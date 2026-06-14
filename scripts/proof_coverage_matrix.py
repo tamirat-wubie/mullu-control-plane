@@ -525,6 +525,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/assistant/profiles",
                 "/api/v1/assistant/finance-ops/plans",
                 "/api/v1/assistant/team-ops/plans",
+                "/api/v1/personal-assistant/skills",
+                "/api/v1/personal-assistant/requests/preview",
             ],
             "request_proof",
             "action_proof",
@@ -534,16 +536,22 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/assistant.py",
                 "mcoi/mcoi_runtime/assistant_kernel/planner.py",
                 "mcoi/mcoi_runtime/assistant_kernel/identity.py",
+                "mcoi/mcoi_runtime/personal_assistant/planner.py",
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
+                "tests/test_personal_assistant_planner.py",
             ],
-            "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, plan, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
                 "finance_ops_plan_projects_operator_queue",
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
+                "personal_assistant_skill_read_model_deployed_read_only",
+                "personal_assistant_preview_compiles_without_execution",
+                "personal_assistant_preview_blocks_with_whqr_step",
+                "personal_assistant_preview_errors_sanitized",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -561,6 +569,20 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "assistant_plan_errors_sanitized": [
                     "finance_ops_plan_error_detail_is_bounded",
+                ],
+                "personal_assistant_skill_read_model_deployed_read_only": [
+                    "personal_assistant_skill_read_model_is_deployed_read_only",
+                ],
+                "personal_assistant_preview_compiles_without_execution": [
+                    "personal_assistant_preview_compiles_inbox_request_without_execution",
+                    "preview_planner_emits_schema_valid_inbox_plan_and_receipt",
+                ],
+                "personal_assistant_preview_blocks_with_whqr_step": [
+                    "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
+                    "preview_planner_blocks_unknown_request_with_clarification_skill",
+                ],
+                "personal_assistant_preview_errors_sanitized": [
+                    "personal_assistant_preview_fails_closed_on_invalid_request",
                 ],
             },
         ),

@@ -396,6 +396,38 @@
       "metadata": { "foundation_only": true, "nested_mind_status": "staging_only" }
     },
     {
+      "skill_id": "personal_assistant.clarification.request",
+      "name": "Personal Assistant Clarification Request",
+      "description": "Prepare WHQR clarification requests when an assistant request is missing required bindings.",
+      "group": "planning",
+      "mode": "planning_only",
+      "risk_level": "P0",
+      "requires_approval": false,
+      "connectors": [],
+      "inputs": ["missing_bindings", "request_context"],
+      "outputs": ["clarification_requests", "receipt"],
+      "allowed_actions": ["ask_clarification", "produce_receipt"],
+      "blocked_actions": ["send", "delete", "archive", "forward", "connector_mutation", "system_of_record_write"],
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "private_connector_required": false,
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "capability_refs": ["personal_assistant.clarification.request", "personal_assistant.receipt.project"],
+      "uao_required": true,
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "nested_mind_live_activation_allowed": false,
+      "public_readiness_claim_allowed": false,
+      "metadata": { "foundation_only": true, "whqr_bridge": true }
+    },
+    {
       "skill_id": "deployment.publish.review",
       "name": "Deployment Publication Review",
       "description": "Review a future deployment publication request without deploying.",

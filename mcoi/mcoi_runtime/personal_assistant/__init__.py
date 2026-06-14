@@ -55,6 +55,10 @@ from .memory import (
     PersonalAssistantMemoryObservationLedger,
     prepare_memory_observation,
 )
+from .planner import (
+    PersonalAssistantPlanningEnvelope,
+    build_personal_assistant_preview_plan,
+)
 from .read_only import (
     ReadOnlyAssistantProjection,
     RedactedCalendarEvent,
@@ -98,6 +102,7 @@ __all__ = (
     "MemorySensitivity",
     "NestedMindStatus",
     "PersonalAssistantMemoryObservationLedger",
+    "PersonalAssistantPlanningEnvelope",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
     "RedactedInboxMessage",
@@ -113,6 +118,7 @@ __all__ = (
     "SkillRiskLevel",
     "build_clarification_requests",
     "build_personal_assistant_console_read_model",
+    "build_personal_assistant_preview_plan",
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",

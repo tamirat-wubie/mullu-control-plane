@@ -990,11 +990,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 262,
+      "proven": 264,
       "unproven": 0,
       "witnessed": 159
     },
-    "route_count": 421,
+    "route_count": 423,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2235,6 +2235,16 @@
         "coverage_state": "proven",
         "route": "/api/v1/partitions",
         "surface_id": "tenant_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/requests/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/skills",
+        "surface_id": "assistant_kernel_planning"
       },
       {
         "coverage_state": "proven",
@@ -3622,14 +3632,18 @@
         "mcoi/mcoi_runtime/app/routers/assistant.py",
         "mcoi/mcoi_runtime/assistant_kernel/planner.py",
         "mcoi/mcoi_runtime/assistant_kernel/identity.py",
+        "mcoi/mcoi_runtime/personal_assistant/planner.py",
         "mcoi/tests/test_assistant_router.py",
-        "tests/test_assistant_kernel.py"
+        "tests/test_assistant_kernel.py",
+        "tests/test_personal_assistant_planner.py"
       ],
-      "notes": "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, plan, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
-        "/api/v1/assistant/team-ops/plans"
+        "/api/v1/assistant/team-ops/plans",
+        "/api/v1/personal-assistant/skills",
+        "/api/v1/personal-assistant/requests/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -3648,6 +3662,20 @@
         ],
         "finance_ops_plan_requires_active_consent": [
           "finance_ops_plan_blocks_without_active_payment_consent"
+        ],
+        "personal_assistant_preview_blocks_with_whqr_step": [
+          "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
+          "preview_planner_blocks_unknown_request_with_clarification_skill"
+        ],
+        "personal_assistant_preview_compiles_without_execution": [
+          "personal_assistant_preview_compiles_inbox_request_without_execution",
+          "preview_planner_emits_schema_valid_inbox_plan_and_receipt"
+        ],
+        "personal_assistant_preview_errors_sanitized": [
+          "personal_assistant_preview_fails_closed_on_invalid_request"
+        ],
+        "personal_assistant_skill_read_model_deployed_read_only": [
+          "personal_assistant_skill_read_model_is_deployed_read_only"
         ]
       },
       "runtime_witnesses": [
@@ -3655,7 +3683,11 @@
         "finance_ops_plan_requires_active_consent",
         "finance_ops_plan_projects_operator_queue",
         "assistant_plan_never_grants_execution_authority",
-        "assistant_plan_errors_sanitized"
+        "assistant_plan_errors_sanitized",
+        "personal_assistant_skill_read_model_deployed_read_only",
+        "personal_assistant_preview_compiles_without_execution",
+        "personal_assistant_preview_blocks_with_whqr_step",
+        "personal_assistant_preview_errors_sanitized"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -10819,8 +10851,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1412,
-    "runtime_witness_count": 1412,
+    "exact_test_anchor_count": 1416,
+    "runtime_witness_count": 1416,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11471,10 +11503,36 @@
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
             ],
             "witness": "assistant_plan_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_skill_read_model_is_deployed_read_only"
+            ],
+            "witness": "personal_assistant_skill_read_model_deployed_read_only"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_compiles_inbox_request_without_execution",
+              "tests/test_personal_assistant_planner.py::test_preview_planner_emits_schema_valid_inbox_plan_and_receipt"
+            ],
+            "witness": "personal_assistant_preview_compiles_without_execution"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_blocks_unknown_request_with_whqr_step",
+              "tests/test_personal_assistant_planner.py::test_preview_planner_blocks_unknown_request_with_clarification_skill"
+            ],
+            "witness": "personal_assistant_preview_blocks_with_whqr_step"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_fails_closed_on_invalid_request"
+            ],
+            "witness": "personal_assistant_preview_errors_sanitized"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
