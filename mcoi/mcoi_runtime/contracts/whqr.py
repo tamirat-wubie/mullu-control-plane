@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, fields, is_dataclass
 from enum import StrEnum
+from math import isfinite
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence, TypeAlias
 import hashlib
@@ -143,7 +144,13 @@ def _freeze_metadata_value(value: Any) -> Any:
         return tuple(_freeze_metadata_value(item) for item in value)
     if isinstance(value, list):
         return tuple(_freeze_metadata_value(item) for item in value)
-    return value
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise ValueError("metadata value must be a finite number")
+        return value
+    raise ValueError("metadata value must be canonical JSON-compatible")
 
 
 def _require_whqr_expr(value: Any, name: str) -> None:
