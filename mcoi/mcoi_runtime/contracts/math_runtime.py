@@ -158,6 +158,8 @@ class UnitConversion(ContractRecord):
         object.__setattr__(self, "from_unit", require_non_empty_text(self.from_unit, "from_unit"))
         object.__setattr__(self, "to_unit", require_non_empty_text(self.to_unit, "to_unit"))
         object.__setattr__(self, "factor", _require_finite_float(self.factor, "factor"))
+        if self.factor <= 0.0:
+            raise ValueError("conversion factor must be positive")
         if not isinstance(self.dimension, UnitDimension):
             raise ValueError("dimension must be a UnitDimension")
         require_datetime_text(self.created_at, "created_at")

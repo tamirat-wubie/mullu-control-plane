@@ -1,6 +1,6 @@
 """Tests for math / optimization / units runtime contracts.
 
-Validates finite-float enforcement on quantity values, conversion factors,
+Validates finite-float enforcement on quantity values, positive conversion factors,
 objective target values, trace objective values, and uncertainty bounds,
 while confirming that MathOptimizationConstraint bounds still allow inf.
 """
@@ -204,6 +204,14 @@ class TestInfNanRejection:
     def test_conversion_factor_rejects_non_finite(self, bad):
         with pytest.raises(ValueError, match="numeric value must be finite"):
             _conversion(factor=bad)
+
+    @pytest.mark.parametrize("bad", [0.0, -1.0])
+    def test_conversion_factor_rejects_non_positive(self, bad):
+        with pytest.raises(ValueError) as exc_info:
+            _conversion(factor=bad)
+        message = str(exc_info.value)
+        assert message == "conversion factor must be positive"
+        assert str(bad) not in message
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_objective_target_rejects_non_finite(self, bad):

@@ -53,6 +53,14 @@ class TestBoundedInvariantContracts:
         assert "kg" not in str(missing_exc.value)
         assert "oz" not in str(missing_exc.value)
 
+    def test_conversion_registration_rejects_non_positive_factor(self, engine):
+        with pytest.raises(ValueError) as exc_info:
+            engine.register_conversion("conv-zero", "t-1", "kg", "lb", 0.0, UnitDimension.MASS)
+
+        assert str(exc_info.value) == "conversion factor must be positive"
+        assert "conv-zero" not in str(exc_info.value)
+        assert engine.conversion_count == 0
+
 
 class TestBoundedViolationReasons:
     def test_detect_math_violations_reasons_are_bounded(self, engine):
