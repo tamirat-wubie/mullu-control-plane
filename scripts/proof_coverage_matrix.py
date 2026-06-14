@@ -6811,6 +6811,107 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "agentic_service_harness_read_models",
+            [
+                "scripts.validate_agentic_service_harness_read_model_binding_plan.validate_read_model_binding_plan",
+                "scripts.validate_agentic_service_harness_read_models.validate_agentic_service_harness_read_models",
+                "scripts.validate_agentic_service_harness_read_model_projections.project_contract_to_read_model",
+                "scripts.validate_agentic_service_harness_read_model_projections.validate_agentic_service_harness_read_model_projections",
+                "scripts.validate_agentic_service_harness_read_model_integrity.validate_agentic_service_harness_read_model_integrity",
+                "examples/agentic_service_harness_read_models.foundation.json",
+                "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
+                "examples/agentic_service_harness_read_models.foundation.json",
+                "schemas/agentic_service_harness.schema.json",
+                "schemas/agentic_service_harness_read_models.schema.json",
+                "scripts/validate_agentic_service_harness_contract.py",
+                "scripts/validate_agentic_service_harness_read_model_binding_plan.py",
+                "scripts/validate_agentic_service_harness_read_models.py",
+                "scripts/validate_agentic_service_harness_read_model_projections.py",
+                "scripts/validate_agentic_service_harness_read_model_integrity.py",
+                "tests/test_validate_agentic_service_harness_read_model_binding_plan.py",
+                "tests/test_validate_agentic_service_harness_read_models.py",
+                "tests/test_validate_agentic_service_harness_read_model_projections.py",
+                "tests/test_validate_agentic_service_harness_read_model_integrity.py",
+            ],
+            (
+                "Agentic Service Harness read models remain planning-only, "
+                "read-only, reference-consistent, redacted, non-terminal, and "
+                "projection-bound to source contract fixtures before UI, "
+                "mutation endpoints, external adapters, branch writes, pull "
+                "requests, or high-risk authority are admitted."
+            ),
+            [
+                "harness_read_model_binding_plan_is_planning_only",
+                "harness_read_model_schema_accepts_default_example",
+                "harness_read_model_rejects_mutation_and_secret_surfaces",
+                "harness_read_model_rejects_missing_identity_refs",
+                "harness_read_model_blocks_terminal_closure_claims",
+                "harness_read_model_projection_covers_contract_scenarios",
+                "harness_read_model_projection_preserves_core_refs",
+                "harness_read_model_projection_rejects_source_authority",
+                "harness_read_model_projection_rejects_source_mutation_routes",
+                "harness_read_model_integrity_preserves_identity_mesh",
+                "harness_read_model_integrity_rejects_identity_drift",
+                "harness_read_model_validators_emit_strict_receipts",
+            ],
+            runtime_witness_anchor_aliases={
+                "harness_read_model_binding_plan_is_planning_only": [
+                    "read_model_binding_plan_accepts_default_artifact",
+                    "read_model_binding_plan_rejects_missing_required_symbol",
+                    "read_model_binding_plan_rejects_mutation_route_string",
+                ],
+                "harness_read_model_schema_accepts_default_example": [
+                    "agentic_service_harness_read_models_accept_default_example",
+                ],
+                "harness_read_model_rejects_mutation_and_secret_surfaces": [
+                    "agentic_service_harness_read_models_reject_mutation_flag",
+                    "agentic_service_harness_read_models_reject_mutation_route_string",
+                    "agentic_service_harness_read_models_reject_secret_like_payload",
+                ],
+                "harness_read_model_rejects_missing_identity_refs": [
+                    "agentic_service_harness_read_models_reject_missing_run_ref",
+                ],
+                "harness_read_model_blocks_terminal_closure_claims": [
+                    "agentic_service_harness_read_models_reject_terminal_closure_claim",
+                    "read_model_projection_detects_terminal_projection_claim",
+                ],
+                "harness_read_model_projection_covers_contract_scenarios": [
+                    "read_model_projections_accept_all_default_contract_fixtures",
+                ],
+                "harness_read_model_projection_preserves_core_refs": [
+                    "projected_read_only_contract_preserves_core_refs",
+                ],
+                "harness_read_model_projection_rejects_source_authority": [
+                    "read_model_projection_rejects_source_write_authority",
+                ],
+                "harness_read_model_projection_rejects_source_mutation_routes": [
+                    "read_model_projection_rejects_source_mutation_route_string",
+                ],
+                "harness_read_model_integrity_preserves_identity_mesh": [
+                    "read_model_integrity_accepts_default_contract_fixtures",
+                ],
+                "harness_read_model_integrity_rejects_identity_drift": [
+                    "read_model_integrity_rejects_run_receipt_drift",
+                    "read_model_integrity_rejects_project_run_ref_drift",
+                    "read_model_integrity_rejects_receipt_evidence_drift",
+                    "read_model_integrity_rejects_duplicate_projected_run_ids",
+                ],
+                "harness_read_model_validators_emit_strict_receipts": [
+                    "agentic_service_harness_read_models_writer_and_cli_honor_strict",
+                    "read_model_projection_writer_and_cli_honor_strict",
+                    "read_model_integrity_writer_and_cli_honor_strict",
+                    "read_model_binding_plan_cli_json_reports_valid",
+                ],
+            },
+        ),
+        _surface(
             "snet_episode_replay",
             [
                 "scripts.validate_snet_episode_replay.validate_contract",
@@ -7206,6 +7307,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_snet_operator_read_model_contract",
             "surfaces": ["snet_operator_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_agentic_service_harness_read_model_contract",
+            "surfaces": ["agentic_service_harness_read_models"],
             "status": "closed",
         },
         {

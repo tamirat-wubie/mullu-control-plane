@@ -229,6 +229,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_memory_refresh"]["unanchored_witness_count"] == 0
     assert surfaces["policy_proof_report"]["exact_test_anchor_count"] == 6
     assert surfaces["policy_proof_report"]["unanchored_witness_count"] == 0
+    assert surfaces["agentic_service_harness_read_models"]["exact_test_anchor_count"] == 12
+    assert surfaces["agentic_service_harness_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3241,6 +3243,60 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert read_model_integrity["exact_test_anchor_count"] == 10
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
+
+
+def test_agentic_service_harness_read_model_surface_binds_planning_only_projection() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    read_model_surface = surfaces["agentic_service_harness_read_models"]
+    read_model_integrity = witness_surfaces["agentic_service_harness_read_models"]
+    witnesses = set(read_model_surface["runtime_witnesses"])
+
+    assert read_model_surface["request_proof"] == "read_model"
+    assert read_model_surface["action_proof"] == "read_model"
+    assert read_model_surface["audit"] == "audit_chain"
+    assert read_model_surface["coverage_state"] == "witnessed"
+    assert (
+        "scripts.validate_agentic_service_harness_read_model_binding_plan.validate_read_model_binding_plan"
+        in read_model_surface["representative_paths"]
+    )
+    assert (
+        "scripts.validate_agentic_service_harness_read_models.validate_agentic_service_harness_read_models"
+        in read_model_surface["representative_paths"]
+    )
+    assert (
+        "scripts.validate_agentic_service_harness_read_model_projections.project_contract_to_read_model"
+        in read_model_surface["representative_paths"]
+    )
+    assert (
+        "scripts.validate_agentic_service_harness_read_model_integrity.validate_agentic_service_harness_read_model_integrity"
+        in read_model_surface["representative_paths"]
+    )
+    assert "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md" in read_model_surface["evidence_files"]
+    assert "schemas/agentic_service_harness_read_models.schema.json" in read_model_surface["evidence_files"]
+    assert "scripts/validate_agentic_service_harness_read_models.py" in read_model_surface["evidence_files"]
+    assert "scripts/validate_agentic_service_harness_read_model_projections.py" in read_model_surface["evidence_files"]
+    assert "scripts/validate_agentic_service_harness_read_model_integrity.py" in read_model_surface["evidence_files"]
+    assert "tests/test_validate_agentic_service_harness_read_models.py" in read_model_surface["evidence_files"]
+    assert "harness_read_model_binding_plan_is_planning_only" in witnesses
+    assert "harness_read_model_rejects_mutation_and_secret_surfaces" in witnesses
+    assert "harness_read_model_blocks_terminal_closure_claims" in witnesses
+    assert "harness_read_model_projection_covers_contract_scenarios" in witnesses
+    assert "harness_read_model_integrity_rejects_identity_drift" in witnesses
+    assert "harness_read_model_validators_emit_strict_receipts" in witnesses
+    assert "planning-only, read-only" in read_model_surface["notes"]
+    assert "high-risk authority are admitted" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 12
+    assert read_model_integrity["unanchored_witness_count"] == 0
+    assert (
+        closure_actions["publish_agentic_service_harness_read_model_contract"]["status"]
+        == "closed"
+    )
 
 
 def test_structured_output_validation_surface_is_witnessed() -> None:
