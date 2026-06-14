@@ -8,8 +8,8 @@ handoff receipts, TeamOps shared inbox blocked handoff, approval binding,
 probe-authority, operator-input request, live-probe receipt, observation
 routing receipt, approval queue receipt, approval decision receipt, and
 send-preparation receipt, send-execution receipt, sent-message observation
-receipt, aggregate adapter evidence, proof coverage witness, protocol manifest
-validation, and finance proof-pilot readiness.
+receipt, terminal closure review packet, aggregate adapter evidence, proof
+coverage witness, protocol manifest validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
@@ -21,9 +21,10 @@ Invariants:
     binding, read-only probe authority, operator-input request, live-probe receipt,
     observation routing receipt, approval queue receipt, approval decision
     receipt, send-preparation receipt, and blocked send-execution receipt
-    plus blocked sent-message observation receipt without provider calls,
-    mailbox writes, drafts, producer-made approval decisions, local send
-    execution, observation, replay, or sends.
+    plus blocked sent-message observation receipt and blocked terminal closure
+    review packet without provider calls, mailbox writes, drafts, producer-made
+    approval decisions, local send execution, observation, replay, terminal
+    certificate minting, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -416,6 +417,32 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked TeamOps sent-message observation receipt without terminal closure claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_terminal_closure_review_packet",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
+            "--sent-message-observation-receipt",
+            ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_terminal_closure_review_packet.json",
+            "--json",
+        ),
+        purpose="emit blocked TeamOps terminal closure review packet without certificate minting or production claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_terminal_closure_review_packet_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
+            "--packet",
+            ".change_assurance/team_ops_shared_inbox_terminal_closure_review_packet.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_terminal_closure_review_packet_validation.json",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps terminal closure review packet without terminal certificate claim",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",
