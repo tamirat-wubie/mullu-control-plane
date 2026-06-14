@@ -103,22 +103,36 @@ def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     assert payload["root"]["expected_type"] == "identity"
 
 
-def test_document_canonical_json_rejects_nonfinite_metadata() -> None:
+def test_document_metadata_rejects_nonfinite_values_before_canonical_json() -> None:
+    with pytest.raises(ValueError, match="finite number") as excinfo:
+        WHQRDocument(
+            root=WHQRNode(
+                role=WHRole.WHAT,
+                target="measurement",
+                metadata={"confidence": float("nan")},
+            )
+        )
+
+    message = str(excinfo.value)
+    assert "finite number" in message
+    assert "confidence" not in message
+    assert "nan" not in message.lower()
+
+
+def test_metadata_values_must_be_canonical_json_compatible() -> None:
     document = WHQRDocument(
         root=WHQRNode(
             role=WHRole.WHAT,
             target="measurement",
-            metadata={"confidence": float("nan")},
+            metadata={"confidence": 0.75, "verified": True, "note": None},
         )
     )
 
-    with pytest.raises(ValueError, match="WHQR document must serialize to deterministic canonical JSON") as excinfo:
-        document.canonical_json()
-
-    message = str(excinfo.value)
-    assert "canonical JSON" in message
-    assert "confidence" not in message
-    assert "nan" not in message.lower()
+    with pytest.raises(ValueError, match="canonical JSON-compatible"):
+        WHQRNode(role=WHRole.WHAT, target="vendor_record", metadata={"tags": {"verified"}})
+    with pytest.raises(ValueError, match="canonical JSON-compatible"):
+        GateResult(truth=TruthGate.TRUE, metadata={"witness": object()})
+    assert json.loads(document.canonical_json())["root"]["metadata"]["confidence"] == 0.75
 
 
 def test_document_metadata_is_deep_frozen_for_stable_hashes() -> None:
