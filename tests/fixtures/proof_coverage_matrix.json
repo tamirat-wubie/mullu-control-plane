@@ -30,6 +30,13 @@
       ]
     },
     {
+      "action_id": "publish_agentic_service_harness_read_model_contract",
+      "status": "closed",
+      "surfaces": [
+        "agentic_service_harness_read_models"
+      ]
+    },
+    {
       "action_id": "register_holistic_loop_read_model_kernel",
       "status": "closed",
       "surfaces": [
@@ -905,12 +912,12 @@
       "action_proof": 105,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 17,
+      "read_model": 18,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 121,
+      "audit_chain": 122,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -918,21 +925,21 @@
     "by_coverage_state": {
       "proven": 38,
       "unproven": 0,
-      "witnessed": 86
+      "witnessed": 87
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 19,
+      "read_model": 20,
       "request_proof": 104
     },
-    "surface_count": 124
+    "surface_count": 125
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 124,
+      "strong": 125,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10011,6 +10018,101 @@
       "surface_id": "snet_operator_read_model"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
+        "examples/agentic_service_harness_read_models.foundation.json",
+        "schemas/agentic_service_harness.schema.json",
+        "schemas/agentic_service_harness_read_models.schema.json",
+        "scripts/validate_agentic_service_harness_contract.py",
+        "scripts/validate_agentic_service_harness_read_model_binding_plan.py",
+        "scripts/validate_agentic_service_harness_read_models.py",
+        "scripts/validate_agentic_service_harness_read_model_projections.py",
+        "scripts/validate_agentic_service_harness_read_model_integrity.py",
+        "tests/test_validate_agentic_service_harness_read_model_binding_plan.py",
+        "tests/test_validate_agentic_service_harness_read_models.py",
+        "tests/test_validate_agentic_service_harness_read_model_projections.py",
+        "tests/test_validate_agentic_service_harness_read_model_integrity.py"
+      ],
+      "notes": "Agentic Service Harness read models remain planning-only, read-only, reference-consistent, redacted, non-terminal, and projection-bound to source contract fixtures before UI, mutation endpoints, external adapters, branch writes, pull requests, or high-risk authority are admitted.",
+      "representative_paths": [
+        "scripts.validate_agentic_service_harness_read_model_binding_plan.validate_read_model_binding_plan",
+        "scripts.validate_agentic_service_harness_read_models.validate_agentic_service_harness_read_models",
+        "scripts.validate_agentic_service_harness_read_model_projections.project_contract_to_read_model",
+        "scripts.validate_agentic_service_harness_read_model_projections.validate_agentic_service_harness_read_model_projections",
+        "scripts.validate_agentic_service_harness_read_model_integrity.validate_agentic_service_harness_read_model_integrity",
+        "examples/agentic_service_harness_read_models.foundation.json",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "harness_read_model_binding_plan_is_planning_only": [
+          "read_model_binding_plan_accepts_default_artifact",
+          "read_model_binding_plan_rejects_missing_required_symbol",
+          "read_model_binding_plan_rejects_mutation_route_string"
+        ],
+        "harness_read_model_blocks_terminal_closure_claims": [
+          "agentic_service_harness_read_models_reject_terminal_closure_claim",
+          "read_model_projection_detects_terminal_projection_claim"
+        ],
+        "harness_read_model_integrity_preserves_identity_mesh": [
+          "read_model_integrity_accepts_default_contract_fixtures"
+        ],
+        "harness_read_model_integrity_rejects_identity_drift": [
+          "read_model_integrity_rejects_run_receipt_drift",
+          "read_model_integrity_rejects_project_run_ref_drift",
+          "read_model_integrity_rejects_receipt_evidence_drift",
+          "read_model_integrity_rejects_duplicate_projected_run_ids"
+        ],
+        "harness_read_model_projection_covers_contract_scenarios": [
+          "read_model_projections_accept_all_default_contract_fixtures"
+        ],
+        "harness_read_model_projection_preserves_core_refs": [
+          "projected_read_only_contract_preserves_core_refs"
+        ],
+        "harness_read_model_projection_rejects_source_authority": [
+          "read_model_projection_rejects_source_write_authority"
+        ],
+        "harness_read_model_projection_rejects_source_mutation_routes": [
+          "read_model_projection_rejects_source_mutation_route_string"
+        ],
+        "harness_read_model_rejects_missing_identity_refs": [
+          "agentic_service_harness_read_models_reject_missing_run_ref"
+        ],
+        "harness_read_model_rejects_mutation_and_secret_surfaces": [
+          "agentic_service_harness_read_models_reject_mutation_flag",
+          "agentic_service_harness_read_models_reject_mutation_route_string",
+          "agentic_service_harness_read_models_reject_secret_like_payload"
+        ],
+        "harness_read_model_schema_accepts_default_example": [
+          "agentic_service_harness_read_models_accept_default_example"
+        ],
+        "harness_read_model_validators_emit_strict_receipts": [
+          "agentic_service_harness_read_models_writer_and_cli_honor_strict",
+          "read_model_projection_writer_and_cli_honor_strict",
+          "read_model_integrity_writer_and_cli_honor_strict",
+          "read_model_binding_plan_cli_json_reports_valid"
+        ]
+      },
+      "runtime_witnesses": [
+        "harness_read_model_binding_plan_is_planning_only",
+        "harness_read_model_schema_accepts_default_example",
+        "harness_read_model_rejects_mutation_and_secret_surfaces",
+        "harness_read_model_rejects_missing_identity_refs",
+        "harness_read_model_blocks_terminal_closure_claims",
+        "harness_read_model_projection_covers_contract_scenarios",
+        "harness_read_model_projection_preserves_core_refs",
+        "harness_read_model_projection_rejects_source_authority",
+        "harness_read_model_projection_rejects_source_mutation_routes",
+        "harness_read_model_integrity_preserves_identity_mesh",
+        "harness_read_model_integrity_rejects_identity_drift",
+        "harness_read_model_validators_emit_strict_receipts"
+      ],
+      "surface_id": "agentic_service_harness_read_models"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -10343,8 +10445,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1339,
-    "runtime_witness_count": 1339,
+    "exact_test_anchor_count": 1352,
+    "runtime_witness_count": 1352,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19359,6 +19461,98 @@
         "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "snet_operator_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_binding_plan.py::test_read_model_binding_plan_accepts_default_artifact",
+              "tests/test_validate_agentic_service_harness_read_model_binding_plan.py::test_read_model_binding_plan_rejects_missing_required_symbol",
+              "tests/test_validate_agentic_service_harness_read_model_binding_plan.py::test_read_model_binding_plan_rejects_mutation_route_string"
+            ],
+            "witness": "harness_read_model_binding_plan_is_planning_only"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_accept_default_example"
+            ],
+            "witness": "harness_read_model_schema_accepts_default_example"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_mutation_flag",
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_mutation_route_string",
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_secret_like_payload"
+            ],
+            "witness": "harness_read_model_rejects_mutation_and_secret_surfaces"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_missing_run_ref"
+            ],
+            "witness": "harness_read_model_rejects_missing_identity_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_terminal_closure_claim",
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_read_model_projection_detects_terminal_projection_claim"
+            ],
+            "witness": "harness_read_model_blocks_terminal_closure_claims"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_read_model_projections_accept_all_default_contract_fixtures"
+            ],
+            "witness": "harness_read_model_projection_covers_contract_scenarios"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_projected_read_only_contract_preserves_core_refs"
+            ],
+            "witness": "harness_read_model_projection_preserves_core_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_read_model_projection_rejects_source_write_authority"
+            ],
+            "witness": "harness_read_model_projection_rejects_source_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_read_model_projection_rejects_source_mutation_route_string"
+            ],
+            "witness": "harness_read_model_projection_rejects_source_mutation_routes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_accepts_default_contract_fixtures"
+            ],
+            "witness": "harness_read_model_integrity_preserves_identity_mesh"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_rejects_run_receipt_drift",
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_rejects_project_run_ref_drift",
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_rejects_receipt_evidence_drift",
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_rejects_duplicate_projected_run_ids"
+            ],
+            "witness": "harness_read_model_integrity_rejects_identity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_writer_and_cli_honor_strict",
+              "tests/test_validate_agentic_service_harness_read_model_projections.py::test_read_model_projection_writer_and_cli_honor_strict",
+              "tests/test_validate_agentic_service_harness_read_model_integrity.py::test_read_model_integrity_writer_and_cli_honor_strict",
+              "tests/test_validate_agentic_service_harness_read_model_binding_plan.py::test_read_model_binding_plan_cli_json_reports_valid"
+            ],
+            "witness": "harness_read_model_validators_emit_strict_receipts"
+          }
+        ],
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
+        "surface_id": "agentic_service_harness_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
