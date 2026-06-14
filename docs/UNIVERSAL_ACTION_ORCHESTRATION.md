@@ -52,7 +52,7 @@ Command terminal-closure read models expose the available `whqr_replay_binding` 
 Command universal-action proof read models expose the same available `whqr_replay_binding` and derived `whqr_replay_ref` at the top level so audit navigation does not require unpacking the nested proof payload.
 Command universal-action orchestration read models expose the same derived `whqr_replay_ref` from `closure.whqr_replay_binding.replay_ref` so orchestration replay, proof replay, and terminal closure use one operator navigation contract.
 The replay surface fails closed unless the persisted command event came from a universal action kernel dispatch or block event and the embedded UAO v1 record preserves the expected command identity, event identity, decision, receipt, closure, WHQR replay binding, and no-private-reasoning shape.
-Operator read-model summaries must expose the replay-validated `reconciliation_ref`, `memory_ref`, and available `whqr_replay_binding` alongside `closure_state`; summaries may omit execution detail, but they must not reduce closure to status-only evidence.
+Operator read-model summaries must expose the replay-validated `reconciliation_ref`, `memory_ref`, available `whqr_replay_binding`, and derived `whqr_replay_ref` alongside `closure_state`; summaries may omit execution detail, but they must not reduce closure to status-only evidence.
 The workspace governance witness must retain UAO doctrine, fixtures, schemas, validators, receipt evidence, bypass detection, and replay tests so preflight can detect removal of the UAO law surface before repository closure.
 
 ## Algorithm
