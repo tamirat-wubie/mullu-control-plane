@@ -329,6 +329,12 @@
       "surface": "memory"
     },
     {
+      "schema_id": "personal-assistant-console-read-model",
+      "path": "schemas/personal_assistant_console_read_model.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "connector-descriptor",
       "path": "schemas/connector_descriptor.schema.json",
       "urn": "urn:mullusi:schema:connector-descriptor:1",

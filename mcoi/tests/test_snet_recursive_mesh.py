@@ -16,11 +16,16 @@ from collections.abc import Mapping
 import pytest
 
 from mcoi_runtime.contracts.snet import (
+    SNetAnswer,
     SNetContradictionState,
     SNetInquiryBudget,
     SNetMeshReceipt,
+    SNetMetadata,
+    SNetRelation,
     SNetSettlementState,
+    SNetSymbol,
     SNetTickStatus,
+    SNetTickResult,
     SNetValidationState,
     SNetWHType,
     WH_TYPES,
@@ -403,6 +408,73 @@ def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
     assert mesh.answers == {answer.answer_id: answer}
     assert answer.evidence_refs == ("evidence:1",)
     assert mesh.metadata == {}
+
+
+def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="metadata_refs"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs="metadata:1")
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type="upstream_dependency",
+            target_symbol_id="symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general",
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="generated_question_ids"):
+        SNetTickResult(
+            tick_id="tick:1",
+            symbol_id="symbol:1",
+            status=SNetTickStatus.RAN,
+            generated_question_ids="question:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetMeshReceipt(**{**receipt_payload, "evidence_refs": "snet:mesh_digest:sha256:" + "a" * 64})
+
+    assert receipt_payload["evidence_refs"]
+    assert SNetSymbol(symbol_id="symbol:2", label="Seed", metadata_refs=["metadata:1"]).metadata_refs == (
+        "metadata:1",
+    )
+    assert (
+        SNetTickResult(
+            tick_id="tick:2",
+            symbol_id="symbol:2",
+            status=SNetTickStatus.RAN,
+            generated_question_ids=["question:1"],
+        ).generated_question_ids
+        == ("question:1",)
+    )
 
 
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:

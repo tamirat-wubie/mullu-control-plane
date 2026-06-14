@@ -122,7 +122,9 @@ WH_TYPES: tuple[SNetWHType, ...] = (
 )
 
 
-def _freeze_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+def _freeze_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (list, tuple)):
+        raise ValueError(f"{field_name} must be an array")
     frozen = freeze_value(list(values))
     if not isinstance(frozen, tuple):
         raise ValueError(f"{field_name} must be an array")
@@ -214,9 +216,9 @@ class SNetSymbol(ContractRecord):
                 "created_from_metadata_id",
                 require_non_empty_text(self.created_from_metadata_id, "created_from_metadata_id"),
             )
-        object.__setattr__(self, "metadata_refs", _freeze_text_tuple(tuple(self.metadata_refs), "metadata_refs"))
-        object.__setattr__(self, "relation_refs", _freeze_text_tuple(tuple(self.relation_refs), "relation_refs"))
-        object.__setattr__(self, "inquiry_history", _freeze_text_tuple(tuple(self.inquiry_history), "inquiry_history"))
+        object.__setattr__(self, "metadata_refs", _freeze_text_tuple(self.metadata_refs, "metadata_refs"))
+        object.__setattr__(self, "relation_refs", _freeze_text_tuple(self.relation_refs, "relation_refs"))
+        object.__setattr__(self, "inquiry_history", _freeze_text_tuple(self.inquiry_history, "inquiry_history"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -286,7 +288,7 @@ class SNetAnswer(ContractRecord):
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         if not isinstance(self.validation_state, SNetValidationState):
             raise ValueError("validation_state must be a SNetValidationState")
-        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(tuple(self.evidence_refs), "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -328,7 +330,7 @@ class SNetMetadata(ContractRecord):
                 "promoted_symbol_id",
                 require_non_empty_text(self.promoted_symbol_id, "promoted_symbol_id"),
             )
-        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(tuple(self.evidence_refs), "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -354,7 +356,7 @@ class SNetRelation(ContractRecord):
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "context", require_non_empty_text(self.context, "context"))
         object.__setattr__(self, "perspective", require_non_empty_text(self.perspective, "perspective"))
-        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(tuple(self.evidence_refs), "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -383,7 +385,7 @@ class SNetContradiction(ContractRecord):
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         if not isinstance(self.resolution_state, SNetContradictionState):
             raise ValueError("resolution_state must be a SNetContradictionState")
-        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(tuple(self.evidence_refs), "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -432,22 +434,22 @@ class SNetTickResult(ContractRecord):
         object.__setattr__(
             self,
             "generated_question_ids",
-            _freeze_text_tuple(tuple(self.generated_question_ids), "generated_question_ids"),
+            _freeze_text_tuple(self.generated_question_ids, "generated_question_ids"),
         )
-        object.__setattr__(self, "answer_ids", _freeze_text_tuple(tuple(self.answer_ids), "answer_ids"))
-        object.__setattr__(self, "metadata_ids", _freeze_text_tuple(tuple(self.metadata_ids), "metadata_ids"))
+        object.__setattr__(self, "answer_ids", _freeze_text_tuple(self.answer_ids, "answer_ids"))
+        object.__setattr__(self, "metadata_ids", _freeze_text_tuple(self.metadata_ids, "metadata_ids"))
         object.__setattr__(
             self,
             "promoted_symbol_ids",
-            _freeze_text_tuple(tuple(self.promoted_symbol_ids), "promoted_symbol_ids"),
+            _freeze_text_tuple(self.promoted_symbol_ids, "promoted_symbol_ids"),
         )
-        object.__setattr__(self, "unknown_ids", _freeze_text_tuple(tuple(self.unknown_ids), "unknown_ids"))
+        object.__setattr__(self, "unknown_ids", _freeze_text_tuple(self.unknown_ids, "unknown_ids"))
         object.__setattr__(
             self,
             "contradiction_ids",
-            _freeze_text_tuple(tuple(self.contradiction_ids), "contradiction_ids"),
+            _freeze_text_tuple(self.contradiction_ids, "contradiction_ids"),
         )
-        object.__setattr__(self, "blocked_reasons", _freeze_text_tuple(tuple(self.blocked_reasons), "blocked_reasons"))
+        object.__setattr__(self, "blocked_reasons", _freeze_text_tuple(self.blocked_reasons, "blocked_reasons"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -540,7 +542,7 @@ class SNetMeshReceipt(ContractRecord):
             raise ValueError("SNet read model must not grant route authority")
         if self.filesystem_authority_granted:
             raise ValueError("SNet read model must not grant filesystem authority")
-        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(tuple(self.evidence_refs), "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         if not self.evidence_refs:
             raise ValueError("evidence_refs must contain at least one evidence reference")
 
