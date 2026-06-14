@@ -1220,6 +1220,17 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_handoff_cont
     assert handoff_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_emitter_dry_run_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dry_run_entry = entries["read-only-worker-runtime-receipt-emitter-dry-run"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dry_run_entry["path"] == "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json"
+    assert dry_run_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1"
+    assert dry_run_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
