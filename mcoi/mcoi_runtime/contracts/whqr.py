@@ -132,8 +132,23 @@ def _freeze_metadata(metadata: Mapping[str, Any]) -> Mapping[str, Any]:
         raise ValueError("metadata must be a mapping")
     rows: dict[str, Any] = {}
     for key, value in metadata.items():
-        rows[_require_text(key, "metadata key")] = value
+        rows[_require_text(key, "metadata key")] = _freeze_metadata_value(value)
     return MappingProxyType(dict(sorted(rows.items(), key=lambda item: item[0])))
+
+
+def _freeze_metadata_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {
+                key: _freeze_metadata_value(item)
+                for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+            }
+        )
+    if isinstance(value, tuple):
+        return tuple(_freeze_metadata_value(item) for item in value)
+    if isinstance(value, list):
+        return tuple(_freeze_metadata_value(item) for item in value)
+    return value
 
 
 def _require_whqr_expr(value: Any, name: str) -> None:

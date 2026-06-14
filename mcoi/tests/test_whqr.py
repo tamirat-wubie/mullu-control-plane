@@ -121,6 +121,32 @@ def test_document_canonical_json_rejects_nonfinite_metadata() -> None:
     assert "nan" not in message.lower()
 
 
+def test_document_metadata_is_deep_frozen_for_stable_hashes() -> None:
+    source_metadata = {
+        "details": {
+            "evidence_refs": ["evidence:vendor-1"],
+            "checks": [{"name": "freshness", "passed": True}],
+        }
+    }
+    document = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="vendor_record",
+            metadata=source_metadata,
+        )
+    )
+    original_hash = document.canonical_hash()
+
+    source_metadata["details"]["evidence_refs"].append("evidence:vendor-2")
+    source_metadata["details"]["checks"][0]["passed"] = False
+
+    assert document.canonical_hash() == original_hash
+    assert document.root.metadata["details"]["evidence_refs"] == ("evidence:vendor-1",)
+    assert document.root.metadata["details"]["checks"][0]["passed"] is True
+    with pytest.raises(TypeError):
+        document.root.metadata["details"]["evidence_refs"] += ("evidence:vendor-3",)
+
+
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")
