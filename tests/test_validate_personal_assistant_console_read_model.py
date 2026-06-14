@@ -35,6 +35,24 @@ def test_personal_assistant_console_read_model_fixture_validates() -> None:
     assert result.errors == ()
 
 
+def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> None:
+    payload = _load_fixture()
+    viewer_binding = payload["receipts"]["viewer_binding"]
+    receipt_item = payload["receipts"]["items"][0]
+
+    assert payload["sections"]["receipts"]["item_count"] == 1
+    assert payload["receipts"]["receipt_count"] == 1
+    assert viewer_binding["read_only_worker_rehearsal_bound"] is True
+    assert viewer_binding["runtime_dispatch_allowed"] is False
+    assert viewer_binding["terminal_closure_allowed"] is False
+    assert receipt_item["receipt_kind"] == "read_only_worker_rehearsal_receipt"
+    assert receipt_item["source_receipt_ref"] == "examples/read_only_worker_rehearsal_receipt.foundation.json"
+    assert receipt_item["dispatch_admitted"] is False
+    assert receipt_item["success_claim_allowed"] is False
+    assert receipt_item["output_digest"].startswith("sha256:")
+    assert "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614" in payload["receipt_refs"]
+
+
 def test_personal_assistant_console_validator_rejects_execution_authority(tmp_path: Path) -> None:
     payload = _load_fixture()
     payload["effect_boundary"]["execution_allowed"] = True
@@ -50,6 +68,24 @@ def test_personal_assistant_console_validator_rejects_execution_authority(tmp_pa
     assert "approval_queue.external_send_allowed must be false" in result.errors
     assert "approval_queue.metadata.approval_decision_executes_action must be false" in result.errors
     assert result.runtime_validated is False
+
+
+def test_personal_assistant_console_validator_rejects_receipt_viewer_authority_drift(tmp_path: Path) -> None:
+    payload = _load_fixture()
+    payload["receipts"]["viewer_binding"]["runtime_dispatch_allowed"] = True
+    payload["receipts"]["viewer_binding"]["projected_receipt_ids"] = ["forged-receipt"]
+    payload["receipts"]["items"][0]["terminal_closure_allowed"] = True
+    payload["receipts"]["items"][0]["source_receipt_ref"] = "examples/forged.json"
+    candidate = tmp_path / "unsafe_receipt_viewer_console.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_personal_assistant_console_read_model(read_model_path=candidate, validate_runtime=False)
+
+    assert result.valid is False
+    assert "receipts.viewer_binding.runtime_dispatch_allowed must be false" in result.errors
+    assert "receipts.viewer_binding.projected_receipt_ids must match receipt item ids" in result.errors
+    assert "receipts.items[0].terminal_closure_allowed must be false" in result.errors
+    assert "receipts.items[0].source_receipt_ref must be examples/read_only_worker_rehearsal_receipt.foundation.json" in result.errors
 
 
 def test_personal_assistant_console_validator_rejects_memory_and_readiness_overclaim(tmp_path: Path) -> None:

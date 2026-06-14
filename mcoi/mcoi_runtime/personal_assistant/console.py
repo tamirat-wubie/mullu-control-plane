@@ -109,6 +109,7 @@ _MEMORY_FALSE_CONTROLS = (
     "secret_value_storage_allowed",
 )
 _MEMORY_METADATA_FALSE_CONTROLS = _MEMORY_FALSE_CONTROLS
+_READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
 
 
 def build_personal_assistant_console_read_model(
@@ -193,6 +194,7 @@ def build_personal_assistant_console_read_model(
             "receipt_count": len(receipt_rows),
             "items": receipt_rows,
             "receipt_required_for_actions": True,
+            "viewer_binding": _receipt_viewer_binding(receipt_rows),
         },
         "skills": skill_model,
         "memory": memory_model,
@@ -393,6 +395,7 @@ def _build_foundation_assurance(
             "teamops_no_live_probe",
             "no_raw_private_payload_serialization",
             "no_secret_value_serialization",
+            "receipt_viewer_read_only_projection",
         ],
         "next_action": (
             "repair authority-drift controls before any further assistant promotion"
@@ -443,6 +446,40 @@ def _receipt_refs(
             if isinstance(receipt, Mapping) and isinstance(receipt.get("receipt_id"), str):
                 refs.append(str(receipt["receipt_id"]))
     return sorted(set(refs))
+
+
+def _receipt_viewer_binding(receipt_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    projected_receipt_ids = sorted(
+        {
+            str(row["receipt_id"])
+            for row in receipt_rows
+            if isinstance(row.get("receipt_id"), str) and str(row.get("receipt_id"))
+        }
+    )
+    source_receipt_refs = sorted(
+        {
+            str(row["source_receipt_ref"])
+            for row in receipt_rows
+            if isinstance(row.get("source_receipt_ref"), str) and str(row.get("source_receipt_ref"))
+        }
+    )
+    return {
+        "viewer_id": "foundation_receipt_viewer_binding",
+        "viewer_state": "foundation_read_only",
+        "foundation_only": True,
+        "projection_count": len(projected_receipt_ids),
+        "projected_receipt_ids": projected_receipt_ids,
+        "source_receipt_refs": source_receipt_refs,
+        "read_only_worker_rehearsal_bound": any(
+            row.get("receipt_kind") == _READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND for row in receipt_rows
+        ),
+        "runtime_dispatch_allowed": False,
+        "filesystem_write_allowed": False,
+        "external_effect_allowed": False,
+        "connector_call_allowed": False,
+        "terminal_closure_allowed": False,
+        "success_claim_allowed": False,
+    }
 
 
 def _mapping_value(value: Mapping[str, Any], key: str) -> dict[str, Any]:

@@ -1,0 +1,61 @@
+{
+  "requirement_id": "sdlc_req_rehearsal_receipt_viewer_binding_20260614",
+  "request_id": "platform_rehearsal_receipt_viewer_binding_20260614",
+  "problem_statement": "The read-only worker rehearsal receipt is contract-bound, but the operator-facing receipt panel did not yet expose the rehearsal evidence. Without a governed read-only projection, future worker runtime work could skip operator-visible evidence review or confuse local dry-run evidence with dispatch success.",
+  "success_criteria": [
+    "personal-assistant console read model carries a schema-backed receipt viewer binding",
+    "the Foundation Mode console example projects the read-only worker rehearsal receipt by id, schema ref, source ref, worker path, dry-run mode, digest ref, and denial flags",
+    "runtime console construction emits an empty governed viewer binding by default",
+    "receipt viewer projection does not grant runtime dispatch, filesystem write, external effect, connector call, terminal closure, or success-claim authority",
+    "focused tests reject viewer count drift, source-ref drift, terminal-closure drift, and dispatch-authority drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no worker runtime registration",
+    "no persisted receipt store",
+    "no dispatch endpoint",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the viewer binding is a read-only projection and not a runtime receipt emitter",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "ReadOnlyWorkerRehearsalReceipt remains the canonical local dry-run evidence source",
+    "future runtime admission must still require temporal lease evidence, UAO, Phi_gov, recovery evidence, and verification",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/personal_assistant_console_read_model.schema.json",
+    "examples/personal_assistant_console_read_model.json",
+    "mcoi/mcoi_runtime/personal_assistant/console.py",
+    "scripts/validate_personal_assistant_console_read_model.py",
+    "tests/test_validate_personal_assistant_console_read_model.py",
+    "tests/test_personal_assistant_console.py",
+    "docs/00_platform_overview.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/sdlc/requirement_rehearsal_receipt_viewer_binding_20260614.json",
+    "examples/sdlc/design_rehearsal_receipt_viewer_binding_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_personal_assistant_console_read_model.py",
+    "python -m pytest tests/test_validate_personal_assistant_console_read_model.py tests/test_personal_assistant_console.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-rehearsal-receipt-viewer-binding-20260614.json"
+  ],
+  "evidence_required": [
+    "console read-model validator receipt",
+    "focused pytest receipt for viewer binding behavior",
+    "schema validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/rehearsal-receipt-viewer-binding/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/rehearsal-receipt-viewer-binding/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/rehearsal-receipt-viewer-binding/20260614"
+}

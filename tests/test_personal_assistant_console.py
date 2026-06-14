@@ -39,6 +39,11 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert payload["effect_boundary"]["nested_mind_live_activation_allowed"] is False
     assert payload["sections"]["chat"]["execution_allowed"] is False
     assert payload["sections"]["tasks"]["task_write_allowed"] is False
+    assert payload["receipts"]["viewer_binding"]["viewer_state"] == "foundation_read_only"
+    assert payload["receipts"]["viewer_binding"]["projection_count"] == 0
+    assert payload["receipts"]["viewer_binding"]["read_only_worker_rehearsal_bound"] is False
+    assert payload["receipts"]["viewer_binding"]["runtime_dispatch_allowed"] is False
+    assert payload["receipts"]["viewer_binding"]["success_claim_allowed"] is False
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]
@@ -77,6 +82,8 @@ def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
         receipts=(
             {
                 "receipt_id": "pa_receipt_console_preview_001",
+                "receipt_kind": "personal_assistant_receipt",
+                "source_receipt_ref": "examples/personal_assistant_receipt_draft_only.json",
                 "skill_id": "email.response.draft",
                 "decision": "allowed",
             },
@@ -90,6 +97,13 @@ def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
     assert payload["memory"]["secret_value_storage_allowed"] is False
     assert payload["memory"]["metadata"]["raw_private_payload_storage_allowed"] is False
     assert payload["memory"]["metadata"]["secret_value_storage_allowed"] is False
+    assert payload["receipts"]["viewer_binding"]["projection_count"] == 1
+    assert payload["receipts"]["viewer_binding"]["projected_receipt_ids"] == ["pa_receipt_console_preview_001"]
+    assert payload["receipts"]["viewer_binding"]["source_receipt_refs"] == [
+        "examples/personal_assistant_receipt_draft_only.json"
+    ]
+    assert payload["receipts"]["viewer_binding"]["read_only_worker_rehearsal_bound"] is False
+    assert payload["receipts"]["viewer_binding"]["terminal_closure_allowed"] is False
     assert record.latest_receipt["receipt_id"] in payload["receipt_refs"]
     assert "pa_receipt_console_preview_001" in payload["receipt_refs"]
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
