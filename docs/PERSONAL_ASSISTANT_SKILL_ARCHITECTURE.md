@@ -53,7 +53,7 @@ This PR scope stops before `CapabilityDispatch` execution. It adds the static co
 | Planner | Produces preview or draft plans with approval gates | Schema only |
 | Approval | Classifies P0-P5 risk and explicit approval requirements | Matrix, validator, and stateless queue read/preview projection |
 | Receipts | Records what was and was not done, with redaction policy | Schema, example, and validator |
-| Memory observation | Stores evidence-backed observations, not raw chat logs | Schema and tests only |
+| Memory observation | Prepares evidence-backed observation candidates, not raw chat logs | Schema, validator, runtime candidate ledger, and stateless public preview |
 
 ## Skill Groups
 
@@ -190,7 +190,21 @@ evidence_refs
 retention_policy
 ```
 
-Nested Mind remains `staging_only` or `awaiting_evidence` until staging evidence and a memory topology activation decision exist.
+The current memory lane is candidate-only. It may prepare a claim-level
+observation, attach source evidence, emit a receipt, and expose a read model for
+operator review. It must keep:
+
+```text
+live_memory_write_allowed = false
+nested_mind_live_activation_allowed = false
+raw_private_payload_storage_allowed = false
+secret_value_storage_allowed = false
+candidate_only = true
+```
+
+Nested Mind remains `staging_only` until staging evidence and a memory topology
+activation decision exist. Requests to activate Nested Mind live memory are
+blocked or classified as `AwaitingEvidence`, not represented as complete.
 
 ## Integration Position
 
@@ -204,9 +218,10 @@ Required local gates for this foundation layer:
 python scripts/validate_personal_assistant_skill_registry.py
 python scripts/validate_personal_assistant_approval_matrix.py
 python scripts/validate_personal_assistant_approval_queue.py
+python scripts/validate_personal_assistant_memory_observation.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

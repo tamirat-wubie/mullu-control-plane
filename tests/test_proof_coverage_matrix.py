@@ -159,7 +159,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 11
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 13
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
     assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
@@ -817,6 +817,14 @@ def test_representative_routes_are_not_unclassified() -> None:
     )
     assert (
         classified_routes["/api/v1/personal-assistant/approval-queue/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations/preview"]["surface_id"]
         == "assistant_kernel_planning"
     )
     assert classified_routes["/api/v1/tool-permissions"]["surface_id"] == "tool_permission_registry"
@@ -3416,9 +3424,9 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "snet_operator_doc_names_blocked_authorities" in witnesses
     assert "snet_operator_doc_lists_verification_commands" in witnesses
     assert "start_here_links_snet_operator_doc" in witnesses
-    assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
-    assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 20
+    assert "denied execution, connector, filesystem, gateway" in read_model_surface["notes"]
+    assert "terminal-closure authority" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 25
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 

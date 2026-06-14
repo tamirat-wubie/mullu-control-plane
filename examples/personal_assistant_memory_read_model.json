@@ -1,0 +1,89 @@
+{
+  "candidate_count": 1,
+  "memory_observation_ids": ["pa_memory_preference_example_001"],
+  "memory_types": ["preference"],
+  "live_memory_write_allowed": false,
+  "nested_mind_live_activation_allowed": false,
+  "raw_private_payload_storage_allowed": false,
+  "secret_value_storage_allowed": false,
+  "candidate_only": true,
+  "candidates": [
+    {
+      "memory_observation_id": "pa_memory_preference_example_001",
+      "observation": {
+        "memory_observation_id": "pa_memory_preference_example_001",
+        "memory_type": "preference",
+        "claim": "User prefers one-at-a-time repository closures.",
+        "source": {
+          "source_type": "user_confirmation",
+          "source_ref": "conversation:personal-assistant-foundation",
+          "observed_at": "2026-06-14T00:00:00+00:00"
+        },
+        "confidence": "high",
+        "scope": "assistant_workflow",
+        "mutable": true,
+        "receipt_id": "pa_receipt_operator_preference_source_001",
+        "evidence_refs": ["proof://personal-assistant/memory/preference-example-001"],
+        "sensitivity": "internal",
+        "retention_policy": "operator_review",
+        "nested_mind_status": "staging_only",
+        "metadata": {
+          "foundation_only": true,
+          "source_projection": "claim_only",
+          "live_memory_write_allowed": false,
+          "nested_mind_live_activation_allowed": false
+        }
+      },
+      "receipt": {
+        "receipt_id": "pa_receipt_preference_example_001_memory_observe",
+        "request_id": "pa_request_memory_example_001",
+        "skill_id": "memory.observe",
+        "mode": "preview",
+        "risk_level": "P2",
+        "inputs_used": ["memory_claim_projection", "source_ref", "receipt_ref"],
+        "connectors_used": [],
+        "decision": "allowed",
+        "approval_required": false,
+        "approval_ref": "",
+        "actions_taken": ["memory_observation_candidate_prepared", "receipt_created"],
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated"
+        ],
+        "redactions": ["claim_only_no_raw_chat_log", "secret_values_not_serialized"],
+        "private_payload_policy": {
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false,
+          "connector_payload_projection": "no_connector_payload",
+          "body_projection": "digest_only"
+        },
+        "timestamp": "2026-06-14T00:00:00+00:00",
+        "evidence_refs": ["proof://personal-assistant/memory/preference-example-001"],
+        "memory_observation_refs": ["pa_memory_preference_example_001"],
+        "replay_refs": ["replay://personal-assistant/memory/preference_example_001"],
+        "outcome": "SolvedVerified",
+        "metadata": {
+          "memory_type": "preference",
+          "confidence": "high",
+          "scope": "assistant_workflow",
+          "retention_policy": "operator_review",
+          "live_memory_write_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "candidate_only": true
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "foundation_only": true,
+    "ledger_projection": "read_model",
+    "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+    "live_memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "raw_private_payload_storage_allowed": false,
+    "secret_value_storage_allowed": false
+  }
+}
