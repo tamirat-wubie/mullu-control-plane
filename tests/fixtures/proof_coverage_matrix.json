@@ -3167,7 +3167,7 @@
         "tests/test_gateway/test_webhooks.py",
         "tests/test_governed_capability_fabric.py"
       ],
-      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
@@ -3229,6 +3229,9 @@
         "successful_response_is_bound_to_response_evidence_closure": [
           "command_closure_read_model"
         ],
+        "terminal_closure_exposes_whqr_replay_ref": [
+          "command_closure_read_model"
+        ],
         "terminal_closure_requires_evidence_refs": [
           "command_closure_read_model"
         ],
@@ -3251,6 +3254,7 @@
       "runtime_witnesses": [
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
+        "terminal_closure_exposes_whqr_replay_ref",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
         "command_interpretation_receipt_read_model_schema_valid",
@@ -10977,8 +10981,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1432,
-    "runtime_witness_count": 1432,
+    "exact_test_anchor_count": 1433,
+    "runtime_witness_count": 1433,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10993,6 +10997,12 @@
               "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
             ],
             "witness": "terminal_closure_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
+            ],
+            "witness": "terminal_closure_exposes_whqr_replay_ref"
           },
           {
             "anchors": [
@@ -11107,8 +11117,8 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 20,
-        "runtime_witness_count": 20,
+        "exact_test_anchor_count": 21,
+        "runtime_witness_count": 21,
         "surface_id": "gateway_capability_fabric",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

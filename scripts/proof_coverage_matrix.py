@@ -63,6 +63,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
     gateway_witnesses = [
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
+        "terminal_closure_exposes_whqr_replay_ref",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
         "command_interpretation_receipt_read_model_schema_valid",
@@ -113,7 +114,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -127,6 +128,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             runtime_witness_anchor_aliases={
                 "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
                 "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
+                "terminal_closure_exposes_whqr_replay_ref": ["command_closure_read_model"],
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
                 "command_interpretation_receipt_read_model_bounds_raw_message": [
                     "command_interpretation_receipt_read_model_bounds_raw_message",

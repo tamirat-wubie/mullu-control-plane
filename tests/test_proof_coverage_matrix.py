@@ -1580,6 +1580,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
+    assert "terminal_closure_exposes_whqr_replay_ref" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
     assert "command_interpretation_receipt_read_model_schema_valid" in witnesses

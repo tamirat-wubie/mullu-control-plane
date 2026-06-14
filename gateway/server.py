@@ -3508,9 +3508,15 @@ def create_gateway_app(
             for event in command_ledger.events_for(command_id)
         ]
         certificate_payload = asdict(certificate)
+        whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+            certificate_payload
+        )
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "terminal_certificate": certificate,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
             "proof_coverage_witnesses": _closure_proof_coverage_witnesses(
                 terminal_certificate=certificate_payload,
                 events=events,
@@ -4861,7 +4867,47 @@ def _closure_proof_coverage_witnesses(
             "witness_type": "response_evidence_closure",
             "witness_ref": response_evidence_closure_id,
         })
+    whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+        terminal_certificate
+    )
+    if whqr_replay_binding:
+        witnesses.append({
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "terminal_closure_exposes_whqr_replay_ref",
+            "witness_type": "whqr_replay_binding",
+            "witness_ref": whqr_replay_binding["replay_ref"],
+            "canonical_hash": whqr_replay_binding["canonical_hash"],
+            "semantics_hash": whqr_replay_binding["semantics_hash"],
+            "version": whqr_replay_binding["version"],
+        })
     return witnesses
+
+
+def _whqr_replay_binding_from_terminal_certificate_payload(
+    terminal_certificate: Mapping[str, Any],
+) -> dict[str, str]:
+    """Project verified WHQR terminal metadata into a replay binding."""
+    metadata = terminal_certificate.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return {}
+    canonical_hash = metadata.get("whqr_canonical_hash")
+    semantics_hash = metadata.get("whqr_semantics_hash")
+    version = metadata.get("whqr_version")
+    if not (
+        isinstance(canonical_hash, str)
+        and canonical_hash
+        and isinstance(semantics_hash, str)
+        and semantics_hash
+        and isinstance(version, str)
+        and version
+    ):
+        return {}
+    return {
+        "replay_ref": f"whqr://replay/{canonical_hash}",
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    }
 
 
 def _gateway_request_receipt(
