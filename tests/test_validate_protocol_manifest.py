@@ -1123,6 +1123,17 @@ def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
     assert worker_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_worker_failure_receipt_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    worker_failure_entry = entries["worker-failure-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert worker_failure_entry["path"] == "schemas/worker_failure_receipt.schema.json"
+    assert worker_failure_entry["urn"] == "urn:mullusi:schema:worker-failure-receipt:1"
+    assert worker_failure_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
