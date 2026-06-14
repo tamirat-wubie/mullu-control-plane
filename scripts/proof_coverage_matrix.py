@@ -4368,8 +4368,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
                 "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
                 "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
+                "scripts/mint_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "tests/test_mint_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_certificate.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, and terminal closure review packets behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, and no local provider-mutation requirements.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, terminal closure review packets, and TeamOps terminal closure certificates behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, source-review binding, and no local provider-mutation requirements.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4462,6 +4466,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim",
                 "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers",
                 "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt",
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review",
+                "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate",
+                "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet",
+                "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate",
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim",
+                "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4863,6 +4873,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "team_ops_terminal_closure_review_cli_writes_packet",
                     "team_ops_terminal_closure_review_validator_cli_writes_validation",
                     "team_ops_terminal_closure_review_validator_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review": [
+                    "team_ops_terminal_closure_certificate_blocks_unready_review",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate": [
+                    "team_ops_terminal_closure_certificate_mints_ready_review",
+                    "team_ops_terminal_closure_certificate_validator_accepts_ready_certificate",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet": [
+                    "team_ops_terminal_closure_certificate_validator_accepts_ready_certificate",
+                    "team_ops_terminal_closure_certificate_validator_rejects_review_hash_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate": [
+                    "team_ops_terminal_closure_certificate_validator_rejects_generic_certificate",
+                    "team_ops_terminal_closure_certificate_validator_rejects_review_hash_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim": [
+                    "team_ops_terminal_closure_certificate_rejects_secret_marker_review",
+                    "team_ops_terminal_closure_certificate_validator_rejects_raw_field",
+                    "team_ops_terminal_closure_certificate_validator_rejects_production_claim",
+                    "team_ops_terminal_closure_certificate_validator_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts": [
+                    "team_ops_terminal_closure_certificate_cli_writes_certificate",
+                    "team_ops_terminal_closure_certificate_validator_cli_writes_validation",
+                    "team_ops_terminal_closure_certificate_validator_missing_path_is_bounded",
                 ],
             },
         ),
@@ -8327,6 +8363,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_team_ops_shared_inbox_terminal_closure_review_packet_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_certificate_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },
