@@ -306,6 +306,21 @@ class WHQRDocument:
     def canonical_hash(self) -> str:
         return "sha256:" + hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
 
+    def verify_semantics(self, *, expected_canonical_hash: str | None = None) -> str:
+        if self.whqr_version != WHQR_VERSION:
+            raise ValueError("WHQR replay semantic version mismatch")
+        if self.semantics_hash != SEMANTICS_HASH:
+            raise ValueError("WHQR replay semantics hash mismatch")
+        _require_whqr_expr(self.root, "root")
+        canonical_hash = self.canonical_hash()
+        if expected_canonical_hash is not None:
+            expected = _require_text(expected_canonical_hash, "expected_canonical_hash")
+            if not expected.startswith("sha256:"):
+                raise ValueError("expected_canonical_hash must start with sha256:")
+            if canonical_hash != expected:
+                raise ValueError("WHQR replay canonical hash mismatch")
+        return canonical_hash
+
 
 def _canonical(value: Any) -> Any:
     if isinstance(value, StrEnum):
