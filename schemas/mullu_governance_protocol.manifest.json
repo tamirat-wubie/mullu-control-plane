@@ -737,6 +737,12 @@
       "surface": "team_ops"
     },
     {
+      "schema_id": "team-ops-shared-inbox-send-execution-receipt",
+      "path": "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1",
+      "surface": "team_ops"
+    },
+    {
       "schema_id": "finance-approval-payment-closure-receipt",
       "path": "schemas/finance_approval_payment_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-payment-closure-receipt:1",
