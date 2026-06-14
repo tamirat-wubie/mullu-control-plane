@@ -13,6 +13,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from mcoi_runtime.app.operational_math_integration import (
+    OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV,
+)
 from mcoi_runtime.persistence.operational_math_receipt_store import (
     OperationalMathReceiptStore,
 )
@@ -63,6 +66,8 @@ def register_operational_math_observability(
     observability: Any,
     receipt_provider: Callable[[], Mapping[str, Any]] | None = None,
     receipt_store: OperationalMathReceiptStore | None = None,
+    store_persistent: bool = False,
+    store_path: str = "",
 ) -> None:
     """Register a read-only operational math receipt projection source."""
 
@@ -72,9 +77,13 @@ def register_operational_math_observability(
     if receipt_store is not None:
         if not isinstance(receipt_store, OperationalMathReceiptStore):
             raise TypeError("receipt_store must be an OperationalMathReceiptStore")
+        store_posture = _receipt_store_posture(
+            store_persistent=store_persistent,
+            store_path=store_path,
+        )
         register_source(
             OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
-            lambda: receipt_store.summary(),
+            lambda: _store_summary_with_posture(receipt_store, store_posture),
         )
         return
     if not callable(receipt_provider):
@@ -83,6 +92,35 @@ def register_operational_math_observability(
         OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
         lambda: summarize_operational_math_receipt(receipt_provider()),
     )
+
+
+def _store_summary_with_posture(
+    receipt_store: OperationalMathReceiptStore,
+    store_posture: Mapping[str, Any],
+) -> dict[str, Any]:
+    summary = receipt_store.summary()
+    summary["receipt_store"] = dict(store_posture)
+    return summary
+
+
+def _receipt_store_posture(*, store_persistent: bool, store_path: str) -> dict[str, Any]:
+    if not isinstance(store_persistent, bool):
+        raise TypeError("store_persistent must be a bool")
+    if not isinstance(store_path, str):
+        raise TypeError("store_path must be a string")
+
+    path_configured = bool(store_path.strip())
+    if store_persistent and not path_configured:
+        raise ValueError("store_path must be configured when store_persistent is true")
+    if path_configured and not store_persistent:
+        raise ValueError("store_path requires store_persistent to be true")
+
+    return {
+        "kind": "file" if store_persistent else "memory",
+        "persistent": store_persistent,
+        "path_configured": path_configured,
+        "path_env": OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV,
+    }
 
 
 def _text_value(value: Any) -> str:

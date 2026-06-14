@@ -40,6 +40,10 @@ def test_operational_math_dashboard_route_exposes_read_only_projection() -> None
     assert projection["source"] == "operational_math"
     assert projection["governed"] is True
     assert projection["total_receipts"] >= 0
+    assert projection["receipt_store"]["kind"] in {"memory", "file"}
+    assert projection["receipt_store"]["persistent"] in (True, False)
+    assert projection["receipt_store"]["path_configured"] in (True, False)
+    assert projection["receipt_store"]["path_env"] == "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH"
     assert projection["requires_operator_review"] in (True, False)
     assert payload["telemetry"]["source_available"] is True
     assert payload["telemetry"]["source_health"] == "normal"

@@ -17,7 +17,7 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 | `OperationalMathLoopIteration` | Records added roles, added controls, tension before/after, and proof refs. |
 | `OperationalMathLoopResult` | Records saturation or remaining gaps without silent completion. |
 | `OperationalMathReceiptStore` | Stores JSON loop receipts with append-only, idempotent receipt-id semantics. |
-| `operational_math` observability source | Exposes store counts, latest receipt posture, and review signals through the server dashboard. |
+| `operational_math` observability source | Exposes store counts, bounded store persistence posture, latest receipt posture, and review signals through the server dashboard. |
 
 ## Algorithm
 
@@ -100,6 +100,15 @@ Server wiring:
 | Dependency key | `operational_math_receipt_store` |
 | Optional durable path | `MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH` |
 | Dashboard source | `operational_math` |
+
+The dashboard projection includes bounded receipt-store posture:
+
+| Field | Meaning |
+| --- | --- |
+| `receipt_store.kind` | `memory` when no durable path is configured, otherwise `file`. |
+| `receipt_store.persistent` | `true` only when the server selected a file-backed receipt store. |
+| `receipt_store.path_configured` | `true` when `MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH` supplied a validated path. |
+| `receipt_store.path_env` | The environment variable that controls durable receipt storage. |
 
 Expected proof outcome:
 
