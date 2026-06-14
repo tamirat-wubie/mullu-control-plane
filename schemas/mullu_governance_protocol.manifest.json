@@ -311,6 +311,12 @@
       "surface": "approval"
     },
     {
+      "schema_id": "personal-assistant-approval-decision",
+      "path": "schemas/personal_assistant_approval_decision.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "personal-assistant-read-only-projection",
       "path": "schemas/personal_assistant_read_only_projection.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-read-only-projection:1",

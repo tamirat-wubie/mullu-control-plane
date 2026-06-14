@@ -6,6 +6,7 @@
     "approved": 0,
     "rejected": 0,
     "revised": 0,
+    "expired": 0,
     "blocked": 0
   },
   "receipt_ids": ["pa_receipt_email_send_001_request"],

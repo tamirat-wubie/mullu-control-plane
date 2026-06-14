@@ -56,6 +56,16 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
 7. Proof coverage classifies approval queue routes under the assistant planning surface.
 
+## PR 6 Decision Evidence Acceptance Criteria
+
+1. Approval decisions validate against `schemas/personal_assistant_approval_decision.schema.json`.
+2. Approved, rejected, revised, and expired decisions embed schema-valid approval packets and receipts.
+3. Approved and revised decisions remain `deferred` evidence records; they do not execute sends, invites, writes, connector mutation, or memory writes.
+4. Rejected and expired decisions emit blocked receipts and record the non-actions taken.
+5. `approval_decision_records_allowed` is true, while execution, external send, connector mutation, task/calendar writes, system-of-record writes, deployment mutation, customer-readiness claims, and live Nested Mind activation remain false.
+6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+7. Proof coverage classifies approval decision evidence under the assistant planning surface.
+
 ## PR 4 Evidence Acceptance Criteria
 
 1. Redacted inbox/calendar summaries validate against `schemas/personal_assistant_read_only_projection.schema.json`.

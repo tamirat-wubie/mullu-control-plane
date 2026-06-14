@@ -201,6 +201,34 @@ def test_gateway_personal_assistant_approval_queue_approved_still_defers_executi
     assert payload["effect_boundary"]["external_send_allowed"] is False
 
 
+def test_gateway_personal_assistant_approval_queue_expired_blocks_execution() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = {
+        **_approval_preview_payload(),
+        "decision": "expired",
+        "reason_codes": ["approval_window_elapsed"],
+        "decided_at": "2026-06-14T10:41:00+00:00",
+        "decision_evidence_ref": "proof://personal-assistant/approval/expired-gateway-001",
+    }
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-queue/preview",
+        json=request_payload,
+    )
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["approval"]["packet"]["approval_state"] == "expired"
+    assert payload["receipt"]["decision"] == "blocked"
+    assert payload["receipt"]["metadata"]["approval_is_execution"] is False
+    assert payload["approval_queue"]["state_counts"]["expired"] == 1
+    assert "approval_expiration_recorded" in payload["receipt"]["actions_taken"]
+    assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
+    assert payload["effect_boundary"]["execution_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["connector_mutation_allowed"] is False
+
+
 def test_gateway_personal_assistant_approval_queue_rejects_extra_private_action_fields() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
     request_payload = _approval_preview_payload()

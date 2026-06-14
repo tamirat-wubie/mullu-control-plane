@@ -57,6 +57,7 @@ class ApprovalDecision(StrEnum):
     APPROVED = "approved"
     REJECTED = "rejected"
     REVISED = "revised"
+    EXPIRED = "expired"
     BLOCKED = "blocked"
 
     @staticmethod
@@ -314,7 +315,7 @@ class PersonalAssistantApprovalQueue:
     def read_model(self) -> dict[str, Any]:
         """Return a deterministic operator-facing approval queue read model."""
         records = tuple(self._records[approval_id] for approval_id in sorted(self._records))
-        state_counts = {state: 0 for state in ("requested", "approved", "rejected", "revised", "blocked")}
+        state_counts = {state: 0 for state in ("requested", "approved", "rejected", "revised", "expired", "blocked")}
         for record in records:
             state = str(record.packet["approval_state"])
             state_counts[state] = state_counts.get(state, 0) + 1
@@ -452,11 +453,13 @@ def _decision_actions_taken(decision: ApprovalDecision) -> tuple[str, ...]:
         return ("approval_rejection_recorded", "receipt_created")
     if decision is ApprovalDecision.REVISED:
         return ("approval_revision_requested", "receipt_created")
+    if decision is ApprovalDecision.EXPIRED:
+        return ("approval_expiration_recorded", "receipt_created")
     return ("approval_block_recorded", "receipt_created")
 
 
 def _receipt_decision_for(decision: ApprovalDecision) -> str:
-    if decision is ApprovalDecision.REJECTED or decision is ApprovalDecision.BLOCKED:
+    if decision in {ApprovalDecision.REJECTED, ApprovalDecision.EXPIRED, ApprovalDecision.BLOCKED}:
         return "blocked"
     return "deferred"
 
