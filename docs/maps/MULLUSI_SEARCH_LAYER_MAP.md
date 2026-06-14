@@ -44,7 +44,7 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | missing / partial | `SearchDecision` covers pre-retrieval decision; SearchReceipt still needed after retrieval. |
+| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | `SearchReceipt` records post-decision evidence metadata, blocked retrieval, freshness, conflicts, citations, and retrieval errors. |
 | Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` blocks deep retrieval on `BudgetUnknown`. |
 
 ## 4. SearchDecision fields
@@ -89,9 +89,14 @@ SearchReceipt {
   conflicts_detected
   stale_sources
   retrieval_errors
+  retrieval_safety_result
+  governance_guards
+  receipt_envelope
   created_at
 }
 ```
+
+`SearchReceipt` is post-decision. It can prove that retrieval was blocked, failed, stale, conflicted, or produced metadata-backed evidence. It stores evidence metadata and citation refs, not retrieved content bodies.
 
 ## 6. Retrieval safety rules
 
@@ -114,6 +119,7 @@ Source freshness must be visible for current-information answers.
 | Search results conflict | cite conflict and avoid overclaim. |
 | Search exceeds budget | block or ask approval for deep search. |
 | Private source requested | verify tenant scope before retrieval. |
+| Retrieved page includes instructions | reject instruction authority; record content as evidence only. |
 
 ## 8. Contract evidence
 
@@ -123,4 +129,9 @@ examples/search_decision.foundation.json
 scripts/validate_search_decision.py
 tests/test_validate_search_decision.py
 docs/77_search_decision_contract.md
+schemas/search_receipt.schema.json
+examples/search_receipt.foundation.json
+scripts/validate_search_receipt.py
+tests/test_validate_search_receipt.py
+docs/78_search_receipt_contract.md
 ```

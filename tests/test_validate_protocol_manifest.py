@@ -69,6 +69,17 @@ def test_protocol_manifest_indexes_search_decision() -> None:
     assert search_entry["surface"] == "search"
 
 
+def test_protocol_manifest_indexes_search_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    search_entry = entries["search-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert search_entry["path"] == "schemas/search_receipt.schema.json"
+    assert search_entry["urn"] == "urn:mullusi:schema:search-receipt:1"
+    assert search_entry["surface"] == "search"
+
+
 def test_protocol_manifest_indexes_claim_verification_report() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

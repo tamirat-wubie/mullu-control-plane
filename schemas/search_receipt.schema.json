@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:search-receipt:1",
+  "title": "Search Receipt",
+  "description": "Read-only receipt contract for post-decision search evidence, freshness, citations, conflicts, retrieval errors, and retrieval safety outcomes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "search_decision_ref",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "receipt_state",
+    "search_state",
+    "freshness_result",
+    "source_plan_result",
+    "cache_result",
+    "budget_result",
+    "evidence_summary",
+    "evidence_items",
+    "citation_refs",
+    "conflict_refs",
+    "stale_source_refs",
+    "retrieval_errors",
+    "retrieval_safety_result",
+    "governance_guards",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^search-receipt-[a-z0-9-]+$" },
+    "receipt_version": { "type": "string", "const": "search_receipt.v1" },
+    "search_decision_ref": { "type": "string", "pattern": "^receipt://search-decision/.+$" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "SolvedUnverified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "receipt_state": {
+      "type": "string",
+      "enum": [
+        "NO_SEARCH_NEEDED",
+        "EVIDENCE_AVAILABLE",
+        "RETRIEVAL_BLOCKED",
+        "RETRIEVAL_FAILED",
+        "STALE_EVIDENCE_BLOCKED",
+        "CONFLICT_DETECTED"
+      ]
+    },
+    "search_state": {
+      "type": "string",
+      "enum": [
+        "NO_SEARCH_NEEDED",
+        "CACHE_HIT",
+        "LOCAL_SEARCH",
+        "WEB_SEARCH_LIGHT",
+        "WEB_SEARCH_DEEP_APPROVAL_REQUIRED",
+        "SEARCH_BLOCKED_BY_BUDGET",
+        "SEARCH_BLOCKED_BY_UNKNOWN",
+        "SEARCH_FAILED_WITH_EXPLANATION"
+      ]
+    },
+    "freshness_result": { "$ref": "#/$defs/freshness_result" },
+    "source_plan_result": { "$ref": "#/$defs/source_plan_result" },
+    "cache_result": { "$ref": "#/$defs/cache_result" },
+    "budget_result": { "$ref": "#/$defs/budget_result" },
+    "evidence_summary": { "$ref": "#/$defs/evidence_summary" },
+    "evidence_items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence_item" }
+    },
+    "citation_refs": { "$ref": "#/$defs/string_array" },
+    "conflict_refs": { "$ref": "#/$defs/string_array" },
+    "stale_source_refs": { "$ref": "#/$defs/string_array" },
+    "retrieval_errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/retrieval_error" }
+    },
+    "retrieval_safety_result": { "$ref": "#/$defs/retrieval_safety_result" },
+    "governance_guards": { "$ref": "#/$defs/governance_guards" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "freshness_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "freshness_required",
+        "freshness_status",
+        "current_info_claim_allowed",
+        "max_age_seconds",
+        "proof_state",
+        "rationale_refs"
+      ],
+      "properties": {
+        "freshness_required": { "type": "boolean" },
+        "freshness_status": {
+          "type": "string",
+          "enum": ["not_required", "fresh", "stale", "unknown_blocked", "not_evaluated"]
+        },
+        "current_info_claim_allowed": { "type": "boolean" },
+        "max_age_seconds": { "type": ["integer", "null"], "minimum": 0 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "source_plan_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selected_sources",
+        "attempted_sources",
+        "tenant_scope_verified",
+        "external_retrieval_performed",
+        "connector_scope_ref",
+        "rationale_refs"
+      ],
+      "properties": {
+        "selected_sources": { "$ref": "#/$defs/source_array" },
+        "attempted_sources": { "$ref": "#/$defs/source_array_allow_empty" },
+        "tenant_scope_verified": { "type": "boolean", "const": true },
+        "external_retrieval_performed": { "type": "boolean" },
+        "connector_scope_ref": { "type": ["string", "null"], "minLength": 1 },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "cache_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "cache_key_ref", "tenant_scoped", "stale_cache_used"],
+      "properties": {
+        "state": { "type": "string", "enum": ["not_checked", "hit", "miss", "stale", "blocked"] },
+        "cache_key_ref": { "type": ["string", "null"], "minLength": 1 },
+        "tenant_scoped": { "type": "boolean", "const": true },
+        "stale_cache_used": { "type": "boolean", "const": false }
+      }
+    },
+    "budget_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "actual_cost_class",
+        "approval_ref",
+        "proof_state",
+        "rationale_refs"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["not_applicable", "within_budget", "approval_required", "blocked_by_budget", "unknown_blocked"]
+        },
+        "actual_cost_class": { "type": "string", "enum": ["none", "low", "medium", "high", "unknown"] },
+        "approval_ref": { "type": ["string", "null"], "minLength": 1 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "evidence_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_count",
+        "citation_count",
+        "conflict_count",
+        "stale_source_count",
+        "retrieval_error_count",
+        "content_body_included"
+      ],
+      "properties": {
+        "evidence_count": { "type": "integer", "minimum": 0 },
+        "citation_count": { "type": "integer", "minimum": 0 },
+        "conflict_count": { "type": "integer", "minimum": 0 },
+        "stale_source_count": { "type": "integer", "minimum": 0 },
+        "retrieval_error_count": { "type": "integer", "minimum": 0 },
+        "content_body_included": { "type": "boolean", "const": false }
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ref",
+        "source_type",
+        "source_ref",
+        "citation_ref",
+        "observed_at",
+        "fresh_until",
+        "freshness_status",
+        "trust_tier",
+        "content_hash_ref",
+        "content_body"
+      ],
+      "properties": {
+        "evidence_ref": { "type": "string", "pattern": "^evidence://.+$" },
+        "source_type": { "type": "string", "enum": ["local_repo", "local_docs", "tenant_cache", "web", "connector"] },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "citation_ref": { "type": "string", "pattern": "^citation://.+$" },
+        "observed_at": { "type": ["string", "null"], "format": "date-time" },
+        "fresh_until": { "type": ["string", "null"], "format": "date-time" },
+        "freshness_status": { "type": "string", "enum": ["not_required", "fresh", "stale", "unknown"] },
+        "trust_tier": { "type": "string", "enum": ["local_governed", "tenant_scoped", "primary", "secondary", "unknown"] },
+        "content_hash_ref": { "type": "string", "pattern": "^hash://.+$" },
+        "content_body": { "type": ["null"], "const": null }
+      }
+    },
+    "retrieval_error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error_ref", "source_type", "error_class", "blocking", "rationale_refs"],
+      "properties": {
+        "error_ref": { "type": "string", "pattern": "^error://.+$" },
+        "source_type": { "type": "string", "enum": ["local_repo", "local_docs", "tenant_cache", "web", "connector", "budget", "governance"] },
+        "error_class": {
+          "type": "string",
+          "enum": ["budget_unknown", "approval_missing", "retrieval_failed", "stale_blocked", "conflict_blocked", "tenant_scope_failed", "instruction_authority_rejected"]
+        },
+        "blocking": { "type": "boolean" },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "retrieval_safety_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retrieved_content_authority",
+        "prompt_injection_guard_applied",
+        "prompt_injection_detected",
+        "source_instruction_authority_granted",
+        "tool_instruction_from_source_allowed",
+        "policy_instruction_from_source_allowed",
+        "private_source_scope_verified",
+        "conflict_handling"
+      ],
+      "properties": {
+        "retrieved_content_authority": { "type": "string", "const": "evidence_only" },
+        "prompt_injection_guard_applied": { "type": "boolean", "const": true },
+        "prompt_injection_detected": { "type": "boolean" },
+        "source_instruction_authority_granted": { "type": "boolean", "const": false },
+        "tool_instruction_from_source_allowed": { "type": "boolean", "const": false },
+        "policy_instruction_from_source_allowed": { "type": "boolean", "const": false },
+        "private_source_scope_verified": { "type": "boolean", "const": true },
+        "conflict_handling": { "type": "string", "enum": ["cite_conflict", "block_current_claim", "escalate"] }
+      }
+    },
+    "governance_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "connector_authority_granted",
+        "answer_claim_authority_granted",
+        "terminal_closure",
+        "raw_secret_material_included",
+        "retrieved_instruction_authority_granted",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "connector_authority_granted": { "type": "boolean" },
+        "answer_claim_authority_granted": { "type": "boolean" },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "raw_secret_material_included": { "type": "boolean", "const": false },
+        "retrieved_instruction_authority_granted": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "source_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["local_repo", "local_docs", "tenant_cache", "web", "connector"]
+      }
+    },
+    "source_array_allow_empty": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["local_repo", "local_docs", "tenant_cache", "web", "connector"]
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
