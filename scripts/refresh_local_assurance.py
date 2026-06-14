@@ -4,9 +4,9 @@
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
-handoff receipts, TeamOps shared inbox blocked handoff and probe-authority
-receipts, aggregate adapter evidence, proof coverage witness, protocol manifest
-validation, and finance proof-pilot readiness.
+handoff receipts, TeamOps shared inbox blocked handoff, probe-authority, and
+operator-input request receipts, aggregate adapter evidence, proof coverage
+witness, protocol manifest validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
@@ -14,8 +14,9 @@ Invariants:
     blocked unless separately supplied by operator-controlled live lanes.
   - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
     not mint tokens, contact Google, or claim live readiness.
-  - TeamOps shared inbox steps emit blocked handoff and read-only probe
-    authority receipts without provider calls, mailbox writes, drafts, or sends.
+  - TeamOps shared inbox steps emit blocked handoff, read-only probe authority,
+    and operator-input request receipts without provider calls, mailbox writes,
+    drafts, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -170,6 +171,33 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked TeamOps live-probe authority without executing the probe",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_operator_input_request",
+        command=(
+            sys.executable,
+            "scripts/emit_team_ops_shared_inbox_live_probe_operator_input_request.py",
+            "--authority",
+            ".change_assurance/team_ops_shared_inbox_live_probe_authority.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_operator_input_request.json",
+            "--json",
+        ),
+        purpose="emit blocked TeamOps live-probe operator inputs without executing the probe",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_operator_input_request_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
+            "--request",
+            ".change_assurance/team_ops_shared_inbox_live_probe_operator_input_request.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_operator_input_request_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps live-probe operator inputs without executing the probe",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",
