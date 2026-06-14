@@ -1,0 +1,173 @@
+{
+  "console_id": "personal_assistant_console_foundation",
+  "status": "foundation_read_only",
+  "solver_outcome": "SolvedVerified",
+  "generated_at": "2026-06-14T00:00:00Z",
+  "governed": true,
+  "sections": {
+    "chat": {
+      "item_count": 0,
+      "execution_allowed": false
+    },
+    "tasks": {
+      "item_count": 0,
+      "task_write_allowed": false
+    },
+    "approvals": {
+      "item_count": 0,
+      "execution_allowed": false
+    },
+    "receipts": {
+      "item_count": 0,
+      "receipt_required": true
+    },
+    "skills": {
+      "item_count": 0,
+      "registry_loaded": true
+    },
+    "memory": {
+      "item_count": 0,
+      "live_memory_write_allowed": false
+    },
+    "teamops": {
+      "item_count": 0,
+      "live_probe_allowed": false
+    }
+  },
+  "chat": {
+    "recent_requests": [],
+    "ask_clarification_allowed": true,
+    "draft_allowed": true,
+    "execution_allowed": false,
+    "external_actions_allowed": false
+  },
+  "tasks": {
+    "items": [],
+    "task_write_allowed": false,
+    "system_of_record_write_allowed": false
+  },
+  "approval_queue": {
+    "approval_count": 0,
+    "approval_ids": [],
+    "state_counts": {
+      "requested": 0,
+      "approved": 0,
+      "rejected": 0,
+      "revised": 0,
+      "blocked": 0
+    },
+    "receipt_ids": [],
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "external_send_allowed": false,
+    "connector_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
+    "approval_is_execution": false,
+    "records": [],
+    "metadata": {
+      "foundation_only": true,
+      "queue_projection": "read_model",
+      "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+      "live_connector_execution_allowed": false,
+      "approval_decision_executes_action": false
+    }
+  },
+  "receipts": {
+    "receipt_count": 0,
+    "items": [],
+    "receipt_required_for_actions": true
+  },
+  "skills": {
+    "skill_count": 0,
+    "skill_ids": [],
+    "skills": []
+  },
+  "memory": {
+    "candidate_count": 0,
+    "memory_observation_ids": [],
+    "memory_types": [],
+    "live_memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "raw_private_payload_storage_allowed": false,
+    "secret_value_storage_allowed": false,
+    "candidate_only": true,
+    "candidates": [],
+    "metadata": {
+      "foundation_only": true,
+      "ledger_projection": "read_model",
+      "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+      "live_memory_write_allowed": false,
+      "nested_mind_live_activation_allowed": false,
+      "raw_private_payload_storage_allowed": false,
+      "secret_value_storage_allowed": false
+    }
+  },
+  "teamops": {
+    "plans": [],
+    "live_probe_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "provider_call_allowed": false
+  },
+  "assurance": {
+    "assurance_id": "personal_assistant_foundation_no_effect_assurance",
+    "outcome": "SolvedVerified",
+    "foundation_only": true,
+    "ready_for_live_execution": false,
+    "ready_for_customer_readiness_claim": false,
+    "authority_drift_detected": false,
+    "blocking_reasons": [],
+    "checked_controls": [
+      "approval_queue_no_execution",
+      "approval_decision_is_not_execution",
+      "memory_candidate_only",
+      "nested_mind_staging_only",
+      "teamops_no_live_probe",
+      "no_raw_private_payload_serialization",
+      "no_secret_value_serialization"
+    ],
+    "next_action": "continue foundation-stage assistant hardening without enabling live execution"
+  },
+  "blocked_actions": [
+    "send_email",
+    "delete_email",
+    "archive_email",
+    "forward_email",
+    "label_large_batch",
+    "create_calendar_event",
+    "move_calendar_event",
+    "cancel_calendar_event",
+    "invite_people",
+    "message_person",
+    "store_contact",
+    "export_contact_list",
+    "pay_invoice",
+    "publish_public_post",
+    "deploy_service",
+    "mutate_connector_state",
+    "write_system_of_record",
+    "activate_live_nested_mind"
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "mailbox_read_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "external_send_allowed": false,
+    "calendar_write_allowed": false,
+    "task_write_allowed": false,
+    "memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "deployment_mutation_allowed": false,
+    "public_readiness_claim_allowed": false
+  },
+  "private_payload_policy": {
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false,
+    "connector_payload_projection": "ref_only",
+    "chat_log_projection": "none"
+  },
+  "evidence_refs": [
+    "examples/personal_assistant_skill_registry.json"
+  ],
+  "receipt_refs": []
+}

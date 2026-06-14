@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-console-read-model:1",
+  "title": "Personal Assistant Console Read Model",
+  "description": "Read-only operator console projection for the governed personal-assistant foundation surface.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "console_id",
+    "status",
+    "solver_outcome",
+    "generated_at",
+    "governed",
+    "sections",
+    "chat",
+    "tasks",
+    "approval_queue",
+    "receipts",
+    "skills",
+    "memory",
+    "teamops",
+    "assurance",
+    "blocked_actions",
+    "effect_boundary",
+    "private_payload_policy",
+    "evidence_refs",
+    "receipt_refs"
+  ],
+  "properties": {
+    "console_id": {"const": "personal_assistant_console_foundation"},
+    "status": {"const": "foundation_read_only"},
+    "solver_outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chat", "tasks", "approvals", "receipts", "skills", "memory", "teamops"],
+      "properties": {
+        "chat": {"$ref": "#/$defs/chat_section"},
+        "tasks": {"$ref": "#/$defs/task_section"},
+        "approvals": {"$ref": "#/$defs/approval_section"},
+        "receipts": {"$ref": "#/$defs/receipt_section"},
+        "skills": {"$ref": "#/$defs/skill_section"},
+        "memory": {"$ref": "#/$defs/memory_section"},
+        "teamops": {"$ref": "#/$defs/teamops_section"}
+      }
+    },
+    "chat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recent_requests",
+        "ask_clarification_allowed",
+        "draft_allowed",
+        "execution_allowed",
+        "external_actions_allowed"
+      ],
+      "properties": {
+        "recent_requests": {"type": "array", "items": {"type": "object"}},
+        "ask_clarification_allowed": {"type": "boolean"},
+        "draft_allowed": {"type": "boolean"},
+        "execution_allowed": {"const": false},
+        "external_actions_allowed": {"const": false}
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items", "task_write_allowed", "system_of_record_write_allowed"],
+      "properties": {
+        "items": {"type": "array", "items": {"type": "object"}},
+        "task_write_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false}
+      }
+    },
+    "approval_queue": {"$ref": "#/$defs/approval_queue"},
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_count", "items", "receipt_required_for_actions"],
+      "properties": {
+        "receipt_count": {"type": "integer", "minimum": 0},
+        "items": {"type": "array", "items": {"type": "object"}},
+        "receipt_required_for_actions": {"const": true}
+      }
+    },
+    "skills": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["skill_count", "skill_ids", "skills"],
+      "properties": {
+        "skill_count": {"type": "integer", "minimum": 0},
+        "skill_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "skills": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "memory": {"$ref": "#/$defs/memory_read_model"},
+    "teamops": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plans", "live_probe_allowed", "mailbox_mutation_allowed", "provider_call_allowed"],
+      "properties": {
+        "plans": {"type": "array", "items": {"type": "object"}},
+        "live_probe_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "provider_call_allowed": {"const": false}
+      }
+    },
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "receipt_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "chat_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "execution_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "execution_allowed": {"const": false}
+      }
+    },
+    "task_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "task_write_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "task_write_allowed": {"const": false}
+      }
+    },
+    "approval_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "execution_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "execution_allowed": {"const": false}
+      }
+    },
+    "receipt_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "receipt_required"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "receipt_required": {"const": true}
+      }
+    },
+    "skill_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "registry_loaded"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "registry_loaded": {"const": true}
+      }
+    },
+    "memory_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "live_memory_write_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "live_memory_write_allowed": {"const": false}
+      }
+    },
+    "teamops_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "live_probe_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 0},
+        "live_probe_allowed": {"const": false}
+      }
+    },
+    "approval_queue": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "approval_count",
+        "approval_ids",
+        "state_counts",
+        "receipt_ids",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "approval_is_execution",
+        "records",
+        "metadata"
+      ],
+      "properties": {
+        "approval_count": {"type": "integer", "minimum": 0},
+        "approval_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "state_counts": {"type": "object"},
+        "receipt_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "approval_is_execution": {"const": false},
+        "records": {"type": "array", "items": {"type": "object"}},
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["foundation_only", "live_connector_execution_allowed", "approval_decision_executes_action"],
+          "properties": {
+            "foundation_only": {"const": true},
+            "live_connector_execution_allowed": {"const": false},
+            "approval_decision_executes_action": {"const": false}
+          }
+        }
+      }
+    },
+    "memory_read_model": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "candidate_count",
+        "memory_observation_ids",
+        "memory_types",
+        "live_memory_write_allowed",
+        "nested_mind_live_activation_allowed",
+        "raw_private_payload_storage_allowed",
+        "secret_value_storage_allowed",
+        "candidate_only",
+        "candidates",
+        "metadata"
+      ],
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "memory_observation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "memory_types": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "live_memory_write_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "raw_private_payload_storage_allowed": {"const": false},
+        "secret_value_storage_allowed": {"const": false},
+        "candidate_only": {"const": true},
+        "candidates": {"type": "array", "items": {"type": "object"}},
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "foundation_only",
+            "live_memory_write_allowed",
+            "nested_mind_live_activation_allowed",
+            "raw_private_payload_storage_allowed",
+            "secret_value_storage_allowed"
+          ],
+          "properties": {
+            "foundation_only": {"const": true},
+            "live_memory_write_allowed": {"const": false},
+            "nested_mind_live_activation_allowed": {"const": false},
+            "raw_private_payload_storage_allowed": {"const": false},
+            "secret_value_storage_allowed": {"const": false}
+          }
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "blocking_reasons",
+        "checked_controls",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_foundation_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "nested_mind_live_activation_allowed",
+        "deployment_mutation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "mailbox_read_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "chat_log_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"type": "string", "minLength": 1},
+        "chat_log_projection": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
