@@ -1,0 +1,34 @@
+{
+  "commit_candidate_id": "truth-commit-color-domain-v1",
+  "tenant_id": "foundation-local",
+  "candidate_id": "truth-candidate-constraint-color-red-blue-v1",
+  "delta_kind": "constraint_addition",
+  "parent_kernel_signature": "kernel-signature-foundation-0001",
+  "new_kernel_signature": "kernel-signature-foundation-0002",
+  "proof_ref": {
+    "proof_id": "kernel-proof-color-domain-exact-v1",
+    "proof_hash": "kernel-proof-hash-color-domain-exact-v1",
+    "proof_schema_ref": "schemas/kernel_proof.schema.json"
+  },
+  "governance_ref": "governance:foundation-local-doc-contract",
+  "trace_ref": "trace:truth-commit-color-domain-v1",
+  "rollback_ref": "rollback:kernel-signature-foundation-0001",
+  "truth_admission": {
+    "proof_state": "Pass",
+    "result_kind": "ExactResult",
+    "mutation_allowed": true,
+    "admission_reason_refs": [
+      "reason:exact-proof-pass",
+      "reason:governance-ref-present",
+      "reason:trace-ref-present"
+    ]
+  },
+  "journal": {
+    "journal_event_ref": "journal:truth-commit-color-domain-v1",
+    "replay_required": true,
+    "replay_mode": "observation_only",
+    "expected_replay_hash": "replay-hash-truth-commit-color-domain-v1"
+  },
+  "status": "proposed",
+  "commit_hash": "truth-commit-hash-color-domain-v1"
+}
