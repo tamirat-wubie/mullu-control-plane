@@ -93,6 +93,37 @@ def test_document_semantics_header_must_match_canonical_pair() -> None:
         WHQRDocument(root=root, semantics_hash="custom-whqr-semantics")
 
 
+def test_document_verify_semantics_replays_hash_and_header() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    canonical_hash = document.canonical_hash()
+
+    assert document.verify_semantics() == canonical_hash
+    assert document.verify_semantics(expected_canonical_hash=canonical_hash) == canonical_hash
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        document.verify_semantics(expected_canonical_hash="sha256:different")
+    with pytest.raises(ValueError, match="expected_canonical_hash"):
+        document.verify_semantics(expected_canonical_hash="")
+
+
+def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    version_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    hash_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    root_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+
+    object.__setattr__(version_tampered, "whqr_version", "0.2.0")
+    object.__setattr__(hash_tampered, "semantics_hash", "sha256:other")
+    object.__setattr__(root_tampered, "root", object())
+
+    assert document.verify_semantics() == document.canonical_hash()
+    with pytest.raises(ValueError, match="semantic version mismatch"):
+        version_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="semantics hash mismatch"):
+        hash_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="root"):
+        root_tampered.verify_semantics()
+
+
 def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     document = WHQRDocument(
         root=WHQRNode(
