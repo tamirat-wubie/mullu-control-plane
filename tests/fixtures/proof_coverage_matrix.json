@@ -629,6 +629,13 @@
       ]
     },
     {
+      "action_id": "publish_team_ops_shared_inbox_approval_queue_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -7476,9 +7483,14 @@
         "scripts/produce_team_ops_shared_inbox_observation_routing_receipt.py",
         "scripts/validate_team_ops_shared_inbox_observation_routing_receipt.py",
         "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py",
-        "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py"
+        "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py",
+        "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json",
+        "scripts/produce_team_ops_shared_inbox_approval_queue_receipt.py",
+        "scripts/validate_team_ops_shared_inbox_approval_queue_receipt.py",
+        "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py",
+        "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, and no-send observation routing behind handoff readiness, separate approval evidence, redacted read-only evidence, and approval-before-send obligations.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, and approval queue obligations behind handoff readiness, separate approval evidence, redacted read-only evidence, and approval-before-send obligations.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7566,6 +7578,33 @@
         ],
         "durable_gmail_oauth_validates_repository_slug": [
           "handoff_rejects_malformed_repository_slug"
+        ],
+        "team_ops_shared_inbox_approval_queue_accepts_pending_obligation": [
+          "team_ops_shared_inbox_approval_queue_accepts_pending_obligation",
+          "team_ops_shared_inbox_approval_queue_validation_accepts_ready_receipt"
+        ],
+        "team_ops_shared_inbox_approval_queue_blocks_effect_drift": [
+          "team_ops_shared_inbox_approval_queue_validation_rejects_effect_drift",
+          "team_ops_shared_inbox_approval_queue_validation_rejects_raw_fields",
+          "team_ops_shared_inbox_approval_queue_validation_rejects_missing_request",
+          "team_ops_shared_inbox_approval_queue_validation_rejects_approval_decision_claim"
+        ],
+        "team_ops_shared_inbox_approval_queue_blocks_without_routing": [
+          "team_ops_shared_inbox_approval_queue_blocks_without_routing_ready",
+          "team_ops_shared_inbox_approval_queue_validation_accepts_blocked_receipt"
+        ],
+        "team_ops_shared_inbox_approval_queue_redacts_secret_markers": [
+          "team_ops_shared_inbox_approval_queue_rejects_secret_marker_ref",
+          "team_ops_shared_inbox_approval_queue_validation_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_approval_queue_requires_request_evidence": [
+          "team_ops_shared_inbox_approval_queue_requires_request_evidence",
+          "team_ops_shared_inbox_approval_queue_validation_require_ready_rejects_blocked"
+        ],
+        "team_ops_shared_inbox_approval_queue_writes_validation_receipt": [
+          "team_ops_shared_inbox_approval_queue_cli_writes_report",
+          "team_ops_shared_inbox_approval_queue_validation_cli_writes_receipt",
+          "team_ops_shared_inbox_approval_queue_validation_missing_path_is_bounded"
         ],
         "team_ops_shared_inbox_handoff_accepts_ready_probe": [
           "team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
@@ -7776,7 +7815,13 @@
         "team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
         "team_ops_shared_inbox_observation_routing_blocks_effect_drift",
         "team_ops_shared_inbox_observation_routing_redacts_secret_markers",
-        "team_ops_shared_inbox_observation_routing_writes_validation_receipt"
+        "team_ops_shared_inbox_observation_routing_writes_validation_receipt",
+        "team_ops_shared_inbox_approval_queue_blocks_without_routing",
+        "team_ops_shared_inbox_approval_queue_requires_request_evidence",
+        "team_ops_shared_inbox_approval_queue_accepts_pending_obligation",
+        "team_ops_shared_inbox_approval_queue_blocks_effect_drift",
+        "team_ops_shared_inbox_approval_queue_redacts_secret_markers",
+        "team_ops_shared_inbox_approval_queue_writes_validation_receipt"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -10710,8 +10755,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1397,
-    "runtime_witness_count": 1397,
+    "exact_test_anchor_count": 1403,
+    "runtime_witness_count": 1403,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16627,10 +16672,55 @@
               "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_missing_path_is_bounded"
             ],
             "witness": "team_ops_shared_inbox_observation_routing_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_blocks_without_routing_ready",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_accepts_blocked_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_blocks_without_routing"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_requires_request_evidence",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_require_ready_rejects_blocked"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_requires_request_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_accepts_pending_obligation",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_accepts_ready_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_accepts_pending_obligation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_rejects_effect_drift",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_rejects_raw_fields",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_rejects_missing_request",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_rejects_approval_decision_claim"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_blocks_effect_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_rejects_secret_marker_ref",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_cli_writes_report",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_cli_writes_receipt",
+              "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py::test_team_ops_shared_inbox_approval_queue_validation_missing_path_is_bounded"
+            ],
+            "witness": "team_ops_shared_inbox_approval_queue_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 55,
-        "runtime_witness_count": 55,
+        "exact_test_anchor_count": 61,
+        "runtime_witness_count": 61,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
