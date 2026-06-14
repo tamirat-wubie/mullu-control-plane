@@ -999,9 +999,9 @@
     "by_coverage_state": {
       "proven": 266,
       "unproven": 0,
-      "witnessed": 159
+      "witnessed": 160
     },
-    "route_count": 425,
+    "route_count": 426,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2602,6 +2602,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/snapshots",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/snet/operator/read-model",
+        "surface_id": "snet_operator_read_model"
       },
       {
         "coverage_state": "proven",
@@ -10379,6 +10384,7 @@
         "docs/73_snet_operator_read_model.md",
         "docs/START_HERE.md",
         "mcoi/mcoi_runtime/contracts/snet.py",
+        "mcoi/mcoi_runtime/app/routers/snet.py",
         "mcoi/mcoi_runtime/snet/engine.py",
         "mcoi/mcoi_runtime/snet/read_model.py",
         "schemas/snet_operator_read_model.schema.json",
@@ -10388,10 +10394,12 @@
         "examples/snet_operator_read_model.json",
         "tests/test_validate_snet_operator_read_model.py",
         "tests/test_validate_snet_mesh_receipt.py",
-        "tests/test_snet_operator_read_model_doc.py"
+        "tests/test_snet_operator_read_model_doc.py",
+        "mcoi/tests/test_snet_router.py"
       ],
-      "notes": "SNet operator read model projects bounded symbol summaries, mesh receipt counts, settlement counts, raw-answer suppression, raw-metadata suppression, and denied execution, connector, route, filesystem, and terminal-closure authority. The operator document preserves the AwaitingEvidence runtime-integration gate.",
+      "notes": "SNet operator read model projects bounded symbol summaries through a read-only MCOI route, mesh receipt counts, settlement counts, raw-answer suppression, raw-metadata suppression, and denied execution, connector, filesystem, gateway, mutation, and terminal-closure authority.",
       "representative_paths": [
+        "/api/v1/snet/operator/read-model",
         "build_snet_operator_read_model",
         "scripts.validate_snet_operator_read_model.validate_contract",
         "scripts.validate_snet_operator_read_model.validate_read_model",
@@ -10400,6 +10408,11 @@
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [
+        "snet_operator_read_model_exposes_bounded_no_authority_projection",
+        "snet_operator_read_model_zero_symbol_projection_is_valid",
+        "snet_operator_read_model_rejects_invalid_bound_without_server_error",
+        "snet_operator_read_model_has_no_mutation_companion",
+        "default_router_mounts_snet_operator_read_model",
         "snet_operator_read_model_contract_passes",
         "snet_operator_read_model_rejects_raw_and_authority_mutations",
         "snet_operator_read_model_saved_file_validation",
@@ -10928,8 +10941,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1424,
-    "runtime_witness_count": 1424,
+    "exact_test_anchor_count": 1429,
+    "runtime_witness_count": 1429,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20256,6 +20269,37 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "mcoi/tests/test_snet_router.py::test_snet_operator_read_model_exposes_bounded_no_authority_projection"
+            ],
+            "witness": "snet_operator_read_model_exposes_bounded_no_authority_projection"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_zero_symbol_projection_is_valid",
+              "mcoi/tests/test_snet_router.py::test_snet_operator_read_model_zero_symbol_projection_is_valid"
+            ],
+            "witness": "snet_operator_read_model_zero_symbol_projection_is_valid"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_snet_router.py::test_snet_operator_read_model_rejects_invalid_bound_without_server_error"
+            ],
+            "witness": "snet_operator_read_model_rejects_invalid_bound_without_server_error"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_snet_router.py::test_snet_operator_read_model_has_no_mutation_companion"
+            ],
+            "witness": "snet_operator_read_model_has_no_mutation_companion"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_snet_router.py::test_default_router_mounts_snet_operator_read_model"
+            ],
+            "witness": "default_router_mounts_snet_operator_read_model"
+          },
+          {
+            "anchors": [
               "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_contract_passes"
             ],
             "witness": "snet_operator_read_model_contract_passes"
@@ -20286,7 +20330,8 @@
           },
           {
             "anchors": [
-              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_zero_symbol_projection_is_valid"
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_zero_symbol_projection_is_valid",
+              "mcoi/tests/test_snet_router.py::test_snet_operator_read_model_zero_symbol_projection_is_valid"
             ],
             "witness": "snet_operator_read_model_zero_symbol_projection_is_valid"
           },
@@ -20375,8 +20420,8 @@
             "witness": "start_here_links_snet_operator_doc"
           }
         ],
-        "exact_test_anchor_count": 20,
-        "runtime_witness_count": 20,
+        "exact_test_anchor_count": 25,
+        "runtime_witness_count": 25,
         "surface_id": "snet_operator_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

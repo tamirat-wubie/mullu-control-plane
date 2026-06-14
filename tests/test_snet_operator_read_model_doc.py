@@ -3,8 +3,8 @@ Governance scope: SNet no-authority boundary, receipt validation commands,
     promotion gate, and operator-facing documentation drift.
 Dependencies: docs/73_snet_operator_read_model.md.
 Invariants:
-  - SNet remains local-only until future promotion evidence exists.
-  - Operator docs must not imply route, connector, filesystem, or execution authority.
+  - SNet exposes only the bounded read-only operator route.
+  - Operator docs must not imply connector, filesystem, execution, gateway, or terminal-closure authority.
   - Validation commands remain visible to operators.
 """
 
@@ -23,8 +23,9 @@ def test_snet_operator_doc_declares_read_only_boundary() -> None:
 
     assert "read_only_snet_recursive_mesh" in text
     assert "SNet mesh receipts are non-terminal evidence" in text
-    assert "Do not wire SNet into runtime routes" in text
-    assert "runtime integration remains AwaitingEvidence" in text
+    assert "GET /api/v1/snet/operator/read-model" in text
+    assert "SNet runtime routing is limited" in text
+    assert "connector, filesystem, execution, and terminal-closure integration remain AwaitingEvidence" in text
 
 
 def test_snet_operator_doc_names_blocked_authorities() -> None:
@@ -44,7 +45,7 @@ def test_snet_operator_doc_lists_verification_commands() -> None:
     assert "python scripts/validate_snet_operator_read_model.py" in text
     assert "python scripts/validate_snet_mesh_receipt.py" in text
     assert "tests/test_validate_snet_operator_read_model.py" in text
-    assert "python -m pytest mcoi/tests/test_snet_recursive_mesh.py tests/test_validate_snet_mesh_receipt.py tests/test_validate_snet_operator_read_model.py -q" in text
+    assert "python -m pytest mcoi/tests/test_snet_recursive_mesh.py mcoi/tests/test_snet_router.py tests/test_validate_snet_mesh_receipt.py tests/test_validate_snet_operator_read_model.py -q" in text
     assert "[PASS] snet_operator_read_model_no_authority_boundary" in text
     assert "python scripts/validate_sdlc_artifact.py" in text
     assert "[PASS] snet_mesh_receipt_no_authority_boundary" in text
