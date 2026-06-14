@@ -89,6 +89,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-pending-status",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_pending_status.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-pending-status:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
