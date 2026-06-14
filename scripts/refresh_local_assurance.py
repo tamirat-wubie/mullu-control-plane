@@ -4,19 +4,23 @@
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
-handoff receipts, TeamOps shared inbox blocked handoff, approval binding,
-probe-authority, operator-input request, live-probe receipt, observation
-routing receipt, approval queue receipt, approval decision receipt, and
-send-preparation receipt, send-execution receipt, sent-message observation
-receipt, terminal closure review packet, aggregate adapter evidence, proof
-coverage witness, protocol manifest validation, and finance proof-pilot readiness.
+handoff receipts, runtime preflight, revocation recovery rehearsal, write
+authority rehearsal, live-write operator input request, TeamOps shared inbox
+blocked handoff, approval binding, probe-authority, operator-input request,
+live-probe receipt, observation routing receipt, approval queue receipt,
+approval decision receipt, and send-preparation receipt, send-execution receipt,
+sent-message observation receipt, terminal closure review packet, aggregate
+adapter evidence, proof coverage witness, protocol manifest validation, and
+finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
   - Live email/calendar, voice, browser, PostgreSQL, and SMTP evidence remains
     blocked unless separately supplied by operator-controlled live lanes.
-  - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
-    not mint tokens, contact Google, or claim live readiness.
+  - Durable Gmail OAuth steps emit blocked, preflight-only, recovery rehearsal,
+    write rehearsal, or live-write operator-input receipts; they do not mint
+    tokens, contact Google, create drafts, send messages, write mailbox state,
+    or claim live readiness.
   - TeamOps shared inbox steps emit blocked handoff, redacted probe approval
     binding, read-only probe authority, operator-input request, live-probe receipt,
     observation routing receipt, approval queue receipt, approval decision
@@ -31,7 +35,9 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+from datetime import UTC, datetime
 import json
+import os
 import subprocess
 import sys
 import time
@@ -127,6 +133,83 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="persist redacted durable Gmail OAuth runtime preflight receipt",
+    ),
+    AssuranceStep(
+        name="durable_gmail_revocation_recovery_rehearsal_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_durable_gmail_revocation_recovery_rehearsal_receipt.py",
+            "--output",
+            ".change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json",
+            "--strict",
+            "--json",
+        ),
+        purpose="regenerate Gmail invalid-grant recovery rehearsal without provider revocation",
+    ),
+    AssuranceStep(
+        name="durable_gmail_revocation_recovery_rehearsal_receipt_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_revocation_recovery_rehearsal_receipt.py",
+            "--receipt",
+            ".change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json",
+            "--max-age-days",
+            "14",
+            "--require-ready",
+            "--json",
+        ),
+        purpose="validate Gmail revocation recovery rehearsal without destructive provider action",
+    ),
+    AssuranceStep(
+        name="durable_gmail_write_authority_rehearsal_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_durable_gmail_write_authority_rehearsal_receipt.py",
+            "--output",
+            ".change_assurance/durable_gmail_write_authority_rehearsal_receipt.json",
+            "--strict",
+            "--json",
+        ),
+        purpose="regenerate Gmail write-authority rehearsal without draft, send, or provider call",
+    ),
+    AssuranceStep(
+        name="durable_gmail_write_authority_rehearsal_receipt_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_write_authority_rehearsal_receipt.py",
+            "--receipt",
+            ".change_assurance/durable_gmail_write_authority_rehearsal_receipt.json",
+            "--max-age-days",
+            "14",
+            "--require-ready",
+            "--json",
+        ),
+        purpose="validate Gmail write-authority rehearsal without live write authority claim",
+    ),
+    AssuranceStep(
+        name="durable_gmail_live_write_operator_input_request",
+        command=(
+            sys.executable,
+            "scripts/emit_durable_gmail_live_write_operator_input_request.py",
+            "--output",
+            ".change_assurance/durable_gmail_live_write_operator_input_request.json",
+            "--json",
+        ),
+        purpose="emit blocked Gmail live-write operator inputs without draft, send, or provider call",
+    ),
+    AssuranceStep(
+        name="durable_gmail_live_write_operator_input_request_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_live_write_operator_input_request.py",
+            "--request",
+            ".change_assurance/durable_gmail_live_write_operator_input_request.json",
+            "--output",
+            ".change_assurance/durable_gmail_live_write_operator_input_request_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked Gmail live-write operator inputs without live write authority claim",
     ),
     AssuranceStep(
         name="team_ops_shared_inbox_operator_handoff",
@@ -489,18 +572,26 @@ def run_refresh(
     steps: Sequence[AssuranceStep] = LOCAL_ASSURANCE_STEPS,
     dry_run: bool = False,
     runner: CommandRunner = subprocess.run,
+    validation_timestamp: str | None = None,
 ) -> tuple[AssuranceStepResult, ...]:
     """Run local assurance refresh steps in governed order."""
     results: list[AssuranceStepResult] = []
+    timestamp = _resolve_validation_timestamp(validation_timestamp)
     for step in steps:
-        result = _run_step(step, dry_run=dry_run, runner=runner)
+        result = _run_step(step, dry_run=dry_run, runner=runner, validation_timestamp=timestamp)
         results.append(result)
         if result.returncode != 0:
             break
     return tuple(results)
 
 
-def _run_step(step: AssuranceStep, *, dry_run: bool, runner: CommandRunner) -> AssuranceStepResult:
+def _run_step(
+    step: AssuranceStep,
+    *,
+    dry_run: bool,
+    runner: CommandRunner,
+    validation_timestamp: str,
+) -> AssuranceStepResult:
     started = time.perf_counter()
     if dry_run:
         return AssuranceStepResult(
@@ -512,9 +603,12 @@ def _run_step(step: AssuranceStep, *, dry_run: bool, runner: CommandRunner) -> A
             stderr_tail="",
             dry_run=True,
         )
+    env = os.environ.copy()
+    env["MULLU_VALIDATION_TIMESTAMP"] = validation_timestamp
     completed = runner(
         list(step.command),
         cwd=str(REPO_ROOT),
+        env=env,
         capture_output=True,
         text=True,
         check=False,
@@ -532,6 +626,15 @@ def _run_step(step: AssuranceStep, *, dry_run: bool, runner: CommandRunner) -> A
         stdout_tail=_tail(completed.stdout),
         stderr_tail=_tail(completed.stderr),
     )
+
+
+def _resolve_validation_timestamp(explicit_timestamp: str | None) -> str:
+    if explicit_timestamp:
+        return explicit_timestamp
+    env_timestamp = os.environ.get("MULLU_VALIDATION_TIMESTAMP", "").strip()
+    if env_timestamp:
+        return env_timestamp
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _tail(value: str, *, max_chars: int = 4000) -> str:
