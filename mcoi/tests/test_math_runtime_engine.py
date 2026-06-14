@@ -127,7 +127,7 @@ class TestDeterministicIntervalSolver:
         assert result.metadata["reason"] == "unbounded_minimize"
         assert result.metadata["constraint_count"] == 1
 
-    def test_solver_rejects_duplicate_and_nan_bound_with_bounded_messages(self, engine):
+    def test_solver_rejects_duplicate_and_contract_rejects_nan_bound(self, engine):
         engine.register_objective("obj-5", "t-1", "Risk", ObjectiveDirection.MINIMIZE)
         engine.add_constraint("c-5", "t-1", "obj-5", "x >= 0", 0.0, 1.0)
         engine.submit_solver_request("req-5", "t-1", "obj-5")
@@ -137,15 +137,14 @@ class TestDeterministicIntervalSolver:
             engine.solve_solver_request("req-5")
 
         engine.register_objective("obj-6", "t-1", "NaN guard", ObjectiveDirection.MINIMIZE)
-        engine.add_constraint("c-6", "t-1", "obj-6", "bad bound", float("nan"), 1.0)
-        engine.submit_solver_request("req-6", "t-1", "obj-6")
-        with pytest.raises(RuntimeCoreInvariantError, match="Constraint bound must not be NaN") as nan_exc:
-            engine.solve_solver_request("req-6")
+        with pytest.raises(ValueError, match="numeric value must not be NaN") as nan_exc:
+            engine.add_constraint("c-6", "t-1", "obj-6", "bad bound", float("nan"), 1.0)
 
         assert str(duplicate_exc.value) == "Solver request already has result"
-        assert str(nan_exc.value) == "Constraint bound must not be NaN"
+        assert str(nan_exc.value) == "numeric value must not be NaN"
         assert "req-5" not in str(duplicate_exc.value)
         assert "c-6" not in str(nan_exc.value)
+        assert engine.constraint_count == 1
 
 
 class TestDeterministicLinearSolver:

@@ -90,10 +90,13 @@ class SolverDisposition(Enum):
 
 
 def _require_any_float(value: float, field_name: str) -> float:
-    """Validate that a value is a real number (int or float, not bool). Allows negative and inf."""
+    """Validate that a value is numeric and not NaN. Allows negative and inf."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise ValueError("numeric value must be a number")
-    return float(value)
+    v = float(value)
+    if math.isnan(v):
+        raise ValueError("numeric value must not be NaN")
+    return v
 
 
 def _require_finite_float(value: float, field_name: str) -> float:

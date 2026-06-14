@@ -141,7 +141,7 @@ The backend rejects:
 1. Unknown request ids.
 2. Requests already solved.
 3. Missing or tenant-mismatched objective references.
-4. `NaN` constraint bounds.
+4. `NaN` constraint bounds at contract admission.
 5. Missing linear objective metadata when linear constraints are present.
 6. Non-numeric or non-finite linear metadata.
 7. Unknown or duplicate linear variable names.

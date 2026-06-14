@@ -241,8 +241,10 @@ class TestInfNanRejection:
         assert math.isinf(c.lower_bound)
         assert math.isinf(c.upper_bound)
 
-    def test_constraint_bounds_allow_nan(self):
-        """MathOptimizationConstraint bounds use _require_any_float which allows nan too."""
-        # nan is a float, passes _require_any_float type check
-        c = _constraint(lower_bound=float("nan"))
-        assert math.isnan(c.lower_bound)
+    @pytest.mark.parametrize("field_name", ["lower_bound", "upper_bound"])
+    def test_constraint_bounds_reject_nan(self, field_name):
+        with pytest.raises(ValueError) as exc_info:
+            _constraint(**{field_name: float("nan")})
+        message = str(exc_info.value)
+        assert message == "numeric value must not be NaN"
+        assert "nan" not in message
