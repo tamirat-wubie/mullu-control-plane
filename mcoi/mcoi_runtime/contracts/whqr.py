@@ -158,6 +158,77 @@ def _require_whqr_expr(value: Any, name: str) -> None:
         raise ValueError(f"{name} must be a WHQR expression")
 
 
+def _require_optional_text(value: Any, name: str) -> None:
+    if value is not None:
+        _require_text(value, name)
+
+
+def _require_metadata_tree(metadata: Any, name: str) -> None:
+    if not isinstance(metadata, Mapping):
+        raise ValueError(f"{name} metadata must be a mapping")
+    for key, value in metadata.items():
+        _require_text(key, "metadata key")
+        _require_metadata_value_tree(value, name)
+
+
+def _require_metadata_value_tree(value: Any, name: str) -> None:
+    if isinstance(value, Mapping):
+        _require_metadata_tree(value, name)
+        return
+    if isinstance(value, tuple):
+        for item in value:
+            _require_metadata_value_tree(item, name)
+        return
+    if isinstance(value, list):
+        for item in value:
+            _require_metadata_value_tree(item, name)
+        return
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise ValueError(f"{name} metadata value must be a finite number")
+        return
+    raise ValueError(f"{name} metadata value must be canonical JSON-compatible")
+
+
+def _require_whqr_expr_tree(value: Any, name: str) -> None:
+    _require_whqr_expr(value, name)
+    if isinstance(value, WHQRNode):
+        if not isinstance(value.role, WHRole):
+            raise ValueError(f"{name}.role must be a WHRole value")
+        _require_text(value.target, f"{name}.target")
+        _require_optional_text(value.node_id, f"{name}.node_id")
+        _require_optional_text(value.scope, f"{name}.scope")
+        if value.modality is not None and not isinstance(value.modality, Adverb):
+            raise ValueError(f"{name}.modality must be an Adverb value")
+        _require_optional_text(value.expected_type, f"{name}.expected_type")
+        if value.quantifier is not None and not isinstance(value.quantifier, Quantifier):
+            raise ValueError(f"{name}.quantifier must be a Quantifier value")
+        _require_optional_text(value.entity_ref, f"{name}.entity_ref")
+        _require_optional_text(value.evidence_ref, f"{name}.evidence_ref")
+        _require_metadata_tree(value.metadata, name)
+        return
+    if isinstance(value, LogicalExpr):
+        if not isinstance(value.op, LogicalOp):
+            raise ValueError(f"{name}.op must be a LogicalOp value")
+        if not isinstance(value.args, tuple):
+            raise ValueError(f"{name}.args must be an immutable tuple")
+        if not value.args:
+            raise ValueError(f"{name}.args must contain at least one WHQR expression")
+        if value.op == LogicalOp.NOT and len(value.args) != 1:
+            raise ValueError(f"{name}.not requires exactly one WHQR expression")
+        if value.op != LogicalOp.NOT and len(value.args) < 2:
+            raise ValueError(f"{name}.logical operators except not require at least two WHQR expressions")
+        for index, arg in enumerate(value.args):
+            _require_whqr_expr_tree(arg, f"{name}.args[{index}]")
+        return
+    if not isinstance(value.connector, Connector):
+        raise ValueError(f"{name}.connector must be a Connector value")
+    _require_whqr_expr_tree(value.left, f"{name}.left")
+    _require_whqr_expr_tree(value.right, f"{name}.right")
+
+
 @dataclass(frozen=True, slots=True)
 class WHQRNode:
     role: WHRole
@@ -311,7 +382,7 @@ class WHQRDocument:
             raise ValueError("WHQR replay semantic version mismatch")
         if self.semantics_hash != SEMANTICS_HASH:
             raise ValueError("WHQR replay semantics hash mismatch")
-        _require_whqr_expr(self.root, "root")
+        _require_whqr_expr_tree(self.root, "root")
         canonical_hash = self.canonical_hash()
         if expected_canonical_hash is not None:
             expected = _require_text(expected_canonical_hash, "expected_canonical_hash")
