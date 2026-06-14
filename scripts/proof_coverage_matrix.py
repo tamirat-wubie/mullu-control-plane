@@ -63,12 +63,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
     gateway_witnesses = [
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
+        "terminal_closure_exposes_whqr_replay_ref",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
         "command_interpretation_receipt_read_model_schema_valid",
         "command_interpretation_receipt_requires_operator_authority",
         "command_interpretation_receipt_replays_from_command_store",
         "universal_action_proof_replays_from_command_events",
+        "universal_action_proof_exposes_whqr_replay_ref",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
@@ -112,7 +114,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -126,6 +128,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             runtime_witness_anchor_aliases={
                 "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
                 "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
+                "terminal_closure_exposes_whqr_replay_ref": ["command_closure_read_model"],
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
                 "command_interpretation_receipt_read_model_bounds_raw_message": [
                     "command_interpretation_receipt_read_model_bounds_raw_message",
@@ -140,6 +143,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "command_interpretation_receipt_read_model_replays_from_command_store",
                 ],
                 "universal_action_proof_replays_from_command_events": [
+                    "command_universal_action_proof_read_model",
+                ],
+                "universal_action_proof_exposes_whqr_replay_ref": [
                     "command_universal_action_proof_read_model",
                 ],
                 "universal_action_runtime_record_exports_contract_shape": [
@@ -527,6 +533,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/assistant/team-ops/plans",
                 "/api/v1/personal-assistant/skills",
                 "/api/v1/personal-assistant/requests/preview",
+                "/api/v1/personal-assistant/approval-queue",
+                "/api/v1/personal-assistant/approval-queue/preview",
+                "/api/v1/personal-assistant/memory-observations",
+                "/api/v1/personal-assistant/memory-observations/preview",
             ],
             "request_proof",
             "action_proof",
@@ -537,11 +547,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/assistant_kernel/planner.py",
                 "mcoi/mcoi_runtime/assistant_kernel/identity.py",
                 "mcoi/mcoi_runtime/personal_assistant/planner.py",
+                "mcoi/mcoi_runtime/personal_assistant/approval.py",
+                "mcoi/mcoi_runtime/personal_assistant/memory.py",
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
+                "tests/test_gateway/test_personal_assistant_public_routes.py",
+                "tests/test_personal_assistant_approval_queue.py",
+                "tests/test_personal_assistant_memory.py",
+                "tests/test_personal_assistant_memory_runtime.py",
                 "tests/test_personal_assistant_planner.py",
+                "schemas/personal_assistant_approval_queue.schema.json",
+                "schemas/personal_assistant_memory_observation.schema.json",
+                "schemas/personal_assistant_memory_read_model.schema.json",
+                "examples/personal_assistant_approval_queue_read_model.json",
+                "examples/personal_assistant_memory_read_model.json",
+                "scripts/validate_personal_assistant_approval_queue.py",
+                "scripts/validate_personal_assistant_memory_observation.py",
             ],
-            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, plan, and receipt projections without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, plan, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
@@ -552,6 +575,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "personal_assistant_preview_compiles_without_execution",
                 "personal_assistant_preview_blocks_with_whqr_step",
                 "personal_assistant_preview_errors_sanitized",
+                "personal_assistant_approval_queue_read_model_public_safe",
+                "personal_assistant_approval_queue_decision_deferred",
+                "personal_assistant_memory_observation_read_model_public_safe",
+                "personal_assistant_memory_observation_preview_candidate_only",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -583,6 +610,27 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "personal_assistant_preview_errors_sanitized": [
                     "personal_assistant_preview_fails_closed_on_invalid_request",
+                ],
+                "personal_assistant_approval_queue_read_model_public_safe": [
+                    "approval_queue_read_model_matches_schema_and_denies_execution",
+                    "personal_assistant_approval_queue_read_model_is_public_safe",
+                    "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
+                    "gateway_personal_assistant_approval_queue_preview_records_pending_packet",
+                ],
+                "personal_assistant_approval_queue_decision_deferred": [
+                    "approved_decision_links_evidence_and_still_defers_execution",
+                    "gateway_personal_assistant_approval_queue_approved_still_defers_execution",
+                ],
+                "personal_assistant_memory_observation_read_model_public_safe": [
+                    "personal_assistant_memory_read_model_validator_accepts_example",
+                    "memory_observation_ledger_indexes_candidates_without_live_memory_write",
+                    "gateway_personal_assistant_memory_read_model_is_empty_and_safe",
+                ],
+                "personal_assistant_memory_observation_preview_candidate_only": [
+                    "prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
+                    "personal_assistant_memory_read_model_validator_rejects_live_write_claim",
+                    "gateway_personal_assistant_memory_preview_prepares_candidate_without_write",
+                    "gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation",
                 ],
             },
         ),
@@ -7139,6 +7187,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "snet_operator_read_model",
             [
+                "/api/v1/snet/operator/read-model",
                 "build_snet_operator_read_model",
                 "scripts.validate_snet_operator_read_model.validate_contract",
                 "scripts.validate_snet_operator_read_model.validate_read_model",
@@ -7153,6 +7202,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/73_snet_operator_read_model.md",
                 "docs/START_HERE.md",
                 "mcoi/mcoi_runtime/contracts/snet.py",
+                "mcoi/mcoi_runtime/app/routers/snet.py",
                 "mcoi/mcoi_runtime/snet/engine.py",
                 "mcoi/mcoi_runtime/snet/read_model.py",
                 "schemas/snet_operator_read_model.schema.json",
@@ -7163,15 +7213,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_validate_snet_operator_read_model.py",
                 "tests/test_validate_snet_mesh_receipt.py",
                 "tests/test_snet_operator_read_model_doc.py",
+                "mcoi/tests/test_snet_router.py",
             ],
             (
-                "SNet operator read model projects bounded symbol summaries, "
-                "mesh receipt counts, settlement counts, raw-answer suppression, "
-                "raw-metadata suppression, and denied execution, connector, "
-                "route, filesystem, and terminal-closure authority. The operator "
-                "document preserves the AwaitingEvidence runtime-integration gate."
+                "SNet operator read model projects bounded symbol summaries through "
+                "a read-only MCOI route, mesh receipt counts, settlement counts, "
+                "raw-answer suppression, raw-metadata suppression, and denied "
+                "execution, connector, filesystem, gateway, mutation, and "
+                "terminal-closure authority."
             ),
             [
+                "snet_operator_read_model_exposes_bounded_no_authority_projection",
+                "snet_operator_read_model_zero_symbol_projection_is_valid",
+                "snet_operator_read_model_rejects_invalid_bound_without_server_error",
+                "snet_operator_read_model_has_no_mutation_companion",
+                "default_router_mounts_snet_operator_read_model",
                 "snet_operator_read_model_contract_passes",
                 "snet_operator_read_model_rejects_raw_and_authority_mutations",
                 "snet_operator_read_model_saved_file_validation",

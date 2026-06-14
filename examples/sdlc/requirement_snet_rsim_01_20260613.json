@@ -18,7 +18,8 @@
     "invalid confidence, invalid validation state, and malformed answer maps fail before WH tick mutation",
     "non-string text inputs, empty score fields, and non-integer read-model bounds fail with explicit errors",
     "case-distinct raw answers remain separate evidence records instead of silently overwriting each other",
-    "answer evidence references reject malformed tuple input before answer mutation"
+    "answer evidence references reject malformed tuple input before answer mutation",
+    "the MCOI runtime exposes a bounded read-only SNet operator route without accepting raw answers or granting execution, connector, route, filesystem, gateway, or terminal-closure authority"
   ],
   "non_goals": [
     "no public deployment claim",
@@ -28,25 +29,28 @@
     "no trusted knowledge promotion without evidence"
   ],
   "constraints": [
-    "SNet must remain a local Foundation Mode proof module",
+    "SNet must remain a Foundation Mode proof module with only bounded read-only MCOI route exposure",
     "all generated records must be deterministic and auditable",
     "all error paths must fail closed with explicit reasons",
     "Mfidel atomicity must not be violated by Unicode normalization, decomposition, recomposition, or root-letter modeling",
-    "runtime integration remains AwaitingEvidence until focused tests prove bounded recursion and promotion behavior"
+    "gateway, connector, filesystem, execution, and terminal-closure integration remain AwaitingEvidence until separate focused witnesses authorize those boundaries"
   ],
   "risk_class": "medium",
   "affected_surfaces": [
     "mcoi/mcoi_runtime/contracts/snet.py",
     "mcoi/mcoi_runtime/snet/engine.py",
     "mcoi/mcoi_runtime/snet/read_model.py",
+    "mcoi/mcoi_runtime/app/routers/snet.py",
     "schemas/snet_mesh_receipt.schema.json",
     "scripts/validate_snet_mesh_receipt.py",
     "mcoi/tests/test_snet_recursive_mesh.py",
+    "mcoi/tests/test_snet_router.py",
     "tests/test_validate_snet_mesh_receipt.py",
     "examples/sdlc/requirement_snet_rsim_01_20260613.json"
   ],
   "acceptance_tests": [
     "python -m pytest mcoi/tests/test_snet_recursive_mesh.py -q",
+    "python -m pytest mcoi/tests/test_snet_router.py -q",
     "python scripts/validate_snet_mesh_receipt.py",
     "python -m pytest tests/test_validate_snet_mesh_receipt.py -q",
     "python -c \"import json; from pathlib import Path; from scripts.validate_sdlc_artifact import validate_artifact_record; payload=json.loads(Path('examples/sdlc/requirement_snet_rsim_01_20260613.json').read_text(encoding='utf-8')); errors=validate_artifact_record('requirement', payload); assert not errors, errors\""
@@ -56,7 +60,8 @@
     "SNet mesh receipt schema validation receipt",
     "SNet SDLC requirement schema validation receipt",
     "workspace governance preflight receipt before closure claim",
-    "future design decision receipt before runtime or route integration",
+    "SNet route test receipt proving read-only bounded operator exposure",
+    "future design decision receipt before gateway, connector, filesystem, execution, or terminal-closure integration",
     "future security review receipt before any execution-adjacent use"
   ],
   "uao_ref": "uao://sdlc/requirement/snet-rsim-01/20260613",

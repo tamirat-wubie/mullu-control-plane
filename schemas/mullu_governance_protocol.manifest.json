@@ -305,6 +305,12 @@
       "surface": "approval"
     },
     {
+      "schema_id": "personal-assistant-approval-queue",
+      "path": "schemas/personal_assistant_approval_queue.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-queue:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "personal-assistant-receipt",
       "path": "schemas/personal_assistant_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-receipt:1",
@@ -314,6 +320,12 @@
       "schema_id": "personal-assistant-memory-observation",
       "path": "schemas/personal_assistant_memory_observation.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-memory-observation:1",
+      "surface": "memory"
+    },
+    {
+      "schema_id": "personal-assistant-memory-read-model",
+      "path": "schemas/personal_assistant_memory_read_model.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-read-model:1",
       "surface": "memory"
     },
     {
@@ -1352,6 +1364,18 @@
       "schema_id": "worker-failure-receipt",
       "path": "schemas/worker_failure_receipt.schema.json",
       "urn": "urn:mullusi:schema:worker-failure-receipt:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-binding",
+      "path": "schemas/read_only_worker_binding.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-binding:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-lease-preflight",
+      "path": "schemas/read_only_worker_lease_preflight.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
       "surface": "worker"
     },
     {

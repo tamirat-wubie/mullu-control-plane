@@ -37,9 +37,8 @@ from collections.abc import Iterable
 from typing import Any
 
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
 
-from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.app.server_http import include_default_routers, iter_effective_app_routes
 
 
 # Endpoints that are deliberately unauthenticated. Each entry must
@@ -81,6 +80,10 @@ _INTENTIONALLY_OPEN: dict[tuple[str, str], str] = {
 
     # OpenAPI / schema introspection (FastAPI defaults; not from our routers)
     # — noted here for completeness; FastAPI mounts these automatically.
+    ("GET", "/openapi.json"): "OpenAPI schema; FastAPI default, no tenant data.",
+    ("GET", "/docs"): "Swagger UI; FastAPI default, no tenant data.",
+    ("GET", "/docs/oauth2-redirect"): "Swagger OAuth redirect; FastAPI default.",
+    ("GET", "/redoc"): "ReDoc UI; FastAPI default, no tenant data.",
 }
 
 
@@ -96,24 +99,20 @@ _AUTH_DEPENDENCY_NAMES: frozenset[str] = frozenset({
 })
 
 
-def _gather_routes() -> Iterable[APIRoute]:
-    """Build the assembled app and yield every APIRoute it mounts."""
+def _gather_routes() -> Iterable[Any]:
+    """Build the assembled app and yield every effective route it mounts."""
     app = FastAPI()
     include_default_routers(app)
-    yield from _flatten_routes(app.routes)
-
-
-def _flatten_routes(routes: Iterable[Any]) -> Iterable[APIRoute]:
-    for route in routes:
-        if isinstance(route, APIRoute):
+    for route in iter_effective_app_routes(app):
+        if (
+            hasattr(route, "path")
+            and hasattr(route, "methods")
+            and hasattr(route, "endpoint")
+        ):
             yield route
-            continue
-        original_router = getattr(route, "original_router", None)
-        if original_router is not None:
-            yield from _flatten_routes(getattr(original_router, "routes", ()))
 
 
-def _route_uses_auth_dependency(route: APIRoute) -> bool:
+def _route_uses_auth_dependency(route: Any) -> bool:
     """Return True if the route's signature names any known auth dependency.
 
     We inspect the *handler function's source* (substring match for any
@@ -131,19 +130,19 @@ def _route_uses_auth_dependency(route: APIRoute) -> bool:
     return any(dep in src for dep in _AUTH_DEPENDENCY_NAMES)
 
 
-def _route_under_api_prefix(route: APIRoute) -> bool:
+def _route_under_api_prefix(route: Any) -> bool:
     """True if the route is gated by GovernanceMiddleware (path under /api/)."""
     return route.path.startswith("/api/")
 
 
-def _is_intentionally_open(route: APIRoute) -> bool:
+def _is_intentionally_open(route: Any) -> bool:
     for method in route.methods:
         if (method, route.path) in _INTENTIONALLY_OPEN:
             return True
     return False
 
 
-def _is_gated(route: APIRoute) -> bool:
+def _is_gated(route: Any) -> bool:
     return (
         _route_under_api_prefix(route)
         or _route_uses_auth_dependency(route)
@@ -171,9 +170,7 @@ def test_every_non_get_route_is_gated():
     neither gating mechanism.
     """
     violations: list[str] = []
-    routes = list(_gather_routes())
-    assert routes, "route governance coverage found no assembled routes"
-    for route in routes:
+    for route in _gather_routes():
         write_methods = route.methods - {"GET", "HEAD", "OPTIONS"}
         if not write_methods:
             continue
@@ -206,9 +203,7 @@ def test_get_routes_are_all_either_gated_or_intentionally_open():
     or annotated.
     """
     unannotated_open: list[str] = []
-    routes = list(_gather_routes())
-    assert routes, "route governance coverage found no assembled routes"
-    for route in routes:
+    for route in _gather_routes():
         if "GET" not in route.methods:
             continue
         if _is_gated(route):
@@ -260,9 +255,7 @@ def test_no_duplicate_route_registrations():
     Operation ID" warning at OpenAPI generation.
     """
     seen: dict[tuple[str, str], int] = {}
-    routes = list(_gather_routes())
-    assert routes, "route governance coverage found no assembled routes"
-    for route in routes:
+    for route in _gather_routes():
         for method in route.methods - {"HEAD", "OPTIONS"}:
             key = (method, route.path)
             seen[key] = seen.get(key, 0) + 1

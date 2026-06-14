@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-memory-read-model:1",
+  "title": "Personal Assistant Memory Read Model",
+  "description": "Candidate-only read-model projection for governed personal-assistant memory observations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_count",
+    "memory_observation_ids",
+    "memory_types",
+    "live_memory_write_allowed",
+    "nested_mind_live_activation_allowed",
+    "raw_private_payload_storage_allowed",
+    "secret_value_storage_allowed",
+    "candidate_only",
+    "candidates",
+    "metadata"
+  ],
+  "properties": {
+    "candidate_count": { "type": "integer", "minimum": 0 },
+    "memory_observation_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^pa_memory_[a-z0-9][a-z0-9_:-]*$" },
+      "uniqueItems": true
+    },
+    "memory_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "preference",
+          "identity_fact",
+          "project_state",
+          "relationship_context",
+          "task_state",
+          "decision_history",
+          "blocked_boundary",
+          "approval_rule"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "live_memory_write_allowed": { "const": false },
+    "nested_mind_live_activation_allowed": { "const": false },
+    "raw_private_payload_storage_allowed": { "const": false },
+    "secret_value_storage_allowed": { "const": false },
+    "candidate_only": { "const": true },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["memory_observation_id", "observation", "receipt"],
+        "properties": {
+          "memory_observation_id": {
+            "type": "string",
+            "pattern": "^pa_memory_[a-z0-9][a-z0-9_:-]*$"
+          },
+          "observation": { "type": "object", "additionalProperties": true },
+          "receipt": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "ledger_projection",
+        "persistence_boundary",
+        "live_memory_write_allowed",
+        "nested_mind_live_activation_allowed",
+        "raw_private_payload_storage_allowed",
+        "secret_value_storage_allowed"
+      ],
+      "properties": {
+        "foundation_only": { "const": true },
+        "ledger_projection": { "type": "string", "minLength": 1 },
+        "persistence_boundary": { "type": "string", "minLength": 1 },
+        "live_memory_write_allowed": { "const": false },
+        "nested_mind_live_activation_allowed": { "const": false },
+        "raw_private_payload_storage_allowed": { "const": false },
+        "secret_value_storage_allowed": { "const": false }
+      }
+    }
+  }
+}

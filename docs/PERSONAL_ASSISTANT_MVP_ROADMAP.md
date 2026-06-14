@@ -14,7 +14,7 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 3 | Request intake and WHQR missing-binding emission | No execution |
 | 4 | Read-only inbox and calendar summaries | No send, delete, archive, create, move, cancel, invite |
 | 5 | Draft-only assistant artifacts | No external communication |
-| 6 | Approval queue | No approval auto-grant |
+| 6 | Approval queue read/preview projection | No approval auto-grant; no execution after approval |
 | 7 | Memory observations | No raw chat-log storage; no live Nested Mind activation |
 | 8 | TeamOps shared inbox planning and handoff | No mailbox mutation without approval evidence |
 | 9 | User-facing assistant console | No customer/SaaS readiness claim |
@@ -45,6 +45,27 @@ schema witness
 ```
 
 No stage may skip UAO admission, approval classification, receipt emission, and rollback or compensation planning where effect-bearing action exists.
+
+## PR 6 Acceptance Criteria
+
+1. Approval queue projections validate against `schemas/personal_assistant_approval_queue.schema.json`.
+2. Queue records embed schema-valid approval packets and personal-assistant receipts.
+3. Pending, approved, rejected, and revised decisions remain evidence records only.
+4. Public routes expose read/preview projections without persistence claims or connector mutation.
+5. `approval_is_execution`, `execution_allowed`, `external_send_allowed`, and `connector_mutation_allowed` remain false.
+6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+7. Proof coverage classifies approval queue routes under the assistant planning surface.
+
+## PR 7 Acceptance Criteria
+
+1. Memory observation records validate against `schemas/personal_assistant_memory_observation.schema.json`.
+2. Candidate ledger projections validate against `schemas/personal_assistant_memory_read_model.schema.json`.
+3. The runtime prepares observation candidates with source, confidence, scope, mutability, evidence refs, receipt refs, sensitivity, retention policy, and Nested Mind staging status.
+4. Public routes expose empty read-model and stateless preview projections only.
+5. `live_memory_write_allowed`, `nested_mind_live_activation_allowed`, `raw_private_payload_storage_allowed`, `secret_value_storage_allowed`, and `candidate_only` remain false/false/false/false/true as applicable.
+6. Raw chat logs, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
+7. Receipts record memory candidate creation plus actions not taken: live memory write, Nested Mind activation, raw chat-log storage, raw connector payload storage, and system-of-record mutation.
+8. Proof coverage classifies memory observation routes under the assistant planning surface.
 
 ## Handoff Risks
 

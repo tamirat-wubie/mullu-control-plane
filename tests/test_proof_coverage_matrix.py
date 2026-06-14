@@ -159,7 +159,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 9
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 13
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
     assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
@@ -262,7 +262,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 19
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 21
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -809,6 +809,22 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/personal-assistant/skills"]["surface_id"] == "assistant_kernel_planning"
     assert (
         classified_routes["/api/v1/personal-assistant/requests/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations/preview"]["surface_id"]
         == "assistant_kernel_planning"
     )
     assert classified_routes["/api/v1/tool-permissions"]["surface_id"] == "tool_permission_registry"
@@ -1564,12 +1580,14 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
+    assert "terminal_closure_exposes_whqr_replay_ref" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
     assert "command_interpretation_receipt_read_model_schema_valid" in witnesses
     assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "command_interpretation_receipt_replays_from_command_store" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "universal_action_proof_exposes_whqr_replay_ref" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
@@ -3449,9 +3467,9 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "snet_operator_doc_names_blocked_authorities" in witnesses
     assert "snet_operator_doc_lists_verification_commands" in witnesses
     assert "start_here_links_snet_operator_doc" in witnesses
-    assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
-    assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 20
+    assert "denied execution, connector, filesystem, gateway" in read_model_surface["notes"]
+    assert "terminal-closure authority" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 25
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 

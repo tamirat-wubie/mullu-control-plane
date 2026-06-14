@@ -1,14 +1,17 @@
 {
   "design_id": "sdlc_design_snet_runtime_integration_gate_20260613",
   "requirement_id": "sdlc_reqspec_snet_rsim_01_20260613",
-  "architecture_summary": "Keep SNet as a local Foundation Mode proof module with a read-only operator projection and mesh receipt. Do not wire SNet into runtime routes, connectors, filesystem effects, external adapters, or autonomous execution until a future design decision, security review, rollback plan, and live evidence receipt explicitly authorize that boundary.",
+  "architecture_summary": "Admit one bounded read-only MCOI route for the SNet operator projection while keeping SNet as a Foundation Mode proof module. Do not wire SNet into gateway publication, connectors, filesystem effects, external adapters, raw answer submission, mutation routes, or autonomous execution until a future design decision, security review, rollback plan, and live evidence receipt explicitly authorize that boundary.",
   "affected_modules": [
     "mcoi/mcoi_runtime/contracts/snet.py",
     "mcoi/mcoi_runtime/snet/engine.py",
     "mcoi/mcoi_runtime/snet/read_model.py",
+    "mcoi/mcoi_runtime/app/routers/snet.py",
+    "mcoi/mcoi_runtime/app/server_http.py",
     "schemas/snet_mesh_receipt.schema.json",
     "scripts/validate_snet_mesh_receipt.py",
     "mcoi/tests/test_snet_recursive_mesh.py",
+    "mcoi/tests/test_snet_router.py",
     "tests/test_validate_snet_mesh_receipt.py",
     "tests/test_validate_sdlc_artifact.py",
     "examples/sdlc/requirement_snet_rsim_01_20260613.json",
@@ -18,7 +21,8 @@
     "no runtime state migration is authorized by this design",
     "SNet mesh records remain local in-memory proof records",
     "SNet operator output remains a bounded read-only projection with no raw answer or raw metadata exposure",
-    "SNet mesh receipts remain non-terminal evidence and cannot grant execution, connector, route, or filesystem authority"
+    "SNet mesh receipts remain non-terminal evidence and cannot grant execution, connector, route, or filesystem authority",
+    "SNet route exposure is limited to a deterministic read-only operator projection and does not accept raw answers"
   ],
   "schema_changes": [
     "schemas/sdlc_change_request.schema.json",
@@ -48,12 +52,13 @@
     "effect_bearing_requires_receipt": true,
     "tenant_scope_reviewed": true
   },
-  "rollback_plan": "Remove this SNet design-gate artifact and its focused SDLC artifact test, then rerun SDLC artifact validation, focused SNet tests, SNet receipt validation, and workspace governance preflight.",
-  "migration_plan": "No migration is required because this design is a repository-local governance gate and does not create runtime state, external effects, public endpoints, tenant records, or authority grants.",
+  "rollback_plan": "Remove mcoi/mcoi_runtime/app/routers/snet.py, remove the SNet router include from mcoi/mcoi_runtime/app/server_http.py, remove mcoi/tests/test_snet_router.py, restore this design gate to local-only route-blocked status, then rerun SDLC artifact validation, focused SNet tests, SNet receipt validation, guard-chain coverage, and workspace governance preflight.",
+  "migration_plan": "No migration is required because this design adds only a deterministic read-only route over an in-memory seed-dependency proof mesh and does not create runtime state, external effects, public gateway endpoints, tenant records, or authority grants.",
   "test_plan": [
     "python -m pytest tests/test_validate_sdlc_artifact.py -q",
-    "python -m pytest mcoi/tests/test_snet_recursive_mesh.py tests/test_validate_snet_mesh_receipt.py -q",
+    "python -m pytest mcoi/tests/test_snet_recursive_mesh.py mcoi/tests/test_snet_router.py tests/test_validate_snet_mesh_receipt.py -q",
     "python scripts/validate_snet_mesh_receipt.py",
+    "python scripts/validate_guard_chain_coverage.py --strict",
     "python scripts/validate_sdlc_artifact.py",
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json"

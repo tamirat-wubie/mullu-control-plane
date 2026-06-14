@@ -243,7 +243,9 @@ def test_snet_runtime_integration_gate_validates_as_design_decision() -> None:
     assert "mcoi/mcoi_runtime/snet/engine.py" in design_record["affected_modules"]
     assert "scripts/validate_snet_mesh_receipt.py" in design_record["validator_changes"]
     assert any("run_workspace_governance_checks.py" in item for item in design_record["test_plan"])
-    assert "Do not wire SNet into runtime routes" in design_record["architecture_summary"]
+    assert "Admit one bounded read-only MCOI route" in design_record["architecture_summary"]
+    assert "raw answer submission" in design_record["architecture_summary"]
+    assert "autonomous execution" in design_record["architecture_summary"]
 
 
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:

@@ -57,13 +57,26 @@ from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureDisposition,
 )
 from mcoi_runtime.personal_assistant import (
+    ApprovalDecision,
+    ApprovalProposedAction,
+    ApprovalScope,
+    MemoryConfidence,
+    MemoryObservationSource,
+    MemoryObservationType,
+    MemoryRetentionPolicy,
+    MemoryScope,
+    MemorySensitivity,
+    NestedMindStatus,
     PersonalAssistantInvariantError,
+    PersonalAssistantApprovalQueue,
+    PersonalAssistantMemoryObservationLedger,
     RequestInterface,
     build_clarification_requests,
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
     interpret_user_request,
     load_default_skill_registry,
+    prepare_memory_observation,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -180,6 +193,63 @@ class GatewayPersonalAssistantPreviewRequest(BaseModel):
     include_console_read_model: bool = False
 
 
+class GatewayPersonalAssistantApprovalAction(BaseModel):
+    """One proposed personal-assistant action for approval queue preview."""
+
+    action_id: str
+    skill_id: str
+    risk_level: str
+    effect_boundary: str
+    summary: str
+
+
+class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
+    """Stateless approval queue preview request for public gateway evidence."""
+
+    request_id: str
+    plan_id: str
+    approver_ref: str = "operator:gateway"
+    approval_scope: str = ApprovalScope.PER_ACTION.value
+    proposed_actions: list[GatewayPersonalAssistantApprovalAction]
+    forbidden_without_approval: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    approval_id: str = ""
+    decision: str = ""
+    reason_codes: list[str] = Field(default_factory=list)
+    decided_at: str = ""
+    decision_evidence_ref: str = ""
+    revision_request: str = ""
+
+
+class GatewayPersonalAssistantMemorySource(BaseModel):
+    """Evidence source for one memory observation preview."""
+
+    source_type: str
+    source_ref: str
+    observed_at: str
+
+
+class GatewayPersonalAssistantMemoryPreviewRequest(BaseModel):
+    """Stateless memory observation preview request for public gateway evidence."""
+
+    request_id: str
+    memory_observation_id: str
+    memory_type: str = MemoryObservationType.PREFERENCE.value
+    claim: str
+    source: GatewayPersonalAssistantMemorySource
+    confidence: str = MemoryConfidence.MEDIUM.value
+    scope: str = MemoryScope.ASSISTANT_WORKFLOW.value
+    mutable: bool = True
+    receipt_id: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    observed_at: str = ""
+    sensitivity: str = MemorySensitivity.INTERNAL.value
+    retention_policy: str = MemoryRetentionPolicy.OPERATOR_REVIEW.value
+    nested_mind_status: str = NestedMindStatus.STAGING_ONLY.value
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
     """Whether the authority dev/test bypass is permitted for this MULLU_ENV.
 
@@ -223,6 +293,13 @@ def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_c
     if bool(plan.get("requires_approval")):
         return "AwaitingEvidence"
     return "SolvedVerified"
+
+
+def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
+    """Return a stable dict across Pydantic major versions."""
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
 
 
 def create_gateway_app(
@@ -1687,6 +1764,139 @@ def create_gateway_app(
                 receipts=(envelope.receipt,),
             )
         return response
+
+    @app.get("/api/v1/personal-assistant/approval-queue")
+    def personal_assistant_approval_queue_read_model():
+        read_model = PersonalAssistantApprovalQueue().read_model()
+        return {
+            "approval_queue": read_model,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/approval-queue/preview")
+    def preview_personal_assistant_approval_queue(req: GatewayPersonalAssistantApprovalPreviewRequest):
+        try:
+            now = req.created_at or _clock()
+            queue = PersonalAssistantApprovalQueue()
+            record = queue.enqueue(
+                request_id=req.request_id,
+                plan_id=req.plan_id,
+                approver_ref=req.approver_ref,
+                approval_scope=req.approval_scope,
+                proposed_actions=tuple(
+                    ApprovalProposedAction.from_mapping(_pydantic_payload(action))
+                    for action in req.proposed_actions
+                ),
+                forbidden_without_approval=tuple(req.forbidden_without_approval),
+                evidence_refs=tuple(req.evidence_refs),
+                created_at=now,
+                approval_id=req.approval_id or None,
+            )
+            if req.decision:
+                decision = ApprovalDecision.coerce(req.decision)
+                record = queue.record_decision(
+                    record.approval_id,
+                    decision=decision,
+                    reason_codes=tuple(req.reason_codes) or (f"operator_{decision.value}_preview",),
+                    decided_at=req.decided_at or now,
+                    decision_evidence_ref=req.decision_evidence_ref,
+                    revision_request=req.revision_request,
+                )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant approval queue preview",
+                    "error_code": "invalid_personal_assistant_approval_queue_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "approval": record.as_dict(),
+            "approval_queue": queue.read_model(),
+            "receipt": dict(record.latest_receipt),
+            "outcome": str(record.latest_receipt.get("outcome", "AwaitingEvidence")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.get("/api/v1/personal-assistant/memory-observations")
+    def personal_assistant_memory_observations_read_model():
+        read_model = PersonalAssistantMemoryObservationLedger().read_model()
+        return {
+            "memory_read_model": read_model,
+            "execution_allowed": False,
+            "live_memory_write_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/memory-observations/preview")
+    def preview_personal_assistant_memory_observation(req: GatewayPersonalAssistantMemoryPreviewRequest):
+        try:
+            now = req.observed_at or _clock()
+            candidate = prepare_memory_observation(
+                request_id=req.request_id,
+                memory_observation_id=req.memory_observation_id,
+                memory_type=req.memory_type,
+                claim=req.claim,
+                source=MemoryObservationSource.from_mapping(_pydantic_payload(req.source)),
+                confidence=req.confidence,
+                scope=req.scope,
+                mutable=req.mutable,
+                receipt_id=req.receipt_id,
+                evidence_refs=tuple(req.evidence_refs),
+                observed_at=now,
+                sensitivity=req.sensitivity,
+                retention_policy=req.retention_policy,
+                nested_mind_status=req.nested_mind_status,
+                metadata=req.metadata,
+            )
+            ledger = PersonalAssistantMemoryObservationLedger()
+            ledger.append(candidate)
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant memory observation preview",
+                    "error_code": "invalid_personal_assistant_memory_observation_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "memory_observation": candidate.as_dict(),
+            "memory_read_model": ledger.read_model(),
+            "receipt": dict(candidate.receipt),
+            "outcome": str(candidate.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
 
     @app.get("/gateway/witness")
     def gateway_witness():
@@ -3298,9 +3508,15 @@ def create_gateway_app(
             for event in command_ledger.events_for(command_id)
         ]
         certificate_payload = asdict(certificate)
+        whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+            certificate_payload
+        )
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "terminal_certificate": certificate,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
             "proof_coverage_witnesses": _closure_proof_coverage_witnesses(
                 terminal_certificate=certificate_payload,
                 events=events,
@@ -3316,12 +3532,18 @@ def create_gateway_app(
                 raise HTTPException(404, detail="command not found")
             raise HTTPException(404, detail="universal action proof not found")
         proof_payload = asdict(proof)
+        whqr_replay_binding = proof_payload.get("whqr_replay_binding")
+        if not isinstance(whqr_replay_binding, Mapping):
+            whqr_replay_binding = {}
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "universal_action_proof": proof_payload,
             "event_count": len(proof.event_hashes),
             "state_sequence": list(proof.state_sequence),
             "proof_hash": proof.proof_hash,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
         }
 
     @app.get("/commands/{command_id}/universal-action-orchestration")
@@ -3338,6 +3560,11 @@ def create_gateway_app(
             closure.get("reconciliation_ref") if isinstance(closure, Mapping) else None
         )
         memory_ref = closure.get("memory_ref") if isinstance(closure, Mapping) else None
+        whqr_replay_binding = (
+            closure.get("whqr_replay_binding")
+            if isinstance(closure, Mapping)
+            else None
+        )
         return {
             "command_id": command_id,
             "universal_action_orchestration": record,
@@ -3346,6 +3573,7 @@ def create_gateway_app(
             "closure_state": record.get("closure_state", ""),
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
+            "whqr_replay_binding": whqr_replay_binding,
         }
 
     def _operator_universal_actions_payload(
@@ -3376,6 +3604,13 @@ def create_gateway_app(
             payload["intent"] = command.intent
             payload["command_state"] = command.state.value
             payload["created_at"] = command.created_at
+            whqr_replay_binding = payload.get("whqr_replay_binding")
+            if isinstance(whqr_replay_binding, Mapping):
+                payload["whqr_replay_ref"] = str(
+                    whqr_replay_binding.get("replay_ref", "")
+                )
+            else:
+                payload["whqr_replay_ref"] = ""
             proofs.append(payload)
         page, page_meta = _read_model_page(
             tuple(proofs),
@@ -4520,6 +4755,7 @@ def _universal_actions_console_html(read_model: Mapping[str, Any]) -> str:
         "closure_state",
         "reconciliation_ref",
         "memory_ref",
+        "whqr_replay_ref",
         "proof_hash",
         "terminal_certificate_id",
         "learning_status",
@@ -4631,7 +4867,47 @@ def _closure_proof_coverage_witnesses(
             "witness_type": "response_evidence_closure",
             "witness_ref": response_evidence_closure_id,
         })
+    whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+        terminal_certificate
+    )
+    if whqr_replay_binding:
+        witnesses.append({
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "terminal_closure_exposes_whqr_replay_ref",
+            "witness_type": "whqr_replay_binding",
+            "witness_ref": whqr_replay_binding["replay_ref"],
+            "canonical_hash": whqr_replay_binding["canonical_hash"],
+            "semantics_hash": whqr_replay_binding["semantics_hash"],
+            "version": whqr_replay_binding["version"],
+        })
     return witnesses
+
+
+def _whqr_replay_binding_from_terminal_certificate_payload(
+    terminal_certificate: Mapping[str, Any],
+) -> dict[str, str]:
+    """Project verified WHQR terminal metadata into a replay binding."""
+    metadata = terminal_certificate.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return {}
+    canonical_hash = metadata.get("whqr_canonical_hash")
+    semantics_hash = metadata.get("whqr_semantics_hash")
+    version = metadata.get("whqr_version")
+    if not (
+        isinstance(canonical_hash, str)
+        and canonical_hash
+        and isinstance(semantics_hash, str)
+        and semantics_hash
+        and isinstance(version, str)
+        and version
+    ):
+        return {}
+    return {
+        "replay_ref": f"whqr://replay/{canonical_hash}",
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    }
 
 
 def _gateway_request_receipt(

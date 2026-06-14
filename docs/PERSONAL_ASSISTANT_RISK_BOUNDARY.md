@@ -60,6 +60,26 @@ Connector-backed skills must project only bounded evidence:
 
 Receipts record action names and evidence references, not raw private payloads.
 
+## Memory Privacy
+
+Memory observation previews may store only a claim-level candidate for operator
+review. They may not store raw chat logs, raw connector payloads, credentials,
+tokens, private keys, or full private message bodies.
+
+Required memory read-model flags:
+
+```text
+live_memory_write_allowed = false
+nested_mind_live_activation_allowed = false
+raw_private_payload_storage_allowed = false
+secret_value_storage_allowed = false
+candidate_only = true
+```
+
+Every memory candidate receipt must record that live memory was not written,
+Nested Mind was not activated, raw chat logs were not stored, raw connector
+payloads were not stored, and system-of-record state was not mutated.
+
 ## Approval Rules
 
 Approval is valid only when it binds:
