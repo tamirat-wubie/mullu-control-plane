@@ -45,6 +45,7 @@
     "required_next_action": "commit_candidate"
   },
   "witness_refs": [
+    "witness:sandbox-isolated",
     "witness:color-red",
     "witness:color-blue"
   ],

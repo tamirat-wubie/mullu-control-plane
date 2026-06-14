@@ -37,9 +37,10 @@ def test_personal_assistant_skill_registry_accepts_foundation_fixture() -> None:
     result = validate_personal_assistant_skill_registry()
 
     assert result.valid is True
-    assert result.skill_count == 12
+    assert result.skill_count == 13
     assert "email.inbox.summarize" in result.skill_ids
     assert "math.reasoning.plan" in result.skill_ids
+    assert "task.create_draft" in result.skill_ids
     assert "email.send.with_approval" in result.skill_ids
     assert "deployment.publish.review" in result.skill_ids
     assert result.errors == ()
@@ -56,7 +57,7 @@ def test_read_only_skills_cannot_declare_mutation_authority(tmp_path: Path) -> N
     result = validate_personal_assistant_skill_registry(registry_path=registry_path)
 
     assert result.valid is False
-    assert result.skill_count == 12
+    assert result.skill_count == 13
     assert any("read-only skill allows mutating actions" in error for error in result.errors)
     assert any("external_write_allowed=true" in error for error in result.errors)
 

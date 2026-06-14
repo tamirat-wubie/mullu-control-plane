@@ -40,10 +40,11 @@ def test_default_registry_loads_foundation_skills() -> None:
     skill_ids = registry.skill_ids()
     inbox_summary = registry.get("email.inbox.summarize")
 
-    assert registry.count == 12
+    assert registry.count == 13
     assert skill_ids == tuple(sorted(skill_ids))
     assert "email.inbox.summarize" in skill_ids
     assert "math.reasoning.plan" in skill_ids
+    assert "task.create_draft" in skill_ids
     assert inbox_summary.mode is SkillMode.READ_ONLY
     assert inbox_summary.risk_level is SkillRiskLevel.P1
     assert inbox_summary.receipt_required is True
@@ -95,7 +96,7 @@ def test_duplicate_skill_id_is_rejected() -> None:
 
     assert "duplicate skill_id" in str(exc_info.value)
     assert "email.inbox.summarize" in str(exc_info.value)
-    assert len(registry_payload["skills"]) == 13
+    assert len(registry_payload["skills"]) == 14
 
 
 def test_read_only_mutation_is_rejected_by_runtime_contract() -> None:
@@ -178,7 +179,7 @@ def test_read_model_preserves_non_execution_boundary() -> None:
     send_skill = skills_by_id["email.send.with_approval"]
     memory_skill = skills_by_id["memory.observe"]
 
-    assert read_model["skill_count"] == 12
+    assert read_model["skill_count"] == 13
     assert read_model["risk_levels"]["P4"] == 1
     assert read_model["risk_levels"]["P5"] == 1
     assert send_skill["metadata"]["execution_enabled"] is False

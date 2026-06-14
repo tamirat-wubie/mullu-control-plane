@@ -163,6 +163,38 @@
       "metadata": { "foundation_only": true }
     },
     {
+      "skill_id": "task.create_draft",
+      "name": "Task Draft",
+      "description": "Prepare a task proposal without writing to a task system or memory.",
+      "group": "task",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "requires_approval": false,
+      "connectors": [],
+      "inputs": ["task_goal", "source_ref", "priority", "due_hint"],
+      "outputs": ["task_draft", "receipt"],
+      "allowed_actions": ["plan", "draft", "produce_receipt"],
+      "blocked_actions": ["system_of_record_write", "connector_mutation", "memory_write", "external_submission"],
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "private_connector_required": false,
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "capability_refs": ["task.draft.prepare", "personal_assistant.receipt.project"],
+      "uao_required": true,
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": true,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "nested_mind_live_activation_allowed": false,
+      "public_readiness_claim_allowed": false,
+      "metadata": { "foundation_only": true, "task_write_boundary": "approval_required_future" }
+    },
+    {
       "skill_id": "document.summarize",
       "name": "Document Summary",
       "description": "Summarize a document through an approved read projection.",

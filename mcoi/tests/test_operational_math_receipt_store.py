@@ -12,6 +12,11 @@ import json
 import pytest
 
 from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceError
+from mcoi_runtime.app.operational_math_integration import (
+    OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV,
+    select_operational_math_receipt_store,
+    validate_operational_math_receipt_store_path,
+)
 from mcoi_runtime.persistence.operational_math_receipt_store import (
     FileOperationalMathReceiptStore,
     OperationalMathReceiptStore,
@@ -119,3 +124,31 @@ def test_file_store_rejects_malformed_payload(tmp_path) -> None:
 
     with pytest.raises(CorruptedDataError, match="malformed operational math receipt store file"):
         FileOperationalMathReceiptStore(store_path)
+
+
+def test_hosted_store_path_requires_json_extension(tmp_path) -> None:
+    valid_path = tmp_path / "operational-math-receipts.json"
+    invalid_path = tmp_path / "operational-math-receipts.jsonl"
+
+    validated = validate_operational_math_receipt_store_path(valid_path)
+
+    assert validated == valid_path
+    assert validated.suffix == ".json"
+    with pytest.raises(RuntimeError, match="must use a .json file extension"):
+        validate_operational_math_receipt_store_path(invalid_path)
+
+
+def test_env_selection_wires_persistent_operational_math_store(tmp_path) -> None:
+    store_path = tmp_path / "operational-math-receipts.json"
+
+    bootstrap = select_operational_math_receipt_store(
+        {OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV: str(store_path)}
+    )
+    appended = bootstrap.store.append(_receipt())
+    reloaded = FileOperationalMathReceiptStore(store_path)
+
+    assert bootstrap.persistent is True
+    assert bootstrap.path == str(store_path)
+    assert isinstance(bootstrap.store, FileOperationalMathReceiptStore)
+    assert appended["receipt_id"] == "operational_math_loop_receipt:result-1"
+    assert reloaded.summary()["total_receipts"] == 1

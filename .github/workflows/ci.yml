@@ -223,7 +223,7 @@ jobs:
           python scripts/validate_personal_assistant_approval_matrix.py
           python scripts/validate_personal_assistant_receipt.py
           python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-          python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_intake.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py -q
+          python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_intake.py tests/test_personal_assistant_read_only.py tests/test_personal_assistant_drafts.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_personal_assistant_teamops.py tests/test_personal_assistant_console.py -q
 
       - name: Validate logic governance application
         run: python scripts/validate_logic_governance_application.py
@@ -424,6 +424,15 @@ jobs:
 
       - name: Run holistic loop read-model tests
         run: python -m pytest tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_admission_closure.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py -q
+
+      - name: Run governed symbolic loop tests
+        run: python -m pytest tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py tests/test_validate_governed_symbolic_loop_contract.py -q
+
+      - name: Run ProblemStar compilation receipt tests
+        run: python -m pytest tests/test_validate_problem_star_compilation_receipt.py -q
+
+      - name: Run truth kernel tests
+        run: python -m pytest tests/test_truth_kernel_plane_contracts.py tests/test_truth_kernel_admission.py tests/test_truth_kernel_finite_domain.py -q
 
       - name: Run Foundation validator tests
         run: python -m pytest tests/test_validate_foundation_mode.py tests/test_validate_foundation_local_proof_thread.py tests/test_validate_foundation_company_boundary_kernel.py tests/test_validate_foundation_*_boundary.py -q

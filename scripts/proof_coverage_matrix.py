@@ -1111,6 +1111,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/whqr/clarifications",
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
+                "/api/v1/console/personal-assistant",
+                "/api/v1/console/personal-assistant/view",
                 "/api/v1/console/spatial-map",
                 "/api/v1/console/spatial-map/view",
             ],
@@ -1144,6 +1146,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
                 "console_whqr_clarifications_return_bounded_read_model",
+                "console_personal_assistant_panel_read_model",
+                "console_personal_assistant_html_view_renders_read_only_panel",
             ],
             runtime_witness_anchor_aliases={
                 "console_home_returns_governed_runtime_vitals": ["console_home"],

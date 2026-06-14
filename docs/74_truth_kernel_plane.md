@@ -1,8 +1,8 @@
 <!--
 Purpose: define the canonical name, boundary, and admission contract for the Mullu truth-state kernel plane.
-Governance scope: naming, MAF Core truth-state responsibility, exact versus bounded result authority, proof admission, journal binding, and Foundation Mode claim boundaries.
-Dependencies: docs/00_platform_overview.md, docs/01_shared_invariants.md, docs/02_shared_contracts.md, docs/03_trace_and_replay.md, docs/04_policy_and_verification.md, docs/05_learning_admission.md, docs/15_deterministic_serialization_policy.md, docs/16_world_state_plane.md, docs/27_mfidel_semantic_layer.md, docs/UNIVERSAL_ACTION_ORCHESTRATION.md, schemas/truth_candidate.schema.json, schemas/kernel_proof.schema.json, schemas/truth_commit_candidate.schema.json, examples/truth_kernel/, tests/test_truth_kernel_plane_contracts.py.
-Invariants: Mullusi is the company name; Mullu is the suite/product family name; Mullu Truth Kernel is an internal MAF Core subsystem; approximate or bounded outputs cannot become truth; all truth-state mutation is proof-bound, governed, replayable, and non-public until witnessed; MTK schema contracts remain non-executing until runtime code is separately admitted.
+Governance scope: naming, MAF Core truth-state responsibility, exact versus bounded result authority, proof admission, journal binding, adapter admission, finite-domain proof threading, and Foundation Mode claim boundaries.
+Dependencies: docs/00_platform_overview.md, docs/01_shared_invariants.md, docs/02_shared_contracts.md, docs/03_trace_and_replay.md, docs/04_policy_and_verification.md, docs/05_learning_admission.md, docs/15_deterministic_serialization_policy.md, docs/16_world_state_plane.md, docs/27_mfidel_semantic_layer.md, docs/UNIVERSAL_ACTION_ORCHESTRATION.md, schemas/truth_candidate.schema.json, schemas/kernel_proof.schema.json, schemas/truth_commit_candidate.schema.json, examples/truth_kernel/, mcoi/mcoi_runtime/truth_kernel_adapter.py, mcoi/mcoi_runtime/truth_kernel_finite_domain.py, maf/rust/crates/maf-truth-kernel/, tests/test_truth_kernel_plane_contracts.py, tests/test_truth_kernel_admission.py, tests/test_truth_kernel_finite_domain.py.
+Invariants: Mullusi is the company name; Mullu is the suite/product family name; Mullu Truth Kernel is an internal MAF Core subsystem; approximate or bounded outputs cannot become truth; all truth-state mutation is proof-bound, governed, replayable, and non-public until witnessed; the Python adapter admits or rejects schema-bound commit candidates but does not mutate truth state; finite-domain proof threads emit replayable proof payloads but do not execute external actions.
 -->
 
 # Mullu Truth Kernel Plane
@@ -33,8 +33,9 @@ Canonical naming:
 | Current runtime package | MCOI Runtime | MCOI | Existing governed runtime package. |
 | Truth-state subsystem | Mullu Truth Kernel | MTK | Internal MAF Core subsystem for domains, constraints, kernel checks, and proofs. |
 | Architecture plane | Truth Kernel Plane | TKP | Documentation and contract boundary for MTK. |
-| Future Rust crate | `maf-truth-kernel` | n/a | Implementation target only after contract and tests exist. |
-| Future Python namespace | `mcoi_runtime.truth_kernel_adapter` | n/a | Adapter only; Python must not redefine the kernel contract. |
+| Rust crate | `maf-truth-kernel` | n/a | Side-effect-free finite-domain kernel substrate under `maf/rust/crates/`. |
+| Python adapter namespace | `mcoi_runtime.truth_kernel_adapter` | n/a | Adapter only; Python must not redefine the kernel contract or mutate truth state. |
+| Python finite proof thread | `mcoi_runtime.truth_kernel_finite_domain` | n/a | Local finite-domain proof emitter; no external effects and no truth-state writes. |
 
 Rejected or archival names:
 
@@ -172,6 +173,87 @@ They do not execute a kernel, dispatch actions, write memory, or commit truth.
 
 Contract tests live in `tests/test_truth_kernel_plane_contracts.py`.
 
+## Runtime Adapter
+
+The first executable MTK surface is the schema-bound Python adapter
+`mcoi_runtime.truth_kernel_adapter`. It is intentionally narrow:
+
+| Adapter responsibility | Rule |
+| --- | --- |
+| Cross-reference binding | Candidate, proof, and commit candidate IDs, tenant IDs, proof refs, and kernel signatures must match. |
+| Exactness gate | `proof_state = Pass` and `result_kind = ExactResult` are required for truth mutation. |
+| Replay gate | Proof replay must be deterministic and the commit journal must require replay. |
+| Replay hash gate | Commit journal replay hash must equal the proof replay expected hash. |
+| Governance gate | Governance, trace, rollback, and admission reason references must be present. |
+| Sandbox gate | Mutation candidates must require sandbox isolation and the proof must carry `witness:sandbox-isolated`. |
+| Mfidel gate | Any Mfidel-bearing delta must preserve atomicity. |
+| State boundary | The adapter returns an admission decision only; it does not write truth state. |
+
+Runtime admission tests live in `tests/test_truth_kernel_admission.py`.
+
+## Finite-Domain Proof Thread
+
+`mcoi_runtime.truth_kernel_finite_domain` is the first local proof thread. It
+is deliberately smaller than the future Rust kernel:
+
+| Proof-thread responsibility | Rule |
+| --- | --- |
+| Domain membership | Every projected value must come from a declared finite domain. |
+| Constraint evaluation | Allowed and forbidden assignments are checked as total finite relations. |
+| Propagation | Exact propagation emits projected values, pruned values, and forced values from the finite valid-state closure. |
+| Closure idempotence | Re-running the same finite closure with the same budget yields the same closure hash. |
+| Closure proof payload | Exact closure can emit a schema-compatible `ValidityProof` with enumeration, constraint, closure, and forced-value derivation steps. |
+| Exact projection | Exact proof is emitted only when all candidate states fit within budget. |
+| Contradiction proof | Empty valid-state sets emit `ContradictionResult`, not truth mutation authority. |
+| Budget proof | Budget exhaustion emits `BudgetExceededResult` with `BudgetUnknown`; it cannot become truth. |
+| Replay binding | Proof payloads carry deterministic replay hashes and validate against `schemas/kernel_proof.schema.json`. |
+| Sandbox witness | Generated proof payloads include `witness:sandbox-isolated` before adapter admission can grant mutation authority. |
+| Mfidel boundary | Mfidel-bearing domains must preserve atomic symbol identity. |
+
+Finite-domain proof tests live in `tests/test_truth_kernel_finite_domain.py`.
+
+Generated proof payloads are wired into commit-candidate fixtures through
+`build_truth_commit_candidate_from_proof(...)` and then checked by
+`admit_truth_commit_candidate(...)`. The builder is deterministic and
+non-mutating; the adapter remains the authority gate. Budget-limited and
+contradicted proofs can still produce recordable commit-candidate-shaped
+objects, but the adapter rejects them before mutation authority.
+
+Finite closure and propagation are read models. They can identify forced values
+and pruned values, but a forced value still needs an exact projection proof and
+adapter admission before it can support a truth mutation.
+
+Multi-step closure proof payloads are now emitted as `ValidityProof` objects.
+They are replayable evidence for the finite closure, not a state write. A
+budget-limited closure proof remains recordable, but the adapter rejects it
+before mutation authority because `BudgetUnknown` cannot satisfy the exact
+truth-admission gate.
+
+## Rust Kernel Substrate
+
+`maf/rust/crates/maf-truth-kernel` is the first Rust-side MTK substrate. It
+matches the Python finite-domain boundary but remains narrower than a full
+production kernel:
+
+| Rust substrate responsibility | Rule |
+| --- | --- |
+| Workspace placement | The crate is a `maf/rust` workspace member and is covered by the existing Rust CI `cargo test` job. |
+| State boundary | The crate is pure and does not mutate truth state, journals, memory, files, or external systems. |
+| Exact projection | Exact projection emits `Pass` plus `ExactResult` only when all finite states fit within budget. |
+| Budget gate | Budget exhaustion emits `BudgetUnknown` plus `BudgetExceededResult`, never mutation authority. |
+| Contradiction gate | Empty valid-state sets emit `ContradictionResult` with a no-valid-state witness. |
+| Sandbox witness | Projection proofs always preserve `witness:sandbox-isolated`. |
+| Replay binding | Proof summaries carry deterministic replay hashes and proof hashes. |
+| Mfidel boundary | Mfidel-bearing domains fail closed unless atomicity is declared preserved. |
+| Fixture parity | Rust and Python finite projection summaries share `examples/truth_kernel/truth_kernel_finite_projection_summary.json`. |
+
+Rust unit tests live inside `maf/rust/crates/maf-truth-kernel/src/lib.rs`.
+Run them with:
+
+```powershell
+cargo test -p maf-truth-kernel
+```
+
 ## Commit Boundary
 
 MTK truth commits are local state changes, so they are effect-bearing inside the
@@ -214,13 +296,14 @@ Use this order:
 1. Keep this document as the canonical naming and boundary contract.
 2. Keep schemas for `TruthCandidate`, `KernelProof`, and
    `TruthCommitCandidate` aligned with examples and tests.
-3. Add a local finite-domain proof thread with no external effects.
-4. Add runtime unit tests for deterministic hashing, domain membership, closure
+3. Keep the schema-bound Python adapter pure and non-mutating.
+4. Keep the local finite-domain proof thread side-effect-free and schema-bound.
+5. Keep Rust and Python proof behavior aligned through deterministic projection, closure,
+   budget, contradiction, sandbox-witness, replay-hash, and Mfidel tests.
+6. Add broader runtime unit tests for deterministic hashing, domain membership, closure
    idempotence, propagation monotonicity, kernel determinism, exact projection,
    forced-value uniqueness, contradiction proof, sandbox isolation, and replay.
-5. Add a Rust `maf-truth-kernel` crate only after the schema and tests are
-   accepted.
-6. Add Python adapters only after the Rust or contract source of truth exists.
+7. Extend Python adapters only after the Rust or contract source of truth exists.
 
 ## Non-Goals
 
@@ -236,15 +319,19 @@ MTK does not:
 
 ## Required Validators
 
-For this documentation-only step:
+For schema and adapter steps:
 
 ```powershell
 python scripts/validate_agents_governance.py
 python scripts/validate_workspace_governance_witness.py
 python -m pytest tests/test_truth_kernel_plane_contracts.py -q
+python -m pytest tests/test_truth_kernel_admission.py -q
+python -m pytest tests/test_truth_kernel_finite_domain.py -q
+cd maf/rust
+cargo test -p maf-truth-kernel
 ```
 
-Before any implementation step:
+Before broader implementation steps:
 
 ```powershell
 python scripts/validate_sdlc_artifact.py
@@ -274,6 +361,6 @@ Implementation tests must be added with the first code-bearing MTK change.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: Mullusi company boundary, Mullu product-family boundary, MTK internal-subsystem boundary, exact-result truth admission only, approximate-output non-promotion, Foundation Mode non-public claim, non-executing schema contract boundary
-  Open issues: runtime implementation is deferred
-  Next action: add a local finite-domain proof thread only after schema contract validation remains green
+  Invariants verified: Mullusi company boundary, Mullu product-family boundary, MTK internal-subsystem boundary, exact-result truth admission only, approximate-output non-promotion, Foundation Mode non-public claim, schema-bound non-mutating adapter boundary, finite-domain proof thread non-effect boundary, Rust finite-domain substrate non-effect boundary, sandbox-isolation witness gate, replay-hash equality gate
+  Open issues: full production kernel persistence, commit journal writer, and byte-identical proof payload parity remain deferred
+  Next action: add byte-identical proof payload parity only after the Rust proof schema emitter is admitted
