@@ -66,6 +66,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_operator_decision_evidence",
         "agentic_service_harness_live_producer_operator_decision_record",
         "agentic_service_harness_live_producer_operator_decision_value_absence",
+        "agentic_service_harness_live_producer_operator_decision_pending_status",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -207,6 +208,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_live_producer_operator_decision_value_absence",
+        "agentic_service_harness_live_producer_operator_decision_pending_status",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_pending_status",
         "foundation_operator_readiness_boundary",
     )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")

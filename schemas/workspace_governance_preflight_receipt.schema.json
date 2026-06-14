@@ -90,6 +90,7 @@
             "agentic_service_harness_live_producer_operator_decision_evidence",
             "agentic_service_harness_live_producer_operator_decision_record",
             "agentic_service_harness_live_producer_operator_decision_value_absence",
+            "agentic_service_harness_live_producer_operator_decision_pending_status",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",
