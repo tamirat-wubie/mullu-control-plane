@@ -6764,6 +6764,53 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "snet_operator_read_model",
+            [
+                "build_snet_operator_read_model",
+                "scripts.validate_snet_operator_read_model.validate_contract",
+                "scripts.validate_snet_operator_read_model.validate_read_model",
+                "examples/snet_operator_read_model.json",
+                "docs/73_snet_operator_read_model.md",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/73_snet_operator_read_model.md",
+                "docs/START_HERE.md",
+                "mcoi/mcoi_runtime/contracts/snet.py",
+                "mcoi/mcoi_runtime/snet/engine.py",
+                "mcoi/mcoi_runtime/snet/read_model.py",
+                "schemas/snet_operator_read_model.schema.json",
+                "schemas/snet_mesh_receipt.schema.json",
+                "scripts/validate_snet_operator_read_model.py",
+                "scripts/validate_snet_mesh_receipt.py",
+                "examples/snet_operator_read_model.json",
+                "tests/test_validate_snet_operator_read_model.py",
+                "tests/test_snet_operator_read_model_doc.py",
+            ],
+            (
+                "SNet operator read model projects bounded symbol summaries, "
+                "mesh receipt counts, settlement counts, raw-answer suppression, "
+                "raw-metadata suppression, and denied execution, connector, "
+                "route, filesystem, and terminal-closure authority. The operator "
+                "document preserves the AwaitingEvidence runtime-integration gate."
+            ),
+            [
+                "snet_operator_read_model_contract_passes",
+                "snet_operator_read_model_rejects_raw_and_authority_mutations",
+                "snet_operator_read_model_saved_file_validation",
+                "snet_operator_read_model_rejects_count_drift",
+                "snet_operator_read_model_rejects_symbol_raw_field",
+                "snet_operator_read_model_zero_symbol_projection_is_valid",
+                "snet_operator_doc_declares_read_only_boundary",
+                "snet_operator_doc_names_blocked_authorities",
+                "snet_operator_doc_lists_verification_commands",
+                "start_here_links_snet_operator_doc",
+            ],
+        ),
+        _surface(
             "snet_episode_replay",
             [
                 "scripts.validate_snet_episode_replay.validate_contract",
@@ -7143,6 +7190,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_snet_episode_replay_contract",
             "surfaces": ["snet_episode_replay"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_snet_operator_read_model_contract",
+            "surfaces": ["snet_operator_read_model"],
             "status": "closed",
         },
         {
