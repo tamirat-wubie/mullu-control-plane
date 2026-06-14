@@ -21,8 +21,9 @@ import urllib.request
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from mcoi_runtime.governance.audit.decision_log import (
     GovernanceDecisionLog,
     GuardDecisionDetail,
@@ -180,14 +181,42 @@ REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
 )
 
 
+def _redacted_request_validation_detail(exc: RequestValidationError) -> list[dict[str, Any]]:
+    """Return validation errors without echoing rejected request values."""
+    details: list[dict[str, Any]] = []
+    for error in exc.errors():
+        details.append(
+            {
+                "type": str(error.get("type", "validation_error")),
+                "loc": list(error.get("loc", ())),
+                "msg": str(error.get("msg", "request validation failed")),
+            }
+        )
+    return details
+
+
+class GatewayPersonalAssistantConnectorRef(BaseModel):
+    """Connector proof reference accepted by the gateway preview boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    connector_id: str
+    connector_name: str
+    proof_state: str
+    private_data_allowed: bool
+    scopes: list[str] = Field(default_factory=list)
+
+
 class GatewayPersonalAssistantPreviewRequest(BaseModel):
     """Preview-only personal-assistant request admitted by the public gateway."""
+
+    model_config = ConfigDict(extra="forbid")
 
     user_request: str
     request_id: str = ""
     submitted_at: str = ""
     interface: str = RequestInterface.API_ROUTE.value
-    connector_refs: list[dict[str, Any]] = Field(default_factory=list)
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
     thread_id: str = "thread-personal-assistant-gateway-preview"
     requested_from_id: str = "operator"
     include_console_read_model: bool = False
@@ -195,6 +224,8 @@ class GatewayPersonalAssistantPreviewRequest(BaseModel):
 
 class GatewayPersonalAssistantApprovalAction(BaseModel):
     """One proposed personal-assistant action for approval queue preview."""
+
+    model_config = ConfigDict(extra="forbid")
 
     action_id: str
     skill_id: str
@@ -205,6 +236,8 @@ class GatewayPersonalAssistantApprovalAction(BaseModel):
 
 class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
     """Stateless approval queue preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
 
     request_id: str
     plan_id: str
@@ -225,6 +258,8 @@ class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
 class GatewayPersonalAssistantMemorySource(BaseModel):
     """Evidence source for one memory observation preview."""
 
+    model_config = ConfigDict(extra="forbid")
+
     source_type: str
     source_ref: str
     observed_at: str
@@ -232,6 +267,8 @@ class GatewayPersonalAssistantMemorySource(BaseModel):
 
 class GatewayPersonalAssistantMemoryPreviewRequest(BaseModel):
     """Stateless memory observation preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
 
     request_id: str
     memory_observation_id: str
@@ -1088,6 +1125,20 @@ def create_gateway_app(
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
 
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_exception_handler(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": _redacted_request_validation_detail(exc),
+                "governed": True,
+                "error_code": "request_validation_failed",
+            },
+        )
+
     # G10.1 — install entry-point receipt middleware. Closes the
     # gap documented in docs/MAF_RECEIPT_COVERAGE.md §"Routes NOT
     # covered". Every webhook/authority POST now produces a
@@ -1705,7 +1756,7 @@ def create_gateway_app(
                 request_id=request_id,
                 submitted_at=now,
                 interface=req.interface,
-                connector_refs=tuple(req.connector_refs),
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
             )
             clarification_bundle = build_clarification_requests(
                 intent,
