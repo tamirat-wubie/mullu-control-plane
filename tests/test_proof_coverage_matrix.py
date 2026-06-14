@@ -1578,6 +1578,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "command_interpretation_receipt_replays_from_command_store" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "universal_action_proof_exposes_whqr_replay_ref" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses

@@ -69,6 +69,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "command_interpretation_receipt_requires_operator_authority",
         "command_interpretation_receipt_replays_from_command_store",
         "universal_action_proof_replays_from_command_events",
+        "universal_action_proof_exposes_whqr_replay_ref",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
@@ -112,7 +113,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -140,6 +141,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "command_interpretation_receipt_read_model_replays_from_command_store",
                 ],
                 "universal_action_proof_replays_from_command_events": [
+                    "command_universal_action_proof_read_model",
+                ],
+                "universal_action_proof_exposes_whqr_replay_ref": [
                     "command_universal_action_proof_read_model",
                 ],
                 "universal_action_runtime_record_exports_contract_shape": [
