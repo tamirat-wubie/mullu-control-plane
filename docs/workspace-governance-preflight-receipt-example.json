@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 160,
+  "check_count": 161,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -291,6 +291,17 @@
       ],
       "return_code": 0,
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION PENDING STATUS VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_intake_preflight.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE INTAKE PREFLIGHT VALID\n",
       "stderr": "",
       "passed": true
     },

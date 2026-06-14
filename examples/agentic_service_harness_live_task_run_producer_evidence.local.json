@@ -133,6 +133,11 @@
       "validator_id": "agentic-service-harness-live-producer-operator-decision-value-absence",
       "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_absence.py",
       "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-value-intake-preflight",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_intake_preflight.py",
+      "required_for_closure": true
     }
   ],
   "next_action": "Implement only a local producer rehearsal after this fixture validates."
