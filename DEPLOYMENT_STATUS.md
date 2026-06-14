@@ -9,7 +9,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 
 # Deployment Status Witness
 
-**Last audited:** 2026-06-12
+**Last audited:** 2026-06-14
 **Deployment witness state:** `published`
 **Public production health endpoint:** `https://api.mullusi.com/health`
 **Gateway health endpoint:** `/health`
@@ -104,7 +104,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Observed pilot health probe URL | `https://api.mullusi.com/health` is the declared public production health endpoint backed by the published deployment witness and public-health declaration receipt |
 | Upstream API readiness | `api.mullusi.com` has a verified published deployment witness, clear runtime and authority responsibility debt, production evidence closure, and declared public health endpoint `https://api.mullusi.com/health` |
 | Deployment witness workflow runs | A deployment witness workflow run collected the published witness for `https://api.mullusi.com`; the local deployment witness records verified signatures, clear runtime and authority responsibility debt, production evidence closure, and `deployment_claim=published` |
-| Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
+| Gateway publication workflow runs | `gateway-publication.yml` run `27489039439` completed successfully and dispatched deployment witness run `27489044697` |
 
 ## Closure Requirements
 
