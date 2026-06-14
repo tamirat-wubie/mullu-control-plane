@@ -3229,21 +3229,31 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "schemas/snet_operator_read_model.schema.json" in read_model_surface["evidence_files"]
     assert "schemas/snet_mesh_receipt.schema.json" in read_model_surface["evidence_files"]
     assert "scripts/validate_snet_operator_read_model.py" in read_model_surface["evidence_files"]
+    assert "scripts/validate_snet_mesh_receipt.py" in read_model_surface["evidence_files"]
     assert "examples/snet_operator_read_model.json" in read_model_surface["evidence_files"]
     assert "tests/test_validate_snet_operator_read_model.py" in read_model_surface["evidence_files"]
+    assert "tests/test_validate_snet_mesh_receipt.py" in read_model_surface["evidence_files"]
     assert "tests/test_snet_operator_read_model_doc.py" in read_model_surface["evidence_files"]
     assert "snet_operator_read_model_contract_passes" in witnesses
     assert "snet_operator_read_model_rejects_raw_and_authority_mutations" in witnesses
     assert "snet_operator_read_model_rejects_count_drift" in witnesses
     assert "snet_operator_read_model_rejects_symbol_raw_field" in witnesses
     assert "snet_operator_read_model_zero_symbol_projection_is_valid" in witnesses
+    assert "snet_mesh_receipt_contract_passes" in witnesses
+    assert "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations" in witnesses
+    assert "snet_mesh_receipt_saved_file_validation" in witnesses
+    assert "snet_mesh_receipt_rejects_settlement_count_drift" in witnesses
+    assert "snet_mesh_receipt_requires_digest_evidence_ref" in witnesses
+    assert "snet_mesh_receipt_non_string_evidence_ref_reports_errors" in witnesses
+    assert "snet_mesh_receipt_malformed_payload_reports_errors" in witnesses
+    assert "snet_mesh_receipt_rejects_identity_drift" in witnesses
     assert "snet_operator_doc_declares_read_only_boundary" in witnesses
     assert "snet_operator_doc_names_blocked_authorities" in witnesses
     assert "snet_operator_doc_lists_verification_commands" in witnesses
     assert "start_here_links_snet_operator_doc" in witnesses
     assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
     assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 10
+    assert read_model_integrity["exact_test_anchor_count"] == 18
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 
