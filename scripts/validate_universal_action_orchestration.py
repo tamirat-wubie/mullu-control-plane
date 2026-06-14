@@ -326,7 +326,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.",
     "Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.",
     "Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.",
-    "Every closure receipt must bind closure state to reconciliation and memory references before exposure.",
+    "Every closure receipt must bind closure state to reconciliation, memory, and available WHQR replay references before exposure.",
     "Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.",
     "Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.",
     "Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.",
@@ -2276,15 +2276,18 @@ def _validate_closure(
         ):
             errors.append("non-allow closure must not require reconciliation")
     closure_receipt = _receipt_by_id(receipts, closure["closure_receipt_ref"])
+    whqr_replay_binding = closure.get("whqr_replay_binding")
+    errors.extend(_validate_whqr_replay_binding(whqr_replay_binding))
     if closure_receipt is not None:
         expected_confirms = _closure_confirmation(
             closure_state=closure["status"],
             reconciliation_ref=closure["reconciliation_ref"],
             memory_ref=closure["memory_ref"],
+            whqr_replay_binding=whqr_replay_binding,
         )
         if closure_receipt.get("confirms") != expected_confirms:
             errors.append(
-                "closure receipt confirms must bind closure state, reconciliation_ref, and memory_ref"
+                "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding"
             )
     if not isinstance(closure["next_action"], str) or not closure["next_action"]:
         errors.append("closure.next_action must be a non-empty string")
@@ -2317,15 +2320,55 @@ def _closure_confirmation(
     closure_state: str,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: Any = None,
 ) -> str:
-    return _stable_identifier(
-        "universal-action-closure-confirmation",
-        {
-            "closure_state": closure_state,
-            "reconciliation_ref": reconciliation_ref or "",
-            "memory_ref": memory_ref or "",
-        },
-    )
+    payload = {
+        "closure_state": closure_state,
+        "reconciliation_ref": reconciliation_ref or "",
+        "memory_ref": memory_ref or "",
+    }
+    payload.update(_whqr_replay_confirmation_payload(whqr_replay_binding))
+    return _stable_identifier("universal-action-closure-confirmation", payload)
+
+
+def _validate_whqr_replay_binding(binding: Any) -> list[str]:
+    if binding is None:
+        return []
+    errors: list[str] = []
+    if not isinstance(binding, dict):
+        return ["closure.whqr_replay_binding must be null or an object"]
+    expected = ("replay_ref", "canonical_hash", "semantics_hash", "version")
+    for field_name in expected:
+        value = binding.get(field_name)
+        if not isinstance(value, str) or not value:
+            errors.append(
+                f"closure.whqr_replay_binding.{field_name} must be a non-empty string"
+            )
+    replay_ref = binding.get("replay_ref")
+    canonical_hash = binding.get("canonical_hash")
+    if isinstance(replay_ref, str) and isinstance(canonical_hash, str):
+        if replay_ref != f"whqr://replay/{canonical_hash}":
+            errors.append(
+                "closure.whqr_replay_binding.replay_ref must bind canonical_hash"
+            )
+    extra_keys = set(binding) - set(expected)
+    if extra_keys:
+        errors.append(
+            "closure.whqr_replay_binding contains unsupported field(s): "
+            + ", ".join(sorted(extra_keys))
+        )
+    return errors
+
+
+def _whqr_replay_confirmation_payload(binding: Any) -> dict[str, str]:
+    if not isinstance(binding, dict):
+        return {}
+    return {
+        "whqr_replay_ref": str(binding.get("replay_ref") or ""),
+        "whqr_canonical_hash": str(binding.get("canonical_hash") or ""),
+        "whqr_semantics_hash": str(binding.get("semantics_hash") or ""),
+        "whqr_version": str(binding.get("version") or ""),
+    }
 
 
 def _stable_identifier(prefix: str, payload: dict[str, Any]) -> str:

@@ -78,6 +78,7 @@ from mcoi_runtime.contracts.verification import (
     VerificationResult,
     VerificationStatus,
 )
+from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
@@ -1099,6 +1100,7 @@ class UniversalActionKernel:
                 if result.terminal_certificate
                 else ""
             ),
+            "whqr_replay_binding": _uao_record_whqr_replay_binding(result) or {},
             "learning_admission_id": result.learning_decision.admission_id
             if result.learning_decision
             else "",
@@ -1201,11 +1203,13 @@ def build_universal_action_orchestration_record(
     outcome_ref = _uao_record_outcome_ref(result)
     reconciliation_ref = _uao_record_reconciliation_ref(result)
     memory_ref = _uao_record_memory_ref(result)
+    whqr_replay_binding = _uao_record_whqr_replay_binding(result)
     receipt_refs = _uao_record_receipt_refs(
         result=result,
         decision_status=decision["status"],
         reconciliation_ref=reconciliation_ref,
         memory_ref=memory_ref,
+        whqr_replay_binding=whqr_replay_binding,
     )
     claim_ledger = _uao_record_claim_ledger(
         result=result,
@@ -1309,6 +1313,7 @@ def build_universal_action_orchestration_record(
             outcome_ref=outcome_ref,
             reconciliation_ref=reconciliation_ref,
             memory_ref=memory_ref,
+            whqr_replay_binding=whqr_replay_binding,
         ),
         "reconciliation": _uao_record_reconciliation(
             result=result, outcome_ref=outcome_ref
@@ -1326,6 +1331,7 @@ def build_universal_action_orchestration_record(
             "closure_receipt_ref": receipt_refs["closure"],
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
+            "whqr_replay_binding": whqr_replay_binding,
             "next_action": (
                 "operator_review"
                 if result.blocked or _result_requires_review(result)
@@ -2763,6 +2769,7 @@ def _uao_record_receipt_refs(
     decision_status: str,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: Mapping[str, str] | None,
 ) -> dict[str, str]:
     refs = {
         "trace": stable_identifier(
@@ -2779,6 +2786,7 @@ def _uao_record_receipt_refs(
                 "decision_status": decision_status,
                 "reconciliation_ref": reconciliation_ref or "",
                 "memory_ref": memory_ref or "",
+                **_whqr_replay_confirmation_payload(whqr_replay_binding),
             },
         ),
         "reconciliation": stable_identifier(
@@ -2819,6 +2827,49 @@ def _uao_record_memory_ref(result: UniversalActionResult) -> str | None:
     if result.learning_decision is not None:
         return f"memory://{result.learning_decision.knowledge_id}"
     return None
+
+
+def _uao_record_whqr_replay_binding(result: UniversalActionResult) -> dict[str, str] | None:
+    certificate = result.terminal_certificate
+    if certificate is None:
+        return None
+    metadata = certificate.metadata
+    canonical_json = metadata.get("whqr_canonical_json")
+    canonical_hash = metadata.get("whqr_canonical_hash")
+    semantics_hash = metadata.get("whqr_semantics_hash")
+    whqr_version = metadata.get("whqr_version")
+    if (
+        canonical_json is None
+        and canonical_hash is None
+        and semantics_hash is None
+        and whqr_version is None
+    ):
+        return None
+    if not isinstance(canonical_json, str) or not canonical_json:
+        raise RuntimeCoreInvariantError(
+            "UAO closure requires WHQR canonical replay document"
+        )
+    if not isinstance(canonical_hash, str) or not canonical_hash:
+        raise RuntimeCoreInvariantError("UAO closure requires WHQR canonical hash")
+    try:
+        document = WHQRDocument.from_canonical_json(
+            canonical_json,
+            expected_canonical_hash=canonical_hash,
+        )
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError(
+            "UAO closure WHQR replay document is invalid"
+        ) from exc
+    if semantics_hash is not None and semantics_hash != document.semantics_hash:
+        raise RuntimeCoreInvariantError("UAO closure WHQR semantics hash mismatch")
+    if whqr_version is not None and whqr_version != document.whqr_version:
+        raise RuntimeCoreInvariantError("UAO closure WHQR version mismatch")
+    return {
+        "replay_ref": f"whqr://replay/{canonical_hash}",
+        "canonical_hash": canonical_hash,
+        "semantics_hash": document.semantics_hash,
+        "version": document.whqr_version,
+    }
 
 
 def _uao_record_pipeline_stages(
@@ -3091,6 +3142,7 @@ def _uao_record_receipts(
     outcome_ref: str | None,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: Mapping[str, str] | None,
 ) -> list[dict[str, Any]]:
     receipts = [
         _uao_receipt(
@@ -3142,6 +3194,7 @@ def _uao_record_receipts(
                 closure_state=result.closure_state,
                 reconciliation_ref=reconciliation_ref,
                 memory_ref=memory_ref,
+                whqr_replay_binding=whqr_replay_binding,
             ),
             result.dispatched,
         )
@@ -3333,15 +3386,28 @@ def _uao_closure_confirmation(
     closure_state: str,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: Mapping[str, str] | None = None,
 ) -> str:
-    return stable_identifier(
-        "universal-action-closure-confirmation",
-        {
-            "closure_state": closure_state,
-            "reconciliation_ref": reconciliation_ref or "",
-            "memory_ref": memory_ref or "",
-        },
-    )
+    payload = {
+        "closure_state": closure_state,
+        "reconciliation_ref": reconciliation_ref or "",
+        "memory_ref": memory_ref or "",
+    }
+    payload.update(_whqr_replay_confirmation_payload(whqr_replay_binding))
+    return stable_identifier("universal-action-closure-confirmation", payload)
+
+
+def _whqr_replay_confirmation_payload(
+    whqr_replay_binding: Mapping[str, str] | None,
+) -> dict[str, str]:
+    if whqr_replay_binding is None:
+        return {}
+    return {
+        "whqr_replay_ref": whqr_replay_binding.get("replay_ref", ""),
+        "whqr_canonical_hash": whqr_replay_binding.get("canonical_hash", ""),
+        "whqr_semantics_hash": whqr_replay_binding.get("semantics_hash", ""),
+        "whqr_version": whqr_replay_binding.get("version", ""),
+    }
 
 
 def _uao_record_lineage(result: UniversalActionResult) -> dict[str, Any]:
