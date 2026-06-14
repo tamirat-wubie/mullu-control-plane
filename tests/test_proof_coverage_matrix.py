@@ -1589,6 +1589,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "universal_action_proof_replays_from_command_events" in witnesses
     assert "universal_action_proof_exposes_whqr_replay_ref" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
+    assert "universal_action_orchestration_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capability_admission_audits_filter_status" in witnesses
