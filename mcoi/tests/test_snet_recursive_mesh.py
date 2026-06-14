@@ -578,6 +578,26 @@ def test_mesh_receipt_rejects_authority_and_settlement_drift() -> None:
     assert sum(receipt_payload["settlement_counts"].values()) == receipt_payload["symbol_count"]
 
 
+def test_mesh_receipt_rejects_boolean_flag_shape_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="terminal closure required flag"):
+        SNetMeshReceipt(**{**receipt_payload, "terminal_closure_required": 1})
+    with pytest.raises(ValueError, match="raw answers exposed flag"):
+        SNetMeshReceipt(**{**receipt_payload, "raw_answers_exposed": 0})
+    with pytest.raises(ValueError, match="connector authority flag"):
+        SNetMeshReceipt(**{**receipt_payload, "connector_authority_granted": ""})
+
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_receipt.terminal_closure_required is True
+    assert valid_receipt.raw_answers_exposed is False
+    assert valid_receipt.connector_authority_granted is False
+
+
 def test_mesh_receipt_rejects_direct_contract_drift() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

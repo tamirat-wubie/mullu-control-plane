@@ -148,6 +148,13 @@ def _require_text_key(key: object, field_name: str) -> str:
     return require_non_empty_text(key, field_name)
 
 
+def _require_literal_bool(value: object, expected: bool, field_name: str) -> bool:
+    if type(value) is not bool or value is not expected:
+        expected_text = "true" if expected else "false"
+        raise ValueError(f"{field_name} must be {expected_text}")
+    return expected
+
+
 @dataclass(frozen=True, slots=True)
 class SNetInquiryBudget(ContractRecord):
     """Hard budget for one local recursive inquiry pass."""
@@ -532,22 +539,46 @@ class SNetMeshReceipt(ContractRecord):
         if sum(settlement_count_map.values()) != self.symbol_count:
             raise ValueError("settlement_counts total must match symbol_count")
         object.__setattr__(self, "settlement_counts", freeze_value(settlement_count_map))
-        if self.terminal_closure_required is not True:
-            raise ValueError("SNet receipt requires terminal closure before closure claims")
-        if self.receipt_is_not_terminal_closure is not True:
-            raise ValueError("SNet mesh receipt is not terminal closure")
-        if self.raw_answers_exposed:
-            raise ValueError("SNet read model must not expose raw answers")
-        if self.raw_metadata_values_exposed:
-            raise ValueError("SNet read model must not expose raw metadata values")
-        if self.execution_authority_granted:
-            raise ValueError("SNet read model must not grant execution authority")
-        if self.connector_authority_granted:
-            raise ValueError("SNet read model must not grant connector authority")
-        if self.route_authority_granted:
-            raise ValueError("SNet read model must not grant route authority")
-        if self.filesystem_authority_granted:
-            raise ValueError("SNet read model must not grant filesystem authority")
+        object.__setattr__(
+            self,
+            "terminal_closure_required",
+            _require_literal_bool(self.terminal_closure_required, True, "terminal closure required flag"),
+        )
+        object.__setattr__(
+            self,
+            "receipt_is_not_terminal_closure",
+            _require_literal_bool(self.receipt_is_not_terminal_closure, True, "receipt is not terminal closure flag"),
+        )
+        object.__setattr__(
+            self,
+            "raw_answers_exposed",
+            _require_literal_bool(self.raw_answers_exposed, False, "raw answers exposed flag"),
+        )
+        object.__setattr__(
+            self,
+            "raw_metadata_values_exposed",
+            _require_literal_bool(self.raw_metadata_values_exposed, False, "raw metadata values exposed flag"),
+        )
+        object.__setattr__(
+            self,
+            "execution_authority_granted",
+            _require_literal_bool(self.execution_authority_granted, False, "execution authority flag"),
+        )
+        object.__setattr__(
+            self,
+            "connector_authority_granted",
+            _require_literal_bool(self.connector_authority_granted, False, "connector authority flag"),
+        )
+        object.__setattr__(
+            self,
+            "route_authority_granted",
+            _require_literal_bool(self.route_authority_granted, False, "route authority flag"),
+        )
+        object.__setattr__(
+            self,
+            "filesystem_authority_granted",
+            _require_literal_bool(self.filesystem_authority_granted, False, "filesystem authority flag"),
+        )
         object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         if not self.evidence_refs:
             raise ValueError("evidence_refs must contain at least one evidence reference")
