@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-memory-observation:1",
+  "title": "Personal Assistant Memory Observation",
+  "description": "Evidence-backed memory observation record for the personal-assistant foundation layer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "memory_observation_id",
+    "memory_type",
+    "claim",
+    "source",
+    "confidence",
+    "scope",
+    "mutable",
+    "receipt_id",
+    "evidence_refs",
+    "sensitivity",
+    "retention_policy",
+    "nested_mind_status",
+    "metadata"
+  ],
+  "properties": {
+    "memory_observation_id": { "type": "string", "pattern": "^pa_memory_[a-z0-9][a-z0-9_:-]*$" },
+    "memory_type": {
+      "type": "string",
+      "enum": [
+        "preference",
+        "identity_fact",
+        "project_state",
+        "relationship_context",
+        "task_state",
+        "decision_history",
+        "blocked_boundary",
+        "approval_rule"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_ref", "observed_at"],
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "enum": ["conversation", "connector_receipt", "user_confirmation", "system_receipt", "project_artifact"]
+        },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "observed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high", "verified"] },
+    "scope": { "type": "string", "enum": ["assistant_workflow", "project", "relationship", "task", "security", "operator_preference"] },
+    "mutable": { "type": "boolean" },
+    "receipt_id": { "type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$" },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "sensitivity": { "type": "string", "enum": ["public", "internal", "private", "secret_forbidden"] },
+    "retention_policy": { "type": "string", "enum": ["session", "bounded", "operator_review", "do_not_store"] },
+    "nested_mind_status": { "type": "string", "enum": ["not_applicable", "staging_only", "awaiting_evidence"] },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

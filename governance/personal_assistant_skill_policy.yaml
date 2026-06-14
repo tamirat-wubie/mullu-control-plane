@@ -1,0 +1,98 @@
+{
+  "schema_version": "personal_assistant.skill_policy.v1",
+  "policy_id": "personal_assistant_skill_policy.foundation.v1",
+  "foundation_mode_required": true,
+  "solver_outcome": "AwaitingEvidence",
+  "default_execution_posture": "plan_preview_draft_only",
+  "risk_levels": ["P0", "P1", "P2", "P3", "P4", "P5"],
+  "default_allowed_actions": [
+    "read",
+    "summarize",
+    "plan",
+    "draft",
+    "ask_clarification",
+    "produce_receipt",
+    "classify",
+    "detect",
+    "extract",
+    "compare",
+    "recommend",
+    "route",
+    "prepare_packet",
+    "review_receipt",
+    "optimize",
+    "memory_observe",
+    "memory_retrieve",
+    "memory_compare"
+  ],
+  "default_blocked_actions": [
+    "send",
+    "delete",
+    "archive",
+    "forward",
+    "label_batch",
+    "create_event",
+    "move_event",
+    "cancel_event",
+    "invite_people",
+    "message_person",
+    "store_contact",
+    "export_contacts",
+    "external_submission",
+    "public_post",
+    "paid_subscription_action",
+    "open_pull_request",
+    "merge_pull_request",
+    "push_branch",
+    "deploy_service",
+    "pay_invoice",
+    "publish",
+    "connector_mutation",
+    "system_of_record_write",
+    "live_nested_mind_activation"
+  ],
+  "skill_modes": {
+    "read_only": {
+      "internal_write_allowed": false,
+      "external_write_allowed": false,
+      "connector_mutation_allowed": false,
+      "system_of_record_write_allowed": false
+    },
+    "draft_only": {
+      "external_write_allowed": false,
+      "connector_mutation_allowed": false,
+      "system_of_record_write_allowed": false
+    },
+    "planning_only": {
+      "execution_allowed": false
+    },
+    "approval_required": {
+      "explicit_approval_required": true
+    },
+    "blocked": {
+      "execution_allowed": false
+    }
+  },
+  "hard_invariants": {
+    "receipt_required_for_every_skill": true,
+    "uao_required_for_effect_bearing_action": true,
+    "read_only_skills_may_mutate": false,
+    "draft_only_skills_may_send": false,
+    "p4_p5_may_run_without_approval": false,
+    "secret_values_may_be_serialized": false,
+    "raw_private_connector_payloads_may_be_serialized": false,
+    "public_readiness_claim_allowed": false,
+    "live_nested_mind_activation_allowed": false,
+    "customer_readiness_claim_allowed": false
+  },
+  "connector_payload_policy": {
+    "allowed": ["connector_id", "query_hash", "response_digest", "redacted_summary", "evidence_ref", "provider_receipt_ref"],
+    "blocked": ["access_token", "refresh_token", "private_key", "credential_value", "raw_mailbox_payload", "raw_message_body", "raw_calendar_payload"]
+  },
+  "governance_refs": [
+    "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+    "docs/PERSONAL_ASSISTANT_RISK_BOUNDARY.md",
+    "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+    "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md"
+  ]
+}

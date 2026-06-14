@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-request:1",
+  "title": "Personal Assistant Request",
+  "description": "Structured governed-intent intake record for the personal-assistant foundation layer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_type",
+    "request_id",
+    "submitted_at",
+    "interface",
+    "user_goal",
+    "requested_capabilities",
+    "requested_skill_ids",
+    "risk_level",
+    "requires_approval",
+    "execution_mode",
+    "approval_scope",
+    "missing_bindings",
+    "connector_refs",
+    "governance_refs",
+    "blocked_actions",
+    "evidence_refs",
+    "metadata"
+  ],
+  "properties": {
+    "request_type": { "type": "string", "const": "personal_assistant.request" },
+    "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
+    "submitted_at": { "type": "string", "format": "date-time" },
+    "interface": {
+      "type": "string",
+      "enum": [
+        "operator_console",
+        "web_chat",
+        "email_intake",
+        "slack_adapter",
+        "discord_adapter",
+        "telegram_adapter",
+        "whatsapp_adapter",
+        "api_route"
+      ]
+    },
+    "user_goal": { "type": "string", "minLength": 1 },
+    "requested_capabilities": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "requested_skill_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+      "uniqueItems": true
+    },
+    "risk_level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+    "requires_approval": { "type": "boolean" },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["dry_run", "preview", "draft", "execute_with_approval", "blocked", "read_and_draft_only"]
+    },
+    "approval_scope": {
+      "type": "string",
+      "enum": ["none", "per_request", "per_plan", "per_skill", "per_action", "per_recipient"]
+    },
+    "missing_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["binding_id", "binding_type", "reason_code", "question"],
+        "properties": {
+          "binding_id": { "type": "string", "minLength": 1 },
+          "binding_type": {
+            "type": "string",
+            "enum": ["entity", "evidence", "action_boundary", "approval_scope", "connector", "recipient", "artifact", "time_window"]
+          },
+          "reason_code": { "type": "string", "minLength": 1 },
+          "question": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "connector_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["connector_id", "connector_name", "proof_state", "private_data_allowed", "scopes"],
+        "properties": {
+          "connector_id": { "type": "string", "minLength": 1 },
+          "connector_name": { "type": "string", "minLength": 1 },
+          "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+          "private_data_allowed": { "type": "boolean" },
+          "scopes": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "governance_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

@@ -215,6 +215,42 @@
       "surface": "interpretation"
     },
     {
+      "schema_id": "personal-assistant-request",
+      "path": "schemas/personal_assistant_request.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-request:1",
+      "surface": "interpretation"
+    },
+    {
+      "schema_id": "personal-assistant-skill",
+      "path": "schemas/personal_assistant_skill.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-skill:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-plan",
+      "path": "schemas/personal_assistant_plan.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-plan:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-approval",
+      "path": "schemas/personal_assistant_approval.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval:1",
+      "surface": "approval"
+    },
+    {
+      "schema_id": "personal-assistant-receipt",
+      "path": "schemas/personal_assistant_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-receipt:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "personal-assistant-memory-observation",
+      "path": "schemas/personal_assistant_memory_observation.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-observation:1",
+      "surface": "memory"
+    },
+    {
       "schema_id": "connector-descriptor",
       "path": "schemas/connector_descriptor.schema.json",
       "urn": "urn:mullusi:schema:connector-descriptor:1",

@@ -1,0 +1,33 @@
+{
+  "request_type": "personal_assistant.request",
+  "request_id": "pa_request_inbox_summary_001",
+  "submitted_at": "2026-06-14T00:00:00+00:00",
+  "interface": "operator_console",
+  "user_goal": "Check important inbox items and prepare response drafts only.",
+  "requested_capabilities": ["email.read", "email.search", "email.reply_suggest"],
+  "requested_skill_ids": ["email.inbox.summarize", "email.response.draft"],
+  "risk_level": "P1",
+  "requires_approval": false,
+  "execution_mode": "read_and_draft_only",
+  "approval_scope": "none",
+  "missing_bindings": [],
+  "connector_refs": [
+    {
+      "connector_id": "connector:gmail:operator",
+      "connector_name": "gmail",
+      "proof_state": "Pass",
+      "private_data_allowed": true,
+      "scopes": ["gmail.readonly"]
+    }
+  ],
+  "governance_refs": [
+    "docs/PERSONAL_ASSISTANT_RISK_BOUNDARY.md",
+    "docs/UNIVERSAL_ACTION_ORCHESTRATION.md"
+  ],
+  "blocked_actions": ["send", "archive", "delete", "forward", "label_batch"],
+  "evidence_refs": ["proof://personal-assistant/request/inbox-summary"],
+  "metadata": {
+    "fixture": "personal_assistant_request_inbox_summary",
+    "live_connector_execution_allowed": false
+  }
+}

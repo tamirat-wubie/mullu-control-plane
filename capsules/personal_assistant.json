@@ -1,0 +1,34 @@
+{
+  "capsule_id": "personal_assistant.foundation.v0",
+  "domain": "personal_assistant",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/personal_assistant/foundation.json"],
+  "capability_refs": [
+    "personal_assistant.intent.interpret",
+    "personal_assistant.skill_plan.build",
+    "personal_assistant.approval.classify",
+    "personal_assistant.receipt.project",
+    "personal_assistant.memory_observation.prepare"
+  ],
+  "policy_refs": [
+    "governance/personal_assistant_skill_policy.yaml",
+    "governance/personal_assistant_approval_matrix.yaml"
+  ],
+  "evidence_rules": ["evidence/personal_assistant/foundation.evidence.json"],
+  "approval_rules": ["approval/personal_assistant/foundation.approval.json"],
+  "recovery_rules": ["recovery/personal_assistant/foundation.recovery.json"],
+  "test_fixture_refs": ["examples/personal_assistant_skill_registry.json"],
+  "read_model_refs": ["read_models/personal_assistant/foundation.json"],
+  "operator_view_refs": ["operator_views/personal_assistant/foundation.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "draft",
+  "metadata": {
+    "purpose": "Foundation capsule for governed personal-assistant planning, approval classification, receipt projection, and memory observation preparation without live connector execution"
+  },
+  "extensions": {
+    "foundation_mode_required": true,
+    "production_ready": false,
+    "live_connector_execution_allowed": false,
+    "live_nested_mind_activation_allowed": false
+  }
+}

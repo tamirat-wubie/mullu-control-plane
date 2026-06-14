@@ -1,0 +1,106 @@
+{
+  "schema_version": "personal_assistant.approval_matrix.v1",
+  "matrix_id": "personal_assistant_approval_matrix.foundation.v1",
+  "foundation_mode_required": true,
+  "risk_levels": [
+    {
+      "level": "P0",
+      "description": "Public read-only with no private connector",
+      "private_connector_allowed": false,
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": ["dry_run", "preview"]
+    },
+    {
+      "level": "P1",
+      "description": "Private read-only",
+      "private_connector_allowed": true,
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": ["dry_run", "preview", "read_and_draft_only"]
+    },
+    {
+      "level": "P2",
+      "description": "Draft-only",
+      "private_connector_allowed": true,
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": ["dry_run", "preview", "draft", "read_and_draft_only"]
+    },
+    {
+      "level": "P3",
+      "description": "Internal write",
+      "private_connector_allowed": true,
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": ["execute_with_approval", "blocked"]
+    },
+    {
+      "level": "P4",
+      "description": "External communication",
+      "private_connector_allowed": true,
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": ["execute_with_approval", "blocked"]
+    },
+    {
+      "level": "P5",
+      "description": "Money, legal, public, deployment, customer-impacting, or system-of-record action",
+      "private_connector_allowed": true,
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": ["blocked"]
+    }
+  ],
+  "action_classification": {
+    "summarize_inbox": "P1",
+    "draft_email": "P2",
+    "send_email": "P4",
+    "create_calendar_event": "P3",
+    "invite_people": "P4",
+    "write_task": "P3",
+    "publish_public_page": "P5",
+    "deploy_service": "P5",
+    "pay_invoice": "P5",
+    "activate_nested_mind_live": "P5"
+  },
+  "blocked_without_approval": [
+    "send",
+    "delete",
+    "archive",
+    "forward",
+    "label_batch",
+    "create_event",
+    "move_event",
+    "cancel_event",
+    "invite_people",
+    "message_person",
+    "store_contact",
+    "export_contacts",
+    "external_submission",
+    "public_post",
+    "paid_subscription_action",
+    "open_pull_request",
+    "merge_pull_request",
+    "push_branch",
+    "deploy_service",
+    "pay_invoice",
+    "publish",
+    "connector_mutation",
+    "system_of_record_write",
+    "live_nested_mind_activation"
+  ],
+  "overclaim_blocks": {
+    "customer_readiness_claim_allowed": false,
+    "enterprise_sla_claim_allowed": false,
+    "production_readiness_claim_allowed": false,
+    "live_nested_mind_activation_allowed": false
+  },
+  "required_evidence_for_p5": [
+    "operator_approval_ref",
+    "uao_admission_ref",
+    "receipt_ref",
+    "rollback_or_compensation_ref",
+    "named_witness_ref"
+  ]
+}
