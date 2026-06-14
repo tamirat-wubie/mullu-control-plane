@@ -110,6 +110,9 @@ The dashboard projection includes bounded receipt-store posture:
 | `receipt_store.path_configured` | `true` when `MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH` supplied a validated path. |
 | `receipt_store.path_env` | The environment variable that controls durable receipt storage. |
 
+Missing, malformed, or internally inconsistent receipt-store posture marks
+dashboard telemetry as `degraded` and requires operator review.
+
 Expected proof outcome:
 
 ```text

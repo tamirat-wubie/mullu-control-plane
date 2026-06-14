@@ -29,6 +29,15 @@ class FakeObservability:
         return self.projection
 
 
+def _memory_store_posture() -> dict[str, object]:
+    return {
+        "kind": "memory",
+        "persistent": False,
+        "path_configured": False,
+        "path_env": "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH",
+    }
+
+
 def test_operational_math_dashboard_route_exposes_read_only_projection() -> None:
     response = asyncio.run(_get_operational_math_dashboard_response())
     payload = response.json()
@@ -68,6 +77,7 @@ def test_operational_math_dashboard_payload_marks_review_signal() -> None:
                 "governed": True,
                 "requires_operator_review": True,
                 "review_signal_count": 1,
+                "receipt_store": _memory_store_posture(),
             }
         ),
         metrics=metrics,
@@ -80,6 +90,50 @@ def test_operational_math_dashboard_payload_marks_review_signal() -> None:
     assert payload["telemetry"]["source_health"] == "normal"
     assert payload["telemetry"]["reason_refs"] == ["operational_math_receipt_review_required"]
     assert metrics.calls == ["requests_governed"]
+
+
+def test_operational_math_dashboard_payload_marks_missing_store_posture_degraded() -> None:
+    payload = build_operational_math_dashboard_payload(
+        observability=FakeObservability(
+            {
+                "source": "operational_math",
+                "governed": True,
+                "requires_operator_review": False,
+            }
+        ),
+    )
+
+    assert payload["telemetry"]["source_available"] is True
+    assert payload["telemetry"]["source_health"] == "degraded"
+    assert payload["requires_operator_review"] is True
+    assert payload["telemetry"]["reason_refs"] == [
+        "operational_math_receipt_store_posture_missing"
+    ]
+
+
+def test_operational_math_dashboard_payload_marks_invalid_store_posture_degraded() -> None:
+    payload = build_operational_math_dashboard_payload(
+        observability=FakeObservability(
+            {
+                "source": "operational_math",
+                "governed": True,
+                "requires_operator_review": False,
+                "receipt_store": {
+                    "kind": "memory",
+                    "persistent": True,
+                    "path_configured": False,
+                    "path_env": "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH",
+                },
+            }
+        ),
+    )
+
+    assert payload["telemetry"]["source_available"] is True
+    assert payload["telemetry"]["source_health"] == "degraded"
+    assert payload["requires_operator_review"] is True
+    assert payload["telemetry"]["reason_refs"] == [
+        "operational_math_receipt_store_posture_inconsistent"
+    ]
 
 
 def test_operational_math_dashboard_payload_marks_missing_source_degraded() -> None:
