@@ -187,6 +187,59 @@ def test_draft_inputs_reject_raw_payload_fields_and_secret_like_values() -> None
     assert "secret-like values" in str(secret_exc.value)
 
 
+def test_draft_input_mapping_rejects_string_sequence_shape_drift() -> None:
+    with pytest.raises(PersonalAssistantInvariantError) as email_exc:
+        EmailDraftInput.from_mapping(
+            {
+                "message_ref": "msg:string-constraints",
+                "recipient_label": "operator-visible recipient",
+                "sender_label": "operator",
+                "subject_digest": "digest",
+                "thread_summary_digest": "digest",
+                "response_goal": "draft reply",
+                "constraints": "do not send",
+            }
+        )
+
+    with pytest.raises(PersonalAssistantInvariantError) as calendar_attendees_exc:
+        CalendarEventDraftInput.from_mapping(
+            {
+                "meeting_goal": "Review handoff.",
+                "title_digest": "handoff review digest",
+                "proposed_window": "2026-06-14 afternoon",
+                "duration_minutes": 30,
+                "attendee_labels": "operator-visible teammate",
+            }
+        )
+
+    with pytest.raises(PersonalAssistantInvariantError) as calendar_constraints_exc:
+        CalendarEventDraftInput.from_mapping(
+            {
+                "meeting_goal": "Review handoff.",
+                "title_digest": "handoff review digest",
+                "proposed_window": "2026-06-14 afternoon",
+                "duration_minutes": 30,
+                "constraints": "do not invite",
+            }
+        )
+
+    with pytest.raises(PersonalAssistantInvariantError) as task_exc:
+        TaskDraftInput.from_mapping(
+            {
+                "task_goal": "Review release notes.",
+                "source_ref": "conversation:release-notes",
+                "title_digest": "review release notes digest",
+                "priority": "medium",
+                "constraints": "do not write task state",
+            }
+        )
+
+    assert "constraints must be a sequence" in str(email_exc.value)
+    assert "attendee_labels must be a sequence" in str(calendar_attendees_exc.value)
+    assert "constraints must be a sequence" in str(calendar_constraints_exc.value)
+    assert "constraints must be a sequence" in str(task_exc.value)
+
+
 def test_draft_projection_requires_unblocked_intent_and_matching_skill() -> None:
     missing_connector_intent = interpret_user_request(
         "Draft a response to this email.",
