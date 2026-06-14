@@ -1142,6 +1142,17 @@ def test_protocol_manifest_indexes_worker_failure_receipt_contract() -> None:
     assert worker_failure_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_binding_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_only_worker_entry = entries["read-only-worker-binding"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_only_worker_entry["path"] == "schemas/read_only_worker_binding.schema.json"
+    assert read_only_worker_entry["urn"] == "urn:mullusi:schema:read-only-worker-binding:1"
+    assert read_only_worker_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
