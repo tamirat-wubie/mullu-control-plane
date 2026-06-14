@@ -9,7 +9,7 @@
 
 Purpose: define the repository boundary for Mullu Govern and the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation and Foundation Mode claim boundary.
-Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`, `docs/74_truth_kernel_plane.md`, `docs/75_problem_star_compilation_receipt.md`, `docs/76_clarification_request_contract.md`, `docs/77_search_decision_contract.md`, `docs/78_search_receipt_contract.md`, `docs/79_worker_failure_receipt_contract.md`, `docs/80_read_only_worker_binding_contract.md`.
+Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`, `docs/74_truth_kernel_plane.md`, `docs/75_problem_star_compilation_receipt.md`, `docs/76_clarification_request_contract.md`, `docs/77_search_decision_contract.md`, `docs/78_search_receipt_contract.md`, `docs/79_worker_failure_receipt_contract.md`, `docs/80_read_only_worker_binding_contract.md`, `schemas/read_only_worker_rehearsal_receipt.schema.json`.
 Invariants: shared meaning is defined once; Foundation Mode remains the current operating posture until promoted by witness; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullusi remains the company name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface; Mullu Truth Kernel remains an internal MAF Core subsystem, not a company, product, or runtime replacement.
 
 ## Product Identity
@@ -44,6 +44,7 @@ and receipt-backed until a later status witness promotes the project.
 - `SearchReceipt Contract` is a read-only post-decision search receipt that records evidence metadata, freshness results, citations, conflicts, retrieval errors, and retrieval safety outcomes.
 - `WorkerFailureReceipt Contract` is a non-terminal post-dispatch worker receipt that records failed steps, partial effects, unknown effects, rollback obligations, recovery obligations, and no-success guards.
 - `ReadOnlyWorkerBinding Contract` selects local repo inspection as the first worker path and binds worker mesh plus failure receipts while denying runtime dispatch, network, secrets, writes, connector authority, terminal closure, and raw output retention.
+- `ReadOnlyWorkerRehearsalReceipt Contract` records local dry-run evidence for the selected read-only worker path while still denying runtime dispatch, external effects, filesystem writes, connector calls, raw output retention, success claims, and terminal closure.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.

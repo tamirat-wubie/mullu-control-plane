@@ -1,0 +1,120 @@
+{
+  "receipt_id": "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614",
+  "receipt_version": "read_only_worker_rehearsal_receipt.v1",
+  "binding_ref": "examples/read_only_worker_binding.foundation.json",
+  "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+  "selected_worker_path": "read_only_repo_inspection",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-14T19:30:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "local_rehearsal_only": true,
+    "runtime_dispatch_allowed": false,
+    "lease_preflight_required": true,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "raw_output_retention_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "rehearsal_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "rehearsal_mode": "LOCAL_DRY_RUN",
+    "dispatch_admitted": false,
+    "filesystem_snapshot_required": true,
+    "allowed_resource_refs": [
+      "repo://local/docs/*",
+      "repo://local/schemas/*",
+      "repo://local/tests/*"
+    ],
+    "forbidden_effect_refs": [
+      "network://*",
+      "secret://*",
+      "filesystem-write://*",
+      "connector-call://*",
+      "terminal-closure://*",
+      "raw-output://*"
+    ],
+    "required_preflight_refs": [
+      "examples/read_only_worker_binding.foundation.json",
+      "examples/read_only_worker_lease_preflight.foundation.json"
+    ],
+    "verification_refs": [
+      "scripts/validate_read_only_worker_rehearsal_receipt.py",
+      "scripts/validate_read_only_worker_lease_preflight.py",
+      "scripts/validate_read_only_worker_binding.py"
+    ]
+  },
+  "rehearsal_result": {
+    "result_state": "REHEARSAL_RECORDED",
+    "inspected_resource_refs": [
+      "repo://local/docs/80_read_only_worker_binding_contract.md",
+      "repo://local/schemas/read_only_worker_binding.schema.json",
+      "repo://local/schemas/read_only_worker_lease_preflight.schema.json",
+      "repo://local/tests/test_validate_read_only_worker_lease_preflight.py"
+    ],
+    "observed_evidence_refs": [
+      "evidence://local-repo/path-hash/docs/80_read_only_worker_binding_contract.md",
+      "evidence://local-repo/path-hash/schemas/read_only_worker_binding.schema.json",
+      "evidence://local-repo/path-hash/schemas/read_only_worker_lease_preflight.schema.json",
+      "evidence://local-repo/path-hash/tests/test_validate_read_only_worker_lease_preflight.py"
+    ],
+    "output_digest": "sha256:9bdf907542da43c8c83374e0c1a880bb4b9bf9792a67997c15c061d56f33e977",
+    "raw_output_included": false,
+    "raw_secret_material_included": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
+    "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "read_only_worker_rehearsal_receipt_schema": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json"
+  },
+  "contract_summary": {
+    "allowed_resource_ref_count": 3,
+    "forbidden_effect_ref_count": 6,
+    "required_preflight_ref_count": 2,
+    "verification_ref_count": 3,
+    "inspected_resource_ref_count": 4,
+    "observed_evidence_ref_count": 4,
+    "receipt_ref_count": 6,
+    "evidence_ref_count": 8
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "gap://GAP-WORKER-001",
+    "gap://GAP-WORKER-002",
+    "gap://GAP-WORKER-003"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://read-only-worker-rehearsal/foundation-repo-inspection/20260614",
+    "causal_decision_trace_ref": "trace://read-only-worker-rehearsal/foundation-repo-inspection/20260614",
+    "receipt_ref": "receipt://read-only-worker-rehearsal/foundation-repo-inspection/20260614"
+  },
+  "evidence_refs": [
+    "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "examples/read_only_worker_rehearsal_receipt.foundation.json",
+    "scripts/validate_read_only_worker_rehearsal_receipt.py",
+    "tests/test_validate_read_only_worker_rehearsal_receipt.py",
+    "schemas/read_only_worker_binding.schema.json",
+    "schemas/read_only_worker_lease_preflight.schema.json",
+    "examples/read_only_worker_binding.foundation.json",
+    "examples/read_only_worker_lease_preflight.foundation.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This receipt records local rehearsal-only evidence. It does not register, dispatch, execute, mutate files, call connectors, retain raw output, or claim terminal closure."
+  }
+}
