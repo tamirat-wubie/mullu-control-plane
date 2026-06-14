@@ -202,9 +202,10 @@ def clarification_request_for(
     if not actionable_missing_fields.intersection(missing_fields):
         return None
     question = _clarification_question_for(missing_fields)
+    raw_message_hash_ref = _clarification_raw_message_hash_ref(interpreted_request.raw_message_hash)
     payload = {
         "request_id": interpreted_request.request_id,
-        "raw_message_hash": interpreted_request.raw_message_hash,
+        "raw_message_hash": raw_message_hash_ref,
         "missing_fields": missing_fields,
         "safe_default": "no_execution",
     }
@@ -215,7 +216,7 @@ def clarification_request_for(
         actor_id=interpreted_request.actor_id,
         channel=interpreted_request.channel,
         conversation_id=interpreted_request.conversation_id,
-        raw_message_hash=interpreted_request.raw_message_hash,
+        raw_message_hash=raw_message_hash_ref,
         missing_fields=missing_fields,
         reason="missing_required_interpretation_slots",
         max_questions=1,
@@ -223,6 +224,12 @@ def clarification_request_for(
         question=question,
         created_at=created_at,
     )
+
+
+def _clarification_raw_message_hash_ref(raw_message_hash: str) -> str:
+    if raw_message_hash.startswith("hash://"):
+        return raw_message_hash
+    return f"hash://gateway-message/{raw_message_hash}"
 
 
 def _request_id_for(*, message: InterpretableMessage, tenant_id: str, actor_id: str) -> str:
