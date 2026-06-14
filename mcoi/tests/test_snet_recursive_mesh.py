@@ -477,6 +477,37 @@ def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
     )
 
 
+def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+    enum_keyed_settlement_counts = dict(receipt_payload["settlement_counts"])
+    active_count = enum_keyed_settlement_counts.pop("active")
+    enum_keyed_settlement_counts[SNetSettlementState.ACTIVE] = active_count
+
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={1: "numeric key"})
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={SNetWHType.WHAT: "enum key"},
+        )
+    with pytest.raises(ValueError, match="settlement_counts.key"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": enum_keyed_settlement_counts})
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"source": "test"})
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_symbol.metadata["source"] == "test"
+    assert set(valid_receipt.settlement_counts) == {state.value for state in SNetSettlementState}
+    assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
+
+
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
     budgeted_mesh = SNetRecursiveMesh(SNetInquiryBudget(max_questions_per_symbol=1))
     budgeted_seed = budgeted_mesh.add_symbol("Budgeted seed", symbol_type="physical_biological_object")
