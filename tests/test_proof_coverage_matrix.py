@@ -231,6 +231,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["policy_proof_report"]["unanchored_witness_count"] == 0
     assert surfaces["agentic_service_harness_read_models"]["exact_test_anchor_count"] == 12
     assert surfaces["agentic_service_harness_read_models"]["unanchored_witness_count"] == 0
+    assert surfaces["agentic_service_harness_authority_transitions"]["exact_test_anchor_count"] == 6
+    assert surfaces["agentic_service_harness_authority_transitions"]["unanchored_witness_count"] == 0
     assert surfaces["code_intelligence_operator_read_model"]["exact_test_anchor_count"] >= 5
     assert surfaces["code_intelligence_operator_read_model"]["unanchored_witness_count"] == 0
     assert surfaces["data_export_lifecycle"]["exact_test_anchor_count"] >= 4
@@ -3296,6 +3298,52 @@ def test_agentic_service_harness_read_model_surface_binds_planning_only_projecti
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert (
         closure_actions["publish_agentic_service_harness_read_model_contract"]["status"]
+        == "closed"
+    )
+
+
+def test_agentic_service_harness_authority_surface_binds_blocked_effect_transitions() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    authority_surface = surfaces["agentic_service_harness_authority_transitions"]
+    authority_integrity = witness_surfaces["agentic_service_harness_authority_transitions"]
+    witnesses = set(authority_surface["runtime_witnesses"])
+
+    assert authority_surface["request_proof"] == "request_proof"
+    assert authority_surface["action_proof"] == "action_proof"
+    assert authority_surface["audit"] == "audit_chain"
+    assert authority_surface["coverage_state"] == "witnessed"
+    assert (
+        "scripts.validate_agentic_service_harness_contract.validate_agentic_service_harness_contract"
+        in authority_surface["representative_paths"]
+    )
+    assert (
+        "scripts.validate_agentic_service_harness_authority_transitions.validate_agentic_service_harness_authority_transitions"
+        in authority_surface["representative_paths"]
+    )
+    assert "schemas/agentic_service_harness.schema.json" in authority_surface["evidence_files"]
+    assert "scripts/validate_agentic_service_harness_authority_transitions.py" in authority_surface["evidence_files"]
+    assert "examples/agentic_service_harness.branch_write_awaiting_approval.json" in authority_surface["evidence_files"]
+    assert "examples/agentic_service_harness.open_pr_awaiting_approval.json" in authority_surface["evidence_files"]
+    assert "examples/agentic_service_harness.blocked_high_risk.json" in authority_surface["evidence_files"]
+    assert "tests/test_validate_agentic_service_harness_authority_transitions.py" in authority_surface["evidence_files"]
+    assert "harness_authority_transitions_accept_default_fixtures" in witnesses
+    assert "harness_authority_rejects_approved_branch_gate" in witnesses
+    assert "harness_authority_rejects_dry_run_file_change" in witnesses
+    assert "harness_authority_rejects_open_pr_without_branch_evidence" in witnesses
+    assert "harness_authority_rejects_incomplete_high_risk_block" in witnesses
+    assert "harness_authority_validator_emits_strict_receipt" in witnesses
+    assert "read-only and dry-run scenarios non-effectful" in authority_surface["notes"]
+    assert "high-risk merge, deploy, DNS" in authority_surface["notes"]
+    assert authority_integrity["exact_test_anchor_count"] == 6
+    assert authority_integrity["unanchored_witness_count"] == 0
+    assert (
+        closure_actions["publish_agentic_service_harness_authority_transition_contract"]["status"]
         == "closed"
     )
 
