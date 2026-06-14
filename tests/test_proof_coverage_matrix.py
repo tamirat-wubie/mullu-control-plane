@@ -3148,6 +3148,45 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
 
 
+def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    replay_surface = surfaces["snet_episode_replay"]
+    replay_integrity = witness_surfaces["snet_episode_replay"]
+    witnesses = set(replay_surface["runtime_witnesses"])
+
+    assert replay_surface["coverage_state"] == "witnessed"
+    assert replay_surface["request_proof"] == "request_proof"
+    assert replay_surface["action_proof"] == "action_proof"
+    assert replay_surface["audit"] == "audit_chain"
+    assert "scripts.validate_snet_episode_replay.validate_contract" in replay_surface["representative_paths"]
+    assert "scripts.validate_snet_episode_replay.validate_episode" in replay_surface["representative_paths"]
+    assert "scripts.validate_snet_episode_replay.replay_episode" in replay_surface["representative_paths"]
+    assert "examples/snet_episode_seed_dependency.json" in replay_surface["representative_paths"]
+    assert "schemas/snet_episode.schema.json" in replay_surface["evidence_files"]
+    assert "schemas/snet_mesh_receipt.schema.json" in replay_surface["evidence_files"]
+    assert "scripts/validate_snet_episode_replay.py" in replay_surface["evidence_files"]
+    assert "scripts/validate_snet_mesh_receipt.py" in replay_surface["evidence_files"]
+    assert "examples/snet_episode_seed_dependency.json" in replay_surface["evidence_files"]
+    assert "tests/test_validate_snet_episode_replay.py" in replay_surface["evidence_files"]
+    assert "snet_episode_replay_contract_passes" in witnesses
+    assert "snet_episode_replay_is_deterministic" in witnesses
+    assert "snet_episode_rejects_answer_drift" in witnesses
+    assert "snet_episode_rejects_authority_and_raw_field_mutations" in witnesses
+    assert "snet_episode_rejects_expected_count_drift" in witnesses
+    assert "snet_episode_saved_file_validation" in witnesses
+    assert "committed_snet_episode_example_replays_to_expected_receipt" in witnesses
+    assert "read-only SNet mesh evidence" in replay_surface["notes"]
+    assert replay_integrity["exact_test_anchor_count"] == 7
+    assert replay_integrity["unanchored_witness_count"] == 0
+    assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
+
+
 def test_structured_output_validation_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

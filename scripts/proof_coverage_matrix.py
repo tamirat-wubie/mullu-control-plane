@@ -6764,6 +6764,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "snet_episode_replay",
+            [
+                "scripts.validate_snet_episode_replay.validate_contract",
+                "scripts.validate_snet_episode_replay.validate_episode",
+                "scripts.validate_snet_episode_replay.replay_episode",
+                "examples/snet_episode_seed_dependency.json",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/snet_episode.schema.json",
+                "schemas/snet_mesh_receipt.schema.json",
+                "scripts/validate_snet_episode_replay.py",
+                "scripts/validate_snet_mesh_receipt.py",
+                "examples/snet_episode_seed_dependency.json",
+                "tests/test_validate_snet_episode_replay.py",
+            ],
+            (
+                "SNet episode replay binds a bounded seed symbol, WH answer "
+                "bindings, deterministic input digest, expected mesh receipt, "
+                "raw-answer exposure denial, authority denial, and saved "
+                "example replay into one local proof surface. Replay produces "
+                "read-only SNet mesh evidence and is not terminal closure."
+            ),
+            [
+                "snet_episode_replay_contract_passes",
+                "snet_episode_replay_is_deterministic",
+                "snet_episode_rejects_answer_drift",
+                "snet_episode_rejects_authority_and_raw_field_mutations",
+                "snet_episode_rejects_expected_count_drift",
+                "snet_episode_saved_file_validation",
+                "committed_snet_episode_example_replays_to_expected_receipt",
+            ],
+        ),
+        _surface(
             "operational_math_loop",
             [
                 "/api/v1/dashboard/operational-math",
@@ -7100,6 +7137,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "anchor_operational_math_loop_receipts_and_projection",
             "surfaces": ["operational_math_loop"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_snet_episode_replay_contract",
+            "surfaces": ["snet_episode_replay"],
             "status": "closed",
         },
         {
