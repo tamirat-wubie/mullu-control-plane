@@ -4246,8 +4246,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
                 "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py",
                 "tests/test_validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
+                "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, and operator-input readiness behind handoff readiness and separate approval evidence.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, and observation receipt binding behind handoff readiness, separate approval evidence, and redacted read-only evidence.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4292,6 +4297,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_input_request_blocks_effect_drift",
                 "team_ops_shared_inbox_probe_input_request_redacts_secret_markers",
                 "team_ops_shared_inbox_probe_input_request_writes_validation_receipt",
+                "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input",
+                "team_ops_shared_inbox_probe_receipt_requires_observation_evidence",
+                "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation",
+                "team_ops_shared_inbox_probe_receipt_blocks_effect_drift",
+                "team_ops_shared_inbox_probe_receipt_redacts_secret_markers",
+                "team_ops_shared_inbox_probe_receipt_writes_validation_receipt",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4469,6 +4480,32 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_input_request_writes_validation_receipt": [
                     "team_ops_live_probe_operator_input_request_cli_writes_report",
                     "team_ops_live_probe_operator_input_request_validation_cli_writes_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input": [
+                    "team_ops_shared_inbox_live_probe_receipt_blocks_without_operator_input_ready",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_requires_observation_evidence": [
+                    "team_ops_shared_inbox_live_probe_receipt_requires_observation_evidence",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation": [
+                    "team_ops_shared_inbox_live_probe_receipt_accepts_read_only_observation",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_blocks_effect_drift": [
+                    "team_ops_shared_inbox_live_probe_receipt_blocks_count_over_authority",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_count_over_authority",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_raw_query_field",
+                ],
+                "team_ops_shared_inbox_probe_receipt_redacts_secret_markers": [
+                    "team_ops_shared_inbox_live_probe_receipt_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_probe_receipt_writes_validation_receipt": [
+                    "team_ops_shared_inbox_live_probe_receipt_cli_writes_report",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_cli_writes_receipt",
                 ],
             },
         ),
@@ -7884,6 +7921,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_team_ops_shared_inbox_live_probe_operator_input_request_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_live_probe_receipt_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },

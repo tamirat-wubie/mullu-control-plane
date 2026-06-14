@@ -689,6 +689,12 @@
       "surface": "team_ops"
     },
     {
+      "schema_id": "team-ops-shared-inbox-live-probe-receipt",
+      "path": "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-receipt:1",
+      "surface": "team_ops"
+    },
+    {
       "schema_id": "finance-approval-payment-closure-receipt",
       "path": "schemas/finance_approval_payment_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-payment-closure-receipt:1",

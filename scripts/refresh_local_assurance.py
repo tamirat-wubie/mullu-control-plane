@@ -5,7 +5,7 @@ Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
 handoff receipts, TeamOps shared inbox blocked handoff, approval binding,
-probe-authority, and operator-input request receipts, aggregate adapter
+probe-authority, operator-input request, and live-probe receipt, aggregate adapter
 evidence, proof coverage witness, protocol manifest validation, and finance
 proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
@@ -16,7 +16,7 @@ Invariants:
   - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
     not mint tokens, contact Google, or claim live readiness.
   - TeamOps shared inbox steps emit blocked handoff, redacted probe approval
-    binding, read-only probe authority, and operator-input request receipts
+    binding, read-only probe authority, operator-input request, and live-probe receipts
     without provider calls, mailbox writes, drafts, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
@@ -228,6 +228,32 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked TeamOps live-probe operator inputs without executing the probe",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py",
+            "--operator-input",
+            ".change_assurance/team_ops_shared_inbox_live_probe_operator_input_request.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_receipt.json",
+            "--json",
+        ),
+        purpose="emit blocked TeamOps live-probe receipt without executing a provider call",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_receipt_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py",
+            "--receipt",
+            ".change_assurance/team_ops_shared_inbox_live_probe_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_receipt_validation.json",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps live-probe receipt without live readiness claim",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",
