@@ -2481,6 +2481,15 @@ class TestGatewayStatus:
         certificate = gateway_app.state.command_ledger.latest_terminal_certificate()
         assert certificate is not None
         command_id = certificate.command_id
+        whqr_metadata = {
+            "whqr_canonical_hash": "sha256:closure-whqr-canonical",
+            "whqr_semantics_hash": "sha256:closure-whqr-semantics",
+            "whqr_version": "0.1.0",
+        }
+        gateway_app.state.command_ledger._terminal_certificates[command_id] = replace(
+            certificate,
+            metadata={**certificate.metadata, **whqr_metadata},
+        )
 
         resp = client.get(f"/commands/{command_id}/closure")
         assert resp.status_code == 200
@@ -2488,11 +2497,22 @@ class TestGatewayStatus:
         assert data["command_id"] == command_id
         assert data["terminal_certificate"]["disposition"] == "committed"
         assert data["terminal_certificate"]["evidence_refs"]
+        assert data["terminal_certificate"]["metadata"]["whqr_canonical_hash"] == (
+            "sha256:closure-whqr-canonical"
+        )
+        assert data["whqr_replay_binding"] == {
+            "replay_ref": "whqr://replay/sha256:closure-whqr-canonical",
+            "canonical_hash": "sha256:closure-whqr-canonical",
+            "semantics_hash": "sha256:closure-whqr-semantics",
+            "version": "0.1.0",
+        }
+        assert data["whqr_replay_ref"] == "whqr://replay/sha256:closure-whqr-canonical"
         assert len(data["events"]) >= 3
         witnesses = data["proof_coverage_witnesses"]
         invariant_ids = {witness["invariant_id"] for witness in witnesses}
         assert "command_lifecycle_events_are_hash_linked" in invariant_ids
         assert "terminal_closure_requires_evidence_refs" in invariant_ids
+        assert "terminal_closure_exposes_whqr_replay_ref" in invariant_ids
         assert (
             "successful_response_is_bound_to_response_evidence_closure" in invariant_ids
         )
@@ -2505,6 +2525,13 @@ class TestGatewayStatus:
             witnesses[1]["evidence_refs"]
             == data["terminal_certificate"]["evidence_refs"]
         )
+        whqr_witness = next(
+            witness
+            for witness in witnesses
+            if witness["invariant_id"] == "terminal_closure_exposes_whqr_replay_ref"
+        )
+        assert whqr_witness["witness_ref"] == data["whqr_replay_ref"]
+        assert whqr_witness["canonical_hash"] == "sha256:closure-whqr-canonical"
         assert data["terminal_certificate"]["response_evidence_closure_id"]
 
     def test_command_interpretation_receipt_read_model_bounds_raw_message(
