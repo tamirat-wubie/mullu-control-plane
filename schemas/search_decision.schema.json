@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:search-decision:1",
+  "title": "Search Decision",
+  "description": "Read-only decision contract for search need, freshness, budget, source scope, and retrieval safety before any evidence retrieval occurs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "decision_version",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "decision_state",
+    "search_need",
+    "freshness",
+    "source_plan",
+    "cache_decision",
+    "budget_decision",
+    "retrieval_safety",
+    "governance_guards",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "decision_id": { "type": "string", "pattern": "^search-decision-[a-z0-9-]+$" },
+    "decision_version": { "type": "string", "const": "search_decision.v1" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "decision_state": {
+      "type": "string",
+      "enum": [
+        "NO_SEARCH_NEEDED",
+        "CACHE_HIT_ALLOWED",
+        "LOCAL_SEARCH_ALLOWED",
+        "WEB_SEARCH_LIGHT_ALLOWED",
+        "WEB_SEARCH_DEEP_APPROVAL_REQUIRED",
+        "SEARCH_BLOCKED_BY_BUDGET",
+        "SEARCH_BLOCKED_BY_UNKNOWN",
+        "SEARCH_FAILED_WITH_EXPLANATION"
+      ]
+    },
+    "search_need": { "$ref": "#/$defs/search_need" },
+    "freshness": { "$ref": "#/$defs/freshness_decision" },
+    "source_plan": { "$ref": "#/$defs/source_plan" },
+    "cache_decision": { "$ref": "#/$defs/cache_decision" },
+    "budget_decision": { "$ref": "#/$defs/budget_decision" },
+    "retrieval_safety": { "$ref": "#/$defs/retrieval_safety" },
+    "governance_guards": { "$ref": "#/$defs/governance_guards" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "search_need": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "confidence", "rationale_refs"],
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": [
+            "no_search_needed",
+            "cache_allowed",
+            "local_search_required",
+            "web_search_light_allowed",
+            "web_search_deep_approval_required",
+            "search_blocked"
+          ]
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "freshness_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "freshness_required",
+        "current_info_claim_allowed",
+        "max_age_seconds",
+        "proof_state",
+        "rationale_refs"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["not_required", "required", "stale_must_refresh", "unknown_blocked"]
+        },
+        "freshness_required": { "type": "boolean" },
+        "current_info_claim_allowed": { "type": "boolean" },
+        "max_age_seconds": { "type": ["integer", "null"], "minimum": 0 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "source_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_sources",
+        "selected_sources",
+        "tenant_scope_required",
+        "external_retrieval_allowed",
+        "connector_scope_ref",
+        "rationale_refs"
+      ],
+      "properties": {
+        "allowed_sources": { "$ref": "#/$defs/source_array" },
+        "selected_sources": { "$ref": "#/$defs/source_array" },
+        "tenant_scope_required": { "type": "boolean", "const": true },
+        "external_retrieval_allowed": { "type": "boolean" },
+        "connector_scope_ref": { "type": ["string", "null"], "minLength": 1 },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "cache_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "cache_key_ref", "tenant_scoped", "stale_cache_allowed"],
+      "properties": {
+        "state": { "type": "string", "enum": ["not_checked", "hit", "miss", "stale", "blocked"] },
+        "cache_key_ref": { "type": ["string", "null"], "minLength": 1 },
+        "tenant_scoped": { "type": "boolean", "const": true },
+        "stale_cache_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "budget_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "estimated_cost_class",
+        "approval_required",
+        "approved_budget_ref",
+        "proof_state",
+        "rationale_refs"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["within_budget", "approval_required", "blocked_by_budget", "unknown_blocked"]
+        },
+        "estimated_cost_class": { "type": "string", "enum": ["none", "low", "medium", "high", "unknown"] },
+        "approval_required": { "type": "boolean" },
+        "approved_budget_ref": { "type": ["string", "null"], "minLength": 1 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "retrieval_safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retrieved_content_authority",
+        "prompt_injection_guard",
+        "tool_instruction_from_source_allowed",
+        "policy_instruction_from_source_allowed",
+        "private_source_scope_required",
+        "conflict_handling"
+      ],
+      "properties": {
+        "retrieved_content_authority": { "type": "string", "const": "evidence_only" },
+        "prompt_injection_guard": { "type": "boolean", "const": true },
+        "tool_instruction_from_source_allowed": { "type": "boolean", "const": false },
+        "policy_instruction_from_source_allowed": { "type": "boolean", "const": false },
+        "private_source_scope_required": { "type": "boolean", "const": true },
+        "conflict_handling": { "type": "string", "enum": ["cite_conflict", "block_current_claim", "escalate"] }
+      }
+    },
+    "governance_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "connector_authority_granted",
+        "external_retrieval_performed",
+        "terminal_closure",
+        "raw_secret_material_included",
+        "retrieved_instruction_authority_granted",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "connector_authority_granted": { "type": "boolean", "const": false },
+        "external_retrieval_performed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "raw_secret_material_included": { "type": "boolean", "const": false },
+        "retrieved_instruction_authority_granted": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "source_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["local_repo", "local_docs", "tenant_cache", "web", "connector"]
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
