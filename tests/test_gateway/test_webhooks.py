@@ -2779,6 +2779,12 @@ class TestGatewayStatus:
         )
 
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
+        whqr_binding = {
+            "replay_ref": "whqr://replay/proof-canonical-hash",
+            "canonical_hash": "proof-canonical-hash",
+            "semantics_hash": "proof-semantics-hash",
+            "version": "0.1.0",
+        }
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
             actor_id="u1",
@@ -2803,6 +2809,7 @@ class TestGatewayStatus:
                     "closure_state": "closed_allowed",
                     "reconciliation_ref": "reconciliation://uact-1",
                     "memory_ref": "memory://uact-1",
+                    "whqr_replay_binding": whqr_binding,
                     "terminal_certificate_id": "",
                     "learning_admission_id": "",
                 },
@@ -2844,6 +2851,9 @@ class TestGatewayStatus:
         assert proof["closure_state"] == "closed_allowed"
         assert proof["reconciliation_ref"] == "reconciliation://uact-1"
         assert proof["memory_ref"] == "memory://uact-1"
+        assert proof["whqr_replay_binding"] == whqr_binding
+        assert data["whqr_replay_binding"] == whqr_binding
+        assert data["whqr_replay_ref"] == "whqr://replay/proof-canonical-hash"
         assert proof["terminal_certificate_id"] == "terminal-1"
         assert proof["terminal_disposition"] == "committed"
         assert proof["learning_admission_id"] == "learn-1"

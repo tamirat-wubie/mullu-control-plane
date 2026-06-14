@@ -3424,12 +3424,18 @@ def create_gateway_app(
                 raise HTTPException(404, detail="command not found")
             raise HTTPException(404, detail="universal action proof not found")
         proof_payload = asdict(proof)
+        whqr_replay_binding = proof_payload.get("whqr_replay_binding")
+        if not isinstance(whqr_replay_binding, Mapping):
+            whqr_replay_binding = {}
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "universal_action_proof": proof_payload,
             "event_count": len(proof.event_hashes),
             "state_sequence": list(proof.state_sequence),
             "proof_hash": proof.proof_hash,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
         }
 
     @app.get("/commands/{command_id}/universal-action-orchestration")
