@@ -8,7 +8,8 @@
     "personal_assistant.skill_plan.build",
     "personal_assistant.approval.classify",
     "personal_assistant.receipt.project",
-    "personal_assistant.memory_observation.prepare"
+    "personal_assistant.memory_observation.prepare",
+    "personal_assistant.clarification.request"
   ],
   "policy_refs": [
     "governance/personal_assistant_skill_policy.yaml",

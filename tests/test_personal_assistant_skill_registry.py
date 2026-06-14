@@ -37,7 +37,7 @@ def test_personal_assistant_skill_registry_accepts_foundation_fixture() -> None:
     result = validate_personal_assistant_skill_registry()
 
     assert result.valid is True
-    assert result.skill_count == 13
+    assert result.skill_count == 14
     assert "email.inbox.summarize" in result.skill_ids
     assert "math.reasoning.plan" in result.skill_ids
     assert "task.create_draft" in result.skill_ids
@@ -57,7 +57,7 @@ def test_read_only_skills_cannot_declare_mutation_authority(tmp_path: Path) -> N
     result = validate_personal_assistant_skill_registry(registry_path=registry_path)
 
     assert result.valid is False
-    assert result.skill_count == 13
+    assert result.skill_count == 14
     assert any("read-only skill allows mutating actions" in error for error in result.errors)
     assert any("external_write_allowed=true" in error for error in result.errors)
 
@@ -121,7 +121,7 @@ def test_personal_assistant_capability_pack_and_capsule_are_schema_valid() -> No
     capsule = _load_json(CAPSULE_PATH)
     capability_ids = tuple(entry["capability_id"] for entry in pack["capabilities"])
 
-    assert len(capability_ids) == 5
+    assert len(capability_ids) == 6
     assert all(_validate_schema_instance(registry_schema, entry) == [] for entry in pack["capabilities"])
     assert _validate_schema_instance(capsule_schema, capsule) == []
     assert tuple(capsule["capability_refs"]) == capability_ids

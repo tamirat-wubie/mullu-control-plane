@@ -13,7 +13,7 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -35,6 +35,14 @@ from mcoi_runtime.assistant_kernel import (
     team_ops_shared_inbox_goal,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+from mcoi_runtime.personal_assistant import (
+    PersonalAssistantInvariantError,
+    RequestInterface,
+    build_clarification_requests,
+    build_personal_assistant_preview_plan,
+    interpret_user_request,
+    load_default_skill_registry,
+)
 
 
 router = APIRouter()
@@ -70,6 +78,19 @@ class TeamOpsAssistantPlanRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class PersonalAssistantPreviewRequest(BaseModel):
+    """Request to interpret and preview a governed personal-assistant action."""
+
+    user_request: str
+    request_id: str = ""
+    submitted_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[dict[str, Any]] = Field(default_factory=list)
+    thread_id: str = "thread-personal-assistant-preview"
+    requested_from_id: str = "operator"
+    include_console_read_model: bool = False
+
+
 def _clock_now() -> str:
     try:
         return deps.clock()
@@ -98,6 +119,83 @@ def assistant_profiles_read_model():
         "count": len(profiles),
         "governed": True,
     }
+
+
+@router.get("/api/v1/personal-assistant/skills")
+def personal_assistant_skill_read_model():
+    """Return the governed personal-assistant skill registry read model."""
+    _inc_metric("requests_governed")
+    registry = load_default_skill_registry()
+    return {
+        "registry": registry.read_model(),
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "governed": True,
+    }
+
+
+@router.post("/api/v1/personal-assistant/requests/preview")
+def preview_personal_assistant_request(req: PersonalAssistantPreviewRequest):
+    """Interpret a request and emit request, WHQR, plan, and receipt previews."""
+    _inc_metric("requests_governed")
+    try:
+        now = req.submitted_at or _clock_now()
+        request_id = req.request_id or _personal_assistant_request_id(req.user_request, now, req.interface)
+        plan_id = _personal_assistant_plan_id(request_id)
+        intent = interpret_user_request(
+            req.user_request,
+            request_id=request_id,
+            submitted_at=now,
+            interface=req.interface,
+            connector_refs=tuple(req.connector_refs),
+        )
+        clarification_bundle = build_clarification_requests(
+            intent,
+            thread_id=req.thread_id,
+            requested_from_id=req.requested_from_id,
+            requested_at=now,
+        )
+        envelope = build_personal_assistant_preview_plan(intent, plan_id=plan_id, created_at=now)
+    except (PersonalAssistantInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_assistant_error_detail(
+                "invalid personal assistant preview",
+                "invalid_personal_assistant_preview",
+            ),
+        ) from exc
+    response: dict[str, Any] = {
+        **envelope.as_dict(),
+        "clarification_bundle": {
+            "request_id": clarification_bundle.request_id,
+            "clarifications": [request.to_json_dict() for request in clarification_bundle.clarifications],
+            "clarification_count": len(clarification_bundle.clarifications),
+        },
+        "outcome": _personal_assistant_outcome(envelope.plan, clarification_bundle.empty),
+        "effect_boundary": {
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "memory_write_allowed": False,
+            "deployment_mutation_allowed": False,
+        },
+    }
+    if req.include_console_read_model:
+        from mcoi_runtime.personal_assistant import build_personal_assistant_console_read_model
+
+        response["console_read_model"] = build_personal_assistant_console_read_model(
+            generated_at=now,
+            recent_requests=(
+                {
+                    "request_id": envelope.request["request_id"],
+                    "summary": envelope.request["user_goal"],
+                    "status": envelope.plan["mode"],
+                },
+            ),
+            receipts=(envelope.receipt,),
+        )
+    return response
 
 
 @router.post("/api/v1/assistant/finance-ops/plans")
@@ -262,3 +360,22 @@ def _operator_queue_item(
     if cognitive_context is not None:
         item["cognitive_planning_context"] = cognitive_context
     return item
+
+
+def _personal_assistant_request_id(user_request: str, submitted_at: str, interface: str) -> str:
+    return "pa_request_" + stable_identifier(
+        "personal-assistant-request",
+        {"user_request": user_request, "submitted_at": submitted_at, "interface": interface},
+    )
+
+
+def _personal_assistant_plan_id(request_id: str) -> str:
+    return "pa_plan_" + stable_identifier("personal-assistant-plan", {"request_id": request_id})
+
+
+def _personal_assistant_outcome(plan: Mapping[str, Any], clarification_complete: bool) -> str:
+    if not clarification_complete:
+        return "AwaitingEvidence"
+    if bool(plan.get("requires_approval")):
+        return "AwaitingEvidence"
+    return "SolvedVerified"
