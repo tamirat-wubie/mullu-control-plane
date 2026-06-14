@@ -147,6 +147,25 @@ def test_document_metadata_is_deep_frozen_for_stable_hashes() -> None:
         document.root.metadata["details"]["evidence_refs"] += ("evidence:vendor-3",)
 
 
+def test_nested_metadata_keys_must_remain_text_for_canonical_identity() -> None:
+    with pytest.raises(ValueError, match="metadata key"):
+        WHQRNode(
+            role=WHRole.WHAT,
+            target="vendor_record",
+            metadata={"details": {1: "numeric-key"}},
+        )
+    with pytest.raises(ValueError, match="metadata key"):
+        GateResult(
+            truth=TruthGate.TRUE,
+            metadata={"details": {("compound", "key"): "tuple-key"}},
+        )
+    with pytest.raises(ValueError, match="metadata key"):
+        WHQRDocument(
+            root=WHQRNode(role=WHRole.WHAT, target="vendor_record"),
+            metadata={"details": {False: "boolean-key"}},
+        )
+
+
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")

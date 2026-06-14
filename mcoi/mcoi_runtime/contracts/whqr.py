@@ -138,12 +138,7 @@ def _freeze_metadata(metadata: Mapping[str, Any]) -> Mapping[str, Any]:
 
 def _freeze_metadata_value(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {
-                key: _freeze_metadata_value(item)
-                for key, item in sorted(value.items(), key=lambda item: str(item[0]))
-            }
-        )
+        return _freeze_metadata(value)
     if isinstance(value, tuple):
         return tuple(_freeze_metadata_value(item) for item in value)
     if isinstance(value, list):
