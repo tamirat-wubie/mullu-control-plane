@@ -3181,7 +3181,7 @@
         "tests/test_gateway/test_webhooks.py",
         "tests/test_governed_capability_fabric.py"
       ],
-      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof and orchestration replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
@@ -3249,6 +3249,9 @@
         "terminal_closure_requires_evidence_refs": [
           "command_closure_read_model"
         ],
+        "universal_action_orchestration_exposes_whqr_replay_ref": [
+          "command_universal_action_orchestration_read_model"
+        ],
         "universal_action_orchestration_replays_from_command_events": [
           "universal_command_orchestration_record_replays_success_events",
           "universal_command_orchestration_record_replays_blocked_events",
@@ -3278,6 +3281,7 @@
         "universal_action_proof_exposes_whqr_replay_ref",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
+        "universal_action_orchestration_exposes_whqr_replay_ref",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
         "capability_admission_audits_filter_status",
@@ -11075,8 +11079,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1445,
-    "runtime_witness_count": 1445,
+    "exact_test_anchor_count": 1446,
+    "runtime_witness_count": 1446,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11157,6 +11161,12 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_universal_action_orchestration_read_model"
+            ],
+            "witness": "universal_action_orchestration_exposes_whqr_replay_ref"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_webhooks.py::test_operator_universal_actions_read_model_filters_proofs"
             ],
             "witness": "operator_universal_action_read_model_filters_command_proofs"
@@ -11211,8 +11221,8 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
         "surface_id": "gateway_capability_fabric",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

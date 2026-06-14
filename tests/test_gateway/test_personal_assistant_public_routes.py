@@ -100,6 +100,34 @@ def test_gateway_personal_assistant_preview_requests_clarification_for_missing_b
     assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
 
 
+def test_gateway_personal_assistant_preview_rejects_extra_private_connector_fields() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/requests/preview",
+        json={
+            "user_request": "Check my inbox and draft replies.",
+            "submitted_at": "2026-06-14T10:22:00+00:00",
+            "connector_refs": [
+                {
+                    "connector_id": "connector:gmail",
+                    "connector_name": "gmail",
+                    "proof_state": "Pass",
+                    "private_data_allowed": False,
+                    "scopes": ["metadata_only"],
+                    "raw_private_connector_payload": "private transcript",
+                }
+            ],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_private_connector_payload" in serialized
+    assert "private transcript" not in serialized
+    assert "request_interpreted" not in serialized
+
+
 def test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -173,6 +201,28 @@ def test_gateway_personal_assistant_approval_queue_approved_still_defers_executi
     assert payload["effect_boundary"]["external_send_allowed"] is False
 
 
+def test_gateway_personal_assistant_approval_queue_rejects_extra_private_action_fields() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = _approval_preview_payload()
+    request_payload["proposed_actions"] = [
+        {
+            **request_payload["proposed_actions"][0],
+            "raw_private_connector_payload": "private transcript",
+        }
+    ]
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-queue/preview",
+        json=request_payload,
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_private_connector_payload" in serialized
+    assert "private transcript" not in serialized
+    assert "approval_request_enqueued" not in serialized
+
+
 def test_gateway_personal_assistant_memory_read_model_is_empty_and_safe() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -244,6 +294,26 @@ def test_gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activ
     assert activation_response.json()["detail"]["error_code"] == "invalid_personal_assistant_memory_observation_preview"
     assert "private transcript" not in serialized_error
     assert "raw_chat_log" not in serialized_error
+
+
+def test_gateway_personal_assistant_memory_preview_rejects_extra_private_source_fields() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = _memory_preview_payload()
+    request_payload["source"] = {
+        **request_payload["source"],
+        "raw_private_connector_payload": "private transcript",
+    }
+
+    response = client.post(
+        "/api/v1/personal-assistant/memory-observations/preview",
+        json=request_payload,
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_private_connector_payload" in serialized
+    assert "private transcript" not in serialized
+    assert "memory_observation_candidate_prepared" not in serialized
 
 
 def _approval_preview_payload() -> dict[str, object]:
