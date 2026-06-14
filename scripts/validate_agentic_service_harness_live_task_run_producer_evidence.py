@@ -94,6 +94,7 @@ REQUIRED_VALIDATORS = (
     "python scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py",
     "python scripts/validate_agentic_service_harness_live_producer_operator_decision_evidence.py",
     "python scripts/validate_agentic_service_harness_live_producer_operator_decision_record.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_absence.py",
     "python scripts/validate_agentic_service_harness_authority_transitions.py",
 )
 REQUIRED_FIXTURE_SURFACES = (
