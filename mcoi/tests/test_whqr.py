@@ -82,6 +82,17 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
     assert first.canonical_hash() == second.canonical_hash()
 
 
+def test_document_semantics_header_must_match_canonical_pair() -> None:
+    root = WHQRNode(role=WHRole.WHAT, target="payment_request")
+
+    with pytest.raises(ValueError, match="canonical WHQR semantics"):
+        WHQRDocument(root=root, whqr_version="0.2.0")
+    with pytest.raises(ValueError, match="canonical WHQR semantics"):
+        WHQRDocument(root=root, semantics_hash="sha256:custom-whqr-semantics")
+    with pytest.raises(ValueError, match="semantics_hash must start"):
+        WHQRDocument(root=root, semantics_hash="custom-whqr-semantics")
+
+
 def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     document = WHQRDocument(
         root=WHQRNode(
