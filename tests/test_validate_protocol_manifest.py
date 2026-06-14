@@ -1153,6 +1153,17 @@ def test_protocol_manifest_indexes_read_only_worker_binding_contract() -> None:
     assert read_only_worker_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_lease_preflight_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    preflight_entry = entries["read-only-worker-lease-preflight"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert preflight_entry["path"] == "schemas/read_only_worker_lease_preflight.schema.json"
+    assert preflight_entry["urn"] == "urn:mullusi:schema:read-only-worker-lease-preflight:1"
+    assert preflight_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
