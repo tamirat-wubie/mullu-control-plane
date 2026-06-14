@@ -10060,6 +10060,8 @@
         "snet_operator_read_model_rejects_count_drift",
         "snet_operator_read_model_rejects_symbol_raw_field",
         "snet_operator_read_model_zero_symbol_projection_is_valid",
+        "snet_operator_read_model_malformed_root_reports_errors",
+        "snet_operator_read_model_non_integer_truncation_reports_errors",
         "snet_mesh_receipt_contract_passes",
         "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations",
         "snet_mesh_receipt_saved_file_validation",
@@ -10561,8 +10563,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1373,
-    "runtime_witness_count": 1373,
+    "exact_test_anchor_count": 1375,
+    "runtime_witness_count": 1375,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19593,6 +19595,18 @@
           },
           {
             "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_malformed_root_reports_errors"
+            ],
+            "witness": "snet_operator_read_model_malformed_root_reports_errors"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_non_integer_truncation_reports_errors"
+            ],
+            "witness": "snet_operator_read_model_non_integer_truncation_reports_errors"
+          },
+          {
+            "anchors": [
               "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_contract_passes"
             ],
             "witness": "snet_mesh_receipt_contract_passes"
@@ -19664,8 +19678,8 @@
             "witness": "start_here_links_snet_operator_doc"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 20,
+        "runtime_witness_count": 20,
         "surface_id": "snet_operator_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

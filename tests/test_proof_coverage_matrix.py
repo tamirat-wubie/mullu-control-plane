@@ -3257,6 +3257,8 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "snet_operator_read_model_rejects_count_drift" in witnesses
     assert "snet_operator_read_model_rejects_symbol_raw_field" in witnesses
     assert "snet_operator_read_model_zero_symbol_projection_is_valid" in witnesses
+    assert "snet_operator_read_model_malformed_root_reports_errors" in witnesses
+    assert "snet_operator_read_model_non_integer_truncation_reports_errors" in witnesses
     assert "snet_mesh_receipt_contract_passes" in witnesses
     assert "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations" in witnesses
     assert "snet_mesh_receipt_saved_file_validation" in witnesses
@@ -3271,7 +3273,7 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "start_here_links_snet_operator_doc" in witnesses
     assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
     assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 18
+    assert read_model_integrity["exact_test_anchor_count"] == 20
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 

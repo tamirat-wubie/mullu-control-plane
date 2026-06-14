@@ -158,10 +158,13 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate_read_model(read_model: dict[str, Any], schema: dict[str, Any] | None = None) -> list[str]:
+def validate_read_model(read_model: Any, schema: dict[str, Any] | None = None) -> list[str]:
     """Return deterministic validation errors for one SNet operator read model."""
     schema_payload = schema or _load_schema(DEFAULT_SCHEMA_PATH)
     errors = _validate_schema_instance(schema_payload, read_model)
+    if not isinstance(read_model, dict):
+        errors.append("read model must be a JSON object")
+        return errors
     missing_fields = [field_name for field_name in REQUIRED_READ_MODEL_FIELDS if field_name not in read_model]
     for field_name in missing_fields:
         errors.append(f"read model missing field: {field_name}")
@@ -193,7 +196,12 @@ def validate_read_model(read_model: dict[str, Any], schema: dict[str, Any] | Non
 
     selected_symbols = read_model.get("selected_symbols")
     if isinstance(selected_symbols, list):
-        if len(selected_symbols) + read_model["truncated_symbol_count"] != read_model["symbol_count"]:
+        symbol_count = read_model["symbol_count"]
+        truncated_symbol_count = read_model["truncated_symbol_count"]
+        if type(symbol_count) is int and type(truncated_symbol_count) is int:
+            if len(selected_symbols) + truncated_symbol_count != symbol_count:
+                errors.append("selected symbol count plus truncated_symbol_count must match symbol_count")
+        else:
             errors.append("selected symbol count plus truncated_symbol_count must match symbol_count")
         for index, symbol in enumerate(selected_symbols):
             if not isinstance(symbol, dict):
