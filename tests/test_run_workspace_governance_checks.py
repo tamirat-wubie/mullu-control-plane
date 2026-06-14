@@ -597,6 +597,33 @@ def test_ci_uploads_workspace_preflight_receipt_artifact() -> None:
     assert workflow_text.find(artifact_name) < workflow_text.find(artifact_path)
 
 
+def test_ci_durable_gmail_plan_runs_revocation_recovery_rehearsal() -> None:
+    workflow_text = _ci_workflow_text()
+    timestamp_command = "export MULLU_VALIDATION_TIMESTAMP="
+    plan_command = "python scripts/validate_durable_gmail_connector_runtime_plan.py"
+    produce_revocation_command = (
+        "python scripts/produce_durable_gmail_revocation_recovery_rehearsal_receipt.py "
+        "--output .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json --strict --json"
+    )
+    validate_revocation_command = (
+        "python scripts/validate_durable_gmail_revocation_recovery_rehearsal_receipt.py "
+        "--receipt .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json "
+        "--max-age-days 14 --require-ready --json"
+    )
+    produce_write_command = (
+        "python scripts/produce_durable_gmail_write_authority_rehearsal_receipt.py "
+        "--output .change_assurance/durable_gmail_write_authority_rehearsal_receipt.json --strict --json"
+    )
+
+    assert timestamp_command in workflow_text
+    assert produce_revocation_command in workflow_text
+    assert validate_revocation_command in workflow_text
+    assert workflow_text.find(timestamp_command) < workflow_text.find(produce_revocation_command)
+    assert workflow_text.find(plan_command) < workflow_text.find(produce_revocation_command)
+    assert workflow_text.find(produce_revocation_command) < workflow_text.find(validate_revocation_command)
+    assert workflow_text.find(validate_revocation_command) < workflow_text.find(produce_write_command)
+
+
 def test_run_check_preserves_failure_evidence() -> None:
     command = runner.CheckCommand(
         "intentional_failure",

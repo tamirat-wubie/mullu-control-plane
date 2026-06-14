@@ -385,7 +385,10 @@ jobs:
 
       - name: Validate durable Gmail connector runtime plan
         run: |
+          export MULLU_VALIDATION_TIMESTAMP="$(python -c 'from datetime import UTC, datetime; print(datetime.now(UTC).isoformat().replace("+00:00", "Z"))')"
           python scripts/validate_durable_gmail_connector_runtime_plan.py
+          python scripts/produce_durable_gmail_revocation_recovery_rehearsal_receipt.py --output .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json --strict --json
+          python scripts/validate_durable_gmail_revocation_recovery_rehearsal_receipt.py --receipt .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json --max-age-days 14 --require-ready --json
           python scripts/produce_durable_gmail_write_authority_rehearsal_receipt.py --output .change_assurance/durable_gmail_write_authority_rehearsal_receipt.json --strict --json
           python scripts/validate_durable_gmail_write_authority_rehearsal_receipt.py --receipt .change_assurance/durable_gmail_write_authority_rehearsal_receipt.json --max-age-days 14 --require-ready --json
           python scripts/emit_durable_gmail_live_write_operator_input_request.py --output .change_assurance/durable_gmail_live_write_operator_input_request.json --json
