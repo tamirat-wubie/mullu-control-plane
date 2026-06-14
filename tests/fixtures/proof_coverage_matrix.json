@@ -23,6 +23,13 @@
       ]
     },
     {
+      "action_id": "publish_snet_operator_read_model_contract",
+      "status": "closed",
+      "surfaces": [
+        "snet_operator_read_model"
+      ]
+    },
+    {
       "action_id": "register_holistic_loop_read_model_kernel",
       "status": "closed",
       "surfaces": [
@@ -898,12 +905,12 @@
       "action_proof": 105,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 16,
+      "read_model": 17,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 120,
+      "audit_chain": 121,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -911,21 +918,21 @@
     "by_coverage_state": {
       "proven": 38,
       "unproven": 0,
-      "witnessed": 85
+      "witnessed": 86
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 18,
+      "read_model": 19,
       "request_proof": 104
     },
-    "surface_count": 123
+    "surface_count": 124
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 123,
+      "strong": 124,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9963,6 +9970,47 @@
       "surface_id": "god_mode_lifecycle"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/73_snet_operator_read_model.md",
+        "docs/START_HERE.md",
+        "mcoi/mcoi_runtime/contracts/snet.py",
+        "mcoi/mcoi_runtime/snet/engine.py",
+        "mcoi/mcoi_runtime/snet/read_model.py",
+        "schemas/snet_operator_read_model.schema.json",
+        "schemas/snet_mesh_receipt.schema.json",
+        "scripts/validate_snet_operator_read_model.py",
+        "scripts/validate_snet_mesh_receipt.py",
+        "examples/snet_operator_read_model.json",
+        "tests/test_validate_snet_operator_read_model.py",
+        "tests/test_snet_operator_read_model_doc.py"
+      ],
+      "notes": "SNet operator read model projects bounded symbol summaries, mesh receipt counts, settlement counts, raw-answer suppression, raw-metadata suppression, and denied execution, connector, route, filesystem, and terminal-closure authority. The operator document preserves the AwaitingEvidence runtime-integration gate.",
+      "representative_paths": [
+        "build_snet_operator_read_model",
+        "scripts.validate_snet_operator_read_model.validate_contract",
+        "scripts.validate_snet_operator_read_model.validate_read_model",
+        "examples/snet_operator_read_model.json",
+        "docs/73_snet_operator_read_model.md"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "snet_operator_read_model_contract_passes",
+        "snet_operator_read_model_rejects_raw_and_authority_mutations",
+        "snet_operator_read_model_saved_file_validation",
+        "snet_operator_read_model_rejects_count_drift",
+        "snet_operator_read_model_rejects_symbol_raw_field",
+        "snet_operator_read_model_zero_symbol_projection_is_valid",
+        "snet_operator_doc_declares_read_only_boundary",
+        "snet_operator_doc_names_blocked_authorities",
+        "snet_operator_doc_lists_verification_commands",
+        "start_here_links_snet_operator_doc"
+      ],
+      "surface_id": "snet_operator_read_model"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -10288,8 +10336,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1328,
-    "runtime_witness_count": 1328,
+    "exact_test_anchor_count": 1338,
+    "runtime_witness_count": 1338,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19235,6 +19283,75 @@
         "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "god_mode_lifecycle",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_contract_passes"
+            ],
+            "witness": "snet_operator_read_model_contract_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_rejects_raw_and_authority_mutations"
+            ],
+            "witness": "snet_operator_read_model_rejects_raw_and_authority_mutations"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_saved_file_validation"
+            ],
+            "witness": "snet_operator_read_model_saved_file_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_rejects_count_drift"
+            ],
+            "witness": "snet_operator_read_model_rejects_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_rejects_symbol_raw_field"
+            ],
+            "witness": "snet_operator_read_model_rejects_symbol_raw_field"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_operator_read_model.py::test_snet_operator_read_model_zero_symbol_projection_is_valid"
+            ],
+            "witness": "snet_operator_read_model_zero_symbol_projection_is_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_snet_operator_read_model_doc.py::test_snet_operator_doc_declares_read_only_boundary"
+            ],
+            "witness": "snet_operator_doc_declares_read_only_boundary"
+          },
+          {
+            "anchors": [
+              "tests/test_snet_operator_read_model_doc.py::test_snet_operator_doc_names_blocked_authorities"
+            ],
+            "witness": "snet_operator_doc_names_blocked_authorities"
+          },
+          {
+            "anchors": [
+              "tests/test_snet_operator_read_model_doc.py::test_snet_operator_doc_lists_verification_commands"
+            ],
+            "witness": "snet_operator_doc_lists_verification_commands"
+          },
+          {
+            "anchors": [
+              "tests/test_snet_operator_read_model_doc.py::test_start_here_links_snet_operator_doc"
+            ],
+            "witness": "start_here_links_snet_operator_doc"
+          }
+        ],
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
+        "surface_id": "snet_operator_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

@@ -3188,6 +3188,52 @@ def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> Non
     assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
 
 
+def test_snet_operator_read_model_surface_binds_no_authority_projection() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    read_model_surface = surfaces["snet_operator_read_model"]
+    read_model_integrity = witness_surfaces["snet_operator_read_model"]
+    witnesses = set(read_model_surface["runtime_witnesses"])
+
+    assert read_model_surface["coverage_state"] == "witnessed"
+    assert read_model_surface["request_proof"] == "read_model"
+    assert read_model_surface["action_proof"] == "read_model"
+    assert read_model_surface["audit"] == "audit_chain"
+    assert "build_snet_operator_read_model" in read_model_surface["representative_paths"]
+    assert "scripts.validate_snet_operator_read_model.validate_contract" in read_model_surface["representative_paths"]
+    assert "scripts.validate_snet_operator_read_model.validate_read_model" in read_model_surface["representative_paths"]
+    assert "examples/snet_operator_read_model.json" in read_model_surface["representative_paths"]
+    assert "docs/73_snet_operator_read_model.md" in read_model_surface["representative_paths"]
+    assert "docs/73_snet_operator_read_model.md" in read_model_surface["evidence_files"]
+    assert "docs/START_HERE.md" in read_model_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/snet/read_model.py" in read_model_surface["evidence_files"]
+    assert "schemas/snet_operator_read_model.schema.json" in read_model_surface["evidence_files"]
+    assert "schemas/snet_mesh_receipt.schema.json" in read_model_surface["evidence_files"]
+    assert "scripts/validate_snet_operator_read_model.py" in read_model_surface["evidence_files"]
+    assert "examples/snet_operator_read_model.json" in read_model_surface["evidence_files"]
+    assert "tests/test_validate_snet_operator_read_model.py" in read_model_surface["evidence_files"]
+    assert "tests/test_snet_operator_read_model_doc.py" in read_model_surface["evidence_files"]
+    assert "snet_operator_read_model_contract_passes" in witnesses
+    assert "snet_operator_read_model_rejects_raw_and_authority_mutations" in witnesses
+    assert "snet_operator_read_model_rejects_count_drift" in witnesses
+    assert "snet_operator_read_model_rejects_symbol_raw_field" in witnesses
+    assert "snet_operator_read_model_zero_symbol_projection_is_valid" in witnesses
+    assert "snet_operator_doc_declares_read_only_boundary" in witnesses
+    assert "snet_operator_doc_names_blocked_authorities" in witnesses
+    assert "snet_operator_doc_lists_verification_commands" in witnesses
+    assert "start_here_links_snet_operator_doc" in witnesses
+    assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
+    assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 10
+    assert read_model_integrity["unanchored_witness_count"] == 0
+    assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
+
+
 def test_structured_output_validation_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
