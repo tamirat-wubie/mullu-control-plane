@@ -54,6 +54,7 @@ class TerminalClosureCertifier:
         response_closure_ref: str | None = None,
         memory_entry: MemoryEntry | None = None,
         graph_refs: tuple[str, ...] = (),
+        metadata: dict[str, object] | None = None,
     ) -> TerminalClosureCertificate:
         """Certify ordinary committed closure."""
         _require_closure_chain_match(execution_result, verification_result, reconciliation)
@@ -72,7 +73,7 @@ class TerminalClosureCertifier:
                 response_closure_ref=response_closure_ref,
                 memory_entry_id=memory_entry.entry_id if memory_entry is not None else None,
                 graph_refs=graph_refs,
-                metadata={"verification_status": verification_result.status.value},
+                metadata={"verification_status": verification_result.status.value, **(metadata or {})},
             )
         )
 
@@ -150,6 +151,7 @@ class TerminalClosureCertifier:
         case_id: str,
         evidence_refs: tuple[str, ...] | None = None,
         graph_refs: tuple[str, ...] = (),
+        metadata: dict[str, object] | None = None,
     ) -> TerminalClosureCertificate:
         """Certify review-required terminal state."""
         _require_closure_chain_match(execution_result, verification_result, reconciliation)
@@ -165,7 +167,7 @@ class TerminalClosureCertifier:
                 evidence_refs=evidence_refs or _verification_evidence_refs(verification_result),
                 case_id=case_id,
                 graph_refs=graph_refs,
-                metadata={"reconciliation_status": reconciliation.status.value},
+                metadata={"reconciliation_status": reconciliation.status.value, **(metadata or {})},
             )
         )
 
