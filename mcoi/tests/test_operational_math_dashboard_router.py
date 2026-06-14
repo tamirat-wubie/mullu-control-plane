@@ -6,6 +6,10 @@ Invariants: the route is governed, JSON-safe, and never grants execution authori
 
 from __future__ import annotations
 
+import asyncio
+
+import httpx
+
 from mcoi_runtime.app.routers.ops.summaries import build_operational_math_dashboard_payload
 
 
@@ -25,8 +29,8 @@ class FakeObservability:
         return self.projection
 
 
-def test_operational_math_dashboard_route_exposes_read_only_projection(test_client) -> None:
-    response = test_client.get("/api/v1/dashboard/operational-math")
+def test_operational_math_dashboard_route_exposes_read_only_projection() -> None:
+    response = asyncio.run(_get_operational_math_dashboard_response())
     payload = response.json()
     projection = payload["operational_math"]
 
@@ -40,6 +44,14 @@ def test_operational_math_dashboard_route_exposes_read_only_projection(test_clie
     assert payload["telemetry"]["source_available"] is True
     assert payload["telemetry"]["source_health"] == "normal"
     assert payload["requires_operator_review"] in (True, False)
+
+
+async def _get_operational_math_dashboard_response() -> httpx.Response:
+    from mcoi_runtime.app.server import app
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        return await client.get("/api/v1/dashboard/operational-math")
 
 
 def test_operational_math_dashboard_payload_marks_review_signal() -> None:
