@@ -15,19 +15,41 @@ from .contracts import (
     SkillMode,
     SkillRiskLevel,
 )
+from .intake import (
+    ApprovalScope,
+    ConnectorProofRef,
+    GovernedIntent,
+    MissingBinding,
+    RequestExecutionMode,
+    RequestInterface,
+    interpret_user_request,
+)
 from .skill_registry import (
     PersonalAssistantSkillRegistry,
     load_default_skill_registry,
     load_skill_registry,
 )
+from .whqr_bridge import (
+    PersonalAssistantClarificationBundle,
+    build_clarification_requests,
+)
 
 __all__ = (
     "EffectBoundary",
     "PersonalAssistantInvariantError",
+    "PersonalAssistantClarificationBundle",
     "PersonalAssistantSkill",
     "PersonalAssistantSkillRegistry",
+    "ApprovalScope",
+    "ConnectorProofRef",
+    "GovernedIntent",
+    "MissingBinding",
+    "RequestExecutionMode",
+    "RequestInterface",
     "SkillMode",
     "SkillRiskLevel",
+    "build_clarification_requests",
+    "interpret_user_request",
     "load_default_skill_registry",
     "load_skill_registry",
 )
