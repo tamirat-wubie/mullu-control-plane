@@ -165,7 +165,7 @@ def validate_report(report: dict[str, Any]) -> list[str]:
     if report["terminal_closure_required"] is not True:
         errors.append("terminal_closure_required must be true")
     for field_name in ("loop_count", "returned_count", "blocked_count", "verified_count"):
-        if isinstance(report[field_name], bool) or not isinstance(report[field_name], int):
+        if not _is_plain_int(report[field_name]):
             errors.append(f"{field_name} must be an integer")
         elif report[field_name] < 0:
             errors.append(f"{field_name} must be non-negative")
@@ -204,7 +204,13 @@ def _validate_report_counts(report: dict[str, Any], loops: list[Any]) -> list[st
     expected_status = "blocked" if blocked_count else "verified"
     if report.get("returned_count") != loop_count:
         errors.append("returned_count does not match loop summaries length")
-    if report.get("loop_count") < report.get("returned_count", 0):
+    loop_count_value = report.get("loop_count")
+    returned_count_value = report.get("returned_count")
+    if (
+        _is_plain_int(loop_count_value)
+        and _is_plain_int(returned_count_value)
+        and loop_count_value < returned_count_value
+    ):
         errors.append("loop_count cannot be lower than returned_count")
     if report.get("blocked_count") != blocked_count:
         errors.append("blocked_count does not match loop blockers")
@@ -213,6 +219,10 @@ def _validate_report_counts(report: dict[str, Any], loops: list[Any]) -> list[st
     if report.get("status") != expected_status:
         errors.append(f"report status must be {expected_status} for observed blockers")
     return errors
+
+
+def _is_plain_int(value: Any) -> bool:
+    return type(value) is int
 
 
 def _validate_loop_summary(loop: Any, index: int) -> list[str]:

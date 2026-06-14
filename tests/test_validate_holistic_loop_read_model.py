@@ -297,6 +297,19 @@ def test_blocked_count_mismatch_is_reported() -> None:
     assert report["blocked_count"] == 8
 
 
+def test_non_integer_report_counts_return_errors() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loop_count"] = "bad"
+    invalid_report["returned_count"] = "bad"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert "loop_count must be an integer" in errors
+    assert "returned_count must be an integer" in errors
+    assert any("returned_count does not match loop summaries length" in error for error in errors)
+
+
 def test_status_mismatch_is_reported() -> None:
     report = validator.build_report()
     invalid_report = copy.deepcopy(report)
