@@ -443,6 +443,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "problem-star-compilation-receipt",
+      "path": "schemas/problem_star_compilation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:problem-star-compilation-receipt:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",

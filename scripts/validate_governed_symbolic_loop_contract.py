@@ -68,8 +68,14 @@ REQUIRED_CONTRACT_EVIDENCE_REFS = (
     "examples/governed_symbolic_loop_contract.foundation.json",
     "scripts/validate_governed_symbolic_loop_contract.py",
     "tests/test_validate_governed_symbolic_loop_contract.py",
+    "schemas/problem_star_compilation_receipt.schema.json",
+    "examples/problem_star_compilation_receipt.foundation.json",
+    "scripts/validate_problem_star_compilation_receipt.py",
+    "tests/test_validate_problem_star_compilation_receipt.py",
     "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
     "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+    "examples/sdlc/requirement_problem_star_compilation_receipt_20260614.json",
+    "examples/sdlc/design_problem_star_compilation_receipt_20260614.json",
 )
 TRUE_EFFECT_GUARDS = (
     "uao_required",

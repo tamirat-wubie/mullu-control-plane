@@ -135,9 +135,10 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 106. Personal-assistant plans, approvals, receipts, and memory observations are public contracts when they preserve draft-only proof, approval separation, memory-use boundaries, and no-effect math or planning outcomes.
 107. Agentic service harness live-producer gates are public contracts when they bind read-only status, admission denial, witness requirements, operator requests, response witnesses, decision evidence, decision records, and no live producer authority in Foundation Mode.
 108. Governed symbolic loop contracts are public contracts when they bind canonical episode phases, action classes, deterministic kernel boundaries, effect-bearing guards, receipt envelopes, rollback plans, and non-runtime authority denials before any loop registry admission.
-109. Truth candidates are public contracts when they describe a proposed truth-state delta, exact-result admission boundary, proof obligations, and Mfidel atomicity preservation before any truth-kernel commit.
-110. Kernel proofs are public contracts when they bind proof kind, ProofState, result kind, premises, derivation steps, replay binding, budget, limitations, and proof hash before a truth-state result can support mutation.
-111. Truth commit candidates are public contracts when they bind a truth candidate, exact-pass proof reference, governance reference, trace reference, rollback reference, journal replay binding, and mutation admission before any truth-state commit.
+109. ProblemStar compilation receipts are public contracts when they bind a raw-input source envelope, canonical Phi-GPS v2.2 field order, separated evidence, assumptions, unknowns, contradictions, goals, constraints, risks, actions, proof obligations, and non-runtime authority denials before solver routing.
+110. Truth candidates are public contracts when they describe a proposed truth-state delta, exact-result admission boundary, proof obligations, and Mfidel atomicity preservation before any truth-kernel commit.
+111. Kernel proofs are public contracts when they bind proof kind, ProofState, result kind, premises, derivation steps, replay binding, budget, limitations, and proof hash before a truth-state result can support mutation.
+112. Truth commit candidates are public contracts when they bind a truth candidate, exact-pass proof reference, governance reference, trace reference, rollback reference, journal replay binding, and mutation admission before any truth-state commit.
 
 ## Verification
 
@@ -150,7 +151,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 227 schemas
+protocol manifest ok: 228 schemas
 ```
 
 STATUS:
