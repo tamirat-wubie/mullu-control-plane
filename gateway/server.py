@@ -57,7 +57,11 @@ from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureDisposition,
 )
 from mcoi_runtime.personal_assistant import (
+    ApprovalDecision,
+    ApprovalProposedAction,
+    ApprovalScope,
     PersonalAssistantInvariantError,
+    PersonalAssistantApprovalQueue,
     RequestInterface,
     build_clarification_requests,
     build_personal_assistant_console_read_model,
@@ -180,6 +184,35 @@ class GatewayPersonalAssistantPreviewRequest(BaseModel):
     include_console_read_model: bool = False
 
 
+class GatewayPersonalAssistantApprovalAction(BaseModel):
+    """One proposed personal-assistant action for approval queue preview."""
+
+    action_id: str
+    skill_id: str
+    risk_level: str
+    effect_boundary: str
+    summary: str
+
+
+class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
+    """Stateless approval queue preview request for public gateway evidence."""
+
+    request_id: str
+    plan_id: str
+    approver_ref: str = "operator:gateway"
+    approval_scope: str = ApprovalScope.PER_ACTION.value
+    proposed_actions: list[GatewayPersonalAssistantApprovalAction]
+    forbidden_without_approval: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    approval_id: str = ""
+    decision: str = ""
+    reason_codes: list[str] = Field(default_factory=list)
+    decided_at: str = ""
+    decision_evidence_ref: str = ""
+    revision_request: str = ""
+
+
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
     """Whether the authority dev/test bypass is permitted for this MULLU_ENV.
 
@@ -223,6 +256,13 @@ def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_c
     if bool(plan.get("requires_approval")):
         return "AwaitingEvidence"
     return "SolvedVerified"
+
+
+def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
+    """Return a stable dict across Pydantic major versions."""
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
 
 
 def create_gateway_app(
@@ -1687,6 +1727,74 @@ def create_gateway_app(
                 receipts=(envelope.receipt,),
             )
         return response
+
+    @app.get("/api/v1/personal-assistant/approval-queue")
+    def personal_assistant_approval_queue_read_model():
+        read_model = PersonalAssistantApprovalQueue().read_model()
+        return {
+            "approval_queue": read_model,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/approval-queue/preview")
+    def preview_personal_assistant_approval_queue(req: GatewayPersonalAssistantApprovalPreviewRequest):
+        try:
+            now = req.created_at or _clock()
+            queue = PersonalAssistantApprovalQueue()
+            record = queue.enqueue(
+                request_id=req.request_id,
+                plan_id=req.plan_id,
+                approver_ref=req.approver_ref,
+                approval_scope=req.approval_scope,
+                proposed_actions=tuple(
+                    ApprovalProposedAction.from_mapping(_pydantic_payload(action))
+                    for action in req.proposed_actions
+                ),
+                forbidden_without_approval=tuple(req.forbidden_without_approval),
+                evidence_refs=tuple(req.evidence_refs),
+                created_at=now,
+                approval_id=req.approval_id or None,
+            )
+            if req.decision:
+                decision = ApprovalDecision.coerce(req.decision)
+                record = queue.record_decision(
+                    record.approval_id,
+                    decision=decision,
+                    reason_codes=tuple(req.reason_codes) or (f"operator_{decision.value}_preview",),
+                    decided_at=req.decided_at or now,
+                    decision_evidence_ref=req.decision_evidence_ref,
+                    revision_request=req.revision_request,
+                )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant approval queue preview",
+                    "error_code": "invalid_personal_assistant_approval_queue_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "approval": record.as_dict(),
+            "approval_queue": queue.read_model(),
+            "receipt": dict(record.latest_receipt),
+            "outcome": str(record.latest_receipt.get("outcome", "AwaitingEvidence")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
 
     @app.get("/gateway/witness")
     def gateway_witness():

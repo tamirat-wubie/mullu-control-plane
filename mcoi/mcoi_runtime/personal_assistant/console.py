@@ -260,8 +260,21 @@ def _empty_approval_model() -> dict[str, Any]:
         "approval_count": 0,
         "approval_ids": [],
         "state_counts": {"requested": 0, "approved": 0, "rejected": 0, "revised": 0, "blocked": 0},
+        "receipt_ids": [],
         "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+        "approval_is_execution": False,
         "records": [],
+        "metadata": {
+            "foundation_only": True,
+            "queue_projection": "read_model",
+            "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+            "live_connector_execution_allowed": False,
+            "approval_decision_executes_action": False,
+        },
     }
 
 

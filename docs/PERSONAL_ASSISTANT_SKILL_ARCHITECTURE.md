@@ -51,7 +51,7 @@ This PR scope stops before `CapabilityDispatch` execution. It adds the static co
 | WHQR bridge | Detects missing entity, evidence, action, and approval bindings | Architecture contract only |
 | Skill registry | Registers governed skills with mode, risk, connectors, and blocked actions | Example registry and validator |
 | Planner | Produces preview or draft plans with approval gates | Schema only |
-| Approval | Classifies P0-P5 risk and explicit approval requirements | Matrix and validator |
+| Approval | Classifies P0-P5 risk and explicit approval requirements | Matrix, validator, and stateless queue read/preview projection |
 | Receipts | Records what was and was not done, with redaction policy | Schema, example, and validator |
 | Memory observation | Stores evidence-backed observations, not raw chat logs | Schema and tests only |
 
@@ -117,6 +117,37 @@ public_readiness_claim_allowed = false
 
 Read-only and draft-only skills cannot declare mutation authority. P4 and P5 skills cannot be admitted without explicit approval.
 
+## Approval Queue Contract
+
+Approval queue records are evidence objects, not execution grants. A queue
+record may bind:
+
+```text
+approval_id
+request_id
+plan_id
+proposed_actions
+forbidden_without_approval
+decision_record
+receipt_ref
+evidence_refs
+```
+
+An approval decision can be `approved`, `rejected`, `revised`, or `blocked`,
+but the decision itself does not call a connector or perform the proposed
+action. Public queue projections must keep:
+
+```text
+approval_is_execution = false
+execution_allowed = false
+external_send_allowed = false
+connector_mutation_allowed = false
+system_of_record_write_allowed = false
+```
+
+Future execution after approval still requires a separate UAO dispatch,
+connector authority proof, effect receipt, and rollback or compensation plan.
+
 ## Receipt Contract
 
 Every assistant action, including blocked and draft-only actions, emits a receipt with:
@@ -172,6 +203,7 @@ Required local gates for this foundation layer:
 ```powershell
 python scripts/validate_personal_assistant_skill_registry.py
 python scripts/validate_personal_assistant_approval_matrix.py
+python scripts/validate_personal_assistant_approval_queue.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
 python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py -q

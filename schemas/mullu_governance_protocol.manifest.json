@@ -305,6 +305,12 @@
       "surface": "approval"
     },
     {
+      "schema_id": "personal-assistant-approval-queue",
+      "path": "schemas/personal_assistant_approval_queue.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-queue:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "personal-assistant-receipt",
       "path": "schemas/personal_assistant_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-receipt:1",

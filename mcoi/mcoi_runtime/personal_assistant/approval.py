@@ -318,12 +318,31 @@ class PersonalAssistantApprovalQueue:
         for record in records:
             state = str(record.packet["approval_state"])
             state_counts[state] = state_counts.get(state, 0) + 1
+        receipt_ids = [
+            str(receipt["receipt_id"])
+            for record in records
+            for receipt in record.receipts
+            if isinstance(receipt.get("receipt_id"), str)
+        ]
         return {
             "approval_count": len(records),
             "approval_ids": [record.approval_id for record in records],
             "state_counts": state_counts,
+            "receipt_ids": receipt_ids,
             "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+            "approval_is_execution": False,
             "records": [record.as_dict() for record in records],
+            "metadata": {
+                "foundation_only": True,
+                "queue_projection": "read_model",
+                "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+                "live_connector_execution_allowed": False,
+                "approval_decision_executes_action": False,
+            },
         }
 
 
