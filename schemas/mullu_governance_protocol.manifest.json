@@ -377,6 +377,12 @@
       "surface": "connector"
     },
     {
+      "schema_id": "durable-gmail-account-binding-operator-input-request",
+      "path": "schemas/durable_gmail_account_binding_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "durable-gmail-live-write-operator-input-request",
       "path": "schemas/durable_gmail_live_write_operator_input_request.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-live-write-operator-input-request:1",
