@@ -187,6 +187,10 @@ def test_contract_validation_and_metadata_fail_closed() -> None:
         WHQRNode(role="who", target="actor")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="non-empty string"):
         GateResult(truth=TruthGate.TRUE, metadata={"": "empty"})
+    with pytest.raises(ValueError, match="metadata must be a mapping"):
+        WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata=[])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="metadata must be a mapping"):
+        WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata="")  # type: ignore[arg-type]
 
     assert ADVERB_THRESHOLDS[Adverb.ALWAYS][0] >= ADVERB_THRESHOLDS[Adverb.OFTEN][0]
 
