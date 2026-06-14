@@ -541,6 +541,23 @@ def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> No
     assert len(report.issues) == 2
 
 
+def test_static_checks_detect_camel_case_side_effect_targets() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            WHQRNode(role=WHRole.HOW, target="sendEmail", node_id="send-email"),
+            WHQRNode(role=WHRole.HOW, target="writeFile", node_id="write-file"),
+            WHQRNode(role=WHRole.WHAT, target="payment_request", node_id="payment-request"),
+        ),
+    )
+    report = validate_static(expr)
+    side_effect_targets = tuple(issue.target for issue in report.issues if issue.code == "side_effect_target")
+
+    assert report.passed is False
+    assert side_effect_targets == ("sendEmail", "writeFile")
+    assert "payment_request" not in side_effect_targets
+
+
 def test_governance_decision_records_static_issue_details() -> None:
     expr = WHQRNode(role=WHRole.HOW, target="send_email", node_id="unsafe-action")
     decision = build_policy_decision(

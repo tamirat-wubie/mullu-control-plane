@@ -170,8 +170,14 @@ def _ranges_disjoint(left: tuple[float, float], right: tuple[float, float]) -> b
 
 
 def _has_side_effect_target(target: str) -> bool:
-    terms = tuple(term for term in re.split(r"[^A-Za-z0-9]+", target.lower()) if term)
+    terms = _target_terms(target)
     return any(term in _SIDE_EFFECT_TERMS for term in terms)
+
+
+def _target_terms(target: str) -> tuple[str, ...]:
+    camel_bounded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", target)
+    acronym_bounded = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", camel_bounded)
+    return tuple(term.lower() for term in re.split(r"[^A-Za-z0-9]+", acronym_bounded) if term)
 
 
 def _has_cycle(edges: set[tuple[str, str]]) -> bool:
