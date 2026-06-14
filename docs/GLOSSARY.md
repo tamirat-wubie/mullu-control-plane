@@ -165,6 +165,12 @@ An append-only record of trust-relevant outcomes that can be independently
 verified, even without access to the live system. *(Trust you can check
 yourself.)* → [65_trust_ledger_offline_verification.md](65_trust_ledger_offline_verification.md)
 
+### ProblemStar compilation receipt
+A read-only receipt showing that raw input was separated into canonical
+Phi-GPS fields, evidence, assumptions, unknowns, contradictions, actions, and
+proof obligations before solver routing. *(It proves framing; it does not grant
+execution authority.)* -> [75_problem_star_compilation_receipt.md](75_problem_star_compilation_receipt.md)
+
 ### Truth kernel / Truth Kernel Plane
 The internal MAF Core subsystem that checks candidate truth states against
 declared domains, constraints, and proofs before anything can be treated as
