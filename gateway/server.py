@@ -60,14 +60,23 @@ from mcoi_runtime.personal_assistant import (
     ApprovalDecision,
     ApprovalProposedAction,
     ApprovalScope,
+    MemoryConfidence,
+    MemoryObservationSource,
+    MemoryObservationType,
+    MemoryRetentionPolicy,
+    MemoryScope,
+    MemorySensitivity,
+    NestedMindStatus,
     PersonalAssistantInvariantError,
     PersonalAssistantApprovalQueue,
+    PersonalAssistantMemoryObservationLedger,
     RequestInterface,
     build_clarification_requests,
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
     interpret_user_request,
     load_default_skill_registry,
+    prepare_memory_observation,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -211,6 +220,34 @@ class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
     decided_at: str = ""
     decision_evidence_ref: str = ""
     revision_request: str = ""
+
+
+class GatewayPersonalAssistantMemorySource(BaseModel):
+    """Evidence source for one memory observation preview."""
+
+    source_type: str
+    source_ref: str
+    observed_at: str
+
+
+class GatewayPersonalAssistantMemoryPreviewRequest(BaseModel):
+    """Stateless memory observation preview request for public gateway evidence."""
+
+    request_id: str
+    memory_observation_id: str
+    memory_type: str = MemoryObservationType.PREFERENCE.value
+    claim: str
+    source: GatewayPersonalAssistantMemorySource
+    confidence: str = MemoryConfidence.MEDIUM.value
+    scope: str = MemoryScope.ASSISTANT_WORKFLOW.value
+    mutable: bool = True
+    receipt_id: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    observed_at: str = ""
+    sensitivity: str = MemorySensitivity.INTERNAL.value
+    retention_policy: str = MemoryRetentionPolicy.OPERATOR_REVIEW.value
+    nested_mind_status: str = NestedMindStatus.STAGING_ONLY.value
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
@@ -1789,6 +1826,71 @@ def create_gateway_app(
                 "external_send_allowed": False,
                 "connector_mutation_allowed": False,
                 "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.get("/api/v1/personal-assistant/memory-observations")
+    def personal_assistant_memory_observations_read_model():
+        read_model = PersonalAssistantMemoryObservationLedger().read_model()
+        return {
+            "memory_read_model": read_model,
+            "execution_allowed": False,
+            "live_memory_write_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/memory-observations/preview")
+    def preview_personal_assistant_memory_observation(req: GatewayPersonalAssistantMemoryPreviewRequest):
+        try:
+            now = req.observed_at or _clock()
+            candidate = prepare_memory_observation(
+                request_id=req.request_id,
+                memory_observation_id=req.memory_observation_id,
+                memory_type=req.memory_type,
+                claim=req.claim,
+                source=MemoryObservationSource.from_mapping(_pydantic_payload(req.source)),
+                confidence=req.confidence,
+                scope=req.scope,
+                mutable=req.mutable,
+                receipt_id=req.receipt_id,
+                evidence_refs=tuple(req.evidence_refs),
+                observed_at=now,
+                sensitivity=req.sensitivity,
+                retention_policy=req.retention_policy,
+                nested_mind_status=req.nested_mind_status,
+                metadata=req.metadata,
+            )
+            ledger = PersonalAssistantMemoryObservationLedger()
+            ledger.append(candidate)
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant memory observation preview",
+                    "error_code": "invalid_personal_assistant_memory_observation_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "memory_observation": candidate.as_dict(),
+            "memory_read_model": ledger.read_model(),
+            "receipt": dict(candidate.receipt),
+            "outcome": str(candidate.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+                "connector_mutation_allowed": False,
                 "deployment_mutation_allowed": False,
                 "system_of_record_write_allowed": False,
             },
