@@ -191,10 +191,8 @@ def test_reconstruction_rejects_tampered_embedded_whqr_replay_document() -> None
         decision.issued_at,
         metadata=metadata,
     )
-    bundle, admission = _admitted(tampered_decision)
-
     with pytest.raises(RuntimeCoreInvariantError, match="WHQR replay document is invalid"):
-        reconstruct_mil_audit(bundle, admission, recorded_at="2026-05-06T12:00:02Z")
+        _admitted(tampered_decision)
 
 
 def test_reconstruction_rejects_explicit_whqr_document_metadata_mismatch() -> None:
