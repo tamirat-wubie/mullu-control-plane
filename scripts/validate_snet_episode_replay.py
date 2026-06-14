@@ -213,7 +213,7 @@ def validate_episode(episode: dict[str, Any], schema: dict[str, Any] | None = No
 
     try:
         replay_receipt = replay_episode(episode)
-    except (KeyError, ValueError, TypeError) as exc:
+    except (AttributeError, KeyError, ValueError, TypeError) as exc:
         errors.append(f"replay failed: {exc}")
         return errors
 
