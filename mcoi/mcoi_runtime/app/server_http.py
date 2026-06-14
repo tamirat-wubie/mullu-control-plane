@@ -7,7 +7,7 @@ Invariants: CORS policy remains fail-closed outside dev, internal exception deta
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any, Callable
 from uuid import uuid4
 
@@ -253,6 +253,39 @@ def install_global_exception_handler(
     app.add_exception_handler(RuntimeCoreInvariantError, invariant_violation_handler)
     app.add_exception_handler(RecursionError, recursion_limit_handler)
     app.add_exception_handler(Exception, global_exception_handler)
+
+
+def iter_inspectable_routes(app: FastAPI) -> Iterable[Any]:
+    """Yield mounted route objects with stable ``path``/``methods`` access.
+
+    FastAPI 0.137 can keep included routers as internal placeholder routes
+    until request-time matching. Older releases expand them in ``app.routes``.
+    Governance and audit tests need a deterministic read-only view of the
+    mounted route surface, independent of that internal representation.
+    """
+    for route in app.routes:
+        yield from _iter_inspectable_route(route)
+
+
+def _iter_inspectable_route(route: Any) -> Iterable[Any]:
+    if hasattr(route, "path"):
+        yield route
+        return
+
+    effective_candidates = getattr(route, "effective_candidates", None)
+    if not callable(effective_candidates):
+        return
+
+    for candidate in effective_candidates():
+        if hasattr(candidate, "effective_candidates"):
+            yield from _iter_inspectable_route(candidate)
+            continue
+        if hasattr(candidate, "path"):
+            yield candidate
+            continue
+        starlette_route = getattr(candidate, "starlette_route", None)
+        if hasattr(starlette_route, "path"):
+            yield starlette_route
 
 
 def include_default_routers(app: FastAPI) -> None:

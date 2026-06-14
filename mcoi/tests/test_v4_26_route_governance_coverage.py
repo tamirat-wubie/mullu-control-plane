@@ -38,7 +38,7 @@ from collections.abc import Iterable
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
-from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.app.server_http import include_default_routers, iter_inspectable_routes
 
 
 # Endpoints that are deliberately unauthenticated. Each entry must
@@ -95,16 +95,17 @@ _AUTH_DEPENDENCY_NAMES: frozenset[str] = frozenset({
 })
 
 
-def _gather_routes() -> Iterable[APIRoute]:
+def _gather_routes() -> Iterable[object]:
     """Build the assembled app and yield every APIRoute it mounts."""
     app = FastAPI()
     include_default_routers(app)
-    for route in app.routes:
-        if isinstance(route, APIRoute):
+    for route in iter_inspectable_routes(app):
+        original_route = getattr(route, "original_route", route)
+        if isinstance(original_route, APIRoute):
             yield route
 
 
-def _route_uses_auth_dependency(route: APIRoute) -> bool:
+def _route_uses_auth_dependency(route: object) -> bool:
     """Return True if the route's signature names any known auth dependency.
 
     We inspect the *handler function's source* (substring match for any
@@ -122,19 +123,19 @@ def _route_uses_auth_dependency(route: APIRoute) -> bool:
     return any(dep in src for dep in _AUTH_DEPENDENCY_NAMES)
 
 
-def _route_under_api_prefix(route: APIRoute) -> bool:
+def _route_under_api_prefix(route: object) -> bool:
     """True if the route is gated by GovernanceMiddleware (path under /api/)."""
     return route.path.startswith("/api/")
 
 
-def _is_intentionally_open(route: APIRoute) -> bool:
+def _is_intentionally_open(route: object) -> bool:
     for method in route.methods:
         if (method, route.path) in _INTENTIONALLY_OPEN:
             return True
     return False
 
 
-def _is_gated(route: APIRoute) -> bool:
+def _is_gated(route: object) -> bool:
     return (
         _route_under_api_prefix(route)
         or _route_uses_auth_dependency(route)

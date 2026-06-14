@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 from mcoi_runtime.app.routers import assistant as assistant_router_module
 from mcoi_runtime.app.routers.assistant import router
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.app.server_http import include_default_routers, iter_inspectable_routes
 from mcoi_runtime.personal_assistant import (
     ApprovalDecision,
     ApprovalProposedAction,
@@ -387,7 +387,7 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     deps.set("metrics", MetricsStub())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = {route.path for route in iter_inspectable_routes(app)}
 
     assert "/api/v1/assistant/profiles" in paths
     assert "/api/v1/assistant/finance-ops/plans" in paths
