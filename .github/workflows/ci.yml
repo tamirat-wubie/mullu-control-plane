@@ -217,6 +217,14 @@ jobs:
       - name: Validate protocol manifest
         run: python scripts/validate_protocol_manifest.py
 
+      - name: Validate personal-assistant foundation
+        run: |
+          python scripts/validate_personal_assistant_skill_registry.py
+          python scripts/validate_personal_assistant_approval_matrix.py
+          python scripts/validate_personal_assistant_receipt.py
+          python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
+          python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_intake.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py -q
+
       - name: Validate logic governance application
         run: python scripts/validate_logic_governance_application.py
 
@@ -418,7 +426,7 @@ jobs:
         run: python -m pytest tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_admission_closure.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py -q
 
       - name: Run Foundation validator tests
-        run: python -m pytest tests/test_validate_foundation_mode.py tests/test_validate_foundation_local_proof_thread.py tests/test_validate_foundation_*_boundary.py -q
+        run: python -m pytest tests/test_validate_foundation_mode.py tests/test_validate_foundation_local_proof_thread.py tests/test_validate_foundation_company_boundary_kernel.py tests/test_validate_foundation_*_boundary.py -q
 
       - name: Run governed code-change loop tests
         run: python -m pytest tests/test_governed_code_change_loop.py tests/test_probe_governed_code_change_loop_sandbox.py tests/test_run_governed_code_change_loop_script.py tests/test_run_wsl_governed_code_change_loop_sandbox_probe.py tests/test_assess_windows_governed_code_change_loop_readiness.py tests/test_validate_governed_code_change_loop_receipt.py tests/test_validate_governed_code_change_loop_sandbox_probe.py tests/test_validate_governed_code_change_loop_sandbox_readiness_runbook.py -q
@@ -430,7 +438,7 @@ jobs:
         run: python -m pytest tests/test_collect_govern_cloud_public_route_monitor.py -q
 
       - name: Run Agentic Service Harness planning tests
-        run: python -m pytest tests/test_validate_agentic_service_harness_read_model_binding_plan.py tests/test_validate_agentic_service_harness_read_models.py tests/test_validate_agentic_service_harness_read_model_projections.py tests/test_validate_agentic_service_harness_read_model_integrity.py tests/test_validate_agentic_service_harness_authority_transitions.py -q
+        run: python -m pytest tests/test_validate_agentic_service_harness_read_model_binding_plan.py tests/test_validate_agentic_service_harness_read_models.py tests/test_validate_agentic_service_harness_read_model_projections.py tests/test_validate_agentic_service_harness_read_model_integrity.py tests/test_validate_agentic_service_harness_read_model_persistence.py tests/test_validate_agentic_service_harness_read_only_status_route_design.py tests/test_validate_agentic_service_harness_read_only_status_route.py tests/test_validate_agentic_service_harness_authority_transitions.py tests/test_validate_agentic_service_harness_live_task_run_producer_evidence.py tests/test_validate_agentic_service_harness_live_task_run_producer_rehearsal.py tests/test_validate_agentic_service_harness_live_producer_admission_gate.py tests/test_validate_agentic_service_harness_live_producer_witness_requirements.py tests/test_validate_agentic_service_harness_live_producer_operator_approval_request.py tests/test_validate_agentic_service_harness_live_producer_operator_response_witness.py tests/test_validate_agentic_service_harness_live_producer_operator_decision_evidence.py tests/test_validate_agentic_service_harness_live_producer_operator_decision_record.py tests/test_validate_agentic_service_harness_live_producer_operator_decision_value_absence.py tests/test_validate_agentic_service_harness_live_producer_operator_decision_pending_status.py -q
 
       - name: Run test-coverage contract tests
         # Enforce the test-execution coverage invariants in CI: the MCOI shard

@@ -1,0 +1,72 @@
+{
+  "evidence_boundary_id": "agentic-service-harness-live-producer-operator-decision-evidence",
+  "schema_version": 1,
+  "generated_at": "2026-06-13T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_response_witness_ref": "response-witness://agentic-service-harness-live-producer-operator-response-witness",
+  "decision_status": "AwaitingEvidence",
+  "observed_input_kind": "generic_continuation",
+  "generic_continuation_satisfies_approval": false,
+  "approval_satisfied": false,
+  "rejection_recorded": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "accepted_decision_evidence": [
+    {
+      "decision_kind": "explicit_operator_approval",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "authority_effect": "no_live_authority_without_all_witnesses"
+    },
+    {
+      "decision_kind": "explicit_operator_rejection",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "authority_effect": "no_live_authority_without_all_witnesses"
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-evidence",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_evidence.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an explicit operator approval or rejection record; generic continuation does not satisfy operator approval."
+}

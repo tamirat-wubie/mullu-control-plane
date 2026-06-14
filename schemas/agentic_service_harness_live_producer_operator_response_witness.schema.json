@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-response-witness:1",
+  "title": "Agentic Service Harness Live Producer Operator Response Witness",
+  "description": "Read-only operator response witness packet for the live task/run producer. This schema records that no explicit operator response has been collected and does not satisfy approval, admit UI, mutation endpoints, live adapters, branch writes, pull-request creation, deployment, DNS mutation, secret mutation, destructive operations, runtime state writes, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "response_witness_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_approval_request_ref",
+    "source_requirements_ref",
+    "source_admission_gate_ref",
+    "witness_kind",
+    "requested_evidence_ref",
+    "response_status",
+    "response_kind",
+    "response_record_collected",
+    "approval_satisfied",
+    "rejection_recorded",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "live_producer_implemented",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "operator_response",
+    "witnesses_after_response",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "response_witness_id": {
+      "type": "string",
+      "const": "agentic-service-harness-live-producer-operator-response-witness"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "source_approval_request_ref": {
+      "$ref": "#/$defs/evidence_ref"
+    },
+    "source_requirements_ref": {
+      "$ref": "#/$defs/evidence_ref"
+    },
+    "source_admission_gate_ref": {
+      "$ref": "#/$defs/evidence_ref"
+    },
+    "witness_kind": {
+      "type": "string",
+      "const": "operator_approval"
+    },
+    "requested_evidence_ref": {
+      "$ref": "#/$defs/evidence_ref"
+    },
+    "response_status": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "response_kind": {
+      "type": "string",
+      "const": "operator_response_missing"
+    },
+    "response_record_collected": {
+      "type": "boolean",
+      "const": false
+    },
+    "approval_satisfied": {
+      "type": "boolean",
+      "const": false
+    },
+    "rejection_recorded": {
+      "type": "boolean",
+      "const": false
+    },
+    "authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "planning_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_producer_implemented": {
+      "type": "boolean",
+      "const": false
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "operator_response": {
+      "$ref": "#/$defs/operator_response"
+    },
+    "witnesses_after_response": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/witness_after_response"
+      },
+      "uniqueItems": true
+    },
+    "authority_denials": {
+      "$ref": "#/$defs/authority_denials"
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "read_only"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "operator_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_request_id",
+        "approver_role",
+        "required_response_kinds",
+        "default_response_kind",
+        "observed_response_kind",
+        "response_record_ref",
+        "response_record_required",
+        "response_record_collected",
+        "approval_effect",
+        "live_execution_authorized_after_response"
+      ],
+      "properties": {
+        "approval_request_id": { "$ref": "#/$defs/identifier" },
+        "approver_role": { "type": "string", "const": "operator" },
+        "required_response_kinds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "string",
+            "enum": [
+              "record_operator_approval_witness",
+              "record_operator_rejection_witness"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "default_response_kind": {
+          "type": "string",
+          "const": "record_operator_rejection_witness"
+        },
+        "observed_response_kind": {
+          "type": "string",
+          "const": "operator_response_missing"
+        },
+        "response_record_ref": { "$ref": "#/$defs/evidence_ref" },
+        "response_record_required": { "type": "boolean", "const": true },
+        "response_record_collected": { "type": "boolean", "const": false },
+        "approval_effect": {
+          "type": "string",
+          "const": "no_approval_effect_without_explicit_response"
+        },
+        "live_execution_authorized_after_response": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "witness_after_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_kind",
+        "status",
+        "evidence_ref",
+        "blocks_live_producer",
+        "authority_granted"
+      ],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "operator_approval",
+            "effect_receipt",
+            "external_adapter_evidence",
+            "secret_handoff",
+            "rollback_proof"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "blocks_live_producer": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "network_policy"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

@@ -222,6 +222,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "agentic_service_harness_status_read_model",
+            ["/api/v1/harness/status"],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/server.py",
+                "gateway/agentic_service_harness_status.py",
+                "gateway/agentic_service_harness_read_model_producer.py",
+                "scripts/validate_agentic_service_harness_read_only_status_route.py",
+                "scripts/validate_agentic_service_harness_read_only_status_route_design.py",
+                "tests/test_gateway/test_agentic_service_harness_status_route.py",
+                "tests/test_validate_agentic_service_harness_read_only_status_route.py",
+                "tests/test_validate_agentic_service_harness_read_only_status_route_design.py",
+            ],
+            (
+                "Agentic service harness status exposes one bounded read-only route, "
+                "rejects mutation methods, projects only status/read-model evidence, "
+                "and grants no live producer, adapter, secret, deployment, or branch authority."
+            ),
+            [
+                "harness_status_projection_accepts_default_fixture",
+                "harness_status_gateway_route_is_read_only",
+                "harness_status_gateway_route_reads_runtime_source",
+                "read_only_status_route_accepts_default_implementation",
+                "read_only_status_route_design_accepts_default_artifact",
+            ],
+        ),
+        _surface(
             "capability_worker_execution",
             ["/capability/execute"],
             "request_proof",

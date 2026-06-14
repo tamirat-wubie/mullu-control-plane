@@ -1,0 +1,33 @@
+{
+  "request_type": "personal_assistant.request",
+  "request_id": "pa_request_calendar_brief_001",
+  "submitted_at": "2026-06-14T00:00:00+00:00",
+  "interface": "operator_console",
+  "user_goal": "Summarize today's calendar and detect conflicts without changing events.",
+  "requested_capabilities": ["calendar.read", "calendar.conflict_check"],
+  "requested_skill_ids": ["calendar.day.brief", "calendar.conflict.detect"],
+  "risk_level": "P1",
+  "requires_approval": false,
+  "execution_mode": "preview",
+  "approval_scope": "none",
+  "missing_bindings": [],
+  "connector_refs": [
+    {
+      "connector_id": "connector:calendar:operator",
+      "connector_name": "google_calendar",
+      "proof_state": "Pass",
+      "private_data_allowed": true,
+      "scopes": ["calendar.readonly"]
+    }
+  ],
+  "governance_refs": [
+    "docs/PERSONAL_ASSISTANT_RISK_BOUNDARY.md",
+    "docs/UNIVERSAL_ACTION_ORCHESTRATION.md"
+  ],
+  "blocked_actions": ["create_event", "move_event", "cancel_event", "invite_people"],
+  "evidence_refs": ["proof://personal-assistant/request/calendar-brief"],
+  "metadata": {
+    "fixture": "personal_assistant_request_calendar_brief",
+    "live_connector_execution_allowed": false
+  }
+}
