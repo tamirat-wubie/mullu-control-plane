@@ -1,0 +1,161 @@
+{
+  "handoff_id": "read-only-worker-runtime-receipt-handoff-foundation-repo-inspection-20260614",
+  "handoff_version": "read_only_worker_runtime_receipt_handoff.v1",
+  "binding_ref": "examples/read_only_worker_binding.foundation.json",
+  "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+  "rehearsal_receipt_ref": "examples/read_only_worker_rehearsal_receipt.foundation.json",
+  "console_read_model_ref": "examples/personal_assistant_console_read_model.json",
+  "selected_worker_path": "read_only_repo_inspection",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-14T21:25:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "foundation_handoff_only": true,
+    "runtime_registration_allowed": false,
+    "dispatch_endpoint_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "emission_handoff_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "handoff_state": "FOUNDATION_HANDOFF_RECORDED",
+    "required_source_receipt_refs": [
+      "examples/read_only_worker_binding.foundation.json",
+      "examples/read_only_worker_lease_preflight.foundation.json",
+      "examples/read_only_worker_rehearsal_receipt.foundation.json",
+      "examples/personal_assistant_console_read_model.json"
+    ],
+    "required_emission_gate_refs": [
+      "gate://runtime-runner-registration",
+      "gate://runtime-receipt-emitter-registration",
+      "gate://temporal-lease-active",
+      "gate://uao-effect-admission",
+      "gate://phi-gov-dispatch-authorization",
+      "gate://worker-failure-receipt-on-error"
+    ],
+    "required_runtime_witness_refs": [
+      "witness://runtime-runner/not-registered",
+      "witness://dispatch-endpoint/not-registered",
+      "witness://runtime-receipt-emitter/not-registered",
+      "witness://runtime-receipt-schema/not-bound"
+    ],
+    "receipt_schema_refs": [
+      "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+      "schemas/worker_mesh.schema.json",
+      "schemas/worker_failure_receipt.schema.json",
+      "schemas/temporal_lease_window_receipt.schema.json",
+      "schemas/read_only_worker_rehearsal_receipt.schema.json"
+    ],
+    "validation_refs": [
+      "scripts/validate_read_only_worker_runtime_receipt_handoff.py",
+      "scripts/validate_read_only_worker_binding.py",
+      "scripts/validate_read_only_worker_lease_preflight.py",
+      "scripts/validate_read_only_worker_rehearsal_receipt.py"
+    ],
+    "denied_until_refs": [
+      "evidence://runtime-runner-registration",
+      "evidence://runtime-receipt-emitter-dry-run",
+      "evidence://active-temporal-lease-window",
+      "evidence://uao-effect-admission",
+      "evidence://phi-gov-dispatch-authorization"
+    ],
+    "future_emitter_obligations": [
+      "emit worker mesh dispatch receipt before accepting worker output",
+      "emit WorkerFailureReceipt for every failed or partial dispatch",
+      "bind active TemporalLeaseWindowReceipt before dispatch admission",
+      "preserve no-terminal-closure until effect reconciliation passes",
+      "publish bounded output digest instead of raw output",
+      "reject dispatch when source receipt refs drift"
+    ]
+  },
+  "admission_guards": {
+    "binding_validated": true,
+    "lease_preflight_validated": true,
+    "rehearsal_receipt_validated": true,
+    "console_projection_validated": true,
+    "runtime_runner_registered": false,
+    "dispatch_endpoint_registered": false,
+    "runtime_receipt_emitter_registered": false,
+    "runtime_receipt_schema_bound": false,
+    "effect_reconciliation_required": true,
+    "failure_receipt_required_on_error": true,
+    "terminal_closure_blocked_until_runtime_receipt": true
+  },
+  "handoff_result": {
+    "result_state": "HANDOFF_RECORDED",
+    "next_required_evidence": [
+      "runtime runner registration witness",
+      "runtime receipt emitter dry-run receipt",
+      "active temporal lease window receipt",
+      "UAO effect admission receipt",
+      "Phi_gov dispatch authorization receipt"
+    ],
+    "handoff_digest": "sha256:4e4dbb01fd3f2a74c40da82e9fd534a761919fbe3113fd1f66be267d74f31834",
+    "runtime_dispatch_admitted": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "read_only_worker_runtime_receipt_handoff_schema": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+    "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
+    "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "read_only_worker_rehearsal_receipt_schema": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "personal_assistant_console_read_model_schema": "schemas/personal_assistant_console_read_model.schema.json",
+    "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json"
+  },
+  "contract_summary": {
+    "source_receipt_ref_count": 4,
+    "emission_gate_ref_count": 6,
+    "runtime_witness_ref_count": 4,
+    "receipt_schema_ref_count": 5,
+    "validation_ref_count": 4,
+    "denied_until_ref_count": 5,
+    "future_emitter_obligation_count": 6,
+    "next_required_evidence_count": 5,
+    "receipt_ref_count": 8,
+    "evidence_ref_count": 11
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "gap://GAP-WORKER-001",
+    "gap://GAP-WORKER-002",
+    "gap://GAP-WORKER-003"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://read-only-worker-runtime-receipt-handoff/foundation-repo-inspection/20260614",
+    "causal_decision_trace_ref": "trace://read-only-worker-runtime-receipt-handoff/foundation-repo-inspection/20260614",
+    "receipt_ref": "receipt://read-only-worker-runtime-receipt-handoff/foundation-repo-inspection/20260614"
+  },
+  "evidence_refs": [
+    "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+    "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_handoff.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_handoff.py",
+    "schemas/read_only_worker_binding.schema.json",
+    "schemas/read_only_worker_lease_preflight.schema.json",
+    "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "examples/read_only_worker_binding.foundation.json",
+    "examples/read_only_worker_lease_preflight.foundation.json",
+    "examples/read_only_worker_rehearsal_receipt.foundation.json",
+    "examples/personal_assistant_console_read_model.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This handoff records evidence required before a future runtime receipt emitter can be considered. It does not register a runner, dispatch endpoint, emitter, connector call, filesystem write, or terminal closure."
+  }
+}
