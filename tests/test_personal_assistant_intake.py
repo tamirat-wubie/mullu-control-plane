@@ -121,6 +121,23 @@ def test_math_request_preserves_planning_only_boundary() -> None:
     assert payload["metadata"]["system_of_record_write_allowed"] is False
 
 
+def test_task_request_compiles_to_connector_free_draft_intent() -> None:
+    intent = interpret_user_request(
+        "Create a task draft for the release checklist.",
+        request_id="pa_request_runtime_task_draft_001",
+        submitted_at=SUBMITTED_AT,
+    )
+    payload = intent.as_request_dict()
+
+    assert _validate_schema_instance(_load_schema(REQUEST_SCHEMA_PATH), payload) == []
+    assert intent.requested_skill_ids == ("task.create_draft",)
+    assert intent.connector_refs == ()
+    assert intent.risk_level is SkillRiskLevel.P2
+    assert intent.execution_mode is RequestExecutionMode.READ_AND_DRAFT_ONLY
+    assert "system_of_record_write" in intent.blocked_actions
+    assert payload["metadata"]["system_of_record_write_allowed"] is False
+
+
 def test_unknown_request_blocks_on_action_boundary_clarification() -> None:
     intent = interpret_user_request(
         "Handle this for me.",

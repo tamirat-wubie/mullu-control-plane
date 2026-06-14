@@ -1,6 +1,6 @@
 """Purpose: personal-assistant foundation runtime package.
-Governance scope: governed skill registry, risk boundaries, and read-only
-registry projections for the personal-assistant layer.
+Governance scope: governed skill registry, risk boundaries, read-only
+projections, and draft-only projections for the personal-assistant layer.
 Dependencies: personal-assistant contracts and skill registry modules.
 Invariants: registry loading is deterministic, receipt and UAO requirements are
 preserved, and no live connector execution is exposed from this package.
@@ -15,6 +15,25 @@ from .contracts import (
     SkillMode,
     SkillRiskLevel,
 )
+from .console import (
+    build_personal_assistant_console_read_model,
+    render_personal_assistant_console_html,
+)
+from .approval import (
+    ApprovalDecision,
+    ApprovalProposedAction,
+    ApprovalQueueRecord,
+    PersonalAssistantApprovalQueue,
+)
+from .drafts import (
+    CalendarEventDraftInput,
+    DraftAssistantProjection,
+    EmailDraftInput,
+    TaskDraftInput,
+    draft_calendar_event,
+    draft_email_response,
+    draft_task,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -24,10 +43,33 @@ from .intake import (
     RequestInterface,
     interpret_user_request,
 )
+from .memory import (
+    MemoryConfidence,
+    MemoryObservationCandidate,
+    MemoryObservationSource,
+    MemoryObservationType,
+    MemoryRetentionPolicy,
+    MemoryScope,
+    MemorySensitivity,
+    NestedMindStatus,
+    PersonalAssistantMemoryObservationLedger,
+    prepare_memory_observation,
+)
+from .read_only import (
+    ReadOnlyAssistantProjection,
+    RedactedCalendarEvent,
+    RedactedInboxMessage,
+    summarize_calendar_day_read_only,
+    summarize_inbox_read_only,
+)
 from .skill_registry import (
     PersonalAssistantSkillRegistry,
     load_default_skill_registry,
     load_skill_registry,
+)
+from .teamops import (
+    TeamOpsSharedInboxProjection,
+    plan_teamops_shared_inbox,
 )
 from .whqr_bridge import (
     PersonalAssistantClarificationBundle,
@@ -40,6 +82,27 @@ __all__ = (
     "PersonalAssistantClarificationBundle",
     "PersonalAssistantSkill",
     "PersonalAssistantSkillRegistry",
+    "ApprovalDecision",
+    "ApprovalProposedAction",
+    "ApprovalQueueRecord",
+    "PersonalAssistantApprovalQueue",
+    "CalendarEventDraftInput",
+    "DraftAssistantProjection",
+    "EmailDraftInput",
+    "MemoryConfidence",
+    "MemoryObservationCandidate",
+    "MemoryObservationSource",
+    "MemoryObservationType",
+    "MemoryRetentionPolicy",
+    "MemoryScope",
+    "MemorySensitivity",
+    "NestedMindStatus",
+    "PersonalAssistantMemoryObservationLedger",
+    "ReadOnlyAssistantProjection",
+    "RedactedCalendarEvent",
+    "RedactedInboxMessage",
+    "TaskDraftInput",
+    "TeamOpsSharedInboxProjection",
     "ApprovalScope",
     "ConnectorProofRef",
     "GovernedIntent",
@@ -49,7 +112,16 @@ __all__ = (
     "SkillMode",
     "SkillRiskLevel",
     "build_clarification_requests",
+    "build_personal_assistant_console_read_model",
+    "draft_calendar_event",
+    "draft_email_response",
+    "draft_task",
     "interpret_user_request",
     "load_default_skill_registry",
     "load_skill_registry",
+    "prepare_memory_observation",
+    "plan_teamops_shared_inbox",
+    "render_personal_assistant_console_html",
+    "summarize_calendar_day_read_only",
+    "summarize_inbox_read_only",
 )

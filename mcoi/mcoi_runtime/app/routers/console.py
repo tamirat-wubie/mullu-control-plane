@@ -15,6 +15,7 @@ frontend can consume. Seven views cover the core operational needs:
 from __future__ import annotations
 
 from dataclasses import asdict
+from datetime import UTC, datetime
 from html import escape
 from typing import Mapping
 
@@ -28,6 +29,10 @@ from mcoi_runtime.app.view_models import WHQRBindingClarificationStatusView
 from mcoi_runtime.contracts.conversation import ConversationThread
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
+from mcoi_runtime.personal_assistant.console import (
+    build_personal_assistant_console_read_model,
+    render_personal_assistant_console_html,
+)
 
 router = APIRouter()
 _MAX_CONSOLE_READ_LIMIT = 500
@@ -526,6 +531,34 @@ def console_spatial_map_view():
     return HTMLResponse(_render_spatial_map_console_html(_spatial_map_console_payload()))
 
 
+@router.get("/api/v1/console/personal-assistant")
+def console_personal_assistant():
+    """Personal-assistant foundation console read model."""
+
+    deps.metrics.inc("requests_governed")
+    return _personal_assistant_console_payload()
+
+
+@router.get("/api/v1/console/personal-assistant/view", response_class=HTMLResponse)
+def console_personal_assistant_view():
+    """Browser-facing read-only personal-assistant console panel."""
+
+    deps.metrics.inc("requests_governed")
+    return HTMLResponse(render_personal_assistant_console_html(_personal_assistant_console_payload()))
+
+
+def _personal_assistant_console_payload() -> dict[str, object]:
+    """Build the foundation personal-assistant console payload."""
+
+    return build_personal_assistant_console_read_model(generated_at=_utc_timestamp())
+
+
+def _utc_timestamp() -> str:
+    """Return an ISO UTC timestamp for read-model generation."""
+
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def _spatial_map_console_payload() -> dict[str, object]:
     """Build panel groupings from the bounded spatial governance map."""
 
@@ -950,5 +983,6 @@ def full_console():
         "note_memory": console_note_memory(),
         "whqr_clarifications": console_whqr_binding_clarifications(),
         "spatial_map": build_gateway_spatial_map(production_readiness_checks()).to_dict(),
+        "personal_assistant": _personal_assistant_console_payload(),
         "governed": True,
     }

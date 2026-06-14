@@ -269,6 +269,8 @@ def _select_skill_ids_and_gaps(request_text: str) -> tuple[tuple[str, ...], tupl
                 ),
             ),
         )
+    if "teamops" in normalized or "team ops" in normalized or "shared inbox" in normalized:
+        return ("teamops.shared_inbox.plan",), ()
     if any(term in normalized for term in ("inbox", "email", "reply", "respond")):
         skill_ids = ["email.inbox.summarize"]
         if any(term in normalized for term in ("draft", "reply", "respond", "response")):
@@ -288,6 +290,8 @@ def _select_skill_ids_and_gaps(request_text: str) -> tuple[tuple[str, ...], tupl
                 )
             )
         return tuple(skill_ids), tuple(gaps)
+    if any(term in normalized for term in ("task", "todo", "to-do", "reminder", "follow-up", "followup")):
+        return ("task.create_draft",), ()
     if any(term in normalized for term in ("math", "calculate", "compare", "budget", "cost", "optimize", "scenario")):
         return ("math.reasoning.plan",), ()
     if any(term in normalized for term in ("document", "doc", "file", "summarize this")):

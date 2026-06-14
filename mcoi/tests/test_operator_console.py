@@ -447,13 +447,42 @@ def test_full_console(client: TestClient) -> None:
     assert "note_memory" in data
     assert "whqr_clarifications" in data
     assert "spatial_map" in data
+    assert "personal_assistant" in data
     assert data["spatial_map"]["frame"].startswith("gateway_architecture_space")
+    assert data["personal_assistant"]["status"] == "foundation_read_only"
+    assert data["personal_assistant"]["effect_boundary"]["execution_allowed"] is False
     assert data["spatial_map"]["metrics"][0]["id"] == "readiness_subsystems"
     judgments = {judgment["path_id"]: judgment for judgment in data["spatial_map"]["judgments"]}
     assert judgments["dashboard_health_check"]["status"] == "allowed"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["source_to_secret"]["status"] == "blocked"
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
+
+
+def test_console_personal_assistant_panel_read_model(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/personal-assistant")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["governed"] is True
+    assert data["status"] == "foundation_read_only"
+    assert data["effect_boundary"]["execution_allowed"] is False
+    assert data["effect_boundary"]["external_send_allowed"] is False
+    assert data["effect_boundary"]["nested_mind_live_activation_allowed"] is False
+    assert data["sections"]["approvals"]["execution_allowed"] is False
+    assert data["skills"]["skill_count"] >= 13
+    assert "send_email" in data["blocked_actions"]
+
+
+def test_console_personal_assistant_html_view_renders_read_only_panel(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/personal-assistant/view")
+
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "Mullu Personal Assistant Console" in resp.text
+    assert "Execution Allowed" in resp.text
+    assert "Blocked Actions" in resp.text
+    assert "json read model" in resp.text
 
 
 def test_console_spatial_map_panel_read_model(client: TestClient) -> None:

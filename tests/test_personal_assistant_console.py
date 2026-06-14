@@ -1,0 +1,117 @@
+"""Purpose: verify the personal-assistant foundation console read model.
+Governance scope: read-only console panels, approval queue visibility, receipt
+references, and private payload rejection.
+Dependencies: personal-assistant console, approval queue, and registry fixtures.
+Invariants: console rendering does not grant connector, write, send, deploy, or
+live memory authority.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from mcoi_runtime.personal_assistant import (
+    ApprovalProposedAction,
+    ApprovalScope,
+    PersonalAssistantApprovalQueue,
+    PersonalAssistantInvariantError,
+    build_personal_assistant_console_read_model,
+    render_personal_assistant_console_html,
+)
+
+
+GENERATED_AT = "2026-06-14T00:00:00Z"
+
+
+def test_console_read_model_exposes_read_only_foundation_sections() -> None:
+    payload = build_personal_assistant_console_read_model(generated_at=GENERATED_AT)
+
+    assert payload["status"] == "foundation_read_only"
+    assert payload["governed"] is True
+    assert payload["effect_boundary"]["execution_allowed"] is False
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["nested_mind_live_activation_allowed"] is False
+    assert payload["sections"]["chat"]["execution_allowed"] is False
+    assert payload["sections"]["tasks"]["task_write_allowed"] is False
+    assert payload["skills"]["skill_count"] >= 13
+    assert "send_email" in payload["blocked_actions"]
+    assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]
+
+
+def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
+    queue = PersonalAssistantApprovalQueue()
+    record = queue.enqueue(
+        request_id="pa_request_console_approval_001",
+        plan_id="pa_plan_console_approval_001",
+        approver_ref="operator:tamirat",
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+        proposed_actions=(
+            ApprovalProposedAction(
+                action_id="send_prepared_email_draft",
+                skill_id="email.send.with_approval",
+                risk_level="P4",
+                effect_boundary="external_email_send",
+                summary="Send one approved email draft to one named recipient.",
+            ),
+        ),
+        forbidden_without_approval=("send", "forward", "connector_mutation"),
+        evidence_refs=("proof://personal-assistant/console/approval-001",),
+        created_at=GENERATED_AT,
+    )
+    payload = build_personal_assistant_console_read_model(
+        generated_at=GENERATED_AT,
+        approval_queue=queue,
+        recent_requests=(
+            {
+                "request_id": "pa_request_console_chat_001",
+                "summary": "<script>alert(1)</script>",
+                "status": "preview_only",
+            },
+        ),
+        receipts=(
+            {
+                "receipt_id": "pa_receipt_console_preview_001",
+                "skill_id": "email.response.draft",
+                "decision": "allowed",
+            },
+        ),
+    )
+    html = render_personal_assistant_console_html(payload)
+
+    assert payload["approval_queue"]["approval_count"] == 1
+    assert payload["approval_queue"]["records"][0]["approval_id"] == record.approval_id
+    assert record.latest_receipt["receipt_id"] in payload["receipt_refs"]
+    assert "pa_receipt_console_preview_001" in payload["receipt_refs"]
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+    assert "<script>alert(1)</script>" not in html
+    assert "Execution Allowed" in html
+
+
+def test_console_rejects_raw_private_fields_and_secret_like_values() -> None:
+    with pytest.raises(PersonalAssistantInvariantError) as raw_exc:
+        build_personal_assistant_console_read_model(
+            generated_at=GENERATED_AT,
+            recent_requests=(
+                {
+                    "request_id": "pa_request_console_raw_001",
+                    "raw_connector_payload": {"subject": "private"},
+                    "status": "blocked",
+                },
+            ),
+        )
+    with pytest.raises(PersonalAssistantInvariantError) as secret_exc:
+        build_personal_assistant_console_read_model(
+            generated_at=GENERATED_AT,
+            task_items=(
+                {
+                    "task_id": "pa_task_console_secret_001",
+                    "summary": "rotate Bearer secret-worker-token",
+                    "status": "blocked",
+                },
+            ),
+        )
+
+    assert "raw private field" in str(raw_exc.value)
+    assert "secret-like value" in str(secret_exc.value)
+    assert "raw_connector_payload" in str(raw_exc.value)
