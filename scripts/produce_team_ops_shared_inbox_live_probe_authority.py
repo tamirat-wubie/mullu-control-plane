@@ -43,6 +43,9 @@ from scripts.validate_team_ops_shared_inbox_operator_handoff import (  # noqa: E
 
 
 DEFAULT_OUTPUT = WORKSPACE_ROOT / ".change_assurance" / "team_ops_shared_inbox_live_probe_authority.json"
+DEFAULT_APPROVAL_BINDING = (
+    WORKSPACE_ROOT / ".change_assurance" / "team_ops_shared_inbox_live_probe_approval_binding.json"
+)
 DEFAULT_QUERY = "newer_than:1d"
 DEFAULT_MAX_MESSAGE_COUNT = 10
 FORBIDDEN_EFFECTS = (
@@ -63,6 +66,7 @@ def produce_team_ops_shared_inbox_live_probe_authority(
     *,
     handoff_path: Path = DEFAULT_HANDOFF,
     probe_approval_ref: str = "",
+    approval_binding_path: Path | None = None,
     repository: str = DEFAULT_REPOSITORY,
     query: str = DEFAULT_QUERY,
     max_message_count: int = DEFAULT_MAX_MESSAGE_COUNT,
@@ -73,14 +77,25 @@ def produce_team_ops_shared_inbox_live_probe_authority(
     validation = validate_team_ops_shared_inbox_operator_handoff(handoff_path=handoff_path)
     handoff_validation_ok = validation.ok
     handoff_ready = handoff_validation_ok and handoff.get("ready_for_live_probe") is True
-    probe_authorized = bool(probe_approval_ref.strip())
-    redacted_approval_ref = _redacted_ref(probe_approval_ref)
+    approval_binding = _load_approval_binding_object(approval_binding_path) if approval_binding_path else {}
+    approval_binding_blockers = _approval_binding_blockers(
+        approval_binding_path=approval_binding_path,
+        approval_binding=approval_binding,
+        source_handoff_id=str(handoff.get("handoff_id", "missing")),
+    )
+    if approval_binding_path:
+        probe_authorized = not approval_binding_blockers and approval_binding.get("ready_for_authority_receipt") is True
+        redacted_approval_ref = str(approval_binding.get("probe_approval_ref", "")) if probe_authorized else ""
+    else:
+        probe_authorized = bool(probe_approval_ref.strip())
+        redacted_approval_ref = _redacted_ref(probe_approval_ref)
     blocked_until = _blocked_until(
         handoff_exists=handoff_path.exists(),
         handoff_validation_ok=handoff_validation_ok,
         handoff_ready=handoff_ready,
         probe_authorized=probe_authorized,
         validation_errors=validation.errors,
+        approval_binding_blockers=approval_binding_blockers,
     )
     read_only_probe_allowed = handoff_ready and probe_authorized and not blocked_until
     status = _authority_status(
@@ -153,6 +168,16 @@ def _load_handoff_object(handoff_path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _load_approval_binding_object(approval_binding_path: Path | None) -> dict[str, Any]:
+    if approval_binding_path is None or not approval_binding_path.exists():
+        return {}
+    try:
+        payload = json.loads(approval_binding_path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant)
+    except (json.JSONDecodeError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def _allowed_probe(*, query: str, max_message_count: int) -> dict[str, Any]:
     bounded_count = min(max(1, int(max_message_count)), 50)
     bounded_query = query.strip() or DEFAULT_QUERY
@@ -175,6 +200,7 @@ def _blocked_until(
     handoff_ready: bool,
     probe_authorized: bool,
     validation_errors: tuple[str, ...],
+    approval_binding_blockers: tuple[str, ...],
 ) -> list[str]:
     blockers: list[str] = []
     if not handoff_exists:
@@ -183,9 +209,63 @@ def _blocked_until(
         blockers.extend(f"team_ops_handoff_invalid:{error}" for error in validation_errors)
     if handoff_validation_ok and not handoff_ready:
         blockers.append("team_ops_handoff_not_ready_for_live_probe")
+    blockers.extend(approval_binding_blockers)
     if not probe_authorized:
         blockers.append("probe_approval_ref")
-    return blockers
+    return list(dict.fromkeys(blockers))
+
+
+def _approval_binding_blockers(
+    *,
+    approval_binding_path: Path | None,
+    approval_binding: Mapping[str, Any],
+    source_handoff_id: str,
+) -> tuple[str, ...]:
+    if approval_binding_path is None:
+        return ()
+    blockers: list[str] = []
+    if not approval_binding_path.exists():
+        blockers.append("approval_binding_missing")
+        return tuple(blockers)
+    if not approval_binding:
+        blockers.append("approval_binding_invalid:json_root")
+        return tuple(blockers)
+    try:
+        _assert_redacted(approval_binding)
+    except ValueError as exc:
+        blockers.append(f"approval_binding_invalid:{exc}")
+    if approval_binding.get("workflow_id") != "team_ops.shared_inbox_triage":
+        blockers.append("approval_binding_invalid:workflow_id")
+    if approval_binding.get("connector_id") != "gmail":
+        blockers.append("approval_binding_invalid:connector_id")
+    if approval_binding.get("source_handoff_id") != source_handoff_id:
+        blockers.append("approval_binding_invalid:source_handoff_id")
+    if approval_binding.get("ready_for_authority_receipt") is not True:
+        binding_blockers = approval_binding.get("blocked_until")
+        if isinstance(binding_blockers, list):
+            blockers.extend(str(blocker) for blocker in binding_blockers)
+        blockers.append("approval_binding_not_ready")
+    if approval_binding.get("handoff_ready_for_live_probe") is not True:
+        blockers.append("approval_binding_invalid:handoff_not_ready")
+    if approval_binding.get("probe_approval_ref_present") is not True:
+        blockers.append("probe_approval_ref")
+    approval_ref = str(approval_binding.get("probe_approval_ref", ""))
+    if not approval_ref.startswith("ref:"):
+        blockers.append("approval_binding_invalid:probe_approval_ref")
+    for field_name in (
+        "live_probe_executed",
+        "external_provider_call_performed",
+        "external_mailbox_write_performed",
+        "external_message_sent",
+        "provider_mutation_performed",
+        "credential_values_disclosed",
+        "approval_ref_value_serialized",
+    ):
+        if approval_binding.get(field_name) is not False:
+            blockers.append(f"approval_binding_invalid:{field_name}")
+    if approval_binding.get("no_secret_values_serialized") is not True:
+        blockers.append("approval_binding_invalid:no_secret_values_serialized")
+    return tuple(dict.fromkeys(blockers))
 
 
 def _authority_status(*, handoff_ready: bool, read_only_probe_allowed: bool) -> str:
@@ -280,6 +360,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--probe-approval-ref",
         default=os.environ.get("MULLU_TEAM_OPS_LIVE_PROBE_APPROVAL_REF", ""),
     )
+    parser.add_argument(
+        "--approval-binding",
+        type=Path,
+        default=None,
+        help="optional redacted TeamOps live-probe approval binding receipt",
+    )
     parser.add_argument("--require-admitted", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -292,6 +378,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = produce_team_ops_shared_inbox_live_probe_authority(
         handoff_path=args.handoff,
         probe_approval_ref=args.probe_approval_ref,
+        approval_binding_path=args.approval_binding,
         repository=args.repo,
         query=args.query,
         max_message_count=args.max_message_count,

@@ -19,6 +19,10 @@ from pathlib import Path
 
 import pytest
 
+from scripts.bind_team_ops_shared_inbox_live_probe_approval import (
+    bind_team_ops_shared_inbox_live_probe_approval,
+    write_team_ops_shared_inbox_live_probe_approval_binding,
+)
 from scripts import validate_durable_gmail_oauth_runtime_preflight as gmail_preflight
 from scripts.produce_team_ops_shared_inbox_live_probe_authority import (
     main,
@@ -91,6 +95,36 @@ def test_ready_handoff_with_probe_approval_admits_read_only_probe(tmp_path: Path
     assert authority["allowed_probe"]["max_message_count"] == 12
     assert authority["live_probe_executed"] is False
     assert authority["external_message_sent"] is False
+
+
+def test_ready_approval_binding_admits_authority_without_raw_ref(tmp_path: Path) -> None:
+    handoff_path = _write_ready_handoff(tmp_path)
+    binding_path = tmp_path / "team_ops_shared_inbox_live_probe_approval_binding.json"
+    write_team_ops_shared_inbox_live_probe_approval_binding(
+        bind_team_ops_shared_inbox_live_probe_approval(
+            handoff_path=handoff_path,
+            probe_approval_ref="approval:teamops-read-probe-20260614",
+        ),
+        binding_path,
+    )
+
+    authority = produce_team_ops_shared_inbox_live_probe_authority(
+        handoff_path=handoff_path,
+        approval_binding_path=binding_path,
+        query="newer_than:3d",
+        max_message_count=8,
+    )
+
+    assert authority["status"] == "admitted_for_read_only_probe"
+    assert authority["solver_outcome"] == "SolvedVerified"
+    assert authority["probe_authorized"] is True
+    assert authority["probe_approval_ref"].startswith("ref:")
+    assert authority["read_only_probe_allowed"] is True
+    assert authority["blocked_until"] == []
+    assert authority["allowed_probe"]["query"] == "newer_than:3d"
+    assert authority["allowed_probe"]["max_message_count"] == 8
+    assert authority["live_probe_executed"] is False
+    assert authority["external_provider_call_performed"] is False
 
 
 def test_probe_authority_rejects_secret_shaped_approval_ref(tmp_path: Path) -> None:

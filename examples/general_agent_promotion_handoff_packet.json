@@ -1,8 +1,9 @@
 {
-  "aggregate_closure_actions": 9,
-  "approval_required_actions": 7,
+  "aggregate_closure_actions": 11,
+  "approval_required_actions": 8,
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
