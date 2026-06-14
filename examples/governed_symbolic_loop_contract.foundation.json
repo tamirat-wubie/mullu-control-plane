@@ -1,0 +1,77 @@
+{
+  "contract_id": "governed_symbolic_loop_contract_foundation_20260614",
+  "contract_version": "governed_symbolic_loop_contract.v1",
+  "surface": "foundation_governed_symbolic_loop_contract",
+  "loop_name": "Foundation Governed Symbolic Loop",
+  "solver_outcome": "AwaitingEvidence",
+  "action_classes": [
+    "epistemic",
+    "effect_bearing",
+    "hybrid"
+  ],
+  "canonical_phases": [
+    "problem_compile",
+    "action_classification",
+    "governance_preflight",
+    "capability_routing",
+    "execution_or_observation",
+    "verification",
+    "receipt_emission",
+    "rollback_or_recovery",
+    "learning_admission"
+  ],
+  "required_authority": [
+    "uao_policy_ref",
+    "phi_gov_authority_ref",
+    "life_meaning_judgment_ref",
+    "operator_registration_decision_ref"
+  ],
+  "required_evidence": [
+    "problem_star_compilation_receipt",
+    "action_classification_receipt",
+    "capability_admission_receipt",
+    "verification_receipt",
+    "rollback_or_recovery_handoff_receipt",
+    "learning_admission_receipt"
+  ],
+  "deterministic_kernel_boundaries": [
+    "DMRS remains deterministic routing and does not reason",
+    "schema validators remain pure read-only checks",
+    "parsers and route helpers do not receive recursive orchestration authority",
+    "registered adapters require explicit capability admission before effects"
+  ],
+  "effect_bearing_guards": {
+    "uao_required": true,
+    "phi_gov_required": true,
+    "life_meaning_judgment_required": true,
+    "rollback_or_recovery_required": true,
+    "rejected_deltas_logged": true,
+    "raw_reasoning_rejected": true,
+    "learning_after_verification_only": true,
+    "mfidel_atomicity_preserved": true
+  },
+  "non_runtime_guards": {
+    "read_only": true,
+    "read_model_registry_admission_claimed": true,
+    "runtime_registration_claimed": false,
+    "execution_authority_granted": false,
+    "connector_authority_granted": false,
+    "deployment_claimed": false,
+    "terminal_closure": false
+  },
+  "receipt_envelope": {
+    "uao_ref": "uao://platform/governed-symbolic-loop/contract/20260614",
+    "causal_decision_trace_ref": "trace://platform/governed-symbolic-loop/contract/20260614",
+    "receipt_ref": "receipt://platform/governed-symbolic-loop/contract/20260614"
+  },
+  "rollback_plan": "Remove the contract schema, example, validator, focused tests, and SDLC requirement/design artifacts, then rerun the governed symbolic loop validator, SDLC artifact validation, and workspace governance preflight before any closure claim.",
+  "next_action": "Maintain read-model registry admission while runtime registration, connector authority, deployment claims, and terminal closure remain blocked until separate governed evidence exists.",
+  "evidence_refs": [
+    "schemas/governed_symbolic_loop_contract.schema.json",
+    "examples/governed_symbolic_loop_contract.foundation.json",
+    "scripts/validate_governed_symbolic_loop_contract.py",
+    "tests/test_validate_governed_symbolic_loop_contract.py",
+    "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+    "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+  ]
+}

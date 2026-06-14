@@ -17,6 +17,21 @@ from mcoi_runtime.app.routers.loops import router
 from mcoi_runtime.app.server_http import include_default_routers
 
 
+EXPECTED_DEFAULT_LOOP_IDS = frozenset(
+    {
+        "audit_proof_verification_loop",
+        "authority_obligation_loop",
+        "universal_action_orchestration_loop",
+        "workflow_execution_loop",
+        "deployment_witness_loop",
+        "runtime_conformance_loop",
+        "cognitive_outcome_loop",
+        "governed_code_change_loop",
+        "governed_symbolic_loop",
+    }
+)
+
+
 def _client() -> TestClient:
     app = FastAPI()
     app.include_router(router)
@@ -32,18 +47,9 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert response.status_code == 200
     assert payload["read_model_id"] == "holistic_loop_read_model"
     assert payload["status"] == "blocked"
-    assert payload["blocked_count"] == 8
-    assert payload["returned_count"] == 8
-    assert {loop["loop_id"] for loop in payload["loops"]} == {
-        "audit_proof_verification_loop",
-        "authority_obligation_loop",
-        "universal_action_orchestration_loop",
-        "workflow_execution_loop",
-        "deployment_witness_loop",
-        "runtime_conformance_loop",
-        "cognitive_outcome_loop",
-        "governed_code_change_loop",
-    }
+    assert payload["blocked_count"] == len(EXPECTED_DEFAULT_LOOP_IDS)
+    assert payload["returned_count"] == len(EXPECTED_DEFAULT_LOOP_IDS)
+    assert {loop["loop_id"] for loop in payload["loops"]} == EXPECTED_DEFAULT_LOOP_IDS
     assert all(loop["open_blockers"] for loop in payload["loops"])
     assert all(loop["risk_binding"] for loop in payload["loops"])
     assert all(loop["status_binding"] for loop in payload["loops"])
@@ -347,7 +353,7 @@ def test_loop_read_model_limit_is_bounded_and_truncated() -> None:
 
     assert response.status_code == 200
     assert payload["returned_count"] == 2
-    assert payload["total_count"] == 8
+    assert payload["total_count"] == len(EXPECTED_DEFAULT_LOOP_IDS)
     assert payload["truncated"] is True
     assert payload["blocked_count"] == 2
     assert len(payload["loops"]) == 2

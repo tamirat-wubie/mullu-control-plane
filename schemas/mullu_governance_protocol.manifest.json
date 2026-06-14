@@ -437,6 +437,12 @@
       "surface": "operations"
     },
     {
+      "schema_id": "governed-symbolic-loop-contract",
+      "path": "schemas/governed_symbolic_loop_contract.schema.json",
+      "urn": "urn:mullusi:schema:governed-symbolic-loop-contract:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",

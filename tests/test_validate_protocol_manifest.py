@@ -47,6 +47,17 @@ def test_protocol_manifest_indexes_agent_identity() -> None:
     assert authority_entry["surface"] == "identity"
 
 
+def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    loop_entry = entries["governed-symbolic-loop-contract"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
+    assert loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
+    assert loop_entry["surface"] == "governance"
+
+
 def test_protocol_manifest_indexes_claim_verification_report() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

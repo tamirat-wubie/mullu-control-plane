@@ -7186,6 +7186,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/report_holistic_loop_workflow_admission_dossier.py",
                 "scripts/report_holistic_loop_authority_admission_dossier.py",
                 "scripts/report_holistic_loop_audit_proof_admission_dossier.py",
+                "scripts/report_holistic_loop_governed_symbolic_admission_dossier.py",
                 "scripts/report_holistic_loop_read_model.py",
                 "scripts/validate_holistic_loop_extension_admission.py",
                 "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -7199,6 +7200,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_report_holistic_loop_workflow_admission_dossier.py",
                 "tests/test_report_holistic_loop_authority_admission_dossier.py",
                 "tests/test_report_holistic_loop_audit_proof_admission_dossier.py",
+                "tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py",
                 "tests/test_report_holistic_loop_read_model.py",
                 "tests/test_validate_holistic_loop_extension_admission.py",
                 "tests/test_validate_holistic_loop_kernel_freeze.py",
@@ -7232,6 +7234,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "The audit/proof loop is registered in the default read model "
                 "as a read-only blocked loop, and its admission dossier reports "
                 "registry admission without causing mutation. "
+                "The governed symbolic loop is registered in the default read "
+                "model as a read-only blocked loop with no real mode, and its "
+                "admission dossier reports registry admission without causing "
+                "mutation. "
                 "The admission closure report proves all tracked candidate "
                 "surfaces are admitted, no candidate admission remains pending, "
                 "extension admission is valid, and holistic proof labels remain "
@@ -7276,6 +7282,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_authority_registered_in_default_read_model",
                 "holistic_loop_uao_registered_in_default_read_model",
                 "holistic_loop_workflow_registered_in_default_read_model",
+                "holistic_loop_governed_symbolic_registered_in_default_read_model",
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
                 "holistic_loop_uao_admission_dossier_reports_registry_admission",
                 "holistic_loop_uao_admission_dossier_blocks_registration_effects",
@@ -7288,6 +7295,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest",
                 "holistic_loop_audit_proof_admission_dossier_reports_registry_admission",
                 "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects",
+                "holistic_loop_governed_symbolic_admission_dossier_builds_proposed_manifest",
+                "holistic_loop_governed_symbolic_admission_dossier_reports_registry_admission",
+                "holistic_loop_governed_symbolic_admission_dossier_blocks_registration_effects",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
@@ -7395,6 +7405,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_workflow_registered_in_default_read_model": [
                     "workflow_execution_loop_is_registered_read_only_and_blocked"
                 ],
+                "holistic_loop_governed_symbolic_registered_in_default_read_model": [
+                    "governed_symbolic_loop_is_registered_read_only_and_blocked"
+                ],
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest": [
                     "uao_admission_dossier_builds_proposed_manifest"
                 ],
@@ -7430,6 +7443,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects": [
                     "audit_proof_admission_dossier_does_not_register_or_mutate_runtime"
+                ],
+                "holistic_loop_governed_symbolic_admission_dossier_builds_proposed_manifest": [
+                    "governed_symbolic_admission_dossier_builds_proposed_manifest"
+                ],
+                "holistic_loop_governed_symbolic_admission_dossier_reports_registry_admission": [
+                    "governed_symbolic_admission_dossier_reports_registry_admission"
+                ],
+                "holistic_loop_governed_symbolic_admission_dossier_blocks_registration_effects": [
+                    "governed_symbolic_admission_dossier_does_not_register_or_mutate_runtime"
                 ],
             },
         ),

@@ -52,6 +52,7 @@ REQUIRED_LOOP_IDS = (
     "runtime_conformance_loop",
     "cognitive_outcome_loop",
     "governed_code_change_loop",
+    "governed_symbolic_loop",
 )
 
 

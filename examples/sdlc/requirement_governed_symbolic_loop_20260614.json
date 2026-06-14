@@ -1,0 +1,58 @@
+{
+  "requirement_id": "sdlc_req_governed_symbolic_loop_20260614",
+  "request_id": "platform_agentic_loop_20260614",
+  "problem_statement": "The platform needs a canonical wholistic symbolic loop contract that governs platform episodes without granting runtime authority or weakening deterministic subsystem contracts.",
+  "success_criteria": [
+    "the loop contract validates against a repository-local JSON schema",
+    "the contract separates epistemic, effect-bearing, and hybrid actions before execution",
+    "effect-bearing actions require UAO, Phi_gov authority, life-meaning judgment, rollback or recovery evidence, rejected-delta logging, and post-verification learning admission",
+    "deterministic kernel boundaries are explicit so DMRS, validators, parsers, and route helpers are not polluted by recursive orchestration",
+    "read-only holistic loop registry admission is allowed and must not grant runtime registration",
+    "the contract denies runtime registration, execution authority, connector authority, deployment claims, and terminal closure until later evidence exists",
+    "missing or malformed UAO, causal trace, receipt, evidence, or guard fields fail closed with explicit validator errors"
+  ],
+  "non_goals": [
+    "no runtime loop registration",
+    "no autonomous execution authority",
+    "no connector or filesystem authority",
+    "no public deployment or production readiness claim",
+    "no replacement of Universal Action Orchestration, DMRS, validators, parsers, or deterministic route helpers"
+  ],
+  "constraints": [
+    "Foundation Mode remains active and public readiness remains AwaitingEvidence",
+    "no raw private reasoning fields may appear in loop receipts or contract payloads",
+    "effect-bearing actions must carry uao_ref, causal_decision_trace_ref, and receipt_ref",
+    "learning updates are admitted only after verification",
+    "Mfidel atomicity remains a hard invariant for any future Amharic, Geez, Ethiopic, or Mfidel surface"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/governed_symbolic_loop_contract.schema.json",
+    "examples/governed_symbolic_loop_contract.foundation.json",
+    "scripts/validate_governed_symbolic_loop_contract.py",
+    "scripts/report_holistic_loop_governed_symbolic_admission_dossier.py",
+    "tests/test_validate_governed_symbolic_loop_contract.py",
+    "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+    "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_symbolic_loop_contract.py",
+    "python -m pytest tests/test_validate_governed_symbolic_loop_contract.py tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py -q",
+    "python -m pytest tests/test_validate_sdlc_artifact.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-governed-symbolic-loop-20260614.json"
+  ],
+  "evidence_required": [
+    "governed symbolic loop contract schema validation receipt",
+    "focused pytest receipt for validator behavior",
+    "SDLC requirement validation receipt",
+    "SDLC design validation receipt",
+    "future security review receipt before runtime or adapter authority",
+    "proof-matrix receipt for default holistic loop registry admission",
+    "governed symbolic loop admission dossier with no runtime registration effect",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/governed-symbolic-loop/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/governed-symbolic-loop/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/governed-symbolic-loop/20260614"
+}
