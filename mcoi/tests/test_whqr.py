@@ -124,6 +124,37 @@ def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
         root_tampered.verify_semantics()
 
 
+def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
+    node_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    logical_tampered = WHQRDocument(
+        root=LogicalExpr(
+            op=LogicalOp.AND,
+            args=(
+                WHQRNode(role=WHRole.WHAT, target="payment_request"),
+                WHQRNode(role=WHRole.WHY, target="invoice_due"),
+            ),
+        )
+    )
+    connector_tampered = WHQRDocument(
+        root=ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+            right=WHQRNode(role=WHRole.WHY, target="invoice_due"),
+        )
+    )
+
+    object.__setattr__(node_tampered.root, "role", "what")
+    object.__setattr__(logical_tampered.root, "args", list(logical_tampered.root.args))
+    object.__setattr__(connector_tampered.root.right, "metadata", {"evidence": object()})
+
+    with pytest.raises(ValueError, match=r"root\.role"):
+        node_tampered.verify_semantics()
+    with pytest.raises(ValueError, match=r"root\.args"):
+        logical_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata value"):
+        connector_tampered.verify_semantics()
+
+
 def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     document = WHQRDocument(
         root=WHQRNode(
