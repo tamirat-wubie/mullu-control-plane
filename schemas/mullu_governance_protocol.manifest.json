@@ -1385,6 +1385,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "read-only-worker-rehearsal-receipt",
+      "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",

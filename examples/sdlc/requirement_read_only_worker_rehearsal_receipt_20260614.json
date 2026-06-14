@@ -1,0 +1,69 @@
+{
+  "requirement_id": "sdlc_req_read_only_worker_rehearsal_receipt_20260614",
+  "request_id": "platform_read_only_worker_rehearsal_receipt_20260614",
+  "problem_statement": "The read-only worker path is selected and lease-preflight-bound, but the gap register still requires local rehearsal-only receipt emission. Without a schema-backed rehearsal receipt, a later runtime thread could confuse local dry-run evidence with dispatch success, filesystem mutation, external effects, or terminal closure.",
+  "success_criteria": [
+    "ReadOnlyWorkerRehearsalReceipt validates against the public JSON schema and Foundation Mode example",
+    "ReadOnlyWorkerRehearsalReceipt binds read_only_repo_inspection to ReadOnlyWorkerBinding and ReadOnlyWorkerLeasePreflight",
+    "runtime dispatch remains denied in Foundation Mode",
+    "local rehearsal evidence stays under repo://local/ and evidence://local-repo/path-hash/",
+    "network, secrets, filesystem writes, connector calls, raw output retention, terminal closure, and success claims remain denied",
+    "focused tests cover valid, authority-drift, worker/preflight-mismatch, dispatch-mode-drift, nonlocal-resource, missing-forbidden-effect, effect/success-drift, receipt-ref-drift, count-drift, CLI, malformed-payload, and SDLC artifact cases"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no worker runtime registration",
+    "no dispatch endpoint",
+    "no filesystem mutation",
+    "no external network access",
+    "no connector authority",
+    "no raw output retention",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the rehearsal receipt is a contract artifact and not a live worker runner",
+    "the selected worker path must remain read_only_repo_inspection",
+    "dispatch_admitted must remain false",
+    "future runtime admission must still require temporal lease evidence",
+    "worker failure receipt evidence remains mandatory on failure",
+    "effect-bearing follow-on dispatch still requires UAO, Phi_gov, life-meaning judgment where applicable, approval where required, recovery evidence, and verification",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "examples/read_only_worker_rehearsal_receipt.foundation.json",
+    "scripts/validate_read_only_worker_rehearsal_receipt.py",
+    "tests/test_validate_read_only_worker_rehearsal_receipt.py",
+    "docs/00_platform_overview.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    ".github/workflows/ci.yml",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    "examples/sdlc/requirement_read_only_worker_rehearsal_receipt_20260614.json",
+    "examples/sdlc/design_read_only_worker_rehearsal_receipt_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_rehearsal_receipt.py",
+    "python -m pytest tests/test_validate_read_only_worker_rehearsal_receipt.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-read-only-worker-rehearsal-receipt-20260614.json"
+  ],
+  "evidence_required": [
+    "ReadOnlyWorkerRehearsalReceipt validation receipt",
+    "focused pytest receipt for validator behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/read-only-worker-rehearsal-receipt/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/read-only-worker-rehearsal-receipt/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/read-only-worker-rehearsal-receipt/20260614"
+}
