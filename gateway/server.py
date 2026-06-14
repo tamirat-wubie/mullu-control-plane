@@ -22,6 +22,7 @@ from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from pydantic import BaseModel, Field
 from mcoi_runtime.governance.audit.decision_log import (
     GovernanceDecisionLog,
     GuardDecisionDetail,
@@ -54,6 +55,15 @@ from mcoi_runtime.app.governed_execution import (
 from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureCertificate,
     TerminalClosureDisposition,
+)
+from mcoi_runtime.personal_assistant import (
+    PersonalAssistantInvariantError,
+    RequestInterface,
+    build_clarification_requests,
+    build_personal_assistant_console_read_model,
+    build_personal_assistant_preview_plan,
+    interpret_user_request,
+    load_default_skill_registry,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -157,6 +167,19 @@ REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
 )
 
 
+class GatewayPersonalAssistantPreviewRequest(BaseModel):
+    """Preview-only personal-assistant request admitted by the public gateway."""
+
+    user_request: str
+    request_id: str = ""
+    submitted_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[dict[str, Any]] = Field(default_factory=list)
+    thread_id: str = "thread-personal-assistant-gateway-preview"
+    requested_from_id: str = "operator"
+    include_console_read_model: bool = False
+
+
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
     """Whether the authority dev/test bypass is permitted for this MULLU_ENV.
 
@@ -169,6 +192,37 @@ def _explicit_dev_or_test_env(raw_env: str) -> bool:
     production must opt into dev mode, not fall into it.
     """
     return raw_env.strip().lower() in {"local_dev", "test"}
+
+
+def _gateway_personal_assistant_request_id(user_request: str, submitted_at: str, interface: str) -> str:
+    """Return a stable gateway request id for preview-only assistant planning."""
+    return "pa_request_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-request",
+            "user_request": user_request,
+            "submitted_at": submitted_at,
+            "interface": interface,
+        }
+    )[:32]
+
+
+def _gateway_personal_assistant_plan_id(request_id: str) -> str:
+    """Return a stable gateway plan id for a preview request id."""
+    return "pa_plan_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-plan",
+            "request_id": request_id,
+        }
+    )[:32]
+
+
+def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_complete: bool) -> str:
+    """Map preview-only plan state to the Mullusi solver outcome taxonomy."""
+    if not clarification_complete:
+        return "AwaitingEvidence"
+    if bool(plan.get("requires_approval")):
+        return "AwaitingEvidence"
+    return "SolvedVerified"
 
 
 def create_gateway_app(
@@ -1549,6 +1603,90 @@ def create_gateway_app(
         return build_agentic_service_harness_status_projection(
             read_model_source=agentic_service_harness_read_model_source,
         )
+
+    @app.get("/api/v1/personal-assistant/skills")
+    def personal_assistant_skill_read_model():
+        registry = load_default_skill_registry()
+        return {
+            "registry": registry.read_model(),
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/requests/preview")
+    def preview_personal_assistant_request(req: GatewayPersonalAssistantPreviewRequest):
+        try:
+            now = req.submitted_at or _clock()
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                now,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=now,
+                interface=req.interface,
+                connector_refs=tuple(req.connector_refs),
+            )
+            clarification_bundle = build_clarification_requests(
+                intent,
+                thread_id=req.thread_id,
+                requested_from_id=req.requested_from_id,
+                requested_at=now,
+            )
+            envelope = build_personal_assistant_preview_plan(
+                intent,
+                plan_id=_gateway_personal_assistant_plan_id(request_id),
+                created_at=now,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant preview",
+                    "error_code": "invalid_personal_assistant_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        response: dict[str, Any] = {
+            **envelope.as_dict(),
+            "clarification_bundle": {
+                "request_id": clarification_bundle.request_id,
+                "clarifications": [
+                    clarification.to_json_dict()
+                    for clarification in clarification_bundle.clarifications
+                ],
+                "clarification_count": len(clarification_bundle.clarifications),
+            },
+            "outcome": _gateway_personal_assistant_outcome(
+                envelope.plan,
+                clarification_bundle.empty,
+            ),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+            },
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=now,
+                recent_requests=(
+                    {
+                        "request_id": envelope.request["request_id"],
+                        "summary": envelope.request["user_goal"],
+                        "status": envelope.plan["mode"],
+                    },
+                ),
+                receipts=(envelope.receipt,),
+            )
+        return response
 
     @app.get("/gateway/witness")
     def gateway_witness():
