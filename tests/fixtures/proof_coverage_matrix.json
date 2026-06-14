@@ -923,7 +923,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 106,
+      "action_proof": 107,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
@@ -931,13 +931,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 123,
+      "audit_chain": 124,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 38,
+      "proven": 39,
       "unproven": 0,
       "witnessed": 88
     },
@@ -946,14 +946,14 @@
       "audit_chain": 0,
       "gap": 0,
       "read_model": 20,
-      "request_proof": 105
+      "request_proof": 106
     },
-    "surface_count": 126
+    "surface_count": 127
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 126,
+      "strong": 127,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -962,11 +962,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 261,
+      "proven": 262,
       "unproven": 0,
       "witnessed": 157
     },
-    "route_count": 418,
+    "route_count": 419,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1827,6 +1827,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/guards",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/harness/status",
+        "surface_id": "agentic_service_harness_status_read_model"
       },
       {
         "coverage_state": "proven",
@@ -3225,6 +3230,34 @@
         "workspace_preflight_includes_local_assurance_plan"
       ],
       "surface_id": "local_assurance_refresh"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/agentic_service_harness_status.py",
+        "gateway/agentic_service_harness_read_model_producer.py",
+        "scripts/validate_agentic_service_harness_read_only_status_route.py",
+        "scripts/validate_agentic_service_harness_read_only_status_route_design.py",
+        "tests/test_gateway/test_agentic_service_harness_status_route.py",
+        "tests/test_validate_agentic_service_harness_read_only_status_route.py",
+        "tests/test_validate_agentic_service_harness_read_only_status_route_design.py"
+      ],
+      "notes": "Agentic service harness status exposes one bounded read-only route, rejects mutation methods, projects only status/read-model evidence, and grants no live producer, adapter, secret, deployment, or branch authority.",
+      "representative_paths": [
+        "/api/v1/harness/status"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "harness_status_projection_accepts_default_fixture",
+        "harness_status_gateway_route_is_read_only",
+        "harness_status_gateway_route_reads_runtime_source",
+        "read_only_status_route_accepts_default_implementation",
+        "read_only_status_route_design_accepts_default_artifact"
+      ],
+      "surface_id": "agentic_service_harness_status_read_model"
     },
     {
       "action_proof": "action_proof",
@@ -10569,8 +10602,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1376,
-    "runtime_witness_count": 1376,
+    "exact_test_anchor_count": 1381,
+    "runtime_witness_count": 1381,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10735,6 +10768,45 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "local_assurance_refresh",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_agentic_service_harness_status_route.py::test_harness_status_projection_accepts_default_fixture"
+            ],
+            "witness": "harness_status_projection_accepts_default_fixture"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_agentic_service_harness_status_route.py::test_harness_status_gateway_route_is_read_only"
+            ],
+            "witness": "harness_status_gateway_route_is_read_only"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_agentic_service_harness_status_route.py::test_harness_status_gateway_route_reads_runtime_source"
+            ],
+            "witness": "harness_status_gateway_route_reads_runtime_source"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_only_status_route.py::test_read_only_status_route_accepts_default_implementation"
+            ],
+            "witness": "read_only_status_route_accepts_default_implementation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_read_only_status_route_design.py::test_read_only_status_route_design_accepts_default_artifact"
+            ],
+            "witness": "read_only_status_route_design_accepts_default_artifact"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "agentic_service_harness_status_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
