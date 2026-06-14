@@ -37,8 +37,8 @@ def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -
         for candidate in report["candidates"]
     }
 
-    assert report["registered_candidate_count"] == 3
-    assert report["blocked_candidate_count"] == 1
+    assert report["registered_candidate_count"] == 4
+    assert report["blocked_candidate_count"] == 0
     assert candidates["audit_proof_verification_loop"]["candidate_id"] in registered_loop_ids
     assert candidates["audit_proof_verification_loop"]["registered"] is True
     assert candidates["audit_proof_verification_loop"]["admission_status"] == "registered"
@@ -54,16 +54,11 @@ def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -
     assert candidates["universal_action_orchestration_loop"]["admission_status"] == "registered"
     assert candidates["universal_action_orchestration_loop"]["admission_blockers"] == []
     assert candidates["universal_action_orchestration_loop"]["next_action"] == "already_registered"
-    assert all(
-        candidate["registered"] is False and candidate["admission_status"] == "blocked"
-        for candidate_id, candidate in candidates.items()
-        if candidate_id
-        not in {
-            "audit_proof_verification_loop",
-            "authority_obligation_loop",
-            "universal_action_orchestration_loop",
-        }
-    )
+    assert candidates["workflow_execution_loop"]["candidate_id"] in registered_loop_ids
+    assert candidates["workflow_execution_loop"]["registered"] is True
+    assert candidates["workflow_execution_loop"]["admission_status"] == "registered"
+    assert candidates["workflow_execution_loop"]["admission_blockers"] == []
+    assert candidates["workflow_execution_loop"]["next_action"] == "already_registered"
 
 
 def test_holistic_loop_candidate_map_is_read_only_non_terminal() -> None:
@@ -97,18 +92,18 @@ def test_candidate_map_rejects_registration_or_closure_claim() -> None:
         for candidate in invalid_report["candidates"]
         if candidate["candidate_id"] == "workflow_execution_loop"
     )
-    invalid_candidate["registered"] = True
-    invalid_candidate["admission_status"] = "registered"
+    invalid_candidate["registered"] = False
+    invalid_candidate["admission_status"] = "blocked"
     invalid_candidate["terminal_closure"] = True
 
     errors = reporter.validate_candidate_map(invalid_report)
 
     assert any("registered state must match default registry" in error for error in errors)
-    assert any("must remain blocked until registration" in error for error in errors)
+    assert any("must report registered admission status" in error for error in errors)
     assert any("terminal_closure must be False" in error for error in errors)
 
 
-def test_candidate_map_rejects_missing_blocker() -> None:
+def test_candidate_map_rejects_registered_candidate_with_blocker() -> None:
     report = reporter.build_candidate_map()
     invalid_report = copy.deepcopy(report)
     invalid_candidate = next(
@@ -120,6 +115,5 @@ def test_candidate_map_rejects_missing_blocker() -> None:
 
     errors = reporter.validate_candidate_map(invalid_report)
 
-    assert any("missing registration decision blocker" in error for error in errors)
-    assert reporter.REGISTRATION_DECISION_BLOCKER not in invalid_candidate["admission_blockers"]
+    assert any("registered admission_blockers must be empty" in error for error in errors)
     assert reporter.NOT_REGISTERED_BLOCKER in invalid_candidate["admission_blockers"]
