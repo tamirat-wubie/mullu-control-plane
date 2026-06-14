@@ -37,6 +37,13 @@
       ]
     },
     {
+      "action_id": "publish_agentic_service_harness_authority_transition_contract",
+      "status": "closed",
+      "surfaces": [
+        "agentic_service_harness_authority_transitions"
+      ]
+    },
+    {
       "action_id": "register_holistic_loop_read_model_kernel",
       "status": "closed",
       "surfaces": [
@@ -909,7 +916,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 105,
+      "action_proof": 106,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
@@ -917,7 +924,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 122,
+      "audit_chain": 123,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -925,21 +932,21 @@
     "by_coverage_state": {
       "proven": 38,
       "unproven": 0,
-      "witnessed": 87
+      "witnessed": 88
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 20,
-      "request_proof": 104
+      "request_proof": 105
     },
-    "surface_count": 125
+    "surface_count": 126
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 125,
+      "strong": 126,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10117,6 +10124,63 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/agentic_service_harness.schema.json",
+        "scripts/validate_agentic_service_harness_contract.py",
+        "scripts/validate_agentic_service_harness_authority_transitions.py",
+        "examples/agentic_service_harness.read_only.json",
+        "examples/agentic_service_harness.dry_run.json",
+        "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+        "examples/agentic_service_harness.open_pr_awaiting_approval.json",
+        "examples/agentic_service_harness.blocked_high_risk.json",
+        "tests/test_gateway/test_agentic_service_harness_contract.py",
+        "tests/test_validate_agentic_service_harness_authority_transitions.py"
+      ],
+      "notes": "Agentic Service Harness authority transitions keep read-only and dry-run scenarios non-effectful, branch-write and open-PR scenarios approval-pending, and high-risk merge, deploy, DNS, secret, and destructive actions blocked by default before UI or external execution authority is admitted.",
+      "representative_paths": [
+        "scripts.validate_agentic_service_harness_contract.validate_agentic_service_harness_contract",
+        "scripts.validate_agentic_service_harness_authority_transitions.validate_agentic_service_harness_authority_transitions",
+        "examples/agentic_service_harness.read_only.json",
+        "examples/agentic_service_harness.dry_run.json",
+        "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+        "examples/agentic_service_harness.open_pr_awaiting_approval.json",
+        "examples/agentic_service_harness.blocked_high_risk.json"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "harness_authority_rejects_approved_branch_gate": [
+          "authority_transition_rejects_approved_branch_gate"
+        ],
+        "harness_authority_rejects_dry_run_file_change": [
+          "authority_transition_rejects_dry_run_file_change"
+        ],
+        "harness_authority_rejects_incomplete_high_risk_block": [
+          "authority_transition_rejects_incomplete_high_risk_block"
+        ],
+        "harness_authority_rejects_open_pr_without_branch_evidence": [
+          "authority_transition_rejects_open_pr_without_branch_evidence"
+        ],
+        "harness_authority_transitions_accept_default_fixtures": [
+          "authority_transitions_accept_default_contract_fixtures"
+        ],
+        "harness_authority_validator_emits_strict_receipt": [
+          "authority_transition_writer_and_cli_honor_strict"
+        ]
+      },
+      "runtime_witnesses": [
+        "harness_authority_transitions_accept_default_fixtures",
+        "harness_authority_rejects_approved_branch_gate",
+        "harness_authority_rejects_dry_run_file_change",
+        "harness_authority_rejects_open_pr_without_branch_evidence",
+        "harness_authority_rejects_incomplete_high_risk_block",
+        "harness_authority_validator_emits_strict_receipt"
+      ],
+      "surface_id": "agentic_service_harness_authority_transitions"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/snet_episode.schema.json",
         "schemas/snet_mesh_receipt.schema.json",
         "scripts/validate_snet_episode_replay.py",
@@ -10446,8 +10510,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1353,
-    "runtime_witness_count": 1353,
+    "exact_test_anchor_count": 1359,
+    "runtime_witness_count": 1359,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19554,6 +19618,51 @@
         "exact_test_anchor_count": 12,
         "runtime_witness_count": 12,
         "surface_id": "agentic_service_harness_read_models",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transitions_accept_default_contract_fixtures"
+            ],
+            "witness": "harness_authority_transitions_accept_default_fixtures"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transition_rejects_approved_branch_gate"
+            ],
+            "witness": "harness_authority_rejects_approved_branch_gate"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transition_rejects_dry_run_file_change"
+            ],
+            "witness": "harness_authority_rejects_dry_run_file_change"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transition_rejects_open_pr_without_branch_evidence"
+            ],
+            "witness": "harness_authority_rejects_open_pr_without_branch_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transition_rejects_incomplete_high_risk_block"
+            ],
+            "witness": "harness_authority_rejects_incomplete_high_risk_block"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_agentic_service_harness_authority_transitions.py::test_authority_transition_writer_and_cli_honor_strict"
+            ],
+            "witness": "harness_authority_validator_emits_strict_receipt"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "agentic_service_harness_authority_transitions",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

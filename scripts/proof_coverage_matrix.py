@@ -6912,6 +6912,69 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "agentic_service_harness_authority_transitions",
+            [
+                "scripts.validate_agentic_service_harness_contract.validate_agentic_service_harness_contract",
+                "scripts.validate_agentic_service_harness_authority_transitions.validate_agentic_service_harness_authority_transitions",
+                "examples/agentic_service_harness.read_only.json",
+                "examples/agentic_service_harness.dry_run.json",
+                "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+                "examples/agentic_service_harness.open_pr_awaiting_approval.json",
+                "examples/agentic_service_harness.blocked_high_risk.json",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/agentic_service_harness.schema.json",
+                "scripts/validate_agentic_service_harness_contract.py",
+                "scripts/validate_agentic_service_harness_authority_transitions.py",
+                "examples/agentic_service_harness.read_only.json",
+                "examples/agentic_service_harness.dry_run.json",
+                "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+                "examples/agentic_service_harness.open_pr_awaiting_approval.json",
+                "examples/agentic_service_harness.blocked_high_risk.json",
+                "tests/test_gateway/test_agentic_service_harness_contract.py",
+                "tests/test_validate_agentic_service_harness_authority_transitions.py",
+            ],
+            (
+                "Agentic Service Harness authority transitions keep read-only "
+                "and dry-run scenarios non-effectful, branch-write and open-PR "
+                "scenarios approval-pending, and high-risk merge, deploy, DNS, "
+                "secret, and destructive actions blocked by default before UI "
+                "or external execution authority is admitted."
+            ),
+            [
+                "harness_authority_transitions_accept_default_fixtures",
+                "harness_authority_rejects_approved_branch_gate",
+                "harness_authority_rejects_dry_run_file_change",
+                "harness_authority_rejects_open_pr_without_branch_evidence",
+                "harness_authority_rejects_incomplete_high_risk_block",
+                "harness_authority_validator_emits_strict_receipt",
+            ],
+            runtime_witness_anchor_aliases={
+                "harness_authority_transitions_accept_default_fixtures": [
+                    "authority_transitions_accept_default_contract_fixtures",
+                ],
+                "harness_authority_rejects_approved_branch_gate": [
+                    "authority_transition_rejects_approved_branch_gate",
+                ],
+                "harness_authority_rejects_dry_run_file_change": [
+                    "authority_transition_rejects_dry_run_file_change",
+                ],
+                "harness_authority_rejects_open_pr_without_branch_evidence": [
+                    "authority_transition_rejects_open_pr_without_branch_evidence",
+                ],
+                "harness_authority_rejects_incomplete_high_risk_block": [
+                    "authority_transition_rejects_incomplete_high_risk_block",
+                ],
+                "harness_authority_validator_emits_strict_receipt": [
+                    "authority_transition_writer_and_cli_honor_strict",
+                ],
+            },
+        ),
+        _surface(
             "snet_episode_replay",
             [
                 "scripts.validate_snet_episode_replay.validate_contract",
@@ -7313,6 +7376,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_agentic_service_harness_read_model_contract",
             "surfaces": ["agentic_service_harness_read_models"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_agentic_service_harness_authority_transition_contract",
+            "surfaces": ["agentic_service_harness_authority_transitions"],
             "status": "closed",
         },
         {
