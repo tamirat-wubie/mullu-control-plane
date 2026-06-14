@@ -128,6 +128,12 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
                 "pattern"
             ],
         )
+        self.assertEqual(
+            "^\\d+\\.\\d+\\.\\d+$",
+            schema["$defs"]["whqr_replay_binding"]["properties"]["version"][
+                "pattern"
+            ],
+        )
 
     def test_recommended_v1_examples_are_non_executing_shapes(self) -> None:
         fixture_paths = (
@@ -397,6 +403,32 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertEqual(
             "expected-semantics",
             invalid_record["closure"]["whqr_replay_binding"]["semantics_hash"],
+        )
+
+    def test_whqr_replay_binding_rejects_non_semver_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/expected-canonical-hash",
+            "canonical_hash": "expected-canonical-hash",
+            "semantics_hash": "sha256:expected-semantics",
+            "version": "draft",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "draft",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
         )
 
     def test_whqr_replay_binding_rejects_non_object_binding(self) -> None:
