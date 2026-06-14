@@ -137,9 +137,12 @@
         "input_kind": {
           "type": "string",
           "enum": [
+            "approval_binding_readiness_evidence",
+            "approval_binding_receipt",
             "handoff_readiness_evidence",
             "probe_approval_ref",
             "source_handoff_receipt",
+            "valid_approval_binding_receipt",
             "valid_authority_receipt",
             "valid_handoff_receipt"
           ]
@@ -152,6 +155,7 @@
             "enum": [
               "MULLU_TEAM_OPS_LIVE_PROBE_APPROVAL_REF",
               "team_ops_handoff_readiness_evidence",
+              "team_ops_shared_inbox_live_probe_approval_binding",
               "team_ops_shared_inbox_live_probe_authority",
               "team_ops_shared_inbox_operator_handoff"
             ]

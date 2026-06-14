@@ -183,7 +183,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 42
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 43
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -2865,12 +2865,13 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "team_ops_shared_inbox_probe_authority_redacts_secret_markers" in witnesses
     assert "team_ops_shared_inbox_probe_authority_writes_validation_receipt" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_lists_blockers" in witnesses
+    assert "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_allows_admitted_authority" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_blocks_invalid_authority" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_blocks_effect_drift" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_redacts_secret_markers" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_writes_validation_receipt" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 42
+    assert connector_witness_surface["exact_test_anchor_count"] == 43
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"

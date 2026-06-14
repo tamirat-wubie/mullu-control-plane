@@ -4256,6 +4256,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_authority_redacts_secret_markers",
                 "team_ops_shared_inbox_probe_authority_writes_validation_receipt",
                 "team_ops_shared_inbox_probe_input_request_lists_blockers",
+                "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers",
                 "team_ops_shared_inbox_probe_input_request_allows_admitted_authority",
                 "team_ops_shared_inbox_probe_input_request_blocks_invalid_authority",
                 "team_ops_shared_inbox_probe_input_request_blocks_effect_drift",
@@ -4416,6 +4417,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_input_request_lists_blockers": [
                     "team_ops_live_probe_operator_input_request_reports_blocked_authority",
                     "team_ops_live_probe_operator_input_request_validation_accepts_blocked_request",
+                ],
+                "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers": [
+                    "team_ops_live_probe_operator_input_request_reports_missing_approval_binding",
+                    "team_ops_live_probe_operator_input_request_reports_invalid_approval_binding",
+                    "team_ops_live_probe_operator_input_request_reports_not_ready_approval_binding",
                 ],
                 "team_ops_shared_inbox_probe_input_request_allows_admitted_authority": [
                     "team_ops_live_probe_operator_input_request_allows_admitted_authority",

@@ -22,6 +22,10 @@ from scripts.emit_team_ops_shared_inbox_live_probe_operator_input_request import
     main,
     write_team_ops_live_probe_operator_input_request,
 )
+from scripts.bind_team_ops_shared_inbox_live_probe_approval import (
+    bind_team_ops_shared_inbox_live_probe_approval,
+    write_team_ops_shared_inbox_live_probe_approval_binding,
+)
 from scripts.produce_team_ops_shared_inbox_live_probe_authority import (
     produce_team_ops_shared_inbox_live_probe_authority,
     write_team_ops_shared_inbox_live_probe_authority,
@@ -101,6 +105,91 @@ def test_team_ops_live_probe_operator_input_request_blocks_invalid_authority(tmp
     assert "external_provider_call" in request.blocked_actions
 
 
+def test_team_ops_live_probe_operator_input_request_reports_missing_approval_binding(tmp_path: Path) -> None:
+    handoff_path = _write_ready_handoff(tmp_path)
+    authority_path = tmp_path / "team_ops_shared_inbox_live_probe_authority.json"
+    missing_binding_path = tmp_path / "missing_approval_binding.json"
+    write_team_ops_shared_inbox_live_probe_authority(
+        produce_team_ops_shared_inbox_live_probe_authority(
+            handoff_path=handoff_path,
+            approval_binding_path=missing_binding_path,
+        ),
+        authority_path,
+    )
+
+    request = emit_team_ops_live_probe_operator_input_request(
+        authority_path=authority_path,
+        schema_path=SCHEMA_PATH,
+    )
+    input_kinds = {item.input_kind for item in request.required_inputs}
+
+    assert request.probe_allowed is False
+    assert request.solver_outcome == "AwaitingEvidence"
+    assert "approval_binding_receipt" in input_kinds
+    assert any(
+        item.required_names == ("team_ops_shared_inbox_live_probe_approval_binding",)
+        for item in request.required_inputs
+    )
+    assert request.next_action == "emit the TeamOps live-probe approval binding receipt, then rerun authority"
+
+
+def test_team_ops_live_probe_operator_input_request_reports_invalid_approval_binding(tmp_path: Path) -> None:
+    handoff_path = _write_ready_handoff(tmp_path)
+    authority_path = tmp_path / "team_ops_shared_inbox_live_probe_authority.json"
+    approval_binding_path = tmp_path / "team_ops_shared_inbox_live_probe_approval_binding.json"
+    approval_binding_path.write_text("[]", encoding="utf-8")
+    write_team_ops_shared_inbox_live_probe_authority(
+        produce_team_ops_shared_inbox_live_probe_authority(
+            handoff_path=handoff_path,
+            approval_binding_path=approval_binding_path,
+        ),
+        authority_path,
+    )
+
+    request = emit_team_ops_live_probe_operator_input_request(
+        authority_path=authority_path,
+        schema_path=SCHEMA_PATH,
+    )
+    input_kinds = {item.input_kind for item in request.required_inputs}
+
+    assert request.probe_allowed is False
+    assert request.authority_validation_ok is True
+    assert "valid_approval_binding_receipt" in input_kinds
+    assert any(item.current_state == "present_invalid" for item in request.required_inputs)
+    assert request.next_action == "fix the TeamOps approval binding receipt validation errors, then rerun authority"
+
+
+def test_team_ops_live_probe_operator_input_request_reports_not_ready_approval_binding(tmp_path: Path) -> None:
+    handoff_path = _write_ready_handoff(tmp_path)
+    approval_binding_path = tmp_path / "team_ops_shared_inbox_live_probe_approval_binding.json"
+    authority_path = tmp_path / "team_ops_shared_inbox_live_probe_authority.json"
+    write_team_ops_shared_inbox_live_probe_approval_binding(
+        bind_team_ops_shared_inbox_live_probe_approval(handoff_path=handoff_path),
+        approval_binding_path,
+    )
+    write_team_ops_shared_inbox_live_probe_authority(
+        produce_team_ops_shared_inbox_live_probe_authority(
+            handoff_path=handoff_path,
+            approval_binding_path=approval_binding_path,
+        ),
+        authority_path,
+    )
+
+    request = emit_team_ops_live_probe_operator_input_request(
+        authority_path=authority_path,
+        schema_path=SCHEMA_PATH,
+    )
+    input_kinds = {item.input_kind for item in request.required_inputs}
+
+    assert request.probe_allowed is False
+    assert "approval_binding_readiness_evidence" in input_kinds
+    assert "probe_approval_ref" in input_kinds
+    assert any(
+        item.next_action == "close TeamOps approval binding evidence, then rerun live-probe authority"
+        for item in request.required_inputs
+    )
+
+
 def test_team_ops_live_probe_operator_input_request_cli_writes_report(tmp_path: Path, capsys) -> None:
     authority_path = _write_blocked_authority(tmp_path)
     output_path = tmp_path / "team_ops_live_probe_operator_input_request.json"
@@ -145,6 +234,21 @@ def _write_blocked_authority(tmp_path: Path) -> Path:
 def _write_admitted_authority(tmp_path: Path) -> Path:
     handoff_path = tmp_path / "team_ops_shared_inbox_operator_handoff.json"
     authority_path = tmp_path / "team_ops_shared_inbox_live_probe_authority.json"
+    _write_ready_handoff(tmp_path)
+    write_team_ops_shared_inbox_live_probe_authority(
+        produce_team_ops_shared_inbox_live_probe_authority(
+            handoff_path=handoff_path,
+            probe_approval_ref="approval:teamops-read-probe-20260613",
+            query="newer_than:2d",
+            max_message_count=12,
+        ),
+        authority_path,
+    )
+    return authority_path
+
+
+def _write_ready_handoff(tmp_path: Path) -> Path:
+    handoff_path = tmp_path / "team_ops_shared_inbox_operator_handoff.json"
     secret_names = (
         set(gmail_preflight.DURABLE_SECRET_SIGNAL_NAMES)
         | set(gmail_preflight.WITNESS_REF_SIGNAL_NAMES)
@@ -156,16 +260,7 @@ def _write_admitted_authority(tmp_path: Path) -> Path:
         operator_approval_ref="approval:teamops-shared-inbox-live-probe-20260613",
     )
     write_team_ops_shared_inbox_operator_handoff(handoff, handoff_path)
-    write_team_ops_shared_inbox_live_probe_authority(
-        produce_team_ops_shared_inbox_live_probe_authority(
-            handoff_path=handoff_path,
-            probe_approval_ref="approval:teamops-read-probe-20260613",
-            query="newer_than:2d",
-            max_message_count=12,
-        ),
-        authority_path,
-    )
-    return authority_path
+    return handoff_path
 
 
 def _configured_env() -> dict[str, str]:

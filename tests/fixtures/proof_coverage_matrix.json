@@ -7597,6 +7597,11 @@
           "team_ops_live_probe_operator_input_request_reports_blocked_authority",
           "team_ops_live_probe_operator_input_request_validation_accepts_blocked_request"
         ],
+        "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers": [
+          "team_ops_live_probe_operator_input_request_reports_missing_approval_binding",
+          "team_ops_live_probe_operator_input_request_reports_invalid_approval_binding",
+          "team_ops_live_probe_operator_input_request_reports_not_ready_approval_binding"
+        ],
         "team_ops_shared_inbox_probe_input_request_redacts_secret_markers": [
           "team_ops_live_probe_operator_input_request_validation_rejects_secret_marker"
         ],
@@ -7643,6 +7648,7 @@
         "team_ops_shared_inbox_probe_authority_redacts_secret_markers",
         "team_ops_shared_inbox_probe_authority_writes_validation_receipt",
         "team_ops_shared_inbox_probe_input_request_lists_blockers",
+        "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers",
         "team_ops_shared_inbox_probe_input_request_allows_admitted_authority",
         "team_ops_shared_inbox_probe_input_request_blocks_invalid_authority",
         "team_ops_shared_inbox_probe_input_request_blocks_effect_drift",
@@ -10563,8 +10569,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1375,
-    "runtime_witness_count": 1375,
+    "exact_test_anchor_count": 1376,
+    "runtime_witness_count": 1376,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16314,6 +16320,14 @@
           },
           {
             "anchors": [
+              "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py::test_team_ops_live_probe_operator_input_request_reports_missing_approval_binding",
+              "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py::test_team_ops_live_probe_operator_input_request_reports_invalid_approval_binding",
+              "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py::test_team_ops_live_probe_operator_input_request_reports_not_ready_approval_binding"
+            ],
+            "witness": "team_ops_shared_inbox_probe_input_request_names_approval_binding_blockers"
+          },
+          {
+            "anchors": [
               "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py::test_team_ops_live_probe_operator_input_request_allows_admitted_authority"
             ],
             "witness": "team_ops_shared_inbox_probe_input_request_allows_admitted_authority"
@@ -16345,8 +16359,8 @@
             "witness": "team_ops_shared_inbox_probe_input_request_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 42,
-        "runtime_witness_count": 42,
+        "exact_test_anchor_count": 43,
+        "runtime_witness_count": 43,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
