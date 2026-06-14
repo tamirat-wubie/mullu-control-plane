@@ -59,6 +59,7 @@ The kernel models the common contract through:
 | `runtime_conformance_loop` | Describes signed runtime conformance collection and certificate validation. | No |
 | `cognitive_outcome_loop` | Describes observe, decide, act, verify, learn, and audit evidence for cognitive outcome recording. | No |
 | `governed_code_change_loop` | Describes lease-bound code-worker execution, SDLC receipt requirements, rollback handoff, and terminal closure blockers. | No |
+| `governed_symbolic_loop` | Describes canonical symbolic episode phases, action classes, deterministic kernel boundaries, effect-bearing guards, verification, rollback, and post-verification learning without registering real mode. | No |
 
 ## Evidence Rule
 
@@ -787,8 +788,8 @@ python scripts/report_holistic_loop_admission_closure.py
 The report verifies:
 
 ```text
-loop_count == 8
-candidate_count == 4
+loop_count == 9
+candidate_count == 5
 blocked_candidate_count == 0
 pending_candidate_ids == []
 unregistered_candidate_ids == []

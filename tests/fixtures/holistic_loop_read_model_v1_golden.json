@@ -1,7 +1,7 @@
 {
-  "blocked_count": 8,
+  "blocked_count": 9,
   "generated_at": "2026-06-08T00:00:00+00:00",
-  "loop_count": 8,
+  "loop_count": 9,
   "loops": [
     {
       "audit_evolution_view": {
@@ -7244,6 +7244,1739 @@
       "audit_evolution_view": {
         "admits_learning": false,
         "audit_blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "audit_state": "audit_blocked_by_unresolved_gaps",
+        "emits_receipt": false,
+        "learning_admission_refs": [
+          "learning_requires_verified_contract",
+          "regression_requires_validator_anchor",
+          "memory_promotion_requires_life_meaning_judgment_ref"
+        ],
+        "learning_candidate_refs": [
+          "promote loop guard regressions into validators only after verified evidence"
+        ],
+        "learning_evidence_input_refs": [
+          "verification_receipt",
+          "learning_admission_receipt",
+          "rollback_or_recovery_handoff_receipt"
+        ],
+        "learning_policy_ref": "promote loop guard regressions into validators only after verified evidence",
+        "learning_retention_refs": [
+          "governed_symbolic_loop_contract",
+          "sdlc_requirement_artifact",
+          "sdlc_design_artifact"
+        ],
+        "loop_id": "governed_symbolic_loop",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "receipt_refs": [
+          "sha256:61c610bb804281f6ee14406d474a6e43a289ea44a89b969054ac94330aacde48",
+          "sha256:c7ac8479aff5090f409b8dff5c10330608dedfc0911b2a884881cd2b343a13eb",
+          "sha256:e14a043fc2de17250a2aec4d333c788d40bbf933c0ec2881b1f1a9526ba91dbb",
+          "sha256:098294d2b1de0ab3ba226b4b9f4f20ecc99b809df219ce50f2c3166842cf8a34",
+          "sha256:c08e9352fc89de18641a79b10d89de1343817558764b35931efc72e56e93d1f1",
+          "sha256:a42e5643b0a4b7499fd3ad7832b6eba2d14944561c8ebb92062139f3e4b81295",
+          "sha256:b7a964f56790fdfc08f7b7e1b16e08ffaf0d67a5afd2ddf5f8e79d80886af21e",
+          "sha256:df1d580acc6fed233dec0b8aedabc748cff8b0385fc7c4c1670479d792865fb5"
+        ],
+        "terminal_closure": false,
+        "view_ref": "governed_symbolic_loop_audit_evolution_view"
+      },
+      "authority_bindings": [
+        {
+          "authority_ref": "uao_policy_ref",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "UAO policy reference authorizes effect-bearing symbolic loop action classification without executing runtime orchestration.",
+          "read_only": true,
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "mcoi/tests/test_universal_action_kernel.py"
+          ]
+        },
+        {
+          "authority_ref": "phi_gov_authority_ref",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "software_dev_capability_pack"
+          ],
+          "purpose": "Phi governance authority reference binds symbolic loop state writes to governed validation and lineage.",
+          "read_only": true,
+          "source_refs": [
+            "AGENTS.md",
+            "scripts/validate_agents_governance.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_agents_governance.py",
+            "scripts/validate_agents_governance.py"
+          ]
+        },
+        {
+          "authority_ref": "life_meaning_judgment_ref",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "LifeMeaningJudgment reference preserves effect-bearing life, feeling, meaning, dignity, consent, and repair review before action admission.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/life_meaning_judgment.schema.json",
+            "docs/LIFE_MEANING_GOVERNANCE_KERNEL.md",
+            "mcoi/mcoi_runtime/core/life_meaning_governance.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_life_meaning_governance.py",
+            "tests/test_life_meaning_governance_kernel.py"
+          ]
+        },
+        {
+          "authority_ref": "operator_registration_decision_ref",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "Operator registration decision reference separates read-only admission from any later runtime authority promotion.",
+          "read_only": true,
+          "source_refs": [
+            "scripts/report_holistic_loop_candidate_map.py",
+            "scripts/validate_holistic_loop_extension_admission.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_report_holistic_loop_candidate_map.py",
+            "tests/test_validate_holistic_loop_extension_admission.py"
+          ]
+        }
+      ],
+      "authority_refs": [],
+      "closure_condition_bindings": [
+        {
+          "closure_ref": "canonical_episode_phases_preserved",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "Require the governed symbolic loop contract to preserve compile, classify, preflight, verify, rollback, and learning phases.",
+          "read_only": true,
+          "required_authority_refs": [
+            "phi_gov_authority_ref"
+          ],
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py"
+          ]
+        },
+        {
+          "closure_ref": "deterministic_kernel_boundaries_preserved",
+          "proof_surface_refs": [
+            "software_dev_capability_pack"
+          ],
+          "purpose": "Require deterministic kernel boundaries to remain explicit before symbolic loop closure can be described.",
+          "read_only": true,
+          "required_authority_refs": [
+            "phi_gov_authority_ref"
+          ],
+          "required_evidence_refs": [
+            "verification_receipt"
+          ],
+          "source_refs": [
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "scripts/validate_sdlc_artifact.py"
+          ]
+        },
+        {
+          "closure_ref": "runtime_authority_denials_preserved",
+          "proof_surface_refs": [
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "purpose": "Require runtime authority denials to remain explicit for direct execution, live adapter, and real-mode paths.",
+          "read_only": true,
+          "required_authority_refs": [
+            "uao_policy_ref",
+            "operator_registration_decision_ref"
+          ],
+          "required_evidence_refs": [
+            "capability_admission_receipt",
+            "rollback_or_recovery_handoff_receipt"
+          ],
+          "source_refs": [
+            "schemas/universal_action_orchestration.schema.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_sdlc_artifact.py"
+          ]
+        },
+        {
+          "closure_ref": "post_verification_learning_preserved",
+          "proof_surface_refs": [
+            "software_outcome_learning",
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "Require learning admission to remain post-verification and read-only until evidence is validated.",
+          "read_only": true,
+          "required_authority_refs": [
+            "life_meaning_judgment_ref"
+          ],
+          "required_evidence_refs": [
+            "learning_admission_receipt",
+            "verification_receipt"
+          ],
+          "source_refs": [
+            "schemas/learning_admission.schema.json",
+            "schemas/life_meaning_judgment.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_life_meaning_governance.py"
+          ]
+        }
+      ],
+      "closure_conditions": [
+        "canonical_episode_phases_preserved",
+        "deterministic_kernel_boundaries_preserved",
+        "runtime_authority_denials_preserved",
+        "post_verification_learning_preserved"
+      ],
+      "closure_evidence_pack": {
+        "authority_complete": false,
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "closure_blocked": true,
+        "closure_condition_refs": [
+          "canonical_episode_phases_preserved",
+          "deterministic_kernel_boundaries_preserved",
+          "runtime_authority_denials_preserved",
+          "post_verification_learning_preserved"
+        ],
+        "closure_report_ref": "closure_report",
+        "emits_receipt": false,
+        "evidence_complete": false,
+        "loop_id": "governed_symbolic_loop",
+        "missing_authority_refs": [
+          "uao_policy_ref",
+          "phi_gov_authority_ref",
+          "life_meaning_judgment_ref",
+          "operator_registration_decision_ref"
+        ],
+        "missing_evidence_refs": [
+          "problem_star_compilation_receipt",
+          "action_classification_receipt",
+          "capability_admission_receipt",
+          "verification_receipt",
+          "rollback_or_recovery_handoff_receipt",
+          "learning_admission_receipt"
+        ],
+        "observed_authority_refs": [],
+        "observed_evidence_refs": [],
+        "pack_ref": "governed_symbolic_loop_closure_evidence_pack",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "required_authority_refs": [
+          "uao_policy_ref",
+          "phi_gov_authority_ref",
+          "life_meaning_judgment_ref",
+          "operator_registration_decision_ref"
+        ],
+        "required_evidence_refs": [
+          "problem_star_compilation_receipt",
+          "action_classification_receipt",
+          "capability_admission_receipt",
+          "verification_receipt",
+          "rollback_or_recovery_handoff_receipt",
+          "learning_admission_receipt"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "remove_registry_admission_and_restore_read_only_contract",
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "closure_report": {
+        "closed": false,
+        "closure_reason": "read_model_blocked_by_unresolved_gaps",
+        "evidence_complete": false,
+        "learning_candidates": [
+          "promote loop guard regressions into validators only after verified evidence"
+        ],
+        "loop_id": "governed_symbolic_loop",
+        "metadata": {
+          "closure_conditions": [
+            "canonical_episode_phases_preserved",
+            "deterministic_kernel_boundaries_preserved",
+            "runtime_authority_denials_preserved",
+            "post_verification_learning_preserved"
+          ],
+          "read_only": true,
+          "terminal_closure": false
+        },
+        "rollback_available": true,
+        "unresolved_gaps": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ]
+      },
+      "current_step": "observe",
+      "evidence_bindings": [
+        {
+          "evidence_ref": "problem_star_compilation_receipt",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "ProblemStar compilation evidence separates evidence, assumptions, unknowns, contradictions, goals, constraints, risks, actions, and proof obligations.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py"
+          ]
+        },
+        {
+          "evidence_ref": "action_classification_receipt",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "Action classification evidence preserves epistemic, world-changing, and hybrid boundaries before execution.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py"
+          ]
+        },
+        {
+          "evidence_ref": "capability_admission_receipt",
+          "proof_surface_refs": [
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "purpose": "Capability admission evidence blocks direct runtime, live adapter, and real-mode authority until explicit admission exists.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/universal_action_orchestration.schema.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_sdlc_artifact.py"
+          ]
+        },
+        {
+          "evidence_ref": "verification_receipt",
+          "proof_surface_refs": [
+            "software_dev_capability_pack",
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "Verification evidence proves the governed symbolic loop contract and SDLC artifacts before closure can advance.",
+          "read_only": true,
+          "source_refs": [
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "scripts/validate_sdlc_artifact.py"
+          ]
+        },
+        {
+          "evidence_ref": "rollback_or_recovery_handoff_receipt",
+          "proof_surface_refs": [
+            "software_dev_capability_pack"
+          ],
+          "purpose": "Rollback or recovery handoff evidence exists before runtime authority or closure promotion can be described.",
+          "read_only": true,
+          "source_refs": [
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "scripts/validate_sdlc_artifact.py"
+          ]
+        },
+        {
+          "evidence_ref": "learning_admission_receipt",
+          "proof_surface_refs": [
+            "software_outcome_learning",
+            "holistic_loop_read_model_kernel"
+          ],
+          "purpose": "Learning admission evidence keeps memory or policy promotion downstream of verified loop evidence.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/learning_admission.schema.json",
+            "schemas/governed_symbolic_loop_contract.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "mcoi/tests/test_learning_loop.py"
+          ]
+        }
+      ],
+      "evidence_refs": [],
+      "learning_binding": {
+        "admission_refs": [
+          "learning_requires_verified_contract",
+          "regression_requires_validator_anchor",
+          "memory_promotion_requires_life_meaning_judgment_ref"
+        ],
+        "evidence_input_refs": [
+          "verification_receipt",
+          "learning_admission_receipt",
+          "rollback_or_recovery_handoff_receipt"
+        ],
+        "learning_ref": "promote loop guard regressions into validators only after verified evidence",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "purpose": "Bind symbolic loop learning to verified contract, rollback, and LifeMeaningJudgment evidence before validator promotion.",
+        "read_only": true,
+        "retention_refs": [
+          "governed_symbolic_loop_contract",
+          "sdlc_requirement_artifact",
+          "sdlc_design_artifact"
+        ],
+        "source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "tests/test_validate_sdlc_artifact.py",
+          "tests/test_validate_protocol_manifest.py"
+        ]
+      },
+      "learning_policy": "promote loop guard regressions into validators only after verified evidence",
+      "loop_id": "governed_symbolic_loop",
+      "missing_authority": [
+        "uao_policy_ref",
+        "phi_gov_authority_ref",
+        "life_meaning_judgment_ref",
+        "operator_registration_decision_ref"
+      ],
+      "missing_evidence": [
+        "problem_star_compilation_receipt",
+        "action_classification_receipt",
+        "capability_admission_receipt",
+        "verification_receipt",
+        "rollback_or_recovery_handoff_receipt",
+        "learning_admission_receipt"
+      ],
+      "mode": "dry_run",
+      "mode_binding": {
+        "allowed_modes": [
+          "dry_run",
+          "shadow",
+          "simulation",
+          "replay"
+        ],
+        "mode_transition": false,
+        "projected_mode": "dry_run",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "purpose": "Expose governed symbolic loop dry-run, shadow, simulation, and replay boundaries without granting runtime execution or state mutation authority.",
+        "read_only": true,
+        "real_execution_guard_refs": [
+          "uao_policy_ref_required_for_effect_bearing_action",
+          "life_meaning_judgment_ref_required_for_effect_bearing_action",
+          "operator_registration_decision_ref_required_before_runtime_admission"
+        ],
+        "separation_refs": [
+          "dry_run_compiles_problem_star_without_effect",
+          "shadow_observes_symbolic_episode_contract_without_state_mutation",
+          "simulation_tests_counterfactuals_without_runtime_authority",
+          "replay_uses_retained_contract_and_receipt_evidence",
+          "real_mode_not_registered_for_governed_symbolic_loop"
+        ],
+        "source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/governed_symbolic_loop_contract.foundation.json",
+          "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+          "scripts/validate_governed_symbolic_loop_contract.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "tests/test_validate_sdlc_artifact.py",
+          "tests/test_validate_protocol_manifest.py"
+        ]
+      },
+      "name": "Governed Symbolic Loop",
+      "open_blockers": [
+        "missing_authority:uao_policy_ref",
+        "missing_authority:phi_gov_authority_ref",
+        "missing_authority:life_meaning_judgment_ref",
+        "missing_authority:operator_registration_decision_ref",
+        "missing_evidence:problem_star_compilation_receipt",
+        "missing_evidence:action_classification_receipt",
+        "missing_evidence:capability_admission_receipt",
+        "missing_evidence:verification_receipt",
+        "missing_evidence:rollback_or_recovery_handoff_receipt",
+        "missing_evidence:learning_admission_receipt"
+      ],
+      "operator_closure_readiness_view": {
+        "authority_gap_refs": [
+          "uao_policy_ref",
+          "phi_gov_authority_ref",
+          "life_meaning_judgment_ref",
+          "operator_registration_decision_ref"
+        ],
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "closure_condition_refs": [
+          "canonical_episode_phases_preserved",
+          "deterministic_kernel_boundaries_preserved",
+          "runtime_authority_denials_preserved",
+          "post_verification_learning_preserved"
+        ],
+        "evidence_gap_refs": [
+          "problem_star_compilation_receipt",
+          "action_classification_receipt",
+          "capability_admission_receipt",
+          "verification_receipt",
+          "rollback_or_recovery_handoff_receipt",
+          "learning_admission_receipt"
+        ],
+        "loop_id": "governed_symbolic_loop",
+        "mutation_route": false,
+        "next_proof_action": "resolve_blockers_before_terminal_closure_review",
+        "next_proof_refs": [
+          "closure_evidence_pack",
+          "closure_report",
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "projected_status": "blocked",
+        "read_only": true,
+        "readiness_state": "blocked_by_unresolved_gaps",
+        "rollback_available": true,
+        "rollback_ref": "remove_registry_admission_and_restore_read_only_contract",
+        "terminal_closure": false,
+        "view_ref": "governed_symbolic_loop_operator_closure_readiness_view"
+      },
+      "owner": "platform_governance",
+      "proof_obligation_view": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "closure_condition_refs": [
+          "canonical_episode_phases_preserved",
+          "deterministic_kernel_boundaries_preserved",
+          "runtime_authority_denials_preserved",
+          "post_verification_learning_preserved"
+        ],
+        "executes_validator": false,
+        "loop_id": "governed_symbolic_loop",
+        "missing_authority_refs": [
+          "uao_policy_ref",
+          "phi_gov_authority_ref",
+          "life_meaning_judgment_ref",
+          "operator_registration_decision_ref"
+        ],
+        "missing_evidence_refs": [
+          "problem_star_compilation_receipt",
+          "action_classification_receipt",
+          "capability_admission_receipt",
+          "verification_receipt",
+          "rollback_or_recovery_handoff_receipt",
+          "learning_admission_receipt"
+        ],
+        "obligation_ref": "governed_symbolic_loop_proof_obligation_view",
+        "obligation_state": "blocked_by_missing_proof",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "read_only": true,
+        "required_authority_refs": [
+          "uao_policy_ref",
+          "phi_gov_authority_ref",
+          "life_meaning_judgment_ref",
+          "operator_registration_decision_ref"
+        ],
+        "required_evidence_refs": [
+          "problem_star_compilation_receipt",
+          "action_classification_receipt",
+          "capability_admission_receipt",
+          "verification_receipt",
+          "rollback_or_recovery_handoff_receipt",
+          "learning_admission_receipt"
+        ],
+        "satisfied_authority_refs": [],
+        "satisfied_evidence_refs": [],
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "purpose": "Describe canonical symbolic episode phases, action classes, deterministic kernel boundaries, effect-bearing guards, verification, rollback, and post-verification learning without executing runtime orchestration or mutating state.",
+      "receipt_lineage_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "observe_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:61c610bb804281f6ee14406d474a6e43a289ea44a89b969054ac94330aacde48",
+          "receipt_ref": "observe_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "observe_receipt",
+            "loop_manifest",
+            "loop_state_projection"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "observe",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "decision_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:c7ac8479aff5090f409b8dff5c10330608dedfc0911b2a884881cd2b343a13eb",
+          "receipt_ref": "decision_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "decision_receipt",
+            "observe_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "decide",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "action_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:e14a043fc2de17250a2aec4d333c788d40bbf933c0ec2881b1f1a9526ba91dbb",
+          "receipt_ref": "action_projection_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "action_projection_receipt",
+            "decision_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "act",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "verification_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:098294d2b1de0ab3ba226b4b9f4f20ecc99b809df219ce50f2c3166842cf8a34",
+          "receipt_ref": "verification_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "verification_receipt",
+            "action_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "verify",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "record_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:c08e9352fc89de18641a79b10d89de1343817558764b35931efc72e56e93d1f1",
+          "receipt_ref": "record_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "record_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "record_receipt",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "state_update_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:a42e5643b0a4b7499fd3ad7832b6eba2d14944561c8ebb92062139f3e4b81295",
+          "receipt_ref": "state_update_projection_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "state_update_projection_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "update_state",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "learning_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:b7a964f56790fdfc08f7b7e1b16e08ffaf0d67a5afd2ddf5f8e79d80886af21e",
+          "receipt_ref": "learning_projection_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "learning_projection_receipt",
+            "state_update_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "learn",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "audit_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:df1d580acc6fed233dec0b8aedabc748cff8b0385fc7c4c1670479d792865fb5",
+          "receipt_ref": "audit_projection_receipt",
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "source_receipt_refs": [
+            "audit_projection_receipt",
+            "learning_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json"
+          ],
+          "step": "audit",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py"
+          ]
+        }
+      ],
+      "recovery_readiness_view": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "closure_evidence_pack_ref": "governed_symbolic_loop_closure_evidence_pack",
+        "closure_report_ref": "closure_report",
+        "executes_rollback": false,
+        "loop_id": "governed_symbolic_loop",
+        "next_recovery_action": "resolve_blockers_before_recovery_or_terminal_review",
+        "opens_incident": false,
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "recovery_proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "recovery_source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+          "scripts/validate_governed_symbolic_loop_contract.py"
+        ],
+        "recovery_state": "recovery_blocked_by_unresolved_gaps",
+        "recovery_validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "scripts/validate_sdlc_artifact.py"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "remove_registry_admission_and_restore_read_only_contract",
+        "terminal_closure": false,
+        "view_ref": "governed_symbolic_loop_recovery_readiness_view"
+      },
+      "required_authority": [
+        "uao_policy_ref",
+        "phi_gov_authority_ref",
+        "life_meaning_judgment_ref",
+        "operator_registration_decision_ref"
+      ],
+      "required_evidence": [
+        "problem_star_compilation_receipt",
+        "action_classification_receipt",
+        "capability_admission_receipt",
+        "verification_receipt",
+        "rollback_or_recovery_handoff_receipt",
+        "learning_admission_receipt"
+      ],
+      "risk_binding": {
+        "hazard_refs": [
+          "overbroad_wholistic_loop_generalization",
+          "direct_runtime_authority_without_registration",
+          "missing_life_meaning_judgment",
+          "premature_learning_admission"
+        ],
+        "mitigation_refs": [
+          "admit_read_model_only",
+          "exclude_real_mode_from_allowed_modes",
+          "require_uao_and_life_meaning_authority_refs",
+          "block_learning_until_verification_receipt_exists"
+        ],
+        "monitor_refs": [
+          "governed_symbolic_loop_contract_validator",
+          "holistic_loop_extension_admission",
+          "workspace_governance_preflight"
+        ],
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "purpose": "Platform orchestration risk covers overbroad loop generalization, direct runtime authority, missing LifeMeaningJudgment, and premature learning admission.",
+        "read_only": true,
+        "risk_ref": "platform_orchestration",
+        "source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/governed_symbolic_loop_contract.foundation.json",
+          "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+          "scripts/validate_governed_symbolic_loop_contract.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "tests/test_validate_sdlc_artifact.py",
+          "tests/test_validate_protocol_manifest.py"
+        ]
+      },
+      "risk_class": "platform_orchestration",
+      "rollback_binding": {
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "purpose": "Rollback governed symbolic loop admission by removing the registry manifest while retaining the read-only contract and SDLC proof artifacts.",
+        "read_only": true,
+        "rollback_ref": "remove_registry_admission_and_restore_read_only_contract",
+        "source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+          "scripts/validate_governed_symbolic_loop_contract.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "scripts/validate_sdlc_artifact.py"
+        ]
+      },
+      "rollback_policy": "remove_registry_admission_and_restore_read_only_contract",
+      "status": "blocked",
+      "status_binding": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_authority:phi_gov_authority_ref",
+          "missing_authority:life_meaning_judgment_ref",
+          "missing_authority:operator_registration_decision_ref",
+          "missing_evidence:problem_star_compilation_receipt",
+          "missing_evidence:action_classification_receipt",
+          "missing_evidence:capability_admission_receipt",
+          "missing_evidence:verification_receipt",
+          "missing_evidence:rollback_or_recovery_handoff_receipt",
+          "missing_evidence:learning_admission_receipt"
+        ],
+        "closure_gate_refs": [
+          "canonical_episode_phases_preserved",
+          "deterministic_kernel_boundaries_preserved",
+          "runtime_authority_denials_preserved",
+          "post_verification_learning_preserved"
+        ],
+        "projected_status": "blocked",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "universal_action_orchestration",
+          "software_dev_capability_pack"
+        ],
+        "read_only": true,
+        "source_refs": [
+          "schemas/governed_symbolic_loop_contract.schema.json",
+          "examples/governed_symbolic_loop_contract.foundation.json",
+          "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+          "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+          "scripts/validate_governed_symbolic_loop_contract.py"
+        ],
+        "status_reason": "read_model_blocked_by_unresolved_gaps",
+        "status_transition": false,
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_governed_symbolic_loop_contract.py",
+          "tests/test_validate_sdlc_artifact.py",
+          "tests/test_validate_protocol_manifest.py"
+        ],
+        "verification_refs": [
+          "required_authority_observed",
+          "required_evidence_observed",
+          "governed_symbolic_loop_contract_validators_passed"
+        ]
+      },
+      "step_receipts": [
+        {
+          "decision": "project_read_model_observe",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:d10793102d8fed02589357cfa7f090e7c5360cff013597dfb7b257a4657904d1",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:61c610bb804281f6ee14406d474a6e43a289ea44a89b969054ac94330aacde48",
+          "status": "blocked",
+          "step": "observe",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_read_model_decide",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:82cfc2899265549a57b0f0d9bf3783ac212dda3c64eb7b693a1962baef45558b",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:c7ac8479aff5090f409b8dff5c10330608dedfc0911b2a884881cd2b343a13eb",
+          "status": "blocked",
+          "step": "decide",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_existing_behavior_without_execution",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:94c7b141cd48fea733589d01a18a7480168069186823cfcdc666573f24eaf7da",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:e14a043fc2de17250a2aec4d333c788d40bbf933c0ec2881b1f1a9526ba91dbb",
+          "status": "blocked",
+          "step": "act",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:ff6cea77e352ab7782d71b04196118da57154b6e8e74b5c02853d145e8aab248",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:098294d2b1de0ab3ba226b4b9f4f20ecc99b809df219ce50f2c3166842cf8a34",
+          "status": "blocked",
+          "step": "verify",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:214bd456f0fb445ad91fcb2fea57cb207b59cc223827096de50aa03e012ee8ca",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:c08e9352fc89de18641a79b10d89de1343817558764b35931efc72e56e93d1f1",
+          "status": "blocked",
+          "step": "record_receipt",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:8af89d76e9cc319591b1e627a62b609d43f4c61e8b220dc52c6ec75029049be8",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:a42e5643b0a4b7499fd3ad7832b6eba2d14944561c8ebb92062139f3e4b81295",
+          "status": "blocked",
+          "step": "update_state",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:838c4dfc9d55a776a9f82f4e45eeee68e89452b5ae1a7ca22daf5e82a2dda8c2",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:b7a964f56790fdfc08f7b7e1b16e08ffaf0d67a5afd2ddf5f8e79d80886af21e",
+          "status": "blocked",
+          "step": "learn",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:b0b3fe80f534746254253709a1cac3f1eb73bfc8f3716586d0482fcbc99da799",
+          "loop_id": "governed_symbolic_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:df1d580acc6fed233dec0b8aedabc748cff8b0385fc7c4c1670479d792865fb5",
+          "status": "blocked",
+          "step": "audit",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        }
+      ],
+      "transition_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "executes_transition": false,
+          "from_status": "open",
+          "from_step": "observe",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "observe_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref",
+            "phi_gov_authority_ref",
+            "life_meaning_judgment_ref",
+            "operator_registration_decision_ref"
+          ],
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "rollback_refs": [
+            "remove_registry_admission_and_restore_read_only_contract"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "blocked",
+          "to_step": "verify",
+          "transition_ref": "open_to_blocked_on_missing_requirements",
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "executes_transition": false,
+          "from_status": "blocked",
+          "from_step": "verify",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "verification_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref",
+            "phi_gov_authority_ref",
+            "life_meaning_judgment_ref",
+            "operator_registration_decision_ref"
+          ],
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "rollback_refs": [
+            "remove_registry_admission_and_restore_read_only_contract"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "verified",
+          "to_step": "record_receipt",
+          "transition_ref": "blocked_to_verified_after_requirements",
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_authority:phi_gov_authority_ref",
+            "missing_authority:life_meaning_judgment_ref",
+            "missing_authority:operator_registration_decision_ref",
+            "missing_evidence:problem_star_compilation_receipt",
+            "missing_evidence:action_classification_receipt",
+            "missing_evidence:capability_admission_receipt",
+            "missing_evidence:verification_receipt",
+            "missing_evidence:rollback_or_recovery_handoff_receipt",
+            "missing_evidence:learning_admission_receipt"
+          ],
+          "executes_transition": false,
+          "from_status": "verified",
+          "from_step": "audit",
+          "proof_surface_refs": [
+            "holistic_loop_read_model_kernel",
+            "universal_action_orchestration",
+            "software_dev_capability_pack"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "audit_receipt",
+            "terminal_closure_certificate",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref",
+            "phi_gov_authority_ref",
+            "life_meaning_judgment_ref",
+            "operator_registration_decision_ref"
+          ],
+          "required_evidence_refs": [
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt"
+          ],
+          "rollback_refs": [
+            "remove_registry_admission_and_restore_read_only_contract"
+          ],
+          "source_refs": [
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/governed_symbolic_loop_contract.foundation.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "closed",
+          "to_step": "close",
+          "transition_ref": "verified_to_closed_requires_terminal_closure",
+          "validator_refs": [
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "tests/test_validate_sdlc_artifact.py",
+            "tests/test_validate_protocol_manifest.py"
+          ]
+        }
+      ],
+      "updated_at": "2026-06-08T00:00:00+00:00"
+    },
+    {
+      "audit_evolution_view": {
+        "admits_learning": false,
+        "audit_blocker_refs": [
           "missing_authority:runtime_conformance_issuer",
           "missing_authority:conformance_secret_handoff_ref",
           "missing_evidence:certificate_schema_valid",
@@ -11548,7 +13281,7 @@
   ],
   "report_id": "holistic_loop_read_model",
   "report_is_not_terminal_closure": true,
-  "returned_count": 8,
+  "returned_count": 9,
   "status": "blocked",
   "terminal_closure_required": true,
   "truncated": false,
