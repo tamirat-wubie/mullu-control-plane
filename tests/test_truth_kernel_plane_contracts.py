@@ -31,6 +31,9 @@ TRUTH_CANDIDATE_EXAMPLE_PATH = (
     EXAMPLE_DIR / "truth_candidate.exact_constraint_addition.json"
 )
 KERNEL_PROOF_EXAMPLE_PATH = EXAMPLE_DIR / "kernel_proof.exact_projection.json"
+RUST_KERNEL_PROOF_EXAMPLE_PATH = (
+    EXAMPLE_DIR / "kernel_proof.rust_finite_projection.json"
+)
 TRUTH_COMMIT_EXAMPLE_PATH = (
     EXAMPLE_DIR / "truth_commit_candidate.exact_constraint_addition.json"
 )
@@ -117,6 +120,19 @@ def test_kernel_proof_requires_exact_pass_for_truth_mutation_support() -> None:
         raise AssertionError("Truth-mutation proof support requires ExactResult")
 
 
+def test_rust_emitted_kernel_proof_fixture_validates_against_schema() -> None:
+    proof = _load_json(RUST_KERNEL_PROOF_EXAMPLE_PATH)
+
+    _validator(KERNEL_PROOF_SCHEMA_PATH).validate(proof)
+
+    assert proof["proof_kind"] == "ProjectionProof"
+    assert proof["proof_state"] == "Pass"
+    assert proof["result_kind"] == "ExactResult"
+    assert proof["conclusion"]["supports_truth_mutation"] is True
+    assert "witness:sandbox-isolated" in proof["witness_refs"]
+    assert proof["replay"]["deterministic"] is True
+
+
 def test_truth_commit_requires_exact_pass_before_mutation() -> None:
     commit_candidate = _load_json(TRUTH_COMMIT_EXAMPLE_PATH)
     invalid_commit = copy.deepcopy(commit_candidate)
@@ -133,6 +149,24 @@ def test_truth_commit_requires_exact_pass_before_mutation() -> None:
         assert invalid_commit["truth_admission"]["proof_state"] == "Pass"
     else:
         raise AssertionError("Truth commit mutation requires exact pass proof")
+
+
+def test_truth_candidate_requires_sandbox_isolation_for_mutation_boundary() -> None:
+    candidate = _load_json(TRUTH_CANDIDATE_EXAMPLE_PATH)
+    invalid_candidate = copy.deepcopy(candidate)
+    invalid_candidate["admission_boundary"]["requires_sandbox_isolation"] = False
+
+    validator = _validator(TRUTH_CANDIDATE_SCHEMA_PATH)
+
+    validator.validate(candidate)
+    try:
+        validator.validate(invalid_candidate)
+    except ValidationError as exc:
+        assert "True was expected" in exc.message
+        assert list(exc.absolute_path)[-1] == "requires_sandbox_isolation"
+        assert invalid_candidate["admission_boundary"]["can_mutate_truth"] is True
+    else:
+        raise AssertionError("Truth mutation candidates must require sandbox isolation")
 
 
 def test_truth_kernel_document_references_schemas_and_non_goals() -> None:

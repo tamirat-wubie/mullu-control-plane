@@ -36,7 +36,8 @@
     "requires_exact_result": true,
     "can_mutate_truth": true,
     "requires_governance_ref": true,
-    "requires_trace_ref": true
+    "requires_trace_ref": true,
+    "requires_sandbox_isolation": true
   },
   "proof_obligations": [
     {

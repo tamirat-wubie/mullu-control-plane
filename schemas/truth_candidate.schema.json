@@ -132,7 +132,8 @@
         "requires_exact_result",
         "can_mutate_truth",
         "requires_governance_ref",
-        "requires_trace_ref"
+        "requires_trace_ref",
+        "requires_sandbox_isolation"
       ],
       "properties": {
         "result_authority": {
@@ -142,7 +143,8 @@
         "requires_exact_result": {"type": "boolean"},
         "can_mutate_truth": {"type": "boolean"},
         "requires_governance_ref": {"type": "boolean"},
-        "requires_trace_ref": {"type": "boolean"}
+        "requires_trace_ref": {"type": "boolean"},
+        "requires_sandbox_isolation": {"type": "boolean"}
       },
       "allOf": [
         {
@@ -157,7 +159,8 @@
               "result_authority": {"const": "exact_required"},
               "requires_exact_result": {"const": true},
               "requires_governance_ref": {"const": true},
-              "requires_trace_ref": {"const": true}
+              "requires_trace_ref": {"const": true},
+              "requires_sandbox_isolation": {"const": true}
             }
           }
         }

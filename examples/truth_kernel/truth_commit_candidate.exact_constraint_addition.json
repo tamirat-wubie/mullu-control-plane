@@ -27,7 +27,7 @@
     "journal_event_ref": "journal:truth-commit-color-domain-v1",
     "replay_required": true,
     "replay_mode": "observation_only",
-    "expected_replay_hash": "replay-hash-truth-commit-color-domain-v1"
+    "expected_replay_hash": "proof-expected-hash-color-domain-v1"
   },
   "status": "proposed",
   "commit_hash": "truth-commit-hash-color-domain-v1"
