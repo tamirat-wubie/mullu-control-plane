@@ -5,6 +5,9 @@ warrant their own per-concern module.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from fastapi import APIRouter
 
 from mcoi_runtime.app.operational_math_observability import OPERATIONAL_MATH_OBSERVABILITY_SOURCE
@@ -27,11 +30,51 @@ def dashboard():
 @router.get("/api/v1/dashboard/operational-math")
 def operational_math_dashboard():
     """Read the operational mathematics proof posture."""
-    deps.metrics.inc("requests_governed")
+    return build_operational_math_dashboard_payload(
+        observability=deps.observability,
+        metrics=deps.metrics,
+    )
+
+
+def build_operational_math_dashboard_payload(
+    *,
+    observability: Any,
+    metrics: Any | None = None,
+) -> dict[str, Any]:
+    """Build the read-only operational mathematics dashboard payload."""
+    if metrics is not None:
+        metrics.inc("requests_governed")
+    raw_projection = observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE)
+    projection = (
+        dict(raw_projection)
+        if isinstance(raw_projection, Mapping)
+        else {"error": "observability source returned non-object"}
+    )
+    telemetry = _operational_math_telemetry_status(projection)
     return {
-        "operational_math": deps.observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE),
+        "operational_math": projection,
+        "telemetry": telemetry,
+        "requires_operator_review": telemetry["requires_operator_review"],
         "governed": True,
         "execution_allowed": False,
+    }
+
+
+def _operational_math_telemetry_status(projection: Mapping[str, Any]) -> dict[str, Any]:
+    source_error = projection.get("error")
+    source_available = not isinstance(source_error, str)
+    requires_operator_review = (not source_available) or bool(projection.get("requires_operator_review"))
+    reason_refs: list[str] = []
+    if not source_available:
+        reason_refs.append("operational_math_observability_source_degraded")
+    if bool(projection.get("requires_operator_review")):
+        reason_refs.append("operational_math_receipt_review_required")
+    return {
+        "source": OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
+        "source_available": source_available,
+        "source_health": "normal" if source_available else "degraded",
+        "requires_operator_review": requires_operator_review,
+        "reason_refs": reason_refs,
     }
 
 
