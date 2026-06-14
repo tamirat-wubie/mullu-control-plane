@@ -1427,6 +1427,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "read-only-worker-runtime-receipt-emitter-dry-run",
+      "path": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",
