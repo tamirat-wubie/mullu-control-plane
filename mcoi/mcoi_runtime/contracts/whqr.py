@@ -282,7 +282,7 @@ class WHQRDocument:
             object.__setattr__(self, "source_ref", _require_text(source_ref, "source_ref"))
         else:
             object.__setattr__(self, "source_ref", None)
-        object.__setattr__(self, "metadata", _freeze_metadata(metadata or {}))
+        object.__setattr__(self, "metadata", _freeze_metadata({} if metadata is None else metadata))
 
     @property
     def expr(self) -> WHQRExpr:
