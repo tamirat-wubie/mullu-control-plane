@@ -25,7 +25,7 @@ from mcoi_runtime.app.routers.organization_kernel import (
     reset_organization_kernel_for_tests,
     router,
 )
-from mcoi_runtime.app.server_http import include_default_routers, iter_effective_app_routes
+from mcoi_runtime.app.server_http import include_default_routers
 from mcoi_runtime.contracts.organization_kernel import (
     PlanStepWorkerDispatchReceipt,
     PlanStepWorkerLeaseReceipt,
@@ -3064,7 +3064,7 @@ def test_launch_gateway_pilot_readiness_packet_rejects_duplicate_evidence_refs(
 def test_default_routers_include_organization_kernel_paths() -> None:
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in iter_effective_app_routes(app)}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
