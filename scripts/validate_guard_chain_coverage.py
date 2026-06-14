@@ -28,7 +28,7 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.routing import APIRoute  # noqa: E402
 
 from mcoi_runtime.app.middleware import EXEMPT_PATHS, GovernanceMiddleware  # noqa: E402
-from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
+from mcoi_runtime.app.server_http import include_default_routers, iter_inspectable_routes  # noqa: E402
 
 GOVERNED_API_PREFIX = "/api/"
 API_V1_PREFIX = "/api/v1"
@@ -93,8 +93,9 @@ def _api_v1_routes(app: FastAPI) -> list[APIRoute]:
     return sorted(
         (
             route
-            for route in app.routes
-            if isinstance(route, APIRoute) and route.path.startswith(API_V1_PREFIX)
+            for route in iter_inspectable_routes(app)
+            if isinstance(getattr(route, "original_route", route), APIRoute)
+            and route.path.startswith(API_V1_PREFIX)
         ),
         key=lambda route: route.path,
     )
