@@ -48,8 +48,8 @@ def test_select_returns_in_memory_store_when_env_blank() -> None:
     assert bootstrap.path == ""
 
 
-def test_select_returns_file_store_when_env_points_to_jsonl(tmp_path: Path) -> None:
-    target = tmp_path / "operational-math-receipts.jsonl"
+def test_select_returns_file_store_when_env_points_to_json(tmp_path: Path) -> None:
+    target = tmp_path / "operational-math-receipts.json"
 
     bootstrap = select_operational_math_receipt_store(
         {OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV: str(target)}
@@ -62,7 +62,7 @@ def test_select_returns_file_store_when_env_points_to_jsonl(tmp_path: Path) -> N
 
 def test_validate_rejects_relative_path() -> None:
     with pytest.raises(RuntimeError, match="absolute file path"):
-        validate_operational_math_receipt_store_path("relative/receipts.jsonl")
+        validate_operational_math_receipt_store_path("relative/receipts.json")
 
 
 def test_validate_rejects_directory(tmp_path: Path) -> None:
@@ -71,12 +71,12 @@ def test_validate_rejects_directory(tmp_path: Path) -> None:
 
 
 def test_validate_rejects_wrong_extension(tmp_path: Path) -> None:
-    with pytest.raises(RuntimeError, match=".jsonl file extension"):
+    with pytest.raises(RuntimeError, match=".json file extension"):
         validate_operational_math_receipt_store_path(tmp_path / "receipts.log")
 
 
 def test_validate_rejects_missing_parent(tmp_path: Path) -> None:
-    missing_parent = tmp_path / "missing" / "receipts.jsonl"
+    missing_parent = tmp_path / "missing" / "receipts.json"
 
     with pytest.raises(RuntimeError, match="parent directory must already exist"):
         validate_operational_math_receipt_store_path(missing_parent)

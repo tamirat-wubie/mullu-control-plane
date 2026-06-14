@@ -7,7 +7,7 @@ validation, and fail-closed misconfiguration handling.
 Dependencies: persistence stores from mcoi_runtime.persistence.operational_math
 _receipt_store and standard filesystem access primitives.
 Invariants: no env path means a non-persistent in-memory store; an env path
-must be absolute, must use a .jsonl extension, must not point to a directory,
+must be absolute, must use a .json extension, must not point to a directory,
 and the parent directory must already exist and be writable.
 """
 
@@ -71,5 +71,5 @@ def validate_operational_math_receipt_store_path(
         store_path,
         env_name=OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV,
         kind="file",
-        required_suffix=".jsonl",
+        required_suffix=".json",
     )
