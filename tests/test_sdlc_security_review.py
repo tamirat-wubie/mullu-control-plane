@@ -125,6 +125,21 @@ def test_adapter_external_effect_receipt_boundary_security_review_passes_strict(
     assert review["receipt_ref"] in review["security_receipts"]
 
 
+def test_adapter_messaging_phone_dispatch_security_review_passes_strict() -> None:
+    review_path = Path("examples/sdlc/security_review_adapter_messaging_phone_dispatch_20260615.json")
+    review = validate_sdlc_artifact.load_json_object(review_path, "adapter messaging phone security review")
+
+    errors = validator.validate_contract(review_path, strict=True)
+
+    assert errors == []
+    assert "external_api" in review["impact_categories"]
+    assert "tenant_scope" in review["impact_categories"]
+    assert "receipts" in review["impact_categories"]
+    assert review["release_blocked"] is False
+    assert review["residual_risk"] == "low"
+    assert review["receipt_ref"] in review["security_receipts"]
+
+
 def test_security_review_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 

@@ -29,6 +29,8 @@ from gateway.capability_dispatch import (
     register_email_calendar_capabilities,
     register_enterprise_capabilities,
     register_financial_capabilities,
+    register_messaging_capabilities,
+    register_phone_capabilities,
     register_voice_capabilities,
 )
 from gateway.intent_resolver import (
@@ -59,5 +61,7 @@ __all__ = [
     "register_email_calendar_capabilities",
     "register_enterprise_capabilities",
     "register_financial_capabilities",
+    "register_messaging_capabilities",
+    "register_phone_capabilities",
     "register_voice_capabilities",
 ]
