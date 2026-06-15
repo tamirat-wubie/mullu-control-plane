@@ -1571,6 +1571,12 @@
       "surface": "memory"
     },
     {
+      "schema_id": "personal-assistant-teamops-projection",
+      "path": "schemas/personal_assistant_teamops_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-teamops-projection:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "personal-assistant-console-read-model",
       "path": "schemas/personal_assistant_console_read_model.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",
