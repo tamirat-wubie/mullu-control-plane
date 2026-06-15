@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+import math
 from typing import Any, Mapping
 
 from ._base import (
@@ -157,7 +158,17 @@ def _freeze_metadata_value(value: object, field_name: str) -> object:
                 for index, item in enumerate(value)
             ]
         )
-    return freeze_value(value)
+    return _require_metadata_scalar(value, field_name)
+
+
+def _require_metadata_scalar(value: object, field_name: str) -> object:
+    if value is None or type(value) in (str, bool, int):
+        return value
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError(f"{field_name} must be finite")
+        return value
+    raise ValueError(f"{field_name} must be a JSON metadata value")
 
 
 def _require_text_key(key: object, field_name: str) -> str:
