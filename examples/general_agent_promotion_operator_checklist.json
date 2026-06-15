@@ -39,7 +39,7 @@
       "command": "python scripts\\validate_general_agent_promotion.py --output .change_assurance\\general_agent_promotion_readiness.json",
       "required_evidence": [
         "readiness_level=pilot-governed-core",
-        "capability_count=80",
+        "capability_count=81",
         "capsule_count=13",
         "production blockers explicit"
       ],

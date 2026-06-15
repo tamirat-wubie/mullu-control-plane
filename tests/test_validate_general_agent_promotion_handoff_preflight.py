@@ -225,7 +225,7 @@ def _ready_report() -> dict[str, object]:
             {"detail": "ok=true action_count=0 approval_required_action_count=0 blocker_count=0", "name": "adapter closure schema validation", "passed": True},
             {"detail": "ok=true action_count=6 approval_required_action_count=6 source_plan_types=['deployment', 'portfolio']", "name": "closure plan schema validation", "passed": True},
             {"detail": "ok=true expected_action_count=6 observed_action_count=6 expected_approval_required_count=6 observed_approval_required_count=6", "name": "closure plan drift validation", "passed": True},
-            {"detail": "readiness_level=production-general-agent capability_count=80 capsule_count=13 production_ready=true", "name": "promotion readiness report", "passed": True},
+            {"detail": "readiness_level=production-general-agent capability_count=81 capsule_count=13 production_ready=true", "name": "promotion readiness report", "passed": True},
         ],
     }
 

@@ -133,7 +133,7 @@ def test_handoff_preflight_rejects_readiness_count_drift_from_capability_fabric(
     assert report.blockers == ("promotion readiness report",)
     assert "expected_capability_count=1" in step_details["promotion readiness report"]
     assert "expected_capsule_count=1" in step_details["promotion readiness report"]
-    assert "'capability_count': 80" in step_details["promotion readiness report"]
+    assert "'capability_count': 81" in step_details["promotion readiness report"]
 
 
 def test_handoff_preflight_accepts_report_derived_action_count(tmp_path: Path) -> None:
@@ -483,7 +483,7 @@ def _write_valid_reports(
             {
                 "ready": True,
                 "readiness_level": "production-general-agent",
-                "capability_count": 80,
+                "capability_count": 81,
                 "capsule_count": 13,
             }
         ),

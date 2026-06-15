@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:computer:workspace-file-preflight-input:1",
+  "title": "Computer Workspace File Preflight Input",
+  "description": "Request schema for classifying a workspace file operation before execution authority is considered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "operation",
+    "target_path",
+    "actor_id",
+    "purpose",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "computer.workspace_file.preflight"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "enum": [
+        "read",
+        "create",
+        "edit",
+        "apply_patch",
+        "diff_propose",
+        "patch_preview",
+        "delete",
+        "move_rename",
+        "chmod_permission",
+        "governance_artifact_mutation"
+      ]
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(^|[\\\\/])\\.\\.([\\\\/]|$)).+"
+    },
+    "secondary_path": {
+      "type": "string",
+      "default": "",
+      "pattern": "^$|^(?!/)(?![A-Za-z]:)(?!.*(^|[\\\\/])\\.\\.([\\\\/]|$)).+"
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_diff_hash": {
+      "type": "string",
+      "default": ""
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
