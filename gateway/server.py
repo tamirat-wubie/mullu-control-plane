@@ -79,6 +79,7 @@ from mcoi_runtime.personal_assistant import (
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
+    plan_math_reasoning,
     plan_research_source_compare,
     plan_teamops_shared_inbox,
     prepare_memory_observation,
@@ -384,6 +385,36 @@ class GatewayPersonalAssistantResearchPreviewRequest(BaseModel):
     blocking_questions: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
     requested_synthesis_goal: str = "prepare a source comparison with citations"
+
+
+class GatewayPersonalAssistantMathKnownValue(BaseModel):
+    """Bounded operator-supplied numeric value for math preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    scenario_ref: str
+    value: float | int | str
+    unit: str
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantMathPreviewRequest(BaseModel):
+    """Stateless math reasoning preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Compare two monthly cost scenarios, check units, and explain assumptions."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    problem_statement: str
+    known_values: list[GatewayPersonalAssistantMathKnownValue] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_result: str = "compare scenarios, check units, and explain assumptions"
 
 
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
@@ -2283,6 +2314,63 @@ def create_gateway_app(
                 "public_post_allowed": False,
                 "paid_subscription_allowed": False,
                 "system_of_record_write_allowed": False,
+                "memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/math/reasoning/preview")
+    def preview_personal_assistant_math_reasoning(req: GatewayPersonalAssistantMathPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_math_reasoning(
+                intent,
+                generated_at=now,
+                problem_statement=req.problem_statement,
+                known_values=tuple(_pydantic_payload(value) for value in req.known_values),
+                assumptions=tuple(req.assumptions),
+                constraints=tuple(req.constraints),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_result=req.requested_result,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant math reasoning preview",
+                    "error_code": "invalid_personal_assistant_math_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "math_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "money_movement_allowed": False,
+                "paid_subscription_allowed": False,
+                "system_of_record_write_allowed": False,
+                "connector_mutation_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "deployment_allowed": False,
                 "memory_write_allowed": False,
                 "nested_mind_live_activation_allowed": False,
             },

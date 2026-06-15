@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-math-projection:1",
+  "title": "Personal Assistant Math Projection",
+  "description": "No-effect evidence envelope for Personal Assistant math reasoning previews.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "projection_count",
+    "projection_ids",
+    "receipt_ids",
+    "connectors_used",
+    "projections",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "projection_set_id": {"type": "string", "pattern": "^pa_math_projection_[a-z0-9][a-z0-9_:-]*$"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_supplied_numeric_values"},
+    "projection_count": {"type": "integer", "minimum": 1},
+    "projection_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_math_projection_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "connectors_used": {"type": "array", "maxItems": 0},
+    "projections": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/projection"}},
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_id", "request_id", "skill_id", "plan_type", "plan", "receipt"],
+      "properties": {
+        "projection_id": {"type": "string", "pattern": "^pa_math_projection_item_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "skill_id": {"const": "math.reasoning.plan"},
+        "plan_type": {"const": "math_reasoning_foundation"},
+        "plan": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "plan_type",
+            "problem_statement",
+            "requested_result",
+            "known_values",
+            "assumptions",
+            "constraints",
+            "scenario_totals",
+            "unit_checks",
+            "comparison_summary",
+            "math_decision",
+            "answer_claim_authority",
+            "evidence_gate",
+            "effect_boundary",
+            "execution_allowed",
+            "money_movement_allowed",
+            "paid_subscription_allowed",
+            "system_of_record_write_allowed",
+            "connector_mutation_allowed",
+            "external_submission_allowed",
+            "public_post_allowed",
+            "deployment_allowed",
+            "memory_write_allowed"
+          ],
+          "properties": {
+            "plan_type": {"const": "math_reasoning_foundation"},
+            "problem_statement": {"type": "string", "minLength": 1},
+            "requested_result": {"type": "string", "minLength": 1},
+            "known_values": {"type": "array", "items": {"$ref": "#/$defs/known_value"}},
+            "assumptions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "constraints": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "scenario_totals": {"type": "array", "items": {"$ref": "#/$defs/scenario_total"}},
+            "unit_checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/unit_check"}},
+            "comparison_summary": {"type": "string", "minLength": 1},
+            "math_decision": {"const": "planning_only"},
+            "answer_claim_authority": {"enum": ["operator_supplied_values_only", "awaiting_operator_values"]},
+            "evidence_gate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "operator_supplied_values_complete",
+                "evidence_refs",
+                "blocking_reasons",
+                "money_movement_performed",
+                "paid_subscription_changed",
+                "system_of_record_written",
+                "connector_state_mutated",
+                "external_submission_sent",
+                "public_post_created",
+                "deployment_started"
+              ],
+              "properties": {
+                "operator_supplied_values_complete": {"type": "boolean"},
+                "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+                "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+                "money_movement_performed": {"const": false},
+                "paid_subscription_changed": {"const": false},
+                "system_of_record_written": {"const": false},
+                "connector_state_mutated": {"const": false},
+                "external_submission_sent": {"const": false},
+                "public_post_created": {"const": false},
+                "deployment_started": {"const": false}
+              }
+            },
+            "effect_boundary": {"const": "math_reasoning_planning_only_no_external_effect"},
+            "execution_allowed": {"const": false},
+            "money_movement_allowed": {"const": false},
+            "paid_subscription_allowed": {"const": false},
+            "system_of_record_write_allowed": {"const": false},
+            "connector_mutation_allowed": {"const": false},
+            "external_submission_allowed": {"const": false},
+            "public_post_allowed": {"const": false},
+            "deployment_allowed": {"const": false},
+            "memory_write_allowed": {"const": false}
+          }
+        },
+        "receipt": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "known_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "scenario_ref", "value", "unit", "source_ref", "notes"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "scenario_ref": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$"},
+        "unit": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1},
+        "notes": {"type": "string"}
+      }
+    },
+    "scenario_total": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_ref", "unit", "total"],
+      "properties": {
+        "scenario_ref": {"type": "string", "minLength": 1},
+        "unit": {"type": "string", "minLength": 1},
+        "total": {"type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$"}
+      }
+    },
+    "unit_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "status", "observed_units", "message"],
+      "properties": {
+        "check_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "blocked"]},
+        "observed_units": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "math_projection_records_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "money_movement_allowed",
+        "paid_subscription_allowed",
+        "system_of_record_write_allowed",
+        "connector_mutation_allowed",
+        "external_submission_allowed",
+        "public_post_allowed",
+        "deployment_allowed",
+        "memory_write_allowed",
+        "public_readiness_claim_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed"
+      ],
+      "properties": {
+        "math_projection_records_allowed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "money_movement_allowed": {"const": false},
+        "paid_subscription_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_submission_allowed": {"const": false},
+        "public_post_allowed": {"const": false},
+        "deployment_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "body_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "no_connector_payload"},
+        "body_projection": {"const": "none"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_money_movement",
+        "ready_for_paid_action",
+        "ready_for_system_write",
+        "ready_for_external_submission",
+        "ready_for_public_posting",
+        "ready_for_deployment",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_math_projection_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_money_movement": {"const": false},
+        "ready_for_paid_action": {"const": false},
+        "ready_for_system_write": {"const": false},
+        "ready_for_external_submission": {"const": false},
+        "ready_for_public_posting": {"const": false},
+        "ready_for_deployment": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "money_movement_allowed",
+        "system_of_record_write_allowed",
+        "external_submission_allowed",
+        "public_post_allowed",
+        "deployment_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "math_reasoning_planning_only"},
+        "runtime_boundary": {"const": "math_projection_does_not_move_money_or_write_records"},
+        "live_connector_execution_allowed": {"const": false},
+        "money_movement_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "external_submission_allowed": {"const": false},
+        "public_post_allowed": {"const": false},
+        "deployment_allowed": {"const": false}
+      }
+    }
+  }
+}

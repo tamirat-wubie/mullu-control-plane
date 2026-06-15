@@ -121,7 +121,7 @@ def test_personal_assistant_capability_pack_and_capsule_are_schema_valid() -> No
     capsule = _load_json(CAPSULE_PATH)
     capability_ids = tuple(entry["capability_id"] for entry in pack["capabilities"])
 
-    assert len(capability_ids) == 10
+    assert len(capability_ids) == 11
     assert all(_validate_schema_instance(registry_schema, entry) == [] for entry in pack["capabilities"])
     assert _validate_schema_instance(capsule_schema, capsule) == []
     assert tuple(capsule["capability_refs"]) == capability_ids
