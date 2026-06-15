@@ -104,6 +104,7 @@ memory_update.status = recorded -> non_empty(memory_update.constitution.evidence
 memory_update.learning_allowed = true -> "learning" in memory_update.constitution.allowed_uses
 intersection(allowed_uses, forbidden_uses) != empty -> reject
 terminal_certificate.metadata.whqr_canonical_hash present -> closure.whqr_replay_binding.replay_ref binds that hash
+closure.whqr_replay_binding.replay_ref present -> replay_ref starts with whqr://replay/sha256:
 closure.whqr_replay_binding.canonical_hash present -> canonical_hash starts with sha256:
 closure.whqr_replay_binding.semantics_hash present -> semantics_hash starts with sha256:
 closure.whqr_replay_binding.version present -> version uses major.minor.patch
