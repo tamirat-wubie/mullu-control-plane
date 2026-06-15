@@ -41,6 +41,10 @@
     "source_temporal_receipt_id",
     "source_reapproval_receipt_id",
     "source_data_decision_id",
+    "retention_approval_required",
+    "retention_approval_refs",
+    "retention_approval_certificate_hash",
+    "backup_guard_hash",
     "receipt_schema_ref",
     "terminal_closure_required",
     "receipt_hash",
@@ -120,6 +124,13 @@
     "source_temporal_receipt_id": {"type": "string"},
     "source_reapproval_receipt_id": {"type": "string"},
     "source_data_decision_id": {"type": "string"},
+    "retention_approval_required": {"type": "boolean"},
+    "retention_approval_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "retention_approval_certificate_hash": {"type": "string"},
+    "backup_guard_hash": {"type": "string"},
     "receipt_schema_ref": {
       "type": "string",
       "const": "urn:mullusi:schema:temporal-retention-window-receipt:1"
@@ -137,7 +148,11 @@
         "delete_after_checked",
         "legal_hold_checked",
         "tenant_scope_checked",
-        "high_risk_source_receipts_checked"
+        "high_risk_source_receipts_checked",
+        "retention_approval_required",
+        "retention_approval_checked",
+        "retention_approval_satisfied",
+        "backup_guard_hash_checked"
       ],
       "properties": {
         "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
@@ -147,7 +162,11 @@
         "delete_after_checked": {"type": "boolean"},
         "legal_hold_checked": {"type": "boolean"},
         "tenant_scope_checked": {"type": "boolean"},
-        "high_risk_source_receipts_checked": {"type": "boolean"}
+        "high_risk_source_receipts_checked": {"type": "boolean"},
+        "retention_approval_required": {"type": "boolean"},
+        "retention_approval_checked": {"type": "boolean"},
+        "retention_approval_satisfied": {"type": "boolean"},
+        "backup_guard_hash_checked": {"type": "boolean"}
       }
     }
   },
@@ -169,7 +188,8 @@
               "lifecycle_action_allowed": {"const": false},
               "retention_checked": {"const": true},
               "delete_after_checked": {"const": true},
-              "legal_hold_checked": {"const": true}
+              "legal_hold_checked": {"const": true},
+              "retention_approval_checked": {"const": false}
             }
           }
         }
@@ -194,7 +214,29 @@
               "legal_hold_checked": {"const": true}
             }
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {"retention_approval_required": {"const": true}},
+              "required": ["retention_approval_required"]
+            },
+            "then": {
+              "properties": {
+                "retention_approval_refs": {"minItems": 1},
+                "retention_approval_certificate_hash": {"minLength": 1},
+                "backup_guard_hash": {"minLength": 1},
+                "metadata": {
+                  "properties": {
+                    "retention_approval_checked": {"const": true},
+                    "retention_approval_satisfied": {"const": true},
+                    "backup_guard_hash_checked": {"const": true}
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -215,7 +257,29 @@
               "lifecycle_action_allowed": {"const": true}
             }
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {"retention_approval_required": {"const": true}},
+              "required": ["retention_approval_required"]
+            },
+            "then": {
+              "properties": {
+                "retention_approval_refs": {"minItems": 1},
+                "retention_approval_certificate_hash": {"minLength": 1},
+                "backup_guard_hash": {"minLength": 1},
+                "metadata": {
+                  "properties": {
+                    "retention_approval_checked": {"const": true},
+                    "retention_approval_satisfied": {"const": true},
+                    "backup_guard_hash_checked": {"const": true}
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -268,7 +332,10 @@
               "delete_after_checked": {"const": false},
               "legal_hold_checked": {"const": false},
               "tenant_scope_checked": {"const": false},
-              "high_risk_source_receipts_checked": {"const": false}
+              "high_risk_source_receipts_checked": {"const": false},
+              "retention_approval_required": {"const": false},
+              "retention_approval_checked": {"const": false},
+              "retention_approval_satisfied": {"const": true}
             }
           }
         }

@@ -308,7 +308,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_credential_expiry"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0
-    assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 11
+    assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 12
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -4958,6 +4958,7 @@ def test_temporal_retention_window_surface_rechecks_data_lifecycle_timing() -> N
     assert "retention_policy_ref_required" in witnesses
     assert "subject_evidence_refs_required" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
+    assert "retention_approval_and_backup_guard_bound" in witnesses
     assert "temporal_retention_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_retention_window_receipt_contract"]["status"] == "closed"
 
