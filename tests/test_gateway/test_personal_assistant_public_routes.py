@@ -344,6 +344,81 @@ def test_gateway_personal_assistant_memory_preview_rejects_extra_private_source_
     assert "memory_observation_candidate_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_memory_review_preview_records_no_effect_review() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/memory-observations/review/preview",
+        json={
+            "candidate": _memory_preview_payload(),
+            "review_id": "pa_memory_review_gateway_kept_001",
+            "decision": "kept_for_operator_review",
+            "reviewer_ref": "operator:tamirat",
+            "reason_codes": ["operator_kept_for_review"],
+            "reviewed_at": "2026-06-15T10:45:00+00:00",
+            "review_evidence_ref": "proof://personal-assistant/memory/gateway-review-001",
+        },
+    )
+    payload = response.json()
+    review = payload["memory_review"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["live_memory_write_allowed"] is False
+    assert payload["effect_boundary"]["memory_admission_allowed"] is False
+    assert payload["effect_boundary"]["nested_mind_live_activation_allowed"] is False
+    assert review["decision"] == "kept_for_operator_review"
+    assert receipt["decision"] == "deferred"
+    assert "memory_observation_review_recorded" in receipt["actions_taken"]
+    assert "memory_observation_not_admitted_to_live_memory" in receipt["actions_not_taken"]
+    assert receipt["metadata"]["memory_admission_allowed"] is False
+
+
+def test_gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/memory-observations/review/preview",
+        json={
+            "candidate": _memory_preview_payload(),
+            "review_id": "pa_memory_review_gateway_revision_001",
+            "decision": "revision_requested",
+            "reviewer_ref": "operator:tamirat",
+            "reason_codes": ["needs_scope"],
+            "reviewed_at": "2026-06-15T10:45:00+00:00",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_memory_review_preview"
+
+
+def test_gateway_personal_assistant_memory_review_preview_rejects_raw_payload() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = {
+        "candidate": _memory_preview_payload(),
+        "review_id": "pa_memory_review_gateway_raw_001",
+        "decision": "rejected",
+        "reviewer_ref": "operator:tamirat",
+        "reason_codes": ["unsafe_payload"],
+        "reviewed_at": "2026-06-15T10:45:00+00:00",
+        "metadata": {"raw_chat_log": "private transcript"},
+    }
+
+    response = client.post(
+        "/api/v1/personal-assistant/memory-observations/review/preview",
+        json=request_payload,
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 400
+    assert "private transcript" not in serialized
+    assert "memory_observation_review_recorded" not in serialized
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",

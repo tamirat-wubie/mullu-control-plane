@@ -347,6 +347,12 @@
       "surface": "memory"
     },
     {
+      "schema_id": "personal-assistant-memory-review",
+      "path": "schemas/personal_assistant_memory_review.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-review:1",
+      "surface": "memory"
+    },
+    {
       "schema_id": "personal-assistant-console-read-model",
       "path": "schemas/personal_assistant_console_read_model.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",

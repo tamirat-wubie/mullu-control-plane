@@ -65,6 +65,7 @@ from mcoi_runtime.personal_assistant import (
     MemoryObservationSource,
     MemoryObservationType,
     MemoryRetentionPolicy,
+    MemoryReviewDecision,
     MemoryScope,
     MemorySensitivity,
     NestedMindStatus,
@@ -78,6 +79,7 @@ from mcoi_runtime.personal_assistant import (
     interpret_user_request,
     load_default_skill_registry,
     prepare_memory_observation,
+    review_memory_observation_candidate,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -284,6 +286,24 @@ class GatewayPersonalAssistantMemoryPreviewRequest(BaseModel):
     sensitivity: str = MemorySensitivity.INTERNAL.value
     retention_policy: str = MemoryRetentionPolicy.OPERATOR_REVIEW.value
     nested_mind_status: str = NestedMindStatus.STAGING_ONLY.value
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class GatewayPersonalAssistantMemoryReviewPreviewRequest(BaseModel):
+    """Stateless memory review preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate: GatewayPersonalAssistantMemoryPreviewRequest
+    review_id: str
+    decision: str = MemoryReviewDecision.KEPT_FOR_OPERATOR_REVIEW.value
+    reviewer_ref: str = "operator:gateway"
+    reason_codes: list[str] = Field(default_factory=list)
+    reviewed_at: str = ""
+    review_evidence_ref: str = ""
+    revision_request: str = ""
+    deferred_until: str = ""
+    expires_at: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -1938,6 +1958,72 @@ def create_gateway_app(
             "effect_boundary": {
                 "execution_allowed": False,
                 "live_memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/memory-observations/review/preview")
+    def preview_personal_assistant_memory_review(req: GatewayPersonalAssistantMemoryReviewPreviewRequest):
+        try:
+            now = req.reviewed_at or _clock()
+            candidate_request = req.candidate
+            candidate_observed_at = candidate_request.observed_at or now
+            candidate = prepare_memory_observation(
+                request_id=candidate_request.request_id,
+                memory_observation_id=candidate_request.memory_observation_id,
+                memory_type=candidate_request.memory_type,
+                claim=candidate_request.claim,
+                source=MemoryObservationSource.from_mapping(_pydantic_payload(candidate_request.source)),
+                confidence=candidate_request.confidence,
+                scope=candidate_request.scope,
+                mutable=candidate_request.mutable,
+                receipt_id=candidate_request.receipt_id,
+                evidence_refs=tuple(candidate_request.evidence_refs),
+                observed_at=candidate_observed_at,
+                sensitivity=candidate_request.sensitivity,
+                retention_policy=candidate_request.retention_policy,
+                nested_mind_status=candidate_request.nested_mind_status,
+                metadata=candidate_request.metadata,
+            )
+            decision = MemoryReviewDecision.coerce(req.decision)
+            review = review_memory_observation_candidate(
+                candidate=candidate,
+                review_id=req.review_id,
+                decision=decision,
+                reviewer_ref=req.reviewer_ref,
+                reason_codes=tuple(req.reason_codes) or (f"operator_{decision.value}_preview",),
+                reviewed_at=now,
+                review_evidence_ref=req.review_evidence_ref,
+                revision_request=req.revision_request,
+                deferred_until=req.deferred_until,
+                expires_at=req.expires_at,
+                metadata=req.metadata,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant memory review preview",
+                    "error_code": "invalid_personal_assistant_memory_review_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "memory_review": review.as_dict(),
+            "receipt": dict(review.receipt),
+            "outcome": str(review.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_memory_write_allowed": False,
+                "memory_admission_allowed": False,
                 "nested_mind_live_activation_allowed": False,
                 "raw_private_payload_storage_allowed": False,
                 "secret_value_storage_allowed": False,
