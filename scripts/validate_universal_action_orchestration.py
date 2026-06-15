@@ -2348,6 +2348,11 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
     canonical_hash = binding.get("canonical_hash")
     semantics_hash = binding.get("semantics_hash")
     version = binding.get("version")
+    if isinstance(replay_ref, str) and replay_ref:
+        if not replay_ref.startswith("whqr://replay/sha256:"):
+            errors.append(
+                "closure.whqr_replay_binding.replay_ref must start with whqr://replay/sha256:"
+            )
     if isinstance(replay_ref, str) and isinstance(canonical_hash, str):
         if replay_ref != f"whqr://replay/{canonical_hash}":
             errors.append(

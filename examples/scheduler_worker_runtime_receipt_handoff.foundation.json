@@ -1,0 +1,177 @@
+{
+  "handoff_id": "scheduler-worker-runtime-receipt-handoff-foundation-20260615",
+  "handoff_version": "scheduler_worker_runtime_receipt_handoff.v1",
+  "scheduler_receipt_ref": "receipt://temporal-scheduler/foundation-leased-command",
+  "distributed_lease_execution_receipt_ref": "receipt://distributed-lease-execution/foundation-scheduler-worker",
+  "worker_mesh_ref": "schemas/worker_mesh.schema.json",
+  "worker_failure_receipt_ref": "schemas/worker_failure_receipt.schema.json",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-15T16:20:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "foundation_handoff_only": true,
+    "scheduler_dispatch_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "worker_invocation_allowed": false,
+    "scheduler_mutation_allowed": false,
+    "lease_backend_call_allowed": false,
+    "adapter_backend_call_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "scheduler_worker_contract": {
+    "operation_family": "scheduler_worker_runtime_receipt_handoff",
+    "handoff_state": "FOUNDATION_HANDOFF_RECORDED",
+    "required_source_receipt_refs": [
+      "schemas/temporal_scheduler_receipt.schema.json",
+      "schemas/distributed_lease_execution_receipt.schema.json",
+      "schemas/worker_mesh.schema.json",
+      "schemas/worker_failure_receipt.schema.json",
+      "schemas/universal_action_orchestration.schema.json"
+    ],
+    "required_admission_gate_refs": [
+      "gate://temporal-scheduler-leased",
+      "gate://distributed-lease-execution-receipt-ready",
+      "gate://uao-effect-admission",
+      "gate://phi-gov-dispatch-authorization",
+      "gate://worker-runtime-receipt-emitter",
+      "gate://worker-failure-receipt-on-error",
+      "gate://effect-reconciliation-before-terminal-closure"
+    ],
+    "required_runtime_witness_refs": [
+      "witness://scheduler-dispatch/not-registered",
+      "witness://runtime-dispatch/not-registered",
+      "witness://worker-invocation/not-registered",
+      "witness://runtime-receipt-emitter/not-registered",
+      "witness://runtime-receipt-schema/not-bound"
+    ],
+    "receipt_schema_refs": [
+      "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+      "schemas/temporal_scheduler_receipt.schema.json",
+      "schemas/distributed_lease_execution_receipt.schema.json",
+      "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+      "schemas/distributed_lease_claim_receipt.schema.json",
+      "schemas/worker_mesh.schema.json",
+      "schemas/worker_failure_receipt.schema.json",
+      "schemas/universal_action_orchestration.schema.json"
+    ],
+    "validation_refs": [
+      "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+      "scripts/validate_schemas.py",
+      "scripts/validate_protocol_manifest.py",
+      "scripts/proof_coverage_matrix.py"
+    ],
+    "denied_until_refs": [
+      "evidence://temporal-scheduler-runtime-receipt",
+      "evidence://distributed-lease-execution-runtime-receipt",
+      "evidence://worker-runtime-receipt-emitter-dry-run",
+      "evidence://uao-effect-admission",
+      "evidence://phi-gov-dispatch-authorization",
+      "evidence://effect-reconciliation-receipt"
+    ],
+    "future_worker_receipt_obligations": [
+      "bind TemporalSchedulerReceipt before worker dispatch admission",
+      "bind DistributedLeaseExecutionReceipt before worker dispatch admission",
+      "emit worker mesh dispatch receipt before accepting worker output",
+      "emit WorkerFailureReceipt for every failed or partial dispatch",
+      "publish bounded output digest instead of raw output",
+      "preserve no-terminal-closure until effect reconciliation passes",
+      "reject worker invocation when source receipt refs drift"
+    ]
+  },
+  "admission_guards": {
+    "temporal_scheduler_receipt_required": true,
+    "distributed_lease_execution_receipt_required": true,
+    "worker_mesh_receipt_required": true,
+    "worker_failure_receipt_required_on_error": true,
+    "uao_effect_admission_required": true,
+    "phi_gov_dispatch_authorization_required": true,
+    "effect_reconciliation_required": true,
+    "scheduler_dispatch_registered": false,
+    "runtime_dispatch_registered": false,
+    "worker_invocation_registered": false,
+    "runtime_receipt_emitter_registered": false,
+    "runtime_receipt_schema_bound": false,
+    "terminal_closure_blocked_until_runtime_receipt": true
+  },
+  "handoff_result": {
+    "result_state": "HANDOFF_RECORDED",
+    "next_required_evidence": [
+      "temporal scheduler runtime receipt witness",
+      "distributed lease execution runtime receipt witness",
+      "runtime receipt emitter dry-run receipt",
+      "UAO effect admission receipt",
+      "Phi_gov dispatch authorization receipt",
+      "effect reconciliation receipt"
+    ],
+    "handoff_digest": "sha256:2d6c98f61a61d9f65a51451d71d4c3acfe8cf425b7e8e2f8309a9c2a35e1fb91",
+    "scheduler_dispatch_performed": false,
+    "runtime_dispatch_performed": false,
+    "worker_invocation_performed": false,
+    "lease_backend_call_performed": false,
+    "adapter_backend_call_performed": false,
+    "scheduler_mutation_performed": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "scheduler_worker_runtime_receipt_handoff_schema": "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+    "temporal_scheduler_receipt_schema": "schemas/temporal_scheduler_receipt.schema.json",
+    "distributed_lease_execution_receipt_schema": "schemas/distributed_lease_execution_receipt.schema.json",
+    "distributed_lease_adapter_registry_receipt_schema": "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+    "distributed_lease_claim_receipt_schema": "schemas/distributed_lease_claim_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json"
+  },
+  "contract_summary": {
+    "source_receipt_ref_count": 5,
+    "admission_gate_ref_count": 7,
+    "runtime_witness_ref_count": 5,
+    "receipt_schema_ref_count": 8,
+    "validation_ref_count": 4,
+    "denied_until_ref_count": 6,
+    "future_worker_obligation_count": 7,
+    "next_required_evidence_count": 6,
+    "receipt_ref_count": 8,
+    "evidence_ref_count": 12
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "policy://distributed-lease/no-live-backend-call",
+    "policy://temporal-scheduler/no-terminal-closure",
+    "policy://uao/no-effect-without-receipt"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://scheduler-worker-runtime-receipt-handoff/foundation/20260615",
+    "causal_decision_trace_ref": "trace://scheduler-worker-runtime-receipt-handoff/foundation/20260615",
+    "receipt_ref": "receipt://scheduler-worker-runtime-receipt-handoff/foundation/20260615"
+  },
+  "evidence_refs": [
+    "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+    "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+    "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+    "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py",
+    "schemas/temporal_scheduler_receipt.schema.json",
+    "schemas/distributed_lease_execution_receipt.schema.json",
+    "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+    "schemas/distributed_lease_claim_receipt.schema.json",
+    "schemas/worker_mesh.schema.json",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "scripts/proof_coverage_matrix.py"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This handoff records the scheduler-to-worker receipt obligations required before future worker invocation. It does not dispatch a scheduler command, invoke a worker, call a lease backend, call an adapter backend, write files, call connectors, or claim terminal closure."
+  }
+}
