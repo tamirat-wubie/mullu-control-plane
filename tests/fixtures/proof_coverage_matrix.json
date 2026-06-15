@@ -930,6 +930,13 @@
       ]
     },
     {
+      "action_id": "publish_github_app_token_exchange_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "github_app_token_exchange_receipts"
+      ]
+    },
+    {
       "action_id": "publish_temporal_rate_limit_window_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -1056,7 +1063,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 108,
+      "action_proof": 109,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1064,7 +1071,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 132,
+      "audit_chain": 133,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1072,21 +1079,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 89
+      "witnessed": 90
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 107
+      "request_proof": 108
     },
-    "surface_count": 135
+    "surface_count": 136
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 135,
+      "strong": 136,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10321,6 +10328,61 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/github_app_token_exchange.py",
+        "schemas/github_app_token_exchange_receipt.schema.json",
+        "tests/test_gateway/test_github_app_token_exchange.py"
+      ],
+      "notes": "GitHub App token-exchange receipts build hash-bound installation-token request payloads, preserve plan-only and dry-run no-exchange modes, and require approval, external exchange execution, 2xx response, token fingerprint, token expiry, and response hash evidence before an exchange-approved token claim is admitted.",
+      "representative_paths": [
+        "GitHubAppTokenExchange.evaluate",
+        "GitHubAppTokenExchangeRequest",
+        "GitHubAppTokenExchangeReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "dry_run_rejects_token_response_evidence": [
+          "github_app_token_exchange_dry_run_rejects_response_evidence"
+        ],
+        "exchange_approved_binds_external_receipt": [
+          "github_app_token_exchange_approved_binds_external_receipt"
+        ],
+        "exchange_approved_requires_external_receipt": [
+          "github_app_token_exchange_approved_requires_external_receipt"
+        ],
+        "github_app_token_exchange_receipt_schema_valid": [
+          "github_app_token_exchange_plan_only_builds_hash_bound_payload",
+          "github_app_token_exchange_approved_binds_external_receipt"
+        ],
+        "plan_only_does_not_exchange_token": [
+          "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+        ],
+        "secret_token_absence_verified": [
+          "github_app_token_exchange_rejects_raw_token_disclosure"
+        ],
+        "token_exchange_payload_is_hash_bound": [
+          "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+        ],
+        "token_ttl_bounds_enforced": [
+          "github_app_token_exchange_rejects_invalid_ttl_before_planning"
+        ]
+      },
+      "runtime_witnesses": [
+        "token_exchange_payload_is_hash_bound",
+        "plan_only_does_not_exchange_token",
+        "dry_run_rejects_token_response_evidence",
+        "exchange_approved_requires_external_receipt",
+        "exchange_approved_binds_external_receipt",
+        "secret_token_absence_verified",
+        "token_ttl_bounds_enforced",
+        "github_app_token_exchange_receipt_schema_valid"
+      ],
+      "surface_id": "github_app_token_exchange_receipts"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_rate_limit_window.py",
         "schemas/temporal_rate_limit_window_receipt.schema.json",
         "tests/test_gateway/test_temporal_rate_limit_window.py"
@@ -11790,8 +11852,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1526,
-    "runtime_witness_count": 1526,
+    "exact_test_anchor_count": 1534,
+    "runtime_witness_count": 1534,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20659,6 +20721,64 @@
         "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "github_check_run_write_receipts",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload"
+            ],
+            "witness": "token_exchange_payload_is_hash_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload"
+            ],
+            "witness": "plan_only_does_not_exchange_token"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_dry_run_rejects_response_evidence"
+            ],
+            "witness": "dry_run_rejects_token_response_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_approved_requires_external_receipt"
+            ],
+            "witness": "exchange_approved_requires_external_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_approved_binds_external_receipt"
+            ],
+            "witness": "exchange_approved_binds_external_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_rejects_raw_token_disclosure"
+            ],
+            "witness": "secret_token_absence_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_rejects_invalid_ttl_before_planning"
+            ],
+            "witness": "token_ttl_bounds_enforced"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload",
+              "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_approved_binds_external_receipt"
+            ],
+            "witness": "github_app_token_exchange_receipt_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "github_app_token_exchange_receipts",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

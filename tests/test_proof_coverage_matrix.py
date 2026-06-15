@@ -311,6 +311,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 12
     assert surfaces["github_check_run_write_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["github_check_run_write_receipts"]["exact_test_anchor_count"] == 8
+    assert surfaces["github_app_token_exchange_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_app_token_exchange_receipts"]["exact_test_anchor_count"] == 8
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -4990,6 +4992,33 @@ def test_github_check_run_write_receipt_surface_binds_external_write_evidence() 
     assert "completed_status_requires_conclusion" in witnesses
     assert "github_check_run_write_receipt_schema_valid" in witnesses
     assert closure_actions["publish_github_check_run_write_receipt_contract"]["status"] == "closed"
+
+
+def test_github_app_token_exchange_receipt_surface_binds_external_exchange_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    exchange_surface = surfaces["github_app_token_exchange_receipts"]
+    witnesses = set(exchange_surface["runtime_witnesses"])
+
+    assert exchange_surface["coverage_state"] == "witnessed"
+    assert exchange_surface["request_proof"] == "request_proof"
+    assert exchange_surface["action_proof"] == "action_proof"
+    assert "GitHubAppTokenExchange.evaluate" in exchange_surface["representative_paths"]
+    assert "GitHubAppTokenExchangeRequest" in exchange_surface["representative_paths"]
+    assert "GitHubAppTokenExchangeReceipt" in exchange_surface["representative_paths"]
+    assert "gateway/github_app_token_exchange.py" in exchange_surface["evidence_files"]
+    assert "schemas/github_app_token_exchange_receipt.schema.json" in exchange_surface["evidence_files"]
+    assert "tests/test_gateway/test_github_app_token_exchange.py" in exchange_surface["evidence_files"]
+    assert "token_exchange_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_exchange_token" in witnesses
+    assert "dry_run_rejects_token_response_evidence" in witnesses
+    assert "exchange_approved_requires_external_receipt" in witnesses
+    assert "exchange_approved_binds_external_receipt" in witnesses
+    assert "secret_token_absence_verified" in witnesses
+    assert "token_ttl_bounds_enforced" in witnesses
+    assert "github_app_token_exchange_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_app_token_exchange_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:
