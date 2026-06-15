@@ -1,0 +1,55 @@
+{
+  "security_review_id": "sdlc_security_trusted_identity_header_boundary_20260615",
+  "change_id": "sdlc_req_trusted_identity_header_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Trusted identity headers can be spoofed by clients if Mullu accepts them without an upstream gateway that strips client-supplied values and injects verified OIDC or mTLS identity claims. The mitigation is a fail-closed, evidence-backed assessment that treats headers as untrusted unless the gateway path proves strip, injection, verifier, freshness or certificate-chain, bypass protection, and receipt refs.",
+  "required_checks": [
+    {
+      "category": "tenant_scope",
+      "check": "IDOR and cross-tenant spoofing check through missing trusted-header gateway evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_trusted_identity_headers_block_missing_gateway_evidence"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass test for disabled default and complete evidence-only admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity test requiring evidence refs before trusted headers are accepted",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_trusted_identity_headers_accept_complete_oidc_gateway_evidence"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check through documented blocker codes and SDLC evidence refs",
+      "status": "passed",
+      "evidence_ref": "docs/54_authority_directory_sync.md#trusted-identity-header-boundary"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "disable trusted identity headers by default",
+    "require upstream client-header stripping evidence",
+    "require verified identity injection evidence",
+    "require a complete OIDC or mTLS verifier path",
+    "require rollback or bypass protection evidence",
+    "require retained gateway evidence refs"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/trusted-identity-header-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/trusted-identity-header-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/trusted-identity-header-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/trusted-identity-header-boundary/20260615"
+}
