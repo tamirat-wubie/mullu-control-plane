@@ -923,6 +923,13 @@
       ]
     },
     {
+      "action_id": "publish_github_check_run_write_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "github_check_run_write_receipts"
+      ]
+    },
+    {
       "action_id": "publish_temporal_rate_limit_window_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -1049,7 +1056,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 107,
+      "action_proof": 108,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1057,7 +1064,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 131,
+      "audit_chain": 132,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1065,21 +1072,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 88
+      "witnessed": 89
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 106
+      "request_proof": 107
     },
-    "surface_count": 134
+    "surface_count": 135
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 134,
+      "strong": 135,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10259,6 +10266,61 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/github_check_run_writer.py",
+        "schemas/github_check_run_write_receipt.schema.json",
+        "tests/test_gateway/test_github_check_run_writer.py"
+      ],
+      "notes": "GitHub check-run write receipts build hash-bound Checks API payloads, preserve plan-only and dry-run no-write modes, and require approval, installation, external execution, response id, and response hash evidence before a write-approved external check-run claim is admitted.",
+      "representative_paths": [
+        "GitHubCheckRunWriter.evaluate",
+        "GitHubCheckRunWriteRequest",
+        "GitHubCheckRunWriteReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "check_run_payload_is_hash_bound": [
+          "github_check_run_plan_only_builds_hash_bound_payload"
+        ],
+        "completed_status_requires_conclusion": [
+          "github_check_run_completed_status_requires_conclusion"
+        ],
+        "dry_run_rejects_response_evidence": [
+          "github_check_run_dry_run_rejects_response_evidence"
+        ],
+        "github_check_run_write_receipt_schema_valid": [
+          "github_check_run_plan_only_builds_hash_bound_payload",
+          "github_check_run_write_approved_binds_external_execution_receipt"
+        ],
+        "plan_only_does_not_write_check_run": [
+          "github_check_run_plan_only_builds_hash_bound_payload"
+        ],
+        "secret_value_absence_verified": [
+          "github_check_run_rejects_secret_value_disclosure"
+        ],
+        "write_approved_binds_external_execution_receipt": [
+          "github_check_run_write_approved_binds_external_execution_receipt"
+        ],
+        "write_approved_requires_github_app_execution_receipt": [
+          "github_check_run_write_approved_requires_github_app_execution_receipt"
+        ]
+      },
+      "runtime_witnesses": [
+        "check_run_payload_is_hash_bound",
+        "plan_only_does_not_write_check_run",
+        "dry_run_rejects_response_evidence",
+        "write_approved_requires_github_app_execution_receipt",
+        "write_approved_binds_external_execution_receipt",
+        "secret_value_absence_verified",
+        "completed_status_requires_conclusion",
+        "github_check_run_write_receipt_schema_valid"
+      ],
+      "surface_id": "github_check_run_write_receipts"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_rate_limit_window.py",
         "schemas/temporal_rate_limit_window_receipt.schema.json",
         "tests/test_gateway/test_temporal_rate_limit_window.py"
@@ -11728,8 +11790,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1518,
-    "runtime_witness_count": 1518,
+    "exact_test_anchor_count": 1526,
+    "runtime_witness_count": 1526,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20539,6 +20601,64 @@
         "exact_test_anchor_count": 12,
         "runtime_witness_count": 12,
         "surface_id": "temporal_retention_window",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_plan_only_builds_hash_bound_payload"
+            ],
+            "witness": "check_run_payload_is_hash_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_plan_only_builds_hash_bound_payload"
+            ],
+            "witness": "plan_only_does_not_write_check_run"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_dry_run_rejects_response_evidence"
+            ],
+            "witness": "dry_run_rejects_response_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_write_approved_requires_github_app_execution_receipt"
+            ],
+            "witness": "write_approved_requires_github_app_execution_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_write_approved_binds_external_execution_receipt"
+            ],
+            "witness": "write_approved_binds_external_execution_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_rejects_secret_value_disclosure"
+            ],
+            "witness": "secret_value_absence_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_completed_status_requires_conclusion"
+            ],
+            "witness": "completed_status_requires_conclusion"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_plan_only_builds_hash_bound_payload",
+              "tests/test_gateway/test_github_check_run_writer.py::test_github_check_run_write_approved_binds_external_execution_receipt"
+            ],
+            "witness": "github_check_run_write_receipt_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "github_check_run_write_receipts",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
