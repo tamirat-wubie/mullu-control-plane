@@ -1,0 +1,70 @@
+{
+  "security_review_id": "sdlc_security_adapter_external_effect_receipt_boundary_20260615",
+  "change_id": "sdlc_req_adapter_external_effect_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Adapter workers can cross provider boundaries, so a signed response must not be enough to claim a live external effect. The risk is false success, omitted effect boundary evidence, tenant-scoped side-effect spoofing, replay without idempotency, missing approval or recovery evidence, secret-value disclosure, or provider observation evidence drift. The mitigation is a fail-closed receipt assessment that infers known external-write capabilities, requires retained provider observation evidence and approval for live-provider claims, requires dry-run proof fields for dry-run claims, rejects secret disclosure and forbidden-effect observations, and emits deterministic blocker codes before the gateway accepts effect-bearing worker success.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authentication boundary check proving the assessment runs after response signature validation and performs no request authentication",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_clients.py::test_signed_adapter_transport_accepts_live_effect_with_provider_receipt"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR and tenant-scope spoofing check through request, tenant, and capability receipt validation before effect assessment",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_clients.py::test_signed_adapter_transport_rejects_receipt_tenant_mismatch"
+    },
+    {
+      "category": "external_api",
+      "check": "external provider effect check requiring provider observation hash, provider observation ref, approval ref, and recovery evidence before live-provider success is admitted",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_clients.py::test_adapter_external_effect_accepts_live_provider_receipt_evidence"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check rejecting plan-only external-effect claims, omitted external-write boundaries, and live-provider claims without provider evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_adapter_capability_fails_closed_on_missing_external_write_effect_boundary"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check requiring evidence refs, idempotency key, rollback or recovery ref, sha256 provider observation hash, and no secret-value disclosure",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_clients.py::test_adapter_external_effect_live_provider_requires_provider_receipt_hash"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check through deterministic blocker codes and durable connector documentation",
+      "status": "passed",
+      "evidence_ref": "docs/64_durable_gmail_connector_runtime_plan.md#adapter-external-effect-receipt-boundary"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep plan-only receipts non-claiming",
+    "infer known external-write capabilities when receipt evidence is omitted",
+    "require dry-run execution proof fields before dry-run success is admitted",
+    "require provider observation hash, provider observation ref, and approval ref before live-provider success is admitted",
+    "require idempotency key and rollback or recovery ref for effect-bearing execution claims",
+    "reject non-boolean external effect, forbidden-effect, and secret-disclosure fields",
+    "reject receipts that disclose secret values",
+    "perform no provider network call, request authentication, or credential mutation inside the assessment"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/adapter-external-effect-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/adapter-external-effect-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/adapter-external-effect-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/adapter-external-effect-receipt-boundary/20260615"
+}

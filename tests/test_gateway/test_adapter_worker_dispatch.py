@@ -14,7 +14,10 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from gateway.adapter_worker_clients import AdapterWorkerResponse  # noqa: E402
+from gateway.adapter_worker_clients import (  # noqa: E402
+    AdapterWorkerResponse,
+    adapter_capability_requires_external_effect_evidence,
+)
 from gateway.skill_dispatch import (  # noqa: E402
     SkillDispatcher,
     SkillIntent,
@@ -36,17 +39,30 @@ class RecordingAdapterWorkerClient:
         self.payloads.append(dict(payload))
         capability_id = str(payload["capability_id"])
         request_id = str(payload["request_id"])
+        receipt = {
+            "request_id": request_id,
+            "tenant_id": str(payload["tenant_id"]),
+            "capability_id": capability_id,
+            "verification_status": "passed",
+            "evidence_refs": [f"{capability_id}:test"],
+        }
+        if adapter_capability_requires_external_effect_evidence(capability_id):
+            receipt.update({
+                "effect_mode": "live_provider",
+                "external_effect_claimed": True,
+                "provider_receipt_hash": "sha256:" + ("c" * 64),
+                "provider_receipt_ref": f"provider://test/{capability_id}/{request_id}",
+                "idempotency_key": f"idempotency:{request_id}",
+                "rollback_or_recovery_ref": f"runbook://adapter/{capability_id}/recovery",
+                "approval_id": str(payload.get("approval_id") or "approval-test"),
+                "forbidden_effects_observed": False,
+                "secret_values_disclosed": False,
+            })
         return AdapterWorkerResponse(
             request_id=request_id,
             status="succeeded",
             result={"observed": capability_id},
-            receipt={
-                "request_id": request_id,
-                "tenant_id": str(payload["tenant_id"]),
-                "capability_id": capability_id,
-                "verification_status": "passed",
-                "evidence_refs": [f"{capability_id}:test"],
-            },
+            receipt=receipt,
             error="",
             raw={},
         )
@@ -72,6 +88,28 @@ class InvalidReceiptAdapterWorkerClient:
                 "capability_id": capability_id,
                 "verification_status": self.verification_status,
                 "evidence_refs": self.evidence_refs,
+            },
+            error="",
+            raw={},
+        )
+
+
+class MissingEffectBoundaryAdapterWorkerClient:
+    """Worker fixture that omits required external-write effect proof."""
+
+    def execute(self, payload):
+        capability_id = str(payload["capability_id"])
+        request_id = str(payload["request_id"])
+        return AdapterWorkerResponse(
+            request_id=request_id,
+            status="succeeded",
+            result={"observed": capability_id},
+            receipt={
+                "request_id": request_id,
+                "tenant_id": str(payload["tenant_id"]),
+                "capability_id": capability_id,
+                "verification_status": "passed",
+                "evidence_refs": [f"{capability_id}:test"],
             },
             error="",
             raw={},
@@ -172,6 +210,8 @@ def test_email_calendar_capability_dispatches_communication_payload() -> None:
     assert result is not None
     assert result["capability_id"] == "email.send.with_approval"
     assert result["receipt_status"] == "succeeded"
+    assert result["external_effect_assessment"]["effect_mode"] == "live_provider"
+    assert result["external_effect_assessment"]["approval_ref_present"] is True
     assert worker_client.payloads[0]["connector_id"] == "gmail"
     assert worker_client.payloads[0]["recipients"] == ["user@example.com"]
     assert worker_client.payloads[0]["approval_id"] == "approval-1"
@@ -235,6 +275,39 @@ def test_adapter_capability_fails_closed_on_failed_worker_verification() -> None
     assert result["worker_status"] == "failed"
     assert result["worker_error"] == "worker_receipt_verification_failed"
     assert result["verification_status"] == "failed"
+
+
+def test_adapter_capability_fails_closed_on_missing_external_write_effect_boundary() -> None:
+    dispatcher = SkillDispatcher()
+    register_email_calendar_capabilities(
+        dispatcher,
+        email_calendar_worker_client=MissingEffectBoundaryAdapterWorkerClient(),
+    )
+
+    result = dispatcher.dispatch(
+        SkillIntent(
+            "email",
+            "send.with_approval",
+            {
+                "connector_id": "gmail",
+                "recipients": ["user@example.com"],
+                "subject": "Status",
+                "body": "Ready",
+                "approval_id": "approval-1",
+            },
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        command_id="cmd-email-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "email.send.with_approval"
+    assert result["receipt_status"] == "failed"
+    assert result["worker_status"] == "failed"
+    assert result["worker_error"] == "worker_effect_receipt_invalid"
+    assert "external_effect_boundary_required" in result["external_effect_blocked_reasons"]
+    assert "external_effect_success_evidence_required" in result["external_effect_blocked_reasons"]
 
 
 def test_platform_builder_registers_adapter_worker_clients(monkeypatch) -> None:

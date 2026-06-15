@@ -19,7 +19,6 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Callable, Protocol
 
-
 @dataclass(frozen=True, slots=True)
 class CapabilityIntent:
     """Typed capability intent emitted by the intent resolver."""
@@ -393,10 +392,14 @@ def _adapter_worker_dispatch(
 
 
 def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
+    from gateway.adapter_worker_clients import assess_adapter_external_effect_receipt
+
     status = str(getattr(response, "status", ""))
     result = getattr(response, "result", {})
     receipt = getattr(response, "receipt", {})
     error = str(getattr(response, "error", ""))
+    external_effect_assessment: dict[str, Any] = {}
+    external_effect_blocked_reasons: tuple[str, ...] = ()
     if isinstance(response, dict):
         status = str(response.get("status", status))
         result = response.get("result", result)
@@ -415,6 +418,22 @@ def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
     elif status == "succeeded" and verification_status != "passed":
         status = "failed"
         error = error or "worker_receipt_verification_failed"
+    elif status == "succeeded":
+        try:
+            assessment = assess_adapter_external_effect_receipt(
+                receipt,
+                status=status,
+                adapter_id=plane,
+            )
+            external_effect_assessment = _adapter_external_effect_assessment_payload(assessment)
+            external_effect_blocked_reasons = assessment.blocked_reasons
+        except ValueError as exc:
+            status = "failed"
+            error = error or f"worker_effect_receipt_invalid:{exc}"
+            external_effect_blocked_reasons = (str(exc),)
+        if external_effect_blocked_reasons:
+            status = "failed"
+            error = error or "worker_effect_receipt_invalid"
     return {
         "response": f"{plane.capitalize()} action {status or 'completed'}.",
         "worker_plane": plane,
@@ -424,7 +443,26 @@ def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
         "worker_error": error,
         "verification_status": verification_status,
         "evidence_refs": list(evidence_refs),
+        "external_effect_assessment": external_effect_assessment,
+        "external_effect_blocked_reasons": list(external_effect_blocked_reasons),
         "receipt_status": status or "unknown",
+    }
+
+
+def _adapter_external_effect_assessment_payload(assessment: Any) -> dict[str, Any]:
+    return {
+        "capability_id": assessment.capability_id,
+        "effect_mode": assessment.effect_mode,
+        "external_effect_claimed": assessment.external_effect_claimed,
+        "execution_success_claim_allowed": assessment.execution_success_claim_allowed,
+        "plan_only": assessment.plan_only,
+        "approval_ref_present": bool(assessment.approval_ref),
+        "provider_receipt_ref_present": bool(assessment.provider_receipt_ref),
+        "idempotency_key_present": bool(assessment.idempotency_key),
+        "rollback_or_recovery_ref_present": bool(assessment.rollback_or_recovery_ref),
+        "forbidden_effects_observed": assessment.forbidden_effects_observed,
+        "secret_values_disclosed": assessment.secret_values_disclosed,
+        "blocked_reasons": list(assessment.blocked_reasons),
     }
 
 

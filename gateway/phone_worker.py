@@ -150,6 +150,13 @@ class PhoneActionReceipt:
     verification_status: str
     evidence_refs: tuple[str, ...]
     approval_id: str = ""
+    effect_mode: str = "plan_only"
+    external_effect_claimed: bool = False
+    provider_receipt_hash: str = ""
+    provider_receipt_ref: str = ""
+    idempotency_key: str = ""
+    rollback_or_recovery_ref: str = ""
+    secret_values_disclosed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -410,6 +417,7 @@ def _receipt_for(
         "verification_status": verification_status,
     }
     receipt_hash = canonical_hash(receipt_material)
+    external_effect_claimed = observation.external_call and verification_status == "passed"
     return PhoneActionReceipt(
         receipt_id=f"phone-receipt-{receipt_hash[:16]}",
         request_id=request.request_id,
@@ -430,6 +438,20 @@ def _receipt_for(
         verification_status=verification_status,
         evidence_refs=(f"phone_action:{receipt_hash[:16]}",),
         approval_id=request.approval_id,
+        effect_mode="live_provider" if external_effect_claimed else "plan_only",
+        external_effect_claimed=external_effect_claimed,
+        provider_receipt_hash=f"sha256:{receipt_hash}" if external_effect_claimed else "",
+        provider_receipt_ref=(
+            f"provider://{observation.connector_id}/{observation.provider_operation}/"
+            f"{observation.resource_id or request.request_id}"
+            if external_effect_claimed
+            else ""
+        ),
+        idempotency_key=f"idempotency:{receipt_hash[:16]}" if external_effect_claimed else "",
+        rollback_or_recovery_ref=(
+            f"runbook://adapter/{request.capability_id}/recovery" if external_effect_claimed else ""
+        ),
+        secret_values_disclosed=False,
     )
 
 
