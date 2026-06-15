@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-teamops-projection:1",
+  "title": "Personal Assistant TeamOps Shared Inbox Projection",
+  "description": "No-effect evidence envelope for Personal Assistant TeamOps shared-inbox planning previews.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "projection_count",
+    "projection_ids",
+    "receipt_ids",
+    "connectors_used",
+    "projections",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "projection_set_id": {
+      "type": "string",
+      "pattern": "^pa_teamops_projection_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_supplied_teamops_shared_inbox_evidence"},
+    "projection_count": {"type": "integer", "minimum": 1},
+    "projection_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_teamops_projection_item_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "connectors_used": {
+      "type": "array",
+      "items": {"const": "gmail"},
+      "uniqueItems": true
+    },
+    "projections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/projection"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "request_id",
+        "skill_id",
+        "plan_type",
+        "plan",
+        "receipt"
+      ],
+      "properties": {
+        "projection_id": {
+          "type": "string",
+          "pattern": "^pa_teamops_projection_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "skill_id": {"const": "teamops.shared_inbox.plan"},
+        "plan_type": {"const": "teamops_shared_inbox_foundation"},
+        "plan": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "plan_type",
+            "handoff",
+            "live_probe_gate",
+            "effect_boundary",
+            "execution_allowed",
+            "live_probe_executed",
+            "mailbox_mutation_allowed",
+            "external_message_allowed"
+          ],
+          "properties": {
+            "plan_type": {"const": "teamops_shared_inbox_foundation"},
+            "handoff": {"type": "object", "additionalProperties": true},
+            "live_probe_gate": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "approval_binding_required",
+                "authority_receipt_required",
+                "operator_input_request_required",
+                "live_probe_executed",
+                "external_provider_call_performed",
+                "mailbox_write_performed",
+                "external_message_sent"
+              ],
+              "properties": {
+                "approval_binding_required": {"const": true},
+                "authority_receipt_required": {"const": true},
+                "operator_input_request_required": {"const": true},
+                "live_probe_executed": {"const": false},
+                "external_provider_call_performed": {"const": false},
+                "mailbox_write_performed": {"const": false},
+                "external_message_sent": {"const": false}
+              }
+            },
+            "effect_boundary": {"const": "teamops_shared_inbox_plan_only_no_provider_call"},
+            "execution_allowed": {"const": false},
+            "live_probe_executed": {"const": false},
+            "mailbox_mutation_allowed": {"const": false},
+            "external_message_allowed": {"const": false}
+          }
+        },
+        "receipt": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "teamops_plan_records_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "live_probe_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "draft_creation_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "public_readiness_claim_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed"
+      ],
+      "properties": {
+        "teamops_plan_records_allowed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "live_probe_execution_allowed": {"const": false},
+        "mailbox_read_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "draft_creation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "body_projection",
+        "handoff_payload_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "ref_only"},
+        "body_projection": {"const": "none"},
+        "handoff_payload_projection": {"const": "bounded_operator_handoff"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_connector_execution",
+        "ready_for_live_probe_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_teamops_projection_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_connector_execution": {"const": false},
+        "ready_for_live_probe_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocking_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "live_probe_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "teamops_shared_inbox_plan_evidence_only"},
+        "runtime_boundary": {"const": "teamops_plan_does_not_call_provider"},
+        "live_connector_execution_allowed": {"const": false},
+        "live_probe_execution_allowed": {"const": false},
+        "mailbox_read_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false}
+      }
+    }
+  }
+}

@@ -221,6 +221,31 @@ Nested Mind remains `staging_only` until staging evidence and a memory topology
 activation decision exist. Requests to activate Nested Mind live memory are
 blocked or classified as `AwaitingEvidence`, not represented as complete.
 
+## TeamOps Shared-Inbox Contract
+
+TeamOps shared-inbox plans are operator handoff projections, not mailbox
+operations. A TeamOps plan may classify handoff readiness, summarize live-probe
+gates, and emit a receipt. It must keep:
+
+```text
+execution_allowed = false
+live_connector_execution_allowed = false
+live_probe_execution_allowed = false
+mailbox_read_allowed = false
+mailbox_mutation_allowed = false
+draft_creation_allowed = false
+external_send_allowed = false
+connector_mutation_allowed = false
+system_of_record_write_allowed = false
+```
+
+The public preview route is
+`/api/v1/personal-assistant/teamops/shared-inbox/plan/preview`. It accepts
+connector proof references and bounded environment-shape evidence only. It does
+not call Gmail, read shared inboxes, create drafts, send messages, mutate
+provider configuration, serialize secrets, activate Nested Mind, or claim
+customer readiness.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
@@ -235,13 +260,14 @@ python scripts/validate_personal_assistant_approval_matrix.py
 python scripts/validate_personal_assistant_approval_queue.py
 python scripts/validate_personal_assistant_memory_observation.py
 python scripts/validate_personal_assistant_memory_review.py
+python scripts/validate_personal_assistant_teamops_projection.py
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

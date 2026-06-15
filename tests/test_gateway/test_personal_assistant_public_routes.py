@@ -419,6 +419,72 @@ def test_gateway_personal_assistant_memory_review_preview_rejects_raw_payload() 
     assert "memory_observation_review_recorded" not in serialized
 
 
+def test_gateway_personal_assistant_teamops_preview_plans_without_provider_call() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+        json={
+            "request_id": "pa_request_gateway_teamops_001",
+            "submitted_at": "2026-06-15T11:00:00+00:00",
+            "generated_at": "2026-06-15T11:01:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+        },
+    )
+    payload = response.json()
+    projection = payload["teamops_projection"]
+    plan = projection["plan"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["live_probe_execution_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_read_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert projection["skill_id"] == "teamops.shared_inbox.plan"
+    assert plan["live_probe_executed"] is False
+    assert plan["live_probe_gate"]["external_provider_call_performed"] is False
+    assert "gmail_not_called" in receipt["actions_not_taken"]
+    assert "shared_inbox_not_read" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_teamops_preview_rejects_missing_connector_proof() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+        json={
+            "request_id": "pa_request_gateway_teamops_missing_connector_001",
+            "submitted_at": "2026-06-15T11:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_teamops_shared_inbox_preview"
+
+
+def test_gateway_personal_assistant_teamops_preview_rejects_raw_payload() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+        json={
+            "request_id": "pa_request_gateway_teamops_raw_001",
+            "submitted_at": "2026-06-15T11:00:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "environment": {"raw_connector_payload": "private mailbox body"},
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 400
+    assert "private mailbox body" not in serialized
+    assert "teamops_handoff_plan_prepared" not in serialized
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",
@@ -463,4 +529,14 @@ def _memory_preview_payload() -> dict[str, object]:
         "receipt_id": "pa_receipt_gateway_memory_source_001",
         "evidence_refs": ["proof://personal-assistant/memory/gateway-preference-001"],
         "observed_at": "2026-06-14T10:40:00+00:00",
+    }
+
+
+def _gmail_connector_ref() -> dict[str, object]:
+    return {
+        "connector_id": "connector:gmail:operator",
+        "connector_name": "gmail",
+        "proof_state": "Pass",
+        "private_data_allowed": True,
+        "scopes": ["gmail.readonly"],
     }

@@ -97,6 +97,17 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 9. Receipts record memory candidate creation or review plus actions not taken: live memory write, memory admission, Nested Mind activation, raw chat-log storage, raw connector payload storage, and system-of-record mutation.
 10. Proof coverage classifies memory observation and review routes under the assistant planning surface.
 
+## PR 8 Acceptance Criteria
+
+1. TeamOps shared-inbox projections validate against `schemas/personal_assistant_teamops_projection.schema.json`.
+2. Projection envelopes embed schema-valid TeamOps operator handoff packets and personal-assistant receipts.
+3. Public routes expose stateless TeamOps shared-inbox plan previews only.
+4. `execution_allowed`, `live_connector_execution_allowed`, `live_probe_execution_allowed`, `mailbox_read_allowed`, `mailbox_mutation_allowed`, `draft_creation_allowed`, `external_send_allowed`, `connector_mutation_allowed`, `system_of_record_write_allowed`, `deployment_mutation_allowed`, and `nested_mind_live_activation_allowed` remain false.
+5. Ready live-probe evidence is treated as handoff readiness only; no live probe, Gmail call, shared-inbox read, draft, send, archive, delete, label, or provider mutation is performed.
+6. Raw private connector payloads, raw message bodies, credentials, tokens, private keys, and secret-like values are rejected.
+7. Receipts record handoff planning and live-probe gate classification plus actions not taken: Gmail not called, shared inbox not read, email not drafted, email not sent, mailbox not mutated, provider configuration not mutated, secret values not serialized, and live probe not executed.
+8. Proof coverage classifies TeamOps shared-inbox plan previews under the assistant planning surface.
+
 ## Handoff Risks
 
 | Boundary | Risk | Control |
