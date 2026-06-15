@@ -23,7 +23,7 @@ def test_durable_gmail_connector_runtime_plan_validates() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 13
+    assert report["check_count"] == 14
     assert report["plan_path"] == "docs/64_durable_gmail_connector_runtime_plan.md"
 
 
@@ -110,6 +110,21 @@ def test_plan_terms_require_account_binding_gate() -> None:
     assert "plan missing required term: source live receipt" in errors
     assert "plan missing required term: Tenant/mailbox binding" in errors
     assert "plan missing required term: account binding" in errors
+
+
+def test_plan_terms_require_account_binding_operator_input_request_gate() -> None:
+    plan_text = validator.PLAN_PATH.read_text(encoding="utf-8")
+    stale_plan_text = plan_text.replace("durable_gmail_account_binding_operator_input_request.schema.json", "")
+    stale_plan_text = stale_plan_text.replace("emit_durable_gmail_account_binding_operator_input_request.py", "")
+    stale_plan_text = stale_plan_text.replace("validate_durable_gmail_account_binding_operator_input_request.py", "")
+    stale_plan_text = stale_plan_text.replace("account binding operator input request", "")
+
+    errors = validator._validate_plan_terms(stale_plan_text)
+
+    assert "plan missing required term: durable_gmail_account_binding_operator_input_request.schema.json" in errors
+    assert "plan missing required term: emit_durable_gmail_account_binding_operator_input_request.py" in errors
+    assert "plan missing required term: validate_durable_gmail_account_binding_operator_input_request.py" in errors
+    assert "plan missing required term: account binding operator input request" in errors
 
 
 def test_plan_terms_require_revocation_recovery_rehearsal_gate() -> None:

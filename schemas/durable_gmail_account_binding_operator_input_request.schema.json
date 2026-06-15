@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
+  "title": "Durable Gmail Account Binding Operator Input Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "adapter_id",
+    "connector_id",
+    "mode",
+    "ready_for_operator_review",
+    "profile_probe_allowed",
+    "account_binding_claim_allowed",
+    "solver_outcome",
+    "proof_state",
+    "required_inputs",
+    "blocked_actions",
+    "source_artifacts",
+    "account_binding_summary",
+    "no_secret_values_serialized",
+    "raw_mailbox_address_disclosed",
+    "raw_hash_material_disclosed",
+    "external_provider_call_performed",
+    "external_mailbox_write_performed",
+    "provider_mutation_performed",
+    "production_ready_claimed",
+    "write_authority_claimed",
+    "calendar_authority_claimed",
+    "next_action"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^durable-gmail-account-binding-input-request-[0-9a-f]{16}$"
+    },
+    "adapter_id": {
+      "type": "string",
+      "const": "communication.gmail_oauth"
+    },
+    "connector_id": {
+      "type": "string",
+      "const": "gmail"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation-local"
+    },
+    "ready_for_operator_review": {
+      "type": "boolean"
+    },
+    "profile_probe_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "account_binding_claim_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Pass"]
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/operator_input"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "account_binding_claim",
+          "calendar_authority_claim",
+          "external_provider_call",
+          "gmail_profile_probe",
+          "mailbox_write",
+          "production_readiness_claim",
+          "write_authority_claim"
+        ]
+      }
+    },
+    "source_artifacts": {
+      "$ref": "#/$defs/source_artifacts"
+    },
+    "account_binding_summary": {
+      "$ref": "#/$defs/account_binding_summary"
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "raw_mailbox_address_disclosed": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_hash_material_disclosed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_provider_call_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_ready_claimed": {
+      "type": "boolean",
+      "const": false
+    },
+    "write_authority_claimed": {
+      "type": "boolean",
+      "const": false
+    },
+    "calendar_authority_claimed": {
+      "type": "boolean",
+      "const": false
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "operator_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "blocker",
+        "input_kind",
+        "required_names",
+        "current_state",
+        "evidence_source",
+        "next_action"
+      ],
+      "properties": {
+        "input_id": {
+          "type": "string",
+          "pattern": "^durable-gmail-account-binding-input-[0-9a-f]{12}$"
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_kind": {
+          "type": "string",
+          "enum": [
+            "access_token_runtime_binding",
+            "expected_account_hash_binding",
+            "hash_salt_runtime_binding",
+            "source_live_receipt_ref",
+            "tenant_ref_binding",
+            "valid_expected_account_hash_binding",
+            "valid_source_live_receipt_ref",
+            "valid_tenant_ref_binding"
+          ]
+        },
+        "required_names": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "EMAIL_CALENDAR_CONNECTOR_TOKEN",
+              "GMAIL_ACCESS_TOKEN",
+              "GMAIL_ACCOUNT_BINDING_HASH_SALT",
+              "MULLU_GMAIL_ACCOUNT_BINDING_SOURCE_RECEIPT_REF",
+              "MULLU_GMAIL_ACCOUNT_BINDING_TENANT_REF",
+              "MULLU_GMAIL_EXPECTED_ACCOUNT_HASH"
+            ]
+          }
+        },
+        "current_state": {
+          "type": "string",
+          "enum": ["missing", "present_invalid"]
+        },
+        "evidence_source": {
+          "type": "string",
+          "const": "durable_gmail_account_binding_operator_input_request"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_live_receipt_ref"],
+      "properties": {
+        "source_live_receipt_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "account_binding_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_probe_required",
+        "source_live_receipt_required",
+        "tenant_binding_required",
+        "expected_hash_required"
+      ],
+      "properties": {
+        "profile_probe_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_live_receipt_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "tenant_binding_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "expected_hash_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

@@ -4,8 +4,9 @@
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
-handoff receipts, runtime preflight, revocation recovery rehearsal, write
-authority rehearsal, live-write operator input request, TeamOps shared inbox
+handoff receipts, runtime preflight, account-binding operator input request,
+revocation recovery rehearsal, write authority rehearsal, live-write operator
+input request, TeamOps shared inbox
 blocked handoff, approval binding, probe-authority, operator-input request,
 live-probe receipt, observation routing receipt, approval queue receipt,
 approval decision receipt, and send-preparation receipt, send-execution receipt,
@@ -17,10 +18,11 @@ Invariants:
   - The default step set performs no external writes and requires no secrets.
   - Live email/calendar, voice, browser, PostgreSQL, and SMTP evidence remains
     blocked unless separately supplied by operator-controlled live lanes.
-  - Durable Gmail OAuth steps emit blocked, preflight-only, recovery rehearsal,
-    write rehearsal, or live-write operator-input receipts; they do not mint
-    tokens, contact Google, create drafts, send messages, write mailbox state,
-    or claim live readiness.
+  - Durable Gmail OAuth steps emit blocked, preflight-only, account-binding
+    operator-input, recovery rehearsal, write rehearsal, or live-write
+    operator-input receipts; they do not mint tokens, contact Google, create
+    drafts, send messages, write mailbox state, probe profiles, or claim live
+    readiness.
   - TeamOps shared inbox steps emit blocked handoff, redacted probe approval
     binding, read-only probe authority, operator-input request, live-probe receipt,
     observation routing receipt, approval queue receipt, approval decision
@@ -133,6 +135,31 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="persist redacted durable Gmail OAuth runtime preflight receipt",
+    ),
+    AssuranceStep(
+        name="durable_gmail_account_binding_operator_input_request",
+        command=(
+            sys.executable,
+            "scripts/emit_durable_gmail_account_binding_operator_input_request.py",
+            "--output",
+            ".change_assurance/durable_gmail_account_binding_operator_input_request.json",
+            "--json",
+        ),
+        purpose="emit blocked Gmail account-binding operator inputs without profile probe or provider call",
+    ),
+    AssuranceStep(
+        name="durable_gmail_account_binding_operator_input_request_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_account_binding_operator_input_request.py",
+            "--request",
+            ".change_assurance/durable_gmail_account_binding_operator_input_request.json",
+            "--output",
+            ".change_assurance/durable_gmail_account_binding_operator_input_request_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked Gmail account-binding operator inputs without account-binding claim",
     ),
     AssuranceStep(
         name="durable_gmail_revocation_recovery_rehearsal_receipt",
