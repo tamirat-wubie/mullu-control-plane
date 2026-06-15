@@ -1,0 +1,58 @@
+{
+  "requirement_id": "sdlc_req_capability_maturity_labels_20260615",
+  "request_id": "borrowed_component_capability_maturity_labels_20260615",
+  "problem_statement": "Operators need a borrowed Verified, Implemented, and Specified capability maturity label projection that improves scanability without replacing the existing C0-C7 evidence ladder or granting production authority.",
+  "success_criteria": [
+    "Capability maturity assessments expose a derived maturity_label field",
+    "C0, C1, and C2 map only to Specified",
+    "C3, C4, and C5 map only to Implemented",
+    "C6 and C7 map only to Verified",
+    "Schema validation rejects a maturity_label that overclaims the maturity_level",
+    "Gateway read models expose maturity_label and maturity label counts without mutating registry entries",
+    "Operator console output shows the label beside the C-level",
+    "Existing production_ready and autonomy_ready gates continue to rely on C-level evidence only"
+  ],
+  "non_goals": [
+    "no replacement of the C0-C7 capability maturity ladder",
+    "no new execution authority",
+    "no production readiness promotion",
+    "no capability pack mutation",
+    "no external deployment claim"
+  ],
+  "constraints": [
+    "maturity_label must be derived from maturity_level",
+    "Verified must be impossible below C6",
+    "read models must remain observational and side-effect free",
+    "registry entries must not self-promote",
+    "all schema and runtime errors must be explicit"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "gateway/capability_maturity.py",
+    "gateway/operator_capability_console.py",
+    "schemas/capability_maturity.schema.json",
+    "docs/39_governed_capability_fabric.md",
+    "docs/CAPABILITY_RUNTIME_GATE_SPEC.md",
+    "tests/test_gateway/test_capability_maturity.py",
+    "tests/test_gateway/test_capability_fabric.py",
+    "tests/test_gateway/test_operator_capability_console.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "examples/sdlc/requirement_capability_maturity_labels_20260615.json"
+  ],
+  "acceptance_tests": [
+    "python -m pytest tests/test_gateway/test_capability_maturity.py tests/test_gateway/test_capability_fabric.py tests/test_gateway/test_operator_capability_console.py -q",
+    "python -m pytest tests/test_validate_sdlc_artifact.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json"
+  ],
+  "evidence_required": [
+    "focused gateway maturity test receipt",
+    "operator console projection test receipt",
+    "schema validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/capability-maturity-labels/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/capability-maturity-labels/20260615",
+  "receipt_ref": "receipt://sdlc/requirement/capability-maturity-labels/20260615"
+}
