@@ -133,7 +133,7 @@ receipt_ref
 evidence_refs
 ```
 
-An approval decision can be `approved`, `rejected`, `revised`, or `blocked`,
+An approval decision can be `approved`, `rejected`, `revised`, or `expired`,
 but the decision itself does not call a connector or perform the proposed
 action. Public queue projections must keep:
 
@@ -147,6 +147,21 @@ system_of_record_write_allowed = false
 
 Future execution after approval still requires a separate UAO dispatch,
 connector authority proof, effect receipt, and rollback or compensation plan.
+
+Memory observation review records are also evidence objects, not memory-write
+grants. A review decision can be `kept_for_operator_review`, `rejected`,
+`revision_requested`, `deferred`, or `expired`. Kept, revision, and deferred
+reviews emit deferred receipts; rejected and expired reviews emit blocked
+receipts. All review receipts keep:
+
+```text
+live_memory_write_allowed = false
+memory_admission_allowed = false
+nested_mind_live_activation_allowed = false
+raw_private_payload_storage_allowed = false
+secret_value_storage_allowed = false
+system_of_record_write_allowed = false
+```
 
 ## Receipt Contract
 
@@ -219,13 +234,14 @@ python scripts/validate_personal_assistant_skill_registry.py
 python scripts/validate_personal_assistant_approval_matrix.py
 python scripts/validate_personal_assistant_approval_queue.py
 python scripts/validate_personal_assistant_memory_observation.py
+python scripts/validate_personal_assistant_memory_review.py
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

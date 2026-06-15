@@ -88,12 +88,14 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 
 1. Memory observation records validate against `schemas/personal_assistant_memory_observation.schema.json`.
 2. Candidate ledger projections validate against `schemas/personal_assistant_memory_read_model.schema.json`.
-3. The runtime prepares observation candidates with source, confidence, scope, mutability, evidence refs, receipt refs, sensitivity, retention policy, and Nested Mind staging status.
-4. Public routes expose empty read-model and stateless preview projections only.
-5. `live_memory_write_allowed`, `nested_mind_live_activation_allowed`, `raw_private_payload_storage_allowed`, `secret_value_storage_allowed`, and `candidate_only` remain false/false/false/false/true as applicable.
-6. Raw chat logs, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
-7. Receipts record memory candidate creation plus actions not taken: live memory write, Nested Mind activation, raw chat-log storage, raw connector payload storage, and system-of-record mutation.
-8. Proof coverage classifies memory observation routes under the assistant planning surface.
+3. Memory review evidence validates against `schemas/personal_assistant_memory_review.schema.json`.
+4. The runtime prepares observation candidates with source, confidence, scope, mutability, evidence refs, receipt refs, sensitivity, retention policy, and Nested Mind staging status.
+5. Review decisions cover `kept_for_operator_review`, `rejected`, `revision_requested`, `deferred`, and `expired` without admitting candidates into live memory.
+6. Public routes expose empty read-model, stateless candidate preview, and stateless review preview projections only.
+7. `live_memory_write_allowed`, `memory_admission_allowed`, `nested_mind_live_activation_allowed`, `raw_private_payload_storage_allowed`, `secret_value_storage_allowed`, and `candidate_only` remain false/false/false/false/false/true as applicable.
+8. Raw chat logs, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
+9. Receipts record memory candidate creation or review plus actions not taken: live memory write, memory admission, Nested Mind activation, raw chat-log storage, raw connector payload storage, and system-of-record mutation.
+10. Proof coverage classifies memory observation and review routes under the assistant planning surface.
 
 ## Handoff Risks
 
