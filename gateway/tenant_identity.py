@@ -6,6 +6,7 @@ Governance scope: gateway identity boundary only.
 Dependencies: standard-library dataclasses, JSON serialization, optional psycopg2.
 Invariants:
   - Channel identity is never inferred from message content.
+  - Trusted identity headers are never accepted without gateway evidence.
   - Revoked identities do not resolve.
   - Production deployments can persist bindings in PostgreSQL.
   - Local tests retain deterministic in-memory behavior.
@@ -21,6 +22,16 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 _log = logging.getLogger(__name__)
+
+TRUSTED_IDENTITY_HEADER_NAMES: tuple[str, ...] = (
+    "x-mullu-authority-channel",
+    "x-mullu-authority-sender-id",
+    "x-mullu-authority-tenant-id",
+    "x-forwarded-user",
+    "x-forwarded-email",
+    "x-auth-request-user",
+    "x-auth-request-email",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +54,37 @@ class TenantIdentityConfigurationError(ValueError):
     """Raised when gateway identity persistence violates deployment policy."""
 
 
+@dataclass(frozen=True, slots=True)
+class TrustedIdentityGatewayEvidence:
+    """Evidence that an upstream gateway can safely inject identity headers."""
+
+    trusted_identity_headers_enabled: bool = False
+    client_header_strip_verified: bool = False
+    verified_identity_injection: bool = False
+    oidc_verified: bool = False
+    mtls_verified: bool = False
+    issuer_pinned: bool = False
+    audience_bound: bool = False
+    jwks_fresh: bool = False
+    mtls_certificate_chain_verified: bool = False
+    rollback_or_bypass_protection: bool = False
+    evidence_refs: tuple[str, ...] = ()
+    header_names: tuple[str, ...] = TRUSTED_IDENTITY_HEADER_NAMES
+
+
+@dataclass(frozen=True, slots=True)
+class TrustedIdentityHeaderBoundaryAssessment:
+    """Decision record for accepting gateway-injected identity headers."""
+
+    trusted_headers_accepted: bool
+    trusted_identity_headers_disabled: bool
+    blocked_reasons: tuple[str, ...]
+    protected_headers: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    verifier_mode: str
+    authentication_performed: bool = False
+
+
 class TenantIdentityStore:
     """Persistence contract for gateway tenant identity mappings."""
 
@@ -61,6 +103,131 @@ class TenantIdentityStore:
     def status(self) -> dict[str, Any]:
         """Return store status for gateway health."""
         return {"backend": "unknown", "persistent": False, "available": False}
+
+
+def assess_trusted_identity_header_boundary(
+    evidence: TrustedIdentityGatewayEvidence,
+) -> TrustedIdentityHeaderBoundaryAssessment:
+    """Assess whether trusted identity headers may be accepted from a gateway."""
+
+    _validate_gateway_evidence_booleans(evidence)
+    protected_headers = _normalize_unique_strings(
+        evidence.header_names,
+        field_name="header_names",
+        lower=True,
+        required=True,
+    )
+    evidence_refs = _normalize_unique_strings(
+        evidence.evidence_refs,
+        field_name="evidence_refs",
+        lower=False,
+        required=False,
+    )
+    verifier_mode = _verifier_mode(evidence)
+    if not evidence.trusted_identity_headers_enabled:
+        return TrustedIdentityHeaderBoundaryAssessment(
+            trusted_headers_accepted=False,
+            trusted_identity_headers_disabled=True,
+            blocked_reasons=(),
+            protected_headers=protected_headers,
+            evidence_refs=evidence_refs,
+            verifier_mode="disabled",
+        )
+
+    blocked_reasons: list[str] = []
+    if not evidence.client_header_strip_verified:
+        blocked_reasons.append("client_header_strip_evidence_missing")
+    if not evidence.verified_identity_injection:
+        blocked_reasons.append("verified_identity_injection_missing")
+
+    oidc_path_ready = (
+        evidence.oidc_verified
+        and evidence.issuer_pinned
+        and evidence.audience_bound
+        and evidence.jwks_fresh
+    )
+    mtls_path_ready = evidence.mtls_verified and evidence.mtls_certificate_chain_verified
+    if not evidence.oidc_verified and not evidence.mtls_verified:
+        blocked_reasons.append("verified_oidc_or_mtls_missing")
+    if evidence.oidc_verified and not evidence.issuer_pinned:
+        blocked_reasons.append("issuer_pinning_missing")
+    if evidence.oidc_verified and not evidence.audience_bound:
+        blocked_reasons.append("audience_binding_missing")
+    if evidence.oidc_verified and not evidence.jwks_fresh:
+        blocked_reasons.append("jwks_freshness_missing")
+    if evidence.mtls_verified and not evidence.mtls_certificate_chain_verified:
+        blocked_reasons.append("mtls_certificate_chain_missing")
+    if not (oidc_path_ready or mtls_path_ready):
+        blocked_reasons.append("complete_verifier_path_missing")
+
+    if not evidence.rollback_or_bypass_protection:
+        blocked_reasons.append("rollback_or_bypass_protection_missing")
+    if not evidence_refs:
+        blocked_reasons.append("gateway_evidence_refs_missing")
+
+    return TrustedIdentityHeaderBoundaryAssessment(
+        trusted_headers_accepted=not blocked_reasons,
+        trusted_identity_headers_disabled=False,
+        blocked_reasons=tuple(blocked_reasons),
+        protected_headers=protected_headers,
+        evidence_refs=evidence_refs,
+        verifier_mode=verifier_mode,
+    )
+
+
+def _validate_gateway_evidence_booleans(evidence: TrustedIdentityGatewayEvidence) -> None:
+    boolean_fields = (
+        "trusted_identity_headers_enabled",
+        "client_header_strip_verified",
+        "verified_identity_injection",
+        "oidc_verified",
+        "mtls_verified",
+        "issuer_pinned",
+        "audience_bound",
+        "jwks_fresh",
+        "mtls_certificate_chain_verified",
+        "rollback_or_bypass_protection",
+    )
+    for field_name in boolean_fields:
+        if not isinstance(getattr(evidence, field_name), bool):
+            raise ValueError(f"{field_name}_invalid")
+
+
+def _normalize_unique_strings(
+    values: tuple[str, ...],
+    *,
+    field_name: str,
+    lower: bool,
+    required: bool,
+) -> tuple[str, ...]:
+    if not isinstance(values, tuple):
+        raise ValueError(f"{field_name}_invalid")
+    normalized_values: list[str] = []
+    observed: set[str] = set()
+    for value in values:
+        if not isinstance(value, str):
+            raise ValueError(f"{field_name}_invalid")
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError(f"{field_name}_invalid")
+        if lower:
+            normalized = normalized.lower()
+        if normalized not in observed:
+            normalized_values.append(normalized)
+            observed.add(normalized)
+    if required and not normalized_values:
+        raise ValueError(f"{field_name}_required")
+    return tuple(normalized_values)
+
+
+def _verifier_mode(evidence: TrustedIdentityGatewayEvidence) -> str:
+    if evidence.oidc_verified and evidence.mtls_verified:
+        return "oidc+mtls"
+    if evidence.oidc_verified:
+        return "oidc"
+    if evidence.mtls_verified:
+        return "mtls"
+    return "none"
 
 
 class InMemoryTenantIdentityStore(TenantIdentityStore):
