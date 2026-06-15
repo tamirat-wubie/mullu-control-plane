@@ -1,0 +1,90 @@
+{
+  "security_review_id": "sdlc_security_distributed_lease_adapter_registry_receipt_boundary_20260615",
+  "change_id": "sdlc_req_distributed_lease_adapter_registry_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Distributed scheduler lease adapters can accidentally grant worker execution authority when backend capability and claim receipt evidence are conflated. The main risks are treating a non-production native client as ready, representing external gateway delegation as local execution, accepting a backend that cannot satisfy fencing-token policy, trusting a claim receipt that is already blocked, leaking raw tokens through registry metadata, and losing audit linkage between capability classification and the underlying distributed lease claim receipt. The mitigation is to keep adapter registry evaluation non-live, hash the registry and selected capability, bind the underlying claim receipt hash, classify native client adapters as blocked unless production_ready is true, classify external HTTP gateways as delegated rather than locally executed, fail closed on fencing-token capability mismatch, reject secret-shaped metadata, and retain no-live-call flags in the schema.",
+  "required_checks": [
+    {
+      "category": "external_api",
+      "check": "non-live adapter check proving registry evaluation performs no SQLite, Postgres, Redis, etcd, Consul, or HTTP gateway call",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_delegates_external_gateway_without_local_execution"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving adapter registry receipts bind the underlying distributed lease claim receipt hash",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_default_inventory_is_hash_bound"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving registry hash and capability hash are retained in adapter registry receipts",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_default_inventory_is_hash_bound"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving raw token-shaped capability metadata blocks receipt creation",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_rejects_secret_values_in_capability_metadata"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving non-production native adapters block capability admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_blocks_native_adapter_without_production_readiness"
+    },
+    {
+      "category": "policy",
+      "check": "fencing policy check proving backends that require fencing tokens block when adapter capability lacks fencing support",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_blocks_fencing_required_backend_without_token_support"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id, actor id, command id, request id, backend kind, and claim receipt identity are carried in the adapter registry receipt",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_default_inventory_is_hash_bound"
+    },
+    {
+      "category": "auth",
+      "check": "auth boundary check proving blocked claim receipts prevent adapter capability admission before worker authority is trusted",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_adapters.py::test_adapter_registry_blocks_claim_receipt_violations_before_capability_admission"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public distributed lease adapter registry receipt schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep DistributedLeaseAdapterRegistryEvaluator non-live and deterministic",
+    "hash the adapter registry and selected capability for every adapter registry receipt",
+    "bind the underlying distributed lease claim receipt hash before capability admission",
+    "block non-production native client adapters",
+    "represent external HTTP gateway adapters as delegated boundaries rather than local execution",
+    "fail closed when fencing-token policy requires fencing and the adapter lacks fencing support",
+    "block raw token, JWT, and private-key shaped material in registry and capability metadata",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid backend calls, request authentication, scheduler mutation, worker dispatch, deployment, or production claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/distributed-lease-adapter-registry-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/distributed-lease-adapter-registry-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/distributed-lease-adapter-registry-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/distributed-lease-adapter-registry-receipt-boundary/20260615"
+}
