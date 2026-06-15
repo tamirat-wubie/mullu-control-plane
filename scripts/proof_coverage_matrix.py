@@ -7059,6 +7059,74 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "distributed_lease_claim_receipts",
+            [
+                "DistributedLeaseClaimPlanner.evaluate",
+                "DistributedLeaseClaimBoundaryRequest",
+                "DistributedLeaseClaimReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_claim_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_boundary.py",
+            ],
+            "Distributed lease claim receipts bind scheduler job identity, worker identity, backend kind, request payload hash, operation payload hash, plan hash, lease expiry, fencing token, adapter claim receipt refs, response evidence, no-secret serialization, and no-local-lease-service-call flags before any distributed scheduler lease claim is admitted.",
+            [
+                "distributed_lease_policy_and_request_hash_bound",
+                "backend_operation_payload_is_hash_bound",
+                "plan_only_does_not_claim_lease",
+                "dry_run_rejects_claim_response_evidence",
+                "claim_approved_requires_external_receipts",
+                "claim_approved_binds_adapter_receipt",
+                "claim_approved_allows_unfenced_policy_without_token",
+                "observed_payload_mismatch_blocks_claim",
+                "expired_or_unfenced_claim_blocks_dispatch",
+                "secret_value_absence_verified",
+                "distributed_lease_claim_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "distributed_lease_policy_and_request_hash_bound": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live"
+                ],
+                "backend_operation_payload_is_hash_bound": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live",
+                    "distributed_lease_external_gateway_operation_is_endpoint_bound",
+                ],
+                "plan_only_does_not_claim_lease": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live"
+                ],
+                "dry_run_rejects_claim_response_evidence": [
+                    "distributed_lease_dry_run_rejects_claim_response_evidence"
+                ],
+                "claim_approved_requires_external_receipts": [
+                    "distributed_lease_claim_approved_requires_external_receipts"
+                ],
+                "claim_approved_binds_adapter_receipt": [
+                    "distributed_lease_claim_approved_binds_adapter_receipt"
+                ],
+                "claim_approved_allows_unfenced_policy_without_token": [
+                    "distributed_lease_claim_allows_unfenced_policy_without_token"
+                ],
+                "observed_payload_mismatch_blocks_claim": [
+                    "distributed_lease_claim_blocks_observed_payload_mismatch"
+                ],
+                "expired_or_unfenced_claim_blocks_dispatch": [
+                    "distributed_lease_claim_blocks_expired_or_unfenced_grant"
+                ],
+                "secret_value_absence_verified": [
+                    "distributed_lease_claim_rejects_secret_value_disclosure"
+                ],
+                "distributed_lease_claim_receipt_schema_valid": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live",
+                    "distributed_lease_claim_approved_binds_adapter_receipt",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9259,6 +9327,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_github_branch_protection_reconcile_receipt_contract",
             "surfaces": ["github_branch_protection_reconcile_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_claim_receipt_contract",
+            "surfaces": ["distributed_lease_claim_receipts"],
             "status": "closed",
         },
         {
