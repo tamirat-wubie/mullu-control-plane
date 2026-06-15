@@ -319,6 +319,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["github_branch_protection_reconcile_receipts"]["exact_test_anchor_count"] == 10
     assert surfaces["distributed_lease_claim_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["distributed_lease_claim_receipts"]["exact_test_anchor_count"] == 11
+    assert surfaces["oidc_jwks_refresh_evidence"]["unanchored_witness_count"] == 0
+    assert surfaces["oidc_jwks_refresh_evidence"]["exact_test_anchor_count"] == 6
+    assert surfaces["trusted_identity_header_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["trusted_identity_header_boundary"]["exact_test_anchor_count"] == 7
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -2866,6 +2870,67 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     assert identity_witness_surface["exact_test_anchor_count"] == 8
     assert identity_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
+
+
+def test_oidc_jwks_refresh_evidence_surface_binds_trust_chain_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    refresh_surface = surfaces["oidc_jwks_refresh_evidence"]
+    refresh_witness_surface = witness_surfaces["oidc_jwks_refresh_evidence"]
+    witnesses = set(refresh_surface["runtime_witnesses"])
+
+    assert refresh_surface["coverage_state"] == "witnessed"
+    assert refresh_surface["request_proof"] == "request_proof"
+    assert refresh_surface["action_proof"] == "action_proof"
+    assert "assess_oidc_jwks_refresh_evidence" in refresh_surface["representative_paths"]
+    assert "gateway/tenant_identity.py" in refresh_surface["evidence_files"]
+    assert "docs/54_authority_directory_sync.md" in refresh_surface["evidence_files"]
+    assert "tests/test_gateway/test_tenant_identity.py" in refresh_surface["evidence_files"]
+    assert "fresh_https_jwks_receipt_accepted" in witnesses
+    assert "stale_cache_and_missing_refs_blocked" in witnesses
+    assert "insecure_discovery_and_redirects_blocked" in witnesses
+    assert "invalid_hashes_and_algorithms_blocked" in witnesses
+    assert "non_boolean_boundary_flags_rejected" in witnesses
+    assert "jwks_refresh_supports_trusted_header_admission" in witnesses
+    assert refresh_witness_surface["exact_test_anchor_count"] == 6
+    assert refresh_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_oidc_jwks_refresh_evidence_contract"]["status"] == "closed"
+
+
+def test_trusted_identity_header_boundary_surface_blocks_header_spoofing() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    header_surface = surfaces["trusted_identity_header_boundary"]
+    header_witness_surface = witness_surfaces["trusted_identity_header_boundary"]
+    witnesses = set(header_surface["runtime_witnesses"])
+
+    assert header_surface["coverage_state"] == "witnessed"
+    assert header_surface["request_proof"] == "request_proof"
+    assert header_surface["action_proof"] == "action_proof"
+    assert "assess_trusted_identity_header_boundary" in header_surface["representative_paths"]
+    assert "gateway/tenant_identity.py" in header_surface["evidence_files"]
+    assert "docs/54_authority_directory_sync.md" in header_surface["evidence_files"]
+    assert "tests/test_gateway/test_tenant_identity.py" in header_surface["evidence_files"]
+    assert "trusted_headers_disabled_by_default" in witnesses
+    assert "complete_oidc_gateway_evidence_accepted" in witnesses
+    assert "complete_mtls_gateway_evidence_accepted" in witnesses
+    assert "missing_gateway_evidence_blocked" in witnesses
+    assert "malformed_evidence_refs_rejected" in witnesses
+    assert "non_boolean_gateway_evidence_rejected" in witnesses
+    assert "jwks_refresh_assessment_binds_trusted_header_path" in witnesses
+    assert header_witness_surface["exact_test_anchor_count"] == 7
+    assert header_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_trusted_identity_header_boundary_contract"]["status"] == "closed"
 
 
 def test_claim_verification_surface_gates_execution_admission() -> None:

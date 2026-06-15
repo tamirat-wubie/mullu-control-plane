@@ -3533,6 +3533,108 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "oidc_jwks_refresh_evidence",
+            [
+                "OidcJwksRefreshEvidence",
+                "OidcJwksRefreshAssessment",
+                "assess_oidc_jwks_refresh_evidence",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/tenant_identity.py",
+                "docs/54_authority_directory_sync.md",
+                "examples/sdlc/requirement_oidc_jwks_refresh_evidence_20260615.json",
+                "examples/sdlc/design_oidc_jwks_refresh_evidence_20260615.json",
+                "examples/sdlc/security_review_oidc_jwks_refresh_evidence_20260615.json",
+                "tests/test_gateway/test_tenant_identity.py",
+            ],
+            "OIDC/JWKS refresh evidence is a proof-only trust-chain witness that accepts only HTTPS, issuer-pinned, audience-bound, JWKS-backed, hash-retained, fresh-cache receipts and never authenticates requests or fetches network metadata.",
+            [
+                "fresh_https_jwks_receipt_accepted",
+                "stale_cache_and_missing_refs_blocked",
+                "insecure_discovery_and_redirects_blocked",
+                "invalid_hashes_and_algorithms_blocked",
+                "non_boolean_boundary_flags_rejected",
+                "jwks_refresh_supports_trusted_header_admission",
+            ],
+            runtime_witness_anchor_aliases={
+                "fresh_https_jwks_receipt_accepted": [
+                    "oidc_jwks_refresh_evidence_accepts_fresh_https_receipt",
+                ],
+                "stale_cache_and_missing_refs_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_stale_cache_and_missing_refs",
+                ],
+                "insecure_discovery_and_redirects_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_insecure_discovery_and_redirects",
+                ],
+                "invalid_hashes_and_algorithms_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_invalid_hashes_and_algorithms",
+                ],
+                "non_boolean_boundary_flags_rejected": [
+                    "oidc_jwks_refresh_evidence_rejects_non_boolean_boundary_flags",
+                ],
+                "jwks_refresh_supports_trusted_header_admission": [
+                    "trusted_identity_headers_accept_oidc_refresh_assessment_evidence",
+                ],
+            },
+        ),
+        _surface(
+            "trusted_identity_header_boundary",
+            [
+                "TrustedIdentityGatewayEvidence",
+                "TrustedIdentityHeaderBoundaryAssessment",
+                "assess_trusted_identity_header_boundary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/tenant_identity.py",
+                "docs/54_authority_directory_sync.md",
+                "examples/sdlc/requirement_trusted_identity_header_boundary_20260615.json",
+                "examples/sdlc/design_trusted_identity_header_boundary_20260615.json",
+                "examples/sdlc/security_review_trusted_identity_header_boundary_20260615.json",
+                "tests/test_gateway/test_tenant_identity.py",
+            ],
+            "Trusted identity headers remain disabled by default and are accepted only when an upstream gateway proves client-header stripping, verified injection, OIDC/JWKS or mTLS verification, rollback or bypass protection, and retained evidence refs.",
+            [
+                "trusted_headers_disabled_by_default",
+                "complete_oidc_gateway_evidence_accepted",
+                "complete_mtls_gateway_evidence_accepted",
+                "missing_gateway_evidence_blocked",
+                "malformed_evidence_refs_rejected",
+                "non_boolean_gateway_evidence_rejected",
+                "jwks_refresh_assessment_binds_trusted_header_path",
+            ],
+            runtime_witness_anchor_aliases={
+                "trusted_headers_disabled_by_default": [
+                    "trusted_identity_headers_disabled_by_default",
+                ],
+                "complete_oidc_gateway_evidence_accepted": [
+                    "trusted_identity_headers_accept_complete_oidc_gateway_evidence",
+                ],
+                "complete_mtls_gateway_evidence_accepted": [
+                    "trusted_identity_headers_accept_complete_mtls_gateway_evidence",
+                ],
+                "missing_gateway_evidence_blocked": [
+                    "trusted_identity_headers_block_missing_gateway_evidence",
+                ],
+                "malformed_evidence_refs_rejected": [
+                    "trusted_identity_headers_reject_malformed_evidence_refs",
+                ],
+                "non_boolean_gateway_evidence_rejected": [
+                    "trusted_identity_headers_reject_non_boolean_evidence",
+                ],
+                "jwks_refresh_assessment_binds_trusted_header_path": [
+                    "trusted_identity_headers_accept_oidc_refresh_assessment_evidence",
+                ],
+            },
+        ),
+        _surface(
             "orgos_case_governance_lifecycle",
             [
                 "/api/v1/orgs",
@@ -9037,6 +9139,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_deployment_orchestration_receipt_contract",
             "surfaces": ["gateway_runtime_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_oidc_jwks_refresh_evidence_contract",
+            "surfaces": ["oidc_jwks_refresh_evidence"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_trusted_identity_header_boundary_contract",
+            "surfaces": ["trusted_identity_header_boundary"],
             "status": "closed",
         },
         {
