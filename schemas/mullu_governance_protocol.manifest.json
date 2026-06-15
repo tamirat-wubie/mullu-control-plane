@@ -341,6 +341,12 @@
       "surface": "search"
     },
     {
+      "schema_id": "capture-policy-decision-ledger",
+      "path": "schemas/capture_policy_decision_ledger.schema.json",
+      "urn": "urn:mullusi:schema:capture-policy-decision-ledger:1",
+      "surface": "data_governance"
+    },
+    {
       "schema_id": "personal-assistant-request",
       "path": "schemas/personal_assistant_request.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-request:1",

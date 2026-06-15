@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capture-policy-decision-ledger:1",
+  "title": "Capture Policy Decision Ledger",
+  "description": "Read-only pre-capture ledger for source surface, policy scope, sensitivity floor, budget window, and per-event capture decisions before observed content can become symbolic evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ledger_id",
+    "ledger_version",
+    "tenant_id",
+    "actor_id",
+    "source_surface",
+    "origin_ref",
+    "created_at",
+    "solver_outcome",
+    "default_capture_posture",
+    "policy_scope",
+    "sensitivity_floor",
+    "budget_window",
+    "decisions",
+    "governance_guards",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "ledger_id": { "type": "string", "pattern": "^capture-policy-ledger-[a-z0-9-]+$" },
+    "ledger_version": { "type": "string", "const": "capture_policy_decision_ledger.v1" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "source_surface": { "$ref": "#/$defs/source_surface" },
+    "origin_ref": { "type": "string", "pattern": "^(browser://|document://|gmail://|calendar://|file://|connector://|operator://).+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "default_capture_posture": {
+      "type": "string",
+      "const": "capture_denied_until_policy_allows"
+    },
+    "policy_scope": { "$ref": "#/$defs/policy_scope" },
+    "sensitivity_floor": { "$ref": "#/$defs/sensitivity_floor" },
+    "budget_window": { "$ref": "#/$defs/budget_window" },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/capture_decision" }
+    },
+    "governance_guards": { "$ref": "#/$defs/governance_guards" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "source_surface": {
+      "type": "string",
+      "enum": [
+        "browser_dom",
+        "browser_interaction",
+        "document",
+        "gmail_message",
+        "calendar_event",
+        "local_file",
+        "connector_result",
+        "operator_supplied_redaction"
+      ]
+    },
+    "event_kind": {
+      "type": "string",
+      "enum": [
+        "dom_snapshot",
+        "user_interaction",
+        "document_text",
+        "message_header",
+        "message_body",
+        "calendar_metadata",
+        "file_metadata",
+        "connector_payload",
+        "operator_redaction"
+      ]
+    },
+    "capture_class": {
+      "type": "string",
+      "enum": ["ALLOW", "REDACT", "BLOCK", "REVIEW_REQUIRED"]
+    },
+    "decision_state": {
+      "type": "string",
+      "enum": [
+        "CAPTURE_ALLOWED",
+        "CAPTURE_REDACTED",
+        "CAPTURE_BLOCKED_BY_POLICY",
+        "CAPTURE_BLOCKED_BY_SENSITIVITY",
+        "CAPTURE_BLOCKED_BY_BUDGET",
+        "CAPTURE_REVIEW_REQUIRED"
+      ]
+    },
+    "sensitivity_classification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "sensitive",
+        "restricted",
+        "secret",
+        "credential",
+        "payment",
+        "health",
+        "minor",
+        "biometric"
+      ]
+    },
+    "policy_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_ref",
+        "tenant_scope_required",
+        "allowed_event_kinds",
+        "allowed_capture_classes",
+        "operator_review_required",
+        "rationale_refs"
+      ],
+      "properties": {
+        "policy_ref": { "type": "string", "pattern": "^policy://.+$" },
+        "tenant_scope_required": { "type": "boolean", "const": true },
+        "allowed_event_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/event_kind" }
+        },
+        "allowed_capture_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/capture_class" }
+        },
+        "operator_review_required": { "type": "boolean" },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "sensitivity_floor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocked_classifications",
+        "redaction_required_classifications",
+        "raw_value_serialization_allowed",
+        "credential_capture_allowed",
+        "rationale_refs"
+      ],
+      "properties": {
+        "blocked_classifications": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/sensitivity_classification" }
+        },
+        "redaction_required_classifications": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/sensitivity_classification" }
+        },
+        "raw_value_serialization_allowed": { "type": "boolean", "const": false },
+        "credential_capture_allowed": { "type": "boolean", "const": false },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "budget_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window_ref",
+        "max_events",
+        "max_bytes",
+        "remaining_events",
+        "remaining_bytes",
+        "proof_state",
+        "expires_at",
+        "rationale_refs"
+      ],
+      "properties": {
+        "window_ref": { "type": "string", "pattern": "^budget://.+$" },
+        "max_events": { "type": "integer", "minimum": 0 },
+        "max_bytes": { "type": "integer", "minimum": 0 },
+        "remaining_events": { "type": "integer", "minimum": 0 },
+        "remaining_bytes": { "type": "integer", "minimum": 0 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "capture_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "observed_symbol_ref",
+        "event_kind",
+        "capture_class",
+        "decision_state",
+        "policy_ref",
+        "rule_id",
+        "reason",
+        "decided_at",
+        "sensitivity",
+        "budget",
+        "stored_payload_ref",
+        "rationale_refs"
+      ],
+      "properties": {
+        "decision_id": { "type": "string", "pattern": "^capture-decision-[a-z0-9-]+$" },
+        "observed_symbol_ref": { "type": "string", "pattern": "^symbol-ref://.+$" },
+        "event_kind": { "$ref": "#/$defs/event_kind" },
+        "capture_class": { "$ref": "#/$defs/capture_class" },
+        "decision_state": { "$ref": "#/$defs/decision_state" },
+        "policy_ref": { "type": "string", "pattern": "^policy://.+$" },
+        "rule_id": { "type": "string", "pattern": "^capture-policy-rule-[a-z0-9-]+$" },
+        "reason": { "type": "string", "minLength": 1 },
+        "decided_at": { "type": "string", "format": "date-time" },
+        "sensitivity": { "$ref": "#/$defs/sensitivity_decision" },
+        "budget": { "$ref": "#/$defs/decision_budget" },
+        "stored_payload_ref": {
+          "type": ["string", "null"],
+          "pattern": "^(redacted://|hash://|symbol://|receipt://).+$"
+        },
+        "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "sensitivity_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "blocked",
+        "redaction_required",
+        "raw_value_serialized",
+        "secret_marker_detected"
+      ],
+      "properties": {
+        "classification": { "$ref": "#/$defs/sensitivity_classification" },
+        "blocked": { "type": "boolean" },
+        "redaction_required": { "type": "boolean" },
+        "raw_value_serialized": { "type": "boolean", "const": false },
+        "secret_marker_detected": { "type": "boolean" }
+      }
+    },
+    "decision_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope_ref", "remaining_events", "remaining_bytes", "budget_exceeded"],
+      "properties": {
+        "scope_ref": { "type": "string", "pattern": "^budget://.+$" },
+        "remaining_events": { "type": "integer", "minimum": 0 },
+        "remaining_bytes": { "type": "integer", "minimum": 0 },
+        "budget_exceeded": { "type": "boolean" }
+      }
+    },
+    "governance_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capture_performed",
+        "raw_observed_content_serialized",
+        "raw_secret_material_included",
+        "connector_authority_granted",
+        "execution_authority_granted",
+        "memory_write_authority_granted",
+        "terminal_closure",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "capture_performed": { "type": "boolean", "const": false },
+        "raw_observed_content_serialized": { "type": "boolean", "const": false },
+        "raw_secret_material_included": { "type": "boolean", "const": false },
+        "connector_authority_granted": { "type": "boolean", "const": false },
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "memory_write_authority_granted": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
