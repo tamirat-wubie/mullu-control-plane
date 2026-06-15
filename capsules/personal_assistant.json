@@ -9,6 +9,7 @@
     "personal_assistant.approval.classify",
     "personal_assistant.receipt.project",
     "personal_assistant.memory_observation.prepare",
+    "personal_assistant.memory_observation.review",
     "personal_assistant.clarification.request"
   ],
   "policy_refs": [
@@ -24,7 +25,7 @@
   "owner_team": "platform-ops",
   "certification_status": "draft",
   "metadata": {
-    "purpose": "Foundation capsule for governed personal-assistant planning, approval classification, receipt projection, and memory observation preparation without live connector execution"
+    "purpose": "Foundation capsule for governed personal-assistant planning, approval classification, receipt projection, memory observation preparation, and memory review evidence without live connector execution"
   },
   "extensions": {
     "foundation_mode_required": true,

@@ -1,0 +1,213 @@
+{
+  "receipt_id": "read-only-worker-runtime-receipt-candidate-foundation-repo-inspection-20260615",
+  "receipt_version": "read_only_worker_runtime_receipt_candidate.v1",
+  "runner_binding_witness_ref": "examples/read_only_worker_runtime_runner_binding_witness.foundation.json",
+  "emitter_dry_run_ref": "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+  "handoff_ref": "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+  "binding_ref": "examples/read_only_worker_binding.foundation.json",
+  "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+  "rehearsal_receipt_ref": "examples/read_only_worker_rehearsal_receipt.foundation.json",
+  "selected_worker_path": "read_only_repo_inspection",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-15T00:10:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "foundation_candidate_only": true,
+    "runtime_runner_registration_performed": false,
+    "dispatch_endpoint_registration_performed": false,
+    "runtime_receipt_emitter_registration_performed": false,
+    "runtime_receipt_schema_binding_performed": false,
+    "runtime_dispatch_allowed": false,
+    "runtime_receipt_emission_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "runtime_receipt_candidate_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "candidate_mode": "RUNTIME_RECEIPT_CANDIDATE_ONLY",
+    "source_runner_binding_witness_ref": "examples/read_only_worker_runtime_runner_binding_witness.foundation.json",
+    "source_emitter_dry_run_ref": "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+    "required_source_receipt_refs": [
+      "examples/read_only_worker_runtime_runner_binding_witness.foundation.json",
+      "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+      "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+      "examples/read_only_worker_binding.foundation.json",
+      "examples/read_only_worker_lease_preflight.foundation.json",
+      "examples/read_only_worker_rehearsal_receipt.foundation.json"
+    ],
+    "required_governance_gate_refs": [
+      "gate://runtime-runner-registration",
+      "gate://dispatch-endpoint-registration",
+      "gate://runtime-receipt-emitter-registration",
+      "gate://runtime-receipt-schema-binding",
+      "gate://temporal-lease-active",
+      "gate://uao-effect-admission",
+      "gate://phi-gov-dispatch-authorization",
+      "gate://worker-failure-receipt-on-error",
+      "gate://effect-reconciliation-before-terminal-closure"
+    ],
+    "required_runtime_evidence_refs": [
+      "evidence://live-runtime-runner-registration-witness",
+      "evidence://live-dispatch-endpoint-registration-witness",
+      "evidence://runtime-receipt-emitter-registration-witness",
+      "evidence://runtime-receipt-schema-binding-witness",
+      "evidence://active-temporal-lease-window",
+      "evidence://uao-effect-admission",
+      "evidence://phi-gov-dispatch-authorization",
+      "evidence://effect-reconciliation-passed"
+    ],
+    "candidate_obligations_checked": [
+      "future runtime receipt must bind source runner-binding witness and emitter dry-run evidence",
+      "future runtime receipt must require UAO, Phi_gov, causal trace, and temporal lease refs before emission",
+      "future runtime receipt must require WorkerFailureReceipt on failed or partial dispatch",
+      "future runtime receipt must store output digest only and reject raw output retention",
+      "future runtime receipt must record external effects, filesystem writes, connector calls, and unknown effects explicitly",
+      "future runtime receipt must block terminal closure until effect reconciliation passes",
+      "future runtime receipt must preserve tenant and actor boundary refs",
+      "future runtime receipt must preserve Mfidel atomicity without text decomposition"
+    ],
+    "validation_refs": [
+      "scripts/validate_read_only_worker_runtime_receipt_candidate.py",
+      "scripts/validate_read_only_worker_runtime_runner_binding_witness.py",
+      "scripts/validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+      "scripts/validate_schemas.py",
+      "scripts/validate_protocol_manifest.py"
+    ]
+  },
+  "candidate_receipt_envelope": {
+    "uao_ref_required": true,
+    "phi_gov_decision_ref_required": true,
+    "causal_decision_trace_ref_required": true,
+    "temporal_lease_window_receipt_ref_required": true,
+    "runtime_runner_registration_witness_ref_required": true,
+    "runtime_receipt_schema_binding_witness_ref_required": true,
+    "worker_failure_receipt_ref_required_on_error": true,
+    "effect_reconciliation_ref_required": true,
+    "receipt_store_ref_required": true,
+    "raw_output_policy": "DIGEST_ONLY_NO_RAW_OUTPUT"
+  },
+  "candidate_execution_summary": {
+    "execution_state": "NOT_EXECUTED_CANDIDATE_ONLY",
+    "runtime_dispatch_started": false,
+    "worker_invoked": false,
+    "runtime_receipt_emitted": false,
+    "worker_mesh_dispatch_receipt_emitted": false,
+    "failure_receipt_path_bound": true,
+    "effect_reconciliation_required": true,
+    "output_digest_only": true,
+    "output_digest": "sha256:6f708b548a147d1c5dd2fb1d6051388d34b4d1b3810b81c969078ad7b83ad7c4",
+    "raw_output_included": false,
+    "raw_secret_material_included": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "candidate_failure_policy": {
+    "worker_failure_receipt_required": true,
+    "partial_effects_must_be_listed": true,
+    "unknown_effects_block_terminal_closure": true,
+    "rollback_refs_required": true,
+    "recovery_refs_required": true,
+    "success_claim_blocked_on_failure": true,
+    "mfidel_atomicity_preserved": true
+  },
+  "admission_decision": {
+    "decision": "RUNTIME_RECEIPT_CANDIDATE_BLOCKED_AWAITING_SCHEMA_BINDING_AND_LIVE_RUNNER",
+    "candidate_defined": true,
+    "runtime_receipt_schema_bound": false,
+    "runtime_receipt_emission_admitted": false,
+    "runtime_dispatch_admitted": false,
+    "terminal_closure_allowed": false,
+    "remaining_denied_until_refs": [
+      "evidence://live-runtime-runner-registration-witness",
+      "evidence://live-dispatch-endpoint-registration-witness",
+      "evidence://runtime-receipt-emitter-registration-witness",
+      "evidence://runtime-receipt-schema-binding-witness",
+      "evidence://active-temporal-lease-window",
+      "evidence://uao-effect-admission",
+      "evidence://phi-gov-dispatch-authorization",
+      "evidence://effect-reconciliation-passed"
+    ],
+    "blocked_reason_refs": [
+      "blocked://runtime-runner/not-registered",
+      "blocked://dispatch-endpoint/not-registered",
+      "blocked://runtime-receipt-emitter/not-registered",
+      "blocked://runtime-receipt-schema/not-bound",
+      "blocked://temporal-lease/not-active",
+      "blocked://phi-gov/dispatch-not-authorized",
+      "blocked://effect-reconciliation/not-proven"
+    ]
+  },
+  "receipt_refs": {
+    "read_only_worker_runtime_receipt_candidate_schema": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+    "read_only_worker_runtime_runner_binding_witness_schema": "schemas/read_only_worker_runtime_runner_binding_witness.schema.json",
+    "read_only_worker_runtime_receipt_emitter_dry_run_schema": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "read_only_worker_runtime_receipt_handoff_schema": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+    "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
+    "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "read_only_worker_rehearsal_receipt_schema": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json"
+  },
+  "contract_summary": {
+    "source_receipt_ref_count": 6,
+    "governance_gate_ref_count": 9,
+    "runtime_evidence_ref_count": 8,
+    "candidate_obligation_count": 8,
+    "validation_ref_count": 5,
+    "envelope_required_ref_count": 9,
+    "failure_policy_required_count": 7,
+    "remaining_denied_until_ref_count": 8,
+    "blocked_reason_ref_count": 7,
+    "receipt_ref_count": 11,
+    "evidence_ref_count": 18
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "gap://GAP-WORKER-001",
+    "gap://GAP-WORKER-002",
+    "gap://GAP-WORKER-003"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://read-only-worker-runtime-receipt-candidate/foundation-repo-inspection/20260615",
+    "causal_decision_trace_ref": "trace://read-only-worker-runtime-receipt-candidate/foundation-repo-inspection/20260615",
+    "receipt_ref": "receipt://read-only-worker-runtime-receipt-candidate/foundation-repo-inspection/20260615"
+  },
+  "evidence_refs": [
+    "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+    "examples/read_only_worker_runtime_receipt_candidate.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_candidate.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_candidate.py",
+    "schemas/read_only_worker_runtime_runner_binding_witness.schema.json",
+    "examples/read_only_worker_runtime_runner_binding_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_runner_binding_witness.py",
+    "tests/test_validate_read_only_worker_runtime_runner_binding_witness.py",
+    "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+    "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+    "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+    "schemas/read_only_worker_binding.schema.json",
+    "examples/read_only_worker_binding.foundation.json",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/universal_action_orchestration.schema.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This candidate defines the future runtime receipt envelope. It does not bind the schema, register a runner, register a dispatch endpoint, register an emitter, invoke a worker, write files, emit a runtime receipt, call connectors, claim success, or allow terminal closure."
+  }
+}

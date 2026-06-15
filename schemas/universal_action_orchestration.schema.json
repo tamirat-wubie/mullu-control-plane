@@ -636,9 +636,9 @@
       "required": ["replay_ref", "canonical_hash", "semantics_hash", "version"],
       "properties": {
         "replay_ref": { "type": "string", "pattern": "^whqr://replay/[A-Za-z0-9_.:-]+$" },
-        "canonical_hash": { "type": "string", "minLength": 1 },
+        "canonical_hash": { "type": "string", "pattern": "^sha256:.+$" },
         "semantics_hash": { "type": "string", "pattern": "^sha256:.+$" },
-        "version": { "type": "string", "minLength": 1 }
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
       }
     },
     "lineage": {

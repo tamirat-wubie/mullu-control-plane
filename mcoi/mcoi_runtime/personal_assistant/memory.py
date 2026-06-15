@@ -53,6 +53,12 @@ _MEMORY_ACTIONS_NOT_TAKEN = (
     "raw_connector_payload_not_stored",
     "system_of_record_not_mutated",
 )
+_MEMORY_REVIEW_ACTIONS_NOT_TAKEN = (
+    *_MEMORY_ACTIONS_NOT_TAKEN,
+    "memory_observation_not_admitted_to_live_memory",
+    "memory_store_not_mutated",
+    "nested_mind_live_activation_not_started",
+)
 
 
 class MemoryObservationType(StrEnum):
@@ -194,6 +200,26 @@ class NestedMindStatus(StrEnum):
             raise PersonalAssistantInvariantError(f"unknown nested_mind_status: {value}") from exc
 
 
+class MemoryReviewDecision(StrEnum):
+    """Schema-backed operator review outcomes for memory candidates."""
+
+    KEPT_FOR_OPERATOR_REVIEW = "kept_for_operator_review"
+    REJECTED = "rejected"
+    REVISION_REQUESTED = "revision_requested"
+    DEFERRED = "deferred"
+    EXPIRED = "expired"
+
+    @staticmethod
+    def coerce(value: str | "MemoryReviewDecision") -> "MemoryReviewDecision":
+        """Coerce text into a memory review decision."""
+        if isinstance(value, MemoryReviewDecision):
+            return value
+        try:
+            return MemoryReviewDecision(str(value))
+        except ValueError as exc:
+            raise PersonalAssistantInvariantError(f"unknown memory review decision: {value}") from exc
+
+
 @dataclass(frozen=True, slots=True)
 class MemoryObservationSource:
     """Evidence source binding for one memory observation candidate."""
@@ -253,6 +279,41 @@ class MemoryObservationCandidate:
         return {
             "memory_observation_id": self.memory_observation_id,
             "observation": dict(self.observation),
+            "receipt": dict(self.receipt),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class MemoryObservationReview:
+    """Governed review evidence for a memory observation candidate."""
+
+    review: Mapping[str, Any]
+    candidate: MemoryObservationCandidate
+    receipt: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.review, Mapping):
+            raise PersonalAssistantInvariantError("review must be a mapping")
+        if not isinstance(self.candidate, MemoryObservationCandidate):
+            raise PersonalAssistantInvariantError("candidate must be a MemoryObservationCandidate")
+        if not isinstance(self.receipt, Mapping):
+            raise PersonalAssistantInvariantError("receipt must be a mapping")
+        object.__setattr__(self, "review", MappingProxyType(dict(self.review)))
+        object.__setattr__(self, "receipt", MappingProxyType(dict(self.receipt)))
+
+    @property
+    def review_id(self) -> str:
+        """Return the review id."""
+        return str(self.review["review_id"])
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a deterministic JSON-ready review envelope."""
+        return {
+            "review_id": self.review_id,
+            "memory_observation_id": self.candidate.memory_observation_id,
+            "decision": str(self.review["decision"]),
+            "review": dict(self.review),
+            "candidate": self.candidate.as_dict(),
             "receipt": dict(self.receipt),
         }
 
@@ -397,6 +458,88 @@ def prepare_memory_observation(
     return MemoryObservationCandidate(observation=observation, receipt=receipt)
 
 
+def review_memory_observation_candidate(
+    *,
+    candidate: MemoryObservationCandidate,
+    review_id: str,
+    decision: MemoryReviewDecision | str,
+    reviewer_ref: str,
+    reason_codes: Sequence[str],
+    reviewed_at: str,
+    review_evidence_ref: str = "",
+    revision_request: str = "",
+    deferred_until: str = "",
+    expires_at: str = "",
+    metadata: Mapping[str, Any] | None = None,
+) -> MemoryObservationReview:
+    """Prepare a schema-ready review record without writing live memory."""
+    if not isinstance(candidate, MemoryObservationCandidate):
+        raise PersonalAssistantInvariantError("candidate must be a MemoryObservationCandidate")
+    review_id = _require_prefix(review_id, "review_id", "pa_memory_review_")
+    review_decision = MemoryReviewDecision.coerce(decision)
+    reviewer_ref = _require_text(reviewer_ref, "reviewer_ref")
+    reasons = _text_tuple(reason_codes, "reason_codes")
+    reviewed_at = _require_text(reviewed_at, "reviewed_at")
+    evidence_ref = (
+        _require_text(review_evidence_ref, "review_evidence_ref")
+        if review_evidence_ref
+        else f"proof://personal-assistant/memory/review/{_review_suffix(review_id)}"
+    )
+    revision_request = _optional_text(revision_request, "revision_request")
+    deferred_until = _optional_text(deferred_until, "deferred_until")
+    expires_at = _optional_text(expires_at, "expires_at")
+    if review_decision is MemoryReviewDecision.REVISION_REQUESTED and not revision_request:
+        raise PersonalAssistantInvariantError("revision_requested reviews require revision_request")
+    if review_decision is MemoryReviewDecision.DEFERRED and not deferred_until:
+        raise PersonalAssistantInvariantError("deferred reviews require deferred_until")
+    if review_decision is MemoryReviewDecision.EXPIRED and not expires_at:
+        raise PersonalAssistantInvariantError("expired reviews require expires_at")
+    review_metadata = _metadata(metadata)
+    memory_observation_id = candidate.memory_observation_id
+    review = {
+        "review_id": review_id,
+        "memory_observation_id": memory_observation_id,
+        "decision": review_decision.value,
+        "reviewer_ref": reviewer_ref,
+        "reason_codes": list(reasons),
+        "reviewed_at": reviewed_at,
+        "review_evidence_ref": evidence_ref,
+        "revision_request": revision_request,
+        "deferred_until": deferred_until,
+        "expires_at": expires_at,
+        "candidate_receipt_id": str(candidate.receipt.get("receipt_id", "")),
+        "live_memory_write_allowed": False,
+        "memory_admission_allowed": False,
+        "nested_mind_live_activation_allowed": False,
+        "raw_private_payload_storage_allowed": False,
+        "secret_value_storage_allowed": False,
+        "metadata": {
+            **review_metadata,
+            "foundation_only": True,
+            "review_only": True,
+            "live_memory_write_allowed": False,
+            "memory_admission_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+        },
+    }
+    receipt = _memory_review_receipt(
+        candidate=candidate,
+        review_id=review_id,
+        decision=review_decision,
+        timestamp=reviewed_at,
+        evidence_ref=evidence_ref,
+        metadata={
+            "review_decision": review_decision.value,
+            "review_only": True,
+            "candidate_only": True,
+            "live_memory_write_allowed": False,
+            "memory_admission_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+        },
+    )
+    return MemoryObservationReview(review=review, candidate=candidate, receipt=receipt)
+
+
 def _memory_receipt(
     *,
     request_id: str,
@@ -437,6 +580,55 @@ def _memory_receipt(
     }
 
 
+def _memory_review_receipt(
+    *,
+    candidate: MemoryObservationCandidate,
+    review_id: str,
+    decision: MemoryReviewDecision,
+    timestamp: str,
+    evidence_ref: str,
+    metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    receipt_decision = (
+        "blocked"
+        if decision in {MemoryReviewDecision.REJECTED, MemoryReviewDecision.EXPIRED}
+        else "deferred"
+    )
+    outcome = (
+        "GovernanceBlocked"
+        if decision in {MemoryReviewDecision.REJECTED, MemoryReviewDecision.EXPIRED}
+        else "SolvedVerified"
+    )
+    memory_observation_id = candidate.memory_observation_id
+    return {
+        "receipt_id": f"pa_receipt_{_review_suffix(review_id)}_memory_review",
+        "request_id": str(candidate.receipt.get("request_id", "pa_request_memory_review")),
+        "skill_id": MEMORY_OBSERVE_SKILL_ID,
+        "mode": "preview",
+        "risk_level": str(candidate.receipt.get("risk_level", "P2")),
+        "inputs_used": ["memory_observation_candidate", "review_decision", "review_evidence_ref"],
+        "connectors_used": [],
+        "decision": receipt_decision,
+        "approval_required": False,
+        "approval_ref": "",
+        "actions_taken": ["memory_observation_review_recorded", f"memory_review_{decision.value}"],
+        "actions_not_taken": list(_MEMORY_REVIEW_ACTIONS_NOT_TAKEN),
+        "redactions": ["claim_only_no_raw_chat_log", "secret_values_not_serialized"],
+        "private_payload_policy": {
+            "raw_private_payload_serialized": False,
+            "secret_values_serialized": False,
+            "connector_payload_projection": "no_connector_payload",
+            "body_projection": "digest_only",
+        },
+        "timestamp": timestamp,
+        "evidence_refs": list(_dedupe((*candidate.receipt.get("evidence_refs", ()), evidence_ref))),
+        "memory_observation_refs": [memory_observation_id],
+        "replay_refs": [f"replay://personal-assistant/memory-review/{_review_suffix(review_id)}"],
+        "outcome": outcome,
+        "metadata": dict(metadata),
+    }
+
+
 def _metadata(value: Mapping[str, Any] | None) -> dict[str, Any]:
     if value is None:
         return {}
@@ -459,6 +651,10 @@ def _text_tuple(values: Sequence[Any], field_name: str) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+def _dedupe(values: Sequence[Any]) -> tuple[str, ...]:
+    return _text_tuple(values, "values")
+
+
 def _require_mapping_text(payload: Mapping[str, Any], field_name: str) -> str:
     return _require_text(payload.get(field_name), field_name)
 
@@ -476,6 +672,12 @@ def _require_text(value: Any, field_name: str) -> str:
     if _contains_secret_like_value(value):
         raise PersonalAssistantInvariantError(f"{field_name} must not contain secret-like values")
     return value
+
+
+def _optional_text(value: Any, field_name: str) -> str:
+    if value in (None, ""):
+        return ""
+    return _require_text(value, field_name)
 
 
 def _scan_private_or_secret_payload(payload: Any, *, path: str) -> None:
@@ -498,6 +700,10 @@ def _contains_secret_like_value(value: str) -> bool:
 
 def _memory_suffix(memory_observation_id: str) -> str:
     return _safe_identifier(memory_observation_id.removeprefix("pa_memory_"))
+
+
+def _review_suffix(review_id: str) -> str:
+    return _safe_identifier(review_id.removeprefix("pa_memory_review_"))
 
 
 def _safe_identifier(value: str) -> str:

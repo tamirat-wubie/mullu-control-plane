@@ -311,6 +311,12 @@
       "surface": "approval"
     },
     {
+      "schema_id": "personal-assistant-approval-decision",
+      "path": "schemas/personal_assistant_approval_decision.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "personal-assistant-read-only-projection",
       "path": "schemas/personal_assistant_read_only_projection.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-read-only-projection:1",
@@ -338,6 +344,12 @@
       "schema_id": "personal-assistant-memory-read-model",
       "path": "schemas/personal_assistant_memory_read_model.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-memory-read-model:1",
+      "surface": "memory"
+    },
+    {
+      "schema_id": "personal-assistant-memory-review",
+      "path": "schemas/personal_assistant_memory_review.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-review:1",
       "surface": "memory"
     },
     {
@@ -794,6 +806,12 @@
       "schema_id": "team-ops-shared-inbox-terminal-closure-review-packet",
       "path": "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-review-packet:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-terminal-closure-anchor-preflight",
+      "path": "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-preflight:1",
       "surface": "team_ops"
     },
     {
@@ -1424,6 +1442,24 @@
       "schema_id": "read-only-worker-runtime-receipt-handoff",
       "path": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-handoff:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-emitter-dry-run",
+      "path": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-runner-binding-witness",
+      "path": "schemas/read_only_worker_runtime_runner_binding_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-candidate",
+      "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-candidate:1",
       "surface": "worker"
     },
     {

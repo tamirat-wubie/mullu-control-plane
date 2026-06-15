@@ -2347,15 +2347,26 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
     replay_ref = binding.get("replay_ref")
     canonical_hash = binding.get("canonical_hash")
     semantics_hash = binding.get("semantics_hash")
+    version = binding.get("version")
     if isinstance(replay_ref, str) and isinstance(canonical_hash, str):
         if replay_ref != f"whqr://replay/{canonical_hash}":
             errors.append(
                 "closure.whqr_replay_binding.replay_ref must bind canonical_hash"
             )
+    if isinstance(canonical_hash, str) and canonical_hash:
+        if not canonical_hash.startswith("sha256:"):
+            errors.append(
+                "closure.whqr_replay_binding.canonical_hash must start with sha256:"
+            )
     if isinstance(semantics_hash, str) and semantics_hash:
         if not semantics_hash.startswith("sha256:"):
             errors.append(
                 "closure.whqr_replay_binding.semantics_hash must start with sha256:"
+            )
+    if isinstance(version, str) and version:
+        if not _is_semver_core(version):
+            errors.append(
+                "closure.whqr_replay_binding.version must use major.minor.patch"
             )
     extra_keys = set(binding) - set(expected)
     if extra_keys:
@@ -2364,6 +2375,11 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             + ", ".join(sorted(extra_keys))
         )
     return errors
+
+
+def _is_semver_core(value: str) -> bool:
+    parts = value.split(".")
+    return len(parts) == 3 and all(part.isdecimal() for part in parts)
 
 
 def _whqr_replay_confirmation_payload(binding: Any) -> dict[str, str]:

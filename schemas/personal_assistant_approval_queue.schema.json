@@ -29,12 +29,13 @@
     "state_counts": {
       "type": "object",
       "additionalProperties": { "type": "integer", "minimum": 0 },
-      "required": ["requested", "approved", "rejected", "revised", "blocked"],
+      "required": ["requested", "approved", "rejected", "revised", "expired", "blocked"],
       "properties": {
         "requested": { "type": "integer", "minimum": 0 },
         "approved": { "type": "integer", "minimum": 0 },
         "rejected": { "type": "integer", "minimum": 0 },
         "revised": { "type": "integer", "minimum": 0 },
+        "expired": { "type": "integer", "minimum": 0 },
         "blocked": { "type": "integer", "minimum": 0 }
       }
     },

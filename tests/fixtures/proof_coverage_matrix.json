@@ -685,6 +685,13 @@
       ]
     },
     {
+      "action_id": "publish_team_ops_shared_inbox_terminal_closure_anchor_preflight_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -1032,11 +1039,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 268,
+      "proven": 269,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 428,
+    "route_count": 429,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2296,6 +2303,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/memory-observations/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/memory-observations/review/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -3722,26 +3734,34 @@
         "tests/test_assistant_kernel.py",
         "tests/test_gateway/test_personal_assistant_public_routes.py",
         "tests/test_personal_assistant_approval_queue.py",
+        "tests/test_validate_personal_assistant_approval_decision.py",
         "tests/test_personal_assistant_memory.py",
         "tests/test_personal_assistant_memory_runtime.py",
+        "tests/test_validate_personal_assistant_memory_review.py",
         "tests/test_personal_assistant_planner.py",
         "tests/test_validate_personal_assistant_read_only_projection.py",
         "tests/test_validate_personal_assistant_draft_projection.py",
         "schemas/personal_assistant_approval_queue.schema.json",
+        "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
         "schemas/personal_assistant_draft_projection.schema.json",
         "schemas/personal_assistant_memory_observation.schema.json",
         "schemas/personal_assistant_memory_read_model.schema.json",
+        "schemas/personal_assistant_memory_review.schema.json",
         "examples/personal_assistant_approval_queue_read_model.json",
+        "examples/personal_assistant_approval_decision_evidence.json",
         "examples/personal_assistant_read_only_projection.json",
         "examples/personal_assistant_draft_projection.json",
         "examples/personal_assistant_memory_read_model.json",
+        "examples/personal_assistant_memory_review_evidence.json",
         "scripts/validate_personal_assistant_approval_queue.py",
+        "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
         "scripts/validate_personal_assistant_draft_projection.py",
-        "scripts/validate_personal_assistant_memory_observation.py"
+        "scripts/validate_personal_assistant_memory_observation.py",
+        "scripts/validate_personal_assistant_memory_review.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, plan, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, plan, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -3751,7 +3771,8 @@
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
         "/api/v1/personal-assistant/memory-observations",
-        "/api/v1/personal-assistant/memory-observations/preview"
+        "/api/v1/personal-assistant/memory-observations/preview",
+        "/api/v1/personal-assistant/memory-observations/review/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -3770,6 +3791,17 @@
         ],
         "finance_ops_plan_requires_active_consent": [
           "finance_ops_plan_blocks_without_active_payment_consent"
+        ],
+        "personal_assistant_approval_decision_public_safe": [
+          "personal_assistant_approval_decision_fixture_validates",
+          "runtime_approval_decision_blocks_effect_boundaries",
+          "approval_queue_expired_decision_records_receipt_without_execution",
+          "approval_queue_read_model_counts_expired_decisions",
+          "approval_decision_validator_rejects_execution_authority",
+          "approval_decision_validator_rejects_receipt_drift",
+          "approval_decision_validator_rejects_missing_decision_state",
+          "approval_decision_validator_rejects_raw_payload_and_secret",
+          "gateway_personal_assistant_approval_queue_expired_blocks_execution"
         ],
         "personal_assistant_approval_queue_decision_deferred": [
           "approved_decision_links_evidence_and_still_defers_execution",
@@ -3799,6 +3831,18 @@
           "personal_assistant_memory_read_model_validator_accepts_example",
           "memory_observation_ledger_indexes_candidates_without_live_memory_write",
           "gateway_personal_assistant_memory_read_model_is_empty_and_safe"
+        ],
+        "personal_assistant_memory_observation_review_no_effect": [
+          "personal_assistant_memory_review_fixture_validates",
+          "runtime_memory_review_blocks_effect_boundaries",
+          "memory_review_runtime_requires_decision_specific_bindings",
+          "memory_review_validator_rejects_memory_write_authority",
+          "memory_review_validator_rejects_receipt_drift",
+          "memory_review_validator_rejects_missing_decision_state",
+          "memory_review_validator_rejects_raw_payload_and_secret",
+          "gateway_personal_assistant_memory_review_preview_records_no_effect_review",
+          "gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
+          "gateway_personal_assistant_memory_review_preview_rejects_raw_payload"
         ],
         "personal_assistant_preview_blocks_with_whqr_step": [
           "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
@@ -3834,10 +3878,12 @@
         "personal_assistant_preview_errors_sanitized",
         "personal_assistant_approval_queue_read_model_public_safe",
         "personal_assistant_approval_queue_decision_deferred",
+        "personal_assistant_approval_decision_public_safe",
         "personal_assistant_read_only_projection_public_safe",
         "personal_assistant_draft_projection_public_safe",
         "personal_assistant_memory_observation_read_model_public_safe",
-        "personal_assistant_memory_observation_preview_candidate_only"
+        "personal_assistant_memory_observation_preview_candidate_only",
+        "personal_assistant_memory_observation_review_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -7724,9 +7770,14 @@
         "scripts/produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
         "scripts/validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
         "tests/test_produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
-        "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py"
+        "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
+        "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json",
+        "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+        "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+        "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+        "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, terminal closure review packets, TeamOps terminal closure certificates, and signed TeamOps terminal closure evidence bundles behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, source-review binding, trust-ledger proof refs, HMAC verification, and no local provider-mutation requirements.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, terminal closure review packets, TeamOps terminal closure certificates, signed TeamOps terminal closure evidence bundles, and no-effect terminal anchor preflights behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, source-review binding, trust-ledger proof refs, HMAC verification, anchor artifact projection, operator authority, anchor-secret presence, and no local provider-mutation or anchor-submission requirements.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -8113,6 +8164,30 @@
           "team_ops_sent_message_observation_validator_cli_writes_validation",
           "team_ops_sent_message_observation_validator_missing_path_is_bounded"
         ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle": [
+          "team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+          "team_ops_terminal_closure_anchor_preflight_validation_accepts_ready_receipt"
+        ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim": [
+          "team_ops_terminal_closure_anchor_preflight_validation_rejects_effect_claim",
+          "team_ops_terminal_closure_anchor_preflight_validation_rejects_raw_field"
+        ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target": [
+          "team_ops_terminal_closure_anchor_preflight_blocks_invalid_target",
+          "team_ops_terminal_closure_anchor_preflight_validation_rejects_wrong_bundle_secret"
+        ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret": [
+          "team_ops_terminal_closure_anchor_preflight_blocks_missing_anchor_secret",
+          "team_ops_terminal_closure_anchor_preflight_blocks_missing_authority"
+        ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts": [
+          "team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+          "team_ops_terminal_closure_anchor_preflight_validation_rejects_artifact_drift"
+        ],
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts": [
+          "team_ops_terminal_closure_anchor_preflight_cli_writes_blocked_receipt",
+          "team_ops_terminal_closure_anchor_preflight_validation_cli_writes_receipt"
+        ],
         "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet": [
           "team_ops_terminal_closure_certificate_validator_accepts_ready_certificate",
           "team_ops_terminal_closure_certificate_validator_rejects_review_hash_drift"
@@ -8294,7 +8369,13 @@
         "team_ops_shared_inbox_terminal_closure_evidence_bundle_verifies_hmac",
         "team_ops_shared_inbox_terminal_closure_evidence_bundle_binds_source_certificate",
         "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_raw_secret_or_production_claim",
-        "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts"
+        "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim",
+        "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -11237,8 +11318,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1467,
-    "runtime_witness_count": 1467,
+    "exact_test_anchor_count": 1475,
+    "runtime_witness_count": 1475,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11957,6 +12038,20 @@
           },
           {
             "anchors": [
+              "tests/test_validate_personal_assistant_approval_decision.py::test_personal_assistant_approval_decision_fixture_validates",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_runtime_approval_decision_blocks_effect_boundaries",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_queue_expired_decision_records_receipt_without_execution",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_queue_read_model_counts_expired_decisions",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_decision_validator_rejects_execution_authority",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_decision_validator_rejects_receipt_drift",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_decision_validator_rejects_missing_decision_state",
+              "tests/test_validate_personal_assistant_approval_decision.py::test_approval_decision_validator_rejects_raw_payload_and_secret",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_expired_blocks_execution"
+            ],
+            "witness": "personal_assistant_approval_decision_public_safe"
+          },
+          {
+            "anchors": [
               "tests/test_validate_personal_assistant_read_only_projection.py::test_personal_assistant_read_only_projection_fixture_validates",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_runtime_read_only_projection_blocks_all_effect_boundaries",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_read_only_projection_validator_rejects_execution_authority",
@@ -11992,10 +12087,25 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation"
             ],
             "witness": "personal_assistant_memory_observation_preview_candidate_only"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_personal_assistant_memory_review.py::test_personal_assistant_memory_review_fixture_validates",
+              "tests/test_validate_personal_assistant_memory_review.py::test_runtime_memory_review_blocks_effect_boundaries",
+              "tests/test_validate_personal_assistant_memory_review.py::test_memory_review_runtime_requires_decision_specific_bindings",
+              "tests/test_validate_personal_assistant_memory_review.py::test_memory_review_validator_rejects_memory_write_authority",
+              "tests/test_validate_personal_assistant_memory_review.py::test_memory_review_validator_rejects_receipt_drift",
+              "tests/test_validate_personal_assistant_memory_review.py::test_memory_review_validator_rejects_missing_decision_state",
+              "tests/test_validate_personal_assistant_memory_review.py::test_memory_review_validator_rejects_raw_payload_and_secret",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_review_preview_records_no_effect_review",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_review_preview_rejects_raw_payload"
+            ],
+            "witness": "personal_assistant_memory_observation_review_no_effect"
           }
         ],
-        "exact_test_anchor_count": 15,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 17,
+        "runtime_witness_count": 17,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -17635,10 +17745,52 @@
               "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py::test_team_ops_terminal_closure_evidence_bundle_validator_missing_path_is_bounded"
             ],
             "witness": "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_accepts_ready_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_blocks_missing_anchor_secret",
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_blocks_missing_authority"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_rejects_artifact_drift"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_blocks_invalid_target",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_rejects_wrong_bundle_secret"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_rejects_effect_claim",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_rejects_raw_field"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_cli_writes_blocked_receipt",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py::test_team_ops_terminal_closure_anchor_preflight_validation_cli_writes_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts"
           }
         ],
-        "exact_test_anchor_count": 103,
-        "runtime_witness_count": 103,
+        "exact_test_anchor_count": 109,
+        "runtime_witness_count": 109,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

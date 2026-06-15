@@ -21,6 +21,7 @@ from mcoi_runtime.contracts.snet import (
     SNetInquiryBudget,
     SNetMeshReceipt,
     SNetMetadata,
+    SNetQuestion,
     SNetRelation,
     SNetSettlementState,
     SNetSymbol,
@@ -508,6 +509,71 @@ def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
     assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
 
 
+def test_direct_snet_contracts_reject_text_shape_drift() -> None:
+    with pytest.raises(ValueError, match="label"):
+        SNetSymbol(symbol_id="symbol:1", label=SNetWHType.WHAT)
+    with pytest.raises(ValueError, match="sense_id"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", sense_id=None)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="identity",
+            parent_question_id=None,
+        )
+    with pytest.raises(ValueError, match="raw_answer"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer=SNetWHType.WHAT,
+            ascii_folded_answer="what",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="promoted_symbol_id"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            promoted_symbol_id=None,
+        )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", sense_id="", parent_context="")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        parent_question_id="",
+    )
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed",
+        context="general",
+        perspective="general",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+        promoted_symbol_id="",
+    )
+
+    assert valid_symbol.sense_id == ""
+    assert valid_question.parent_question_id == ""
+    assert valid_metadata.promoted_symbol_id == ""
+
+
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
     budgeted_mesh = SNetRecursiveMesh(SNetInquiryBudget(max_questions_per_symbol=1))
     budgeted_seed = budgeted_mesh.add_symbol("Budgeted seed", symbol_type="physical_biological_object")
@@ -576,6 +642,26 @@ def test_mesh_receipt_rejects_authority_and_settlement_drift() -> None:
     with pytest.raises(ValueError, match="settlement_counts total"):
         SNetMeshReceipt(**{**receipt_payload, "settlement_counts": {**receipt_payload["settlement_counts"], "active": 99}})
     assert sum(receipt_payload["settlement_counts"].values()) == receipt_payload["symbol_count"]
+
+
+def test_mesh_receipt_rejects_boolean_flag_shape_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="terminal closure required flag"):
+        SNetMeshReceipt(**{**receipt_payload, "terminal_closure_required": 1})
+    with pytest.raises(ValueError, match="raw answers exposed flag"):
+        SNetMeshReceipt(**{**receipt_payload, "raw_answers_exposed": 0})
+    with pytest.raises(ValueError, match="connector authority flag"):
+        SNetMeshReceipt(**{**receipt_payload, "connector_authority_granted": ""})
+
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_receipt.terminal_closure_required is True
+    assert valid_receipt.raw_answers_exposed is False
+    assert valid_receipt.connector_authority_granted is False
 
 
 def test_mesh_receipt_rejects_direct_contract_drift() -> None:
