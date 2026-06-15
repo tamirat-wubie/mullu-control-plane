@@ -7335,6 +7335,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "distributed_lease_execution_receipts",
+            [
+                "DistributedLeaseExecutionReceiptEvaluator.evaluate",
+                "DistributedLeaseExecutionPlan",
+                "DistributedLeaseExecutionReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_execution.py",
+                "gateway/distributed_lease_adapters.py",
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_execution_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_execution.py",
+            ],
+            "Distributed lease execution receipts compose adapter registry and claim receipts into a hash-bound execution plan, then classify the boundary as ready, delegated, or blocked while proving no local lease service call, backend adapter call, scheduler mutation, worker dispatch, request authentication, or raw secret storage occurred.",
+            [
+                "execution_receipt_ready_for_sqlite_compare_and_swap",
+                "execution_receipt_delegates_external_gateway_without_http_call",
+                "execution_blocks_native_adapter_without_production_readiness",
+                "execution_blocks_claim_receipt_violations_before_dispatch",
+                "execution_binds_claim_approved_external_gateway_grant",
+                "execution_blocks_fencing_required_backend_without_token_support",
+                "execution_rejects_secret_value_disclosure",
+                "distributed_lease_execution_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "execution_receipt_ready_for_sqlite_compare_and_swap": [
+                    "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+                ],
+                "execution_receipt_delegates_external_gateway_without_http_call": [
+                    "execution_receipt_delegates_external_gateway_without_http_call"
+                ],
+                "execution_blocks_native_adapter_without_production_readiness": [
+                    "execution_blocks_native_adapter_without_production_readiness"
+                ],
+                "execution_blocks_claim_receipt_violations_before_dispatch": [
+                    "execution_blocks_claim_receipt_violations_before_dispatch"
+                ],
+                "execution_binds_claim_approved_external_gateway_grant": [
+                    "execution_binds_claim_approved_external_gateway_grant"
+                ],
+                "execution_blocks_fencing_required_backend_without_token_support": [
+                    "execution_blocks_fencing_required_backend_without_token_support"
+                ],
+                "execution_rejects_secret_value_disclosure": [
+                    "execution_rejects_secret_value_disclosure"
+                ],
+                "distributed_lease_execution_receipt_schema_valid": [
+                    "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call",
+                    "execution_binds_claim_approved_external_gateway_grant",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9555,6 +9612,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_distributed_lease_adapter_registry_receipt_contract",
             "surfaces": ["distributed_lease_adapter_registry_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_execution_receipt_contract",
+            "surfaces": ["distributed_lease_execution_receipts"],
             "status": "closed",
         },
         {

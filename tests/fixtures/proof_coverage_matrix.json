@@ -979,6 +979,13 @@
       ]
     },
     {
+      "action_id": "publish_distributed_lease_execution_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "distributed_lease_execution_receipts"
+      ]
+    },
+    {
       "action_id": "publish_temporal_rate_limit_window_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -1105,7 +1112,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 115,
+      "action_proof": 116,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1113,7 +1120,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 139,
+      "audit_chain": 140,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1121,21 +1128,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 96
+      "witnessed": 97
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 114
+      "request_proof": 115
     },
-    "surface_count": 142
+    "surface_count": 143
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 142,
+      "strong": 143,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10834,6 +10841,63 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/distributed_lease_execution.py",
+        "gateway/distributed_lease_adapters.py",
+        "gateway/distributed_lease_boundary.py",
+        "schemas/distributed_lease_execution_receipt.schema.json",
+        "tests/test_gateway/test_distributed_lease_execution.py"
+      ],
+      "notes": "Distributed lease execution receipts compose adapter registry and claim receipts into a hash-bound execution plan, then classify the boundary as ready, delegated, or blocked while proving no local lease service call, backend adapter call, scheduler mutation, worker dispatch, request authentication, or raw secret storage occurred.",
+      "representative_paths": [
+        "DistributedLeaseExecutionReceiptEvaluator.evaluate",
+        "DistributedLeaseExecutionPlan",
+        "DistributedLeaseExecutionReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "distributed_lease_execution_receipt_schema_valid": [
+          "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call",
+          "execution_binds_claim_approved_external_gateway_grant"
+        ],
+        "execution_binds_claim_approved_external_gateway_grant": [
+          "execution_binds_claim_approved_external_gateway_grant"
+        ],
+        "execution_blocks_claim_receipt_violations_before_dispatch": [
+          "execution_blocks_claim_receipt_violations_before_dispatch"
+        ],
+        "execution_blocks_fencing_required_backend_without_token_support": [
+          "execution_blocks_fencing_required_backend_without_token_support"
+        ],
+        "execution_blocks_native_adapter_without_production_readiness": [
+          "execution_blocks_native_adapter_without_production_readiness"
+        ],
+        "execution_receipt_delegates_external_gateway_without_http_call": [
+          "execution_receipt_delegates_external_gateway_without_http_call"
+        ],
+        "execution_receipt_ready_for_sqlite_compare_and_swap": [
+          "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+        ],
+        "execution_rejects_secret_value_disclosure": [
+          "execution_rejects_secret_value_disclosure"
+        ]
+      },
+      "runtime_witnesses": [
+        "execution_receipt_ready_for_sqlite_compare_and_swap",
+        "execution_receipt_delegates_external_gateway_without_http_call",
+        "execution_blocks_native_adapter_without_production_readiness",
+        "execution_blocks_claim_receipt_violations_before_dispatch",
+        "execution_binds_claim_approved_external_gateway_grant",
+        "execution_blocks_fencing_required_backend_without_token_support",
+        "execution_rejects_secret_value_disclosure",
+        "distributed_lease_execution_receipt_schema_valid"
+      ],
+      "surface_id": "distributed_lease_execution_receipts"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_rate_limit_window.py",
         "schemas/temporal_rate_limit_window_receipt.schema.json",
         "tests/test_gateway/test_temporal_rate_limit_window.py"
@@ -12303,8 +12367,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1590,
-    "runtime_witness_count": 1590,
+    "exact_test_anchor_count": 1598,
+    "runtime_witness_count": 1598,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21642,6 +21706,64 @@
         "exact_test_anchor_count": 8,
         "runtime_witness_count": 8,
         "surface_id": "distributed_lease_adapter_registry_receipts",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+            ],
+            "witness": "execution_receipt_ready_for_sqlite_compare_and_swap"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_delegates_external_gateway_without_http_call"
+            ],
+            "witness": "execution_receipt_delegates_external_gateway_without_http_call"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_native_adapter_without_production_readiness"
+            ],
+            "witness": "execution_blocks_native_adapter_without_production_readiness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_claim_receipt_violations_before_dispatch"
+            ],
+            "witness": "execution_blocks_claim_receipt_violations_before_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_binds_claim_approved_external_gateway_grant"
+            ],
+            "witness": "execution_binds_claim_approved_external_gateway_grant"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_fencing_required_backend_without_token_support"
+            ],
+            "witness": "execution_blocks_fencing_required_backend_without_token_support"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_rejects_secret_value_disclosure"
+            ],
+            "witness": "execution_rejects_secret_value_disclosure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call",
+              "tests/test_gateway/test_distributed_lease_execution.py::test_execution_binds_claim_approved_external_gateway_grant"
+            ],
+            "witness": "distributed_lease_execution_receipt_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "distributed_lease_execution_receipts",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

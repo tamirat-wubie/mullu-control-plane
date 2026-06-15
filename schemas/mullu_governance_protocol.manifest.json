@@ -1235,6 +1235,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "distributed-lease-execution-receipt",
+      "path": "schemas/distributed_lease_execution_receipt.schema.json",
+      "urn": "urn:mullusi:schema:distributed-lease-execution-receipt:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "temporal-lease-window-receipt",
       "path": "schemas/temporal_lease_window_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-lease-window-receipt:1",
