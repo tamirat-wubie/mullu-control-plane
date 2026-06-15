@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-github-codex-projection:1",
+  "title": "Personal Assistant GitHub Codex Projection",
+  "description": "No-effect evidence envelope for Personal Assistant GitHub/Codex review previews.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "projection_count",
+    "projection_ids",
+    "receipt_ids",
+    "connectors_used",
+    "projections",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "projection_set_id": {
+      "type": "string",
+      "pattern": "^pa_github_codex_projection_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_supplied_github_codex_evidence"},
+    "projection_count": {"type": "integer", "minimum": 1},
+    "projection_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_github_codex_projection_item_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "connectors_used": {
+      "type": "array",
+      "items": {"const": "github"},
+      "uniqueItems": true
+    },
+    "projections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/projection"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "request_id",
+        "skill_id",
+        "plan_type",
+        "plan",
+        "receipt"
+      ],
+      "properties": {
+        "projection_id": {
+          "type": "string",
+          "pattern": "^pa_github_codex_projection_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "skill_id": {"const": "github.pr.summarize"},
+        "plan_type": {"const": "github_codex_review_foundation"},
+        "plan": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "plan_type",
+            "repository_ref",
+            "change_summary",
+            "changed_files",
+            "risk_notes",
+            "blocking_questions",
+            "review_decision",
+            "merge_recommendation",
+            "codex_instruction",
+            "evidence_gate",
+            "effect_boundary",
+            "execution_allowed",
+            "github_call_allowed",
+            "repository_mutation_allowed",
+            "pull_request_mutation_allowed",
+            "deployment_allowed"
+          ],
+          "properties": {
+            "plan_type": {"const": "github_codex_review_foundation"},
+            "repository_ref": {"type": "string", "minLength": 1},
+            "pull_request_ref": {"type": "string"},
+            "change_summary": {"type": "string", "minLength": 1},
+            "changed_files": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "risk_notes": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "blocking_questions": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "review_decision": {"const": "review_only"},
+            "merge_recommendation": {"const": "do_not_merge_from_projection"},
+            "codex_instruction": {"type": "string", "minLength": 1},
+            "evidence_gate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "operator_supplied_evidence_complete",
+                "evidence_refs",
+                "blocking_reasons",
+                "github_call_performed",
+                "repository_write_performed",
+                "review_submission_performed",
+                "deployment_performed"
+              ],
+              "properties": {
+                "operator_supplied_evidence_complete": {"type": "boolean"},
+                "evidence_refs": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1}
+                },
+                "blocking_reasons": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1}
+                },
+                "github_call_performed": {"const": false},
+                "repository_write_performed": {"const": false},
+                "review_submission_performed": {"const": false},
+                "deployment_performed": {"const": false}
+              }
+            },
+            "effect_boundary": {"const": "github_codex_review_no_repository_effect"},
+            "execution_allowed": {"const": false},
+            "github_call_allowed": {"const": false},
+            "repository_mutation_allowed": {"const": false},
+            "pull_request_mutation_allowed": {"const": false},
+            "deployment_allowed": {"const": false}
+          }
+        },
+        "receipt": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_codex_review_records_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "github_call_allowed",
+        "repository_read_allowed",
+        "repository_mutation_allowed",
+        "pull_request_mutation_allowed",
+        "branch_push_allowed",
+        "issue_creation_allowed",
+        "review_submission_allowed",
+        "deployment_mutation_allowed",
+        "system_of_record_write_allowed",
+        "public_readiness_claim_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed"
+      ],
+      "properties": {
+        "github_codex_review_records_allowed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "github_call_allowed": {"const": false},
+        "repository_read_allowed": {"const": false},
+        "repository_mutation_allowed": {"const": false},
+        "pull_request_mutation_allowed": {"const": false},
+        "branch_push_allowed": {"const": false},
+        "issue_creation_allowed": {"const": false},
+        "review_submission_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "raw_diff_projection",
+        "body_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "ref_only"},
+        "raw_diff_projection": {"const": "forbidden"},
+        "body_projection": {"const": "redacted_summary"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_connector_execution",
+        "ready_for_repository_mutation",
+        "ready_for_merge_claim",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_github_codex_projection_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_connector_execution": {"const": false},
+        "ready_for_repository_mutation": {"const": false},
+        "ready_for_merge_claim": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocking_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "github_call_allowed",
+        "repository_mutation_allowed",
+        "pull_request_mutation_allowed",
+        "deployment_mutation_allowed",
+        "system_of_record_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "github_codex_review_evidence_only"},
+        "runtime_boundary": {"const": "github_codex_projection_does_not_call_github"},
+        "live_connector_execution_allowed": {"const": false},
+        "github_call_allowed": {"const": false},
+        "repository_mutation_allowed": {"const": false},
+        "pull_request_mutation_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false}
+      }
+    }
+  }
+}

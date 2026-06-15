@@ -17,7 +17,8 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 6 | Approval queue read/preview projection | No approval auto-grant; no execution after approval |
 | 7 | Memory observations | No raw chat-log storage; no live Nested Mind activation |
 | 8 | TeamOps shared inbox planning and handoff | No mailbox mutation without approval evidence |
-| 9 | User-facing assistant console | No customer/SaaS readiness claim |
+| 9 | GitHub and Codex review planning | No GitHub calls, repository reads, PR mutation, branch push, issue creation, review submission, merge, or deployment |
+| 10 | User-facing assistant console | No customer/SaaS readiness claim |
 
 ## PR 1 Acceptance Criteria
 
@@ -107,6 +108,17 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw private connector payloads, raw message bodies, credentials, tokens, private keys, and secret-like values are rejected.
 7. Receipts record handoff planning and live-probe gate classification plus actions not taken: Gmail not called, shared inbox not read, email not drafted, email not sent, mailbox not mutated, provider configuration not mutated, secret values not serialized, and live probe not executed.
 8. Proof coverage classifies TeamOps shared-inbox plan previews under the assistant planning surface.
+
+## PR 9 Acceptance Criteria
+
+1. GitHub and Codex review projections validate against `schemas/personal_assistant_github_codex_projection.schema.json`.
+2. Projection envelopes embed schema-valid personal-assistant receipts.
+3. Public routes expose stateless GitHub/Codex review previews only.
+4. `execution_allowed`, `live_connector_execution_allowed`, `github_call_allowed`, `repository_read_allowed`, `repository_mutation_allowed`, `pull_request_mutation_allowed`, `branch_push_allowed`, `issue_creation_allowed`, `review_submission_allowed`, `deployment_mutation_allowed`, `system_of_record_write_allowed`, and `nested_mind_live_activation_allowed` remain false.
+5. Ready evidence is treated as review readiness only; no GitHub call, repository read, pull-request open, merge, branch push, issue creation, review submission, or deployment is performed.
+6. Raw diffs, raw connector payloads, raw repository contents, credentials, tokens, private keys, and secret-like values are rejected.
+7. Receipts record review planning and Codex instruction drafting plus actions not taken: GitHub not called, pull request not opened, pull request not merged, branch not pushed, issue not created, review not submitted, deployment not started, repository not mutated, secret values not serialized, and raw diff not serialized.
+8. Proof coverage classifies GitHub/Codex review previews under the assistant planning surface.
 
 ## Handoff Risks
 

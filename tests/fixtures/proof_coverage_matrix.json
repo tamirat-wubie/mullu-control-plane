@@ -1144,11 +1144,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 273,
+      "proven": 274,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 433,
+    "route_count": 434,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2413,6 +2413,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/approval-queue/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/github-codex/review/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -4188,6 +4193,7 @@
         "mcoi/mcoi_runtime/personal_assistant/approval.py",
         "mcoi/mcoi_runtime/personal_assistant/memory.py",
         "mcoi/mcoi_runtime/personal_assistant/teamops.py",
+        "mcoi/mcoi_runtime/personal_assistant/github_codex.py",
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py",
         "tests/test_gateway/test_personal_assistant_public_routes.py",
@@ -4201,6 +4207,7 @@
         "tests/test_validate_personal_assistant_read_only_projection.py",
         "tests/test_validate_personal_assistant_draft_projection.py",
         "tests/test_validate_personal_assistant_teamops_projection.py",
+        "tests/test_validate_personal_assistant_github_codex_projection.py",
         "schemas/personal_assistant_approval_queue.schema.json",
         "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
@@ -4209,6 +4216,7 @@
         "schemas/personal_assistant_memory_read_model.schema.json",
         "schemas/personal_assistant_memory_review.schema.json",
         "schemas/personal_assistant_teamops_projection.schema.json",
+        "schemas/personal_assistant_github_codex_projection.schema.json",
         "examples/personal_assistant_approval_queue_read_model.json",
         "examples/personal_assistant_approval_decision_evidence.json",
         "examples/personal_assistant_read_only_projection.json",
@@ -4216,15 +4224,17 @@
         "examples/personal_assistant_memory_read_model.json",
         "examples/personal_assistant_memory_review_evidence.json",
         "examples/personal_assistant_teamops_projection.json",
+        "examples/personal_assistant_github_codex_projection.json",
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
         "scripts/validate_personal_assistant_draft_projection.py",
         "scripts/validate_personal_assistant_memory_observation.py",
         "scripts/validate_personal_assistant_memory_review.py",
-        "scripts/validate_personal_assistant_teamops_projection.py"
+        "scripts/validate_personal_assistant_teamops_projection.py",
+        "scripts/validate_personal_assistant_github_codex_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -4236,7 +4246,8 @@
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",
         "/api/v1/personal-assistant/memory-observations/review/preview",
-        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"
+        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+        "/api/v1/personal-assistant/github-codex/review/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -4284,6 +4295,17 @@
           "draft_projection_validator_rejects_approval_boundary_drift",
           "draft_projection_validator_rejects_receipt_drift",
           "draft_projection_validator_rejects_raw_payload_and_secret"
+        ],
+        "personal_assistant_github_codex_review_no_effect": [
+          "personal_assistant_github_codex_projection_fixture_validates",
+          "runtime_github_codex_projection_blocks_effect_boundaries",
+          "github_codex_projection_validator_rejects_live_execution_authority",
+          "github_codex_projection_validator_rejects_receipt_drift",
+          "github_codex_projection_validator_rejects_raw_diff_and_secret",
+          "github_codex_projection_requires_ready_and_blocked_items",
+          "gateway_personal_assistant_github_codex_preview_reviews_without_github_call",
+          "gateway_personal_assistant_github_codex_preview_rejects_missing_connector_proof",
+          "gateway_personal_assistant_github_codex_preview_rejects_secret_like_summary"
         ],
         "personal_assistant_memory_observation_preview_candidate_only": [
           "prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
@@ -4360,7 +4382,8 @@
         "personal_assistant_memory_observation_read_model_public_safe",
         "personal_assistant_memory_observation_preview_candidate_only",
         "personal_assistant_memory_observation_review_no_effect",
-        "personal_assistant_teamops_shared_inbox_plan_no_effect"
+        "personal_assistant_teamops_shared_inbox_plan_no_effect",
+        "personal_assistant_github_codex_review_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -12280,8 +12303,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1589,
-    "runtime_witness_count": 1589,
+    "exact_test_anchor_count": 1590,
+    "runtime_witness_count": 1590,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13387,10 +13410,23 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_teamops_preview_rejects_raw_payload"
             ],
             "witness": "personal_assistant_teamops_shared_inbox_plan_no_effect"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_personal_assistant_github_codex_projection.py::test_personal_assistant_github_codex_projection_fixture_validates",
+              "tests/test_validate_personal_assistant_github_codex_projection.py::test_runtime_github_codex_projection_blocks_effect_boundaries",
+              "tests/test_validate_personal_assistant_github_codex_projection.py::test_github_codex_projection_validator_rejects_live_execution_authority",
+              "tests/test_validate_personal_assistant_github_codex_projection.py::test_github_codex_projection_validator_rejects_receipt_drift",
+              "tests/test_validate_personal_assistant_github_codex_projection.py::test_github_codex_projection_validator_rejects_raw_diff_and_secret",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_github_codex_preview_reviews_without_github_call",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_github_codex_preview_rejects_missing_connector_proof",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_github_codex_preview_rejects_secret_like_summary"
+            ],
+            "witness": "personal_assistant_github_codex_review_no_effect"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 19,
+        "runtime_witness_count": 19,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
