@@ -114,6 +114,83 @@
       }
     },
     {
+      "capability_id": "computer.workspace_file.preflight",
+      "domain": "computer",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/computer/workspace_file_preflight.input.schema.json",
+      "output_schema_ref": "schemas/computer/workspace_file_preflight.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["workspace_file_preflight_receipt_emitted"],
+        "forbidden_effects": [
+          "workspace_file_written",
+          "workspace_file_deleted",
+          "workspace_file_moved",
+          "permission_changed",
+          "credential_file_read"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["workspace_file_preflight_receipt_id", "risk_level", "decision"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Preflight workspace file operation",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["workspace_file.preflight"],
+          "allowed_paths": ["/workspace"],
+          "canonical_workspace_operations": [
+            "read",
+            "create",
+            "edit",
+            "apply_patch",
+            "diff_propose",
+            "patch_preview",
+            "delete",
+            "move_rename",
+            "chmod_permission",
+            "governance_artifact_mutation"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
       "capability_id": "computer.command.run",
       "domain": "computer",
       "version": "0.1.0",

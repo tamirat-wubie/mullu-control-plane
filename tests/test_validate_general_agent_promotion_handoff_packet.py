@@ -143,7 +143,7 @@ def test_validate_promotion_handoff_packet_rejects_capability_count_drift(tmp_pa
     assert result.valid is False
     assert result.open_blocker_count == 1
     assert any("capability_capsules must be 13" in error for error in result.errors)
-    assert any("governed_capabilities must be 80" in error for error in result.errors)
+    assert any("governed_capabilities must be 81" in error for error in result.errors)
 
 
 def test_validate_promotion_handoff_packet_rejects_stale_portfolio_blockers(

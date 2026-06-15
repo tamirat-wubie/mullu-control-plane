@@ -254,7 +254,7 @@ The generated readiness artifact reported:
 
 ```text
 readiness_level: production-general-agent
-capability_count: 80
+capability_count: 81
 capsule_count: 13
 ```
 

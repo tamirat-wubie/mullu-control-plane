@@ -55,7 +55,7 @@
     "terminal_minting_gate_planner": "scripts/gate_general_agent_promotion_terminal_minting.py",
     "terminal_minting_gate_schema": "schemas/general_agent_promotion_terminal_minting_gate.schema.json"
   },
-  "governed_capabilities": 80,
+  "governed_capabilities": 81,
   "invariants": [
     "production_promotion remains blocked until adapter live evidence, upstream readiness, and portfolio review close",
     "credential actions require governed approval",

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:computer:workspace-file-preflight-output:1",
+  "title": "Computer Workspace File Preflight Output",
+  "description": "Receipt schema for a governed workspace file operation preflight.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "operation",
+    "target_path",
+    "decision",
+    "risk_level",
+    "actor_id",
+    "purpose",
+    "world_mutating",
+    "approval_required",
+    "sandbox_required",
+    "receipt_required",
+    "rollback_required",
+    "coordination_lock_key",
+    "protected_path",
+    "protected_reason",
+    "secondary_path",
+    "required_evidence",
+    "forbidden_effects",
+    "allowed_capability_ids",
+    "reasons",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^workspace-file-preflight-[0-9a-f]{16}$"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "enum": [
+        "read",
+        "create",
+        "edit",
+        "apply_patch",
+        "diff_propose",
+        "patch_preview",
+        "delete",
+        "move_rename",
+        "chmod_permission",
+        "governance_artifact_mutation"
+      ]
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "secondary_path": {
+      "type": "string"
+    },
+    "decision": {
+      "enum": ["allow", "require_approval", "proposal_only", "block"]
+    },
+    "risk_level": {
+      "enum": [
+        "level_0_readonly_inspect",
+        "level_1_create_new_file",
+        "level_2_edit_existing_file",
+        "level_3_destructive_mutation",
+        "level_4_governance_artifact_mutation"
+      ]
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "world_mutating": {
+      "type": "boolean"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "sandbox_required": {
+      "type": "boolean"
+    },
+    "receipt_required": {
+      "type": "boolean"
+    },
+    "rollback_required": {
+      "type": "boolean"
+    },
+    "coordination_lock_key": {
+      "type": "string",
+      "pattern": "^workspace_file:[0-9a-f]{16}$"
+    },
+    "protected_path": {
+      "type": "boolean"
+    },
+    "protected_reason": {
+      "type": "string"
+    },
+    "required_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbidden_effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "allowed_capability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["preflight_is_not_execution_authority"]
+    }
+  }
+}
