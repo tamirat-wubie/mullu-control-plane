@@ -341,7 +341,7 @@ class DistributedLeaseClaimPlanner:
             observed_payload_hash=request.observed_payload_hash,
             lease_expires_at=request.lease_expires_at,
             fencing_token=request.fencing_token,
-            claim_outcome="granted" if external_claim_admitted else "not_observed",
+            claim_outcome=_claim_outcome(request, external_claim_admitted),
             blocked_reasons=_unique(blocked_reasons),
             required_actions=_required_actions(status),
             required_controls=required_controls,
@@ -547,6 +547,23 @@ def _status(mode: str, blocked_reasons: list[str]) -> str:
     if mode == "dry_run":
         return "dry_run_accepted"
     return "claim_receipt_bound"
+
+
+def _claim_outcome(
+    request: DistributedLeaseClaimBoundaryRequest,
+    external_claim_admitted: bool,
+) -> str:
+    if external_claim_admitted:
+        return "granted"
+    if request.mode != "claim_approved" or not request.response_status_code:
+        return "not_observed"
+    if 200 <= request.response_status_code <= 299:
+        return "not_observed"
+    if request.response_status_code in {409, 412}:
+        return "conflict"
+    if request.response_status_code in {423, 425, 429, 503}:
+        return "deferred"
+    return "rejected"
 
 
 def _required_actions(status: str) -> list[str]:

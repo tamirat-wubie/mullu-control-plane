@@ -10,7 +10,7 @@
     "receipts",
     "audit"
   ],
-  "threat_model": "Distributed scheduler lease claims can admit worker execution authority if a backend grant is trusted without binding the scheduled job payload and worker identity. The main risks are unapproved lease claim admission, claiming one payload and executing another, accepting stale or expired lease grants, missing fencing tokens when policy requires fencing, overclaiming dry-run proof as live lease acquisition, accepting forged adapter response evidence, leaking raw tokens or private keys through metadata, and bypassing downstream temporal lease-window admission. The mitigation is to keep the planner non-live, hash the policy, request payload, operation payload, and plan, require readiness evidence refs for every mode, forbid claim evidence in plan-only and dry-run modes, require approval plus adapter claim receipt plus 2xx response plus response hash plus observed payload hash match plus future lease expiry plus fencing token when policy requires fencing before claim-approved admission, block oversized lease windows, and preserve temporal lease-window receipts as the downstream dispatch gate.",
+  "threat_model": "Distributed scheduler lease claims can admit worker execution authority if a backend grant is trusted without binding the scheduled job payload and worker identity. The main risks are unapproved lease claim admission, claiming one payload and executing another, accepting stale or expired lease grants, missing fencing tokens when policy requires fencing, overclaiming dry-run proof as live lease acquisition, accepting forged adapter response evidence, collapsing observed backend conflict, retry, or rejection evidence into not_observed, leaking raw tokens or private keys through metadata, and bypassing downstream temporal lease-window admission. The mitigation is to keep the planner non-live, hash the policy, request payload, operation payload, and plan, require readiness evidence refs for every mode, forbid claim evidence in plan-only and dry-run modes, require approval plus adapter claim receipt plus 2xx response plus response hash plus observed payload hash match plus future lease expiry plus fencing token when policy requires fencing before claim-approved admission, classify observed non-2xx adapter responses as conflict, deferred, or rejected while blocking admission, block oversized lease windows, and preserve temporal lease-window receipts as the downstream dispatch gate.",
   "required_checks": [
     {
       "category": "external_api",
@@ -29,6 +29,12 @@
       "check": "audit visibility check proving backend kind, scheduled job, worker, request hash, operation hash, and plan hash are bound into deterministic receipt evidence",
       "status": "passed",
       "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_plan_is_hash_bound_and_non_live"
+    },
+    {
+      "category": "audit",
+      "check": "adapter outcome classification check proving observed non-2xx claim-approved responses are classified as conflict, deferred, or rejected instead of not_observed",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_claim_classifies_conflict_response"
     },
     {
       "category": "secrets",
@@ -67,6 +73,7 @@
     "require readiness evidence refs for all distributed lease claim receipts",
     "forbid claim response evidence in plan-only and dry-run modes",
     "require approval, adapter claim receipt, 2xx response, response hash, observed payload hash match, future lease expiry, and fencing token when policy requires fencing for claim-approved mode",
+    "classify observed non-2xx adapter responses into conflict, deferred, or rejected outcomes while blocking claim admission",
     "block oversized lease windows and disabled receipt policy",
     "preserve temporal lease-window receipts as the downstream dispatch admission gate",
     "block raw token, JWT, and private-key shaped material before receipt admission",
