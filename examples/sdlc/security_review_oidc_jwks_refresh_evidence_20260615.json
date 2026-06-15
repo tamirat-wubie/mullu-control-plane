@@ -1,0 +1,68 @@
+{
+  "security_review_id": "sdlc_security_oidc_jwks_refresh_evidence_20260615",
+  "change_id": "sdlc_req_oidc_jwks_refresh_evidence_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "policy",
+    "network",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "OIDC/JWKS freshness evidence can be unsafe if it accepts stale caches, unsigned algorithms, symmetric token algorithms, HTTP discovery, redirected JWKS fetches, missing issuer or audience binding, or unretained evidence refs. The mitigation is a fail-closed receipt assessment that does not fetch or authenticate and only marks JWKS evidence fresh when all gateway-bound evidence fields are complete.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authentication boundary check proving the assessment performs no request authentication or network fetch",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_oidc_jwks_refresh_evidence_accepts_fresh_https_receipt"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR and tenant-scope spoofing check through missing or stale OIDC/JWKS evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_oidc_jwks_refresh_evidence_blocks_stale_cache_and_missing_refs"
+    },
+    {
+      "category": "network",
+      "check": "SSRF and external endpoint safety check requiring HTTPS discovery and JWKS URIs plus redirect blocking",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_oidc_jwks_refresh_evidence_blocks_insecure_discovery_and_redirects"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check rejecting unsigned and non-JWKS-bound algorithms",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_oidc_jwks_refresh_evidence_blocks_invalid_hashes_and_algorithms"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check requiring evidence refs before JWKS evidence can be fresh",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_tenant_identity.py::test_oidc_jwks_refresh_evidence_blocks_stale_cache_and_missing_refs"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check through documented blocker codes and SDLC evidence refs",
+      "status": "passed",
+      "evidence_ref": "docs/54_authority_directory_sync.md#oidc-jwks-refresh-evidence"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "require HTTPS issuer, discovery, and JWKS URI evidence",
+    "require issuer pinning and audience binding",
+    "allow only JWKS-backed asymmetric OIDC algorithms",
+    "require sha256 discovery and JWKS document hashes",
+    "require positive key count, positive TTL, and cache age within TTL",
+    "require redirect blocking, bypass protection, and retained evidence refs"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/oidc-jwks-refresh-evidence/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/oidc-jwks-refresh-evidence/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/oidc-jwks-refresh-evidence/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/oidc-jwks-refresh-evidence/20260615"
+}
