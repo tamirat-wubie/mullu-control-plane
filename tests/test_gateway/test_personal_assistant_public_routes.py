@@ -568,6 +568,106 @@ def test_gateway_personal_assistant_github_codex_preview_rejects_secret_like_sum
     assert "github_codex_review_plan_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_research_preview_compares_without_web_search() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/research/source-compare/preview",
+        json={
+            "request_id": "pa_request_gateway_research_001",
+            "submitted_at": "2026-06-15T13:00:00+00:00",
+            "generated_at": "2026-06-15T13:01:00+00:00",
+            "research_question": "Compare search receipt and personal assistant research boundaries.",
+            "source_summaries": [
+                {
+                    "source_ref": "docs/78_search_receipt_contract.md",
+                    "title": "Search Receipt Contract",
+                    "publisher": "Mullusi repository",
+                    "published_at": "2026-06-14",
+                    "summary": "Defines evidence metadata and citation requirements.",
+                    "trust_tier": "primary",
+                    "citation_ref": "citation://docs/search-receipt-contract",
+                }
+            ],
+            "citation_refs": ["citation://docs/search-receipt-contract"],
+            "freshness_notes": ["operator supplied repository document"],
+            "evidence_refs": ["proof://docs/search-receipt-contract"],
+        },
+    )
+    payload = response.json()
+    projection = payload["research_projection"]
+    plan = projection["plan"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["web_search_allowed"] is False
+    assert payload["effect_boundary"]["web_search_performed"] is False
+    assert payload["effect_boundary"]["external_submission_allowed"] is False
+    assert payload["effect_boundary"]["public_post_allowed"] is False
+    assert payload["effect_boundary"]["paid_subscription_allowed"] is False
+    assert payload["effect_boundary"]["memory_write_allowed"] is False
+    assert projection["skill_id"] == "research.web_search"
+    assert plan["evidence_gate"]["web_search_performed"] is False
+    assert plan["answer_claim_authority"] == "citation_backed_summary_only"
+    assert "web_search_not_performed" in receipt["actions_not_taken"]
+    assert "public_post_not_created" in receipt["actions_not_taken"]
+    assert receipt["connectors_used"] == []
+
+
+def test_gateway_personal_assistant_research_preview_rejects_non_research_intent() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/research/source-compare/preview",
+        json={
+            "request_id": "pa_request_gateway_research_wrong_intent_001",
+            "submitted_at": "2026-06-15T13:00:00+00:00",
+            "user_request": "Check my inbox.",
+            "research_question": "Compare source metadata.",
+            "source_summaries": [],
+            "citation_refs": [],
+            "evidence_refs": [],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_research_preview"
+
+
+def test_gateway_personal_assistant_research_preview_rejects_raw_source_body() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/research/source-compare/preview",
+        json={
+            "request_id": "pa_request_gateway_research_raw_001",
+            "submitted_at": "2026-06-15T13:00:00+00:00",
+            "research_question": "Compare source metadata.",
+            "source_summaries": [
+                {
+                    "source_ref": "source://raw",
+                    "title": "Raw source",
+                    "publisher": "operator",
+                    "summary": "bounded",
+                    "trust_tier": "operator_supplied",
+                    "citation_ref": "citation://raw",
+                    "raw_source_body": "full page body",
+                }
+            ],
+            "citation_refs": ["citation://raw"],
+            "evidence_refs": ["proof://raw"],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "full page body" not in serialized
+    assert "research_source_compare_plan_prepared" not in serialized
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",

@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-research-projection:1",
+  "title": "Personal Assistant Research Projection",
+  "description": "No-effect evidence envelope for Personal Assistant research source-compare previews.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "projection_count",
+    "projection_ids",
+    "receipt_ids",
+    "connectors_used",
+    "projections",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "projection_set_id": {
+      "type": "string",
+      "pattern": "^pa_research_projection_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_supplied_public_source_metadata"},
+    "projection_count": {"type": "integer", "minimum": 1},
+    "projection_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_research_projection_item_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "connectors_used": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "projections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/projection"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "request_id",
+        "skill_id",
+        "plan_type",
+        "plan",
+        "receipt"
+      ],
+      "properties": {
+        "projection_id": {
+          "type": "string",
+          "pattern": "^pa_research_projection_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "skill_id": {"const": "research.web_search"},
+        "plan_type": {"const": "research_source_compare_foundation"},
+        "plan": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "plan_type",
+            "research_question",
+            "requested_synthesis_goal",
+            "source_summaries",
+            "citation_refs",
+            "freshness_notes",
+            "conflict_notes",
+            "blocking_questions",
+            "research_decision",
+            "answer_claim_authority",
+            "source_compare",
+            "evidence_gate",
+            "effect_boundary",
+            "execution_allowed",
+            "web_search_allowed",
+            "source_contact_allowed",
+            "external_submission_allowed",
+            "public_post_allowed",
+            "paid_subscription_allowed",
+            "memory_write_allowed"
+          ],
+          "properties": {
+            "plan_type": {"const": "research_source_compare_foundation"},
+            "research_question": {"type": "string", "minLength": 1},
+            "requested_synthesis_goal": {"type": "string", "minLength": 1},
+            "source_summaries": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/source_summary"},
+              "uniqueItems": true
+            },
+            "citation_refs": {
+              "type": "array",
+              "items": {"type": "string", "pattern": "^citation://.+$"},
+              "uniqueItems": true
+            },
+            "freshness_notes": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "conflict_notes": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "blocking_questions": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            },
+            "research_decision": {"const": "compare_only"},
+            "answer_claim_authority": {"enum": ["citation_backed_summary_only", "awaiting_citations"]},
+            "source_compare": {"type": "string", "minLength": 1},
+            "evidence_gate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "operator_supplied_evidence_complete",
+                "evidence_refs",
+                "blocking_reasons",
+                "web_search_performed",
+                "source_contact_performed",
+                "external_submission_performed",
+                "public_post_performed",
+                "paid_subscription_performed"
+              ],
+              "properties": {
+                "operator_supplied_evidence_complete": {"type": "boolean"},
+                "evidence_refs": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1}
+                },
+                "blocking_reasons": {
+                  "type": "array",
+                  "items": {"type": "string", "minLength": 1}
+                },
+                "web_search_performed": {"const": false},
+                "source_contact_performed": {"const": false},
+                "external_submission_performed": {"const": false},
+                "public_post_performed": {"const": false},
+                "paid_subscription_performed": {"const": false}
+              }
+            },
+            "effect_boundary": {"const": "research_source_compare_no_external_effect"},
+            "execution_allowed": {"const": false},
+            "web_search_allowed": {"const": false},
+            "source_contact_allowed": {"const": false},
+            "external_submission_allowed": {"const": false},
+            "public_post_allowed": {"const": false},
+            "paid_subscription_allowed": {"const": false},
+            "memory_write_allowed": {"const": false}
+          }
+        },
+        "receipt": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "title", "publisher", "published_at", "summary", "trust_tier", "citation_ref"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "publisher": {"type": "string", "minLength": 1},
+        "published_at": {"type": "string"},
+        "summary": {"type": "string", "minLength": 1},
+        "trust_tier": {"enum": ["primary", "official", "secondary", "operator_supplied"]},
+        "citation_ref": {"type": "string", "pattern": "^citation://.+$"}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_compare_records_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "web_search_allowed",
+        "web_search_performed",
+        "source_contact_allowed",
+        "external_submission_allowed",
+        "public_post_allowed",
+        "paid_subscription_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "public_readiness_claim_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed"
+      ],
+      "properties": {
+        "research_compare_records_allowed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "web_search_allowed": {"const": false},
+        "web_search_performed": {"const": false},
+        "source_contact_allowed": {"const": false},
+        "external_submission_allowed": {"const": false},
+        "public_post_allowed": {"const": false},
+        "paid_subscription_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "raw_source_body_projection",
+        "body_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "no_connector_payload"},
+        "raw_source_body_projection": {"const": "forbidden"},
+        "body_projection": {"const": "redacted_summary"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_web_search",
+        "ready_for_external_submission",
+        "ready_for_public_posting",
+        "ready_for_paid_action",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_research_projection_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_web_search": {"const": false},
+        "ready_for_external_submission": {"const": false},
+        "ready_for_public_posting": {"const": false},
+        "ready_for_paid_action": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocking_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "web_search_allowed",
+        "external_submission_allowed",
+        "public_post_allowed",
+        "paid_subscription_allowed",
+        "system_of_record_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "research_source_compare_evidence_only"},
+        "runtime_boundary": {"const": "research_projection_does_not_perform_web_search"},
+        "live_connector_execution_allowed": {"const": false},
+        "web_search_allowed": {"const": false},
+        "external_submission_allowed": {"const": false},
+        "public_post_allowed": {"const": false},
+        "paid_subscription_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false}
+      }
+    }
+  }
+}

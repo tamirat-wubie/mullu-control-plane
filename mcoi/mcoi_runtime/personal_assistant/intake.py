@@ -273,6 +273,8 @@ def _select_skill_ids_and_gaps(request_text: str) -> tuple[tuple[str, ...], tupl
         return ("teamops.shared_inbox.plan",), ()
     if any(term in normalized for term in ("github", "pull request", " pr ", "codex", "merge", "branch")):
         return ("github.pr.summarize",), ()
+    if any(term in normalized for term in ("research", "web search", "source", "citation", "cite", "compare sources")):
+        return ("research.web_search",), ()
     if any(term in normalized for term in ("inbox", "email", "reply", "respond")):
         skill_ids = ["email.inbox.summarize"]
         if any(term in normalized for term in ("draft", "reply", "respond", "response")):
