@@ -13,6 +13,7 @@ Invariants:
   - Registry projections add readiness assessments without mutating registry entries.
   - Effect-bearing production claims require live write evidence.
   - Production readiness requires worker deployment and recovery evidence.
+  - Human-readable labels are derived from C-levels and cannot promote authority.
   - C7 autonomy requires bounded autonomy controls.
 """
 
@@ -30,6 +31,7 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
 
 
 MATURITY_LEVELS = ("C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
+MATURITY_LABELS = ("Specified", "Implemented", "Verified")
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,18 +117,27 @@ class CapabilityMaturityAssessment:
     autonomy_ready: bool
     blockers: tuple[str, ...]
     evidence_refs: tuple[str, ...]
+    maturity_label: str = ""
     assessment_hash: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.maturity_level not in MATURITY_LEVELS:
             raise ValueError("maturity_level_invalid")
+        if not isinstance(self.maturity_label, str):
+            raise ValueError("maturity_label_invalid")
+        maturity_label = self.maturity_label.strip() or maturity_label_for_level(self.maturity_level)
+        if maturity_label not in MATURITY_LABELS:
+            raise ValueError("maturity_label_invalid")
+        if maturity_label != maturity_label_for_level(self.maturity_level):
+            raise ValueError("maturity_label_level_mismatch")
         if self.production_ready and self.maturity_level not in {"C6", "C7"}:
             raise ValueError("production_requires_C6_or_C7")
         if self.autonomy_ready and self.maturity_level != "C7":
             raise ValueError("autonomy_requires_C7")
         if self.autonomy_ready and not self.production_ready:
             raise ValueError("autonomy_requires_production_readiness")
+        object.__setattr__(self, "maturity_label", maturity_label)
         object.__setattr__(self, "blockers", tuple(str(blocker) for blocker in self.blockers))
         object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
         object.__setattr__(self, "metadata", dict(self.metadata))
@@ -150,9 +161,11 @@ class CapabilityMaturityAssessor:
             autonomy_ready=autonomy_ready,
             blockers=tuple(dict.fromkeys((*production_blockers, *autonomy_blockers))),
             evidence_refs=evidence.evidence_refs,
+            maturity_label=maturity_label_for_level(maturity_level),
             metadata={
                 "effect_bearing": evidence.effect_bearing,
                 "assessment_is_not_promotion": True,
+                "maturity_label_is_not_authority": True,
             },
         )
         assessment_hash = canonical_hash(asdict(assessment))
@@ -256,6 +269,7 @@ class CapabilityRegistryMaturityProjector:
             decorated_governed_records.append({
                 **governed_payload,
                 "maturity_level": assessment["maturity_level"],
+                "maturity_label": assessment["maturity_label"],
                 "production_ready": assessment["production_ready"],
                 "autonomy_ready": assessment["autonomy_ready"],
                 "maturity_assessment_id": assessment["assessment_id"],
@@ -267,6 +281,7 @@ class CapabilityRegistryMaturityProjector:
             "governed_capability_records": tuple(decorated_governed_records),
             "capability_maturity_assessments": tuple(assessments_by_capability.values()),
             "capability_maturity_counts": _maturity_counts(assessments_by_capability.values()),
+            "capability_maturity_label_counts": _maturity_label_counts(assessments_by_capability.values()),
             "production_ready_count": sum(
                 1 for assessment in assessments_by_capability.values() if assessment["production_ready"] is True
             ),
@@ -310,6 +325,17 @@ def registry_entry_with_certification_maturity_evidence(
         bundle,
         require_production_ready=require_production_ready,
     )
+
+
+def maturity_label_for_level(maturity_level: str) -> str:
+    """Return the non-authoritative label derived from one C0-C7 level."""
+    if maturity_level not in MATURITY_LEVELS:
+        raise ValueError("maturity_level_invalid")
+    if maturity_level in {"C0", "C1", "C2"}:
+        return "Specified"
+    if maturity_level in {"C3", "C4", "C5"}:
+        return "Implemented"
+    return "Verified"
 
 
 def _maturity_evidence_from_extension(
@@ -489,6 +515,15 @@ def _maturity_counts(assessments: Any) -> dict[str, int]:
         level = str(assessment.get("maturity_level", ""))
         if level in counts:
             counts[level] += 1
+    return counts
+
+
+def _maturity_label_counts(assessments: Any) -> dict[str, int]:
+    counts = {label: 0 for label in MATURITY_LABELS}
+    for assessment in assessments:
+        label = str(assessment.get("maturity_label", ""))
+        if label in counts:
+            counts[label] += 1
     return counts
 
 

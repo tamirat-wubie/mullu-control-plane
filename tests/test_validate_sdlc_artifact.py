@@ -248,6 +248,24 @@ def test_snet_runtime_integration_gate_validates_as_design_decision() -> None:
     assert "autonomous execution" in design_record["architecture_summary"]
 
 
+def test_capability_maturity_label_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_capability_maturity_labels_20260615.json")
+    design_path = Path("examples/sdlc/design_capability_maturity_labels_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "capability maturity label requirement")
+    design_record = validator.load_json_object(design_path, "capability maturity label design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "maturity_label" in design_record["architecture_summary"]
+    assert "schemas/capability_maturity.schema.json" in design_record["schema_changes"]
+    assert "tests/test_gateway/test_capability_maturity.py" in design_record["validator_changes"]
+    assert "Verified must be impossible below C6" in requirement_record["constraints"]
+
+
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
     implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
     implementation["changed_files"][0]["path"] = "../outside.py"

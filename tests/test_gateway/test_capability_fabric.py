@@ -437,6 +437,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
 
     assert len(records) == 81
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
+    assert payment_capability["maturity_assessment"]["maturity_label"] == "Verified"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
     assert payment_capability["maturity_assessment"]["blockers"] == ["autonomy_controls_missing"]
@@ -444,6 +445,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert "capability_registry:financial.send_payment" in payment_capability["maturity_assessment"]["evidence_refs"]
     assert "proof://capabilities/financial.send_payment/live-write" in payment_capability["maturity_assessment"]["evidence_refs"]
     assert payment_record["maturity_level"] == "C6"
+    assert payment_record["maturity_label"] == "Verified"
     assert payment_record["production_ready"] is True
     assert payment_record["autonomy_ready"] is False
     assert payment_record["maturity_assessment_id"].startswith("capability-maturity-")
@@ -508,12 +510,14 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert voice_actions_record["forbidden_effects"] == ["tool_executed", "external_message_sent", "task_created"]
     assert github_read_record["risk_level"] == "low"
     assert github_read_capability["maturity_assessment"]["maturity_level"] == "C6"
+    assert github_read_capability["maturity_assessment"]["maturity_label"] == "Verified"
     assert github_read_capability["maturity_assessment"]["production_ready"] is True
     assert github_read_capability["maturity_assessment"]["autonomy_ready"] is False
     assert "proof://capabilities/connector.github.read/live-read" in github_read_capability[
         "maturity_assessment"
     ]["evidence_refs"]
     assert github_read_record["maturity_level"] == "C6"
+    assert github_read_record["maturity_label"] == "Verified"
     assert github_read_record["production_ready"] is True
     assert github_read_record["autonomy_ready"] is False
     assert github_read_record["read_only"] is True

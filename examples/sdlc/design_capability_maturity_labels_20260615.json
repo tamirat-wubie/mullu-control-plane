@@ -1,0 +1,70 @@
+{
+  "design_id": "sdlc_design_capability_maturity_labels_20260615",
+  "requirement_id": "sdlc_req_capability_maturity_labels_20260615",
+  "architecture_summary": "Add maturity_label as a deterministic read-model projection over the existing C0-C7 capability maturity ladder. The runtime derives labels through maturity_label_for_level, the schema rejects mismatched labels, gateway read models and governed records expose the label for operator scanability, and admission decisions continue to use maturity_level, production_ready, and autonomy_ready as the authority-bearing fields.",
+  "affected_modules": [
+    "gateway/capability_maturity.py",
+    "gateway/operator_capability_console.py",
+    "schemas/capability_maturity.schema.json",
+    "docs/39_governed_capability_fabric.md",
+    "docs/CAPABILITY_RUNTIME_GATE_SPEC.md",
+    "tests/test_gateway/test_capability_maturity.py",
+    "tests/test_gateway/test_capability_fabric.py",
+    "tests/test_gateway/test_operator_capability_console.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "examples/sdlc/requirement_capability_maturity_labels_20260615.json",
+    "examples/sdlc/design_capability_maturity_labels_20260615.json"
+  ],
+  "data_model_changes": [
+    "CapabilityMaturityAssessment gains a derived maturity_label field",
+    "CapabilityRegistryMaturityProjector adds maturity_label to governed capability records",
+    "Gateway maturity read models gain capability_maturity_label_counts",
+    "Operator capability read models gain maturity_label_counts",
+    "No persisted registry, capability pack, or tenant-state migration is required"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/capability_maturity.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    "tests/test_gateway/test_capability_maturity.py",
+    "tests/test_gateway/test_capability_fabric.py",
+    "tests/test_gateway/test_operator_capability_console.py",
+    "tests/test_validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the maturity_label field, label helper, label counts, schema property, console column, documentation paragraphs, and tests, then rerun focused gateway tests, SDLC artifact validation, schema validation, and workspace governance preflight. C0-C7 admission gates remain intact during rollback.",
+  "migration_plan": "No migration is required because the change adds a deterministic derived read-model field and schema contract. Existing consumers can continue reading maturity_level, production_ready, and autonomy_ready.",
+  "test_plan": [
+    "python -m pytest tests/test_gateway/test_capability_maturity.py tests/test_gateway/test_capability_fabric.py tests/test_gateway/test_operator_capability_console.py -q",
+    "python -m pytest tests/test_validate_sdlc_artifact.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json"
+  ],
+  "uao_ref": "uao://sdlc/design/capability-maturity-labels/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/design/capability-maturity-labels/20260615",
+  "receipt_ref": "receipt://sdlc/design/capability-maturity-labels/20260615"
+}

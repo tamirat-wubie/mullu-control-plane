@@ -26,6 +26,7 @@ from gateway.capability_maturity import (
     CapabilityMaturityAssessor,
     CapabilityMaturityEvidence,
     CapabilityRegistryMaturityProjector,
+    maturity_label_for_level,
     registry_entry_with_certification_maturity_evidence,
 )
 from mcoi_runtime.contracts.governed_capability_fabric import (
@@ -44,6 +45,7 @@ def test_missing_evidence_assesses_to_c0_with_blockers() -> None:
     assessment = CapabilityMaturityAssessor().assess(CapabilityMaturityEvidence(capability_id="payments.send"))
 
     assert assessment.maturity_level == "C0"
+    assert assessment.maturity_label == "Specified"
     assert assessment.production_ready is False
     assert assessment.autonomy_ready is False
     assert "schema_evidence_missing" in assessment.blockers
@@ -57,6 +59,7 @@ def test_effect_bearing_capability_requires_live_write_for_production() -> None:
     )
 
     assert assessment.maturity_level == "C4"
+    assert assessment.maturity_label == "Implemented"
     assert assessment.production_ready is False
     assert assessment.autonomy_ready is False
     assert "effect_bearing_production_requires_live_write" in assessment.blockers
@@ -70,6 +73,7 @@ def test_complete_production_evidence_assesses_to_c6_without_autonomy() -> None:
     )
 
     assert assessment.maturity_level == "C6"
+    assert assessment.maturity_label == "Verified"
     assert assessment.production_ready is True
     assert assessment.autonomy_ready is False
     assert assessment.blockers == ("autonomy_controls_missing",)
@@ -88,6 +92,7 @@ def test_autonomy_controls_assess_to_c7_when_production_ready() -> None:
     )
 
     assert assessment.maturity_level == "C7"
+    assert assessment.maturity_label == "Verified"
     assert assessment.production_ready is True
     assert assessment.autonomy_ready is True
     assert assessment.blockers == ()
@@ -121,7 +126,9 @@ def test_capability_maturity_schema_accepts_assessment_contract() -> None:
     assert errors == []
     assert schema["$id"] == "urn:mullusi:schema:capability-maturity:1"
     assert "C7" in schema["properties"]["maturity_level"]["enum"]
+    assert "Verified" in schema["properties"]["maturity_label"]["enum"]
     assert payload["maturity_level"] == "C6"
+    assert payload["maturity_label"] == "Verified"
     assert payload["production_ready"] is True
     assert payload["metadata"]["assessment_is_not_promotion"] is True
 
@@ -137,8 +144,22 @@ def test_capability_maturity_schema_rejects_readiness_overclaim() -> None:
     assert any("$.maturity_level: expected one of ['C6', 'C7']" in error for error in errors)
     assert any("$.maturity_level: expected const 'C7'" in error for error in errors)
     assert payload["maturity_level"] == "C0"
+    assert payload["maturity_label"] == "Specified"
     assert payload["production_ready"] is True
     assert payload["autonomy_ready"] is True
+
+
+def test_capability_maturity_schema_rejects_maturity_label_overclaim() -> None:
+    assessment = CapabilityMaturityAssessor().assess(CapabilityMaturityEvidence(capability_id="payments.send"))
+    payload = _json_payload(assessment)
+    payload["maturity_label"] = "Verified"
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    errors = _validate_schema_instance(schema, payload)
+
+    assert any("$.maturity_label: expected const 'Specified'" in error for error in errors)
+    assert payload["maturity_level"] == "C0"
+    assert payload["maturity_label"] == "Verified"
+    assert payload["production_ready"] is False
 
 
 def test_capability_maturity_rejects_invalid_manual_claims() -> None:
@@ -179,6 +200,17 @@ def test_capability_maturity_rejects_invalid_manual_claims() -> None:
             blockers=(),
             evidence_refs=(),
         )
+    with pytest.raises(ValueError, match="^maturity_label_level_mismatch$"):
+        CapabilityMaturityAssessment(
+            assessment_id="assessment-1",
+            capability_id="payments.send",
+            maturity_level="C5",
+            maturity_label="Verified",
+            production_ready=False,
+            autonomy_ready=False,
+            blockers=(),
+            evidence_refs=(),
+        )
 
 
 def test_registry_entry_projection_derives_c3_for_certified_entry_without_live_receipts() -> None:
@@ -187,6 +219,7 @@ def test_registry_entry_projection_derives_c3_for_certified_entry_without_live_r
 
     assert assessment.capability_id == "crm.update_customer_address"
     assert assessment.maturity_level == "C3"
+    assert assessment.maturity_label == "Implemented"
     assert assessment.production_ready is False
     assert assessment.autonomy_ready is False
     assert "sandbox_receipt_missing" in assessment.blockers
@@ -209,6 +242,7 @@ def test_registry_entry_extension_evidence_can_reach_c6_without_autonomy() -> No
     assessment = CapabilityRegistryMaturityProjector().assess_entry(entry)
 
     assert assessment.maturity_level == "C6"
+    assert assessment.maturity_label == "Verified"
     assert assessment.production_ready is True
     assert assessment.autonomy_ready is False
     assert assessment.blockers == ("autonomy_controls_missing",)
@@ -232,6 +266,7 @@ def test_registry_entry_extension_drops_structured_evidence_refs() -> None:
     assessment = CapabilityRegistryMaturityProjector().assess_entry(entry)
 
     assert assessment.maturity_level == "C6"
+    assert assessment.maturity_label == "Verified"
     assert "proof://capabilities/crm.update_customer_address/live" not in assessment.evidence_refs
     assert assessment.evidence_refs == (
         "capability_registry:crm.update_customer_address",
@@ -254,6 +289,7 @@ def test_certification_bundle_generates_maturity_extension_without_manual_flags(
     assert extension["live_write_receipt_valid"] is True
     assert "proof://capabilities/crm.update_customer_address/worker" in extension["evidence_refs"]
     assert assessment.maturity_level == "C6"
+    assert assessment.maturity_label == "Verified"
     assert assessment.production_ready is True
     assert assessment.blockers == ("autonomy_controls_missing",)
 
@@ -272,6 +308,7 @@ def test_registry_projection_synthesizes_maturity_from_certification_extension()
 
     assert "capability_maturity_evidence" not in entry.extensions
     assert assessment.maturity_level == "C6"
+    assert assessment.maturity_label == "Verified"
     assert assessment.production_ready is True
     assert "proof://capabilities/crm.update_customer_address/live-write" in assessment.evidence_refs
     assert assessment.autonomy_ready is False
@@ -295,6 +332,7 @@ def test_certification_evidence_synthesizer_bounds_mismatch_and_incomplete_claim
             require_production_ready=True,
         )
     assert partial_assessment.maturity_level == "C4"
+    assert partial_assessment.maturity_label == "Implemented"
     assert partial_assessment.production_ready is False
     assert "effect_bearing_production_requires_live_write" in partial_assessment.blockers
 
@@ -313,11 +351,14 @@ def test_read_model_projection_attaches_maturity_to_capabilities_and_records() -
     assessment = projected["capability_maturity_assessments"][0]
 
     assert capability["maturity_assessment"]["maturity_level"] == "C3"
+    assert capability["maturity_assessment"]["maturity_label"] == "Implemented"
     assert governed["maturity_level"] == "C3"
+    assert governed["maturity_label"] == "Implemented"
     assert governed["production_ready"] is False
     assert governed["autonomy_ready"] is False
     assert governed["maturity_assessment_id"] == assessment["assessment_id"]
     assert projected["capability_maturity_counts"]["C3"] == 1
+    assert projected["capability_maturity_label_counts"]["Implemented"] == 1
     assert projected["production_ready_count"] == 0
     assert projected["autonomy_ready_count"] == 0
 
@@ -337,9 +378,13 @@ def test_maturity_derived_from_evidence() -> None:
     )
 
     assert c0_assessment.maturity_level == "C0"
+    assert c0_assessment.maturity_label == "Specified"
     assert c4_assessment.maturity_level == "C4"
+    assert c4_assessment.maturity_label == "Implemented"
     assert c6_assessment.maturity_level == "C6"
+    assert c6_assessment.maturity_label == "Verified"
     assert c7_assessment.maturity_level == "C7"
+    assert c7_assessment.maturity_label == "Verified"
     assert c6_assessment.production_ready is True
     assert c7_assessment.autonomy_ready is True
 
@@ -350,6 +395,7 @@ def test_effect_bearing_c6_requires_live_write() -> None:
     )
 
     assert assessment.maturity_level == "C4"
+    assert assessment.maturity_label == "Implemented"
     assert assessment.production_ready is False
     assert assessment.autonomy_ready is False
     assert "effect_bearing_production_requires_live_write" in assessment.blockers
@@ -375,6 +421,7 @@ def test_production_requires_worker_deployment_recovery() -> None:
     )
 
     assert assessment.maturity_level == "C5"
+    assert assessment.maturity_label == "Implemented"
     assert assessment.production_ready is False
     assert assessment.autonomy_ready is False
     assert "worker_deployment_evidence_missing" in assessment.blockers
@@ -406,8 +453,10 @@ def test_production_requires_c6_or_c7() -> None:
 
     assert c6_assessment.production_ready is True
     assert c6_assessment.maturity_level == "C6"
+    assert c6_assessment.maturity_label == "Verified"
     assert c7_assessment.production_ready is True
     assert c7_assessment.maturity_level == "C7"
+    assert c7_assessment.maturity_label == "Verified"
 
 
 def test_autonomy_requires_c7() -> None:
@@ -437,6 +486,7 @@ def test_autonomy_requires_c7() -> None:
     assert c6_assessment.blockers == ("autonomy_controls_missing",)
     assert c7_assessment.autonomy_ready is True
     assert c7_assessment.maturity_level == "C7"
+    assert c7_assessment.maturity_label == "Verified"
 
 
 def test_capability_maturity_schema_valid() -> None:
@@ -450,9 +500,21 @@ def test_capability_maturity_schema_valid() -> None:
     assert errors == []
     assert payload["assessment_id"].startswith("capability-maturity-")
     assert payload["maturity_level"] == "C6"
+    assert payload["maturity_label"] == "Verified"
     assert payload["production_ready"] is True
     assert payload["autonomy_ready"] is False
     assert payload["metadata"]["assessment_is_not_promotion"] is True
+
+
+def test_maturity_label_for_level_is_total_for_known_levels() -> None:
+    assert maturity_label_for_level("C0") == "Specified"
+    assert maturity_label_for_level("C2") == "Specified"
+    assert maturity_label_for_level("C3") == "Implemented"
+    assert maturity_label_for_level("C5") == "Implemented"
+    assert maturity_label_for_level("C6") == "Verified"
+    assert maturity_label_for_level("C7") == "Verified"
+    with pytest.raises(ValueError, match="^maturity_level_invalid$"):
+        maturity_label_for_level("C8")
 
 
 def _evidence(

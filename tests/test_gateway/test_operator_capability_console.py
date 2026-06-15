@@ -59,6 +59,7 @@ def test_operator_capability_read_model_projects_governed_records_only() -> None
     assert read_model["capability_count"] == 6
     assert read_model["domain_counts"] == {"voice": 6}
     assert read_model["maturity_counts"] == {"C3": 6}
+    assert read_model["maturity_label_counts"] == {"Implemented": 6}
     assert read_model["production_ready_count"] == 0
     assert read_model["autonomy_ready_count"] == 0
     assert read_model["sandbox_required_count"] == 6
@@ -69,6 +70,7 @@ def test_operator_capability_read_model_projects_governed_records_only() -> None
     assert all("extensions" not in item for item in read_model["capabilities"])
     assert all("input_schema_ref" not in item for item in read_model["capabilities"])
     assert all(item["maturity_level"] == "C3" for item in read_model["capabilities"])
+    assert all(item["maturity_label"] == "Implemented" for item in read_model["capabilities"])
 
 
 def test_operator_capability_endpoint_reports_default_fabric() -> None:
@@ -88,6 +90,7 @@ def test_operator_capability_endpoint_reports_default_fabric() -> None:
     assert payload["capability_count"] >= 1
     assert payload["raw_tool_surface_exposed"] is False
     assert payload["maturity_counts"]["C3"] >= 1
+    assert payload["maturity_label_counts"]["Implemented"] >= 1
     assert payload["production_ready_count"] == 0
     assert payload["admission_audit_page"]["limit"] == 1
     assert payload["improvement_portfolio"]["schema_ref"] == "urn:mullusi:schema:capability-improvement-portfolio:1"
@@ -111,6 +114,8 @@ def test_operator_console_links_capability_improvement_portfolio() -> None:
     assert "Governed Capability Records" in response.text
     assert "voice.intent_confirm" in response.text
     assert "Maturity" in response.text
+    assert "Label" in response.text
+    assert "Implemented" in response.text
     assert "Production ready: 0" in response.text
     assert "Raw tools exposed: false" in response.text
     assert "Capability improvement portfolio" in response.text
