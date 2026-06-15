@@ -95,6 +95,21 @@ def test_trusted_identity_header_boundary_security_review_passes_strict() -> Non
     assert review["receipt_ref"] in review["security_receipts"]
 
 
+def test_oidc_jwks_refresh_evidence_security_review_passes_strict() -> None:
+    review_path = Path("examples/sdlc/security_review_oidc_jwks_refresh_evidence_20260615.json")
+    review = validate_sdlc_artifact.load_json_object(review_path, "OIDC JWKS refresh evidence security review")
+
+    errors = validator.validate_contract(review_path, strict=True)
+
+    assert errors == []
+    assert "auth" in review["impact_categories"]
+    assert "network" in review["impact_categories"]
+    assert "tenant_scope" in review["impact_categories"]
+    assert review["release_blocked"] is False
+    assert review["residual_risk"] == "low"
+    assert review["receipt_ref"] in review["security_receipts"]
+
+
 def test_security_review_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 

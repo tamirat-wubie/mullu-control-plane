@@ -7,6 +7,7 @@ Dependencies: standard-library dataclasses, JSON serialization, optional psycopg
 Invariants:
   - Channel identity is never inferred from message content.
   - Trusted identity headers are never accepted without gateway evidence.
+  - OIDC/JWKS refresh evidence is proof-only, not request authentication.
   - Revoked identities do not resolve.
   - Production deployments can persist bindings in PostgreSQL.
   - Local tests retain deterministic in-memory behavior.
@@ -20,8 +21,11 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
+from urllib.parse import urlparse
 
 _log = logging.getLogger(__name__)
+
+JWKS_BOUND_OIDC_ALGORITHMS: tuple[str, ...] = ("RS256", "RS384", "RS512")
 
 TRUSTED_IDENTITY_HEADER_NAMES: tuple[str, ...] = (
     "x-mullu-authority-channel",
@@ -83,6 +87,49 @@ class TrustedIdentityHeaderBoundaryAssessment:
     evidence_refs: tuple[str, ...]
     verifier_mode: str
     authentication_performed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class OidcJwksRefreshEvidence:
+    """Operational evidence that an OIDC JWKS refresh is fresh and bounded."""
+
+    issuer: str
+    discovery_url: str
+    jwks_uri: str
+    audiences: tuple[str, ...]
+    allowed_algorithms: tuple[str, ...]
+    discovery_hash: str
+    jwks_hash: str
+    key_count: int
+    cache_age_seconds: int
+    cache_ttl_seconds: int
+    issuer_pinned: bool = False
+    audience_bound: bool = False
+    https_enforced: bool = False
+    redirects_blocked: bool = False
+    rollback_or_bypass_protection: bool = False
+    evidence_refs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class OidcJwksRefreshAssessment:
+    """Decision record for using a refreshed JWKS cache as gateway evidence."""
+
+    jwks_fresh: bool
+    blocked_reasons: tuple[str, ...]
+    issuer: str
+    discovery_url: str
+    jwks_uri: str
+    audiences: tuple[str, ...]
+    allowed_algorithms: tuple[str, ...]
+    discovery_hash: str
+    jwks_hash: str
+    key_count: int
+    cache_age_seconds: int
+    cache_ttl_seconds: int
+    evidence_refs: tuple[str, ...]
+    authentication_performed: bool = False
+    network_fetch_performed: bool = False
 
 
 class TenantIdentityStore:
@@ -175,6 +222,103 @@ def assess_trusted_identity_header_boundary(
     )
 
 
+def assess_oidc_jwks_refresh_evidence(
+    evidence: OidcJwksRefreshEvidence,
+) -> OidcJwksRefreshAssessment:
+    """Assess whether OIDC discovery/JWKS refresh evidence is fresh enough."""
+
+    _validate_oidc_refresh_booleans(evidence)
+    issuer = _normalize_required_text(evidence.issuer, "issuer")
+    discovery_url = _normalize_required_text(evidence.discovery_url, "discovery_url")
+    jwks_uri = _normalize_required_text(evidence.jwks_uri, "jwks_uri")
+    audiences = _normalize_unique_strings(
+        evidence.audiences,
+        field_name="audiences",
+        lower=False,
+        required=False,
+    )
+    allowed_algorithms = _normalize_unique_strings(
+        evidence.allowed_algorithms,
+        field_name="allowed_algorithms",
+        lower=False,
+        required=False,
+    )
+    discovery_hash = _normalize_required_text(evidence.discovery_hash, "discovery_hash")
+    jwks_hash = _normalize_required_text(evidence.jwks_hash, "jwks_hash")
+    evidence_refs = _normalize_unique_strings(
+        evidence.evidence_refs,
+        field_name="evidence_refs",
+        lower=False,
+        required=False,
+    )
+    key_count = _validate_integer(evidence.key_count, "key_count")
+    cache_age_seconds = _validate_integer(evidence.cache_age_seconds, "cache_age_seconds")
+    cache_ttl_seconds = _validate_integer(evidence.cache_ttl_seconds, "cache_ttl_seconds")
+
+    blocked_reasons: list[str] = []
+    if not issuer:
+        blocked_reasons.append("oidc_issuer_missing")
+    elif not _is_https_url(issuer):
+        blocked_reasons.append("oidc_issuer_https_required")
+    if not discovery_url:
+        blocked_reasons.append("oidc_discovery_url_missing")
+    elif not _is_https_url(discovery_url):
+        blocked_reasons.append("oidc_discovery_https_required")
+    if not jwks_uri:
+        blocked_reasons.append("oidc_jwks_uri_missing")
+    elif not _is_https_url(jwks_uri):
+        blocked_reasons.append("oidc_jwks_https_required")
+    if not audiences:
+        blocked_reasons.append("oidc_audiences_missing")
+    if not allowed_algorithms:
+        blocked_reasons.append("oidc_allowed_algorithms_missing")
+    for algorithm in allowed_algorithms:
+        if algorithm.lower() == "none":
+            blocked_reasons.append("oidc_unsigned_algorithm_rejected")
+        elif algorithm not in JWKS_BOUND_OIDC_ALGORITHMS:
+            blocked_reasons.append("oidc_allowed_algorithm_not_jwks_bound")
+    if not _is_sha256_ref(discovery_hash):
+        blocked_reasons.append("oidc_discovery_hash_invalid")
+    if not _is_sha256_ref(jwks_hash):
+        blocked_reasons.append("oidc_jwks_hash_invalid")
+    if key_count <= 0:
+        blocked_reasons.append("oidc_jwks_key_count_invalid")
+    if cache_age_seconds < 0:
+        blocked_reasons.append("oidc_jwks_cache_age_invalid")
+    if cache_ttl_seconds <= 0:
+        blocked_reasons.append("oidc_jwks_cache_ttl_invalid")
+    if cache_ttl_seconds > 0 and cache_age_seconds > cache_ttl_seconds:
+        blocked_reasons.append("jwks_cache_stale")
+    if not evidence.issuer_pinned:
+        blocked_reasons.append("issuer_pinning_missing")
+    if not evidence.audience_bound:
+        blocked_reasons.append("audience_binding_missing")
+    if not evidence.https_enforced:
+        blocked_reasons.append("https_enforcement_missing")
+    if not evidence.redirects_blocked:
+        blocked_reasons.append("redirect_blocking_missing")
+    if not evidence.rollback_or_bypass_protection:
+        blocked_reasons.append("rollback_or_bypass_protection_missing")
+    if not evidence_refs:
+        blocked_reasons.append("oidc_refresh_evidence_refs_missing")
+
+    return OidcJwksRefreshAssessment(
+        jwks_fresh=not blocked_reasons,
+        blocked_reasons=tuple(dict.fromkeys(blocked_reasons)),
+        issuer=issuer,
+        discovery_url=discovery_url,
+        jwks_uri=jwks_uri,
+        audiences=audiences,
+        allowed_algorithms=allowed_algorithms,
+        discovery_hash=discovery_hash,
+        jwks_hash=jwks_hash,
+        key_count=key_count,
+        cache_age_seconds=cache_age_seconds,
+        cache_ttl_seconds=cache_ttl_seconds,
+        evidence_refs=evidence_refs,
+    )
+
+
 def _validate_gateway_evidence_booleans(evidence: TrustedIdentityGatewayEvidence) -> None:
     boolean_fields = (
         "trusted_identity_headers_enabled",
@@ -191,6 +335,25 @@ def _validate_gateway_evidence_booleans(evidence: TrustedIdentityGatewayEvidence
     for field_name in boolean_fields:
         if not isinstance(getattr(evidence, field_name), bool):
             raise ValueError(f"{field_name}_invalid")
+
+
+def _validate_oidc_refresh_booleans(evidence: OidcJwksRefreshEvidence) -> None:
+    boolean_fields = (
+        "issuer_pinned",
+        "audience_bound",
+        "https_enforced",
+        "redirects_blocked",
+        "rollback_or_bypass_protection",
+    )
+    for field_name in boolean_fields:
+        if not isinstance(getattr(evidence, field_name), bool):
+            raise ValueError(f"{field_name}_invalid")
+
+
+def _normalize_required_text(value: str, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name}_invalid")
+    return value.strip()
 
 
 def _normalize_unique_strings(
@@ -218,6 +381,21 @@ def _normalize_unique_strings(
     if required and not normalized_values:
         raise ValueError(f"{field_name}_required")
     return tuple(normalized_values)
+
+
+def _validate_integer(value: int, field_name: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name}_invalid")
+    return value
+
+
+def _is_https_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme.lower() == "https" and bool(parsed.netloc)
+
+
+def _is_sha256_ref(value: str) -> bool:
+    return value.startswith("sha256:") and len(value) > len("sha256:")
 
 
 def _verifier_mode(evidence: TrustedIdentityGatewayEvidence) -> str:

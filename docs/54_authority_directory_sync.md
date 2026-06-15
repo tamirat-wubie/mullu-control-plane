@@ -89,6 +89,29 @@ identity evidence. Missing evidence blocks the trusted-header path while direct
 JWT/OIDC, API key, webhook signature, and tenant mapping checks continue to
 operate through their existing gates.
 
+## OIDC/JWKS Refresh Evidence
+
+OIDC/JWKS refresh evidence is an operational witness, not request
+authentication. A deployment may use it to satisfy the trusted-header
+`jwks_fresh` field only when the refresh receipt proves:
+
+1. The issuer, discovery URL, and JWKS URI are HTTPS and issuer-pinned.
+2. At least one audience is bound to the gateway verifier configuration.
+3. Allowed algorithms are JWKS-backed algorithms supported by this control
+   plane boundary: `RS256`, `RS384`, or `RS512`.
+4. Discovery and JWKS documents retain `sha256:` evidence hashes.
+5. The JWKS cache has a positive key count, a positive TTL, and an age less
+   than or equal to that TTL.
+6. HTTPS enforcement, redirect blocking, rollback or bypass protection, and
+   evidence refs are retained.
+
+`gateway/tenant_identity.py` exposes `assess_oidc_jwks_refresh_evidence` as
+the pure receipt assessment. It does not fetch discovery metadata, does not
+fetch JWKS documents, does not parse JWTs, and does not authenticate a request.
+Live JWT/OIDC verification remains in the runtime authentication layer; this
+assessment only decides whether retained refresh evidence is fresh enough to
+support the upstream gateway's identity-header claim.
+
 ## Minimal Import Algorithm
 
 1. Parse the source adapter output as structured data.
@@ -341,6 +364,6 @@ normalized authority source to `scripts/sync_authority_directory.py`.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, live LDAP DN evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, read-model verification required
+  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, live LDAP DN evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, OIDC/JWKS freshness proof separated from request authentication, read-model verification required
   Open issues: none
   Next action: run credentialed directory collection in an operator environment before applying authority mappings
