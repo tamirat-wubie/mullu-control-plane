@@ -944,6 +944,13 @@
       ]
     },
     {
+      "action_id": "publish_github_branch_protection_reconcile_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "github_branch_protection_reconcile_receipts"
+      ]
+    },
+    {
       "action_id": "publish_temporal_rate_limit_window_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -1070,7 +1077,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 110,
+      "action_proof": 111,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1078,7 +1085,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 134,
+      "audit_chain": 135,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1086,21 +1093,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 91
+      "witnessed": 92
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 109
+      "request_proof": 110
     },
-    "surface_count": 137
+    "surface_count": 138
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 137,
+      "strong": 138,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10449,6 +10456,70 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/branch_protection_reconcile.py",
+        "schemas/github_branch_protection_reconcile_receipt.schema.json",
+        "tests/test_gateway/test_branch_protection_reconcile.py"
+      ],
+      "notes": "GitHub branch-protection reconcile receipts compare desired branch policy to observed protection state, bind the protected-branch REST payload and plan hash, preserve plan-only and dry-run no-apply modes, and require approval, token-exchange receipt, action-execution receipt, 2xx response, and response hash evidence before an apply-approved external reconcile claim is admitted.",
+      "representative_paths": [
+        "BranchProtectionReconciler.evaluate",
+        "BranchProtectionReconcileRequest",
+        "BranchProtectionReconcileReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "apply_approved_binds_external_action_receipt": [
+          "branch_protection_apply_approved_binds_external_action_receipt"
+        ],
+        "apply_approved_requires_external_receipts": [
+          "branch_protection_apply_approved_requires_external_receipts"
+        ],
+        "branch_protection_policy_payload_is_hash_bound": [
+          "branch_protection_reconcile_noop_is_hash_bound",
+          "branch_protection_payload_uses_checks_objects"
+        ],
+        "dry_run_rejects_apply_response_evidence": [
+          "branch_protection_reconcile_dry_run_rejects_apply_evidence"
+        ],
+        "github_branch_protection_reconcile_receipt_schema_valid": [
+          "branch_protection_reconcile_noop_is_hash_bound",
+          "branch_protection_apply_approved_binds_external_action_receipt"
+        ],
+        "missing_observed_state_is_explicit": [
+          "branch_protection_reconcile_plan_marks_missing_observed_state"
+        ],
+        "noop_apply_blocks_external_mutation": [
+          "branch_protection_apply_approved_blocks_noop_apply"
+        ],
+        "observed_compliance_emits_noop_receipt": [
+          "branch_protection_reconcile_noop_is_hash_bound"
+        ],
+        "observed_drift_emits_reconcile_actions": [
+          "branch_protection_reconcile_plan_reports_observed_drift"
+        ],
+        "secret_value_absence_verified": [
+          "branch_protection_reconcile_rejects_secret_value_disclosure"
+        ]
+      },
+      "runtime_witnesses": [
+        "branch_protection_policy_payload_is_hash_bound",
+        "observed_compliance_emits_noop_receipt",
+        "observed_drift_emits_reconcile_actions",
+        "missing_observed_state_is_explicit",
+        "dry_run_rejects_apply_response_evidence",
+        "apply_approved_requires_external_receipts",
+        "apply_approved_binds_external_action_receipt",
+        "noop_apply_blocks_external_mutation",
+        "secret_value_absence_verified",
+        "github_branch_protection_reconcile_receipt_schema_valid"
+      ],
+      "surface_id": "github_branch_protection_reconcile_receipts"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_rate_limit_window.py",
         "schemas/temporal_rate_limit_window_receipt.schema.json",
         "tests/test_gateway/test_temporal_rate_limit_window.py"
@@ -11918,8 +11989,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1543,
-    "runtime_witness_count": 1543,
+    "exact_test_anchor_count": 1553,
+    "runtime_witness_count": 1553,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20909,6 +20980,77 @@
         "exact_test_anchor_count": 9,
         "runtime_witness_count": 9,
         "surface_id": "github_action_execution_receipts",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_noop_is_hash_bound",
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_payload_uses_checks_objects"
+            ],
+            "witness": "branch_protection_policy_payload_is_hash_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_noop_is_hash_bound"
+            ],
+            "witness": "observed_compliance_emits_noop_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_plan_reports_observed_drift"
+            ],
+            "witness": "observed_drift_emits_reconcile_actions"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_plan_marks_missing_observed_state"
+            ],
+            "witness": "missing_observed_state_is_explicit"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_dry_run_rejects_apply_evidence"
+            ],
+            "witness": "dry_run_rejects_apply_response_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_requires_external_receipts"
+            ],
+            "witness": "apply_approved_requires_external_receipts"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_binds_external_action_receipt"
+            ],
+            "witness": "apply_approved_binds_external_action_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_blocks_noop_apply"
+            ],
+            "witness": "noop_apply_blocks_external_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_rejects_secret_value_disclosure"
+            ],
+            "witness": "secret_value_absence_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_noop_is_hash_bound",
+              "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_binds_external_action_receipt"
+            ],
+            "witness": "github_branch_protection_reconcile_receipt_schema_valid"
+          }
+        ],
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
+        "surface_id": "github_branch_protection_reconcile_receipts",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

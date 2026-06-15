@@ -6995,6 +6995,70 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "github_branch_protection_reconcile_receipts",
+            [
+                "BranchProtectionReconciler.evaluate",
+                "BranchProtectionReconcileRequest",
+                "BranchProtectionReconcileReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/branch_protection_reconcile.py",
+                "schemas/github_branch_protection_reconcile_receipt.schema.json",
+                "tests/test_gateway/test_branch_protection_reconcile.py",
+            ],
+            "GitHub branch-protection reconcile receipts compare desired branch policy to observed protection state, bind the protected-branch REST payload and plan hash, preserve plan-only and dry-run no-apply modes, and require approval, token-exchange receipt, action-execution receipt, 2xx response, and response hash evidence before an apply-approved external reconcile claim is admitted.",
+            [
+                "branch_protection_policy_payload_is_hash_bound",
+                "observed_compliance_emits_noop_receipt",
+                "observed_drift_emits_reconcile_actions",
+                "missing_observed_state_is_explicit",
+                "dry_run_rejects_apply_response_evidence",
+                "apply_approved_requires_external_receipts",
+                "apply_approved_binds_external_action_receipt",
+                "noop_apply_blocks_external_mutation",
+                "secret_value_absence_verified",
+                "github_branch_protection_reconcile_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "branch_protection_policy_payload_is_hash_bound": [
+                    "branch_protection_reconcile_noop_is_hash_bound",
+                    "branch_protection_payload_uses_checks_objects",
+                ],
+                "observed_compliance_emits_noop_receipt": [
+                    "branch_protection_reconcile_noop_is_hash_bound"
+                ],
+                "observed_drift_emits_reconcile_actions": [
+                    "branch_protection_reconcile_plan_reports_observed_drift"
+                ],
+                "missing_observed_state_is_explicit": [
+                    "branch_protection_reconcile_plan_marks_missing_observed_state"
+                ],
+                "dry_run_rejects_apply_response_evidence": [
+                    "branch_protection_reconcile_dry_run_rejects_apply_evidence"
+                ],
+                "apply_approved_requires_external_receipts": [
+                    "branch_protection_apply_approved_requires_external_receipts"
+                ],
+                "apply_approved_binds_external_action_receipt": [
+                    "branch_protection_apply_approved_binds_external_action_receipt"
+                ],
+                "noop_apply_blocks_external_mutation": [
+                    "branch_protection_apply_approved_blocks_noop_apply"
+                ],
+                "secret_value_absence_verified": [
+                    "branch_protection_reconcile_rejects_secret_value_disclosure"
+                ],
+                "github_branch_protection_reconcile_receipt_schema_valid": [
+                    "branch_protection_reconcile_noop_is_hash_bound",
+                    "branch_protection_apply_approved_binds_external_action_receipt",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9190,6 +9254,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_github_action_execution_receipt_contract",
             "surfaces": ["github_action_execution_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_branch_protection_reconcile_receipt_contract",
+            "surfaces": ["github_branch_protection_reconcile_receipts"],
             "status": "closed",
         },
         {
