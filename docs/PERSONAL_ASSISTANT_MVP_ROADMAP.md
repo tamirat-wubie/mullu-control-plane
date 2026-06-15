@@ -18,7 +18,8 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 7 | Memory observations | No raw chat-log storage; no live Nested Mind activation |
 | 8 | TeamOps shared inbox planning and handoff | No mailbox mutation without approval evidence |
 | 9 | GitHub and Codex review planning | No GitHub calls, repository reads, PR mutation, branch push, issue creation, review submission, merge, or deployment |
-| 10 | User-facing assistant console | No customer/SaaS readiness claim |
+| 10 | Research source comparison and citation pack | No live web search, source contact, external submission, public posting, paid subscription, raw source body storage, or memory write |
+| 11 | User-facing assistant console | No customer/SaaS readiness claim |
 
 ## PR 1 Acceptance Criteria
 
@@ -42,6 +43,7 @@ schema witness
 -> internal write witness
 -> external communication witness
 -> TeamOps shared-inbox witness
+-> research citation witness
 -> console witness
 ```
 
@@ -119,6 +121,17 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw diffs, raw connector payloads, raw repository contents, credentials, tokens, private keys, and secret-like values are rejected.
 7. Receipts record review planning and Codex instruction drafting plus actions not taken: GitHub not called, pull request not opened, pull request not merged, branch not pushed, issue not created, review not submitted, deployment not started, repository not mutated, secret values not serialized, and raw diff not serialized.
 8. Proof coverage classifies GitHub/Codex review previews under the assistant planning surface.
+
+## PR 10 Acceptance Criteria
+
+1. Research source-compare projections validate against `schemas/personal_assistant_research_projection.schema.json`.
+2. Projection envelopes embed schema-valid personal-assistant receipts.
+3. Public routes expose stateless research source-compare previews only.
+4. `execution_allowed`, `live_connector_execution_allowed`, `web_search_allowed`, `web_search_performed`, `source_contact_allowed`, `external_submission_allowed`, `public_post_allowed`, `paid_subscription_allowed`, `system_of_record_write_allowed`, `memory_write_allowed`, and `nested_mind_live_activation_allowed` remain false.
+5. Ready evidence is treated as citation-backed comparison readiness only; no web search, source contact, external submission, public post, paid subscription, memory write, or system-of-record write is performed.
+6. Raw source bodies, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
+7. Receipts record source comparison and citation-pack projection plus actions not taken: web search not performed, source not contacted, external submission not performed, public post not created, paid subscription not started, raw source body not serialized, secret values not serialized, memory not written, and Nested Mind not activated.
+8. Proof coverage classifies research source-compare previews under the assistant planning surface.
 
 ## Handoff Risks
 

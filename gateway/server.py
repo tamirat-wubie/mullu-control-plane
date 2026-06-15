@@ -79,6 +79,7 @@ from mcoi_runtime.personal_assistant import (
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
+    plan_research_source_compare,
     plan_teamops_shared_inbox,
     prepare_memory_observation,
     review_memory_observation_candidate,
@@ -350,6 +351,39 @@ class GatewayPersonalAssistantGitHubCodexPreviewRequest(BaseModel):
     blocking_questions: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
     requested_instruction_goal: str = "prepare the next safe Codex instruction"
+
+
+class GatewayPersonalAssistantResearchSourceSummary(BaseModel):
+    """Bounded public-source metadata for research preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_ref: str
+    title: str
+    publisher: str
+    published_at: str = ""
+    summary: str
+    trust_tier: str = "operator_supplied"
+    citation_ref: str
+
+
+class GatewayPersonalAssistantResearchPreviewRequest(BaseModel):
+    """Stateless research source-compare preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Research this topic, compare sources, and prepare citations."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    research_question: str
+    source_summaries: list[GatewayPersonalAssistantResearchSourceSummary] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+    freshness_notes: list[str] = Field(default_factory=list)
+    conflict_notes: list[str] = Field(default_factory=list)
+    blocking_questions: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_synthesis_goal: str = "prepare a source comparison with citations"
 
 
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
@@ -2191,6 +2225,65 @@ def create_gateway_app(
                 "review_submission_allowed": False,
                 "deployment_mutation_allowed": False,
                 "system_of_record_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/research/source-compare/preview")
+    def preview_personal_assistant_research_source_compare(req: GatewayPersonalAssistantResearchPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_research_source_compare(
+                intent,
+                generated_at=now,
+                research_question=req.research_question,
+                source_summaries=tuple(_pydantic_payload(source) for source in req.source_summaries),
+                citation_refs=tuple(req.citation_refs),
+                freshness_notes=tuple(req.freshness_notes),
+                conflict_notes=tuple(req.conflict_notes),
+                blocking_questions=tuple(req.blocking_questions),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_synthesis_goal=req.requested_synthesis_goal,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant research source-compare preview",
+                    "error_code": "invalid_personal_assistant_research_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "research_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "web_search_allowed": False,
+                "web_search_performed": False,
+                "source_contact_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "paid_subscription_allowed": False,
+                "system_of_record_write_allowed": False,
+                "memory_write_allowed": False,
                 "nested_mind_live_activation_allowed": False,
             },
             "governed": True,
