@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:scheduler-worker-runtime-receipt-handoff:1",
+  "title": "Scheduler Worker Runtime Receipt Handoff",
+  "description": "Foundation Mode handoff contract that binds temporal scheduler receipts and distributed lease execution receipts to future worker runtime receipt obligations without mutating scheduler state, invoking workers, calling lease backends, calling adapter backends, or claiming terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_id",
+    "handoff_version",
+    "scheduler_receipt_ref",
+    "distributed_lease_execution_receipt_ref",
+    "worker_mesh_ref",
+    "worker_failure_receipt_ref",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "authority_scope",
+    "scheduler_worker_contract",
+    "admission_guards",
+    "handoff_result",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "handoff_id": {
+      "type": "string",
+      "pattern": "^scheduler-worker-runtime-receipt-handoff-[a-z0-9-]+$"
+    },
+    "handoff_version": {
+      "type": "string",
+      "const": "scheduler_worker_runtime_receipt_handoff.v1"
+    },
+    "scheduler_receipt_ref": {
+      "type": "string",
+      "const": "receipt://temporal-scheduler/foundation-leased-command"
+    },
+    "distributed_lease_execution_receipt_ref": {
+      "type": "string",
+      "const": "receipt://distributed-lease-execution/foundation-scheduler-worker"
+    },
+    "worker_mesh_ref": {
+      "type": "string",
+      "const": "schemas/worker_mesh.schema.json"
+    },
+    "worker_failure_receipt_ref": {
+      "type": "string",
+      "const": "schemas/worker_failure_receipt.schema.json"
+    },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "authority_scope": { "$ref": "#/$defs/authority_scope" },
+    "scheduler_worker_contract": { "$ref": "#/$defs/scheduler_worker_contract" },
+    "admission_guards": { "$ref": "#/$defs/admission_guards" },
+    "handoff_result": { "$ref": "#/$defs/handoff_result" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "contract_summary": { "$ref": "#/$defs/contract_summary" },
+    "governance_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_handoff_only",
+        "scheduler_dispatch_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "scheduler_mutation_allowed",
+        "lease_backend_call_allowed",
+        "adapter_backend_call_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "foundation_handoff_only": { "type": "boolean", "const": true },
+        "scheduler_dispatch_allowed": { "type": "boolean", "const": false },
+        "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+        "worker_invocation_allowed": { "type": "boolean", "const": false },
+        "scheduler_mutation_allowed": { "type": "boolean", "const": false },
+        "lease_backend_call_allowed": { "type": "boolean", "const": false },
+        "adapter_backend_call_allowed": { "type": "boolean", "const": false },
+        "external_network_allowed": { "type": "boolean", "const": false },
+        "secret_access_allowed": { "type": "boolean", "const": false },
+        "filesystem_write_allowed": { "type": "boolean", "const": false },
+        "connector_authority_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "scheduler_worker_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_family",
+        "handoff_state",
+        "required_source_receipt_refs",
+        "required_admission_gate_refs",
+        "required_runtime_witness_refs",
+        "receipt_schema_refs",
+        "validation_refs",
+        "denied_until_refs",
+        "future_worker_receipt_obligations"
+      ],
+      "properties": {
+        "operation_family": {
+          "type": "string",
+          "const": "scheduler_worker_runtime_receipt_handoff"
+        },
+        "handoff_state": {
+          "type": "string",
+          "enum": ["FOUNDATION_HANDOFF_RECORDED", "AWAITING_RUNTIME_EVIDENCE"]
+        },
+        "required_source_receipt_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "required_admission_gate_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "required_runtime_witness_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "receipt_schema_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "validation_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "denied_until_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "future_worker_receipt_obligations": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "admission_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "temporal_scheduler_receipt_required",
+        "distributed_lease_execution_receipt_required",
+        "worker_mesh_receipt_required",
+        "worker_failure_receipt_required_on_error",
+        "uao_effect_admission_required",
+        "phi_gov_dispatch_authorization_required",
+        "effect_reconciliation_required",
+        "scheduler_dispatch_registered",
+        "runtime_dispatch_registered",
+        "worker_invocation_registered",
+        "runtime_receipt_emitter_registered",
+        "runtime_receipt_schema_bound",
+        "terminal_closure_blocked_until_runtime_receipt"
+      ],
+      "properties": {
+        "temporal_scheduler_receipt_required": { "type": "boolean", "const": true },
+        "distributed_lease_execution_receipt_required": { "type": "boolean", "const": true },
+        "worker_mesh_receipt_required": { "type": "boolean", "const": true },
+        "worker_failure_receipt_required_on_error": { "type": "boolean", "const": true },
+        "uao_effect_admission_required": { "type": "boolean", "const": true },
+        "phi_gov_dispatch_authorization_required": { "type": "boolean", "const": true },
+        "effect_reconciliation_required": { "type": "boolean", "const": true },
+        "scheduler_dispatch_registered": { "type": "boolean", "const": false },
+        "runtime_dispatch_registered": { "type": "boolean", "const": false },
+        "worker_invocation_registered": { "type": "boolean", "const": false },
+        "runtime_receipt_emitter_registered": { "type": "boolean", "const": false },
+        "runtime_receipt_schema_bound": { "type": "boolean", "const": false },
+        "terminal_closure_blocked_until_runtime_receipt": { "type": "boolean", "const": true }
+      }
+    },
+    "handoff_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_state",
+        "next_required_evidence",
+        "handoff_digest",
+        "scheduler_dispatch_performed",
+        "runtime_dispatch_performed",
+        "worker_invocation_performed",
+        "lease_backend_call_performed",
+        "adapter_backend_call_performed",
+        "scheduler_mutation_performed",
+        "external_effects_observed",
+        "filesystem_writes_observed",
+        "connector_calls_observed",
+        "terminal_closure",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "result_state": {
+          "type": "string",
+          "enum": ["HANDOFF_RECORDED", "HANDOFF_BLOCKED", "HANDOFF_INVALIDATED"]
+        },
+        "next_required_evidence": { "$ref": "#/$defs/non_empty_string_array" },
+        "handoff_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "scheduler_dispatch_performed": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "worker_invocation_performed": { "type": "boolean", "const": false },
+        "lease_backend_call_performed": { "type": "boolean", "const": false },
+        "adapter_backend_call_performed": { "type": "boolean", "const": false },
+        "scheduler_mutation_performed": { "type": "boolean", "const": false },
+        "external_effects_observed": { "type": "boolean", "const": false },
+        "filesystem_writes_observed": { "type": "boolean", "const": false },
+        "connector_calls_observed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheduler_worker_runtime_receipt_handoff_schema",
+        "temporal_scheduler_receipt_schema",
+        "distributed_lease_execution_receipt_schema",
+        "distributed_lease_adapter_registry_receipt_schema",
+        "distributed_lease_claim_receipt_schema",
+        "worker_mesh_schema",
+        "worker_failure_receipt_schema",
+        "universal_action_orchestration_schema"
+      ],
+      "properties": {
+        "scheduler_worker_runtime_receipt_handoff_schema": { "type": "string", "const": "schemas/scheduler_worker_runtime_receipt_handoff.schema.json" },
+        "temporal_scheduler_receipt_schema": { "type": "string", "const": "schemas/temporal_scheduler_receipt.schema.json" },
+        "distributed_lease_execution_receipt_schema": { "type": "string", "const": "schemas/distributed_lease_execution_receipt.schema.json" },
+        "distributed_lease_adapter_registry_receipt_schema": { "type": "string", "const": "schemas/distributed_lease_adapter_registry_receipt.schema.json" },
+        "distributed_lease_claim_receipt_schema": { "type": "string", "const": "schemas/distributed_lease_claim_receipt.schema.json" },
+        "worker_mesh_schema": { "type": "string", "const": "schemas/worker_mesh.schema.json" },
+        "worker_failure_receipt_schema": { "type": "string", "const": "schemas/worker_failure_receipt.schema.json" },
+        "universal_action_orchestration_schema": { "type": "string", "const": "schemas/universal_action_orchestration.schema.json" }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_receipt_ref_count",
+        "admission_gate_ref_count",
+        "runtime_witness_ref_count",
+        "receipt_schema_ref_count",
+        "validation_ref_count",
+        "denied_until_ref_count",
+        "future_worker_obligation_count",
+        "next_required_evidence_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_receipt_ref_count": { "type": "integer", "minimum": 4 },
+        "admission_gate_ref_count": { "type": "integer", "minimum": 7 },
+        "runtime_witness_ref_count": { "type": "integer", "minimum": 5 },
+        "receipt_schema_ref_count": { "type": "integer", "minimum": 7 },
+        "validation_ref_count": { "type": "integer", "minimum": 3 },
+        "denied_until_ref_count": { "type": "integer", "minimum": 5 },
+        "future_worker_obligation_count": { "type": "integer", "minimum": 7 },
+        "next_required_evidence_count": { "type": "integer", "minimum": 5 },
+        "receipt_ref_count": { "type": "integer", "const": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 10 }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

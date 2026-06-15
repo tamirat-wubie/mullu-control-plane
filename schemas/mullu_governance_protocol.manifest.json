@@ -1241,6 +1241,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "scheduler-worker-runtime-receipt-handoff",
+      "path": "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+      "urn": "urn:mullusi:schema:scheduler-worker-runtime-receipt-handoff:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "temporal-lease-window-receipt",
       "path": "schemas/temporal_lease_window_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-lease-window-receipt:1",

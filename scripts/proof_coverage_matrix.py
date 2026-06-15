@@ -7410,6 +7410,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "scheduler_worker_runtime_receipt_handoff",
+            [
+                "SchedulerWorkerRuntimeReceiptHandoff",
+                "validate_scheduler_worker_runtime_receipt_handoff",
+                "scheduler_worker_runtime_receipt_handoff.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+                "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+                "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+                "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py",
+            ],
+            "Scheduler worker runtime receipt handoffs bind TemporalSchedulerReceipt and DistributedLeaseExecutionReceipt refs to future worker runtime receipt obligations while denying scheduler dispatch, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, terminal closure, and success claims.",
+            [
+                "scheduler_worker_runtime_handoff_schema_valid",
+                "scheduler_worker_runtime_handoff_blocks_live_dispatch",
+                "scheduler_worker_runtime_handoff_binds_scheduler_and_lease_receipts",
+                "scheduler_worker_runtime_handoff_rejects_authority_drift",
+                "scheduler_worker_runtime_handoff_rejects_missing_required_refs",
+                "scheduler_worker_runtime_handoff_rejects_admission_and_result_drift",
+                "scheduler_worker_runtime_handoff_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "scheduler_worker_runtime_handoff_schema_valid": [
+                    "scheduler_worker_runtime_receipt_handoff_passes"
+                ],
+                "scheduler_worker_runtime_handoff_blocks_live_dispatch": [
+                    "scheduler_worker_runtime_receipt_handoff_passes",
+                    "handoff_rejects_admission_and_result_drift",
+                ],
+                "scheduler_worker_runtime_handoff_binds_scheduler_and_lease_receipts": [
+                    "scheduler_worker_runtime_receipt_handoff_passes",
+                    "handoff_rejects_top_level_and_contract_drift",
+                ],
+                "scheduler_worker_runtime_handoff_rejects_authority_drift": [
+                    "handoff_rejects_authority_drift"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_missing_required_refs": [
+                    "handoff_rejects_missing_required_refs"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_admission_and_result_drift": [
+                    "handoff_rejects_admission_and_result_drift"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_receipt_ref_and_count_drift": [
+                    "handoff_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9635,6 +9688,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_distributed_lease_execution_receipt_contract",
             "surfaces": ["distributed_lease_execution_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_scheduler_worker_runtime_receipt_handoff_contract",
+            "surfaces": ["scheduler_worker_runtime_receipt_handoff"],
             "status": "closed",
         },
         {
