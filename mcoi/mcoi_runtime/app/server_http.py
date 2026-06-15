@@ -306,6 +306,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.cognition import router as cognition_router
     from mcoi_runtime.app.routers.domains import router as domains_router
     from mcoi_runtime.app.routers.compliance import router as compliance_router
+    from mcoi_runtime.app.routers.components import router as components_router
     from mcoi_runtime.app.routers.connectors import router as connectors_router
     from mcoi_runtime.app.routers.console import router as console_router
     from mcoi_runtime.app.routers.constructs import router as constructs_router
@@ -368,6 +369,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(temporal_scheduler_router)
     app.include_router(console_router)
     app.include_router(shadow_router)
+    app.include_router(components_router)
     app.include_router(connectors_router)
     app.include_router(rbac_router)
     app.include_router(pilot_router)

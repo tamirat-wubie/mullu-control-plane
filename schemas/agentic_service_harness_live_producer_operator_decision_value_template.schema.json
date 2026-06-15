@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-template:1",
+  "title": "Agentic Service Harness Live Producer Operator Decision Value Template",
+  "description": "Template-only approval and rejection value shapes. Templates are not accepted as operator values and grant no live producer authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "template_packet_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_value_request_ref",
+    "template_status",
+    "requested_input_kind",
+    "operator_value_collected",
+    "explicit_operator_value_present",
+    "template_accepted_as_value",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "live_producer_implemented",
+    "terminal_closure",
+    "scope",
+    "decision_value_templates",
+    "template_controls",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "template_packet_id": {
+      "type": "string",
+      "const": "agentic-service-harness-live-producer-operator-decision-value-template"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_value_request_ref": { "$ref": "#/$defs/evidence_ref" },
+    "template_status": { "type": "string", "const": "template_only_awaiting_operator_value" },
+    "requested_input_kind": { "type": "string", "const": "explicit_operator_decision_value" },
+    "operator_value_collected": { "type": "boolean", "const": false },
+    "explicit_operator_value_present": { "type": "boolean", "const": false },
+    "template_accepted_as_value": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "live_producer_implemented": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "decision_value_templates": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/decision_value_template" },
+      "uniqueItems": true
+    },
+    "template_controls": { "$ref": "#/$defs/template_controls" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "organization_id", "project_id", "repository_connection_id", "read_only"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "decision_value_template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_kind", "template_only", "accepted_as_value", "grants_live_authority", "field_templates"],
+      "properties": {
+        "decision_kind": {
+          "type": "string",
+          "enum": ["explicit_operator_approval", "explicit_operator_rejection"]
+        },
+        "template_only": { "type": "boolean", "const": true },
+        "accepted_as_value": { "type": "boolean", "const": false },
+        "grants_live_authority": { "type": "boolean", "const": false },
+        "field_templates": { "$ref": "#/$defs/field_templates" }
+      }
+    },
+    "field_templates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_kind", "operator_id", "decision_text", "scope", "created_at", "witness_ref"],
+      "properties": {
+        "decision_kind": {
+          "type": "string",
+          "enum": ["explicit_operator_approval", "explicit_operator_rejection"]
+        },
+        "operator_id": { "type": "string", "const": "operator_id_required" },
+        "decision_text": { "type": "string", "const": "write_explicit_operator_intent_here" },
+        "scope": { "$ref": "#/$defs/template_scope" },
+        "created_at": { "type": "string", "const": "YYYY-MM-DDTHH:MM:SSZ" },
+        "witness_ref": { "type": "string", "const": "witness_ref_required" }
+      }
+    },
+    "template_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "organization_id", "project_id", "repository_connection_id"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "template_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "template_only",
+        "stores_operator_value",
+        "accepts_template_as_value",
+        "credential_values_allowed",
+        "mutation_route_allowed",
+        "live_authority_on_template"
+      ],
+      "properties": {
+        "template_only": { "type": "boolean", "const": true },
+        "stores_operator_value": { "type": "boolean", "const": false },
+        "accepts_template_as_value": { "type": "boolean", "const": false },
+        "credential_values_allowed": { "type": "boolean", "const": false },
+        "mutation_route_allowed": { "type": "boolean", "const": false },
+        "live_authority_on_template": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "network_policy"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

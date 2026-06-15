@@ -1,0 +1,471 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-read-model:1",
+  "title": "Mullu Component Read Model",
+  "description": "Read-only Component Harness projection that joins component registry, router inventory, and proof binding posture without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "read_model_id",
+    "route",
+    "mode",
+    "governed",
+    "read_model_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "components",
+    "bundles",
+    "validators"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "read_model_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "route": {
+      "type": "string",
+      "const": "/api/v1/components/read-model"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_model_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry",
+        "router_inventory",
+        "proof_binding"
+      ],
+      "properties": {
+        "registry": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_binding": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "bundle_count",
+        "proof_bound_count",
+        "awaiting_binding_count",
+        "bound_route_count",
+        "blocked_component_count"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bundle_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proof_bound_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "awaiting_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bound_route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_component_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    },
+    "bundles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/bundle"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "money_movement",
+        "provider_write",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_call_connector",
+        "can_claim_terminal_closure",
+        "can_draft",
+        "can_emit_receipt",
+        "can_execute",
+        "can_mutate",
+        "can_preview",
+        "can_read",
+        "can_send_external_message",
+        "can_write_files"
+      ],
+      "properties": {
+        "can_call_connector": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_draft": {
+          "type": "boolean"
+        },
+        "can_emit_receipt": {
+          "type": "boolean"
+        },
+        "can_execute": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_preview": {
+          "type": "boolean"
+        },
+        "can_read": {
+          "type": "boolean"
+        },
+        "can_send_external_message": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_write_files": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "name",
+        "type",
+        "mode",
+        "state",
+        "wiring_state",
+        "authority_level",
+        "authority",
+        "receipt_required",
+        "health",
+        "proof_surface",
+        "route_binding",
+        "proof_binding",
+        "dependencies",
+        "blocked_actions",
+        "owner_surface"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/identifier"
+        },
+        "mode": {
+          "$ref": "#/$defs/identifier"
+        },
+        "state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "wiring_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authority_level": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authority": {
+          "$ref": "#/$defs/authority"
+        },
+        "receipt_required": {
+          "type": "boolean"
+        },
+        "health": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "source"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "known",
+                "unknown"
+              ]
+            },
+            "source": {
+              "$ref": "#/$defs/source_ref"
+            }
+          }
+        },
+        "proof_surface": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "surface_id"
+          ],
+          "properties": {
+            "status": {
+              "$ref": "#/$defs/identifier"
+            },
+            "surface_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "route_binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "proof_surface_ids",
+            "route_count"
+          ],
+          "properties": {
+            "state": {
+              "$ref": "#/$defs/identifier"
+            },
+            "proof_surface_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/identifier"
+              }
+            },
+            "route_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "proof_binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "required_surface_ids",
+            "inventory_surface_ids",
+            "runtime_witness_count",
+            "evidence_file_count"
+          ],
+          "properties": {
+            "state": {
+              "$ref": "#/$defs/identifier"
+            },
+            "required_surface_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/identifier"
+              }
+            },
+            "inventory_surface_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "$ref": "#/$defs/identifier"
+              }
+            },
+            "runtime_witness_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "evidence_file_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        },
+        "owner_surface": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "allowed_mode",
+        "component_count",
+        "blocked_actions",
+        "receipt_required",
+        "bundle_is_not_execution_route",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "bundle_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "allowed_mode": {
+          "$ref": "#/$defs/identifier"
+        },
+        "component_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        },
+        "receipt_required": {
+          "type": "boolean"
+        },
+        "bundle_is_not_execution_route": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

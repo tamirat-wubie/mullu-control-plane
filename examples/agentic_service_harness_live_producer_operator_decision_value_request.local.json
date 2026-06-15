@@ -1,0 +1,90 @@
+{
+  "request_id": "agentic-service-harness-live-producer-operator-decision-value-request",
+  "schema_version": 1,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_rejection_witness_ref": "rejection-witness://agentic-service-harness-live-producer-operator-decision-generic-continuation-rejection",
+  "request_status": "awaiting_explicit_operator_decision_value",
+  "requested_input_kind": "explicit_operator_decision_value",
+  "rejected_input_kind": "generic_continuation",
+  "generic_continuation_rejected": true,
+  "operator_value_collected": false,
+  "explicit_operator_value_present": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "decision_value_requirements": [
+    {
+      "decision_kind": "explicit_operator_approval",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "required_fields": ["decision_kind", "operator_id", "decision_text", "scope", "created_at", "witness_ref"],
+      "forbidden_fields": ["access_token", "api_key", "password", "private_key", "refresh_token", "secret", "secret_value", "token"],
+      "scope_must_match_request": true,
+      "witness_ref_required": true,
+      "records_operator_intent_only": true,
+      "grants_live_authority": false
+    },
+    {
+      "decision_kind": "explicit_operator_rejection",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "required_fields": ["decision_kind", "operator_id", "decision_text", "scope", "created_at", "witness_ref"],
+      "forbidden_fields": ["access_token", "api_key", "password", "private_key", "refresh_token", "secret", "secret_value", "token"],
+      "scope_must_match_request": true,
+      "witness_ref_required": true,
+      "records_operator_intent_only": true,
+      "grants_live_authority": false
+    }
+  ],
+  "request_controls": {
+    "freeform_continuation_allowed": false,
+    "credential_values_allowed": false,
+    "mutation_route_allowed": false,
+    "self_authorization_allowed": false,
+    "live_authority_on_request": false
+  },
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-value-request",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_request.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Provide an explicit operator approval or rejection value matching the required fields; this request records no value and grants no live authority."
+}

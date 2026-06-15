@@ -1,0 +1,294 @@
+{
+  "generated_at": "2026-06-15T00:00:00+00:00",
+  "inventory_id": "component_router_inventory.foundation.v1",
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Bind proof matrix surfaces and component read-model routes without enabling live execution.",
+  "purpose": "Bind currently declared component-owned route families to registered component IDs and proof surfaces while preserving blocked-action authority boundaries.",
+  "route_bindings": [
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "governance_core",
+      "expected_routes": [
+        "/capability-fabric/admission-audits",
+        "/capability-fabric/capsule-admission-receipts",
+        "/capability-fabric/capsule-admissions",
+        "/capability-fabric/read-model",
+        "/commands/{command_id}/capability-admission",
+        "/commands/{command_id}/authority",
+        "/commands/{command_id}/closure",
+        "/commands/{command_id}/interpretation-receipt",
+        "/commands/{command_id}/universal-action-orchestration",
+        "/commands/{command_id}/universal-action-proof",
+        "/api/v1/components/read-model",
+        "/webhook/approve/{request_id}",
+        "/webhook/discord",
+        "/webhook/phone",
+        "/webhook/sms",
+        "/webhook/teams",
+        "/webhook/slack",
+        "/webhook/telegram",
+        "/webhook/web",
+        "/webhook/whatsapp"
+      ],
+      "notes": "Gateway governance routes are bound as proof surfaces only; the inventory does not grant route execution authority.",
+      "proof_surface_ids": [
+        "authority_obligation_mesh",
+        "component_harness_read_model",
+        "gateway_approval_resolution",
+        "gateway_capability_fabric",
+        "gateway_webhook_ingress"
+      ],
+      "route_prefixes": [
+        "/api/v1/components",
+        "/capability-fabric",
+        "/commands",
+        "/webhook"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "agentic_service_harness",
+      "expected_routes": [
+        "/api/v1/harness/status"
+      ],
+      "notes": "Agentic service harness status is a read-only route binding.",
+      "proof_surface_ids": [
+        "agentic_service_harness_status_read_model"
+      ],
+      "route_prefixes": [
+        "/api/v1/harness"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "no_declared_route",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "snet",
+      "expected_routes": [],
+      "notes": "SNet is currently proof-bound through docs, fixtures, and validators rather than a mounted API route.",
+      "proof_surface_ids": [
+        "snet_operator_read_model"
+      ],
+      "route_prefixes": []
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "inceptadive_shadow",
+      "expected_routes": [
+        "/api/v1/console/shadow"
+      ],
+      "notes": "InceptaDive shadow is bound only to its console posture route.",
+      "proof_surface_ids": [
+        "operator_console_read_models"
+      ],
+      "route_prefixes": [
+        "/api/v1/console/shadow"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "route_execution",
+        "send_email",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "personal_assistant",
+      "expected_routes": [
+        "/api/v1/assistant/finance-ops/plans",
+        "/api/v1/assistant/profiles",
+        "/api/v1/console/personal-assistant",
+        "/api/v1/console/personal-assistant/view"
+      ],
+      "notes": "Personal Assistant routes are read/draft projections only; send and mutation paths stay blocked.",
+      "proof_surface_ids": [
+        "assistant_kernel_planning",
+        "operator_console_read_models"
+      ],
+      "route_prefixes": [
+        "/api/v1/assistant/finance-ops",
+        "/api/v1/assistant/profiles",
+        "/api/v1/console/personal-assistant"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "route_execution",
+        "send_email",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "teamops_shared_inbox",
+      "expected_routes": [
+        "/api/v1/assistant/team-ops/plans"
+      ],
+      "notes": "TeamOps route binding covers the plan projection only; provider write and send stay blocked.",
+      "proof_surface_ids": [
+        "assistant_kernel_planning"
+      ],
+      "route_prefixes": [
+        "/api/v1/assistant/team-ops"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "no_declared_route",
+      "blocked_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "gmail_account_binding_gate",
+      "expected_routes": [],
+      "notes": "Gmail account binding remains validator and handoff evidence only; generic connector routes are not treated as Gmail live authority.",
+      "proof_surface_ids": [
+        "governed_connector_framework"
+      ],
+      "route_prefixes": []
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "no_declared_route",
+      "blocked_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "worker_runtime",
+      "expected_routes": [],
+      "notes": "Worker runtime is proof-bound as a runtime mesh surface rather than a mounted API route.",
+      "proof_surface_ids": [
+        "networked_worker_mesh"
+      ],
+      "route_prefixes": []
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "route_execution",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "capability_workers",
+      "expected_routes": [
+        "/capability/execute"
+      ],
+      "notes": "Capability worker route binding remains restricted and signed; the inventory does not admit product live dispatch.",
+      "proof_surface_ids": [
+        "capability_worker_execution"
+      ],
+      "route_prefixes": [
+        "/capability/"
+      ]
+    },
+    {
+      "binding_is_not_execution_authority": true,
+      "binding_state": "no_declared_route",
+      "blocked_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "component_id": "nested_mind_bridge",
+      "expected_routes": [],
+      "notes": "Nested Mind bridge has no declared route binding in foundation posture.",
+      "proof_surface_ids": [],
+      "route_prefixes": []
+    }
+  ],
+  "router_inventory_is_not_execution_authority": true,
+  "schema_version": 1,
+  "source_registry": "examples/component_registry.foundation.json",
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_component_router_inventory.py",
+      "required_for_closure": true,
+      "validator_id": "component_router_inventory_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_router_inventory.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_router_inventory_tests"
+    }
+  ]
+}

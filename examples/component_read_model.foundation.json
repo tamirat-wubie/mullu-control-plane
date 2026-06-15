@@ -1,0 +1,728 @@
+{
+  "bundles": [
+    {
+      "allowed_mode": "demo_v0",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "bundle_id": "personal_assistant_v0",
+      "bundle_is_not_execution_route": true,
+      "component_count": 5,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "symbolic_reasoning_read_only",
+      "bundle_is_not_execution_route": true,
+      "component_count": 3,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "worker_runtime_foundation",
+      "bundle_is_not_execution_route": true,
+      "component_count": 3,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    }
+  ],
+  "components": [
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "governance_core",
+      "dependencies": [],
+      "health": {
+        "source": {
+          "ref": "scripts/run_workspace_governance_checks.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "mode": "foundation",
+      "name": "Governance Core",
+      "owner_surface": "governance",
+      "proof_binding": {
+        "evidence_file_count": 5,
+        "inventory_surface_ids": [
+          "authority_obligation_mesh",
+          "component_harness_read_model",
+          "gateway_approval_resolution",
+          "gateway_capability_fabric",
+          "gateway_webhook_ingress"
+        ],
+        "required_surface_ids": [
+          "gateway_capability_fabric"
+        ],
+        "runtime_witness_count": 3,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "gateway_capability_fabric"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "authority_obligation_mesh",
+          "component_harness_read_model",
+          "gateway_approval_resolution",
+          "gateway_capability_fabric",
+          "gateway_webhook_ingress"
+        ],
+        "route_count": 20,
+        "state": "bound"
+      },
+      "state": "registered",
+      "type": "governance_core",
+      "wiring_state": "present"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "agentic_service_harness",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/harness/status",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "mode": "read_only",
+      "name": "Agentic Service Harness",
+      "owner_surface": "runtime",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "required_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "runtime_witness_count": 1,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "agentic_service_harness_status_read_model"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "mounted",
+      "type": "runtime_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "snet",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_snet_operator_read_model.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "mode": "read_only",
+      "name": "SNet Symbolic Mesh",
+      "owner_surface": "reasoning",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "snet_operator_read_model"
+        ],
+        "required_surface_ids": [
+          "snet_operator_read_model"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "snet_operator_read_model"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "snet_operator_read_model"
+        ],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "inceptadive_shadow",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/console/shadow",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "mode": "read_only_advisory",
+      "name": "InceptaDive Shadow",
+      "owner_surface": "reasoning",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "operator_console_read_models"
+        ],
+        "required_surface_ids": [
+          "operator_console_read_models"
+        ],
+        "runtime_witness_count": 1,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "operator_console_read_models"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "operator_console_read_models"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": true,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "draft_only",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "personal_assistant",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "health": {
+        "source": {
+          "ref": "docs/PERSONAL_ASSISTANT_MVP_ROADMAP.md",
+          "type": "doc"
+        },
+        "status": "known"
+      },
+      "mode": "draft_only",
+      "name": "Personal Assistant",
+      "owner_surface": "assistant",
+      "proof_binding": {
+        "evidence_file_count": 3,
+        "inventory_surface_ids": [
+          "assistant_kernel_planning",
+          "operator_console_read_models"
+        ],
+        "required_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "assistant_kernel_planning"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "assistant_kernel_planning",
+          "operator_console_read_models"
+        ],
+        "route_count": 4,
+        "state": "bound"
+      },
+      "state": "draft_only",
+      "type": "assistant_product_core",
+      "wiring_state": "draft_only"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "live_probe",
+      "blocked_actions": [
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "teamops_shared_inbox",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "mode": "live_probe",
+      "name": "TeamOps Shared Inbox",
+      "owner_surface": "assistant",
+      "proof_binding": {
+        "evidence_file_count": 3,
+        "inventory_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "required_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "live_probe",
+      "type": "assistant_product_core",
+      "wiring_state": "live_probe"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "gmail_account_binding_gate",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "mode": "approval_required",
+      "name": "Gmail Account Binding Gate",
+      "owner_surface": "connector",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "required_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "approval_required",
+      "type": "connector_action_core",
+      "wiring_state": "approval_required"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "worker_runtime",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/worker_mesh.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "mode": "approval_required",
+      "name": "Worker Runtime",
+      "owner_surface": "execution",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "required_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "networked_worker_mesh"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "terminal_closure"
+      ],
+      "component_id": "capability_workers",
+      "dependencies": [
+        "governance_core",
+        "worker_runtime"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/capability_worker.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "mode": "approval_required",
+      "name": "Capability Workers",
+      "owner_surface": "execution",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "required_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "capability_worker_execution"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "blocked",
+      "blocked_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "nested_mind_bridge",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_nested_mind_p3_readiness.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "mode": "blocked",
+      "name": "Nested Mind Bridge",
+      "owner_surface": "memory",
+      "proof_binding": {
+        "evidence_file_count": 0,
+        "inventory_surface_ids": [],
+        "required_surface_ids": [],
+        "runtime_witness_count": 0,
+        "state": "awaiting_binding"
+      },
+      "proof_surface": {
+        "status": "awaiting_binding",
+        "surface_id": null
+      },
+      "receipt_required": false,
+      "route_binding": {
+        "proof_surface_ids": [],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "present",
+      "type": "data_memory_core",
+      "wiring_state": "blocked"
+    }
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "read_model_id": "component_read_model.foundation.v1",
+  "read_model_is_not_execution_authority": true,
+  "route": "/api/v1/components/read-model",
+  "schema_version": 1,
+  "source_refs": {
+    "proof_binding": "examples/component_proof_binding.foundation.json",
+    "registry": "examples/component_registry.foundation.json",
+    "router_inventory": "examples/component_router_inventory.foundation.json"
+  },
+  "summary": {
+    "awaiting_binding_count": 1,
+    "blocked_component_count": 1,
+    "bound_route_count": 28,
+    "bundle_count": 3,
+    "component_count": 10,
+    "proof_bound_count": 9
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    "component_registry_validator",
+    "component_router_inventory_validator",
+    "component_proof_binding_validator",
+    "component_read_model_validator"
+  ]
+}

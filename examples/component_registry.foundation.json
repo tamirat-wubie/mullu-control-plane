@@ -1,0 +1,648 @@
+{
+  "components": [
+    {
+      "aliases": [
+        "governance"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+      ],
+      "health_source": {
+        "ref": "scripts/run_workspace_governance_checks.py",
+        "type": "validator"
+      },
+      "id": "governance_core",
+      "lifecycle_state": "registered",
+      "mode": "foundation",
+      "name": "Governance Core",
+      "notes": "Governance core is present as the repository policy and proof surface. It does not grant live execution authority.",
+      "owner_surface": "governance",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+        ],
+        "status": "proof_bound",
+        "surface_id": "gateway_capability_fabric"
+      },
+      "receipt_required": true,
+      "type": "governance_core",
+      "wiring_state": "present"
+    },
+    {
+      "aliases": [
+        "agentic_service_harness"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+      ],
+      "health_source": {
+        "ref": "/api/v1/harness/status",
+        "type": "route"
+      },
+      "id": "agentic_service_harness",
+      "lifecycle_state": "mounted",
+      "mode": "read_only",
+      "name": "Agentic Service Harness",
+      "notes": "Existing harness shell exposes bounded status/read-model posture only.",
+      "owner_surface": "runtime",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+        ],
+        "status": "proof_bound",
+        "surface_id": "agentic_service_harness_status_read_model"
+      },
+      "receipt_required": true,
+      "type": "runtime_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "aliases": [
+        "snet",
+        "symbolic_mesh"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/73_snet_operator_read_model.md",
+        "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+      ],
+      "health_source": {
+        "ref": "scripts/validate_snet_operator_read_model.py",
+        "type": "validator"
+      },
+      "id": "snet",
+      "lifecycle_state": "mounted",
+      "mode": "read_only",
+      "name": "SNet Symbolic Mesh",
+      "notes": "SNet is proof-bound as a read-only operator read model with no execution, connector, route, filesystem, or terminal-closure authority.",
+      "owner_surface": "reasoning",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+        ],
+        "status": "proof_bound",
+        "surface_id": "snet_operator_read_model"
+      },
+      "receipt_required": true,
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "aliases": [
+        "inceptadive_shadow",
+        "shadow_console"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/inceptadive-shadow-pass.md",
+        "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+      ],
+      "health_source": {
+        "ref": "/api/v1/console/shadow",
+        "type": "route"
+      },
+      "id": "inceptadive_shadow",
+      "lifecycle_state": "mounted",
+      "mode": "read_only_advisory",
+      "name": "InceptaDive Shadow",
+      "notes": "Shadow routes expose posture and health while execution authority remains false.",
+      "owner_surface": "reasoning",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+        ],
+        "status": "proof_bound",
+        "surface_id": "operator_console_read_models"
+      },
+      "receipt_required": true,
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "aliases": [
+        "assistant",
+        "personal_assistant"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": true,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "draft_only",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "evidence_refs": [
+        "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+        "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+      ],
+      "health_source": {
+        "ref": "docs/PERSONAL_ASSISTANT_MVP_ROADMAP.md",
+        "type": "doc"
+      },
+      "id": "personal_assistant",
+      "lifecycle_state": "draft_only",
+      "mode": "draft_only",
+      "name": "Personal Assistant",
+      "notes": "Personal Assistant has read-only and draft projections only. Live send and write paths remain blocked.",
+      "owner_surface": "assistant",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+        ],
+        "status": "proof_bound",
+        "surface_id": "assistant_kernel_planning"
+      },
+      "receipt_required": true,
+      "type": "assistant_product_core",
+      "wiring_state": "draft_only"
+    },
+    {
+      "aliases": [
+        "teamops",
+        "team_ops"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "live_probe",
+      "blocked_actions": [
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "health_source": {
+        "ref": "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+        "type": "validator"
+      },
+      "id": "teamops_shared_inbox",
+      "lifecycle_state": "live_probe",
+      "mode": "live_probe",
+      "name": "TeamOps Shared Inbox",
+      "notes": "TeamOps has terminal evidence bundle posture and read-only probe gates. Provider write and send paths remain blocked.",
+      "owner_surface": "assistant",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "type": "assistant_product_core",
+      "wiring_state": "live_probe"
+    },
+    {
+      "aliases": [
+        "gmail_gate",
+        "gmail"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/64_durable_gmail_connector_runtime_plan.md",
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "health_source": {
+        "ref": "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+        "type": "validator"
+      },
+      "id": "gmail_account_binding_gate",
+      "lifecycle_state": "approval_required",
+      "mode": "approval_required",
+      "name": "Gmail Account Binding Gate",
+      "notes": "Gmail gate may validate handoff evidence but does not claim mailbox write, send, or account-bound live authority.",
+      "owner_surface": "connector",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "type": "connector_action_core",
+      "wiring_state": "approval_required"
+    },
+    {
+      "aliases": [
+        "worker_runtime",
+        "worker_mesh"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+      ],
+      "health_source": {
+        "ref": "gateway/worker_mesh.py",
+        "type": "read_model"
+      },
+      "id": "worker_runtime",
+      "lifecycle_state": "bootstrapped",
+      "mode": "approval_required",
+      "name": "Worker Runtime",
+      "notes": "Worker mesh has runner binding witness. Product runtime dispatch remains blocked until separate authority evidence exists.",
+      "owner_surface": "execution",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+        ],
+        "status": "proof_bound",
+        "surface_id": "networked_worker_mesh"
+      },
+      "receipt_required": true,
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "aliases": [
+        "capability_worker",
+        "restricted_workers"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core",
+        "worker_runtime"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#capability_worker_execution",
+        "docs/40_proof_coverage_matrix.md#restricted_adapter_worker_boundaries"
+      ],
+      "health_source": {
+        "ref": "gateway/capability_worker.py",
+        "type": "read_model"
+      },
+      "id": "capability_workers",
+      "lifecycle_state": "bootstrapped",
+      "mode": "approval_required",
+      "name": "Capability Workers",
+      "notes": "Restricted and signed worker pathway exists. Future product authority remains gated.",
+      "owner_surface": "execution",
+      "proof_surface": {
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#capability_worker_execution"
+        ],
+        "status": "proof_bound",
+        "surface_id": "capability_worker_execution"
+      },
+      "receipt_required": true,
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "aliases": [
+        "nested_mind",
+        "nested_mind_submission"
+      ],
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "blocked",
+      "blocked_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+        "docs/runbooks/nested-mind-record-observation-staging.md"
+      ],
+      "health_source": {
+        "ref": "scripts/validate_nested_mind_p3_readiness.py",
+        "type": "validator"
+      },
+      "id": "nested_mind_bridge",
+      "lifecycle_state": "present",
+      "mode": "blocked",
+      "name": "Nested Mind Bridge",
+      "notes": "Bridge and submission infrastructure exists, but live memory topology activation remains blocked.",
+      "owner_surface": "memory",
+      "proof_surface": {
+        "evidence_refs": [],
+        "status": "awaiting_binding",
+        "surface_id": null
+      },
+      "receipt_required": false,
+      "type": "data_memory_core",
+      "wiring_state": "blocked"
+    }
+  ],
+  "component_bundles": [
+    {
+      "allowed_mode": "demo_v0",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "bundle_id": "personal_assistant_v0",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "personal_assistant",
+        "gmail_account_binding_gate",
+        "snet",
+        "inceptadive_shadow"
+      ],
+      "name": "Personal Assistant v0 Bundle",
+      "purpose": "Group the read-only and draft-only assistant components needed for Demo v0 posture without granting Gmail send, mailbox mutation, calendar write, connector call, or terminal closure authority.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "symbolic_reasoning_read_only",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "snet",
+        "inceptadive_shadow"
+      ],
+      "name": "Symbolic Reasoning Read-Only Bundle",
+      "purpose": "Group read-only symbolic reasoning surfaces for advisory analysis while route execution, connector calls, filesystem writes, runtime mutation, and terminal closure stay blocked.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "worker_runtime_foundation",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "worker_runtime",
+        "capability_workers"
+      ],
+      "name": "Worker Runtime Foundation Bundle",
+      "purpose": "Group bootstrapped worker surfaces for inventory and evidence tracking while live dispatch, provider write, filesystem write, runtime mutation, and terminal closure stay blocked.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    }
+  ],
+  "generated_at": "2026-06-15T00:00:00+00:00",
+  "mode": "foundation",
+  "next_action": "Bind router inventory and proof matrix coverage in follow-on Component Harness PRs without enabling live execution.",
+  "purpose": "Make current platform components visible, classified, gated, proof-aware, receipt-aware, health-aware, dependency-aware, and owner-scoped before action claims are allowed.",
+  "registry_guardrails": {
+    "foundation_mode": true,
+    "live_connector_send_enabled": false,
+    "live_execution_enabled": false,
+    "proof_matrix_binding_enforced": false,
+    "public_customer_ready_claimed": false,
+    "registry_only": true,
+    "route_binding_enabled": false,
+    "terminal_closure_claimed": false
+  },
+  "registry_id": "component_registry.foundation.v1",
+  "registry_is_not_terminal_closure": true,
+  "schema_version": 1,
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_component_registry.py",
+      "required_for_closure": true,
+      "validator_id": "component_registry_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_registry.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_registry_tests"
+    }
+  ]
+}
