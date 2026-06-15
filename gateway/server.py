@@ -78,6 +78,7 @@ from mcoi_runtime.personal_assistant import (
     build_personal_assistant_preview_plan,
     interpret_user_request,
     load_default_skill_registry,
+    plan_github_codex_review,
     plan_teamops_shared_inbox,
     prepare_memory_observation,
     review_memory_observation_candidate,
@@ -329,6 +330,26 @@ class GatewayPersonalAssistantTeamOpsPreviewRequest(BaseModel):
     github_secret_names: list[str] = Field(default_factory=list)
     operator_approval_ref: str = ""
     repository: str = "tamirat-wubie/mullu-control-plane"
+
+
+class GatewayPersonalAssistantGitHubCodexPreviewRequest(BaseModel):
+    """Stateless GitHub/Codex review preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Review this GitHub pull request and draft the next Codex instruction."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    repository_ref: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_ref: str = ""
+    change_summary: str
+    changed_files: list[str] = Field(default_factory=list)
+    risk_notes: list[str] = Field(default_factory=list)
+    blocking_questions: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_instruction_goal: str = "prepare the next safe Codex instruction"
 
 
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
@@ -2107,6 +2128,67 @@ def create_gateway_app(
                 "draft_creation_allowed": False,
                 "external_send_allowed": False,
                 "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/github-codex/review/preview")
+    def preview_personal_assistant_github_codex_review(req: GatewayPersonalAssistantGitHubCodexPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = plan_github_codex_review(
+                intent,
+                generated_at=now,
+                repository_ref=req.repository_ref,
+                pull_request_ref=req.pull_request_ref,
+                change_summary=req.change_summary,
+                changed_files=tuple(req.changed_files),
+                risk_notes=tuple(req.risk_notes),
+                blocking_questions=tuple(req.blocking_questions),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_instruction_goal=req.requested_instruction_goal,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant GitHub/Codex review preview",
+                    "error_code": "invalid_personal_assistant_github_codex_review_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_codex_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
                 "deployment_mutation_allowed": False,
                 "system_of_record_write_allowed": False,
                 "nested_mind_live_activation_allowed": False,

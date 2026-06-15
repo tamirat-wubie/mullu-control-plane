@@ -43,6 +43,10 @@ from .intake import (
     RequestInterface,
     interpret_user_request,
 )
+from .github_codex import (
+    GitHubCodexReviewProjection,
+    plan_github_codex_review,
+)
 from .memory import (
     MemoryConfidence,
     MemoryObservationCandidate,
@@ -116,6 +120,7 @@ __all__ = (
     "ApprovalScope",
     "ConnectorProofRef",
     "GovernedIntent",
+    "GitHubCodexReviewProjection",
     "MissingBinding",
     "RequestExecutionMode",
     "RequestInterface",
@@ -133,6 +138,7 @@ __all__ = (
     "prepare_memory_observation",
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
+    "plan_github_codex_review",
     "render_personal_assistant_console_html",
     "summarize_calendar_day_read_only",
     "summarize_inbox_read_only",

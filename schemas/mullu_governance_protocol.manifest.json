@@ -1583,6 +1583,12 @@
       "surface": "assistant"
     },
     {
+      "schema_id": "personal-assistant-github-codex-projection",
+      "path": "schemas/personal_assistant_github_codex_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-github-codex-projection:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "personal-assistant-console-read-model",
       "path": "schemas/personal_assistant_console_read_model.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",

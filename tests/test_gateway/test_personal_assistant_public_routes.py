@@ -485,6 +485,89 @@ def test_gateway_personal_assistant_teamops_preview_rejects_raw_payload() -> Non
     assert "teamops_handoff_plan_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_github_codex_preview_reviews_without_github_call() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/github-codex/review/preview",
+        json={
+            "request_id": "pa_request_gateway_github_codex_001",
+            "submitted_at": "2026-06-15T12:00:00+00:00",
+            "generated_at": "2026-06-15T12:01:00+00:00",
+            "connector_refs": [_github_connector_ref()],
+            "repository_ref": "tamirat-wubie/mullu-control-plane",
+            "pull_request_ref": "PR-1771",
+            "change_summary": "Adds a no-effect TeamOps shared-inbox preview projection.",
+            "changed_files": [
+                "gateway/server.py",
+                "schemas/personal_assistant_teamops_projection.schema.json",
+            ],
+            "risk_notes": ["must not call GitHub or mutate PR state"],
+            "evidence_refs": ["proof://github/pr/1771"],
+        },
+    )
+    payload = response.json()
+    projection = payload["github_codex_projection"]
+    plan = projection["plan"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["github_call_allowed"] is False
+    assert payload["effect_boundary"]["repository_mutation_allowed"] is False
+    assert payload["effect_boundary"]["pull_request_mutation_allowed"] is False
+    assert payload["effect_boundary"]["deployment_mutation_allowed"] is False
+    assert projection["skill_id"] == "github.pr.summarize"
+    assert plan["evidence_gate"]["github_call_performed"] is False
+    assert plan["evidence_gate"]["repository_write_performed"] is False
+    assert "github_not_called" in receipt["actions_not_taken"]
+    assert "pull_request_not_merged" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_github_codex_preview_rejects_missing_connector_proof() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/github-codex/review/preview",
+        json={
+            "request_id": "pa_request_gateway_github_codex_missing_connector_001",
+            "submitted_at": "2026-06-15T12:00:00+00:00",
+            "change_summary": "Review a PR without connector proof.",
+            "changed_files": ["gateway/server.py"],
+            "evidence_refs": ["proof://github/pr/missing"],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_github_codex_review_preview"
+
+
+def test_gateway_personal_assistant_github_codex_preview_rejects_secret_like_summary() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/github-codex/review/preview",
+        json={
+            "request_id": "pa_request_gateway_github_codex_raw_001",
+            "submitted_at": "2026-06-15T12:00:00+00:00",
+            "connector_refs": [_github_connector_ref()],
+            "repository_ref": "tamirat-wubie/mullu-control-plane",
+            "pull_request_ref": "PR-1771",
+            "change_summary": "Use Bearer secret-token-value",
+            "changed_files": ["gateway/server.py"],
+            "evidence_refs": ["proof://github/pr/1771"],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 400
+    assert "secret-token-value" not in serialized
+    assert "github_codex_review_plan_prepared" not in serialized
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",
@@ -539,4 +622,14 @@ def _gmail_connector_ref() -> dict[str, object]:
         "proof_state": "Pass",
         "private_data_allowed": True,
         "scopes": ["gmail.readonly"],
+    }
+
+
+def _github_connector_ref() -> dict[str, object]:
+    return {
+        "connector_id": "connector:github:operator",
+        "connector_name": "github",
+        "proof_state": "Pass",
+        "private_data_allowed": True,
+        "scopes": ["repo.read"],
     }
