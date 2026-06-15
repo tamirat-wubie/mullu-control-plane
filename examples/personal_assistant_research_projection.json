@@ -1,0 +1,335 @@
+{
+  "projection_set_id": "pa_research_projection_foundation_001",
+  "generated_at": "2026-06-15T19:05:00+00:00",
+  "governed": true,
+  "source_projection": "operator_supplied_public_source_metadata",
+  "projection_count": 2,
+  "projection_ids": [
+    "pa_research_projection_item_blocked_001",
+    "pa_research_projection_item_ready_001"
+  ],
+  "receipt_ids": [
+    "pa_receipt_research_projection_blocked_001_research_web_search",
+    "pa_receipt_research_projection_ready_001_research_web_search"
+  ],
+  "connectors_used": [],
+  "projections": [
+    {
+      "projection_id": "pa_research_projection_item_blocked_001",
+      "request_id": "pa_request_research_projection_blocked_001",
+      "skill_id": "research.web_search",
+      "plan_type": "research_source_compare_foundation",
+      "plan": {
+        "plan_type": "research_source_compare_foundation",
+        "research_question": "Compare current public evidence for the assistant research lane.",
+        "requested_synthesis_goal": "prepare a source comparison with citations",
+        "source_summaries": [],
+        "citation_refs": [],
+        "freshness_notes": [
+          "operator has not supplied source metadata"
+        ],
+        "conflict_notes": [],
+        "blocking_questions": [
+          "source_metadata_missing"
+        ],
+        "research_decision": "compare_only",
+        "answer_claim_authority": "awaiting_citations",
+        "source_compare": "Research question 'Compare current public evidence for the assistant research lane.' is awaiting operator-supplied public source metadata.",
+        "evidence_gate": {
+          "operator_supplied_evidence_complete": false,
+          "evidence_refs": [],
+          "blocking_reasons": [
+            "source_summaries_missing",
+            "citation_refs_missing",
+            "evidence_refs_missing",
+            "source_metadata_missing"
+          ],
+          "web_search_performed": false,
+          "source_contact_performed": false,
+          "external_submission_performed": false,
+          "public_post_performed": false,
+          "paid_subscription_performed": false
+        },
+        "next_actions": [
+          "source_summaries_missing",
+          "citation_refs_missing",
+          "evidence_refs_missing",
+          "source_metadata_missing"
+        ],
+        "effect_boundary": "research_source_compare_no_external_effect",
+        "execution_allowed": false,
+        "web_search_allowed": false,
+        "source_contact_allowed": false,
+        "external_submission_allowed": false,
+        "public_post_allowed": false,
+        "paid_subscription_allowed": false,
+        "memory_write_allowed": false
+      },
+      "receipt": {
+        "receipt_id": "pa_receipt_research_projection_blocked_001_research_web_search",
+        "request_id": "pa_request_research_projection_blocked_001",
+        "skill_id": "research.web_search",
+        "mode": "preview",
+        "risk_level": "P0",
+        "inputs_used": [
+          "operator_supplied_source_summaries",
+          "citation_refs",
+          "evidence_refs"
+        ],
+        "connectors_used": [],
+        "decision": "blocked",
+        "approval_required": false,
+        "approval_ref": "",
+        "actions_taken": [
+          "research_source_compare_plan_prepared",
+          "citation_pack_projected",
+          "receipt_created"
+        ],
+        "actions_not_taken": [
+          "web_search_not_performed",
+          "source_not_contacted",
+          "external_submission_not_performed",
+          "public_post_not_created",
+          "paid_subscription_not_started",
+          "raw_source_body_not_serialized",
+          "secret_values_not_serialized",
+          "system_of_record_not_mutated",
+          "memory_not_written",
+          "nested_mind_not_activated"
+        ],
+        "redactions": [
+          "raw_source_body_not_serialized",
+          "secret_values_not_serialized"
+        ],
+        "private_payload_policy": {
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false,
+          "connector_payload_projection": "no_connector_payload",
+          "body_projection": "redacted_summary"
+        },
+        "timestamp": "2026-06-15T19:05:00+00:00",
+        "evidence_refs": [
+          "proof://personal-assistant/request/research_projection_blocked_001",
+          "proof://personal-assistant/research/research_projection_blocked_001"
+        ],
+        "memory_observation_refs": [],
+        "replay_refs": [
+          "replay://personal-assistant/research/research_projection_blocked_001"
+        ],
+        "outcome": "AwaitingEvidence",
+        "metadata": {
+          "research_decision": "compare_only",
+          "answer_claim_authority": "awaiting_citations",
+          "blocking_reasons": [
+            "source_summaries_missing",
+            "citation_refs_missing",
+            "evidence_refs_missing",
+            "source_metadata_missing"
+          ],
+          "live_connector_execution_allowed": false,
+          "web_search_performed": false,
+          "external_write_allowed": false,
+          "public_post_allowed": false,
+          "paid_subscription_allowed": false,
+          "memory_write_allowed": false,
+          "system_of_record_write_allowed": false
+        }
+      }
+    },
+    {
+      "projection_id": "pa_research_projection_item_ready_001",
+      "request_id": "pa_request_research_projection_ready_001",
+      "skill_id": "research.web_search",
+      "plan_type": "research_source_compare_foundation",
+      "plan": {
+        "plan_type": "research_source_compare_foundation",
+        "research_question": "Compare the documented search receipt contract and Personal Assistant research lane.",
+        "requested_synthesis_goal": "prepare a source comparison with citations",
+        "source_summaries": [
+          {
+            "source_ref": "docs/78_search_receipt_contract.md",
+            "title": "Search Receipt Contract",
+            "publisher": "Mullusi repository",
+            "published_at": "2026-06-14",
+            "summary": "Defines evidence metadata, citations, freshness, conflicts, and retrieval safety.",
+            "trust_tier": "primary",
+            "citation_ref": "citation://docs/search-receipt-contract"
+          },
+          {
+            "source_ref": "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+            "title": "Personal Assistant Skill Architecture",
+            "publisher": "Mullusi repository",
+            "published_at": "2026-06-15",
+            "summary": "Defines research skill boundaries for source compare and citation packs.",
+            "trust_tier": "primary",
+            "citation_ref": "citation://docs/personal-assistant-skill-architecture"
+          }
+        ],
+        "citation_refs": [
+          "citation://docs/search-receipt-contract",
+          "citation://docs/personal-assistant-skill-architecture"
+        ],
+        "freshness_notes": [
+          "operator supplied dated repository documents"
+        ],
+        "conflict_notes": [
+          "no conflict supplied by operator"
+        ],
+        "blocking_questions": [],
+        "research_decision": "compare_only",
+        "answer_claim_authority": "citation_backed_summary_only",
+        "source_compare": "Compare 2 operator-supplied public source summaries for 'Compare the documented search receipt contract and Personal Assistant research lane.': Search Receipt Contract, Personal Assistant Skill Architecture. Freshness notes: operator supplied dated repository documents. Conflict notes: no conflict supplied by operator. Use only citation-backed summaries.",
+        "evidence_gate": {
+          "operator_supplied_evidence_complete": true,
+          "evidence_refs": [
+            "proof://docs/search-receipt-contract",
+            "proof://docs/personal-assistant-skill-architecture"
+          ],
+          "blocking_reasons": [],
+          "web_search_performed": false,
+          "source_contact_performed": false,
+          "external_submission_performed": false,
+          "public_post_performed": false,
+          "paid_subscription_performed": false
+        },
+        "next_actions": [
+          "operator may review the citation-backed comparison before using it"
+        ],
+        "effect_boundary": "research_source_compare_no_external_effect",
+        "execution_allowed": false,
+        "web_search_allowed": false,
+        "source_contact_allowed": false,
+        "external_submission_allowed": false,
+        "public_post_allowed": false,
+        "paid_subscription_allowed": false,
+        "memory_write_allowed": false
+      },
+      "receipt": {
+        "receipt_id": "pa_receipt_research_projection_ready_001_research_web_search",
+        "request_id": "pa_request_research_projection_ready_001",
+        "skill_id": "research.web_search",
+        "mode": "preview",
+        "risk_level": "P0",
+        "inputs_used": [
+          "operator_supplied_source_summaries",
+          "citation_refs",
+          "evidence_refs"
+        ],
+        "connectors_used": [],
+        "decision": "allowed",
+        "approval_required": false,
+        "approval_ref": "",
+        "actions_taken": [
+          "research_source_compare_plan_prepared",
+          "citation_pack_projected",
+          "receipt_created"
+        ],
+        "actions_not_taken": [
+          "web_search_not_performed",
+          "source_not_contacted",
+          "external_submission_not_performed",
+          "public_post_not_created",
+          "paid_subscription_not_started",
+          "raw_source_body_not_serialized",
+          "secret_values_not_serialized",
+          "system_of_record_not_mutated",
+          "memory_not_written",
+          "nested_mind_not_activated"
+        ],
+        "redactions": [
+          "raw_source_body_not_serialized",
+          "secret_values_not_serialized"
+        ],
+        "private_payload_policy": {
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false,
+          "connector_payload_projection": "no_connector_payload",
+          "body_projection": "redacted_summary"
+        },
+        "timestamp": "2026-06-15T19:05:00+00:00",
+        "evidence_refs": [
+          "proof://personal-assistant/request/research_projection_ready_001",
+          "proof://docs/search-receipt-contract",
+          "proof://docs/personal-assistant-skill-architecture",
+          "proof://personal-assistant/research/research_projection_ready_001"
+        ],
+        "memory_observation_refs": [],
+        "replay_refs": [
+          "replay://personal-assistant/research/research_projection_ready_001"
+        ],
+        "outcome": "SolvedVerified",
+        "metadata": {
+          "research_decision": "compare_only",
+          "answer_claim_authority": "citation_backed_summary_only",
+          "blocking_reasons": [],
+          "live_connector_execution_allowed": false,
+          "web_search_performed": false,
+          "external_write_allowed": false,
+          "public_post_allowed": false,
+          "paid_subscription_allowed": false,
+          "memory_write_allowed": false,
+          "system_of_record_write_allowed": false
+        }
+      }
+    }
+  ],
+  "effect_boundary": {
+    "research_compare_records_allowed": true,
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "web_search_allowed": false,
+    "web_search_performed": false,
+    "source_contact_allowed": false,
+    "external_submission_allowed": false,
+    "public_post_allowed": false,
+    "paid_subscription_allowed": false,
+    "system_of_record_write_allowed": false,
+    "memory_write_allowed": false,
+    "public_readiness_claim_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false
+  },
+  "private_payload_policy": {
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false,
+    "connector_payload_projection": "no_connector_payload",
+    "raw_source_body_projection": "forbidden",
+    "body_projection": "redacted_summary"
+  },
+  "assurance": {
+    "assurance_id": "personal_assistant_research_projection_no_effect_assurance",
+    "outcome": "AwaitingEvidence",
+    "foundation_only": true,
+    "ready_for_live_web_search": false,
+    "ready_for_external_submission": false,
+    "ready_for_public_posting": false,
+    "ready_for_paid_action": false,
+    "ready_for_customer_readiness_claim": false,
+    "authority_drift_detected": false,
+    "checked_controls": [
+      "research_projection_is_not_web_search",
+      "no_source_contact",
+      "no_external_submission",
+      "no_public_post",
+      "no_paid_subscription",
+      "no_memory_write",
+      "no_secret_value_serialization",
+      "no_raw_source_body_serialization"
+    ],
+    "blocking_reasons": [
+      "blocked_projection_awaiting_evidence"
+    ],
+    "next_action": "review citation-backed source comparison before use"
+  },
+  "metadata": {
+    "foundation_only": true,
+    "projection_contract": "research_source_compare_evidence_only",
+    "runtime_boundary": "research_projection_does_not_perform_web_search",
+    "live_connector_execution_allowed": false,
+    "web_search_allowed": false,
+    "external_submission_allowed": false,
+    "public_post_allowed": false,
+    "paid_subscription_allowed": false,
+    "system_of_record_write_allowed": false
+  }
+}

@@ -274,6 +274,33 @@ call GitHub, read repositories, open or merge pull requests, push branches,
 create issues, submit reviews, deploy services, serialize raw diffs or secrets,
 activate Nested Mind, or claim customer readiness.
 
+## Research Source-Compare Contract
+
+Research source-compare plans are operator-supplied public-source evidence
+projections, not live retrieval operations. A research plan may compare bounded
+source summaries, bind citation refs, classify freshness/conflict notes, and
+emit a receipt. It must keep:
+
+```text
+execution_allowed = false
+live_connector_execution_allowed = false
+web_search_allowed = false
+web_search_performed = false
+source_contact_allowed = false
+external_submission_allowed = false
+public_post_allowed = false
+paid_subscription_allowed = false
+system_of_record_write_allowed = false
+memory_write_allowed = false
+```
+
+The public preview route is
+`/api/v1/personal-assistant/research/source-compare/preview`. It accepts bounded
+operator-supplied source metadata and citation refs only. It does not browse the
+web, contact sources, submit externally, post publicly, start subscriptions,
+write memory, serialize raw source bodies or secrets, activate Nested Mind, or
+claim customer readiness.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
@@ -290,13 +317,14 @@ python scripts/validate_personal_assistant_memory_observation.py
 python scripts/validate_personal_assistant_memory_review.py
 python scripts/validate_personal_assistant_teamops_projection.py
 python scripts/validate_personal_assistant_github_codex_projection.py
+python scripts/validate_personal_assistant_research_projection.py
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

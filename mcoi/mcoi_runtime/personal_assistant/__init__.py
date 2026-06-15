@@ -47,6 +47,10 @@ from .github_codex import (
     GitHubCodexReviewProjection,
     plan_github_codex_review,
 )
+from .research import (
+    ResearchSourceCompareProjection,
+    plan_research_source_compare,
+)
 from .memory import (
     MemoryConfidence,
     MemoryObservationCandidate,
@@ -115,6 +119,7 @@ __all__ = (
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
     "RedactedInboxMessage",
+    "ResearchSourceCompareProjection",
     "TaskDraftInput",
     "TeamOpsSharedInboxProjection",
     "ApprovalScope",
@@ -139,6 +144,7 @@ __all__ = (
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
     "plan_github_codex_review",
+    "plan_research_source_compare",
     "render_personal_assistant_console_html",
     "summarize_calendar_day_read_only",
     "summarize_inbox_read_only",
