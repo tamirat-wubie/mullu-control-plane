@@ -255,6 +255,37 @@ def install_global_exception_handler(
     app.add_exception_handler(Exception, global_exception_handler)
 
 
+def iter_effective_routes(app: FastAPI) -> tuple[Any, ...]:
+    """Return route objects with included-router wrappers expanded.
+
+    FastAPI 0.137 stores ``app.include_router`` entries as internal
+    ``_IncludedRouter`` wrappers. The server still dispatches correctly, but
+    route-surface validators and legacy tests need the effective path-bearing
+    routes. This helper keeps that compatibility boundary explicit.
+    """
+
+    effective_routes: list[Any] = []
+    for route in app.routes:
+        route_contexts = getattr(route, "effective_route_contexts", None)
+        if not callable(route_contexts):
+            effective_routes.append(route)
+            continue
+        for context in route_contexts():
+            candidate = getattr(context, "original_route", None)
+            if candidate is None:
+                candidate = getattr(context, "starlette_route", None)
+            if candidate is None:
+                raise RuntimeError("included router context is missing an effective route")
+            effective_routes.append(candidate)
+    return tuple(effective_routes)
+
+
+def _normalize_default_router_routes(app: FastAPI) -> None:
+    """Flatten default included-router wrappers after deterministic bootstrap."""
+
+    app.router.routes = list(iter_effective_routes(app))
+
+
 def include_default_routers(app: FastAPI) -> None:
     """Mount the default API router set onto the application."""
     from mcoi_runtime.app.routers.adapter import router as adapter_router
@@ -351,3 +382,4 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(domains_router)
     app.include_router(software_receipts_router)
     app.include_router(god_mode_router)
+    _normalize_default_router_routes(app)
