@@ -2606,6 +2606,40 @@ class TestGatewayStatus:
         assert whqr_witness["canonical_hash"] == "sha256:closure-whqr-canonical"
         assert data["terminal_certificate"]["response_evidence_closure_id"]
 
+    def test_command_closure_read_model_rejects_malformed_whqr_binding(
+        self, gateway_app, client
+    ):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "closure-malformed-token"},
+        )
+        assert msg_resp.status_code == 200
+        certificate = gateway_app.state.command_ledger.latest_terminal_certificate()
+        assert certificate is not None
+        command_id = certificate.command_id
+        gateway_app.state.command_ledger._terminal_certificates[command_id] = replace(
+            certificate,
+            metadata={
+                **certificate.metadata,
+                "whqr_canonical_hash": "closure-whqr-canonical",
+                "whqr_semantics_hash": "sha256:closure-whqr-semantics",
+                "whqr_version": "0.1.0",
+            },
+        )
+
+        resp = client.get(f"/commands/{command_id}/closure")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["whqr_replay_binding"] == {}
+        assert data["whqr_replay_ref"] == ""
+        invariant_ids = {
+            witness["invariant_id"]
+            for witness in data["proof_coverage_witnesses"]
+        }
+        assert "terminal_closure_exposes_whqr_replay_ref" not in invariant_ids
+
     def test_command_interpretation_receipt_read_model_bounds_raw_message(
         self, gateway_app, client
     ):
@@ -2879,9 +2913,9 @@ class TestGatewayStatus:
 
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
         whqr_binding = {
-            "replay_ref": "whqr://replay/proof-canonical-hash",
-            "canonical_hash": "proof-canonical-hash",
-            "semantics_hash": "proof-semantics-hash",
+            "replay_ref": "whqr://replay/sha256:proof-canonical-hash",
+            "canonical_hash": "sha256:proof-canonical-hash",
+            "semantics_hash": "sha256:proof-semantics-hash",
             "version": "0.1.0",
         }
         command = gateway_app.state.command_ledger.create_command(
@@ -2952,13 +2986,60 @@ class TestGatewayStatus:
         assert proof["memory_ref"] == "memory://uact-1"
         assert proof["whqr_replay_binding"] == whqr_binding
         assert data["whqr_replay_binding"] == whqr_binding
-        assert data["whqr_replay_ref"] == "whqr://replay/proof-canonical-hash"
+        assert data["whqr_replay_ref"] == "whqr://replay/sha256:proof-canonical-hash"
         assert proof["terminal_certificate_id"] == "terminal-1"
         assert proof["terminal_disposition"] == "committed"
         assert proof["learning_admission_id"] == "learn-1"
         assert proof["learning_status"] == "admit"
         assert CommandState.DISPATCHED.value in data["state_sequence"]
         assert CommandState.LEARNING_DECIDED.value in data["state_sequence"]
+
+    def test_command_universal_action_proof_read_model_rejects_malformed_whqr_binding(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proof-malformed",
+            idempotency_key="universal-proof-malformed",
+            intent="llm_completion",
+            payload={"body": "run governed action"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": {
+                    "action_id": "uact-malformed",
+                    "blocked": False,
+                    "block_reason": "",
+                    "proof_hash": "proof-hash-malformed",
+                    "capability_id": "shell_command",
+                    "dispatch_ledger_hash": "dispatch-ledger-malformed",
+                    "closure_state": "closed_allowed",
+                    "reconciliation_ref": "reconciliation://uact-malformed",
+                    "memory_ref": "memory://uact-malformed",
+                    "whqr_replay_binding": {
+                        "replay_ref": "whqr://replay/sha256:proof-canonical-hash",
+                        "canonical_hash": "proof-canonical-hash",
+                        "semantics_hash": "sha256:proof-semantics-hash",
+                        "version": "0.1.0",
+                    },
+                    "terminal_certificate_id": "",
+                    "learning_admission_id": "",
+                },
+            },
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/universal-action-proof")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["whqr_replay_binding"] == {}
+        assert data["whqr_replay_ref"] == ""
+        assert data["universal_action_proof"]["whqr_replay_binding"] == {}
 
     def test_command_universal_action_proof_missing_returns_404(
         self, gateway_app, client
@@ -2999,8 +3080,8 @@ class TestGatewayStatus:
         )
         record["action_envelope"]["intent"] = command.command_id
         record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/fixture-canonical-hash",
-            "canonical_hash": "fixture-canonical-hash",
+            "replay_ref": "whqr://replay/sha256:fixture-canonical-hash",
+            "canonical_hash": "sha256:fixture-canonical-hash",
             "semantics_hash": "sha256:fixture-semantics",
             "version": "0.1.0",
         }
@@ -3036,10 +3117,10 @@ class TestGatewayStatus:
         assert data["reconciliation_ref"] == record["closure"]["reconciliation_ref"]
         assert data["memory_ref"] == record["closure"]["memory_ref"]
         assert data["whqr_replay_binding"] == record["closure"]["whqr_replay_binding"]
-        assert data["whqr_replay_ref"] == "whqr://replay/fixture-canonical-hash"
+        assert data["whqr_replay_ref"] == "whqr://replay/sha256:fixture-canonical-hash"
         assert (
             data["whqr_replay_binding"]["replay_ref"]
-            == "whqr://replay/fixture-canonical-hash"
+            == "whqr://replay/sha256:fixture-canonical-hash"
         )
         assert data["universal_action_orchestration"]["raw_reasoning_included"] is False
 
@@ -3534,8 +3615,8 @@ class TestGatewayStatus:
                     "reconciliation_ref": "reconciliation://uact-committed",
                     "memory_ref": "memory://uact-committed",
                     "whqr_replay_binding": {
-                        "replay_ref": "whqr://replay/operator-canonical-hash",
-                        "canonical_hash": "operator-canonical-hash",
+                        "replay_ref": "whqr://replay/sha256:operator-canonical-hash",
+                        "canonical_hash": "sha256:operator-canonical-hash",
                         "semantics_hash": "sha256:operator-semantics",
                         "version": "0.1.0",
                     },
@@ -3592,13 +3673,13 @@ class TestGatewayStatus:
         assert committed_row["reconciliation_ref"] == "reconciliation://uact-committed"
         assert committed_row["memory_ref"] == "memory://uact-committed"
         assert committed_row["whqr_replay_binding"] == {
-            "replay_ref": "whqr://replay/operator-canonical-hash",
-            "canonical_hash": "operator-canonical-hash",
+            "replay_ref": "whqr://replay/sha256:operator-canonical-hash",
+            "canonical_hash": "sha256:operator-canonical-hash",
             "semantics_hash": "sha256:operator-semantics",
             "version": "0.1.0",
         }
         assert committed_row["whqr_replay_ref"] == (
-            "whqr://replay/operator-canonical-hash"
+            "whqr://replay/sha256:operator-canonical-hash"
         )
         assert invalid_resp.status_code == 400
         assert invalid_resp.json()["detail"] == "blocked must be true or false"
@@ -3631,8 +3712,8 @@ class TestGatewayStatus:
                     "reconciliation_ref": "reconciliation://uact-console",
                     "memory_ref": "memory://uact-console",
                     "whqr_replay_binding": {
-                        "replay_ref": "whqr://replay/console-canonical-hash",
-                        "canonical_hash": "console-canonical-hash",
+                        "replay_ref": "whqr://replay/sha256:console-canonical-hash",
+                        "canonical_hash": "sha256:console-canonical-hash",
                         "semantics_hash": "sha256:console-semantics",
                         "version": "0.1.0",
                     },
@@ -3653,7 +3734,7 @@ class TestGatewayStatus:
         assert "closed_blocked" in resp.text
         assert "reconciliation://uact-console" in resp.text
         assert "memory://uact-console" in resp.text
-        assert "whqr://replay/console-canonical-hash" in resp.text
+        assert "whqr://replay/sha256:console-canonical-hash" in resp.text
 
     def test_operator_receipt_viewer_read_model_groups_bounded_receipts(
         self, gateway_app, client
