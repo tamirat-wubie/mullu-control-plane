@@ -48,6 +48,7 @@ and receipt-backed until a later status witness promotes the project.
 - `ReadOnlyWorkerRuntimeReceiptHandoff Contract` binds the next runtime receipt-emitter proof boundary while keeping runner registration, dispatch endpoint registration, receipt-emitter registration, filesystem writes, connector calls, success claims, and terminal closure denied.
 - `ReadOnlyWorkerRuntimeReceiptEmitterDryRun Contract` records dry-run emitter-envelope evidence while still denying runner registration, dispatch endpoint registration, runtime emitter registration, runtime receipt schema binding, filesystem writes, connector calls, runtime receipt emission, success claims, and terminal closure.
 - `ReadOnlyWorkerRuntimeRunnerBindingWitness Contract` records witness-only evidence for future runtime runner registration and runtime receipt schema binding while keeping registration, binding, dispatch, filesystem writes, connector calls, success claims, and terminal closure unperformed.
+- `ReadOnlyWorkerRuntimeReceiptCandidate Contract` defines the future runtime receipt envelope for the selected read-only worker path while keeping schema binding, dispatch, receipt emission, worker invocation, writes, connector calls, success claims, and terminal closure unperformed.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.
