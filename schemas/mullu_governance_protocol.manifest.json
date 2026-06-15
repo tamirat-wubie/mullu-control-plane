@@ -215,6 +215,12 @@
       "surface": "ci"
     },
     {
+      "schema_id": "github-app-installation-token-exchange-receipt",
+      "path": "schemas/github_app_token_exchange_receipt.schema.json",
+      "urn": "urn:mullusi:schema:github-app-installation-token-exchange-receipt:1",
+      "surface": "ci"
+    },
+    {
       "schema_id": "runtime-witness",
       "path": "schemas/runtime_witness.schema.json",
       "urn": "urn:mullusi:schema:runtime-witness:1",

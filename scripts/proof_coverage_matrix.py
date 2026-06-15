@@ -6881,6 +6881,61 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "github_app_token_exchange_receipts",
+            [
+                "GitHubAppTokenExchange.evaluate",
+                "GitHubAppTokenExchangeRequest",
+                "GitHubAppTokenExchangeReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/github_app_token_exchange.py",
+                "schemas/github_app_token_exchange_receipt.schema.json",
+                "tests/test_gateway/test_github_app_token_exchange.py",
+            ],
+            "GitHub App token-exchange receipts build hash-bound installation-token request payloads, preserve plan-only and dry-run no-exchange modes, and require approval, external exchange execution, 2xx response, token fingerprint, token expiry, and response hash evidence before an exchange-approved token claim is admitted.",
+            [
+                "token_exchange_payload_is_hash_bound",
+                "plan_only_does_not_exchange_token",
+                "dry_run_rejects_token_response_evidence",
+                "exchange_approved_requires_external_receipt",
+                "exchange_approved_binds_external_receipt",
+                "secret_token_absence_verified",
+                "token_ttl_bounds_enforced",
+                "github_app_token_exchange_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "token_exchange_payload_is_hash_bound": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+                ],
+                "plan_only_does_not_exchange_token": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+                ],
+                "dry_run_rejects_token_response_evidence": [
+                    "github_app_token_exchange_dry_run_rejects_response_evidence"
+                ],
+                "exchange_approved_requires_external_receipt": [
+                    "github_app_token_exchange_approved_requires_external_receipt"
+                ],
+                "exchange_approved_binds_external_receipt": [
+                    "github_app_token_exchange_approved_binds_external_receipt"
+                ],
+                "secret_token_absence_verified": [
+                    "github_app_token_exchange_rejects_raw_token_disclosure"
+                ],
+                "token_ttl_bounds_enforced": [
+                    "github_app_token_exchange_rejects_invalid_ttl_before_planning"
+                ],
+                "github_app_token_exchange_receipt_schema_valid": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload",
+                    "github_app_token_exchange_approved_binds_external_receipt",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9066,6 +9121,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_github_check_run_write_receipt_contract",
             "surfaces": ["github_check_run_write_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_app_token_exchange_receipt_contract",
+            "surfaces": ["github_app_token_exchange_receipts"],
             "status": "closed",
         },
         {
