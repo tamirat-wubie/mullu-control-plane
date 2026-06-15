@@ -200,6 +200,54 @@ def test_distributed_lease_claim_blocks_observed_payload_mismatch() -> None:
     assert receipt.claim_outcome == "not_observed"
 
 
+def test_distributed_lease_claim_classifies_conflict_response() -> None:
+    receipt = DistributedLeaseClaimPlanner().evaluate(
+        replace(_approved_request(), response_status_code=409)
+    )
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), asdict(receipt))
+
+    assert errors == []
+    assert receipt.status == "blocked"
+    assert receipt.response_status_code == 409
+    assert receipt.claim_outcome == "conflict"
+    assert "response_status_code_2xx_required" in receipt.blocked_reasons
+    assert "distributed_lease_claim_block" in receipt.required_controls
+    assert receipt.external_claim_admitted is False
+    assert receipt.lease_service_call_performed is False
+
+
+def test_distributed_lease_claim_classifies_deferred_response() -> None:
+    receipt = DistributedLeaseClaimPlanner().evaluate(
+        replace(_approved_request(), response_status_code=429)
+    )
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), asdict(receipt))
+
+    assert errors == []
+    assert receipt.status == "blocked"
+    assert receipt.response_status_code == 429
+    assert receipt.claim_outcome == "deferred"
+    assert "response_status_code_2xx_required" in receipt.blocked_reasons
+    assert "distributed_lease_claim_block" in receipt.required_controls
+    assert receipt.external_claim_admitted is False
+    assert receipt.raw_secret_stored is False
+
+
+def test_distributed_lease_claim_classifies_rejected_response() -> None:
+    receipt = DistributedLeaseClaimPlanner().evaluate(
+        replace(_approved_request(), response_status_code=403)
+    )
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), asdict(receipt))
+
+    assert errors == []
+    assert receipt.status == "blocked"
+    assert receipt.response_status_code == 403
+    assert receipt.claim_outcome == "rejected"
+    assert "response_status_code_2xx_required" in receipt.blocked_reasons
+    assert "distributed_lease_claim_block" in receipt.required_controls
+    assert receipt.external_claim_admitted is False
+    assert receipt.request_authentication_performed is False
+
+
 def test_distributed_lease_claim_blocks_expired_or_unfenced_grant() -> None:
     receipt = DistributedLeaseClaimPlanner().evaluate(
         replace(

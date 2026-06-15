@@ -318,7 +318,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["github_branch_protection_reconcile_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["github_branch_protection_reconcile_receipts"]["exact_test_anchor_count"] == 10
     assert surfaces["distributed_lease_claim_receipts"]["unanchored_witness_count"] == 0
-    assert surfaces["distributed_lease_claim_receipts"]["exact_test_anchor_count"] == 11
+    assert surfaces["distributed_lease_claim_receipts"]["exact_test_anchor_count"] == 14
     assert surfaces["oidc_jwks_refresh_evidence"]["unanchored_witness_count"] == 0
     assert surfaces["oidc_jwks_refresh_evidence"]["exact_test_anchor_count"] == 6
     assert surfaces["trusted_identity_header_boundary"]["unanchored_witness_count"] == 0
@@ -5172,6 +5172,9 @@ def test_distributed_lease_claim_receipt_surface_binds_backend_claim_evidence() 
     assert "claim_approved_requires_external_receipts" in witnesses
     assert "claim_approved_binds_adapter_receipt" in witnesses
     assert "claim_approved_allows_unfenced_policy_without_token" in witnesses
+    assert "claim_approved_classifies_conflict_response" in witnesses
+    assert "claim_approved_classifies_deferred_response" in witnesses
+    assert "claim_approved_classifies_rejected_response" in witnesses
     assert "observed_payload_mismatch_blocks_claim" in witnesses
     assert "expired_or_unfenced_claim_blocks_dispatch" in witnesses
     assert "secret_value_absence_verified" in witnesses

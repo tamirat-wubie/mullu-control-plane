@@ -7,6 +7,7 @@
     "Plan-only mode emits an explicit non-live receipt that does not claim lease acquisition, perform backend calls, authenticate requests, or store secrets",
     "Dry-run mode rejects approval refs, adapter claim receipt refs, response status, response hash, observed payload hash, lease expiry, and fencing token evidence",
     "Claim-approved mode requires operator approval, adapter claim receipt ref, 2xx response status, response hash, observed payload hash matching the expected job payload hash, future lease expiry, and a fencing token when policy requires fencing before external claim admission",
+    "Claim-approved mode classifies observed non-2xx adapter responses into conflict, deferred, or rejected claim outcomes while blocking external claim admission",
     "Observed payload hash mismatch, expired lease grants, missing fencing tokens, oversized lease windows, missing evidence refs, and disabled receipt policy all block admission with explicit reasons",
     "Raw token, JWT, or private-key shaped material in metadata or refs blocks receipt admission",
     "The distributed lease claim receipt is schema-backed, indexed in the governance protocol manifest, and included in proof coverage matrix witnesses",
@@ -29,6 +30,7 @@
   ],
   "constraints": [
     "claim-approved receipts must bind external adapter evidence instead of executing the distributed lease claim in the planner",
+    "observed non-2xx adapter responses must preserve conflict, deferred, or rejected claim outcome evidence instead of collapsing to not_observed",
     "plan-only and dry-run modes must remain free of external effects and live claim evidence",
     "expected and observed payload hashes must use sha256-prefixed hex digests and must match before claim admission",
     "claim-approved receipts must require a future lease expiry and fencing token when policy requires fencing",

@@ -7205,6 +7205,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "claim_approved_requires_external_receipts",
                 "claim_approved_binds_adapter_receipt",
                 "claim_approved_allows_unfenced_policy_without_token",
+                "claim_approved_classifies_conflict_response",
+                "claim_approved_classifies_deferred_response",
+                "claim_approved_classifies_rejected_response",
                 "observed_payload_mismatch_blocks_claim",
                 "expired_or_unfenced_claim_blocks_dispatch",
                 "secret_value_absence_verified",
@@ -7232,6 +7235,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "claim_approved_allows_unfenced_policy_without_token": [
                     "distributed_lease_claim_allows_unfenced_policy_without_token"
+                ],
+                "claim_approved_classifies_conflict_response": [
+                    "distributed_lease_claim_classifies_conflict_response"
+                ],
+                "claim_approved_classifies_deferred_response": [
+                    "distributed_lease_claim_classifies_deferred_response"
+                ],
+                "claim_approved_classifies_rejected_response": [
+                    "distributed_lease_claim_classifies_rejected_response"
                 ],
                 "observed_payload_mismatch_blocks_claim": [
                     "distributed_lease_claim_blocks_observed_payload_mismatch"
