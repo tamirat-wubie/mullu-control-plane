@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:distributed-lease-claim-receipt:1",
+  "title": "Distributed Lease Claim Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "mode",
+    "status",
+    "backend_kind",
+    "service_id",
+    "endpoint",
+    "policy",
+    "policy_hash",
+    "job",
+    "job_id",
+    "worker_id",
+    "target",
+    "attempt",
+    "expected_payload_hash",
+    "lease_seconds",
+    "runtime_now_utc",
+    "request_payload",
+    "request_payload_hash",
+    "operation_payload",
+    "operation_payload_hash",
+    "plan_hash",
+    "approval_ref",
+    "adapter_claim_receipt_ref",
+    "response_status_code",
+    "response_payload_hash",
+    "observed_payload_hash",
+    "lease_expires_at",
+    "fencing_token",
+    "claim_outcome",
+    "blocked_reasons",
+    "required_actions",
+    "required_controls",
+    "evidence_refs",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "external_claim_admitted",
+    "lease_service_call_performed",
+    "request_authentication_performed",
+    "raw_secret_stored",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^distributed-lease-claim-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "mode": {
+      "type": "string",
+      "enum": ["plan_only", "dry_run", "claim_approved"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "dry_run_accepted", "claim_receipt_bound", "blocked"]
+    },
+    "backend_kind": {"$ref": "#/$defs/backend_kind"},
+    "service_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:/-]+$"
+    },
+    "endpoint": {
+      "type": "string",
+      "pattern": "^$|^https://[^\\s]+$"
+    },
+    "policy": {"$ref": "#/$defs/policy"},
+    "policy_hash": {"$ref": "#/$defs/sha256_hex"},
+    "job": {"$ref": "#/$defs/job"},
+    "job_id": {"type": "string", "minLength": 1},
+    "worker_id": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "attempt": {"type": "integer", "minimum": 1},
+    "expected_payload_hash": {"$ref": "#/$defs/sha256_ref"},
+    "lease_seconds": {"type": "integer", "minimum": 1},
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "request_payload": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "request_payload_hash": {"$ref": "#/$defs/sha256_hex"},
+    "operation_payload": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "operation_payload_hash": {"$ref": "#/$defs/sha256_hex"},
+    "plan_hash": {"$ref": "#/$defs/sha256_hex"},
+    "approval_ref": {"type": "string"},
+    "adapter_claim_receipt_ref": {"type": "string"},
+    "response_status_code": {"type": "integer", "minimum": 0, "maximum": 599},
+    "response_payload_hash": {
+      "type": "string",
+      "pattern": "^$|^sha256:[0-9a-f]{64}$"
+    },
+    "observed_payload_hash": {
+      "type": "string",
+      "pattern": "^$|^sha256:[0-9a-f]{64}$"
+    },
+    "lease_expires_at": {
+      "type": "string",
+      "pattern": "^$|^[^\\s]+$"
+    },
+    "fencing_token": {"type": "string"},
+    "claim_outcome": {
+      "type": "string",
+      "enum": ["not_observed", "granted", "rejected", "conflict", "deferred"]
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:distributed-lease-claim-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "external_claim_admitted": {"type": "boolean"},
+    "lease_service_call_performed": {"type": "boolean", "const": false},
+    "request_authentication_performed": {"type": "boolean", "const": false},
+    "raw_secret_stored": {"type": "boolean", "const": false},
+    "receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "lease_service_not_called",
+        "request_authentication_not_performed",
+        "raw_secret_not_stored",
+        "external_claim_admitted",
+        "policy_hash_bound",
+        "request_hash_bound",
+        "operation_hash_bound",
+        "plan_hash_bound",
+        "payload_hash_bound",
+        "fencing_token_checked",
+        "lease_expiry_checked",
+        "secret_absence_verified"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "lease_service_not_called": {"type": "boolean", "const": true},
+        "request_authentication_not_performed": {"type": "boolean", "const": true},
+        "raw_secret_not_stored": {"type": "boolean", "const": true},
+        "external_claim_admitted": {"type": "boolean"},
+        "policy_hash_bound": {"type": "boolean", "const": true},
+        "request_hash_bound": {"type": "boolean", "const": true},
+        "operation_hash_bound": {"type": "boolean", "const": true},
+        "plan_hash_bound": {"type": "boolean", "const": true},
+        "payload_hash_bound": {"type": "boolean", "const": true},
+        "fencing_token_checked": {"type": "boolean"},
+        "lease_expiry_checked": {"type": "boolean"},
+        "secret_absence_verified": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha256_ref": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "backend_kind": {
+      "type": "string",
+      "enum": [
+        "sqlite_compare_and_swap",
+        "postgres_advisory_lock",
+        "redis_redlock",
+        "etcd_lease",
+        "consul_session",
+        "external_http_gateway"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "backend_kind",
+        "service_id",
+        "default_lease_seconds",
+        "max_lease_seconds",
+        "endpoint",
+        "fencing_tokens_required",
+        "receipt_required",
+        "metadata"
+      ],
+      "properties": {
+        "policy_id": {"type": "string", "minLength": 1},
+        "backend_kind": {"$ref": "#/$defs/backend_kind"},
+        "service_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.:/-]+$"
+        },
+        "default_lease_seconds": {"type": "integer", "minimum": 1},
+        "max_lease_seconds": {"type": "integer", "minimum": 1},
+        "endpoint": {
+          "type": "string",
+          "pattern": "^$|^https://[^\\s]+$"
+        },
+        "fencing_tokens_required": {"type": "boolean"},
+        "receipt_required": {"type": "boolean"},
+        "metadata": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "target",
+        "attempt",
+        "expected_payload_hash",
+        "idempotency_key",
+        "scheduler_receipt_ref",
+        "metadata"
+      ],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "attempt": {"type": "integer", "minimum": 1},
+        "expected_payload_hash": {"$ref": "#/$defs/sha256_ref"},
+        "idempotency_key": {"type": "string", "minLength": 1},
+        "scheduler_receipt_ref": {"type": "string"},
+        "metadata": {"type": "object", "additionalProperties": true}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "external_claim_admitted": {"const": false},
+          "metadata": {
+            "properties": {
+              "external_claim_admitted": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "planned"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "plan_only"},
+          "approval_ref": {"maxLength": 0},
+          "adapter_claim_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0},
+          "observed_payload_hash": {"maxLength": 0},
+          "lease_expires_at": {"maxLength": 0},
+          "fencing_token": {"maxLength": 0},
+          "claim_outcome": {"const": "not_observed"},
+          "external_claim_admitted": {"const": false}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "dry_run_accepted"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "dry_run"},
+          "approval_ref": {"maxLength": 0},
+          "adapter_claim_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0},
+          "observed_payload_hash": {"maxLength": 0},
+          "lease_expires_at": {"maxLength": 0},
+          "fencing_token": {"maxLength": 0},
+          "claim_outcome": {"const": "not_observed"},
+          "external_claim_admitted": {"const": false}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "claim_receipt_bound"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "claim_approved"},
+          "approval_ref": {"minLength": 1},
+          "adapter_claim_receipt_ref": {"minLength": 1},
+          "response_status_code": {"minimum": 200, "maximum": 299},
+          "response_payload_hash": {"pattern": "^sha256:[0-9a-f]{64}$"},
+          "observed_payload_hash": {"pattern": "^sha256:[0-9a-f]{64}$"},
+          "lease_expires_at": {"minLength": 1},
+          "claim_outcome": {"const": "granted"},
+          "blocked_reasons": {"maxItems": 0},
+          "external_claim_admitted": {"const": true},
+          "metadata": {
+            "properties": {
+              "external_claim_admitted": {"const": true},
+              "fencing_token_checked": {"const": true},
+              "lease_expiry_checked": {"const": true},
+              "secret_absence_verified": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"const": "claim_receipt_bound"},
+          "policy": {
+            "properties": {"fencing_tokens_required": {"const": true}},
+            "required": ["fencing_tokens_required"]
+          }
+        },
+        "required": ["status", "policy"]
+      },
+      "then": {
+        "properties": {
+          "fencing_token": {"minLength": 1}
+        }
+      }
+    }
+  ]
+}

@@ -1223,6 +1223,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "distributed-lease-claim-receipt",
+      "path": "schemas/distributed_lease_claim_receipt.schema.json",
+      "urn": "urn:mullusi:schema:distributed-lease-claim-receipt:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "temporal-lease-window-receipt",
       "path": "schemas/temporal_lease_window_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-lease-window-receipt:1",
