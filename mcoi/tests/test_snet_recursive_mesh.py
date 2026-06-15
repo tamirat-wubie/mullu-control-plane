@@ -509,6 +509,32 @@ def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
     assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
 
 
+def test_direct_snet_contracts_reject_nested_metadata_key_shape_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.outer.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"outer": {1: "numeric nested key"}})
+    with pytest.raises(ValueError, match="metadata.outer.key"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"outer": {SNetWHType.WHAT: "enum nested key"}},
+        )
+    with pytest.raises(ValueError, match=r"metadata.items\[0\].key"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"items": [{1: "numeric list key"}]})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:3",
+        label="Seed",
+        metadata={"outer": {"inner": "ok"}, "items": [{"key": "value"}]},
+    )
+
+    assert valid_symbol.metadata["outer"]["inner"] == "ok"
+    assert valid_symbol.metadata["items"][0]["key"] == "value"
+    assert tuple(valid_symbol.metadata) == ("items", "outer")
+
+
 def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     with pytest.raises(ValueError, match="label"):
         SNetSymbol(symbol_id="symbol:1", label=SNetWHType.WHAT)

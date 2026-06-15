@@ -138,8 +138,26 @@ def _freeze_metadata(metadata: Mapping[str, Any], field_name: str = "metadata") 
         raise ValueError(f"{field_name} must be a mapping")
     sorted_metadata: dict[str, Any] = {}
     for key, value in metadata.items():
-        sorted_metadata[_require_text_key(key, f"{field_name}.key")] = value
+        metadata_key = _require_text_key(key, f"{field_name}.key")
+        sorted_metadata[metadata_key] = _freeze_metadata_value(value, f"{field_name}.{metadata_key}")
     return freeze_value(dict(sorted(sorted_metadata.items(), key=lambda item: item[0])))
+
+
+def _freeze_metadata_value(value: object, field_name: str) -> object:
+    if isinstance(value, Mapping):
+        sorted_metadata: dict[str, object] = {}
+        for key, item in value.items():
+            metadata_key = _require_text_key(key, f"{field_name}.key")
+            sorted_metadata[metadata_key] = _freeze_metadata_value(item, f"{field_name}.{metadata_key}")
+        return freeze_value(dict(sorted(sorted_metadata.items(), key=lambda item: item[0])))
+    if isinstance(value, (list, tuple)):
+        return freeze_value(
+            [
+                _freeze_metadata_value(item, f"{field_name}[{index}]")
+                for index, item in enumerate(value)
+            ]
+        )
+    return freeze_value(value)
 
 
 def _require_text_key(key: object, field_name: str) -> str:
