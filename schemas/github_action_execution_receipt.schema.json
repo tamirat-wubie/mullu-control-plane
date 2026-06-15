@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:github-action-execution-receipt:1",
+  "title": "GitHub Action Execution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "mode",
+    "status",
+    "action_kind",
+    "repository_owner",
+    "repository_name",
+    "token_repository_owner",
+    "token_repository_name",
+    "token_plan_ref",
+    "action_plan_ref",
+    "branch_name",
+    "endpoint",
+    "method",
+    "request_payload",
+    "request_payload_hash",
+    "approval_ref",
+    "token_exchange_receipt_ref",
+    "external_execution_receipt_ref",
+    "response_status_code",
+    "response_payload_hash",
+    "blocked_reasons",
+    "required_controls",
+    "evidence_refs",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "external_execution_admitted",
+    "network_call_performed",
+    "request_authentication_performed",
+    "raw_token_stored",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^github-action-execution-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "mode": {
+      "type": "string",
+      "enum": ["plan_only", "dry_run", "execute_approved"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planned", "dry_run_accepted", "execution_receipt_bound", "blocked"]
+    },
+    "action_kind": {
+      "type": "string",
+      "enum": ["check_run_write", "branch_protection_reconcile"]
+    },
+    "repository_owner": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "repository_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "token_repository_owner": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "token_repository_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "token_plan_ref": {"type": "string", "minLength": 1},
+    "action_plan_ref": {"type": "string", "minLength": 1},
+    "branch_name": {
+      "type": "string",
+      "pattern": "^$|^[A-Za-z0-9_.-]+$"
+    },
+    "endpoint": {
+      "type": "string",
+      "pattern": "^/repos/[^/]+/[^/]+/(check-runs|branches/[^/]+/protection)$"
+    },
+    "method": {
+      "type": "string",
+      "enum": ["POST", "PUT"]
+    },
+    "request_payload": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "request_payload_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "approval_ref": {"type": "string"},
+    "token_exchange_receipt_ref": {"type": "string"},
+    "external_execution_receipt_ref": {"type": "string"},
+    "response_status_code": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 599
+    },
+    "response_payload_hash": {
+      "type": "string",
+      "pattern": "^$|^sha256:[0-9a-f]{64}$"
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:github-action-execution-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "external_execution_admitted": {"type": "boolean"},
+    "network_call_performed": {"type": "boolean", "const": false},
+    "request_authentication_performed": {"type": "boolean", "const": false},
+    "raw_token_stored": {"type": "boolean", "const": false},
+    "receipt_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "github_api_not_called",
+        "request_authentication_not_performed",
+        "raw_token_not_stored",
+        "external_execution_admitted",
+        "payload_hash_bound",
+        "token_repository_match",
+        "secret_absence_verified"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "github_api_not_called": {"type": "boolean", "const": true},
+        "request_authentication_not_performed": {"type": "boolean", "const": true},
+        "raw_token_not_stored": {"type": "boolean", "const": true},
+        "external_execution_admitted": {"type": "boolean"},
+        "payload_hash_bound": {"type": "boolean", "const": true},
+        "token_repository_match": {"type": "boolean"},
+        "secret_absence_verified": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "external_execution_admitted": {"const": false},
+          "metadata": {
+            "properties": {
+              "external_execution_admitted": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "planned"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "plan_only"},
+          "external_execution_admitted": {"const": false},
+          "approval_ref": {"maxLength": 0},
+          "token_exchange_receipt_ref": {"maxLength": 0},
+          "external_execution_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "dry_run_accepted"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "dry_run"},
+          "external_execution_admitted": {"const": false},
+          "approval_ref": {"maxLength": 0},
+          "token_exchange_receipt_ref": {"maxLength": 0},
+          "external_execution_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "execution_receipt_bound"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "execute_approved"},
+          "approval_ref": {"minLength": 1},
+          "token_exchange_receipt_ref": {"minLength": 1},
+          "external_execution_receipt_ref": {"minLength": 1},
+          "response_status_code": {"minimum": 200, "maximum": 299},
+          "response_payload_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "blocked_reasons": {"maxItems": 0},
+          "external_execution_admitted": {"const": true},
+          "metadata": {
+            "properties": {
+              "external_execution_admitted": {"const": true},
+              "token_repository_match": {"const": true},
+              "secret_absence_verified": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"action_kind": {"const": "check_run_write"}},
+        "required": ["action_kind"]
+      },
+      "then": {
+        "properties": {
+          "method": {"const": "POST"},
+          "branch_name": {"maxLength": 0},
+          "endpoint": {"pattern": "^/repos/[^/]+/[^/]+/check-runs$"}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"action_kind": {"const": "branch_protection_reconcile"}},
+        "required": ["action_kind"]
+      },
+      "then": {
+        "properties": {
+          "method": {"const": "PUT"},
+          "branch_name": {"minLength": 1},
+          "endpoint": {"pattern": "^/repos/[^/]+/[^/]+/branches/[^/]+/protection$"}
+        }
+      }
+    }
+  ]
+}
