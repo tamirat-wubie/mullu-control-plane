@@ -6826,6 +6826,61 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "github_check_run_write_receipts",
+            [
+                "GitHubCheckRunWriter.evaluate",
+                "GitHubCheckRunWriteRequest",
+                "GitHubCheckRunWriteReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/github_check_run_writer.py",
+                "schemas/github_check_run_write_receipt.schema.json",
+                "tests/test_gateway/test_github_check_run_writer.py",
+            ],
+            "GitHub check-run write receipts build hash-bound Checks API payloads, preserve plan-only and dry-run no-write modes, and require approval, installation, external execution, response id, and response hash evidence before a write-approved external check-run claim is admitted.",
+            [
+                "check_run_payload_is_hash_bound",
+                "plan_only_does_not_write_check_run",
+                "dry_run_rejects_response_evidence",
+                "write_approved_requires_github_app_execution_receipt",
+                "write_approved_binds_external_execution_receipt",
+                "secret_value_absence_verified",
+                "completed_status_requires_conclusion",
+                "github_check_run_write_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "check_run_payload_is_hash_bound": [
+                    "github_check_run_plan_only_builds_hash_bound_payload"
+                ],
+                "plan_only_does_not_write_check_run": [
+                    "github_check_run_plan_only_builds_hash_bound_payload"
+                ],
+                "dry_run_rejects_response_evidence": [
+                    "github_check_run_dry_run_rejects_response_evidence"
+                ],
+                "write_approved_requires_github_app_execution_receipt": [
+                    "github_check_run_write_approved_requires_github_app_execution_receipt"
+                ],
+                "write_approved_binds_external_execution_receipt": [
+                    "github_check_run_write_approved_binds_external_execution_receipt"
+                ],
+                "secret_value_absence_verified": [
+                    "github_check_run_rejects_secret_value_disclosure"
+                ],
+                "completed_status_requires_conclusion": [
+                    "github_check_run_completed_status_requires_conclusion"
+                ],
+                "github_check_run_write_receipt_schema_valid": [
+                    "github_check_run_plan_only_builds_hash_bound_payload",
+                    "github_check_run_write_approved_binds_external_execution_receipt",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9006,6 +9061,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_retention_window_receipt_contract",
             "surfaces": ["temporal_retention_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_check_run_write_receipt_contract",
+            "surfaces": ["github_check_run_write_receipts"],
             "status": "closed",
         },
         {

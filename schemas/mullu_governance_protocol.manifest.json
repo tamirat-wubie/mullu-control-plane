@@ -209,6 +209,12 @@
       "surface": "ci"
     },
     {
+      "schema_id": "github-check-run-write-receipt",
+      "path": "schemas/github_check_run_write_receipt.schema.json",
+      "urn": "urn:mullusi:schema:github-check-run-write-receipt:1",
+      "surface": "ci"
+    },
+    {
       "schema_id": "runtime-witness",
       "path": "schemas/runtime_witness.schema.json",
       "urn": "urn:mullusi:schema:runtime-witness:1",

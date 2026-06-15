@@ -309,6 +309,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 12
+    assert surfaces["github_check_run_write_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_check_run_write_receipts"]["exact_test_anchor_count"] == 8
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -4961,6 +4963,33 @@ def test_temporal_retention_window_surface_rechecks_data_lifecycle_timing() -> N
     assert "retention_approval_and_backup_guard_bound" in witnesses
     assert "temporal_retention_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_retention_window_receipt_contract"]["status"] == "closed"
+
+
+def test_github_check_run_write_receipt_surface_binds_external_write_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    check_surface = surfaces["github_check_run_write_receipts"]
+    witnesses = set(check_surface["runtime_witnesses"])
+
+    assert check_surface["coverage_state"] == "witnessed"
+    assert check_surface["request_proof"] == "request_proof"
+    assert check_surface["action_proof"] == "action_proof"
+    assert "GitHubCheckRunWriter.evaluate" in check_surface["representative_paths"]
+    assert "GitHubCheckRunWriteRequest" in check_surface["representative_paths"]
+    assert "GitHubCheckRunWriteReceipt" in check_surface["representative_paths"]
+    assert "gateway/github_check_run_writer.py" in check_surface["evidence_files"]
+    assert "schemas/github_check_run_write_receipt.schema.json" in check_surface["evidence_files"]
+    assert "tests/test_gateway/test_github_check_run_writer.py" in check_surface["evidence_files"]
+    assert "check_run_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_write_check_run" in witnesses
+    assert "dry_run_rejects_response_evidence" in witnesses
+    assert "write_approved_requires_github_app_execution_receipt" in witnesses
+    assert "write_approved_binds_external_execution_receipt" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "completed_status_requires_conclusion" in witnesses
+    assert "github_check_run_write_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_check_run_write_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:
