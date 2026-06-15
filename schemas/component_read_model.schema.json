@@ -66,7 +66,8 @@
       "required": [
         "registry",
         "router_inventory",
-        "proof_binding"
+        "proof_binding",
+        "lifecycle_transition_receipts"
       ],
       "properties": {
         "registry": {
@@ -77,6 +78,9 @@
         },
         "proof_binding": {
           "$ref": "#/$defs/repo_path"
+        },
+        "lifecycle_transition_receipts": {
+          "$ref": "#/$defs/repo_path"
         }
       }
     },
@@ -86,6 +90,7 @@
       "required": [
         "component_count",
         "bundle_count",
+        "lifecycle_receipt_count",
         "proof_bound_count",
         "awaiting_binding_count",
         "bound_route_count",
@@ -97,6 +102,10 @@
           "minimum": 0
         },
         "bundle_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lifecycle_receipt_count": {
           "type": "integer",
           "minimum": 0
         },
@@ -264,6 +273,7 @@
         "authority_level",
         "authority",
         "receipt_required",
+        "lifecycle_receipt",
         "health",
         "proof_surface",
         "route_binding",
@@ -300,6 +310,9 @@
         },
         "receipt_required": {
           "type": "boolean"
+        },
+        "lifecycle_receipt": {
+          "$ref": "#/$defs/lifecycle_receipt"
         },
         "health": {
           "type": "object",
@@ -420,6 +433,107 @@
         },
         "owner_surface": {
           "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "lifecycle_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "from_state",
+        "to_state",
+        "proof_state",
+        "evidence_refs",
+        "validator_refs",
+        "operator_approval_required",
+        "external_effect",
+        "transition_is_not_execution_authority",
+        "can_claim_terminal_closure",
+        "next_transition_candidates"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "from_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "to_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        },
+        "validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "operator_approval_required": {
+          "type": "boolean"
+        },
+        "external_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "transition_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "next_transition_candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lifecycle_transition_candidate"
+          }
+        }
+      }
+    },
+    "lifecycle_transition_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from_state",
+        "to_state",
+        "requires_evidence",
+        "operator_approval_required",
+        "external_effect"
+      ],
+      "properties": {
+        "from_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "to_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "requires_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "operator_approval_required": {
+          "type": "boolean"
+        },
+        "external_effect": {
+          "type": "boolean",
+          "const": false
         }
       }
     },

@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 170,
+  "check_count": 176,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -196,6 +196,17 @@
       "passed": true
     },
     {
+      "name": "component_lifecycle_transition_receipts",
+      "args": [
+        "python",
+        "scripts/validate_component_lifecycle_transition_receipts.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT LIFECYCLE TRANSITION RECEIPTS VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
       "name": "component_router_inventory",
       "args": [
         "python",
@@ -225,6 +236,61 @@
       ],
       "return_code": 0,
       "stdout": "COMPONENT READ MODEL VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_autopsy",
+      "args": [
+        "python",
+        "scripts/validate_component_autopsy.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT AUTOPSY VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_request_simulation",
+      "args": [
+        "python",
+        "scripts/validate_component_request_simulation.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT REQUEST SIMULATION VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_bundle_compiler",
+      "args": [
+        "python",
+        "scripts/validate_component_bundle_compiler.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT BUNDLE COMPILER VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_graph",
+      "args": [
+        "python",
+        "scripts/validate_component_graph.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT GRAPH VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_dead_detector",
+      "args": [
+        "python",
+        "scripts/validate_component_dead_detector.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT DEAD DETECTOR VALID\n",
       "stderr": "",
       "passed": true
     },

@@ -35,6 +35,9 @@ from mcoi_runtime.app.component_read_model import (  # noqa: E402
     build_component_read_model,
 )
 from scripts.validate_component_proof_binding import validate_component_proof_binding  # noqa: E402
+from scripts.validate_component_lifecycle_transition_receipts import (  # noqa: E402
+    validate_component_lifecycle_transition_receipts,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -77,6 +80,12 @@ def validate_component_read_model(
         errors.extend(
             f"component proof binding validation failed: {error}"
             for error in proof_binding_validation.errors
+        )
+    lifecycle_validation = validate_component_lifecycle_transition_receipts()
+    if not lifecycle_validation.ok:
+        errors.extend(
+            f"component lifecycle transition receipt validation failed: {error}"
+            for error in lifecycle_validation.errors
         )
 
     expected_read_model = build_component_read_model()
@@ -160,6 +169,22 @@ def _validate_read_model_semantics(
                 errors.append(f"{label}: component {component_id} receipt requires proof_bound state")
             elif int(proof_binding.get("runtime_witness_count", 0)) <= 0:
                 errors.append(f"{label}: component {component_id} receipt requires runtime witnesses")
+        lifecycle_receipt = component.get("lifecycle_receipt")
+        if not isinstance(lifecycle_receipt, dict):
+            errors.append(f"{label}: component {component_id} lifecycle_receipt must be an object")
+            continue
+        if lifecycle_receipt.get("to_state") != component.get("state"):
+            errors.append(f"{label}: component {component_id} lifecycle receipt must target current state")
+        if lifecycle_receipt.get("proof_state") != "Pass":
+            errors.append(f"{label}: component {component_id} lifecycle receipt proof_state must be Pass")
+        if lifecycle_receipt.get("external_effect") is not False:
+            errors.append(f"{label}: component {component_id} lifecycle receipt external_effect must be false")
+        if lifecycle_receipt.get("transition_is_not_execution_authority") is not True:
+            errors.append(f"{label}: component {component_id} lifecycle receipt must not grant execution authority")
+        if lifecycle_receipt.get("can_claim_terminal_closure") is not False:
+            errors.append(f"{label}: component {component_id} lifecycle receipt cannot claim terminal closure")
+        if not isinstance(lifecycle_receipt.get("evidence_refs"), list) or not lifecycle_receipt["evidence_refs"]:
+            errors.append(f"{label}: component {component_id} lifecycle receipt must list evidence refs")
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

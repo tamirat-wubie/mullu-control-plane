@@ -90,14 +90,43 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "scripts/validate_component_registry.py",
+          "tests/test_validate_component_registry.py"
+        ],
+        "external_effect": false,
+        "from_state": "present",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "registered",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "validated"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.governance_core.present_to_registered.v1",
+        "to_state": "registered",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "foundation",
       "name": "Governance Core",
       "owner_surface": "governance",
       "proof_binding": {
-        "evidence_file_count": 5,
+        "evidence_file_count": 12,
         "inventory_surface_ids": [
           "authority_obligation_mesh",
+          "component_autopsy",
           "component_harness_read_model",
+          "component_request_simulator",
           "gateway_approval_resolution",
           "gateway_capability_fabric",
           "gateway_webhook_ingress"
@@ -105,7 +134,7 @@
         "required_surface_ids": [
           "gateway_capability_fabric"
         ],
-        "runtime_witness_count": 3,
+        "runtime_witness_count": 6,
         "state": "proof_bound"
       },
       "proof_surface": {
@@ -116,12 +145,14 @@
       "route_binding": {
         "proof_surface_ids": [
           "authority_obligation_mesh",
+          "component_autopsy",
           "component_harness_read_model",
+          "component_request_simulator",
           "gateway_approval_resolution",
           "gateway_capability_fabric",
           "gateway_webhook_ingress"
         ],
-        "route_count": 20,
+        "route_count": 22,
         "state": "bound"
       },
       "state": "registered",
@@ -161,6 +192,40 @@
           "type": "route"
         },
         "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/component_registry.schema.json",
+          "scripts/validate_component_registry.py"
+        ],
+        "external_effect": false,
+        "from_state": "bootstrapped",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "read_only"
+          },
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "draft_only"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.agentic_service_harness.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
       },
       "mode": "read_only",
       "name": "Agentic Service Harness",
@@ -226,6 +291,40 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "docs/73_snet_operator_read_model.md",
+          "examples/snet_operator_read_model.json"
+        ],
+        "external_effect": false,
+        "from_state": "bootstrapped",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "read_only"
+          },
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "draft_only"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.snet.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "read_only",
       "name": "SNet Symbolic Mesh",
       "owner_surface": "reasoning",
@@ -289,6 +388,40 @@
           "type": "route"
         },
         "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "docs/inceptadive-shadow-pass.md",
+          "mcoi/tests/test_inceptadive_shadow_routes.py"
+        ],
+        "external_effect": false,
+        "from_state": "bootstrapped",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "read_only"
+          },
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "draft_only"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.inceptadive_shadow.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
       },
       "mode": "read_only_advisory",
       "name": "InceptaDive Shadow",
@@ -355,6 +488,33 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/personal_assistant_plan.schema.json",
+          "tests/test_personal_assistant_drafts.py"
+        ],
+        "external_effect": false,
+        "from_state": "mounted",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "draft_only",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "live_probe"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.personal_assistant.mounted_to_draft_only.v1",
+        "to_state": "draft_only",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "draft_only",
       "name": "Personal Assistant",
       "owner_surface": "assistant",
@@ -420,6 +580,33 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
+          "scripts/validate_team_ops_shared_inbox_live_probe_authority.py"
+        ],
+        "external_effect": false,
+        "from_state": "draft_only",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "live_probe",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "approval_required"
+          }
+        ],
+        "operator_approval_required": true,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.teamops_shared_inbox.draft_only_to_live_probe.v1",
+        "to_state": "live_probe",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "live_probe",
       "name": "TeamOps Shared Inbox",
       "owner_surface": "assistant",
@@ -484,6 +671,33 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+          "scripts/validate_durable_gmail_oauth_operator_handoff.py"
+        ],
+        "external_effect": false,
+        "from_state": "live_probe",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "approval_required",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "blocked"
+          }
+        ],
+        "operator_approval_required": true,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.gmail_account_binding_gate.live_probe_to_approval_required.v1",
+        "to_state": "approval_required",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "approval_required",
       "name": "Gmail Account Binding Gate",
       "owner_surface": "connector",
@@ -545,6 +759,33 @@
           "type": "read_model"
         },
         "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/worker_mesh.schema.json",
+          "tests/test_gateway/test_worker_mesh.py"
+        ],
+        "external_effect": false,
+        "from_state": "validated",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "bootstrapped",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "mounted"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.worker_runtime.validated_to_bootstrapped.v1",
+        "to_state": "bootstrapped",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
       },
       "mode": "approval_required",
       "name": "Worker Runtime",
@@ -610,6 +851,33 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "gateway/capability_worker.py",
+          "tests/test_gateway/test_capability_worker.py"
+        ],
+        "external_effect": false,
+        "from_state": "validated",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "bootstrapped",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "mounted"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.capability_workers.validated_to_bootstrapped.v1",
+        "to_state": "bootstrapped",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "approval_required",
       "name": "Capability Workers",
       "owner_surface": "execution",
@@ -672,6 +940,33 @@
         },
         "status": "known"
       },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+          "schemas/p3_memory_topology_read_model.schema.json"
+        ],
+        "external_effect": false,
+        "from_state": "not_present",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "present",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "registered"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.nested_mind_bridge.not_present_to_present.v1",
+        "to_state": "present",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
       "mode": "blocked",
       "name": "Nested Mind Bridge",
       "owner_surface": "memory",
@@ -706,6 +1001,7 @@
   "route": "/api/v1/components/read-model",
   "schema_version": 1,
   "source_refs": {
+    "lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json",
     "proof_binding": "examples/component_proof_binding.foundation.json",
     "registry": "examples/component_registry.foundation.json",
     "router_inventory": "examples/component_router_inventory.foundation.json"
@@ -713,14 +1009,16 @@
   "summary": {
     "awaiting_binding_count": 1,
     "blocked_component_count": 1,
-    "bound_route_count": 28,
+    "bound_route_count": 30,
     "bundle_count": 3,
     "component_count": 10,
+    "lifecycle_receipt_count": 10,
     "proof_bound_count": 9
   },
   "terminal_closure_required": true,
   "validators": [
     "component_registry_validator",
+    "component_lifecycle_transition_receipts_validator",
     "component_router_inventory_validator",
     "component_proof_binding_validator",
     "component_read_model_validator"

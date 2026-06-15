@@ -65,6 +65,42 @@
       "surface": "governance"
     },
     {
+      "schema_id": "component-graph",
+      "path": "schemas/component_graph.schema.json",
+      "urn": "urn:mullusi:schema:component-graph:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-autopsy",
+      "path": "schemas/component_autopsy.schema.json",
+      "urn": "urn:mullusi:schema:component-autopsy:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-request-simulation",
+      "path": "schemas/component_request_simulation.schema.json",
+      "urn": "urn:mullusi:schema:component-request-simulation:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-bundle-compilation",
+      "path": "schemas/component_bundle_compilation.schema.json",
+      "urn": "urn:mullusi:schema:component-bundle-compilation:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-lifecycle-transition-receipts",
+      "path": "schemas/component_lifecycle_transition_receipts.schema.json",
+      "urn": "urn:mullusi:schema:component-lifecycle-transition-receipts:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-dead-component-detection",
+      "path": "schemas/component_dead_component_detection.schema.json",
+      "urn": "urn:mullusi:schema:component-dead-component-detection:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "agentic-service-harness-live-task-run-producer-evidence",
       "path": "schemas/agentic_service_harness_live_task_run_producer_evidence.schema.json",
       "urn": "urn:mullusi:schema:agentic-service-harness-live-task-run-producer-evidence:1",
@@ -321,6 +357,18 @@
       "path": "schemas/command_interpretation_receipt_read_model.schema.json",
       "urn": "urn:mullusi:schema:command-interpretation-receipt-read-model:1",
       "surface": "evidence"
+    },
+    {
+      "schema_id": "operator-receipt-viewer-read-model",
+      "path": "schemas/operator_receipt_viewer_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-receipt-viewer-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "current-task-read-model",
+      "path": "schemas/current_task_read_model.schema.json",
+      "urn": "urn:mullusi:schema:current-task-read-model:1",
+      "surface": "operator"
     },
     {
       "schema_id": "clarification-request",

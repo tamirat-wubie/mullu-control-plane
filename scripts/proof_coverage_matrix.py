@@ -73,6 +73,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "universal_action_orchestration_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
+        "operator_receipt_viewer_groups_bounded_receipts",
+        "operator_receipt_viewer_schema_valid",
+        "operator_current_task_read_model_classifies_states",
+        "operator_receipt_and_current_task_consoles_render_bounded_tables",
+        "operator_receipt_viewer_requires_operator_authority",
     ]
     surfaces = [
         _surface(
@@ -90,6 +95,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/commands/{command_id}/interpretation-receipt",
                 "/operator/universal-actions/read-model",
                 "/operator/universal-actions",
+                "/operator/receipts/read-model",
+                "/operator/receipts",
+                "/operator/current-task/read-model",
+                "/operator/current-task",
                 "DomainCapsuleCompiler.compile",
                 "install_certified_capsule_with_handoff_evidence",
             ],
@@ -107,12 +116,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
                 "mcoi/mcoi_runtime/core/universal_action_kernel.py",
                 "schemas/command_interpretation_receipt_read_model.schema.json",
+                "schemas/operator_receipt_viewer_read_model.schema.json",
+                "schemas/current_task_read_model.schema.json",
+                "gateway/operator_receipt_viewer.py",
                 "mcoi/tests/test_universal_action_kernel.py",
                 "tests/test_gateway/test_capability_capsule_installer.py",
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt and operator receipt/task read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -156,6 +168,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "operator_universal_action_console_renders_replay_state": [
                     "operator_universal_actions_console_renders_proof_table",
+                ],
+                "operator_receipt_viewer_groups_bounded_receipts": [
+                    "operator_receipt_viewer_read_model_groups_bounded_receipts",
+                ],
+                "operator_receipt_viewer_schema_valid": [
+                    "operator_receipt_viewer_read_model_groups_bounded_receipts",
+                ],
+                "operator_current_task_read_model_classifies_states": [
+                    "operator_current_task_read_model_classifies_waiting_blocked_and_completed",
+                ],
+                "operator_receipt_and_current_task_consoles_render_bounded_tables": [
+                    "operator_receipt_and_current_task_consoles_render_bounded_tables",
+                ],
+                "operator_receipt_viewer_requires_operator_authority": [
+                    "operator_receipt_viewer_requires_operator_authority_in_production",
                 ],
                 "capability_admission_audits_filter_status": [
                     "fabric_admission_blocks_uninstalled_runtime_intent",
@@ -290,6 +317,255 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_read_model_example_matches_runtime_projection": [
                     "component_read_model_example_matches_runtime_projection",
+                ],
+            },
+        ),
+        _surface(
+            "component_autopsy",
+            ["/api/v1/components/{component_id}/autopsy"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_autopsy.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "schemas/component_autopsy.schema.json",
+                "examples/component_autopsy.nested_mind_bridge.json",
+                "scripts/validate_component_autopsy.py",
+                "mcoi/tests/test_component_autopsy_route.py",
+                "tests/test_validate_component_autopsy.py",
+            ],
+            "Component Harness autopsy exposes component blockers, evidence, missing evidence, forbidden actions, and next transition previews without granting execution, connector, mutation, external send, file write, or terminal closure authority.",
+            [
+                "component_autopsy_explains_missing_evidence",
+                "component_autopsy_route_is_read_only",
+                "component_autopsy_rejects_unknown_component",
+                "component_autopsy_schema_valid",
+                "component_autopsy_blocks_live_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_autopsy_explains_missing_evidence": [
+                    "component_autopsy_builds_nested_mind_blocker_view",
+                    "component_autopsy_example_matches_runtime_projection",
+                ],
+                "component_autopsy_route_is_read_only": [
+                    "component_autopsy_route_is_read_only",
+                    "foundation_component_autopsies_keep_live_authority_false",
+                ],
+                "component_autopsy_rejects_unknown_component": [
+                    "component_autopsy_route_rejects_unknown_component",
+                    "component_autopsy_rejects_unknown_component",
+                ],
+                "component_autopsy_schema_valid": [
+                    "component_autopsy_schema_valid_and_write",
+                ],
+                "component_autopsy_blocks_live_authority_drift": [
+                    "component_autopsy_rejects_live_authority_and_missing_evidence_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_request_simulator",
+            ["/api/v1/components/simulate"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_request_simulator.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "schemas/component_request_simulation.schema.json",
+                "examples/component_request_simulation.foundation.json",
+                "scripts/validate_component_request_simulation.py",
+                "mcoi/tests/test_component_request_simulator.py",
+                "tests/test_validate_component_request_simulation.py",
+            ],
+            "Component Harness request simulator predicts component path, blocked actions, approval need, receipts, and missing evidence without granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_request_simulator_predicts_send_email_blocked",
+                "component_request_simulator_routes_deep_analysis_read_only",
+                "component_request_simulator_route_is_preview_only",
+                "component_request_simulation_schema_valid",
+                "component_request_simulation_example_matches_runtime_projection",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_request_simulator_predicts_send_email_blocked": [
+                    "component_request_simulator_predicts_send_email_blocked",
+                ],
+                "component_request_simulator_routes_deep_analysis_read_only": [
+                    "component_request_simulator_routes_deep_analysis_read_only",
+                ],
+                "component_request_simulator_route_is_preview_only": [
+                    "component_request_simulator_route_is_preview_only",
+                ],
+                "component_request_simulation_schema_valid": [
+                    "component_request_simulation_schema_valid",
+                ],
+                "component_request_simulation_example_matches_runtime_projection": [
+                    "component_request_simulation_example_matches_runtime_projection",
+                ],
+            },
+        ),
+        _surface(
+            "component_bundle_compiler",
+            ["component_bundle_compilation"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_bundle_compiler.py",
+                "schemas/component_bundle_compilation.schema.json",
+                "examples/component_bundle_compilation.personal_assistant_v0.json",
+                "scripts/validate_component_bundle_compiler.py",
+                "mcoi/tests/test_component_bundle_compiler.py",
+                "tests/test_validate_component_bundle_compiler.py",
+            ],
+            "Component Harness bundle compiler joins registry bundles, component read-model posture, and request simulation evidence into preview-only product bundle reports without granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_bundle_compiler_compiles_personal_assistant_v0_preview",
+                "component_bundle_compiler_compiles_all_foundation_bundles",
+                "component_bundle_compilation_schema_valid",
+                "component_bundle_compilation_example_matches_runtime_projection",
+                "component_bundle_compiler_rejects_live_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_bundle_compiler_compiles_personal_assistant_v0_preview": [
+                    "component_bundle_compiler_compiles_personal_assistant_v0_preview",
+                ],
+                "component_bundle_compiler_compiles_all_foundation_bundles": [
+                    "component_bundle_compiler_compiles_all_foundation_bundles",
+                ],
+                "component_bundle_compilation_schema_valid": [
+                    "component_bundle_compilation_schema_valid",
+                ],
+                "component_bundle_compilation_example_matches_runtime_projection": [
+                    "component_bundle_compilation_example_matches_runtime_projection",
+                ],
+                "component_bundle_compiler_rejects_live_authority_drift": [
+                    "component_bundle_compiler_rejects_live_authority_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_graph",
+            ["component_graph"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_graph.py",
+                "schemas/component_graph.schema.json",
+                "examples/component_graph.foundation.json",
+                "scripts/validate_component_graph.py",
+                "tests/test_validate_component_graph.py",
+            ],
+            "Component Harness graph joins registry dependencies, request-path previews, bundle memberships, and autopsy blockers into one read-only relationship projection without granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_graph_schema_valid",
+                "component_graph_example_matches_runtime_projection",
+                "component_graph_rejects_unregistered_edge",
+                "component_graph_covers_blocked_paths",
+                "component_graph_denies_live_authority",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_graph_schema_valid": [
+                    "component_graph_schema_valid_and_write",
+                ],
+                "component_graph_example_matches_runtime_projection": [
+                    "component_graph_example_matches_runtime_projection",
+                ],
+                "component_graph_rejects_unregistered_edge": [
+                    "component_graph_rejects_unregistered_edge_and_authority_drift",
+                ],
+                "component_graph_covers_blocked_paths": [
+                    "component_graph_covers_every_component_with_blocked_path",
+                ],
+                "component_graph_denies_live_authority": [
+                    "component_graph_example_matches_runtime_projection",
+                    "component_graph_rejects_unregistered_edge_and_authority_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_dead_detector",
+            ["component_dead_component_detection"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_dead_detector.py",
+                "schemas/component_dead_component_detection.schema.json",
+                "examples/component_dead_component_detection.foundation.json",
+                "scripts/validate_component_dead_detector.py",
+                "tests/test_validate_component_dead_detector.py",
+            ],
+            "Component Harness dead-component detector classifies active, watch, blocked-governed, and dead-candidate components from graph/read-model evidence without granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_dead_detector_schema_valid",
+                "component_dead_detector_example_matches_runtime_projection",
+                "component_dead_detector_rejects_authority_drift",
+                "component_dead_detector_separates_blocked_from_dead",
+                "component_dead_detector_reports_zero_foundation_dead_candidates",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_dead_detector_schema_valid": [
+                    "component_dead_detector_schema_valid_and_write",
+                ],
+                "component_dead_detector_example_matches_runtime_projection": [
+                    "component_dead_detector_example_matches_runtime_projection",
+                ],
+                "component_dead_detector_rejects_authority_drift": [
+                    "component_dead_detector_rejects_authority_and_summary_drift",
+                ],
+                "component_dead_detector_separates_blocked_from_dead": [
+                    "component_dead_detector_keeps_blocked_governed_separate_from_dead_candidate",
+                ],
+                "component_dead_detector_reports_zero_foundation_dead_candidates": [
+                    "component_dead_detector_schema_valid_and_write",
+                    "component_dead_detector_keeps_blocked_governed_separate_from_dead_candidate",
+                ],
+            },
+        ),
+        _surface(
+            "component_lifecycle_transition_receipts",
+            ["component_lifecycle_transition_receipts"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "schemas/component_lifecycle_transition_receipts.schema.json",
+                "examples/component_lifecycle_transition_receipts.foundation.json",
+                "scripts/validate_component_lifecycle_transition_receipts.py",
+                "tests/test_validate_component_lifecycle_transition_receipts.py",
+            ],
+            "Component Harness lifecycle transition receipts bind each current component lifecycle state to evidence, allowed transition graph, validator refs, and live-authority denial without granting execution, mutation, connector, external effect, or terminal closure authority.",
+            [
+                "component_lifecycle_transition_receipts_validate_and_write",
+                "component_lifecycle_transition_receipts_reject_missing_component_receipt",
+                "component_lifecycle_transition_receipts_reject_state_drift",
+                "component_lifecycle_transition_receipts_reject_live_authority_drift",
+                "component_lifecycle_transition_receipts_reject_missing_evidence",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_lifecycle_transition_receipts_validate_and_write": [
+                    "component_lifecycle_transition_receipts_validate_and_write",
+                ],
+                "component_lifecycle_transition_receipts_reject_missing_component_receipt": [
+                    "component_lifecycle_transition_receipts_reject_missing_component_receipt",
+                ],
+                "component_lifecycle_transition_receipts_reject_state_drift": [
+                    "component_lifecycle_transition_receipts_reject_state_drift",
+                ],
+                "component_lifecycle_transition_receipts_reject_live_authority_drift": [
+                    "component_lifecycle_transition_receipts_reject_live_authority_drift",
+                ],
+                "component_lifecycle_transition_receipts_reject_missing_evidence": [
+                    "component_lifecycle_transition_receipts_reject_missing_evidence",
                 ],
             },
         ),
@@ -7543,6 +7819,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_component_harness_read_model",
             "surfaces": ["component_harness_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_autopsy",
+            "surfaces": ["component_autopsy"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_request_simulator",
+            "surfaces": ["component_request_simulator"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_bundle_compiler",
+            "surfaces": ["component_bundle_compiler"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_graph",
+            "surfaces": ["component_graph"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_dead_detector",
+            "surfaces": ["component_dead_detector"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_lifecycle_transition_receipts",
+            "surfaces": ["component_lifecycle_transition_receipts"],
             "status": "closed",
         },
         {

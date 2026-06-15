@@ -108,6 +108,13 @@ from gateway.operator_capability_console import (
     build_operator_capability_read_model,
     render_operator_capability_console,
 )
+from gateway.operator_receipt_viewer import (
+    build_current_task_read_model,
+    build_operator_receipt_viewer_read_model,
+    render_current_task_html,
+    render_operator_receipt_viewer_html,
+    valid_task_statuses,
+)
 from gateway.orgos_kernel import (
     AuthorityRule,
     DepartmentPack,
@@ -3285,6 +3292,90 @@ def create_gateway_app(
             offset=offset,
         )
         return HTMLResponse(_universal_actions_console_html(read_model))
+
+    @app.get("/operator/receipts/read-model")
+    def operator_receipts_read_model(
+        request: Request,
+        tenant_id: str = "",
+        command_id: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        return build_operator_receipt_viewer_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            command_id=command_id,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/receipts", response_class=HTMLResponse)
+    def operator_receipts_console(
+        request: Request,
+        tenant_id: str = "",
+        command_id: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_receipt_viewer_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            command_id=command_id,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_operator_receipt_viewer_html(read_model))
+
+    @app.get("/operator/current-task/read-model")
+    def operator_current_task_read_model(
+        request: Request,
+        tenant_id: str = "",
+        status: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        normalized_status = status.strip()
+        if normalized_status and normalized_status not in valid_task_statuses():
+            raise HTTPException(
+                400,
+                detail="status must be one of: "
+                + ", ".join(valid_task_statuses()),
+            )
+        return build_current_task_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            status=normalized_status,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/current-task", response_class=HTMLResponse)
+    def operator_current_task_console(
+        request: Request,
+        tenant_id: str = "",
+        status: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        normalized_status = status.strip()
+        if normalized_status and normalized_status not in valid_task_statuses():
+            raise HTTPException(
+                400,
+                detail="status must be one of: "
+                + ", ".join(valid_task_statuses()),
+            )
+        read_model = build_current_task_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            status=normalized_status,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_current_task_html(read_model))
 
     @app.get("/capability-fabric/admission-audits")
     def capability_fabric_admission_audits(

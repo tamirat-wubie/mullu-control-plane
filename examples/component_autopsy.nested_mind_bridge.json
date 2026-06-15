@@ -1,0 +1,106 @@
+{
+  "authority_level": "blocked",
+  "authority_snapshot": {
+    "can_call_connector": false,
+    "can_claim_terminal_closure": false,
+    "can_draft": false,
+    "can_emit_receipt": false,
+    "can_execute": false,
+    "can_mutate": false,
+    "can_preview": true,
+    "can_read": true,
+    "can_send_external_message": false,
+    "can_write_files": false
+  },
+  "autopsy_id": "component_autopsy.nested_mind_bridge.v1",
+  "autopsy_is_not_execution_authority": true,
+  "blockers": [
+    {
+      "blocker_id": "live_authority_denied",
+      "proof_state": "Pass",
+      "reason": "approved live action authority is missing"
+    },
+    {
+      "blocker_id": "terminal_closure_blocked",
+      "proof_state": "Pass",
+      "reason": "autopsy output cannot claim terminal closure"
+    },
+    {
+      "blocker_id": "missing_evidence",
+      "proof_state": "Unknown",
+      "reason": "evidence is required before authority promotion"
+    }
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "can_send_external_message": false,
+  "can_write_files": false,
+  "component_id": "nested_mind_bridge",
+  "evidence_present": {
+    "lifecycle_evidence_refs": [
+      "examples/component_registry.foundation.json",
+      "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+      "schemas/p3_memory_topology_read_model.schema.json"
+    ],
+    "lifecycle_receipt_id": "component_lifecycle_transition.nested_mind_bridge.not_present_to_present.v1",
+    "lifecycle_validator_refs": [
+      "component_registry_validator"
+    ],
+    "proof_evidence_file_count": 0,
+    "proof_surface_ids": [],
+    "route_binding_state": "no_declared_route",
+    "route_count": 0,
+    "runtime_witness_count": 0
+  },
+  "expected_receipts": [
+    "component_autopsy_receipt",
+    "component_read_model_validation_receipt",
+    "component_lifecycle_transition_receipt",
+    "authority_denial_receipt"
+  ],
+  "forbidden_actions": [
+    "external_send",
+    "memory_topology_activation",
+    "provider_write",
+    "runtime_mutation",
+    "terminal_closure"
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "missing_evidence": [
+    "proof_matrix_surface",
+    "memory_topology_activation_witness"
+  ],
+  "mode": "blocked",
+  "name": "Nested Mind Bridge",
+  "next_transition_candidates": [
+    {
+      "external_effect": false,
+      "from_state": "present",
+      "operator_approval_required": false,
+      "requires_evidence": true,
+      "to_state": "registered",
+      "transition_is_not_authority": true
+    }
+  ],
+  "outcome": "AwaitingEvidence",
+  "reason": "component nested_mind_bridge is visible but blocked by missing evidence: proof_matrix_surface, memory_topology_activation_witness",
+  "route": "/api/v1/components/{component_id}/autopsy",
+  "schema_version": 1,
+  "source_refs": {
+    "lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json",
+    "read_model": "examples/component_read_model.foundation.json"
+  },
+  "state": "present",
+  "terminal_closure_required": true,
+  "validators": [
+    "component_autopsy_validator",
+    "component_autopsy_tests",
+    "component_read_model_validator",
+    "component_lifecycle_transition_receipts_validator"
+  ],
+  "wiring_state": "blocked"
+}

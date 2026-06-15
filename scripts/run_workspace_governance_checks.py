@@ -179,6 +179,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_component_registry.py"),
         ),
         CheckCommand(
+            "component_lifecycle_transition_receipts",
+            (python_executable, "scripts/validate_component_lifecycle_transition_receipts.py"),
+        ),
+        CheckCommand(
             "component_router_inventory",
             (python_executable, "scripts/validate_component_router_inventory.py"),
         ),
@@ -189,6 +193,26 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "component_read_model",
             (python_executable, "scripts/validate_component_read_model.py"),
+        ),
+        CheckCommand(
+            "component_autopsy",
+            (python_executable, "scripts/validate_component_autopsy.py"),
+        ),
+        CheckCommand(
+            "component_request_simulation",
+            (python_executable, "scripts/validate_component_request_simulation.py"),
+        ),
+        CheckCommand(
+            "component_bundle_compiler",
+            (python_executable, "scripts/validate_component_bundle_compiler.py"),
+        ),
+        CheckCommand(
+            "component_graph",
+            (python_executable, "scripts/validate_component_graph.py"),
+        ),
+        CheckCommand(
+            "component_dead_detector",
+            (python_executable, "scripts/validate_component_dead_detector.py"),
         ),
         CheckCommand(
             "agentic_service_harness_live_task_run_producer_evidence",

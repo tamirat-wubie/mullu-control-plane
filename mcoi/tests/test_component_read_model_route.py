@@ -29,9 +29,13 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
     assert read_model["governed"] is True
     assert read_model["route"] == "/api/v1/components/read-model"
     assert read_model["summary"]["component_count"] == 10
-    assert read_model["summary"]["bound_route_count"] == 28
-    assert components["governance_core"]["route_binding"]["route_count"] == 20
+    assert read_model["summary"]["bound_route_count"] == 30
+    assert read_model["summary"]["lifecycle_receipt_count"] == 10
+    assert components["governance_core"]["route_binding"]["route_count"] == 22
     assert "component_harness_read_model" in components["governance_core"]["route_binding"]["proof_surface_ids"]
+    assert "component_request_simulator" in components["governance_core"]["route_binding"]["proof_surface_ids"]
+    assert "component_autopsy" in components["governance_core"]["route_binding"]["proof_surface_ids"]
+    assert components["governance_core"]["lifecycle_receipt"]["proof_state"] == "Pass"
     assert components["nested_mind_bridge"]["proof_binding"]["state"] == "awaiting_binding"
 
 

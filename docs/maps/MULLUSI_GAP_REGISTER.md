@@ -36,8 +36,8 @@ blocked
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | GAP-MAP-001 | Total mapbook not cross-linked from Start Here | Documentation | medium | implemented | The mapbook may be hard to discover from the main documentation entry path. | `docs/START_HERE.md` links to the mapbook without readiness claims. | Keep the link aligned as the mapbook evolves. |
 | GAP-UI-001 | Governed Goal Intake UI missing | User Surface | high | missing / unknown | First-time users need a universal ask/goal entry before Current Task makes sense. | Web UI accepts user goal and emits `GatewayMessage`. | Design web-only Goal Intake. |
-| GAP-UI-002 | Current Task state view missing | User Surface | medium | missing / unknown | Users need to see running, blocked, approved, denied, or completed task state. | UI state bound to command ledger and receipts. | Map Current Task states to command states. |
-| GAP-UI-003 | Receipt Viewer missing | User Surface / Evidence | high | missing / unknown | Users need visible proof of what was interpreted, approved, executed, blocked, and evidenced. | Receipt viewer renders final and intermediate receipts. | Design read-only receipt screen. |
+| GAP-UI-002 | Current Task state view missing | User Surface | medium | implemented / partial | Users need to see running, blocked, approved, denied, or completed task state. | `/operator/current-task/read-model` and `/operator/current-task` classify command states into received, active, waiting, review, blocked, and completed task states. | Bind future Goal Intake and Plan Review UI to this read model. |
+| GAP-UI-003 | Receipt Viewer missing | User Surface / Evidence | high | implemented / partial | Users need visible proof of what was interpreted, approved, executed, blocked, and evidenced. | `/operator/receipts/read-model` and `/operator/receipts` render bounded command receipt groups, interpretation receipts, command events, terminal certificates, and proof refs without raw payload text. | Extend receipt grouping to richer plan, approval, worker, denial, and delivery receipts. |
 | GAP-COMM-001 | Production channel adapter hardening incomplete | Communication | high | partial | External channels can create identity, replay, approval, and delivery risks. | One channel has signature validation, deduplication, tenant binding, and request-ID approvals. | Harden one channel after web flow. |
 | GAP-COMM-002 | Channel approval-strength rules missing | Communication / Governance | high | missing / partial | A casual message like `yes` should not approve high-risk actions without bound context. | Approval matrix by channel, action risk, tenant, actor, and request ID. | Draft channel trust policy. |
 | GAP-COMM-003 | Cross-channel conversation binding incomplete | Communication | medium | missing / partial | A user may start in web and respond in Slack or WhatsApp; this can cause identity ambiguity. | Cross-channel binding rules and audit receipt. | Define allowed cross-channel handoff cases. |
@@ -67,11 +67,11 @@ blocked
 
 ```text
 1. Review mapbook for Foundation Mode language.
-2. Add persisted receipt viewer for InterpretedRequest and InterpretationReceipt.
-3. Design web-only Governed Goal Intake.
+2. Design web-only Governed Goal Intake.
+3. Bind Goal Intake and Plan Review to Current Task state.
 4. Add budget and tool display fields to Plan Preview before UI binding.
-5. Select one read-only first worker path.
-6. Build Receipt Viewer for interpretation, plan, approval, execution, and denial receipts.
+5. Extend Receipt Viewer to plan, approval, worker, denial, and delivery receipts.
+6. Select one read-only first worker path.
 7. Add one external channel only after web identity and approval work.
 ```
 
@@ -106,7 +106,7 @@ The register converts curiosity-level architecture discussion into trackable loc
 Fracture delta:
 
 ```text
-The register confirms that product UI, durable interpretation, search cost controls, receipt viewer, and channel hardening are still not closed.
+The register confirms that Goal Intake, Plan Review binding, search cost controls, deeper receipt coverage, worker selection, and channel hardening are still not closed.
 ```
 
 Refinement:

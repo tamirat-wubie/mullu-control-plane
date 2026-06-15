@@ -149,6 +149,16 @@ tests/test_terminal_closure_certificate_schema.py
 tests/test_validate_agents_governance.py
 tests/test_validate_artifacts.py
 tests/test_validate_browser_sandbox_evidence.py
+tests/test_validate_component_autopsy.py
+tests/test_validate_component_bundle_compiler.py
+tests/test_validate_component_dead_detector.py
+tests/test_validate_component_graph.py
+tests/test_validate_component_lifecycle_transition_receipts.py
+tests/test_validate_component_proof_binding.py
+tests/test_validate_component_read_model.py
+tests/test_validate_component_registry.py
+tests/test_validate_component_request_simulation.py
+tests/test_validate_component_router_inventory.py
 tests/test_validate_deployment_orchestration_receipt.py
 tests/test_validate_deployment_publication_closure.py
 tests/test_validate_deployment_upstream_blocker_receipt.py
@@ -205,4 +215,5 @@ tests/test_verify_claims.py
 tests/test_verify_findings.py
 tests/test_verify_orgos_event_log.py
 tests/test_worker_dependency_packaging.py
+tests/test_workspace_file_capability.py
 tests/test_workspace_groups_authority_directory_adapter.py

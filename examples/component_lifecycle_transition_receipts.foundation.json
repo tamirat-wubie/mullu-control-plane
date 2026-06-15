@@ -1,0 +1,487 @@
+{
+  "allowed_transition_graph": [
+    {
+      "external_effect": false,
+      "from_state": "not_present",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "present"
+    },
+    {
+      "external_effect": false,
+      "from_state": "present",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "registered"
+    },
+    {
+      "external_effect": false,
+      "from_state": "registered",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "validated"
+    },
+    {
+      "external_effect": false,
+      "from_state": "validated",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "bootstrapped"
+    },
+    {
+      "external_effect": false,
+      "from_state": "bootstrapped",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "mounted"
+    },
+    {
+      "external_effect": false,
+      "from_state": "mounted",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "read_only"
+    },
+    {
+      "external_effect": false,
+      "from_state": "mounted",
+      "requires_evidence": true,
+      "requires_operator_approval": false,
+      "to_state": "draft_only"
+    },
+    {
+      "external_effect": false,
+      "from_state": "draft_only",
+      "requires_evidence": true,
+      "requires_operator_approval": true,
+      "to_state": "live_probe"
+    },
+    {
+      "external_effect": false,
+      "from_state": "live_probe",
+      "requires_evidence": true,
+      "requires_operator_approval": true,
+      "to_state": "approval_required"
+    },
+    {
+      "external_effect": false,
+      "from_state": "approval_required",
+      "requires_evidence": true,
+      "requires_operator_approval": true,
+      "to_state": "blocked"
+    }
+  ],
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Use lifecycle receipts in readiness/dashboard reporting without enabling live execution.",
+  "receipt_set_id": "component_lifecycle_transition_receipts.foundation.v1",
+  "receipt_set_is_not_execution_authority": true,
+  "schema_version": 1,
+  "source_registry": "examples/component_registry.foundation.json",
+  "terminal_closure_required": true,
+  "transition_receipts": [
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "governance_core",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "scripts/validate_component_registry.py",
+        "tests/test_validate_component_registry.py"
+      ],
+      "external_effect": false,
+      "from_state": "present",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Governance core is registered for foundation inventory only and carries no live execution authority.",
+      "receipt_id": "component_lifecycle_transition.governance_core.present_to_registered.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "registered",
+      "transition_kind": "foundation_inventory_registration",
+      "wiring_state": "present"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "agentic_service_harness",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "schemas/component_registry.schema.json",
+        "scripts/validate_component_registry.py"
+      ],
+      "external_effect": false,
+      "from_state": "bootstrapped",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Harness route posture is mounted as read-only status evidence without adapter or mutation authority.",
+      "receipt_id": "component_lifecycle_transition.agentic_service_harness.bootstrapped_to_mounted.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "mounted",
+      "transition_kind": "read_only_mount",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "snet",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "docs/73_snet_operator_read_model.md",
+        "examples/snet_operator_read_model.json"
+      ],
+      "external_effect": false,
+      "from_state": "bootstrapped",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "SNet is mounted as a symbolic read model while execution, connector, and filesystem actions remain blocked.",
+      "receipt_id": "component_lifecycle_transition.snet.bootstrapped_to_mounted.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "mounted",
+      "transition_kind": "read_only_symbolic_mount",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "read_only_advisory",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "inceptadive_shadow",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "docs/inceptadive-shadow-pass.md",
+        "mcoi/tests/test_inceptadive_shadow_routes.py"
+      ],
+      "external_effect": false,
+      "from_state": "bootstrapped",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "InceptaDive shadow is mounted for health and advisory console posture only.",
+      "receipt_id": "component_lifecycle_transition.inceptadive_shadow.bootstrapped_to_mounted.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "mounted",
+      "transition_kind": "shadow_console_mount",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "draft_only",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "personal_assistant",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "schemas/personal_assistant_plan.schema.json",
+        "tests/test_personal_assistant_drafts.py"
+      ],
+      "external_effect": false,
+      "from_state": "mounted",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Personal Assistant is draft-only and cannot send, mutate mailboxes, or write calendars.",
+      "receipt_id": "component_lifecycle_transition.personal_assistant.mounted_to_draft_only.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "draft_only",
+      "transition_kind": "draft_projection",
+      "wiring_state": "draft_only"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "live_probe",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "teamops_shared_inbox",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
+        "scripts/validate_team_ops_shared_inbox_live_probe_authority.py"
+      ],
+      "external_effect": false,
+      "from_state": "draft_only",
+      "operator_approval_required": true,
+      "proof_state": "Pass",
+      "reason": "TeamOps live probe is evidence-only and cannot write to providers or send external messages.",
+      "receipt_id": "component_lifecycle_transition.teamops_shared_inbox.draft_only_to_live_probe.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "live_probe",
+      "transition_kind": "evidence_only_live_probe",
+      "wiring_state": "live_probe"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "gmail_account_binding_gate",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+        "scripts/validate_durable_gmail_oauth_operator_handoff.py"
+      ],
+      "external_effect": false,
+      "from_state": "live_probe",
+      "operator_approval_required": true,
+      "proof_state": "Pass",
+      "reason": "Gmail account binding gate requires evidence and approval before any account-bound claim.",
+      "receipt_id": "component_lifecycle_transition.gmail_account_binding_gate.live_probe_to_approval_required.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "approval_required",
+      "transition_kind": "account_binding_gate",
+      "wiring_state": "approval_required"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "worker_runtime",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "schemas/worker_mesh.schema.json",
+        "tests/test_gateway/test_worker_mesh.py"
+      ],
+      "external_effect": false,
+      "from_state": "validated",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Worker runtime is bootstrapped for inventory and evidence while dispatch remains blocked.",
+      "receipt_id": "component_lifecycle_transition.worker_runtime.validated_to_bootstrapped.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "bootstrapped",
+      "transition_kind": "worker_runtime_bootstrap",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "approval_required",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "capability_workers",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "gateway/capability_worker.py",
+        "tests/test_gateway/test_capability_worker.py"
+      ],
+      "external_effect": false,
+      "from_state": "validated",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Capability workers are bootstrapped through restricted signed pathways while product authority remains gated.",
+      "receipt_id": "component_lifecycle_transition.capability_workers.validated_to_bootstrapped.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "bootstrapped",
+      "transition_kind": "capability_worker_bootstrap",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "authority_guardrails": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "authority_level": "blocked",
+      "blocked_actions": [
+        "connector_call",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "nested_mind_bridge",
+      "evidence_refs": [
+        "examples/component_registry.foundation.json",
+        "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+        "schemas/p3_memory_topology_read_model.schema.json"
+      ],
+      "external_effect": false,
+      "from_state": "not_present",
+      "operator_approval_required": false,
+      "proof_state": "Pass",
+      "reason": "Nested Mind bridge is present but blocked from memory topology activation.",
+      "receipt_id": "component_lifecycle_transition.nested_mind_bridge.not_present_to_present.v1",
+      "receipt_is_not_execution_authority": true,
+      "receipt_is_not_terminal_closure": true,
+      "required_validator_refs": [
+        "component_registry_validator"
+      ],
+      "to_state": "present",
+      "transition_kind": "blocked_presence_record",
+      "wiring_state": "blocked"
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_component_lifecycle_transition_receipts.py",
+      "required_for_closure": true,
+      "validator_id": "component_lifecycle_transition_receipts_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_lifecycle_transition_receipts.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_lifecycle_transition_receipts_tests"
+    }
+  ]
+}

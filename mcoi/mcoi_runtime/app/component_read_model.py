@@ -39,6 +39,7 @@ def build_component_read_model(
     registry_path: Path | None = None,
     router_inventory_path: Path | None = None,
     proof_binding_path: Path | None = None,
+    lifecycle_receipts_path: Path | None = None,
 ) -> dict[str, Any]:
     """Return the deterministic foundation Component Harness read model.
 
@@ -54,15 +55,21 @@ def build_component_read_model(
         router_inventory_path or repo_root / "examples" / "component_router_inventory.foundation.json"
     )
     effective_proof_binding_path = proof_binding_path or repo_root / "examples" / "component_proof_binding.foundation.json"
+    effective_lifecycle_receipts_path = (
+        lifecycle_receipts_path
+        or repo_root / "examples" / "component_lifecycle_transition_receipts.foundation.json"
+    )
 
     registry = _load_json_object(effective_registry_path, "component registry")
     router_inventory = _load_json_object(effective_router_inventory_path, "component router inventory")
     proof_binding = _load_json_object(effective_proof_binding_path, "component proof binding")
+    lifecycle_receipts = _load_json_object(effective_lifecycle_receipts_path, "component lifecycle transition receipts")
 
     components = _component_records(
         registry=registry,
         router_inventory=router_inventory,
         proof_binding=proof_binding,
+        lifecycle_receipts=lifecycle_receipts,
     )
     bundles = _bundle_records(registry)
     live_execution_enabled = (
@@ -88,10 +95,14 @@ def build_component_read_model(
             "registry": _path_label(effective_registry_path, repo_root),
             "router_inventory": _path_label(effective_router_inventory_path, repo_root),
             "proof_binding": _path_label(effective_proof_binding_path, repo_root),
+            "lifecycle_transition_receipts": _path_label(effective_lifecycle_receipts_path, repo_root),
         },
         "summary": {
             "component_count": len(components),
             "bundle_count": len(bundles),
+            "lifecycle_receipt_count": sum(
+                1 for component in components if component["lifecycle_receipt"]["receipt_id"]
+            ),
             "proof_bound_count": sum(
                 1 for component in components if component["proof_binding"]["state"] == "proof_bound"
             ),
@@ -107,6 +118,7 @@ def build_component_read_model(
         "bundles": bundles,
         "validators": [
             "component_registry_validator",
+            "component_lifecycle_transition_receipts_validator",
             "component_router_inventory_validator",
             "component_proof_binding_validator",
             "component_read_model_validator",
@@ -119,6 +131,7 @@ def _component_records(
     registry: dict[str, Any],
     router_inventory: dict[str, Any],
     proof_binding: dict[str, Any],
+    lifecycle_receipts: dict[str, Any],
 ) -> list[dict[str, Any]]:
     components = registry.get("components")
     if not isinstance(components, list):
@@ -133,6 +146,12 @@ def _component_records(
         id_field="component_id",
         source_label="component proof binding component_bindings",
     )
+    lifecycle_receipts_by_component = _object_by_id(
+        lifecycle_receipts.get("transition_receipts"),
+        id_field="component_id",
+        source_label="component lifecycle transition receipts transition_receipts",
+    )
+    next_transitions_by_state = _next_transitions_by_state(lifecycle_receipts)
     records: list[dict[str, Any]] = []
     for component in components:
         if not isinstance(component, dict):
@@ -140,6 +159,9 @@ def _component_records(
         component_id = _required_text(component, "id", "component registry entry")
         route_binding = route_bindings.get(component_id, {})
         component_proof_binding = proof_bindings.get(component_id, {})
+        lifecycle_receipt = lifecycle_receipts_by_component.get(component_id)
+        if lifecycle_receipt is None:
+            raise ComponentReadModelError(f"component {component_id} is missing lifecycle transition receipt")
         proof_surface = component.get("proof_surface")
         if not isinstance(proof_surface, dict):
             raise ComponentReadModelError(f"component {component_id} proof_surface must be an object")
@@ -149,17 +171,24 @@ def _component_records(
         health_source = component.get("health_source")
         if not isinstance(health_source, dict):
             raise ComponentReadModelError(f"component {component_id} health_source must be an object")
+        current_state = _required_text(component, "lifecycle_state", f"component {component_id}")
         records.append(
             {
                 "component_id": component_id,
                 "name": _required_text(component, "name", f"component {component_id}"),
                 "type": _required_text(component, "type", f"component {component_id}"),
                 "mode": _required_text(component, "mode", f"component {component_id}"),
-                "state": _required_text(component, "lifecycle_state", f"component {component_id}"),
+                "state": current_state,
                 "wiring_state": _required_text(component, "wiring_state", f"component {component_id}"),
                 "authority_level": _required_text(component, "authority_level", f"component {component_id}"),
                 "authority": {key: bool(authority.get(key, False)) for key in sorted(authority)},
                 "receipt_required": bool(component.get("receipt_required")),
+                "lifecycle_receipt": _lifecycle_receipt_summary(
+                    component_id=component_id,
+                    current_state=current_state,
+                    lifecycle_receipt=lifecycle_receipt,
+                    next_transition_candidates=next_transitions_by_state.get(current_state, ()),
+                ),
                 "health": {
                     "status": "known" if health_source.get("type") != "none" else "unknown",
                     "source": dict(health_source),
@@ -190,6 +219,58 @@ def _component_records(
             }
         )
     return records
+
+
+def _lifecycle_receipt_summary(
+    *,
+    component_id: str,
+    current_state: str,
+    lifecycle_receipt: dict[str, Any],
+    next_transition_candidates: tuple[dict[str, Any], ...],
+) -> dict[str, Any]:
+    receipt_id = _required_text(lifecycle_receipt, "receipt_id", f"component {component_id} lifecycle receipt")
+    target_state = _required_text(lifecycle_receipt, "to_state", f"component {component_id} lifecycle receipt")
+    if target_state != current_state:
+        raise ComponentReadModelError(
+            f"component {component_id} lifecycle receipt target {target_state} does not match state {current_state}"
+        )
+    return {
+        "receipt_id": receipt_id,
+        "from_state": _required_text(lifecycle_receipt, "from_state", f"component {component_id} lifecycle receipt"),
+        "to_state": target_state,
+        "proof_state": _required_text(lifecycle_receipt, "proof_state", f"component {component_id} lifecycle receipt"),
+        "evidence_refs": _string_list(lifecycle_receipt.get("evidence_refs")),
+        "validator_refs": _string_list(lifecycle_receipt.get("required_validator_refs")),
+        "operator_approval_required": bool(lifecycle_receipt.get("operator_approval_required")),
+        "external_effect": bool(lifecycle_receipt.get("external_effect")),
+        "transition_is_not_execution_authority": bool(
+            lifecycle_receipt.get("receipt_is_not_execution_authority")
+        ),
+        "can_claim_terminal_closure": lifecycle_receipt.get("receipt_is_not_terminal_closure") is not True,
+        "next_transition_candidates": [
+            {
+                "from_state": _required_text(candidate, "from_state", "allowed lifecycle transition"),
+                "to_state": _required_text(candidate, "to_state", "allowed lifecycle transition"),
+                "requires_evidence": bool(candidate.get("requires_evidence")),
+                "operator_approval_required": bool(candidate.get("operator_approval_required")),
+                "external_effect": bool(candidate.get("external_effect")),
+            }
+            for candidate in next_transition_candidates
+        ],
+    }
+
+
+def _next_transitions_by_state(lifecycle_receipts: dict[str, Any]) -> dict[str, tuple[dict[str, Any], ...]]:
+    transition_graph = lifecycle_receipts.get("allowed_transition_graph")
+    if not isinstance(transition_graph, list):
+        raise ComponentReadModelError("component lifecycle transition graph must be a list")
+    transitions_by_state: dict[str, list[dict[str, Any]]] = {}
+    for transition in transition_graph:
+        if not isinstance(transition, dict):
+            raise ComponentReadModelError("component lifecycle transition graph entries must be objects")
+        from_state = _required_text(transition, "from_state", "allowed lifecycle transition")
+        transitions_by_state.setdefault(from_state, []).append(transition)
+    return {state: tuple(transitions) for state, transitions in transitions_by_state.items()}
 
 
 def _bundle_records(registry: dict[str, Any]) -> list[dict[str, Any]]:

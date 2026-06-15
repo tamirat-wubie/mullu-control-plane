@@ -1,0 +1,254 @@
+{
+  "allowed_mode": "demo_v0",
+  "blocked_actions": [
+    "calendar_write",
+    "connector_call",
+    "external_send",
+    "mailbox_mutation",
+    "memory_topology_activation",
+    "send_email",
+    "terminal_closure",
+    "autonomous_execution",
+    "customer_exposure",
+    "deploy",
+    "dns_mutation",
+    "filesystem_write",
+    "live_dispatch",
+    "public_readiness_claim",
+    "runtime_mutation",
+    "secret_mutation",
+    "account_binding_claim",
+    "provider_write",
+    "route_execution"
+  ],
+  "blocked_component_ids": [
+    "governance_core",
+    "personal_assistant",
+    "gmail_account_binding_gate",
+    "inceptadive_shadow",
+    "snet"
+  ],
+  "bundle_id": "personal_assistant_v0",
+  "bundle_is_not_execution_route": true,
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "compilation_id": "component_bundle_compilation.personal_assistant_v0.v1",
+  "compiler_is_not_execution_authority": true,
+  "component_ids": [
+    "governance_core",
+    "personal_assistant",
+    "gmail_account_binding_gate",
+    "snet",
+    "inceptadive_shadow"
+  ],
+  "component_states": [
+    {
+      "authority_level": "read_only_advisory",
+      "component_id": "governance_core",
+      "mode": "foundation",
+      "proof_binding_state": "proof_bound",
+      "route_binding_state": "bound",
+      "state": "registered",
+      "wiring_state": "present"
+    },
+    {
+      "authority_level": "draft_only",
+      "component_id": "personal_assistant",
+      "mode": "draft_only",
+      "proof_binding_state": "proof_bound",
+      "route_binding_state": "bound",
+      "state": "draft_only",
+      "wiring_state": "draft_only"
+    },
+    {
+      "authority_level": "approval_required",
+      "component_id": "gmail_account_binding_gate",
+      "mode": "approval_required",
+      "proof_binding_state": "proof_bound",
+      "route_binding_state": "no_declared_route",
+      "state": "approval_required",
+      "wiring_state": "approval_required"
+    },
+    {
+      "authority_level": "read_only_advisory",
+      "component_id": "snet",
+      "mode": "read_only",
+      "proof_binding_state": "proof_bound",
+      "route_binding_state": "no_declared_route",
+      "state": "mounted",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_level": "read_only_advisory",
+      "component_id": "inceptadive_shadow",
+      "mode": "read_only_advisory",
+      "proof_binding_state": "proof_bound",
+      "route_binding_state": "bound",
+      "state": "mounted",
+      "wiring_state": "mounted"
+    }
+  ],
+  "expected_receipts": [
+    "component_bundle_compilation_receipt",
+    "component_registry_validation_receipt",
+    "component_read_model_validation_receipt",
+    "component_request_simulation_receipt",
+    "authority_denial_receipt",
+    "component_path_preview_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "explicit_operator_send_approval_receipt",
+    "live_send_authority_transition_receipt"
+  ],
+  "forbidden_claims": [
+    "production_ready",
+    "customer_ready",
+    "live_gmail_enabled",
+    "autonomous_execution",
+    "compliance_certified",
+    "enterprise_sla",
+    "nested_mind_live"
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "matching_simulations": [
+    {
+      "approval_required": true,
+      "blocked_actions": [
+        "send_email",
+        "external_send",
+        "mailbox_mutation",
+        "connector_call",
+        "autonomous_execution",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure",
+        "calendar_write",
+        "memory_topology_activation",
+        "account_binding_claim",
+        "provider_write"
+      ],
+      "intent": "send_email_request",
+      "needed_evidence": [
+        "gmail_account_binding_evidence_receipt",
+        "explicit_operator_send_approval_receipt",
+        "live_send_authority_transition_receipt"
+      ],
+      "outcome": "GovernanceBlocked",
+      "selected_component_ids": [
+        "governance_core",
+        "personal_assistant",
+        "gmail_account_binding_gate"
+      ],
+      "simulation_id": "component_request_simulation.send_email_blocked_preview.v1"
+    },
+    {
+      "approval_required": true,
+      "blocked_actions": [
+        "connector_call",
+        "mailbox_mutation",
+        "external_send",
+        "autonomous_execution",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure",
+        "calendar_write",
+        "memory_topology_activation",
+        "send_email",
+        "account_binding_claim",
+        "provider_write"
+      ],
+      "intent": "inbox_readiness_probe",
+      "needed_evidence": [
+        "gmail_account_binding_evidence_receipt"
+      ],
+      "outcome": "AwaitingEvidence",
+      "selected_component_ids": [
+        "governance_core",
+        "personal_assistant",
+        "gmail_account_binding_gate"
+      ],
+      "simulation_id": "component_request_simulation.inbox_readiness_probe_preview.v1"
+    },
+    {
+      "approval_required": false,
+      "blocked_actions": [
+        "route_execution",
+        "connector_call",
+        "filesystem_write",
+        "external_send",
+        "autonomous_execution",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "intent": "deep_symbolic_analysis",
+      "needed_evidence": [
+        "component_request_simulation_receipt"
+      ],
+      "outcome": "SolvedUnverified",
+      "selected_component_ids": [
+        "governance_core",
+        "inceptadive_shadow",
+        "snet"
+      ],
+      "simulation_id": "component_request_simulation.deep_symbolic_analysis_preview.v1"
+    }
+  ],
+  "missing_evidence": [
+    "gmail_account_binding_evidence_receipt",
+    "explicit_operator_send_approval_receipt",
+    "live_send_authority_transition_receipt",
+    "component_request_simulation_receipt"
+  ],
+  "mode": "foundation",
+  "name": "Personal Assistant v0 Bundle",
+  "outcome": "GovernanceBlocked",
+  "reason": "bundle personal_assistant_v0 compiles for preview while live-action scenarios remain blocked",
+  "receipt_required": true,
+  "schema_version": 1,
+  "source_refs": {
+    "read_model": "examples/component_read_model.foundation.json",
+    "registry": "examples/component_registry.foundation.json",
+    "request_simulations": "mcoi_runtime.app.component_request_simulator.foundation_component_request_simulations"
+  },
+  "summary": {
+    "approval_required_simulation_count": 2,
+    "awaiting_binding_component_count": 0,
+    "blocked_action_count": 19,
+    "blocked_simulation_count": 1,
+    "component_count": 5,
+    "live_action_ready": false,
+    "preview_available": true,
+    "proof_bound_component_count": 5,
+    "route_count": 27,
+    "simulation_count": 3
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    "component_bundle_compiler_validator",
+    "component_bundle_compiler_tests",
+    "component_registry_validator",
+    "component_read_model_validator",
+    "component_request_simulation_validator"
+  ]
+}

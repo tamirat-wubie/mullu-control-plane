@@ -21,7 +21,9 @@
       "component_id": "governance_core",
       "inventory_surface_ids": [
         "authority_obligation_mesh",
+        "component_autopsy",
         "component_harness_read_model",
+        "component_request_simulator",
         "gateway_approval_resolution",
         "gateway_capability_fabric",
         "gateway_webhook_ingress"
@@ -32,13 +34,23 @@
       "required_evidence_files": [
         "gateway/capability_fabric.py",
         "gateway/server.py",
+        "mcoi/mcoi_runtime/app/component_autopsy.py",
         "mcoi/mcoi_runtime/app/component_read_model.py",
+        "mcoi/mcoi_runtime/app/component_request_simulator.py",
         "mcoi/mcoi_runtime/app/routers/components.py",
+        "schemas/component_autopsy.schema.json",
+        "examples/component_autopsy.nested_mind_bridge.json",
+        "scripts/validate_component_autopsy.py",
+        "mcoi/tests/test_component_autopsy_route.py",
+        "tests/test_validate_component_autopsy.py",
         "tests/test_governed_capability_fabric.py"
       ],
       "required_runtime_witnesses": [
         "capsule_installer_stamps_admission_receipt",
+        "component_autopsy_route_is_read_only",
+        "component_autopsy_explains_missing_evidence",
         "component_read_model_route_is_read_only",
+        "component_request_simulator_route_is_preview_only",
         "command_lifecycle_events_are_hash_linked"
       ],
       "required_surface_ids": [
@@ -312,7 +324,7 @@
   "generated_at": "2026-06-15T00:00:00+00:00",
   "live_execution_enabled": false,
   "mode": "foundation",
-  "next_action": "Expose a component read model route only after registry, router inventory, and proof binding remain valid without enabling live execution.",
+  "next_action": "Extend proof binding toward remaining route-owned component surfaces without enabling live execution.",
   "proof_binding_is_not_execution_authority": true,
   "purpose": "Bind every registered foundation component to proof coverage matrix surfaces and router inventory proof declarations so receipt claims cannot drift from witnesses.",
   "schema_version": 1,

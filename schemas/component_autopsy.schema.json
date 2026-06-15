@@ -1,0 +1,404 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-autopsy:1",
+  "title": "Mullu Component Autopsy",
+  "description": "Read-only Component Harness autopsy view that explains component blockers, evidence, missing evidence, forbidden actions, and next transition previews without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "autopsy_id",
+    "route",
+    "component_id",
+    "name",
+    "mode",
+    "state",
+    "wiring_state",
+    "authority_level",
+    "governed",
+    "autopsy_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_write_files",
+    "can_send_external_message",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "authority_snapshot",
+    "forbidden_actions",
+    "blockers",
+    "evidence_present",
+    "missing_evidence",
+    "next_transition_candidates",
+    "expected_receipts",
+    "outcome",
+    "reason",
+    "source_refs",
+    "validators"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "autopsy_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "route": {
+      "type": "string",
+      "const": "/api/v1/components/{component_id}/autopsy"
+    },
+    "component_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "$ref": "#/$defs/identifier"
+    },
+    "state": {
+      "$ref": "#/$defs/identifier"
+    },
+    "wiring_state": {
+      "$ref": "#/$defs/identifier"
+    },
+    "authority_level": {
+      "$ref": "#/$defs/identifier"
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "autopsy_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_write_files": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_send_external_message": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "authority_snapshot": {
+      "$ref": "#/$defs/authority_snapshot"
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/blocked_action"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/blocker"
+      }
+    },
+    "evidence_present": {
+      "$ref": "#/$defs/evidence_present"
+    },
+    "missing_evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_transition_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transition_candidate"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_model",
+        "lifecycle_transition_receipts"
+      ],
+      "properties": {
+        "read_model": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "lifecycle_transition_receipts": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "money_movement",
+        "provider_write",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    },
+    "authority_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_call_connector",
+        "can_claim_terminal_closure",
+        "can_draft",
+        "can_emit_receipt",
+        "can_execute",
+        "can_mutate",
+        "can_preview",
+        "can_read",
+        "can_send_external_message",
+        "can_write_files"
+      ],
+      "properties": {
+        "can_call_connector": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_draft": {
+          "type": "boolean"
+        },
+        "can_emit_receipt": {
+          "type": "boolean"
+        },
+        "can_execute": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_preview": {
+          "type": "boolean"
+        },
+        "can_read": {
+          "type": "boolean"
+        },
+        "can_send_external_message": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_write_files": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocker_id",
+        "reason",
+        "proof_state"
+      ],
+      "properties": {
+        "blocker_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass",
+            "Unknown"
+          ]
+        }
+      }
+    },
+    "evidence_present": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lifecycle_receipt_id",
+        "lifecycle_evidence_refs",
+        "lifecycle_validator_refs",
+        "proof_surface_ids",
+        "runtime_witness_count",
+        "proof_evidence_file_count",
+        "route_binding_state",
+        "route_count"
+      ],
+      "properties": {
+        "lifecycle_receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "lifecycle_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        },
+        "lifecycle_validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "proof_surface_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "runtime_witness_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proof_evidence_file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "route_binding_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "route_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "transition_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from_state",
+        "to_state",
+        "requires_evidence",
+        "operator_approval_required",
+        "external_effect",
+        "transition_is_not_authority"
+      ],
+      "properties": {
+        "from_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "to_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "requires_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "operator_approval_required": {
+          "type": "boolean"
+        },
+        "external_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "transition_is_not_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

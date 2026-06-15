@@ -65,6 +65,12 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     router_entry = entries["component-router-inventory"]
     proof_entry = entries["component-proof-binding"]
     read_model_entry = entries["component-read-model"]
+    graph_entry = entries["component-graph"]
+    autopsy_entry = entries["component-autopsy"]
+    simulation_entry = entries["component-request-simulation"]
+    bundle_compilation_entry = entries["component-bundle-compilation"]
+    lifecycle_entry = entries["component-lifecycle-transition-receipts"]
+    dead_component_entry = entries["component-dead-component-detection"]
 
     assert validate_protocol_manifest(manifest) == []
     assert registry_entry["path"] == "schemas/component_registry.schema.json"
@@ -79,6 +85,47 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     assert read_model_entry["path"] == "schemas/component_read_model.schema.json"
     assert read_model_entry["urn"] == "urn:mullusi:schema:component-read-model:1"
     assert read_model_entry["surface"] == "governance"
+    assert graph_entry["path"] == "schemas/component_graph.schema.json"
+    assert graph_entry["urn"] == "urn:mullusi:schema:component-graph:1"
+    assert graph_entry["surface"] == "governance"
+    assert autopsy_entry["path"] == "schemas/component_autopsy.schema.json"
+    assert autopsy_entry["urn"] == "urn:mullusi:schema:component-autopsy:1"
+    assert autopsy_entry["surface"] == "governance"
+    assert simulation_entry["path"] == "schemas/component_request_simulation.schema.json"
+    assert simulation_entry["urn"] == "urn:mullusi:schema:component-request-simulation:1"
+    assert simulation_entry["surface"] == "governance"
+    assert bundle_compilation_entry["path"] == "schemas/component_bundle_compilation.schema.json"
+    assert bundle_compilation_entry["urn"] == "urn:mullusi:schema:component-bundle-compilation:1"
+    assert bundle_compilation_entry["surface"] == "governance"
+    assert lifecycle_entry["path"] == "schemas/component_lifecycle_transition_receipts.schema.json"
+    assert lifecycle_entry["urn"] == "urn:mullusi:schema:component-lifecycle-transition-receipts:1"
+    assert lifecycle_entry["surface"] == "governance"
+    assert dead_component_entry["path"] == (
+        "schemas/component_dead_component_detection.schema.json"
+    )
+    assert dead_component_entry["urn"] == (
+        "urn:mullusi:schema:component-dead-component-detection:1"
+    )
+    assert dead_component_entry["surface"] == "governance"
+
+
+def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["operator-receipt-viewer-read-model"]
+    task_entry = entries["current-task-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == (
+        "schemas/operator_receipt_viewer_read_model.schema.json"
+    )
+    assert receipt_entry["urn"] == (
+        "urn:mullusi:schema:operator-receipt-viewer-read-model:1"
+    )
+    assert receipt_entry["surface"] == "operator"
+    assert task_entry["path"] == "schemas/current_task_read_model.schema.json"
+    assert task_entry["urn"] == "urn:mullusi:schema:current-task-read-model:1"
+    assert task_entry["surface"] == "operator"
 
 
 def test_protocol_manifest_indexes_claim_verification_report() -> None:

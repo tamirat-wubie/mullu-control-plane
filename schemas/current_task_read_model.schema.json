@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:current-task-read-model:1",
+  "title": "Current Task Read Model",
+  "description": "Operator-gated, bounded current command task state for read-only review.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "tenant_id_filter",
+    "status_filter",
+    "limit",
+    "offset",
+    "next_offset",
+    "total",
+    "count",
+    "current_task_id",
+    "status_counts",
+    "tasks",
+    "raw_message_exposed",
+    "execution_allowed",
+    "write_allowed",
+    "governed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:current-task-read-model:1"
+    },
+    "tenant_id_filter": {"type": "string"},
+    "status_filter": {
+      "type": "string",
+      "enum": [
+        "",
+        "received",
+        "active",
+        "waiting_for_approval",
+        "requires_review",
+        "blocked",
+        "completed"
+      ]
+    },
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500},
+    "offset": {"type": "integer", "minimum": 0},
+    "next_offset": {
+      "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "total": {"type": "integer", "minimum": 0},
+    "count": {"type": "integer", "minimum": 0},
+    "current_task_id": {"type": "string"},
+    "status_counts": {"$ref": "#/$defs/status_counts"},
+    "tasks": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/task"}
+    },
+    "raw_message_exposed": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "write_allowed": {"type": "boolean", "const": false},
+    "governed": {"type": "boolean", "const": true}
+  },
+  "$defs": {
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "received",
+        "active",
+        "waiting_for_approval",
+        "requires_review",
+        "blocked",
+        "completed"
+      ],
+      "properties": {
+        "received": {"type": "integer", "minimum": 0},
+        "active": {"type": "integer", "minimum": 0},
+        "waiting_for_approval": {"type": "integer", "minimum": 0},
+        "requires_review": {"type": "integer", "minimum": 0},
+        "blocked": {"type": "integer", "minimum": 0},
+        "completed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "tenant_id",
+        "actor_id",
+        "source",
+        "intent",
+        "command_state",
+        "task_status",
+        "task_terminal",
+        "task_blocked",
+        "waiting_for",
+        "next_action",
+        "created_at",
+        "trace_id",
+        "latest_event_hash",
+        "event_count",
+        "receipt_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "command_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "actor_id": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "intent": {"type": "string", "minLength": 1},
+        "command_state": {"type": "string", "minLength": 1},
+        "task_status": {"$ref": "#/$defs/task_status"},
+        "task_terminal": {"type": "boolean"},
+        "task_blocked": {"type": "boolean"},
+        "waiting_for": {"type": "string"},
+        "next_action": {
+          "type": "string",
+          "enum": [
+            "review_receipts",
+            "inspect_denial_or_block_receipts",
+            "resolve_approval",
+            "operator_review",
+            "monitor_execution_receipts",
+            "continue_governed_admission"
+          ]
+        },
+        "created_at": {"type": "string", "minLength": 1},
+        "trace_id": {"type": "string", "minLength": 1},
+        "latest_event_hash": {"type": "string"},
+        "event_count": {"type": "integer", "minimum": 0},
+        "receipt_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "task_status": {
+      "type": "string",
+      "enum": [
+        "received",
+        "active",
+        "waiting_for_approval",
+        "requires_review",
+        "blocked",
+        "completed"
+      ]
+    }
+  }
+}
