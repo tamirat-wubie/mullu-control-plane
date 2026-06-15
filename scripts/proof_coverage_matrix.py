@@ -6765,7 +6765,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/temporal_retention_window_receipt.schema.json",
                 "tests/test_gateway/test_temporal_retention_window.py",
             ],
-            "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review.",
+            "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, retention approval, backup guard evidence, and overdue timing before deletion, archive, anonymization, or retention review.",
             [
                 "runtime_clock_owns_retention_timing",
                 "delete_before_delete_after_defers_action",
@@ -6776,6 +6776,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "retention_policy_ref_required",
                 "subject_evidence_refs_required",
                 "high_risk_source_receipts_bound",
+                "retention_approval_and_backup_guard_bound",
                 "temporal_retention_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
@@ -6809,6 +6810,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "high_risk_source_receipts_bound": [
                     "retention_window_allows_archive_after_retention_until",
                     "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
+                ],
+                "retention_approval_and_backup_guard_bound": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_blocks_due_delete_without_retention_approval",
                 ],
                 "temporal_retention_window_receipt_schema_valid": [
                     "retention_window_allows_delete_at_due_boundary",

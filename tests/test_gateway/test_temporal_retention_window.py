@@ -5,14 +5,16 @@ tenant-scoped, legal-hold-aware, source-bound, and schema-backed before data
 lifecycle action dispatch.
 Governance scope: retention_until, delete_after, legal hold, tenant scope,
 retention policy refs, owner refs, evidence refs, high-risk source binding,
-and non-terminal temporal retention window receipts.
+retention approval evidence, backup guard binding, and non-terminal temporal
+retention window receipts.
 Dependencies: gateway.temporal_retention_window and temporal retention window
 receipt schema.
 Invariants:
   - Data deletion cannot run before delete_after.
   - Archive, anonymize, and review actions cannot run before retention_until.
   - Legal hold blocks lifecycle actions regardless of retention age.
-  - High-risk lifecycle actions bind temporal, reapproval, and data-decision receipts.
+  - High-risk lifecycle actions bind temporal, reapproval, data-decision,
+    retention approval, and backup guard receipts.
   - Low-risk policies may mark retention-window control not required.
 """
 
@@ -55,6 +57,9 @@ def test_retention_window_defers_delete_before_delete_after() -> None:
     assert receipt.overdue_seconds == 0
     assert "retention_window_not_expired" in receipt.warning_reasons
     assert "retention_defer" in receipt.required_controls
+    assert "retention_approval_certificate" in receipt.required_controls
+    assert receipt.retention_approval_required is True
+    assert receipt.metadata["retention_approval_checked"] is False
     assert receipt.metadata["lifecycle_action_allowed"] is False
     assert receipt.metadata["high_risk_source_receipts_checked"] is True
 
@@ -74,7 +79,39 @@ def test_retention_window_allows_delete_at_due_boundary() -> None:
     assert receipt.warning_reasons == []
     assert "lifecycle_action_receipt" in receipt.required_controls
     assert "audit_trail" in receipt.required_controls
+    assert "retention_approval_certificate" in receipt.required_controls
+    assert "retention_backup_guard_hash" in receipt.required_controls
+    assert receipt.retention_approval_refs == ["approval://retention/certificate-1"]
+    assert receipt.retention_approval_certificate_hash == "retention-approval-hash-0123456789abcdef"
+    assert receipt.backup_guard_hash == "backup-guard-hash-0123456789abcdef"
+    assert receipt.metadata["retention_approval_checked"] is True
+    assert receipt.metadata["retention_approval_satisfied"] is True
+    assert receipt.metadata["backup_guard_hash_checked"] is True
     assert receipt.metadata["lifecycle_action_allowed"] is True
+
+
+def test_retention_window_blocks_due_delete_without_retention_approval() -> None:
+    receipt = TemporalRetentionWindow(FixedClock()).evaluate(
+        _request(
+            subject=replace(_subject(), delete_after=NOW),
+            retention_approval_refs=[],
+            retention_approval_certificate_hash="",
+            backup_guard_hash="",
+        )
+    )
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), asdict(receipt))
+
+    assert errors == []
+    assert receipt.status == "blocked"
+    assert receipt.retention_state == "invalid"
+    assert "retention_approval_refs_required" in receipt.blocked_reasons
+    assert "retention_approval_certificate_hash_required" in receipt.blocked_reasons
+    assert "retention_backup_guard_hash_required" in receipt.blocked_reasons
+    assert "retention_approval_certificate" in receipt.required_controls
+    assert "retention_backup_guard_hash" in receipt.required_controls
+    assert receipt.metadata["retention_approval_checked"] is True
+    assert receipt.metadata["retention_approval_satisfied"] is False
+    assert receipt.metadata["lifecycle_action_allowed"] is False
 
 
 def test_retention_window_marks_overdue_after_warning_window() -> None:
@@ -96,6 +133,8 @@ def test_retention_window_marks_overdue_after_warning_window() -> None:
     assert receipt.overdue_seconds == 9000
     assert "retention_action_overdue" in receipt.warning_reasons
     assert "retention_overdue_review" in receipt.required_controls
+    assert receipt.metadata["retention_approval_checked"] is True
+    assert receipt.metadata["retention_approval_satisfied"] is True
     assert receipt.blocked_reasons == []
     assert receipt.metadata["lifecycle_action_allowed"] is True
 
@@ -194,10 +233,13 @@ def test_retention_window_marks_low_risk_action_not_required() -> None:
     assert receipt.retention_check_required is False
     assert receipt.data_id == ""
     assert receipt.seconds_until_action_due == 0
+    assert receipt.retention_approval_required is False
+    assert receipt.retention_approval_refs == []
     assert receipt.blocked_reasons == []
     assert receipt.warning_reasons == []
     assert receipt.metadata["lifecycle_action_allowed"] is True
     assert receipt.metadata["retention_checked"] is False
+    assert receipt.metadata["retention_approval_satisfied"] is True
 
 
 def _request(
@@ -209,6 +251,9 @@ def _request(
     source_temporal_receipt_id: str = "temporal-receipt-0123456789abcdef",
     source_reapproval_receipt_id: str = "temporal-reapproval-receipt-0123456789abcdef",
     source_data_decision_id: str = "data-decision-0123456789abcdef",
+    retention_approval_refs: list[str] | None = None,
+    retention_approval_certificate_hash: str = "retention-approval-hash-0123456789abcdef",
+    backup_guard_hash: str = "backup-guard-hash-0123456789abcdef",
 ) -> TemporalRetentionRequest:
     return TemporalRetentionRequest(
         request_id="retention-window-1",
@@ -223,6 +268,13 @@ def _request(
         source_temporal_receipt_id=source_temporal_receipt_id,
         source_reapproval_receipt_id=source_reapproval_receipt_id,
         source_data_decision_id=source_data_decision_id,
+        retention_approval_refs=(
+            retention_approval_refs
+            if retention_approval_refs is not None
+            else ["approval://retention/certificate-1"]
+        ),
+        retention_approval_certificate_hash=retention_approval_certificate_hash,
+        backup_guard_hash=backup_guard_hash,
     )
 
 

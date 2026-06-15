@@ -4,7 +4,8 @@ Purpose: prove a data lifecycle action is inside the governed retention
     window before deletion, archive, anonymization, or retention review.
 Governance scope: runtime-owned retention timing, delete-after windows,
     legal hold, tenant scope, retention policy refs, evidence refs, high-risk
-    source receipt binding, and non-terminal temporal receipts.
+    source receipt binding, retention approval evidence, backup guard binding,
+    and non-terminal temporal receipts.
 Dependencies: dataclasses, datetime, command-spine canonical hashing, and the
     Temporal Kernel trusted clock.
 Invariants:
@@ -12,7 +13,8 @@ Invariants:
   - Data cannot be deleted before delete_after.
   - Archive and anonymization cannot run before retention_until.
   - Legal hold blocks lifecycle actions regardless of retention age.
-  - High-risk lifecycle actions bind temporal, reapproval, and data-decision receipts.
+  - High-risk lifecycle actions bind temporal, reapproval, data-decision,
+    retention approval, and backup guard receipts before irreversible action.
   - Temporal retention window receipts are not terminal closure certificates.
 """
 
@@ -40,6 +42,7 @@ BASE_RETENTION_WINDOW_CONTROLS = (
     "legal_hold",
     "tenant_scope",
     "retention_policy",
+    "retention_approval",
     "evidence_reference",
     "temporal_retention_window_receipt",
     "terminal_closure",
@@ -97,6 +100,10 @@ class TemporalRetentionPolicy:
     overdue_warning_seconds: int = 0
     requires_retention_check: bool = True
     high_risk_requires_retention_check: bool = True
+    approval_required_for_destructive_actions: bool = True
+    approval_required_for_high_risk_actions: bool = True
+    minimum_retention_approval_refs: int = 1
+    backup_guard_hash_required: bool = True
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -111,6 +118,8 @@ class TemporalRetentionPolicy:
                 raise ValueError("retention_action_invalid")
         if self.overdue_warning_seconds < 0:
             raise ValueError("overdue_warning_seconds_nonnegative_required")
+        if self.minimum_retention_approval_refs < 0:
+            raise ValueError("minimum_retention_approval_refs_nonnegative_required")
         object.__setattr__(self, "allowed_actions", allowed_actions)
         object.__setattr__(self, "metadata", dict(self.metadata))
 
@@ -131,6 +140,9 @@ class TemporalRetentionRequest:
     source_temporal_receipt_id: str = ""
     source_reapproval_receipt_id: str = ""
     source_data_decision_id: str = ""
+    retention_approval_refs: list[str] = field(default_factory=list)
+    retention_approval_certificate_hash: str = ""
+    backup_guard_hash: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -147,6 +159,13 @@ class TemporalRetentionRequest:
         object.__setattr__(self, "source_temporal_receipt_id", str(self.source_temporal_receipt_id).strip())
         object.__setattr__(self, "source_reapproval_receipt_id", str(self.source_reapproval_receipt_id).strip())
         object.__setattr__(self, "source_data_decision_id", str(self.source_data_decision_id).strip())
+        object.__setattr__(self, "retention_approval_refs", _normalize_list(self.retention_approval_refs))
+        object.__setattr__(
+            self,
+            "retention_approval_certificate_hash",
+            str(self.retention_approval_certificate_hash).strip(),
+        )
+        object.__setattr__(self, "backup_guard_hash", str(self.backup_guard_hash).strip())
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -190,6 +209,10 @@ class TemporalRetentionWindowReceipt:
     source_temporal_receipt_id: str
     source_reapproval_receipt_id: str
     source_data_decision_id: str
+    retention_approval_required: bool
+    retention_approval_refs: list[str]
+    retention_approval_certificate_hash: str
+    backup_guard_hash: str
     receipt_schema_ref: str
     terminal_closure_required: bool
     receipt_hash: str = ""
@@ -213,6 +236,7 @@ class TemporalRetentionWindowReceipt:
         object.__setattr__(self, "required_controls", _normalize_list(self.required_controls))
         object.__setattr__(self, "evidence_refs", _normalize_list(self.evidence_refs))
         object.__setattr__(self, "subject_evidence_refs", _normalize_list(self.subject_evidence_refs))
+        object.__setattr__(self, "retention_approval_refs", _normalize_list(self.retention_approval_refs))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -266,6 +290,22 @@ class TemporalRetentionWindow:
                 blocked_reasons=blocked_reasons,
                 warning_reasons=warning_reasons,
             )
+        retention_approval_required = _retention_approval_required(
+            request,
+            retention_check_required,
+        )
+        retention_approval_due = _retention_approval_due(
+            request=request,
+            retention_check_required=retention_check_required,
+            target_due_at=target_due_at,
+            now=now,
+        )
+        if retention_approval_required:
+            required_controls.append("retention_approval_certificate")
+            if request.policy.backup_guard_hash_required:
+                required_controls.append("retention_backup_guard_hash")
+        if retention_approval_due:
+            blocked_reasons.extend(_retention_approval_violations(request))
 
         status = _status(
             blocked_reasons=blocked_reasons,
@@ -313,6 +353,10 @@ class TemporalRetentionWindow:
             source_temporal_receipt_id=request.source_temporal_receipt_id,
             source_reapproval_receipt_id=request.source_reapproval_receipt_id,
             source_data_decision_id=request.source_data_decision_id,
+            retention_approval_required=retention_approval_required,
+            retention_approval_refs=request.retention_approval_refs,
+            retention_approval_certificate_hash=request.retention_approval_certificate_hash,
+            backup_guard_hash=request.backup_guard_hash,
             receipt_schema_ref=TEMPORAL_RETENTION_WINDOW_RECEIPT_SCHEMA_REF,
             terminal_closure_required=True,
             metadata={
@@ -324,6 +368,13 @@ class TemporalRetentionWindow:
                 "legal_hold_checked": retention_check_required and subject is not None,
                 "tenant_scope_checked": retention_check_required and subject is not None,
                 "high_risk_source_receipts_checked": _source_receipts_checked(request),
+                "retention_approval_required": retention_approval_required,
+                "retention_approval_checked": retention_approval_due,
+                "retention_approval_satisfied": _retention_approval_satisfied(
+                    request,
+                    retention_approval_required,
+                ),
+                "backup_guard_hash_checked": bool(request.backup_guard_hash),
             },
         )
         receipt_hash = canonical_hash(asdict(receipt))
@@ -360,6 +411,59 @@ def _policy_violations(request: TemporalRetentionRequest, retention_check_requir
         violations.append("source_reapproval_receipt_required_for_high_risk")
     if request.risk_level in HIGH_RISK_LEVELS and not request.source_data_decision_id:
         violations.append("source_data_decision_required_for_high_risk")
+    return violations
+
+
+def _retention_approval_required(
+    request: TemporalRetentionRequest,
+    retention_check_required: bool,
+) -> bool:
+    if not retention_check_required:
+        return False
+    if request.action_type in DESTRUCTIVE_ACTIONS and request.policy.approval_required_for_destructive_actions:
+        return True
+    return request.risk_level in HIGH_RISK_LEVELS and request.policy.approval_required_for_high_risk_actions
+
+
+def _retention_approval_due(
+    *,
+    request: TemporalRetentionRequest,
+    retention_check_required: bool,
+    target_due_at: datetime | None,
+    now: datetime,
+) -> bool:
+    if not _retention_approval_required(request, retention_check_required):
+        return False
+    if target_due_at is None:
+        return False
+    return target_due_at <= now
+
+
+def _retention_approval_satisfied(
+    request: TemporalRetentionRequest,
+    retention_approval_required: bool,
+) -> bool:
+    if not retention_approval_required:
+        return True
+    minimum_refs = max(1, request.policy.minimum_retention_approval_refs)
+    if len(request.retention_approval_refs) < minimum_refs:
+        return False
+    if not request.retention_approval_certificate_hash:
+        return False
+    if request.policy.backup_guard_hash_required and not request.backup_guard_hash:
+        return False
+    return True
+
+
+def _retention_approval_violations(request: TemporalRetentionRequest) -> list[str]:
+    violations: list[str] = []
+    minimum_refs = max(1, request.policy.minimum_retention_approval_refs)
+    if len(request.retention_approval_refs) < minimum_refs:
+        violations.append("retention_approval_refs_required")
+    if not request.retention_approval_certificate_hash:
+        violations.append("retention_approval_certificate_hash_required")
+    if request.policy.backup_guard_hash_required and not request.backup_guard_hash:
+        violations.append("retention_backup_guard_hash_required")
     return violations
 
 
