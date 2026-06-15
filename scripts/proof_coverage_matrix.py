@@ -7261,6 +7261,62 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "distributed_lease_adapter_registry_receipts",
+            [
+                "DistributedLeaseAdapterRegistryEvaluator.evaluate",
+                "DistributedLeaseAdapterRegistry",
+                "DistributedLeaseAdapterRegistryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_adapters.py",
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_adapters.py",
+            ],
+            "Distributed lease adapter registry receipts bind backend capability, adapter mode, production readiness, fencing-token support, compare-and-swap support, registry hash, capability hash, and distributed lease claim receipt hash before any adapter claim can be treated as ready, delegated, or blocked.",
+            [
+                "adapter_registry_default_inventory_hash_bound",
+                "adapter_registry_delegates_external_gateway_without_local_execution",
+                "adapter_registry_blocks_native_adapter_without_production_readiness",
+                "adapter_registry_blocks_fencing_required_backend_without_token_support",
+                "adapter_registry_blocks_claim_receipt_violations",
+                "adapter_registry_binds_claim_approved_external_gateway_receipt",
+                "adapter_registry_rejects_secret_values",
+                "distributed_lease_adapter_registry_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "adapter_registry_default_inventory_hash_bound": [
+                    "adapter_registry_default_inventory_is_hash_bound"
+                ],
+                "adapter_registry_delegates_external_gateway_without_local_execution": [
+                    "adapter_registry_delegates_external_gateway_without_local_execution"
+                ],
+                "adapter_registry_blocks_native_adapter_without_production_readiness": [
+                    "adapter_registry_blocks_native_adapter_without_production_readiness"
+                ],
+                "adapter_registry_blocks_fencing_required_backend_without_token_support": [
+                    "adapter_registry_blocks_fencing_required_backend_without_token_support"
+                ],
+                "adapter_registry_blocks_claim_receipt_violations": [
+                    "adapter_registry_blocks_claim_receipt_violations_before_capability_admission"
+                ],
+                "adapter_registry_binds_claim_approved_external_gateway_receipt": [
+                    "adapter_registry_binds_claim_approved_external_gateway_receipt"
+                ],
+                "adapter_registry_rejects_secret_values": [
+                    "adapter_registry_rejects_secret_values_in_capability_metadata"
+                ],
+                "distributed_lease_adapter_registry_receipt_schema_valid": [
+                    "adapter_registry_default_inventory_is_hash_bound",
+                    "adapter_registry_binds_claim_approved_external_gateway_receipt",
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9476,6 +9532,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_distributed_lease_claim_receipt_contract",
             "surfaces": ["distributed_lease_claim_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_adapter_registry_receipt_contract",
+            "surfaces": ["distributed_lease_adapter_registry_receipts"],
             "status": "closed",
         },
         {

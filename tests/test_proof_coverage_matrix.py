@@ -319,6 +319,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["github_branch_protection_reconcile_receipts"]["exact_test_anchor_count"] == 10
     assert surfaces["distributed_lease_claim_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["distributed_lease_claim_receipts"]["exact_test_anchor_count"] == 14
+    assert surfaces["distributed_lease_adapter_registry_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["distributed_lease_adapter_registry_receipts"]["exact_test_anchor_count"] == 8
     assert surfaces["oidc_jwks_refresh_evidence"]["unanchored_witness_count"] == 0
     assert surfaces["oidc_jwks_refresh_evidence"]["exact_test_anchor_count"] == 6
     assert surfaces["trusted_identity_header_boundary"]["unanchored_witness_count"] == 0
@@ -5180,6 +5182,34 @@ def test_distributed_lease_claim_receipt_surface_binds_backend_claim_evidence() 
     assert "secret_value_absence_verified" in witnesses
     assert "distributed_lease_claim_receipt_schema_valid" in witnesses
     assert closure_actions["publish_distributed_lease_claim_receipt_contract"]["status"] == "closed"
+
+
+def test_distributed_lease_adapter_registry_surface_binds_backend_capability() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lease_surface = surfaces["distributed_lease_adapter_registry_receipts"]
+    witnesses = set(lease_surface["runtime_witnesses"])
+
+    assert lease_surface["coverage_state"] == "witnessed"
+    assert lease_surface["request_proof"] == "request_proof"
+    assert lease_surface["action_proof"] == "action_proof"
+    assert "DistributedLeaseAdapterRegistryEvaluator.evaluate" in lease_surface["representative_paths"]
+    assert "DistributedLeaseAdapterRegistry" in lease_surface["representative_paths"]
+    assert "DistributedLeaseAdapterRegistryReceipt" in lease_surface["representative_paths"]
+    assert "gateway/distributed_lease_adapters.py" in lease_surface["evidence_files"]
+    assert "gateway/distributed_lease_boundary.py" in lease_surface["evidence_files"]
+    assert "schemas/distributed_lease_adapter_registry_receipt.schema.json" in lease_surface["evidence_files"]
+    assert "tests/test_gateway/test_distributed_lease_adapters.py" in lease_surface["evidence_files"]
+    assert "adapter_registry_default_inventory_hash_bound" in witnesses
+    assert "adapter_registry_delegates_external_gateway_without_local_execution" in witnesses
+    assert "adapter_registry_blocks_native_adapter_without_production_readiness" in witnesses
+    assert "adapter_registry_blocks_fencing_required_backend_without_token_support" in witnesses
+    assert "adapter_registry_blocks_claim_receipt_violations" in witnesses
+    assert "adapter_registry_binds_claim_approved_external_gateway_receipt" in witnesses
+    assert "adapter_registry_rejects_secret_values" in witnesses
+    assert "distributed_lease_adapter_registry_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_distributed_lease_adapter_registry_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:
