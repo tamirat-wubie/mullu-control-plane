@@ -1,0 +1,90 @@
+{
+  "security_review_id": "sdlc_security_distributed_lease_execution_receipt_boundary_20260615",
+  "change_id": "sdlc_req_distributed_lease_execution_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Distributed scheduler lease execution can accidentally grant worker authority when execution planning, adapter readiness, and claim outcome are conflated. The main risks are treating a blocked adapter as executable, representing external gateway delegation as local execution, accepting claim receipt violations before scheduler mutation, admitting a delegated execution without a granted claim outcome, leaking raw tokens through request metadata, and losing audit linkage between execution plan, adapter registry receipt, and claim receipt. The mitigation is to keep execution receipt evaluation non-live, hash the execution plan, bind adapter registry receipt hash and claim receipt hash, limit local readiness to adapter_ready local compare-and-swap receipts, classify external gateway execution as delegated, fail closed on blocked adapter or claim receipts, reject secret-shaped metadata, and retain no-live-call/no-scheduler-mutation/no-worker-dispatch flags in the schema.",
+  "required_checks": [
+    {
+      "category": "external_api",
+      "check": "non-live execution check proving execution receipt evaluation performs no SQLite, Postgres, Redis, etcd, Consul, or HTTP gateway call",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_delegates_external_gateway_without_http_call"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving execution receipts bind adapter registry receipt hash and claim receipt hash",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving execution plan hash and operation payload hash are retained in execution receipts",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving raw token-shaped request metadata blocks receipt admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_rejects_secret_value_disclosure"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving non-production native adapters block execution admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_native_adapter_without_production_readiness"
+    },
+    {
+      "category": "policy",
+      "check": "fencing policy check proving backends that require fencing tokens block execution when adapter capability lacks fencing support",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_fencing_required_backend_without_token_support"
+    },
+    {
+      "category": "auth",
+      "check": "auth boundary check proving blocked claim receipts prevent execution admission before scheduler mutation or worker dispatch",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_blocks_claim_receipt_violations_before_dispatch"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id, actor id, command id, request id, backend kind, job id, and worker id are carried in the execution receipt",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_execution.py::test_execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public distributed lease execution receipt schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep DistributedLeaseExecutionReceiptEvaluator non-live and deterministic",
+    "hash execution plan, operation payload, adapter registry receipt, and claim receipt for every execution receipt",
+    "block execution when adapter registry or claim receipt evidence is blocked",
+    "limit local execution readiness to adapter_ready local compare-and-swap receipts",
+    "represent external HTTP gateway execution as delegated rather than local execution",
+    "fail closed when fencing-token policy requires fencing and the adapter lacks fencing support",
+    "block raw token, JWT, and private-key shaped material in request metadata",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid backend calls, request authentication, scheduler mutation, worker dispatch, deployment, or production claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/distributed-lease-execution-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/distributed-lease-execution-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/distributed-lease-execution-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/distributed-lease-execution-receipt-boundary/20260615"
+}
