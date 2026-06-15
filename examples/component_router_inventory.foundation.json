@@ -4,7 +4,7 @@
   "live_connector_send_enabled": false,
   "live_execution_enabled": false,
   "mode": "foundation",
-  "next_action": "Bind proof matrix surfaces and component read-model routes without enabling live execution.",
+  "next_action": "Extend selected route inventory toward remaining declared route families without enabling live execution.",
   "purpose": "Bind currently declared component-owned route families to registered component IDs and proof surfaces while preserving blocked-action authority boundaries.",
   "route_bindings": [
     {
@@ -38,7 +38,9 @@
         "/commands/{command_id}/interpretation-receipt",
         "/commands/{command_id}/universal-action-orchestration",
         "/commands/{command_id}/universal-action-proof",
+        "/api/v1/components/{component_id}/autopsy",
         "/api/v1/components/read-model",
+        "/api/v1/components/simulate",
         "/webhook/approve/{request_id}",
         "/webhook/discord",
         "/webhook/phone",
@@ -52,7 +54,9 @@
       "notes": "Gateway governance routes are bound as proof surfaces only; the inventory does not grant route execution authority.",
       "proof_surface_ids": [
         "authority_obligation_mesh",
+        "component_autopsy",
         "component_harness_read_model",
+        "component_request_simulator",
         "gateway_approval_resolution",
         "gateway_capability_fabric",
         "gateway_webhook_ingress"

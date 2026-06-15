@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-bundle-compilation:1",
+  "title": "Mullu Component Bundle Compilation",
+  "description": "Preview-only Component Harness product-bundle compilation report that joins bundle registry, component read model, and request simulation evidence without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "compilation_id",
+    "bundle_id",
+    "name",
+    "mode",
+    "allowed_mode",
+    "governed",
+    "compiler_is_not_execution_authority",
+    "bundle_is_not_execution_route",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "receipt_required",
+    "component_ids",
+    "component_states",
+    "summary",
+    "blocked_component_ids",
+    "blocked_actions",
+    "matching_simulations",
+    "expected_receipts",
+    "missing_evidence",
+    "forbidden_claims",
+    "outcome",
+    "reason",
+    "source_refs",
+    "validators"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "compilation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "bundle_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "allowed_mode": {
+      "type": "string",
+      "enum": [
+        "demo_v0",
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "compiler_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "bundle_is_not_execution_route": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_required": {
+      "type": "boolean"
+    },
+    "component_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "component_states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component_state"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "blocked_component_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "terminal_closure"
+      },
+      "items": {
+        "$ref": "#/$defs/blocked_action"
+      }
+    },
+    "matching_simulations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/simulation_summary"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "missing_evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "forbidden_claims": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked",
+        "SolvedUnverified"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry",
+        "read_model",
+        "request_simulations"
+      ],
+      "properties": {
+        "registry": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "read_model": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "request_simulations": {
+          "$ref": "#/$defs/source_ref"
+        }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "money_movement",
+        "provider_write",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    },
+    "component_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "mode",
+        "state",
+        "wiring_state",
+        "authority_level",
+        "proof_binding_state",
+        "route_binding_state"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wiring_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority_level": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proof_binding_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route_binding_state": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "proof_bound_component_count",
+        "awaiting_binding_component_count",
+        "route_count",
+        "blocked_action_count",
+        "simulation_count",
+        "blocked_simulation_count",
+        "approval_required_simulation_count",
+        "preview_available",
+        "live_action_ready"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "proof_bound_component_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "awaiting_binding_component_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "simulation_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_simulation_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approval_required_simulation_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "preview_available": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_action_ready": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "simulation_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "simulation_id",
+        "intent",
+        "outcome",
+        "approval_required",
+        "selected_component_ids",
+        "blocked_actions",
+        "needed_evidence"
+      ],
+      "properties": {
+        "simulation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "intent": {
+          "$ref": "#/$defs/identifier"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "GovernanceBlocked",
+            "SolvedUnverified"
+          ]
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "selected_component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        },
+        "needed_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      }
+    }
+  }
+}

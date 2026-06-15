@@ -262,7 +262,19 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 23
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 28
+    assert surfaces["component_autopsy"]["unanchored_witness_count"] == 0
+    assert surfaces["component_autopsy"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_request_simulator"]["unanchored_witness_count"] == 0
+    assert surfaces["component_request_simulator"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_bundle_compiler"]["unanchored_witness_count"] == 0
+    assert surfaces["component_bundle_compiler"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_graph"]["unanchored_witness_count"] == 0
+    assert surfaces["component_graph"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_dead_detector"]["unanchored_witness_count"] == 0
+    assert surfaces["component_dead_detector"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_lifecycle_transition_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["component_lifecycle_transition_receipts"]["exact_test_anchor_count"] == 5
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -688,6 +700,54 @@ def test_declared_routes_have_explicit_coverage_classification() -> None:
     assert all(record["coverage_state"] != "unproven" for record in report["routes"])
 
 
+def test_component_bundle_compiler_surface_is_preview_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    bundle_surface = surfaces["component_bundle_compiler"]
+    witnesses = set(bundle_surface["runtime_witnesses"])
+
+    assert bundle_surface["coverage_state"] == "proven"
+    assert bundle_surface["representative_paths"] == ["component_bundle_compilation"]
+    assert "mcoi/mcoi_runtime/app/component_bundle_compiler.py" in bundle_surface["evidence_files"]
+    assert "schemas/component_bundle_compilation.schema.json" in bundle_surface["evidence_files"]
+    assert "component_bundle_compiler_compiles_personal_assistant_v0_preview" in witnesses
+    assert "component_bundle_compiler_rejects_live_authority_drift" in witnesses
+    assert closure_actions["publish_component_bundle_compiler"]["status"] == "closed"
+
+
+def test_component_lifecycle_transition_receipts_surface_is_preview_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lifecycle_surface = surfaces["component_lifecycle_transition_receipts"]
+    witnesses = set(lifecycle_surface["runtime_witnesses"])
+
+    assert lifecycle_surface["coverage_state"] == "proven"
+    assert lifecycle_surface["representative_paths"] == ["component_lifecycle_transition_receipts"]
+    assert "schemas/component_lifecycle_transition_receipts.schema.json" in lifecycle_surface["evidence_files"]
+    assert "scripts/validate_component_lifecycle_transition_receipts.py" in lifecycle_surface["evidence_files"]
+    assert "component_lifecycle_transition_receipts_validate_and_write" in witnesses
+    assert "component_lifecycle_transition_receipts_reject_live_authority_drift" in witnesses
+    assert closure_actions["publish_component_lifecycle_transition_receipts"]["status"] == "closed"
+
+
+def test_component_autopsy_surface_is_read_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    autopsy_surface = surfaces["component_autopsy"]
+    witnesses = set(autopsy_surface["runtime_witnesses"])
+
+    assert autopsy_surface["coverage_state"] == "proven"
+    assert autopsy_surface["representative_paths"] == ["/api/v1/components/{component_id}/autopsy"]
+    assert "mcoi/mcoi_runtime/app/component_autopsy.py" in autopsy_surface["evidence_files"]
+    assert "schemas/component_autopsy.schema.json" in autopsy_surface["evidence_files"]
+    assert "component_autopsy_explains_missing_evidence" in witnesses
+    assert "component_autopsy_route_is_read_only" in witnesses
+    assert closure_actions["publish_component_autopsy"]["status"] == "closed"
+
+
 def test_operational_platform_surface_owns_operational_read_model_routes() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -843,6 +903,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/components/read-model"]["surface_id"] == "component_harness_read_model"
+    assert classified_routes["/api/v1/components/simulate"]["surface_id"] == "component_request_simulator"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/spatial-map"]["surface_id"] == "operational_health_read_models"
@@ -1566,6 +1627,10 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "/commands/{command_id}/interpretation-receipt" in gateway_surface["representative_paths"]
     assert "/operator/universal-actions/read-model" in gateway_surface["representative_paths"]
     assert "/operator/universal-actions" in gateway_surface["representative_paths"]
+    assert "/operator/receipts/read-model" in gateway_surface["representative_paths"]
+    assert "/operator/receipts" in gateway_surface["representative_paths"]
+    assert "/operator/current-task/read-model" in gateway_surface["representative_paths"]
+    assert "/operator/current-task" in gateway_surface["representative_paths"]
     assert "DomainCapsuleCompiler.compile" in gateway_surface["representative_paths"]
     assert "install_certified_capsule_with_handoff_evidence" in gateway_surface["representative_paths"]
     assert "gateway/capability_capsule_installer.py" in gateway_surface["evidence_files"]

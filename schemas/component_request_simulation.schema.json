@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-request-simulation:1",
+  "title": "Mullu Component Request Simulation",
+  "description": "Preview-only Component Harness request routing simulation that predicts component path, blocked actions, approvals, receipts, and missing evidence without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "simulation_id",
+    "route",
+    "mode",
+    "governed",
+    "request_text",
+    "intent",
+    "scenario_id",
+    "simulation_is_not_execution_authority",
+    "live_execution_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "selected_component_ids",
+    "blocked_component_ids",
+    "blocked_actions",
+    "approval_required",
+    "expected_receipts",
+    "needed_evidence",
+    "outcome",
+    "reason",
+    "source_refs",
+    "validators"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "simulation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "route": {
+      "type": "string",
+      "const": "/api/v1/components/simulate"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "request_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "deep_symbolic_analysis",
+        "inbox_readiness_probe",
+        "nested_mind_activation_request",
+        "send_email_request",
+        "unknown_component_request",
+        "worker_dispatch_request"
+      ]
+    },
+    "scenario_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "simulation_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "selected_component_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_component_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "terminal_closure"
+      },
+      "items": {
+        "$ref": "#/$defs/blocked_action"
+      }
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "needed_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked",
+        "SolvedUnverified"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_model",
+        "registry",
+        "router_inventory",
+        "proof_binding"
+      ],
+      "properties": {
+        "read_model": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "registry": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_binding": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "money_movement",
+        "provider_write",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    }
+  }
+}

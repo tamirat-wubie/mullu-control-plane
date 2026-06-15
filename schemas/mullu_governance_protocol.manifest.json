@@ -65,6 +65,42 @@
       "surface": "governance"
     },
     {
+      "schema_id": "component-graph",
+      "path": "schemas/component_graph.schema.json",
+      "urn": "urn:mullusi:schema:component-graph:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-autopsy",
+      "path": "schemas/component_autopsy.schema.json",
+      "urn": "urn:mullusi:schema:component-autopsy:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-request-simulation",
+      "path": "schemas/component_request_simulation.schema.json",
+      "urn": "urn:mullusi:schema:component-request-simulation:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-bundle-compilation",
+      "path": "schemas/component_bundle_compilation.schema.json",
+      "urn": "urn:mullusi:schema:component-bundle-compilation:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-lifecycle-transition-receipts",
+      "path": "schemas/component_lifecycle_transition_receipts.schema.json",
+      "urn": "urn:mullusi:schema:component-lifecycle-transition-receipts:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-dead-component-detection",
+      "path": "schemas/component_dead_component_detection.schema.json",
+      "urn": "urn:mullusi:schema:component-dead-component-detection:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "agentic-service-harness-live-task-run-producer-evidence",
       "path": "schemas/agentic_service_harness_live_task_run_producer_evidence.schema.json",
       "urn": "urn:mullusi:schema:agentic-service-harness-live-task-run-producer-evidence:1",
@@ -323,28 +359,22 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "operator-receipt-viewer-read-model",
+      "path": "schemas/operator_receipt_viewer_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-receipt-viewer-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "current-task-read-model",
+      "path": "schemas/current_task_read_model.schema.json",
+      "urn": "urn:mullusi:schema:current-task-read-model:1",
+      "surface": "operator"
+    },
+    {
       "schema_id": "clarification-request",
       "path": "schemas/clarification_request.schema.json",
       "urn": "urn:mullusi:schema:clarification-request:1",
       "surface": "interpretation"
-    },
-    {
-      "schema_id": "search-decision",
-      "path": "schemas/search_decision.schema.json",
-      "urn": "urn:mullusi:schema:search-decision:1",
-      "surface": "search"
-    },
-    {
-      "schema_id": "search-receipt",
-      "path": "schemas/search_receipt.schema.json",
-      "urn": "urn:mullusi:schema:search-receipt:1",
-      "surface": "search"
-    },
-    {
-      "schema_id": "capture-policy-decision-ledger",
-      "path": "schemas/capture_policy_decision_ledger.schema.json",
-      "urn": "urn:mullusi:schema:capture-policy-decision-ledger:1",
-      "surface": "data_governance"
     },
     {
       "schema_id": "personal-assistant-request",
@@ -371,30 +401,6 @@
       "surface": "approval"
     },
     {
-      "schema_id": "personal-assistant-approval-queue",
-      "path": "schemas/personal_assistant_approval_queue.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-approval-queue:1",
-      "surface": "approval"
-    },
-    {
-      "schema_id": "personal-assistant-approval-decision",
-      "path": "schemas/personal_assistant_approval_decision.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1",
-      "surface": "approval"
-    },
-    {
-      "schema_id": "personal-assistant-read-only-projection",
-      "path": "schemas/personal_assistant_read_only_projection.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-read-only-projection:1",
-      "surface": "assistant"
-    },
-    {
-      "schema_id": "personal-assistant-draft-projection",
-      "path": "schemas/personal_assistant_draft_projection.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-draft-projection:1",
-      "surface": "assistant"
-    },
-    {
       "schema_id": "personal-assistant-receipt",
       "path": "schemas/personal_assistant_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-receipt:1",
@@ -405,24 +411,6 @@
       "path": "schemas/personal_assistant_memory_observation.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-memory-observation:1",
       "surface": "memory"
-    },
-    {
-      "schema_id": "personal-assistant-memory-read-model",
-      "path": "schemas/personal_assistant_memory_read_model.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-memory-read-model:1",
-      "surface": "memory"
-    },
-    {
-      "schema_id": "personal-assistant-memory-review",
-      "path": "schemas/personal_assistant_memory_review.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-memory-review:1",
-      "surface": "memory"
-    },
-    {
-      "schema_id": "personal-assistant-console-read-model",
-      "path": "schemas/personal_assistant_console_read_model.schema.json",
-      "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",
-      "surface": "assistant"
     },
     {
       "schema_id": "connector-descriptor",
@@ -452,18 +440,6 @@
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
-      "surface": "connector"
-    },
-    {
-      "schema_id": "durable-gmail-account-binding-operator-input-request",
-      "path": "schemas/durable_gmail_account_binding_operator_input_request.schema.json",
-      "urn": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
-      "surface": "connector"
-    },
-    {
-      "schema_id": "durable-gmail-live-write-operator-input-request",
-      "path": "schemas/durable_gmail_live_write_operator_input_request.schema.json",
-      "urn": "urn:mullusi:schema:durable-gmail-live-write-operator-input-request:1",
       "surface": "connector"
     },
     {
@@ -824,60 +800,6 @@
       "schema_id": "team-ops-shared-inbox-live-probe-operator-input-request",
       "path": "schemas/team_ops_shared_inbox_live_probe_operator_input_request.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-operator-input-request:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-live-probe-receipt",
-      "path": "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-observation-routing-receipt",
-      "path": "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-observation-routing-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-approval-queue-receipt",
-      "path": "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-approval-queue-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-approval-decision-receipt",
-      "path": "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-approval-decision-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-send-preparation-receipt",
-      "path": "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-send-preparation-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-send-execution-receipt",
-      "path": "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-sent-message-observation-receipt",
-      "path": "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-sent-message-observation-receipt:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-terminal-closure-review-packet",
-      "path": "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-review-packet:1",
-      "surface": "team_ops"
-    },
-    {
-      "schema_id": "team-ops-shared-inbox-terminal-closure-anchor-preflight",
-      "path": "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json",
-      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-preflight:1",
       "surface": "team_ops"
     },
     {
@@ -1481,54 +1403,6 @@
       "surface": "worker"
     },
     {
-      "schema_id": "worker-failure-receipt",
-      "path": "schemas/worker_failure_receipt.schema.json",
-      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-binding",
-      "path": "schemas/read_only_worker_binding.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-binding:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-lease-preflight",
-      "path": "schemas/read_only_worker_lease_preflight.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-rehearsal-receipt",
-      "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-runtime-receipt-handoff",
-      "path": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-handoff:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-runtime-receipt-emitter-dry-run",
-      "path": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-runtime-runner-binding-witness",
-      "path": "schemas/read_only_worker_runtime_runner_binding_witness.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1",
-      "surface": "worker"
-    },
-    {
-      "schema_id": "read-only-worker-runtime-receipt-candidate",
-      "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-candidate:1",
-      "surface": "worker"
-    },
-    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",
@@ -1611,6 +1485,180 @@
       "path": "schemas/finding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finding-receipt:1",
       "surface": "governance"
+    },
+    {
+      "schema_id": "search-decision",
+      "path": "schemas/search_decision.schema.json",
+      "urn": "urn:mullusi:schema:search-decision:1",
+      "surface": "search"
+    },
+    {
+      "schema_id": "search-receipt",
+      "path": "schemas/search_receipt.schema.json",
+      "urn": "urn:mullusi:schema:search-receipt:1",
+      "surface": "search"
+    },
+    {
+      "schema_id": "capture-policy-decision-ledger",
+      "path": "schemas/capture_policy_decision_ledger.schema.json",
+      "urn": "urn:mullusi:schema:capture-policy-decision-ledger:1",
+      "surface": "data_governance"
+    },
+    {
+      "schema_id": "personal-assistant-approval-queue",
+      "path": "schemas/personal_assistant_approval_queue.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-queue:1",
+      "surface": "approval"
+    },
+    {
+      "schema_id": "personal-assistant-approval-decision",
+      "path": "schemas/personal_assistant_approval_decision.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1",
+      "surface": "approval"
+    },
+    {
+      "schema_id": "personal-assistant-read-only-projection",
+      "path": "schemas/personal_assistant_read_only_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-read-only-projection:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-draft-projection",
+      "path": "schemas/personal_assistant_draft_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-draft-projection:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-memory-read-model",
+      "path": "schemas/personal_assistant_memory_read_model.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-read-model:1",
+      "surface": "memory"
+    },
+    {
+      "schema_id": "personal-assistant-memory-review",
+      "path": "schemas/personal_assistant_memory_review.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-memory-review:1",
+      "surface": "memory"
+    },
+    {
+      "schema_id": "personal-assistant-console-read-model",
+      "path": "schemas/personal_assistant_console_read_model.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "durable-gmail-account-binding-operator-input-request",
+      "path": "schemas/durable_gmail_account_binding_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "durable-gmail-live-write-operator-input-request",
+      "path": "schemas/durable_gmail_live_write_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-live-write-operator-input-request:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-live-probe-receipt",
+      "path": "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-observation-routing-receipt",
+      "path": "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-observation-routing-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-approval-queue-receipt",
+      "path": "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-approval-queue-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-approval-decision-receipt",
+      "path": "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-approval-decision-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-send-preparation-receipt",
+      "path": "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-send-preparation-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-send-execution-receipt",
+      "path": "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-sent-message-observation-receipt",
+      "path": "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-sent-message-observation-receipt:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-terminal-closure-review-packet",
+      "path": "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-review-packet:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "team-ops-shared-inbox-terminal-closure-anchor-preflight",
+      "path": "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-preflight:1",
+      "surface": "team_ops"
+    },
+    {
+      "schema_id": "worker-failure-receipt",
+      "path": "schemas/worker_failure_receipt.schema.json",
+      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-binding",
+      "path": "schemas/read_only_worker_binding.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-binding:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-lease-preflight",
+      "path": "schemas/read_only_worker_lease_preflight.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-rehearsal-receipt",
+      "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-handoff",
+      "path": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-handoff:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-emitter-dry-run",
+      "path": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-runner-binding-witness",
+      "path": "schemas/read_only_worker_runtime_runner_binding_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-candidate",
+      "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-candidate:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [

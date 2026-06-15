@@ -5,9 +5,17 @@ warrant their own per-concern module.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from fastapi import APIRouter
 
-from mcoi_runtime.app.operational_math_observability import OPERATIONAL_MATH_OBSERVABILITY_SOURCE
+from mcoi_runtime.app.operational_math_integration import (
+    OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV,
+)
+from mcoi_runtime.app.operational_math_observability import (
+    OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
+)
 from mcoi_runtime.app.readiness import production_readiness_checks
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
@@ -27,12 +35,87 @@ def dashboard():
 @router.get("/api/v1/dashboard/operational-math")
 def operational_math_dashboard():
     """Read the operational mathematics proof posture."""
-    deps.metrics.inc("requests_governed")
+    return build_operational_math_dashboard_payload(
+        observability=deps.observability,
+        metrics=deps.metrics,
+    )
+
+
+def build_operational_math_dashboard_payload(
+    *,
+    observability: Any,
+    metrics: Any | None = None,
+) -> dict[str, Any]:
+    """Build the read-only operational mathematics dashboard payload."""
+    if metrics is not None:
+        metrics.inc("requests_governed")
+    raw_projection = observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE)
+    projection = (
+        dict(raw_projection)
+        if isinstance(raw_projection, Mapping)
+        else {"error": "observability source returned non-object"}
+    )
+    telemetry = _operational_math_telemetry_status(projection)
     return {
-        "operational_math": deps.observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE),
+        "operational_math": projection,
+        "telemetry": telemetry,
+        "requires_operator_review": telemetry["requires_operator_review"],
         "governed": True,
         "execution_allowed": False,
     }
+
+
+def _operational_math_telemetry_status(projection: Mapping[str, Any]) -> dict[str, Any]:
+    source_error = projection.get("error")
+    source_available = not isinstance(source_error, str)
+    posture_reason_refs = (
+        _operational_math_receipt_store_posture_reason_refs(projection)
+        if source_available
+        else []
+    )
+    source_health = "normal" if source_available and not posture_reason_refs else "degraded"
+    requires_operator_review = (
+        source_health != "normal"
+        or bool(projection.get("requires_operator_review"))
+    )
+    reason_refs: list[str] = []
+    if not source_available:
+        reason_refs.append("operational_math_observability_source_degraded")
+    reason_refs.extend(posture_reason_refs)
+    if bool(projection.get("requires_operator_review")):
+        reason_refs.append("operational_math_receipt_review_required")
+    return {
+        "source": OPERATIONAL_MATH_OBSERVABILITY_SOURCE,
+        "source_available": source_available,
+        "source_health": source_health,
+        "requires_operator_review": requires_operator_review,
+        "reason_refs": reason_refs,
+    }
+
+
+def _operational_math_receipt_store_posture_reason_refs(
+    projection: Mapping[str, Any],
+) -> list[str]:
+    receipt_store = projection.get("receipt_store")
+    if not isinstance(receipt_store, Mapping):
+        return ["operational_math_receipt_store_posture_missing"]
+
+    kind = receipt_store.get("kind")
+    persistent = receipt_store.get("persistent")
+    path_configured = receipt_store.get("path_configured")
+    path_env = receipt_store.get("path_env")
+    if (
+        kind not in {"memory", "file"}
+        or not isinstance(persistent, bool)
+        or not isinstance(path_configured, bool)
+        or path_env != OPERATIONAL_MATH_RECEIPT_STORE_PATH_ENV
+    ):
+        return ["operational_math_receipt_store_posture_invalid"]
+    if kind == "memory" and (persistent or path_configured):
+        return ["operational_math_receipt_store_posture_inconsistent"]
+    if kind == "file" and (not persistent or not path_configured):
+        return ["operational_math_receipt_store_posture_inconsistent"]
+    return []
 
 
 # ═══ Plugins ═══

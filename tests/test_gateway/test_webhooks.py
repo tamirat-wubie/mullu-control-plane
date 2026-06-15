@@ -29,6 +29,7 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
     TeamOwnership,
 )
 from gateway.command_spine import (  # noqa: E402
+    ClosureDisposition,
     CommandLedger,
     CommandState,
     InMemoryCommandLedgerStore,
@@ -58,6 +59,12 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 LATEST_ANCHOR_SCHEMA = _ROOT / "schemas" / "latest_anchor_read_model.schema.json"
 COMMAND_INTERPRETATION_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "command_interpretation_receipt_read_model.schema.json"
+)
+OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_receipt_viewer_read_model.schema.json"
+)
+CURRENT_TASK_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "current_task_read_model.schema.json"
 )
 INTERPRETATION_RECEIPT_SCHEMA = _ROOT / "schemas" / "interpretation_receipt.schema.json"
 INTERPRETED_REQUEST_SCHEMA = _ROOT / "schemas" / "interpreted_request.schema.json"
@@ -387,6 +394,71 @@ def _fabric_capsule_payload(capability_refs: str | list[str]) -> dict:
         "metadata": {"purpose": "Gateway web chat fabric test capsule"},
         "extensions": {},
     }
+
+
+def _create_completed_receipt_viewer_command(ledger, *, idempotency_key: str):
+    command = ledger.create_command(
+        tenant_id="t1",
+        actor_id="u1",
+        source="web",
+        conversation_id=f"conversation-{idempotency_key}",
+        idempotency_key=idempotency_key,
+        intent="llm_completion",
+        payload={
+            "body": "operator viewer raw body must stay hidden",
+            "interpretation_receipt": {
+                "receipt_id": f"interpretation-receipt-{idempotency_key}",
+                "request_id": f"interpreted-request-{idempotency_key}",
+                "raw_message_hash": f"raw-message-hash-{idempotency_key}",
+                "normalized_text_hash": f"normalized-text-hash-{idempotency_key}",
+                "interpreted_intent": "llm_completion",
+                "confidence": 0.91,
+                "created_at": "2026-04-24T12:00:00+00:00",
+            },
+            "interpreted_request": {
+                "request_id": f"interpreted-request-{idempotency_key}",
+                "tenant_id": "t1",
+                "actor_id": "u1",
+                "channel": "web",
+                "conversation_id": f"conversation-{idempotency_key}",
+                "raw_message_hash": f"raw-message-hash-{idempotency_key}",
+                "intent_class": "action_request",
+                "capability_id": "llm_completion",
+                "extracted_slots": {"capability_id": "llm_completion"},
+                "missing_slots": [],
+                "constraints": ["tenant_bound"],
+                "search_needed": False,
+                "action_needed": True,
+                "risk_estimate": "low",
+                "approval_required": False,
+                "confidence": 0.91,
+                "interpreter_kind": "deterministic_rule",
+                "rejected_interpretations": [],
+                "created_at": "2026-04-24T12:00:00+00:00",
+            },
+        },
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "bounded receipt viewer output", "succeeded": True},
+    )
+    ledger.promote_provider_receipts_to_graph(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Operator receipt viewer command completed with reconciled evidence.",
+        verified=True,
+    )
+    closure = ledger.close_success_response_evidence(
+        command.command_id,
+        claim_id=claim.claim_id,
+    )
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.COMMITTED,
+        response_evidence_closure=closure,
+    )
+    return command, certificate
 
 
 def _configure_fabric_env(
@@ -3582,6 +3654,212 @@ class TestGatewayStatus:
         assert "reconciliation://uact-console" in resp.text
         assert "memory://uact-console" in resp.text
         assert "whqr://replay/console-canonical-hash" in resp.text
+
+    def test_operator_receipt_viewer_read_model_groups_bounded_receipts(
+        self, gateway_app, client
+    ):
+        command, certificate = _create_completed_receipt_viewer_command(
+            gateway_app.state.command_ledger,
+            idempotency_key="receipt-viewer-read-model",
+        )
+
+        resp = client.get("/operator/receipts/read-model?tenant_id=t1")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["schema_ref"] == (
+            "urn:mullusi:schema:operator-receipt-viewer-read-model:1"
+        )
+        assert data["raw_message_exposed"] is False
+        assert data["execution_allowed"] is False
+        assert data["write_allowed"] is False
+        assert data["governed"] is True
+        assert data["count"] >= 1
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        receipt_types = {receipt["receipt_type"] for receipt in row["receipts"]}
+        assert row["task_status"] == "completed"
+        assert row["receipt_count"] >= row["event_count"]
+        assert "interpretation_receipt" in receipt_types
+        assert "command_event" in receipt_types
+        assert "terminal_closure_certificate" in receipt_types
+        terminal_receipt = next(
+            receipt
+            for receipt in row["receipts"]
+            if receipt["receipt_type"] == "terminal_closure_certificate"
+        )
+        assert terminal_receipt["receipt_id"] == certificate.certificate_id
+        assert terminal_receipt["evidence_refs"]["evidence_refs"]
+        assert "operator viewer raw body must stay hidden" not in json.dumps(
+            data, sort_keys=True
+        )
+
+    def test_operator_current_task_read_model_classifies_waiting_blocked_and_completed(
+        self, gateway_app, client
+    ):
+        waiting = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-current-task-waiting",
+            idempotency_key="current-task-waiting",
+            intent="llm_completion",
+            payload={"body": "waiting raw body"},
+        )
+        blocked = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-current-task-blocked",
+            idempotency_key="current-task-blocked",
+            intent="llm_completion",
+            payload={"body": "blocked raw body"},
+        )
+        completed, _certificate = _create_completed_receipt_viewer_command(
+            gateway_app.state.command_ledger,
+            idempotency_key="current-task-completed",
+        )
+        gateway_app.state.command_ledger.transition(
+            waiting.command_id,
+            CommandState.PENDING_APPROVAL,
+            detail={"cause": "operator_approval_required"},
+        )
+        gateway_app.state.command_ledger.transition(
+            blocked.command_id,
+            CommandState.DENIED,
+            detail={"cause": "policy_denied"},
+        )
+
+        resp = client.get("/operator/current-task/read-model?tenant_id=t1")
+        blocked_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=blocked"
+        )
+        invalid_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=unknown"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["schema_ref"] == "urn:mullusi:schema:current-task-read-model:1"
+        assert data["raw_message_exposed"] is False
+        assert data["execution_allowed"] is False
+        assert data["write_allowed"] is False
+        assert data["governed"] is True
+        assert _validate_schema_instance(
+            _load_schema(CURRENT_TASK_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        tasks = {task["command_id"]: task for task in data["tasks"]}
+        assert tasks[waiting.command_id]["task_status"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["waiting_for"] == "operator_approval"
+        assert tasks[waiting.command_id]["next_action"] == "resolve_approval"
+        assert tasks[blocked.command_id]["task_status"] == "blocked"
+        assert tasks[blocked.command_id]["task_blocked"] is True
+        assert (
+            tasks[blocked.command_id]["next_action"]
+            == "inspect_denial_or_block_receipts"
+        )
+        assert tasks[completed.command_id]["task_status"] == "completed"
+        assert tasks[completed.command_id]["task_terminal"] is True
+        assert data["status_counts"]["waiting_for_approval"] >= 1
+        assert data["status_counts"]["blocked"] >= 1
+        assert data["status_counts"]["completed"] >= 1
+        assert "waiting raw body" not in json.dumps(data, sort_keys=True)
+        assert "blocked raw body" not in json.dumps(data, sort_keys=True)
+        assert blocked_resp.status_code == 200
+        assert blocked_resp.json()["count"] == 1
+        assert blocked_resp.json()["tasks"][0]["command_id"] == blocked.command_id
+        assert invalid_resp.status_code == 400
+        assert "status must be one of" in invalid_resp.json()["detail"]
+
+    def test_operator_receipt_and_current_task_consoles_render_bounded_tables(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-receipt-current-html",
+            idempotency_key="receipt-current-html",
+            intent="llm_completion",
+            payload={"body": "html raw body must stay hidden"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.PENDING_APPROVAL,
+            detail={"cause": "operator_approval_required"},
+        )
+
+        receipts_resp = client.get("/operator/receipts?tenant_id=t1")
+        current_resp = client.get("/operator/current-task?tenant_id=t1")
+
+        assert receipts_resp.status_code == 200
+        assert "text/html" in receipts_resp.headers["content-type"]
+        assert "Mullu Operator Receipt Viewer" in receipts_resp.text
+        assert "/operator/receipts/read-model" in receipts_resp.text
+        assert command.command_id in receipts_resp.text
+        assert "html raw body must stay hidden" not in receipts_resp.text
+        assert current_resp.status_code == 200
+        assert "text/html" in current_resp.headers["content-type"]
+        assert "Mullu Current Task State" in current_resp.text
+        assert "/operator/current-task/read-model" in current_resp.text
+        assert command.command_id in current_resp.text
+        assert "waiting_for_approval" in current_resp.text
+        assert "html raw body must stay hidden" not in current_resp.text
+
+    def test_operator_receipt_viewer_requires_operator_authority_in_production(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "authority-secret")
+        app = create_gateway_app(platform=StubPlatform())
+        local_client = TestClient(app)
+        command = app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-receipt-production",
+            idempotency_key="receipt-viewer-production",
+            intent="llm_completion",
+            payload={"body": "production receipt body"},
+        )
+
+        denied_receipts = local_client.get("/operator/receipts/read-model")
+        denied_current = local_client.get("/operator/current-task/read-model")
+        allowed_receipts = local_client.get(
+            "/operator/receipts/read-model",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_current = local_client.get(
+            "/operator/current-task/read-model",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+
+        assert denied_receipts.status_code == 403
+        assert denied_current.status_code == 403
+        assert denied_receipts.json()["detail"] == (
+            "Authority operator access not authorized"
+        )
+        assert allowed_receipts.status_code == 200
+        assert allowed_current.status_code == 200
+        assert allowed_receipts.json()["receipt_groups"][0]["command_id"] == (
+            command.command_id
+        )
+        assert allowed_current.json()["tasks"][0]["command_id"] == command.command_id
+        assert "production receipt body" not in json.dumps(
+            allowed_receipts.json(), sort_keys=True
+        )
+        assert "production receipt body" not in json.dumps(
+            allowed_current.json(), sort_keys=True
+        )
 
     def test_latest_anchor_read_model(self, gateway_app, client):
         msg_resp = client.post(

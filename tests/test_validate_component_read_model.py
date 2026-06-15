@@ -42,7 +42,7 @@ def test_component_read_model_schema_valid(tmp_path: Path) -> None:
 
     assert validation.ok is True
     assert validation.component_count == 10
-    assert validation.bound_route_count == 28
+    assert validation.bound_route_count == 30
     assert validation.proof_bound_count == 9
     assert written_payload["errors"] == []
     assert written_payload["ok"] is True
@@ -57,6 +57,8 @@ def test_component_read_model_example_matches_runtime_projection() -> None:
     assert example["read_model_is_not_execution_authority"] is True
     assert example["live_execution_enabled"] is False
     assert example["summary"]["component_count"] == 10
+    assert example["summary"]["lifecycle_receipt_count"] == 10
+    assert example["components"][0]["lifecycle_receipt"]["proof_state"] == "Pass"
 
 
 def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> None:
@@ -69,6 +71,9 @@ def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> No
     authority = first_component["authority"]
     assert isinstance(authority, dict)
     authority["can_execute"] = True
+    lifecycle_receipt = first_component["lifecycle_receipt"]
+    assert isinstance(lifecycle_receipt, dict)
+    lifecycle_receipt["external_effect"] = True
 
     validation = validate_component_read_model(example_path=_write_payload(tmp_path, payload))
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
@@ -76,4 +81,5 @@ def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> No
     assert validation.ok is False
     assert "live_execution_enabled" in serialized_errors
     assert "authority.can_execute" in serialized_errors
+    assert "lifecycle receipt external_effect" in serialized_errors
     assert "example does not match runtime projection" in serialized_errors

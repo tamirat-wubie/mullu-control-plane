@@ -16,7 +16,6 @@ from fastapi.testclient import TestClient
 from mcoi_runtime.app.routers.loops import router
 from mcoi_runtime.app.server_http import include_default_routers
 
-
 EXPECTED_DEFAULT_LOOP_IDS = frozenset(
     {
         "audit_proof_verification_loop",

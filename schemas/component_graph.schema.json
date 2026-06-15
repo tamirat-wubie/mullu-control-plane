@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-graph:1",
+  "title": "Mullu Component Graph",
+  "description": "Read-only Component Harness graph that exposes component dependencies, request-path edges, bundle memberships, and blocked paths without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "graph_id",
+    "mode",
+    "governed",
+    "graph_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "nodes",
+    "edges",
+    "bundle_memberships",
+    "blocked_paths",
+    "expected_receipts",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "graph_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "graph_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry",
+        "read_model",
+        "request_simulations",
+        "autopsies"
+      ],
+      "properties": {
+        "registry": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "read_model": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "request_simulations": {
+          "$ref": "#/$defs/source_ref"
+        },
+        "autopsies": {
+          "$ref": "#/$defs/source_ref"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "bundle_memberships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/bundle_membership"
+      }
+    },
+    "blocked_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/blocked_path"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "edge_count",
+        "dependency_edge_count",
+        "request_path_edge_count",
+        "bundle_membership_count",
+        "blocked_component_count",
+        "proof_bound_count",
+        "awaiting_binding_count",
+        "cycle_count"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "edge_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dependency_edge_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "request_path_edge_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bundle_membership_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_component_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proof_bound_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "awaiting_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cycle_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "name",
+        "type",
+        "mode",
+        "state",
+        "wiring_state",
+        "authority_level",
+        "proof_binding_state",
+        "route_binding_state",
+        "route_count",
+        "dependency_count",
+        "dependent_count",
+        "bundle_count",
+        "request_path_count",
+        "blocked_action_count",
+        "missing_evidence_count",
+        "autopsy_outcome"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/identifier"
+        },
+        "mode": {
+          "$ref": "#/$defs/identifier"
+        },
+        "state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "wiring_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "authority_level": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proof_binding_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "route_binding_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dependency_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dependent_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bundle_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "request_path_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "autopsy_outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "GovernanceBlocked"
+          ]
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "from_component_id",
+        "to_component_id",
+        "relation",
+        "source",
+        "scenario_refs",
+        "edge_is_not_execution_authority"
+      ],
+      "properties": {
+        "edge_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "from_component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "to_component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "depends_on",
+            "request_path_next"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source_ref"
+        },
+        "scenario_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "edge_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "bundle_membership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "component_id",
+        "allowed_mode",
+        "membership_is_not_execution_authority"
+      ],
+      "properties": {
+        "bundle_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "allowed_mode": {
+          "$ref": "#/$defs/identifier"
+        },
+        "membership_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "blocked_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "outcome",
+        "forbidden_actions",
+        "missing_evidence",
+        "next_transition_targets",
+        "terminal_closure_blocked"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "GovernanceBlocked"
+          ]
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "missing_evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "next_transition_targets": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "terminal_closure_blocked": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

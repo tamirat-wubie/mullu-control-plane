@@ -1,4 +1,77 @@
 {
+  "component_bundles": [
+    {
+      "allowed_mode": "demo_v0",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "bundle_id": "personal_assistant_v0",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "personal_assistant",
+        "gmail_account_binding_gate",
+        "snet",
+        "inceptadive_shadow"
+      ],
+      "name": "Personal Assistant v0 Bundle",
+      "purpose": "Group the read-only and draft-only assistant components needed for Demo v0 posture without granting Gmail send, mailbox mutation, calendar write, connector call, or terminal closure authority.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "symbolic_reasoning_read_only",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "snet",
+        "inceptadive_shadow"
+      ],
+      "name": "Symbolic Reasoning Read-Only Bundle",
+      "purpose": "Group read-only symbolic reasoning surfaces for advisory analysis while route execution, connector calls, filesystem writes, runtime mutation, and terminal closure stay blocked.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "worker_runtime_foundation",
+      "bundle_is_not_execution_route": true,
+      "components": [
+        "governance_core",
+        "worker_runtime",
+        "capability_workers"
+      ],
+      "name": "Worker Runtime Foundation Bundle",
+      "purpose": "Group bootstrapped worker surfaces for inventory and evidence tracking while live dispatch, provider write, filesystem write, runtime mutation, and terminal closure stay blocked.",
+      "receipt_required": true,
+      "terminal_closure_required": true
+    }
+  ],
   "components": [
     {
       "aliases": [
@@ -542,82 +615,9 @@
       "wiring_state": "blocked"
     }
   ],
-  "component_bundles": [
-    {
-      "allowed_mode": "demo_v0",
-      "blocked_actions": [
-        "calendar_write",
-        "connector_call",
-        "external_send",
-        "mailbox_mutation",
-        "memory_topology_activation",
-        "send_email",
-        "terminal_closure"
-      ],
-      "bundle_id": "personal_assistant_v0",
-      "bundle_is_not_execution_route": true,
-      "components": [
-        "governance_core",
-        "personal_assistant",
-        "gmail_account_binding_gate",
-        "snet",
-        "inceptadive_shadow"
-      ],
-      "name": "Personal Assistant v0 Bundle",
-      "purpose": "Group the read-only and draft-only assistant components needed for Demo v0 posture without granting Gmail send, mailbox mutation, calendar write, connector call, or terminal closure authority.",
-      "receipt_required": true,
-      "terminal_closure_required": true
-    },
-    {
-      "allowed_mode": "read_only",
-      "blocked_actions": [
-        "connector_call",
-        "external_send",
-        "filesystem_write",
-        "live_dispatch",
-        "route_execution",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "bundle_id": "symbolic_reasoning_read_only",
-      "bundle_is_not_execution_route": true,
-      "components": [
-        "governance_core",
-        "snet",
-        "inceptadive_shadow"
-      ],
-      "name": "Symbolic Reasoning Read-Only Bundle",
-      "purpose": "Group read-only symbolic reasoning surfaces for advisory analysis while route execution, connector calls, filesystem writes, runtime mutation, and terminal closure stay blocked.",
-      "receipt_required": true,
-      "terminal_closure_required": true
-    },
-    {
-      "allowed_mode": "foundation",
-      "blocked_actions": [
-        "autonomous_execution",
-        "connector_call",
-        "filesystem_write",
-        "live_dispatch",
-        "provider_write",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "bundle_id": "worker_runtime_foundation",
-      "bundle_is_not_execution_route": true,
-      "components": [
-        "governance_core",
-        "worker_runtime",
-        "capability_workers"
-      ],
-      "name": "Worker Runtime Foundation Bundle",
-      "purpose": "Group bootstrapped worker surfaces for inventory and evidence tracking while live dispatch, provider write, filesystem write, runtime mutation, and terminal closure stay blocked.",
-      "receipt_required": true,
-      "terminal_closure_required": true
-    }
-  ],
   "generated_at": "2026-06-15T00:00:00+00:00",
   "mode": "foundation",
-  "next_action": "Bind router inventory and proof matrix coverage in follow-on Component Harness PRs without enabling live execution.",
+  "next_action": "Extend route-wide component binding toward the remaining declared route families without enabling live execution.",
   "purpose": "Make current platform components visible, classified, gated, proof-aware, receipt-aware, health-aware, dependency-aware, and owner-scoped before action claims are allowed.",
   "registry_guardrails": {
     "foundation_mode": true,

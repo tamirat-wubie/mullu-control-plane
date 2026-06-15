@@ -1,6 +1,6 @@
 """Tests for math / optimization / units runtime contracts.
 
-Validates finite-float enforcement on quantity values, conversion factors,
+Validates finite-float enforcement on quantity values, positive conversion factors,
 objective target values, trace objective values, and uncertainty bounds,
 while confirming that MathOptimizationConstraint bounds still allow inf.
 """
@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.math_runtime import (
     OptimizationTrace,
     QuantityRecord,
     SolverDisposition,
+    SolverRequest,
     SolverResult,
     UncertaintyInterval,
     UncertaintyKind,
@@ -109,6 +110,18 @@ def _solver_result(**overrides) -> SolverResult:
     return SolverResult(**defaults)
 
 
+def _solver_request(**overrides) -> SolverRequest:
+    defaults = dict(
+        request_id="req-1",
+        tenant_id="t-1",
+        objective_ref="obj-1",
+        status=OptimizationStatus.FEASIBLE,
+        created_at=TS,
+    )
+    defaults.update(overrides)
+    return SolverRequest(**defaults)
+
+
 def _solver_receipt(**overrides) -> MathSolverReceipt:
     defaults = dict(
         receipt_id="math-solver-receipt-123456789abc",
@@ -166,6 +179,11 @@ class TestHappyPaths:
         r = _solver_result(objective_value=-10.5)
         assert r.objective_value == -10.5
 
+    def test_solver_request_valid(self):
+        r = _solver_request(max_iterations=1, timeout_ms=1)
+        assert r.max_iterations == 1
+        assert r.timeout_ms == 1
+
     def test_math_solver_receipt_valid_and_schema_bound(self):
         receipt = _solver_receipt()
         schema = json.loads((REPO_ROOT / "schemas/math_solver_receipt.schema.json").read_text(encoding="utf-8"))
@@ -205,6 +223,14 @@ class TestInfNanRejection:
         with pytest.raises(ValueError, match="numeric value must be finite"):
             _conversion(factor=bad)
 
+    @pytest.mark.parametrize("bad", [0.0, -1.0])
+    def test_conversion_factor_rejects_non_positive(self, bad):
+        with pytest.raises(ValueError) as exc_info:
+            _conversion(factor=bad)
+        message = str(exc_info.value)
+        assert message == "conversion factor must be positive"
+        assert str(bad) not in message
+
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_objective_target_rejects_non_finite(self, bad):
         with pytest.raises(ValueError, match="numeric value must be finite"):
@@ -235,14 +261,24 @@ class TestInfNanRejection:
         with pytest.raises(ValueError, match="numeric value must be finite"):
             _solver_receipt(objective_value=bad)
 
+    @pytest.mark.parametrize("field_name", ["max_iterations", "timeout_ms"])
+    def test_solver_request_rejects_non_positive_budget(self, field_name):
+        with pytest.raises(ValueError) as exc_info:
+            _solver_request(**{field_name: 0})
+        message = str(exc_info.value)
+        assert message == f"{field_name} must be >= 1"
+        assert "req-1" not in message
+
     def test_constraint_bounds_allow_inf(self):
         """MathOptimizationConstraint bounds intentionally allow inf."""
         c = _constraint(lower_bound=float("-inf"), upper_bound=float("inf"))
         assert math.isinf(c.lower_bound)
         assert math.isinf(c.upper_bound)
 
-    def test_constraint_bounds_allow_nan(self):
-        """MathOptimizationConstraint bounds use _require_any_float which allows nan too."""
-        # nan is a float, passes _require_any_float type check
-        c = _constraint(lower_bound=float("nan"))
-        assert math.isnan(c.lower_bound)
+    @pytest.mark.parametrize("field_name", ["lower_bound", "upper_bound"])
+    def test_constraint_bounds_reject_nan(self, field_name):
+        with pytest.raises(ValueError) as exc_info:
+            _constraint(**{field_name: float("nan")})
+        message = str(exc_info.value)
+        assert message == "numeric value must not be NaN"
+        assert "nan" not in message

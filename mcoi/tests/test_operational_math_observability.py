@@ -108,6 +108,33 @@ def test_registers_operational_math_store_observability_source() -> None:
     assert summary["passed_receipt_count"] == 1
     assert summary["requires_operator_review"] is False
     assert summary["governed"] is True
+    assert summary["receipt_store"] == {
+        "kind": "memory",
+        "persistent": False,
+        "path_configured": False,
+        "path_env": "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH",
+    }
+
+
+def test_registers_operational_math_store_persistence_posture() -> None:
+    observability = FakeObservability()
+    receipt_store = OperationalMathReceiptStore()
+    receipt_store.append(_receipt())
+
+    register_operational_math_observability(
+        observability=observability,
+        receipt_store=receipt_store,
+        store_persistent=True,
+        store_path="C:/mullu/runtime/operational-math-receipts.json",
+    )
+    source = observability.sources[OPERATIONAL_MATH_OBSERVABILITY_SOURCE]
+    summary = source()
+
+    assert summary["receipt_store"]["kind"] == "file"
+    assert summary["receipt_store"]["persistent"] is True
+    assert summary["receipt_store"]["path_configured"] is True
+    assert summary["receipt_store"]["path_env"] == "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH"
+    assert "path" not in summary["receipt_store"]
 
 
 def test_server_wires_operational_math_store_into_dashboard() -> None:
@@ -124,6 +151,10 @@ def test_server_wires_operational_math_store_into_dashboard() -> None:
     assert summary["total_receipts"] >= 0
     assert summary["requires_operator_review"] in (True, False)
     assert summary["governed"] is True
+    assert summary["receipt_store"]["kind"] in {"memory", "file"}
+    assert summary["receipt_store"]["persistent"] in (True, False)
+    assert summary["receipt_store"]["path_configured"] in (True, False)
+    assert summary["receipt_store"]["path_env"] == "MULLU_OPERATIONAL_MATH_RECEIPT_STORE_PATH"
 
 
 def test_observability_registration_rejects_invalid_surfaces() -> None:
@@ -143,6 +174,34 @@ def test_observability_registration_rejects_invalid_surfaces() -> None:
         register_operational_math_observability(
             observability=FakeObservability(),
             receipt_store=object(),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(TypeError):
+        register_operational_math_observability(
+            observability=FakeObservability(),
+            receipt_store=OperationalMathReceiptStore(),
+            store_persistent=object(),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(TypeError):
+        register_operational_math_observability(
+            observability=FakeObservability(),
+            receipt_store=OperationalMathReceiptStore(),
+            store_path=object(),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError):
+        register_operational_math_observability(
+            observability=FakeObservability(),
+            receipt_store=OperationalMathReceiptStore(),
+            store_persistent=True,
+        )
+
+    with pytest.raises(ValueError):
+        register_operational_math_observability(
+            observability=FakeObservability(),
+            receipt_store=OperationalMathReceiptStore(),
+            store_path="C:/mullu/runtime/operational-math-receipts.json",
         )
 
 

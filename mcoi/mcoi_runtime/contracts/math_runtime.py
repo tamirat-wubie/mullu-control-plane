@@ -25,6 +25,7 @@ from ._base import (
     require_non_empty_tuple,
     require_non_negative_float,
     require_non_negative_int,
+    require_positive_int,
     require_unit_float,
 )
 
@@ -90,10 +91,13 @@ class SolverDisposition(Enum):
 
 
 def _require_any_float(value: float, field_name: str) -> float:
-    """Validate that a value is a real number (int or float, not bool). Allows negative and inf."""
+    """Validate that a value is numeric and not NaN. Allows negative and inf."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise ValueError("numeric value must be a number")
-    return float(value)
+    v = float(value)
+    if math.isnan(v):
+        raise ValueError("numeric value must not be NaN")
+    return v
 
 
 def _require_finite_float(value: float, field_name: str) -> float:
@@ -155,6 +159,8 @@ class UnitConversion(ContractRecord):
         object.__setattr__(self, "from_unit", require_non_empty_text(self.from_unit, "from_unit"))
         object.__setattr__(self, "to_unit", require_non_empty_text(self.to_unit, "to_unit"))
         object.__setattr__(self, "factor", _require_finite_float(self.factor, "factor"))
+        if self.factor <= 0.0:
+            raise ValueError("conversion factor must be positive")
         if not isinstance(self.dimension, UnitDimension):
             raise ValueError("dimension must be a UnitDimension")
         require_datetime_text(self.created_at, "created_at")
@@ -229,8 +235,8 @@ class SolverRequest(ContractRecord):
         object.__setattr__(self, "objective_ref", require_non_empty_text(self.objective_ref, "objective_ref"))
         if not isinstance(self.status, OptimizationStatus):
             raise ValueError("status must be an OptimizationStatus")
-        object.__setattr__(self, "max_iterations", require_non_negative_int(self.max_iterations, "max_iterations"))
-        object.__setattr__(self, "timeout_ms", require_non_negative_int(self.timeout_ms, "timeout_ms"))
+        object.__setattr__(self, "max_iterations", require_positive_int(self.max_iterations, "max_iterations"))
+        object.__setattr__(self, "timeout_ms", require_positive_int(self.timeout_ms, "timeout_ms"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 

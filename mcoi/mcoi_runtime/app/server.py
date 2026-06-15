@@ -378,6 +378,8 @@ deps.set("operational_math_receipt_store", operational_math_receipt_store)
 register_operational_math_observability(
     observability=observability,
     receipt_store=operational_math_receipt_store,
+    store_persistent=_operational_math_bootstrap.persistent,
+    store_path=_operational_math_bootstrap.path,
 )
 
 _replay_report_bootstrap = select_replay_report_store(os.environ)

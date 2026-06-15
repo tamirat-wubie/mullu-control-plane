@@ -255,6 +255,12 @@ def install_global_exception_handler(
     app.add_exception_handler(Exception, global_exception_handler)
 
 
+def iter_effective_routes(app: FastAPI) -> tuple[Any, ...]:
+    """Backward-compatible alias for validators expecting effective routes."""
+
+    return iter_effective_app_routes(app)
+
+
 def iter_inspectable_routes(app: FastAPI) -> Iterable[Any]:
     """Yield mounted route objects with stable ``path``/``methods`` access."""
 
@@ -289,12 +295,21 @@ def _iter_effective_route(route: Any) -> Iterable[Any]:
         if hasattr(candidate, "effective_candidates"):
             yield from _iter_effective_route(candidate)
             continue
-        if hasattr(candidate, "path"):
-            yield candidate
-            continue
         starlette_route = getattr(candidate, "starlette_route", None)
         if hasattr(starlette_route, "path"):
             yield starlette_route
+            continue
+        if hasattr(candidate, "handle") and hasattr(candidate, "path"):
+            yield candidate
+            continue
+        if hasattr(candidate, "path") and hasattr(candidate, "methods") and hasattr(candidate, "endpoint"):
+            yield candidate
+
+
+def _normalize_default_router_routes(app: FastAPI) -> None:
+    """Flatten default included-router wrappers for read-only diagnostics."""
+
+    app.router.routes = list(iter_effective_app_routes(app))
 
 
 def include_default_routers(app: FastAPI) -> None:

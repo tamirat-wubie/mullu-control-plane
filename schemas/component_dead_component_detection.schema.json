@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-dead-component-detection:1",
+  "title": "Mullu Component Dead-Component Detection",
+  "description": "Read-only Component Harness detector that classifies active, watched, blocked, and dead-candidate components from graph/read-model evidence without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "mode",
+    "governed",
+    "detector_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "detections",
+    "dead_component_candidates",
+    "blocked_governed_components",
+    "expected_receipts",
+    "outcome",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "report_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "detector_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_graph",
+        "read_model"
+      ],
+      "properties": {
+        "component_graph": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "read_model": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "detections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/detection"
+      }
+    },
+    "dead_component_candidates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_governed_components": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked",
+        "SolvedUnverified"
+      ]
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "active_governed_count",
+        "governed_watch_count",
+        "blocked_governed_count",
+        "dead_candidate_count",
+        "no_route_count",
+        "no_bundle_membership_count",
+        "no_request_path_count",
+        "awaiting_binding_count"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "active_governed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "governed_watch_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_governed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dead_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "no_route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "no_bundle_membership_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "no_request_path_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "awaiting_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "name",
+        "classification",
+        "signals",
+        "route_count",
+        "bundle_count",
+        "request_path_count",
+        "dependency_count",
+        "dependent_count",
+        "proof_binding_state",
+        "autopsy_outcome",
+        "missing_evidence_count",
+        "recommended_decisions",
+        "detection_is_not_execution_authority"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "active_governed",
+            "blocked_governed",
+            "dead_candidate",
+            "governed_watch"
+          ]
+        },
+        "signals": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/signal"
+          }
+        },
+        "route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bundle_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "request_path_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dependency_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dependent_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proof_binding_state": {
+          "$ref": "#/$defs/identifier"
+        },
+        "autopsy_outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "GovernanceBlocked"
+          ]
+        },
+        "missing_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recommended_decisions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "detection_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "signal": {
+      "type": "string",
+      "enum": [
+        "missing_evidence",
+        "no_bundle_membership",
+        "no_declared_dependencies",
+        "no_dependent_components",
+        "no_mounted_route",
+        "no_request_path_coverage",
+        "proof_binding_missing"
+      ]
+    }
+  }
+}

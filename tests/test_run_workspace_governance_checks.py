@@ -58,9 +58,15 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
         "component_registry",
+        "component_lifecycle_transition_receipts",
         "component_router_inventory",
         "component_proof_binding",
         "component_read_model",
+        "component_autopsy",
+        "component_request_simulation",
+        "component_bundle_compiler",
+        "component_graph",
+        "component_dead_detector",
         "agentic_service_harness_live_task_run_producer_evidence",
         "agentic_service_harness_live_task_run_producer_rehearsal",
         "agentic_service_harness_live_producer_admission_gate",
@@ -186,6 +192,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_registry",
+        "component_lifecycle_transition_receipts",
+    )
+    assert_ordered(
+        "component_lifecycle_transition_receipts",
         "component_router_inventory",
     )
     assert_ordered(
@@ -198,6 +208,26 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_read_model",
+        "component_autopsy",
+    )
+    assert_ordered(
+        "component_autopsy",
+        "component_request_simulation",
+    )
+    assert_ordered(
+        "component_request_simulation",
+        "component_bundle_compiler",
+    )
+    assert_ordered(
+        "component_bundle_compiler",
+        "component_graph",
+    )
+    assert_ordered(
+        "component_graph",
+        "component_dead_detector",
+    )
+    assert_ordered(
+        "component_dead_detector",
         "agentic_service_harness_live_task_run_producer_evidence",
     )
     assert_ordered(

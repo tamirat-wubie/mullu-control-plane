@@ -1,0 +1,691 @@
+{
+  "blocked_paths": [
+    {
+      "component_id": "agentic_service_harness",
+      "forbidden_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [],
+      "next_transition_targets": [
+        "read_only",
+        "draft_only"
+      ],
+      "outcome": "GovernanceBlocked",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "capability_workers",
+      "forbidden_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "terminal_closure"
+      ],
+      "missing_evidence": [
+        "operator_approval"
+      ],
+      "next_transition_targets": [
+        "mounted"
+      ],
+      "outcome": "AwaitingEvidence",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "gmail_account_binding_gate",
+      "forbidden_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "missing_evidence": [
+        "operator_approval"
+      ],
+      "next_transition_targets": [
+        "blocked"
+      ],
+      "outcome": "AwaitingEvidence",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "governance_core",
+      "forbidden_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [],
+      "next_transition_targets": [
+        "validated"
+      ],
+      "outcome": "GovernanceBlocked",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "inceptadive_shadow",
+      "forbidden_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [],
+      "next_transition_targets": [
+        "read_only",
+        "draft_only"
+      ],
+      "outcome": "GovernanceBlocked",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "nested_mind_bridge",
+      "forbidden_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [
+        "proof_matrix_surface",
+        "memory_topology_activation_witness"
+      ],
+      "next_transition_targets": [
+        "registered"
+      ],
+      "outcome": "AwaitingEvidence",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "personal_assistant",
+      "forbidden_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "missing_evidence": [],
+      "next_transition_targets": [
+        "live_probe"
+      ],
+      "outcome": "GovernanceBlocked",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "snet",
+      "forbidden_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [],
+      "next_transition_targets": [
+        "read_only",
+        "draft_only"
+      ],
+      "outcome": "GovernanceBlocked",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "teamops_shared_inbox",
+      "forbidden_actions": [
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "missing_evidence": [
+        "operator_approval"
+      ],
+      "next_transition_targets": [
+        "approval_required"
+      ],
+      "outcome": "AwaitingEvidence",
+      "terminal_closure_blocked": true
+    },
+    {
+      "component_id": "worker_runtime",
+      "forbidden_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "missing_evidence": [
+        "operator_approval"
+      ],
+      "next_transition_targets": [
+        "mounted"
+      ],
+      "outcome": "AwaitingEvidence",
+      "terminal_closure_blocked": true
+    }
+  ],
+  "bundle_memberships": [
+    {
+      "allowed_mode": "demo_v0",
+      "bundle_id": "personal_assistant_v0",
+      "component_id": "governance_core",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "demo_v0",
+      "bundle_id": "personal_assistant_v0",
+      "component_id": "personal_assistant",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "demo_v0",
+      "bundle_id": "personal_assistant_v0",
+      "component_id": "gmail_account_binding_gate",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "demo_v0",
+      "bundle_id": "personal_assistant_v0",
+      "component_id": "snet",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "demo_v0",
+      "bundle_id": "personal_assistant_v0",
+      "component_id": "inceptadive_shadow",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "bundle_id": "symbolic_reasoning_read_only",
+      "component_id": "governance_core",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "bundle_id": "symbolic_reasoning_read_only",
+      "component_id": "snet",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "bundle_id": "symbolic_reasoning_read_only",
+      "component_id": "inceptadive_shadow",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "bundle_id": "worker_runtime_foundation",
+      "component_id": "governance_core",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "bundle_id": "worker_runtime_foundation",
+      "component_id": "worker_runtime",
+      "membership_is_not_execution_authority": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "bundle_id": "worker_runtime_foundation",
+      "component_id": "capability_workers",
+      "membership_is_not_execution_authority": true
+    }
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "edges": [
+    {
+      "edge_id": "edge.agentic_service_harness.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "agentic_service_harness",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.capability_workers.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "capability_workers",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.capability_workers.depends_on.worker_runtime",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "capability_workers",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "worker_runtime"
+    },
+    {
+      "edge_id": "edge.gmail_account_binding_gate.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "gmail_account_binding_gate",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.inceptadive_shadow.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "inceptadive_shadow",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.nested_mind_bridge.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "nested_mind_bridge",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.personal_assistant.depends_on.gmail_account_binding_gate",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "personal_assistant",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "gmail_account_binding_gate"
+    },
+    {
+      "edge_id": "edge.personal_assistant.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "personal_assistant",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.snet.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "snet",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.teamops_shared_inbox.depends_on.gmail_account_binding_gate",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "teamops_shared_inbox",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "gmail_account_binding_gate"
+    },
+    {
+      "edge_id": "edge.teamops_shared_inbox.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "teamops_shared_inbox",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.worker_runtime.depends_on.governance_core",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "worker_runtime",
+      "relation": "depends_on",
+      "scenario_refs": [],
+      "source": "component_registry.dependencies",
+      "to_component_id": "governance_core"
+    },
+    {
+      "edge_id": "edge.governance_core.request_path_next.inceptadive_shadow",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "governance_core",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "deep_symbolic_analysis"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "inceptadive_shadow"
+    },
+    {
+      "edge_id": "edge.governance_core.request_path_next.nested_mind_bridge",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "governance_core",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "nested_mind_activation_request"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "nested_mind_bridge"
+    },
+    {
+      "edge_id": "edge.governance_core.request_path_next.personal_assistant",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "governance_core",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "send_email_request",
+        "inbox_readiness_probe"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "personal_assistant"
+    },
+    {
+      "edge_id": "edge.governance_core.request_path_next.worker_runtime",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "governance_core",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "worker_dispatch_request"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "worker_runtime"
+    },
+    {
+      "edge_id": "edge.inceptadive_shadow.request_path_next.snet",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "inceptadive_shadow",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "deep_symbolic_analysis"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "snet"
+    },
+    {
+      "edge_id": "edge.personal_assistant.request_path_next.gmail_account_binding_gate",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "personal_assistant",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "send_email_request",
+        "inbox_readiness_probe"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "gmail_account_binding_gate"
+    },
+    {
+      "edge_id": "edge.worker_runtime.request_path_next.capability_workers",
+      "edge_is_not_execution_authority": true,
+      "from_component_id": "worker_runtime",
+      "relation": "request_path_next",
+      "scenario_refs": [
+        "worker_dispatch_request"
+      ],
+      "source": "component_request_simulation.selected_component_ids",
+      "to_component_id": "capability_workers"
+    }
+  ],
+  "expected_receipts": [
+    "component_graph_projection_receipt",
+    "component_registry_validation_receipt",
+    "component_read_model_validation_receipt",
+    "component_request_simulation_receipt",
+    "component_autopsy_receipt",
+    "authority_denial_receipt"
+  ],
+  "governed": true,
+  "graph_id": "component_graph.foundation.v1",
+  "graph_is_not_execution_authority": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Feed component graph into readiness dashboard reporting without enabling live execution.",
+  "nodes": [
+    {
+      "authority_level": "read_only",
+      "autopsy_outcome": "GovernanceBlocked",
+      "blocked_action_count": 7,
+      "bundle_count": 0,
+      "component_id": "agentic_service_harness",
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "missing_evidence_count": 0,
+      "mode": "read_only",
+      "name": "Agentic Service Harness",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 0,
+      "route_binding_state": "bound",
+      "route_count": 1,
+      "state": "mounted",
+      "type": "runtime_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_level": "approval_required",
+      "autopsy_outcome": "AwaitingEvidence",
+      "blocked_action_count": 6,
+      "bundle_count": 1,
+      "component_id": "capability_workers",
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "missing_evidence_count": 1,
+      "mode": "approval_required",
+      "name": "Capability Workers",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 1,
+      "route_binding_state": "bound",
+      "route_count": 1,
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    },
+    {
+      "authority_level": "approval_required",
+      "autopsy_outcome": "AwaitingEvidence",
+      "blocked_action_count": 7,
+      "bundle_count": 1,
+      "component_id": "gmail_account_binding_gate",
+      "dependency_count": 1,
+      "dependent_count": 2,
+      "missing_evidence_count": 1,
+      "mode": "approval_required",
+      "name": "Gmail Account Binding Gate",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 2,
+      "route_binding_state": "no_declared_route",
+      "route_count": 0,
+      "state": "approval_required",
+      "type": "connector_action_core",
+      "wiring_state": "approval_required"
+    },
+    {
+      "authority_level": "read_only_advisory",
+      "autopsy_outcome": "GovernanceBlocked",
+      "blocked_action_count": 12,
+      "bundle_count": 3,
+      "component_id": "governance_core",
+      "dependency_count": 0,
+      "dependent_count": 9,
+      "missing_evidence_count": 0,
+      "mode": "foundation",
+      "name": "Governance Core",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 6,
+      "route_binding_state": "bound",
+      "route_count": 22,
+      "state": "registered",
+      "type": "governance_core",
+      "wiring_state": "present"
+    },
+    {
+      "authority_level": "read_only_advisory",
+      "autopsy_outcome": "GovernanceBlocked",
+      "blocked_action_count": 7,
+      "bundle_count": 2,
+      "component_id": "inceptadive_shadow",
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "missing_evidence_count": 0,
+      "mode": "read_only_advisory",
+      "name": "InceptaDive Shadow",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 1,
+      "route_binding_state": "bound",
+      "route_count": 1,
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_level": "blocked",
+      "autopsy_outcome": "AwaitingEvidence",
+      "blocked_action_count": 5,
+      "bundle_count": 0,
+      "component_id": "nested_mind_bridge",
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "missing_evidence_count": 2,
+      "mode": "blocked",
+      "name": "Nested Mind Bridge",
+      "proof_binding_state": "awaiting_binding",
+      "request_path_count": 1,
+      "route_binding_state": "no_declared_route",
+      "route_count": 0,
+      "state": "present",
+      "type": "data_memory_core",
+      "wiring_state": "blocked"
+    },
+    {
+      "authority_level": "draft_only",
+      "autopsy_outcome": "GovernanceBlocked",
+      "blocked_action_count": 7,
+      "bundle_count": 1,
+      "component_id": "personal_assistant",
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "missing_evidence_count": 0,
+      "mode": "draft_only",
+      "name": "Personal Assistant",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 2,
+      "route_binding_state": "bound",
+      "route_count": 4,
+      "state": "draft_only",
+      "type": "assistant_product_core",
+      "wiring_state": "draft_only"
+    },
+    {
+      "authority_level": "read_only_advisory",
+      "autopsy_outcome": "GovernanceBlocked",
+      "blocked_action_count": 7,
+      "bundle_count": 2,
+      "component_id": "snet",
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "missing_evidence_count": 0,
+      "mode": "read_only",
+      "name": "SNet Symbolic Mesh",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 1,
+      "route_binding_state": "no_declared_route",
+      "route_count": 0,
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
+    },
+    {
+      "authority_level": "live_probe",
+      "autopsy_outcome": "AwaitingEvidence",
+      "blocked_action_count": 5,
+      "bundle_count": 0,
+      "component_id": "teamops_shared_inbox",
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "missing_evidence_count": 1,
+      "mode": "live_probe",
+      "name": "TeamOps Shared Inbox",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 0,
+      "route_binding_state": "bound",
+      "route_count": 1,
+      "state": "live_probe",
+      "type": "assistant_product_core",
+      "wiring_state": "live_probe"
+    },
+    {
+      "authority_level": "approval_required",
+      "autopsy_outcome": "AwaitingEvidence",
+      "blocked_action_count": 5,
+      "bundle_count": 1,
+      "component_id": "worker_runtime",
+      "dependency_count": 1,
+      "dependent_count": 1,
+      "missing_evidence_count": 1,
+      "mode": "approval_required",
+      "name": "Worker Runtime",
+      "proof_binding_state": "proof_bound",
+      "request_path_count": 1,
+      "route_binding_state": "no_declared_route",
+      "route_count": 0,
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
+    }
+  ],
+  "schema_version": 1,
+  "source_refs": {
+    "autopsies": "mcoi_runtime.app.component_autopsy.build_foundation_component_autopsies",
+    "read_model": "examples/component_read_model.foundation.json",
+    "registry": "examples/component_registry.foundation.json",
+    "request_simulations": "mcoi_runtime.app.component_request_simulator.foundation_component_request_simulations"
+  },
+  "summary": {
+    "awaiting_binding_count": 1,
+    "blocked_component_count": 1,
+    "bundle_membership_count": 11,
+    "component_count": 10,
+    "cycle_count": 0,
+    "dependency_edge_count": 12,
+    "edge_count": 19,
+    "proof_bound_count": 9,
+    "request_path_edge_count": 7
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    "component_graph_validator",
+    "component_graph_tests",
+    "component_registry_validator",
+    "component_read_model_validator",
+    "component_request_simulation_validator",
+    "component_autopsy_validator"
+  ]
+}
