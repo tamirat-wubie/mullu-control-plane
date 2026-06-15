@@ -379,6 +379,25 @@ def test_github_app_token_exchange_receipt_boundary_sdlc_artifacts_validate() ->
     assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
 
 
+def test_github_action_execution_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_github_action_execution_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_github_action_execution_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "GitHub action execution requirement")
+    design_record = validator.load_json_object(design_path, "GitHub action execution design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "GitHubActionExecution" in design_record["architecture_summary"]
+    assert "gateway/github_action_execution.py" in requirement_record["affected_surfaces"]
+    assert "no live GitHub API call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_github_action_execution.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
     implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
     implementation["changed_files"][0]["path"] = "../outside.py"
