@@ -78,9 +78,9 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     assert gate is not None
     read_model = gate.read_model()
     assert read_model["capsule_count"] == 13
-    assert read_model["capability_count"] == 80
-    assert len(read_model["capability_maturity_assessments"]) == 80
-    assert read_model["capability_maturity_counts"]["C3"] == 78
+    assert read_model["capability_count"] == 81
+    assert len(read_model["capability_maturity_assessments"]) == 81
+    assert read_model["capability_maturity_counts"]["C3"] == 79
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
@@ -250,6 +250,10 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     enterprise_decision = gate.admit(command_id="command-2", intent_name="enterprise.task_schedule")
     payment_decision = gate.admit(command_id="command-4", intent_name="financial.send_payment")
     command_decision = gate.admit(command_id="command-5", intent_name="computer.command.run")
+    workspace_preflight_decision = gate.admit(
+        command_id="command-5b",
+        intent_name="computer.workspace_file.preflight",
+    )
     browser_decision = gate.admit(command_id="command-6", intent_name="browser.submit")
     document_decision = gate.admit(command_id="command-7", intent_name="document.generate_pdf")
     spreadsheet_decision = gate.admit(command_id="command-8", intent_name="spreadsheet.generate")
@@ -278,6 +282,8 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert payment_decision.owner_team == "finance-ops"
     assert command_decision.status.value == "accepted"
     assert command_decision.owner_team == "platform-ops"
+    assert workspace_preflight_decision.status.value == "accepted"
+    assert workspace_preflight_decision.capability_id == "computer.workspace_file.preflight"
     assert browser_decision.status.value == "accepted"
     assert browser_decision.owner_team == "platform-ops"
     assert document_decision.status.value == "accepted"
@@ -402,6 +408,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     payment_capability = capabilities["financial.send_payment"]
     balance_record = records["financial.balance_check"]
     command_record = records["computer.command.run"]
+    workspace_preflight_record = records["computer.workspace_file.preflight"]
     browser_record = records["browser.submit"]
     extract_record = records["document.extract_text"]
     pdf_record = records["document.generate_pdf"]
@@ -428,7 +435,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 80
+    assert len(records) == 81
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
@@ -459,6 +466,12 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert command_record["requires_sandbox"] is True
     assert command_record["allowed_tools"] == ["sandbox_runner.execute"]
     assert command_record["allowed_paths"] == ["/workspace"]
+    assert workspace_preflight_record["risk_level"] == "medium"
+    assert workspace_preflight_record["read_only"] is True
+    assert workspace_preflight_record["world_mutating"] is False
+    assert workspace_preflight_record["requires_approval"] is False
+    assert workspace_preflight_record["allowed_tools"] == ["workspace_file.preflight"]
+    assert workspace_preflight_record["allowed_paths"] == ["/workspace"]
     assert browser_record["risk_level"] == "high"
     assert browser_record["requires_approval"] is True
     assert browser_record["requires_sandbox"] is True

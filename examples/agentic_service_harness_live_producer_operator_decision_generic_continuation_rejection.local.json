@@ -1,0 +1,81 @@
+{
+  "rejection_witness_id": "agentic-service-harness-live-producer-operator-decision-generic-continuation-rejection",
+  "schema_version": 1,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_preflight_ref": "preflight://agentic-service-harness-live-producer-operator-decision-value-intake-preflight",
+  "witness_status": "rejected_non_decision_input",
+  "observed_input_kind": "generic_continuation",
+  "rejected_input_kind": "generic_continuation",
+  "rejected_reason": "not_explicit_operator_decision_value",
+  "generic_continuation_rejected": true,
+  "generic_continuation_accepted_as_decision": false,
+  "explicit_operator_value_present": false,
+  "operator_value_collected": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "rejection_rules": [
+    {
+      "rule_id": "generic-continuation-is-not-explicit-operator-approval",
+      "applies": true,
+      "decision": "reject",
+      "grants_live_authority": false
+    },
+    {
+      "rule_id": "generic-continuation-is-not-explicit-operator-rejection",
+      "applies": true,
+      "decision": "reject",
+      "grants_live_authority": false
+    },
+    {
+      "rule_id": "generic-continuation-grants-no-live-authority",
+      "applies": true,
+      "decision": "reject",
+      "grants_live_authority": false
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-generic-continuation-rejection",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an explicit operator approval or rejection value; generic continuation remains rejected and grants no live authority."
+}

@@ -95,7 +95,7 @@ REQUIRED_STEP_COMMAND_TOKENS = {
 REQUIRED_STEP_EVIDENCE = {
     "write_promotion_readiness": frozenset({
         "readiness_level=pilot-governed-core",
-        "capability_count=80",
+        "capability_count=81",
         "capsule_count=13",
         "production blockers explicit",
     }),

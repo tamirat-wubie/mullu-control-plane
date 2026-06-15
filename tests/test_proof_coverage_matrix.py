@@ -161,7 +161,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 17
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 17
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -842,6 +842,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/score"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/components/read-model"]["surface_id"] == "component_harness_read_model"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/spatial-map"]["surface_id"] == "operational_health_read_models"

@@ -1071,10 +1071,10 @@ class TestWebChatWebhook:
         )
 
         assert read_model["capsule_count"] == 13
-        assert read_model["capability_count"] == 80
-        assert len(read_model["governed_capability_records"]) == 80
-        assert len(read_model["capability_maturity_assessments"]) == 80
-        assert read_model["capability_maturity_counts"]["C3"] == 78
+        assert read_model["capability_count"] == 81
+        assert len(read_model["governed_capability_records"]) == 81
+        assert len(read_model["capability_maturity_assessments"]) == 81
+        assert read_model["capability_maturity_counts"]["C3"] == 79
         assert read_model["capability_maturity_counts"]["C6"] == 2
         assert read_model["production_ready_count"] == 2
         assert read_model["autonomy_ready_count"] == 0

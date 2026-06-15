@@ -57,6 +57,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
+        "component_registry",
+        "component_router_inventory",
+        "component_proof_binding",
+        "component_read_model",
         "agentic_service_harness_live_task_run_producer_evidence",
         "agentic_service_harness_live_task_run_producer_rehearsal",
         "agentic_service_harness_live_producer_admission_gate",
@@ -67,6 +71,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_operator_decision_record",
         "agentic_service_harness_live_producer_operator_decision_value_absence",
         "agentic_service_harness_live_producer_operator_decision_pending_status",
+        "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -172,6 +182,22 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_authority_transitions",
+        "component_registry",
+    )
+    assert_ordered(
+        "component_registry",
+        "component_router_inventory",
+    )
+    assert_ordered(
+        "component_router_inventory",
+        "component_proof_binding",
+    )
+    assert_ordered(
+        "component_proof_binding",
+        "component_read_model",
+    )
+    assert_ordered(
+        "component_read_model",
         "agentic_service_harness_live_task_run_producer_evidence",
     )
     assert_ordered(
@@ -212,6 +238,30 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_live_producer_operator_decision_pending_status",
+        "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
         "foundation_operator_readiness_boundary",
     )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
@@ -698,6 +748,90 @@ def test_write_receipt_rejects_escape_and_non_json(tmp_path: Path) -> None:
         runner.resolve_receipt_path(Path("../receipt.json"), tmp_path)
     with pytest.raises(ValueError):
         runner.resolve_receipt_path(Path("receipt.txt"), tmp_path)
+
+
+def test_canonical_receipt_refresh_bootstraps_self_validating_example(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand(runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, ("python", "receipt.py")),
+        runner.CheckCommand("omega", ("python", "omega.py")),
+    )
+    written_receipts: list[dict[str, object]] = []
+
+    def fake_run_checks(
+        observed_commands: tuple[runner.CheckCommand, ...],
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        max_workers: int = 1,
+        timeout_seconds: float | None = None,
+    ) -> tuple[runner.CheckResult, ...]:
+        assert [command.name for command in observed_commands] == ["alpha", "omega"]
+        return (
+            runner.CheckResult("alpha", ("python", "alpha.py"), 0, "alpha ok\n", ""),
+            runner.CheckResult("omega", ("python", "omega.py"), 0, "omega ok\n", ""),
+        )
+
+    def fake_run_check(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        assert observed_command.name == runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME
+        assert written_receipts[0]["status"] == "passed"
+        return runner.CheckResult(observed_command.name, observed_command.args, 0, "receipt ok\n", "")
+
+    def fake_write_receipt(
+        receipt: dict[str, object],
+        receipt_path: Path,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+    ) -> Path:
+        written_receipts.append(receipt)
+        return tmp_path / receipt_path.name
+
+    monkeypatch.setattr(runner, "run_checks", fake_run_checks)
+    monkeypatch.setattr(runner, "run_check", fake_run_check)
+    monkeypatch.setattr(runner, "write_receipt", fake_write_receipt)
+
+    results = runner.run_checks_for_canonical_receipt_refresh(commands, Path("receipt.json"), tmp_path)
+
+    assert [result.name for result in results] == ["alpha", runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, "omega"]
+    assert len(written_receipts) == 2
+    assert written_receipts[0]["checks"][1]["stdout"] == "STATUS: passed\n"
+    assert written_receipts[1]["checks"][1]["stdout"] == "receipt ok\n"
+
+
+def test_canonical_receipt_refresh_does_not_mask_prior_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand(runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, ("python", "receipt.py")),
+    )
+
+    def fake_run_checks(
+        observed_commands: tuple[runner.CheckCommand, ...],
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        max_workers: int = 1,
+        timeout_seconds: float | None = None,
+    ) -> tuple[runner.CheckResult, ...]:
+        return (runner.CheckResult("alpha", ("python", "alpha.py"), 1, "", "alpha failed\n"),)
+
+    def fail_if_receipt_check_runs(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        raise AssertionError("receipt example check should not run after prior failure")
+
+    monkeypatch.setattr(runner, "run_checks", fake_run_checks)
+    monkeypatch.setattr(runner, "run_check", fail_if_receipt_check_runs)
+
+    results = runner.run_checks_for_canonical_receipt_refresh(commands, Path("receipt.json"))
+
+    assert [result.name for result in results] == ["alpha", runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME]
+    assert results[0].passed is False
+    assert results[1].passed is False
+    assert "prior checks failed" in results[1].stderr
 
 
 def test_main_json_emits_machine_readable_receipt() -> None:

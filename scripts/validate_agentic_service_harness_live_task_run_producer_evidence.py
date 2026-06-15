@@ -96,6 +96,12 @@ REQUIRED_VALIDATORS = (
     "python scripts/validate_agentic_service_harness_live_producer_operator_decision_record.py",
     "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_absence.py",
     "python scripts/validate_agentic_service_harness_live_producer_operator_decision_pending_status.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_intake_preflight.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_request.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_template.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_collection_gate.py",
+    "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record_path.py",
     "python scripts/validate_agentic_service_harness_authority_transitions.py",
 )
 REQUIRED_FIXTURE_SURFACES = (

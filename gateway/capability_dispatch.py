@@ -210,6 +210,10 @@ def register_computer_capabilities(
         lambda context, params: _code_patch(code_adapter, context, params),
     ))
     dispatcher.register(FunctionCapabilityHandler(
+        "computer.workspace_file.preflight",
+        _workspace_file_preflight,
+    ))
+    dispatcher.register(FunctionCapabilityHandler(
         "computer.command.run",
         lambda context, params: _command_run(sandbox_runner, context, params),
     ))
@@ -778,6 +782,50 @@ def _code_patch(
         "target_file": getattr(result, "target_file", target_file),
         "error_message": error_message,
         "receipt_status": "patched" if status_value == "applied" else "failed",
+    }
+
+
+def _workspace_file_preflight(
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    from mcoi_runtime.contracts.workspace_file_capability import WorkspaceFilePreflightRequest
+    from mcoi_runtime.core.governed_workspace_io import preflight_workspace_file_operation
+
+    operation = str(params.get("operation") or "").strip()
+    target_path = str(params.get("target_path") or "").strip()
+    purpose = str(params.get("purpose") or "").strip()
+    if not operation or not target_path or not purpose:
+        return {
+            "response": "Workspace file preflight requires operation, target_path, and purpose.",
+            "receipt_status": "invalid",
+        }
+    request_id = str(params.get("request_id") or f"workspace-file-preflight-{_hash_text(operation + target_path)[:16]}")
+    try:
+        request = WorkspaceFilePreflightRequest(
+            request_id=request_id,
+            operation=operation,
+            target_path=target_path,
+            secondary_path=str(params.get("secondary_path") or ""),
+            actor_id=str(params.get("actor_id") or context.identity_id),
+            purpose=purpose,
+            expected_diff_hash=str(params.get("expected_diff_hash") or ""),
+            metadata=dict(params.get("metadata", {})),
+        )
+        result = preflight_workspace_file_operation(request)
+    except ValueError as exc:
+        return {
+            "response": f"Workspace file preflight rejected: {type(exc).__name__}",
+            "receipt_status": "invalid",
+        }
+    payload = result.to_json_dict()
+    return {
+        "response": f"Workspace file preflight {payload['decision']}: {payload['target_path']}",
+        "workspace_file_preflight": payload,
+        "workspace_file_preflight_receipt_id": payload["receipt_id"],
+        "risk_level": payload["risk_level"],
+        "decision": payload["decision"],
+        "receipt_status": "preflighted",
     }
 
 

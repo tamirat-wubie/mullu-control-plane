@@ -6,6 +6,7 @@
   "capability_refs": [
     "computer.filesystem.observe",
     "computer.code.patch",
+    "computer.workspace_file.preflight",
     "computer.command.run"
   ],
   "policy_refs": ["policies/computer/sandbox_ops.policy.json"],
@@ -18,7 +19,7 @@
   "owner_team": "platform-ops",
   "certification_status": "certified",
   "metadata": {
-    "purpose": "Certified computer capabilities constrained to workspace observation, patching, and sandboxed command execution"
+    "purpose": "Certified computer capabilities constrained to workspace observation, file-operation preflight, patching, and sandboxed command execution"
   },
   "extensions": {}
 }

@@ -41,6 +41,30 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "component-registry",
+      "path": "schemas/component_registry.schema.json",
+      "urn": "urn:mullusi:schema:component-registry:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-router-inventory",
+      "path": "schemas/component_router_inventory.schema.json",
+      "urn": "urn:mullusi:schema:component-router-inventory:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-proof-binding",
+      "path": "schemas/component_proof_binding.schema.json",
+      "urn": "urn:mullusi:schema:component-proof-binding:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-read-model",
+      "path": "schemas/component_read_model.schema.json",
+      "urn": "urn:mullusi:schema:component-read-model:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "agentic-service-harness-live-task-run-producer-evidence",
       "path": "schemas/agentic_service_harness_live_task_run_producer_evidence.schema.json",
       "urn": "urn:mullusi:schema:agentic-service-harness-live-task-run-producer-evidence:1",
@@ -92,6 +116,42 @@
       "schema_id": "agentic-service-harness-live-producer-operator-decision-pending-status",
       "path": "schemas/agentic_service_harness_live_producer_operator_decision_pending_status.schema.json",
       "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-pending-status:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-intake-preflight",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_intake_preflight.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-intake-preflight:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-generic-continuation-rejection",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-generic-continuation-rejection:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-request",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_request.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-request:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-template",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_template.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-template:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-collection-gate",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_collection_gate.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-collection-gate:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-record-path",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_record_path.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-record-path:1",
       "surface": "runtime"
     },
     {

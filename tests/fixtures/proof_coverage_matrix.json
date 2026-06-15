@@ -44,6 +44,13 @@
       ]
     },
     {
+      "action_id": "publish_component_harness_read_model",
+      "status": "closed",
+      "surfaces": [
+        "component_harness_read_model"
+      ]
+    },
+    {
       "action_id": "register_holistic_loop_read_model_kernel",
       "status": "closed",
       "surfaces": [
@@ -1003,18 +1010,18 @@
       "action_proof": 107,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 18,
+      "read_model": 19,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 124,
+      "audit_chain": 125,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 39,
+      "proven": 40,
       "unproven": 0,
       "witnessed": 88
     },
@@ -1022,15 +1029,15 @@
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 20,
+      "read_model": 21,
       "request_proof": 106
     },
-    "surface_count": 127
+    "surface_count": 128
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 127,
+      "strong": 128,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -1039,11 +1046,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 269,
+      "proven": 270,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 429,
+    "route_count": 430,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1424,6 +1431,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/compliance/summary",
         "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/components/read-model",
+        "surface_id": "component_harness_read_model"
       },
       {
         "coverage_state": "proven",
@@ -3403,6 +3415,50 @@
       "surface_id": "agentic_service_harness_status_read_model"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/component_read_model.py",
+        "mcoi/mcoi_runtime/app/routers/components.py",
+        "schemas/component_read_model.schema.json",
+        "examples/component_read_model.foundation.json",
+        "scripts/validate_component_read_model.py",
+        "mcoi/tests/test_component_read_model_route.py",
+        "tests/test_validate_component_read_model.py"
+      ],
+      "notes": "Component Harness read model joins registry, router inventory, and proof binding into one bounded projection with live execution, connector send, mutation, and terminal closure authority denied.",
+      "representative_paths": [
+        "/api/v1/components/read-model"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "component_read_model_blocks_live_authority": [
+          "component_read_model_blocks_live_authority"
+        ],
+        "component_read_model_builds_registry_router_proof_projection": [
+          "component_read_model_builds_registry_router_proof_projection"
+        ],
+        "component_read_model_example_matches_runtime_projection": [
+          "component_read_model_example_matches_runtime_projection"
+        ],
+        "component_read_model_route_is_read_only": [
+          "component_read_model_route_is_read_only"
+        ],
+        "component_read_model_schema_valid": [
+          "component_read_model_schema_valid"
+        ]
+      },
+      "runtime_witnesses": [
+        "component_read_model_builds_registry_router_proof_projection",
+        "component_read_model_route_is_read_only",
+        "component_read_model_schema_valid",
+        "component_read_model_blocks_live_authority",
+        "component_read_model_example_matches_runtime_projection"
+      ],
+      "surface_id": "component_harness_read_model"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "proven",
@@ -4514,12 +4570,13 @@
         "mcoi/mcoi_runtime/app/routers/shadow.py",
         "mcoi/mcoi_runtime/app/console.py",
         "mcoi/mcoi_runtime/app/view_models.py",
+        "mcoi/mcoi_runtime/personal_assistant/console.py",
         "mcoi/mcoi_runtime/core/spatial_governance.py",
         "mcoi/tests/test_operator_console.py",
         "mcoi/tests/test_console.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py"
       ],
-      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
       "representative_paths": [
         "/api/v1/console",
         "/api/v1/console/home",
@@ -4558,6 +4615,12 @@
         "console_note_memory_returns_read_only_lifecycle_summary": [
           "console_note_memory_enabled_read_model"
         ],
+        "console_personal_assistant_html_view_renders_read_only_panel": [
+          "console_personal_assistant_html_view_renders_read_only_panel"
+        ],
+        "console_personal_assistant_panel_read_model": [
+          "console_personal_assistant_panel_read_model"
+        ],
         "console_provider_and_scheduler_views_are_read_only": [
           "console_providers",
           "console_scheduler"
@@ -4592,6 +4655,8 @@
         "console_note_memory_returns_read_only_lifecycle_summary",
         "console_note_memory_html_escapes_read_model",
         "console_note_memory_fails_closed_without_store_path",
+        "console_personal_assistant_panel_read_model",
+        "console_personal_assistant_html_view_renders_read_only_panel",
         "full_console_includes_spatial_map_read_model",
         "console_spatial_map_returns_panel_read_model",
         "console_spatial_map_html_renders_blockers",
@@ -11318,8 +11383,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1475,
-    "runtime_witness_count": 1475,
+    "exact_test_anchor_count": 1482,
+    "runtime_witness_count": 1482,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11547,6 +11612,45 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "agentic_service_harness_status_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_component_read_model_route.py::test_component_read_model_builds_registry_router_proof_projection"
+            ],
+            "witness": "component_read_model_builds_registry_router_proof_projection"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_component_read_model_route.py::test_component_read_model_route_is_read_only"
+            ],
+            "witness": "component_read_model_route_is_read_only"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_read_model.py::test_component_read_model_schema_valid"
+            ],
+            "witness": "component_read_model_schema_valid"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_component_read_model_route.py::test_component_read_model_blocks_live_authority"
+            ],
+            "witness": "component_read_model_blocks_live_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_read_model.py::test_component_read_model_example_matches_runtime_projection"
+            ],
+            "witness": "component_read_model_example_matches_runtime_projection"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "component_harness_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
@@ -13043,6 +13147,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_personal_assistant_panel_read_model"
+            ],
+            "witness": "console_personal_assistant_panel_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_personal_assistant_html_view_renders_read_only_panel"
+            ],
+            "witness": "console_personal_assistant_html_view_renders_read_only_panel"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operator_console.py::test_full_console"
             ],
             "witness": "full_console_includes_spatial_map_read_model"
@@ -13079,8 +13195,8 @@
             "witness": "console_personal_assistant_html_view_renders_read_only_panel"
           }
         ],
-        "exact_test_anchor_count": 15,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 17,
+        "runtime_witness_count": 17,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
