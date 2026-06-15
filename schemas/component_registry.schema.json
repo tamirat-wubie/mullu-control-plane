@@ -1,0 +1,572 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-registry:1",
+  "title": "Mullu Component Registry",
+  "description": "Canonical foundation-stage component inventory for the Mullu Component Harness. The registry classifies components, wiring state, authority level, proof posture, receipt requirement, health source, blocked actions, dependencies, and owner surface without granting live execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_id",
+    "generated_at",
+    "mode",
+    "purpose",
+    "registry_guardrails",
+    "component_bundles",
+    "components",
+    "validators",
+    "next_action",
+    "registry_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "registry_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "demo_v0",
+        "read_only"
+      ]
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_guardrails": {
+      "$ref": "#/$defs/registry_guardrails"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    },
+    "component_bundles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component_bundle"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "text_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "component_type": {
+      "type": "string",
+      "enum": [
+        "governance_core",
+        "runtime_core",
+        "agent_workflow_core",
+        "reasoning_symbolic_core",
+        "assistant_product_core",
+        "connector_action_core",
+        "data_memory_core",
+        "execution_tooling_core",
+        "platform_operations",
+        "tenant_security_access",
+        "domain_special_modules"
+      ]
+    },
+    "component_mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "demo_v0",
+        "read_only",
+        "read_only_advisory",
+        "draft_only",
+        "live_probe",
+        "approval_required",
+        "blocked",
+        "deprecated"
+      ]
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "not_present",
+        "present",
+        "registered",
+        "validated",
+        "bootstrapped",
+        "mounted",
+        "read_only",
+        "draft_only",
+        "live_probe",
+        "approval_required",
+        "approved_live_action",
+        "blocked",
+        "deprecated"
+      ]
+    },
+    "wiring_state": {
+      "type": "string",
+      "enum": [
+        "present",
+        "imported",
+        "bootstrapped",
+        "mounted",
+        "bootstrapped_and_mounted",
+        "read_only",
+        "draft_only",
+        "live_probe",
+        "approval_required",
+        "live_action_enabled",
+        "blocked",
+        "deprecated"
+      ]
+    },
+    "authority_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "registry_only",
+        "read_only",
+        "read_only_advisory",
+        "draft_only",
+        "live_probe",
+        "approval_required",
+        "approved_live_action",
+        "blocked"
+      ]
+    },
+    "owner_surface": {
+      "type": "string",
+      "enum": [
+        "governance",
+        "runtime",
+        "reasoning",
+        "assistant",
+        "connector",
+        "memory",
+        "execution",
+        "operations",
+        "security",
+        "domain"
+      ]
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "money_movement",
+        "provider_write",
+        "public_readiness_claim",
+        "route_execution",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    },
+    "registry_guardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_mode",
+        "registry_only",
+        "route_binding_enabled",
+        "proof_matrix_binding_enforced",
+        "live_execution_enabled",
+        "live_connector_send_enabled",
+        "public_customer_ready_claimed",
+        "terminal_closure_claimed"
+      ],
+      "properties": {
+        "foundation_mode": {
+          "type": "boolean",
+          "const": true
+        },
+        "registry_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "route_binding_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "proof_matrix_binding_enforced": {
+          "type": "boolean",
+          "const": false
+        },
+        "live_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "live_connector_send_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "public_customer_ready_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_claimed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "authority_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_read",
+        "can_preview",
+        "can_draft",
+        "can_execute",
+        "can_mutate",
+        "can_call_connector",
+        "can_write_files",
+        "can_send_external_message",
+        "can_emit_receipt",
+        "can_claim_terminal_closure"
+      ],
+      "properties": {
+        "can_read": {
+          "type": "boolean"
+        },
+        "can_preview": {
+          "type": "boolean"
+        },
+        "can_draft": {
+          "type": "boolean"
+        },
+        "can_execute": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_call_connector": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_write_files": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_send_external_message": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_emit_receipt": {
+          "type": "boolean"
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "proof_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "surface_id",
+        "evidence_refs"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "awaiting_binding",
+            "declared",
+            "proof_bound"
+          ]
+        },
+        "surface_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        }
+      }
+    },
+    "health_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "ref"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "none",
+            "doc",
+            "route",
+            "validator",
+            "witness",
+            "read_model"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "aliases",
+        "type",
+        "mode",
+        "lifecycle_state",
+        "wiring_state",
+        "authority_level",
+        "authority",
+        "proof_surface",
+        "receipt_required",
+        "health_source",
+        "blocked_actions",
+        "dependencies",
+        "owner_surface",
+        "evidence_refs",
+        "notes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "type": {
+          "$ref": "#/$defs/component_type"
+        },
+        "mode": {
+          "$ref": "#/$defs/component_mode"
+        },
+        "lifecycle_state": {
+          "$ref": "#/$defs/lifecycle_state"
+        },
+        "wiring_state": {
+          "$ref": "#/$defs/wiring_state"
+        },
+        "authority_level": {
+          "$ref": "#/$defs/authority_level"
+        },
+        "authority": {
+          "$ref": "#/$defs/authority_flags"
+        },
+        "proof_surface": {
+          "$ref": "#/$defs/proof_surface"
+        },
+        "receipt_required": {
+          "type": "boolean"
+        },
+        "health_source": {
+          "$ref": "#/$defs/health_source"
+        },
+        "blocked_actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "owner_surface": {
+          "$ref": "#/$defs/owner_surface"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean"
+        }
+      }
+    },
+    "component_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "name",
+        "purpose",
+        "allowed_mode",
+        "components",
+        "blocked_actions",
+        "receipt_required",
+        "bundle_is_not_execution_route",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "bundle_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_mode": {
+          "type": "string",
+          "enum": [
+            "foundation",
+            "demo_v0",
+            "read_only",
+            "draft_only"
+          ]
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        },
+        "receipt_required": {
+          "type": "boolean"
+        },
+        "bundle_is_not_execution_route": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

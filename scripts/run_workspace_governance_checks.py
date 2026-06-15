@@ -175,6 +175,22 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_authority_transitions.py"),
         ),
         CheckCommand(
+            "component_registry",
+            (python_executable, "scripts/validate_component_registry.py"),
+        ),
+        CheckCommand(
+            "component_router_inventory",
+            (python_executable, "scripts/validate_component_router_inventory.py"),
+        ),
+        CheckCommand(
+            "component_proof_binding",
+            (python_executable, "scripts/validate_component_proof_binding.py"),
+        ),
+        CheckCommand(
+            "component_read_model",
+            (python_executable, "scripts/validate_component_read_model.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_live_task_run_producer_evidence",
             (python_executable, "scripts/validate_agentic_service_harness_live_task_run_producer_evidence.py"),
         ),
@@ -237,6 +253,41 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (
                 python_executable,
                 "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_intake_preflight.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_value_request",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_request.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_value_template",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_template.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_collection_gate.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_value_record_path",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record_path.py",
             ),
         ),
         CheckCommand(

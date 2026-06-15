@@ -252,6 +252,48 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "component_harness_read_model",
+            ["/api/v1/components/read-model"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_read_model.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "schemas/component_read_model.schema.json",
+                "examples/component_read_model.foundation.json",
+                "scripts/validate_component_read_model.py",
+                "mcoi/tests/test_component_read_model_route.py",
+                "tests/test_validate_component_read_model.py",
+            ],
+            "Component Harness read model joins registry, router inventory, and proof binding into one bounded projection with live execution, connector send, mutation, and terminal closure authority denied.",
+            [
+                "component_read_model_builds_registry_router_proof_projection",
+                "component_read_model_route_is_read_only",
+                "component_read_model_schema_valid",
+                "component_read_model_blocks_live_authority",
+                "component_read_model_example_matches_runtime_projection",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_read_model_builds_registry_router_proof_projection": [
+                    "component_read_model_builds_registry_router_proof_projection",
+                ],
+                "component_read_model_route_is_read_only": [
+                    "component_read_model_route_is_read_only",
+                ],
+                "component_read_model_schema_valid": [
+                    "component_read_model_schema_valid",
+                ],
+                "component_read_model_blocks_live_authority": [
+                    "component_read_model_blocks_live_authority",
+                ],
+                "component_read_model_example_matches_runtime_projection": [
+                    "component_read_model_example_matches_runtime_projection",
+                ],
+            },
+        ),
+        _surface(
             "capability_worker_execution",
             ["/capability/execute"],
             "request_proof",
@@ -1111,6 +1153,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/whqr/clarifications",
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
+                "/api/v1/console/personal-assistant",
+                "/api/v1/console/personal-assistant/view",
                 "/api/v1/console/spatial-map",
                 "/api/v1/console/spatial-map/view",
             ],
@@ -1124,12 +1168,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/shadow.py",
                 "mcoi/mcoi_runtime/app/console.py",
                 "mcoi/mcoi_runtime/app/view_models.py",
+                "mcoi/mcoi_runtime/personal_assistant/console.py",
                 "mcoi/mcoi_runtime/core/spatial_governance.py",
                 "mcoi/tests/test_operator_console.py",
                 "mcoi/tests/test_console.py",
                 "mcoi/tests/test_inceptadive_shadow_routes.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
@@ -1140,6 +1185,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_returns_read_only_lifecycle_summary",
                 "console_note_memory_html_escapes_read_model",
                 "console_note_memory_fails_closed_without_store_path",
+                "console_personal_assistant_panel_read_model",
+                "console_personal_assistant_html_view_renders_read_only_panel",
                 "full_console_includes_spatial_map_read_model",
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
@@ -1166,6 +1213,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "console_note_memory_fails_closed_without_store_path": [
                     "console_note_memory_mounted_without_store_path_fails_closed",
+                ],
+                "console_personal_assistant_panel_read_model": [
+                    "console_personal_assistant_panel_read_model",
+                ],
+                "console_personal_assistant_html_view_renders_read_only_panel": [
+                    "console_personal_assistant_html_view_renders_read_only_panel",
                 ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",
@@ -7485,6 +7538,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_agentic_service_harness_authority_transition_contract",
             "surfaces": ["agentic_service_harness_authority_transitions"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_harness_read_model",
+            "surfaces": ["component_harness_read_model"],
             "status": "closed",
         },
         {

@@ -1,0 +1,69 @@
+{
+  "collection_gate_id": "agentic-service-harness-live-producer-operator-decision-value-collection-gate",
+  "schema_version": 1,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_template_ref": "value-template://agentic-service-harness-live-producer-operator-decision-value-template",
+  "gate_status": "blocked_awaiting_explicit_operator_value",
+  "requested_input_kind": "explicit_operator_decision_value",
+  "accepted_input_kinds": ["explicit_operator_approval", "explicit_operator_rejection"],
+  "rejected_input_kinds": ["generic_continuation", "template_packet"],
+  "collection_route_admitted": false,
+  "template_accepted_as_value": false,
+  "operator_value_collected": false,
+  "explicit_operator_value_present": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "gate_controls": {
+    "requires_actual_operator_value": true,
+    "accepts_generic_continuation": false,
+    "accepts_template_packet": false,
+    "admits_mutation_route": false,
+    "stores_operator_value": false,
+    "grants_live_authority": false
+  },
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-value-collection-gate",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_collection_gate.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Provide an actual explicit operator approval or rejection value through a future governed value-record path; this gate admits no collection route."
+}

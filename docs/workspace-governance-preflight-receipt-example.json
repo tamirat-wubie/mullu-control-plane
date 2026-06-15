@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 161,
+  "check_count": 170,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -185,6 +185,50 @@
       "passed": true
     },
     {
+      "name": "component_registry",
+      "args": [
+        "python",
+        "scripts/validate_component_registry.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT REGISTRY VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_router_inventory",
+      "args": [
+        "python",
+        "scripts/validate_component_router_inventory.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT ROUTER INVENTORY VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_proof_binding",
+      "args": [
+        "python",
+        "scripts/validate_component_proof_binding.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT PROOF BINDING VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "component_read_model",
+      "args": [
+        "python",
+        "scripts/validate_component_read_model.py"
+      ],
+      "return_code": 0,
+      "stdout": "COMPONENT READ MODEL VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
       "name": "agentic_service_harness_live_task_run_producer_evidence",
       "args": [
         "python",
@@ -302,6 +346,61 @@
       ],
       "return_code": 0,
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE INTAKE PREFLIGHT VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION GENERIC CONTINUATION REJECTION VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_request",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_request.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE REQUEST VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_template",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_template.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE TEMPLATE VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_collection_gate.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE COLLECTION GATE VALID\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_record_path",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record_path.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE RECORD PATH VALID\n",
       "stderr": "",
       "passed": true
     },

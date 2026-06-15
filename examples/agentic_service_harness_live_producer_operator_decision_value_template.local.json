@@ -1,0 +1,106 @@
+{
+  "template_packet_id": "agentic-service-harness-live-producer-operator-decision-value-template",
+  "schema_version": 1,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_value_request_ref": "value-request://agentic-service-harness-live-producer-operator-decision-value-request",
+  "template_status": "template_only_awaiting_operator_value",
+  "requested_input_kind": "explicit_operator_decision_value",
+  "operator_value_collected": false,
+  "explicit_operator_value_present": false,
+  "template_accepted_as_value": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "decision_value_templates": [
+    {
+      "decision_kind": "explicit_operator_approval",
+      "template_only": true,
+      "accepted_as_value": false,
+      "grants_live_authority": false,
+      "field_templates": {
+        "decision_kind": "explicit_operator_approval",
+        "operator_id": "operator_id_required",
+        "decision_text": "write_explicit_operator_intent_here",
+        "scope": {
+          "tenant_id": "tenant-local-foundation",
+          "organization_id": "org-mullusi-foundation",
+          "project_id": "project-agentic-service-harness",
+          "repository_connection_id": "repo-mullu-control-plane"
+        },
+        "created_at": "YYYY-MM-DDTHH:MM:SSZ",
+        "witness_ref": "witness_ref_required"
+      }
+    },
+    {
+      "decision_kind": "explicit_operator_rejection",
+      "template_only": true,
+      "accepted_as_value": false,
+      "grants_live_authority": false,
+      "field_templates": {
+        "decision_kind": "explicit_operator_rejection",
+        "operator_id": "operator_id_required",
+        "decision_text": "write_explicit_operator_intent_here",
+        "scope": {
+          "tenant_id": "tenant-local-foundation",
+          "organization_id": "org-mullusi-foundation",
+          "project_id": "project-agentic-service-harness",
+          "repository_connection_id": "repo-mullu-control-plane"
+        },
+        "created_at": "YYYY-MM-DDTHH:MM:SSZ",
+        "witness_ref": "witness_ref_required"
+      }
+    }
+  ],
+  "template_controls": {
+    "template_only": true,
+    "stores_operator_value": false,
+    "accepts_template_as_value": false,
+    "credential_values_allowed": false,
+    "mutation_route_allowed": false,
+    "live_authority_on_template": false
+  },
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-value-template",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_template.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Fill exactly one template as a separate explicit operator value; this template packet is not itself a value and grants no live authority."
+}

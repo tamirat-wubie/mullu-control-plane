@@ -57,6 +57,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
+        "component_registry",
+        "component_router_inventory",
+        "component_proof_binding",
+        "component_read_model",
         "agentic_service_harness_live_task_run_producer_evidence",
         "agentic_service_harness_live_task_run_producer_rehearsal",
         "agentic_service_harness_live_producer_admission_gate",
@@ -68,6 +72,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_operator_decision_value_absence",
         "agentic_service_harness_live_producer_operator_decision_pending_status",
         "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -173,6 +182,22 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_authority_transitions",
+        "component_registry",
+    )
+    assert_ordered(
+        "component_registry",
+        "component_router_inventory",
+    )
+    assert_ordered(
+        "component_router_inventory",
+        "component_proof_binding",
+    )
+    assert_ordered(
+        "component_proof_binding",
+        "component_read_model",
+    )
+    assert_ordered(
+        "component_read_model",
         "agentic_service_harness_live_task_run_producer_evidence",
     )
     assert_ordered(
@@ -217,6 +242,26 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_request",
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_template",
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_value_record_path",
         "foundation_operator_readiness_boundary",
     )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")

@@ -58,6 +58,29 @@ def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     assert loop_entry["surface"] == "governance"
 
 
+def test_protocol_manifest_indexes_component_registry() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    registry_entry = entries["component-registry"]
+    router_entry = entries["component-router-inventory"]
+    proof_entry = entries["component-proof-binding"]
+    read_model_entry = entries["component-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert registry_entry["path"] == "schemas/component_registry.schema.json"
+    assert registry_entry["urn"] == "urn:mullusi:schema:component-registry:1"
+    assert registry_entry["surface"] == "governance"
+    assert router_entry["path"] == "schemas/component_router_inventory.schema.json"
+    assert router_entry["urn"] == "urn:mullusi:schema:component-router-inventory:1"
+    assert router_entry["surface"] == "governance"
+    assert proof_entry["path"] == "schemas/component_proof_binding.schema.json"
+    assert proof_entry["urn"] == "urn:mullusi:schema:component-proof-binding:1"
+    assert proof_entry["surface"] == "governance"
+    assert read_model_entry["path"] == "schemas/component_read_model.schema.json"
+    assert read_model_entry["urn"] == "urn:mullusi:schema:component-read-model:1"
+    assert read_model_entry["surface"] == "governance"
+
+
 def test_protocol_manifest_indexes_claim_verification_report() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
