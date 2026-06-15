@@ -80,6 +80,17 @@ def test_protocol_manifest_indexes_search_receipt() -> None:
     assert search_entry["surface"] == "search"
 
 
+def test_protocol_manifest_indexes_capture_policy_decision_ledger() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    ledger_entry = entries["capture-policy-decision-ledger"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert ledger_entry["path"] == "schemas/capture_policy_decision_ledger.schema.json"
+    assert ledger_entry["urn"] == "urn:mullusi:schema:capture-policy-decision-ledger:1"
+    assert ledger_entry["surface"] == "data_governance"
+
+
 def test_protocol_manifest_indexes_component_registry() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

@@ -1,0 +1,141 @@
+{
+  "ledger_id": "capture-policy-ledger-foundation-browser-20260615",
+  "ledger_version": "capture_policy_decision_ledger.v1",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "source_surface": "browser_dom",
+  "origin_ref": "browser://local-foundation/session/login-form",
+  "created_at": "2026-06-15T13:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "default_capture_posture": "capture_denied_until_policy_allows",
+  "policy_scope": {
+    "policy_ref": "policy://foundation-mode/capture-policy-ledger",
+    "tenant_scope_required": true,
+    "allowed_event_kinds": ["dom_snapshot", "user_interaction"],
+    "allowed_capture_classes": ["REDACT", "BLOCK", "REVIEW_REQUIRED"],
+    "operator_review_required": true,
+    "rationale_refs": [
+      "foundation-mode://local-first",
+      "borrow://mullu-inspect/capture-policy-decision-ledger"
+    ]
+  },
+  "sensitivity_floor": {
+    "blocked_classifications": ["credential", "secret", "payment"],
+    "redaction_required_classifications": [
+      "confidential",
+      "sensitive",
+      "restricted",
+      "health",
+      "minor",
+      "biometric"
+    ],
+    "raw_value_serialization_allowed": false,
+    "credential_capture_allowed": false,
+    "rationale_refs": [
+      "policy://foundation-mode/no-secret-serialization",
+      "policy://capture-policy/raw-content-denied-by-default"
+    ]
+  },
+  "budget_window": {
+    "window_ref": "budget://foundation/capture-policy-ledger/browser-dom/20260615",
+    "max_events": 5,
+    "max_bytes": 4096,
+    "remaining_events": 3,
+    "remaining_bytes": 3072,
+    "proof_state": "Pass",
+    "expires_at": "2026-06-16T13:00:00Z",
+    "rationale_refs": [
+      "budget://foundation/local-proof-thread"
+    ]
+  },
+  "decisions": [
+    {
+      "decision_id": "capture-decision-login-password-input",
+      "observed_symbol_ref": "symbol-ref://browser/local-foundation/login-password-input",
+      "event_kind": "user_interaction",
+      "capture_class": "BLOCK",
+      "decision_state": "CAPTURE_BLOCKED_BY_SENSITIVITY",
+      "policy_ref": "policy://foundation-mode/capture-policy-ledger",
+      "rule_id": "capture-policy-rule-block-credential",
+      "reason": "Credential-bearing interaction is blocked before capture and no raw value is serialized.",
+      "decided_at": "2026-06-15T13:00:00Z",
+      "sensitivity": {
+        "classification": "credential",
+        "blocked": true,
+        "redaction_required": true,
+        "raw_value_serialized": false,
+        "secret_marker_detected": true
+      },
+      "budget": {
+        "scope_ref": "budget://foundation/capture-policy-ledger/browser-dom/20260615",
+        "remaining_events": 4,
+        "remaining_bytes": 4096,
+        "budget_exceeded": false
+      },
+      "stored_payload_ref": null,
+      "rationale_refs": [
+        "policy://foundation-mode/no-secret-serialization",
+        "rule://capture-policy-rule-block-credential"
+      ]
+    },
+    {
+      "decision_id": "capture-decision-login-form-dom",
+      "observed_symbol_ref": "symbol-ref://browser/local-foundation/login-form-dom",
+      "event_kind": "dom_snapshot",
+      "capture_class": "REDACT",
+      "decision_state": "CAPTURE_REDACTED",
+      "policy_ref": "policy://foundation-mode/capture-policy-ledger",
+      "rule_id": "capture-policy-rule-redact-private-dom",
+      "reason": "DOM evidence may be represented only through a redacted symbolic reference.",
+      "decided_at": "2026-06-15T13:00:00Z",
+      "sensitivity": {
+        "classification": "confidential",
+        "blocked": false,
+        "redaction_required": true,
+        "raw_value_serialized": false,
+        "secret_marker_detected": false
+      },
+      "budget": {
+        "scope_ref": "budget://foundation/capture-policy-ledger/browser-dom/20260615",
+        "remaining_events": 3,
+        "remaining_bytes": 3072,
+        "budget_exceeded": false
+      },
+      "stored_payload_ref": "redacted://capture-policy/foundation/login-form-dom",
+      "rationale_refs": [
+        "policy://capture-policy/raw-content-denied-by-default",
+        "rule://capture-policy-rule-redact-private-dom"
+      ]
+    }
+  ],
+  "governance_guards": {
+    "capture_performed": false,
+    "raw_observed_content_serialized": false,
+    "raw_secret_material_included": false,
+    "connector_authority_granted": false,
+    "execution_authority_granted": false,
+    "memory_write_authority_granted": false,
+    "terminal_closure": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "receipt_envelope": {
+    "uao_ref": "uao://capture-policy-decision-ledger/foundation-browser/20260615",
+    "causal_decision_trace_ref": "trace://capture-policy-decision-ledger/foundation-browser/20260615",
+    "receipt_ref": "receipt://capture-policy-decision-ledger/foundation-browser/20260615"
+  },
+  "evidence_refs": [
+    "schemas/capture_policy_decision_ledger.schema.json",
+    "examples/capture_policy_decision_ledger.foundation.json",
+    "scripts/validate_capture_policy_decision_ledger.py",
+    "tests/test_validate_capture_policy_decision_ledger.py",
+    "docs/81_capture_policy_decision_ledger_contract.md",
+    "examples/sdlc/requirement_capture_policy_decision_ledger_20260615.json",
+    "examples/sdlc/design_capture_policy_decision_ledger_20260615.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_capture_not_performed": true,
+    "borrowed_pattern": "mullu-inspect capture-policy decision ledger",
+    "note": "This example validates pre-capture policy decisions only; it stores no observed raw content."
+  }
+}

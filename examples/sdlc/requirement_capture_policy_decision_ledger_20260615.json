@@ -1,0 +1,65 @@
+{
+  "requirement_id": "sdlc_req_capture_policy_decision_ledger_20260615",
+  "request_id": "platform_capture_policy_decision_ledger_20260615",
+  "problem_statement": "The control plane can route search and read-only worker receipts, but it lacks a schema-backed pre-capture ledger that records browser, document, mailbox, file, or connector observation decisions before raw content can become symbolic evidence.",
+  "success_criteria": [
+    "CapturePolicyDecisionLedger validates against the public JSON schema and a Foundation Mode example",
+    "source surface, origin, policy scope, sensitivity floor, budget window, and per-event decisions are explicit",
+    "decision_state is aligned with capture_class for allowed, redacted, blocked, and review-required outcomes",
+    "Credential, secret, and payment classifications are blocked",
+    "redaction-required classifications cannot be captured with ALLOW",
+    "raw observed content, raw secret material, connector authority, execution authority, memory-write authority, and terminal closure are denied",
+    "focused tests cover valid, malformed, authority-drift, sensitivity-drift, budget-drift, policy-drift, prefix, stored-payload, and evidence-ref cases"
+  ],
+  "non_goals": [
+    "no live capture execution",
+    "no browser automation",
+    "no connector reads",
+    "no document extraction",
+    "no mailbox inspection",
+    "no memory write",
+    "no runtime worker registration",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "CapturePolicyDecisionLedger is a pre-capture contract, not proof of observed content",
+    "raw observed content and raw secret material must never be serialized",
+    "credentials, secrets, and payment values must be blocked before storage",
+    "effect-bearing follow-on capture still requires UAO, Phi_gov, life-meaning judgment where applicable, budget proof, tenant scope, redaction policy, worker receipt, and verification",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/capture_policy_decision_ledger.schema.json",
+    "examples/capture_policy_decision_ledger.foundation.json",
+    "scripts/validate_capture_policy_decision_ledger.py",
+    "tests/test_validate_capture_policy_decision_ledger.py",
+    "docs/81_capture_policy_decision_ledger_contract.md",
+    "docs/52_mullu_governance_protocol.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_capture_policy_decision_ledger_20260615.json",
+    "examples/sdlc/design_capture_policy_decision_ledger_20260615.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_capture_policy_decision_ledger.py",
+    "python -m pytest tests/test_validate_capture_policy_decision_ledger.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-capture-policy-ledger-20260615.json"
+  ],
+  "evidence_required": [
+    "CapturePolicyDecisionLedger validation receipt",
+    "focused pytest receipt for validator behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/capture-policy-decision-ledger/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/capture-policy-decision-ledger/20260615",
+  "receipt_ref": "receipt://sdlc/requirement/capture-policy-decision-ledger/20260615"
+}
