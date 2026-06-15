@@ -164,6 +164,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 135. Personal-assistant approval decision evidence is a public contract when it binds approved, rejected, revised, and expired operator decisions to schema-valid approval packets, receipts, effect boundaries, private payload policy, and no-effect assurance without executing sends, invites, task or calendar writes, connector mutation, memory writes, deployment mutation, customer-readiness claims, or live Nested Mind activation.
 136. Personal-assistant memory review evidence is a public contract when it binds kept, rejected, revision-requested, deferred, and expired operator review decisions to schema-valid memory candidates, receipts, effect boundaries, private payload policy, and no-effect assurance without admitting live memory, storing raw private payloads, mutating connector state, activating Nested Mind, or claiming customer readiness.
 137. Capture policy decision ledgers are public contracts when they bind source surface, origin, policy scope, sensitivity floor, budget window, per-event capture decisions, redacted stored refs, and no-capture/no-secret/no-connector/no-execution/no-memory-write/no-terminal-closure guards before any observed page, document, mailbox, file, or connector payload can become symbolic evidence.
+138. GitHub branch-protection reconcile receipts are public contracts when they bind desired protected-branch policy, observed drift, GitHub REST payload hash, plan hash, approval refs, token-exchange refs, action-execution refs, response evidence, no-secret serialization, and no-local-GitHub-call flags before any branch-protection reconciliation claim can be admitted.
 
 ## Verification
 
@@ -176,7 +177,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 277 schemas
+protocol manifest ok: 278 schemas
 ```
 
 STATUS:

@@ -315,6 +315,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["github_app_token_exchange_receipts"]["exact_test_anchor_count"] == 8
     assert surfaces["github_action_execution_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["github_action_execution_receipts"]["exact_test_anchor_count"] == 9
+    assert surfaces["github_branch_protection_reconcile_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_branch_protection_reconcile_receipts"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -5049,6 +5051,35 @@ def test_github_action_execution_receipt_surface_binds_external_action_evidence(
     assert "branch_protection_reconcile_action_is_endpoint_bound" in witnesses
     assert "github_action_execution_receipt_schema_valid" in witnesses
     assert closure_actions["publish_github_action_execution_receipt_contract"]["status"] == "closed"
+
+
+def test_github_branch_protection_reconcile_receipt_surface_binds_drift_and_apply_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    reconcile_surface = surfaces["github_branch_protection_reconcile_receipts"]
+    witnesses = set(reconcile_surface["runtime_witnesses"])
+
+    assert reconcile_surface["coverage_state"] == "witnessed"
+    assert reconcile_surface["request_proof"] == "request_proof"
+    assert reconcile_surface["action_proof"] == "action_proof"
+    assert "BranchProtectionReconciler.evaluate" in reconcile_surface["representative_paths"]
+    assert "BranchProtectionReconcileRequest" in reconcile_surface["representative_paths"]
+    assert "BranchProtectionReconcileReceipt" in reconcile_surface["representative_paths"]
+    assert "gateway/branch_protection_reconcile.py" in reconcile_surface["evidence_files"]
+    assert "schemas/github_branch_protection_reconcile_receipt.schema.json" in reconcile_surface["evidence_files"]
+    assert "tests/test_gateway/test_branch_protection_reconcile.py" in reconcile_surface["evidence_files"]
+    assert "branch_protection_policy_payload_is_hash_bound" in witnesses
+    assert "observed_compliance_emits_noop_receipt" in witnesses
+    assert "observed_drift_emits_reconcile_actions" in witnesses
+    assert "missing_observed_state_is_explicit" in witnesses
+    assert "dry_run_rejects_apply_response_evidence" in witnesses
+    assert "apply_approved_requires_external_receipts" in witnesses
+    assert "apply_approved_binds_external_action_receipt" in witnesses
+    assert "noop_apply_blocks_external_mutation" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "github_branch_protection_reconcile_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_branch_protection_reconcile_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:

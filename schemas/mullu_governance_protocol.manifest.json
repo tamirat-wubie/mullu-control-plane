@@ -227,6 +227,12 @@
       "surface": "ci"
     },
     {
+      "schema_id": "github-branch-protection-reconcile-receipt",
+      "path": "schemas/github_branch_protection_reconcile_receipt.schema.json",
+      "urn": "urn:mullusi:schema:github-branch-protection-reconcile-receipt:1",
+      "surface": "ci"
+    },
+    {
       "schema_id": "runtime-witness",
       "path": "schemas/runtime_witness.schema.json",
       "urn": "urn:mullusi:schema:runtime-witness:1",
