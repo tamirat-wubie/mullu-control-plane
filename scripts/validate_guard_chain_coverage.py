@@ -25,10 +25,12 @@ if str(MCOI_ROOT) not in sys.path:
     sys.path.insert(0, str(MCOI_ROOT))
 
 from fastapi import FastAPI  # noqa: E402
-from fastapi.routing import APIRoute  # noqa: E402
 
 from mcoi_runtime.app.middleware import EXEMPT_PATHS, GovernanceMiddleware  # noqa: E402
-from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
+from mcoi_runtime.app.server_http import (  # noqa: E402
+    include_default_routers,
+    iter_effective_app_routes,
+)
 
 GOVERNED_API_PREFIX = "/api/"
 API_V1_PREFIX = "/api/v1"
@@ -92,30 +94,18 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
 def _api_v1_route_records(app: FastAPI) -> list[dict[str, Any]]:
     """Return API v1 route records across eager and lazy FastAPI router layouts."""
     records: list[dict[str, Any]] = []
-    for route in app.routes:
-        if isinstance(route, APIRoute):
-            _append_api_v1_route_record(
-                records,
-                path=route.path,
-                endpoint=route.endpoint,
-                methods=route.methods,
-            )
+    for route in iter_effective_app_routes(app):
+        path = getattr(route, "path", "")
+        methods = getattr(route, "methods", None)
+        endpoint = getattr(route, "endpoint", None)
+        if methods is None or endpoint is None:
             continue
-
-        effective_contexts = getattr(route, "effective_route_contexts", None)
-        if callable(effective_contexts):
-            for context in effective_contexts():
-                methods = getattr(context, "methods", None)
-                endpoint = getattr(context, "endpoint", None)
-                path = getattr(context, "path", "")
-                if methods is None or endpoint is None:
-                    continue
-                _append_api_v1_route_record(
-                    records,
-                    path=path,
-                    endpoint=endpoint,
-                    methods=methods,
-                )
+        _append_api_v1_route_record(
+            records,
+            path=path,
+            endpoint=endpoint,
+            methods=methods,
+        )
 
     return sorted(
         records,

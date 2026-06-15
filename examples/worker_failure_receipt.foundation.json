@@ -1,0 +1,75 @@
+{
+  "receipt_id": "worker-failure-receipt-foundation-read-only-worker-timeout-20260614",
+  "receipt_version": "worker_failure_receipt.v1",
+  "worker_dispatch_ref": "receipt://worker-dispatch/foundation-read-only-worker/20260614",
+  "request_id": "worker-request-foundation-read-only-repo-inspection-20260614",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "worker_id": "worker_local_read_only_repo_inspection",
+  "capability": "read_only_repo_inspection",
+  "operation": "inspect_receipt_surfaces",
+  "command_id": "command-foundation-read-only-worker-20260614",
+  "lease_id": "lease-foundation-read-only-worker-20260614",
+  "created_at": "2026-06-14T10:15:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "receipt_state": "PARTIAL_EXECUTION_RECORDED",
+  "failure_class": "timeout",
+  "effect_status": "partial_effect_recorded",
+  "rollback_required": true,
+  "recovery_required": true,
+  "failure_summary": {
+    "completed_step_count": 1,
+    "failed_step_count": 1,
+    "partial_effect_count": 1,
+    "rollback_action_count": 1,
+    "recovery_action_count": 1,
+    "blocked_reason_count": 1,
+    "raw_output_included": false,
+    "raw_secret_material_included": false
+  },
+  "completed_step_refs": [
+    "step://worker/foundation-read-only-repo-inspection/list-schema-surface"
+  ],
+  "failed_step_refs": [
+    "step://worker/foundation-read-only-repo-inspection/read-worker-surface"
+  ],
+  "partial_effect_refs": [
+    "effect://local-workspace/tmp-read-only-inventory-created"
+  ],
+  "rollback_action_refs": [
+    "rollback://worker/foundation-read-only-repo-inspection/remove-tmp-inventory"
+  ],
+  "recovery_action_refs": [
+    "recovery://worker/foundation-read-only-repo-inspection/retry-with-shorter-scope"
+  ],
+  "blocked_reason_refs": [
+    "blocked://worker/foundation-read-only-repo-inspection/timeout-before-verification"
+  ],
+  "governance_guards": {
+    "terminal_closure": false,
+    "success_claim_allowed": false,
+    "execution_authority_renewal_allowed": false,
+    "raw_secret_material_included": false,
+    "mfidel_atomicity_preserved": true,
+    "partial_or_unknown_effect_requires_recovery": true
+  },
+  "receipt_envelope": {
+    "uao_ref": "uao://worker-failure/foundation-read-only-worker/20260614",
+    "causal_decision_trace_ref": "trace://worker-failure/foundation-read-only-worker/20260614",
+    "receipt_ref": "receipt://worker-failure/foundation-read-only-worker/20260614"
+  },
+  "evidence_refs": [
+    "schemas/worker_failure_receipt.schema.json",
+    "examples/worker_failure_receipt.foundation.json",
+    "scripts/validate_worker_failure_receipt.py",
+    "tests/test_validate_worker_failure_receipt.py",
+    "docs/79_worker_failure_receipt_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/sdlc/requirement_worker_failure_receipt_contract_20260614.json",
+    "examples/sdlc/design_worker_failure_receipt_contract_20260614.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This receipt is a contract example only. It does not register a live worker or claim terminal closure."
+  }
+}

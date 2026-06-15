@@ -115,7 +115,10 @@
             "type": "string",
             "enum": ["health", "version", "blocked_evaluate"]
           },
-          "method": { "const": "GET" },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST"]
+          },
           "url": {
             "type": "string",
             "pattern": "^https://[^/]+/v1/.+$"

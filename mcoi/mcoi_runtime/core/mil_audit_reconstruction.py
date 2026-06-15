@@ -7,8 +7,10 @@ Invariants: reconstruction requires admitted episodic memory and preserves paren
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Mapping
 
 from mcoi_runtime.contracts.learning import LearningAdmissionStatus
+from mcoi_runtime.contracts.policy import PolicyDecision
 from mcoi_runtime.contracts.replay import ReplayEffect, ReplayMode, ReplayRecord
 from mcoi_runtime.contracts.trace import TraceEntry
 from mcoi_runtime.contracts.whqr import WHQRDocument
@@ -41,7 +43,8 @@ def reconstruct_mil_audit(
     if bundle.certificate.certificate_id not in admission.memory_entry.source_ids:
         raise RuntimeCoreInvariantError("MIL audit memory does not anchor terminal certificate")
 
-    entries = _trace_entries(bundle, admission, whqr_document, recorded_at, state_hash, registry_hash)
+    replay_document = _resolve_whqr_document(bundle.program.whqr_decision, whqr_document)
+    entries = _trace_entries(bundle, admission, replay_document, recorded_at, state_hash, registry_hash)
     chain_hash = stable_identifier(
         "mil-audit-chain",
         {
@@ -72,10 +75,34 @@ def reconstruct_mil_audit(
     return MILAuditReconstruction(entries, replay, chain_hash)
 
 
+def _resolve_whqr_document(decision: PolicyDecision, whqr_document: WHQRDocument | None) -> WHQRDocument:
+    expected_hash = _metadata_text(decision.metadata, "whqr_canonical_hash", required=whqr_document is None)
+    if whqr_document is not None:
+        try:
+            whqr_document.verify_semantics(expected_canonical_hash=expected_hash)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("MIL audit WHQR document does not match policy metadata") from exc
+        return whqr_document
+    canonical_json = _metadata_text(decision.metadata, "whqr_canonical_json", required=True)
+    try:
+        return WHQRDocument.from_canonical_json(canonical_json, expected_canonical_hash=expected_hash)
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError("MIL audit WHQR replay document is invalid") from exc
+
+
+def _metadata_text(metadata: Mapping[str, Any], key: str, *, required: bool) -> str | None:
+    value = metadata.get(key)
+    if value is None and not required:
+        return None
+    if not isinstance(value, str) or value == "":
+        raise RuntimeCoreInvariantError(f"MIL audit requires policy metadata {key}")
+    return value
+
+
 def _trace_entries(
     bundle: MILTerminalCertificateBundle,
     admission: MILLearningAdmissionResult,
-    whqr_document: WHQRDocument | None,
+    whqr_document: WHQRDocument,
     recorded_at: str,
     state_hash: str,
     registry_hash: str,
@@ -87,8 +114,11 @@ def _trace_entries(
     specs = (
         (
             "whqr_semantic_tree",
-            whqr_document.canonical_hash() if whqr_document else bundle.program.whqr_decision.decision_id,
-            {"whqr_version": whqr_document.whqr_version if whqr_document else None},
+            whqr_document.canonical_hash(),
+            {
+                "whqr_version": whqr_document.whqr_version,
+                "whqr_semantics_hash": whqr_document.semantics_hash,
+            },
         ),
         (
             "policy_decision",

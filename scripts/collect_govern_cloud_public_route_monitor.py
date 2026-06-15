@@ -41,7 +41,7 @@ DEFAULT_API_VERSION = "2026.05.v1"
 DEFAULT_EVALUATOR_VERSION = "govern-evaluator.v1"
 MAX_BODY_BYTES = 65536
 
-HttpGetter = Callable[[str], "HttpProbeResult"]
+HttpRequester = Callable[[str, str], "HttpProbeResult"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +60,7 @@ class RouteSpec:
     """Expected public route contract for one monitor probe."""
 
     route_id: str
+    method: str
     path: str
     expected_status_code: int
     expected_fields: Mapping[str, str]
@@ -71,7 +72,7 @@ def collect_govern_cloud_public_route_monitor(
     expected_service: str = DEFAULT_SERVICE,
     expected_api: str = DEFAULT_API_VERSION,
     expected_evaluator: str = DEFAULT_EVALUATOR_VERSION,
-    http_getter: HttpGetter | None = None,
+    http_getter: HttpRequester | None = None,
     now_utc: datetime | None = None,
 ) -> dict[str, object]:
     """Collect one Govern Cloud public route monitor receipt."""
@@ -80,18 +81,21 @@ def collect_govern_cloud_public_route_monitor(
     route_specs = (
         RouteSpec(
             route_id="health",
+            method="GET",
             path="/v1/health",
             expected_status_code=200,
             expected_fields={"status": "ok", "service": expected_service},
         ),
         RouteSpec(
             route_id="version",
+            method="GET",
             path="/v1/version",
             expected_status_code=200,
             expected_fields={"api": expected_api, "evaluator": expected_evaluator},
         ),
         RouteSpec(
             route_id="blocked_evaluate",
+            method="POST",
             path="/v1/govern/evaluate",
             expected_status_code=404,
             expected_fields={},
@@ -103,7 +107,7 @@ def collect_govern_cloud_public_route_monitor(
         _route_observation(
             spec=spec,
             base_url=normalized_base_url,
-            result=getter(f"{normalized_base_url}{spec.path}"),
+            result=getter(spec.method, f"{normalized_base_url}{spec.path}"),
         )
         for spec in route_specs
     ]
@@ -194,7 +198,7 @@ def _route_observation(*, spec: RouteSpec, base_url: str, result: HttpProbeResul
         error = "unexpected_response_contract"
     return {
         "route_id": spec.route_id,
-        "method": "GET",
+        "method": spec.method,
         "url": f"{base_url}{spec.path}",
         "expected_status_code": spec.expected_status_code,
         "observed_status_code": result.status_code,
@@ -206,8 +210,12 @@ def _route_observation(*, spec: RouteSpec, base_url: str, result: HttpProbeResul
     }
 
 
-def _urlopen_getter(url: str) -> HttpProbeResult:
-    request = urllib.request.Request(url, headers={"User-Agent": "mullusi-govern-cloud-public-route-monitor/1.0"})
+def _urlopen_getter(method: str, url: str) -> HttpProbeResult:
+    request = urllib.request.Request(
+        url,
+        method=method,
+        headers={"User-Agent": "mullusi-govern-cloud-public-route-monitor/1.0"},
+    )
     try:
         assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=10) as response:
@@ -326,7 +334,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(
     argv: list[str] | None = None,
     *,
-    http_getter: HttpGetter | None = None,
+    http_getter: HttpRequester | None = None,
     now_utc: datetime | None = None,
 ) -> int:
     """CLI entry point for Govern Cloud public route monitor collection."""

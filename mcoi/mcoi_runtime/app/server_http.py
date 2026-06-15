@@ -7,7 +7,7 @@ Invariants: CORS policy remains fail-closed outside dev, internal exception deta
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any, Callable
 from uuid import uuid4
 
@@ -256,34 +256,60 @@ def install_global_exception_handler(
 
 
 def iter_effective_routes(app: FastAPI) -> tuple[Any, ...]:
-    """Return route objects with included-router wrappers expanded.
+    """Backward-compatible alias for validators expecting effective routes."""
 
-    FastAPI 0.137 stores ``app.include_router`` entries as internal
-    ``_IncludedRouter`` wrappers. The server still dispatches correctly, but
-    route-surface validators and legacy tests need the effective path-bearing
-    routes. This helper keeps that compatibility boundary explicit.
+    return iter_effective_app_routes(app)
+
+
+def iter_inspectable_routes(app: FastAPI) -> Iterable[Any]:
+    """Yield mounted route objects with stable ``path``/``methods`` access."""
+
+    yield from iter_effective_app_routes(app)
+
+
+def iter_effective_app_routes(app: FastAPI) -> tuple[Any, ...]:
+    """Return route-like entries for eager and lazy FastAPI router storage.
+
+    FastAPI 0.137 can keep included routers as internal placeholder routes
+    until request-time matching. Older releases expand them in ``app.routes``.
+    Governance and audit tests need a deterministic read-only view of the
+    mounted route surface, independent of that internal representation.
     """
+    routes: list[Any] = []
 
-    effective_routes: list[Any] = []
     for route in app.routes:
-        route_contexts = getattr(route, "effective_route_contexts", None)
-        if not callable(route_contexts):
-            effective_routes.append(route)
+        routes.extend(_iter_effective_route(route))
+    return tuple(routes)
+
+
+def _iter_effective_route(route: Any) -> Iterable[Any]:
+    if hasattr(route, "path"):
+        yield route
+        return
+
+    effective_candidates = getattr(route, "effective_candidates", None)
+    if not callable(effective_candidates):
+        return
+
+    for candidate in effective_candidates():
+        if hasattr(candidate, "effective_candidates"):
+            yield from _iter_effective_route(candidate)
             continue
-        for context in route_contexts():
-            candidate = getattr(context, "original_route", None)
-            if candidate is None:
-                candidate = getattr(context, "starlette_route", None)
-            if candidate is None:
-                raise RuntimeError("included router context is missing an effective route")
-            effective_routes.append(candidate)
-    return tuple(effective_routes)
+        starlette_route = getattr(candidate, "starlette_route", None)
+        if hasattr(starlette_route, "path"):
+            yield starlette_route
+            continue
+        if hasattr(candidate, "handle") and hasattr(candidate, "path"):
+            yield candidate
+            continue
+        if hasattr(candidate, "path") and hasattr(candidate, "methods") and hasattr(candidate, "endpoint"):
+            yield candidate
 
 
 def _normalize_default_router_routes(app: FastAPI) -> None:
-    """Flatten default included-router wrappers after deterministic bootstrap."""
+    """Flatten default included-router wrappers for read-only diagnostics."""
 
-    app.router.routes = list(iter_effective_routes(app))
+    app.router.routes = list(iter_effective_app_routes(app))
 
 
 def include_default_routers(app: FastAPI) -> None:
@@ -327,6 +353,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.scheduler import router as scheduler_router
     from mcoi_runtime.app.routers.shadow import router as shadow_router
     from mcoi_runtime.app.routers.simulation import router as simulation_router
+    from mcoi_runtime.app.routers.snet import router as snet_router
     from mcoi_runtime.app.routers.software_receipts import router as software_receipts_router
     from mcoi_runtime.app.routers.tenant import router as tenant_router
     from mcoi_runtime.app.routers.temporal_scheduler import router as temporal_scheduler_router
@@ -366,6 +393,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(replay_router)
     app.include_router(sandbox_router)
     app.include_router(simulation_router)
+    app.include_router(snet_router)
     app.include_router(runbooks_router)
     app.include_router(mil_audit_router)
     app.include_router(explain_router)
@@ -382,4 +410,3 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(domains_router)
     app.include_router(software_receipts_router)
     app.include_router(god_mode_router)
-    _normalize_default_router_routes(app)

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-approval-queue:1",
+  "title": "Personal Assistant Approval Queue",
+  "description": "Read-model projection for governed personal-assistant approval packets and receipts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approval_count",
+    "approval_ids",
+    "state_counts",
+    "receipt_ids",
+    "execution_allowed",
+    "live_connector_execution_allowed",
+    "external_send_allowed",
+    "connector_mutation_allowed",
+    "system_of_record_write_allowed",
+    "approval_is_execution",
+    "records",
+    "metadata"
+  ],
+  "properties": {
+    "approval_count": { "type": "integer", "minimum": 0 },
+    "approval_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+      "uniqueItems": true
+    },
+    "state_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "required": ["requested", "approved", "rejected", "revised", "expired", "blocked"],
+      "properties": {
+        "requested": { "type": "integer", "minimum": 0 },
+        "approved": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "revised": { "type": "integer", "minimum": 0 },
+        "expired": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "receipt_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$" },
+      "uniqueItems": true
+    },
+    "execution_allowed": { "const": false },
+    "live_connector_execution_allowed": { "const": false },
+    "external_send_allowed": { "const": false },
+    "connector_mutation_allowed": { "const": false },
+    "system_of_record_write_allowed": { "const": false },
+    "approval_is_execution": { "const": false },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["approval_id", "packet", "receipts"],
+        "properties": {
+          "approval_id": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+          "packet": { "type": "object", "additionalProperties": true },
+          "receipts": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "object", "additionalProperties": true }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "queue_projection",
+        "persistence_boundary",
+        "live_connector_execution_allowed",
+        "approval_decision_executes_action"
+      ],
+      "properties": {
+        "foundation_only": { "const": true },
+        "queue_projection": { "type": "string", "minLength": 1 },
+        "persistence_boundary": { "type": "string", "minLength": 1 },
+        "live_connector_execution_allowed": { "const": false },
+        "approval_decision_executes_action": { "const": false }
+      }
+    }
+  }
+}

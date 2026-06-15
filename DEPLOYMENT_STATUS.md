@@ -9,7 +9,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 
 # Deployment Status Witness
 
-**Last audited:** 2026-06-12
+**Last audited:** 2026-06-14
 **Deployment witness state:** `published`
 **Public production health endpoint:** `https://api.mullusi.com/health`
 **Gateway health endpoint:** `/health`
@@ -89,7 +89,8 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
 | Public production health | Declared from a verified published deployment witness; `https://api.mullusi.com/health` is the public health endpoint, `.change_assurance/deployment_witness.json` records `deployment_claim=published`, and `.change_assurance/public_production_health_declaration.json` records the operator-approved declaration receipt | Reflected |
-| Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `/v1/health`, `/v1/version`, and the blocked `/v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
+| Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `GET /v1/health`, `GET /v1/version`, and the blocked `POST /v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
+| Govern Cloud evaluate-route rollback witness | `scripts/validate_govern_evaluate_route_rollback.py` verifies `/v1/health` and `/v1/version` remain public read routes while `POST /v1/govern/evaluate` returns 404 without outbound proxy transport | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -104,7 +105,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Observed pilot health probe URL | `https://api.mullusi.com/health` is the declared public production health endpoint backed by the published deployment witness and public-health declaration receipt |
 | Upstream API readiness | `api.mullusi.com` has a verified published deployment witness, clear runtime and authority responsibility debt, production evidence closure, and declared public health endpoint `https://api.mullusi.com/health` |
 | Deployment witness workflow runs | A deployment witness workflow run collected the published witness for `https://api.mullusi.com`; the local deployment witness records verified signatures, clear runtime and authority responsibility debt, production evidence closure, and `deployment_claim=published` |
-| Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
+| Gateway publication workflow runs | `gateway-publication.yml` run `27489039439` completed successfully and dispatched deployment witness run `27489044697` |
 
 ## Closure Requirements
 

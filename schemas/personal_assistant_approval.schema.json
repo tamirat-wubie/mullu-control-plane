@@ -59,7 +59,7 @@
       "additionalProperties": false,
       "required": ["decision", "reason_codes", "decided_at"],
       "properties": {
-        "decision": { "type": "string", "enum": ["pending", "approved", "rejected", "revised", "blocked"] },
+        "decision": { "type": "string", "enum": ["pending", "approved", "rejected", "revised", "expired", "blocked"] },
         "reason_codes": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },

@@ -14,7 +14,7 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 3 | Request intake and WHQR missing-binding emission | No execution |
 | 4 | Read-only inbox and calendar summaries | No send, delete, archive, create, move, cancel, invite |
 | 5 | Draft-only assistant artifacts | No external communication |
-| 6 | Approval queue | No approval auto-grant |
+| 6 | Approval queue read/preview projection | No approval auto-grant; no execution after approval |
 | 7 | Memory observations | No raw chat-log storage; no live Nested Mind activation |
 | 8 | TeamOps shared inbox planning and handoff | No mailbox mutation without approval evidence |
 | 9 | User-facing assistant console | No customer/SaaS readiness claim |
@@ -45,6 +45,57 @@ schema witness
 ```
 
 No stage may skip UAO admission, approval classification, receipt emission, and rollback or compensation planning where effect-bearing action exists.
+
+## PR 6 Acceptance Criteria
+
+1. Approval queue projections validate against `schemas/personal_assistant_approval_queue.schema.json`.
+2. Queue records embed schema-valid approval packets and personal-assistant receipts.
+3. Pending, approved, rejected, and revised decisions remain evidence records only.
+4. Public routes expose read/preview projections without persistence claims or connector mutation.
+5. `approval_is_execution`, `execution_allowed`, `external_send_allowed`, and `connector_mutation_allowed` remain false.
+6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+7. Proof coverage classifies approval queue routes under the assistant planning surface.
+
+## PR 6 Decision Evidence Acceptance Criteria
+
+1. Approval decisions validate against `schemas/personal_assistant_approval_decision.schema.json`.
+2. Approved, rejected, revised, and expired decisions embed schema-valid approval packets and receipts.
+3. Approved and revised decisions remain `deferred` evidence records; they do not execute sends, invites, writes, connector mutation, or memory writes.
+4. Rejected and expired decisions emit blocked receipts and record the non-actions taken.
+5. `approval_decision_records_allowed` is true, while execution, external send, connector mutation, task/calendar writes, system-of-record writes, deployment mutation, customer-readiness claims, and live Nested Mind activation remain false.
+6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+7. Proof coverage classifies approval decision evidence under the assistant planning surface.
+
+## PR 4 Evidence Acceptance Criteria
+
+1. Redacted inbox/calendar summaries validate against `schemas/personal_assistant_read_only_projection.schema.json`.
+2. Projection envelopes embed schema-valid personal-assistant receipts.
+3. `execution_allowed`, `live_connector_execution_allowed`, `mailbox_read_allowed`, `mailbox_mutation_allowed`, `calendar_write_allowed`, `external_send_allowed`, and `connector_mutation_allowed` remain false.
+4. The source is explicitly `operator_supplied_redacted_projection`; the contract does not claim live provider reads.
+5. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+6. Assurance remains Foundation Mode only, with no live execution or customer-readiness claim.
+
+## PR 5 Evidence Acceptance Criteria
+
+1. Email, calendar, and task drafts validate against `schemas/personal_assistant_draft_projection.schema.json`.
+2. Draft projection envelopes embed schema-valid personal-assistant receipts for each draft artifact.
+3. `draft_preparation_allowed` is true, while `execution_allowed`, `live_connector_execution_allowed`, `external_send_allowed`, `calendar_write_allowed`, `task_write_allowed`, `memory_write_allowed`, `connector_mutation_allowed`, and `system_of_record_write_allowed` remain false.
+4. Drafts require approval before any send, invite, connector mutation, task write, or system-of-record write.
+5. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+6. Assurance remains Foundation Mode only, with no live execution or customer-readiness claim.
+
+## PR 7 Acceptance Criteria
+
+1. Memory observation records validate against `schemas/personal_assistant_memory_observation.schema.json`.
+2. Candidate ledger projections validate against `schemas/personal_assistant_memory_read_model.schema.json`.
+3. Memory review evidence validates against `schemas/personal_assistant_memory_review.schema.json`.
+4. The runtime prepares observation candidates with source, confidence, scope, mutability, evidence refs, receipt refs, sensitivity, retention policy, and Nested Mind staging status.
+5. Review decisions cover `kept_for_operator_review`, `rejected`, `revision_requested`, `deferred`, and `expired` without admitting candidates into live memory.
+6. Public routes expose empty read-model, stateless candidate preview, and stateless review preview projections only.
+7. `live_memory_write_allowed`, `memory_admission_allowed`, `nested_mind_live_activation_allowed`, `raw_private_payload_storage_allowed`, `secret_value_storage_allowed`, and `candidate_only` remain false/false/false/false/false/true as applicable.
+8. Raw chat logs, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
+9. Receipts record memory candidate creation or review plus actions not taken: live memory write, memory admission, Nested Mind activation, raw chat-log storage, raw connector payload storage, and system-of-record mutation.
+10. Proof coverage classifies memory observation and review routes under the assistant planning surface.
 
 ## Handoff Risks
 

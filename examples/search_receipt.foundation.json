@@ -1,0 +1,122 @@
+{
+  "receipt_id": "search-receipt-foundation-current-status-blocked-20260614",
+  "receipt_version": "search_receipt.v1",
+  "search_decision_ref": "receipt://search-decision/foundation-current-status/20260614",
+  "request_id": "gateway-message-search-current-status-20260614",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-14T09:05:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "receipt_state": "RETRIEVAL_BLOCKED",
+  "search_state": "WEB_SEARCH_DEEP_APPROVAL_REQUIRED",
+  "freshness_result": {
+    "freshness_required": true,
+    "freshness_status": "unknown_blocked",
+    "current_info_claim_allowed": false,
+    "max_age_seconds": 3600,
+    "proof_state": "Unknown",
+    "rationale_refs": [
+      "gap://GAP-SEARCH-002",
+      "search-decision://foundation-current-status/20260614"
+    ]
+  },
+  "source_plan_result": {
+    "selected_sources": ["web"],
+    "attempted_sources": [],
+    "tenant_scope_verified": true,
+    "external_retrieval_performed": false,
+    "connector_scope_ref": null,
+    "rationale_refs": [
+      "foundation-mode://local-first",
+      "policy://foundation-mode/no-unbounded-retrieval"
+    ]
+  },
+  "cache_result": {
+    "state": "not_checked",
+    "cache_key_ref": "cache://tenant_local_foundation/search-current-status",
+    "tenant_scoped": true,
+    "stale_cache_used": false
+  },
+  "budget_result": {
+    "state": "approval_required",
+    "actual_cost_class": "none",
+    "approval_ref": null,
+    "proof_state": "BudgetUnknown",
+    "rationale_refs": [
+      "gap://GAP-SEARCH-003",
+      "policy://foundation-mode/no-unbounded-retrieval"
+    ]
+  },
+  "evidence_summary": {
+    "evidence_count": 0,
+    "citation_count": 0,
+    "conflict_count": 0,
+    "stale_source_count": 0,
+    "retrieval_error_count": 2,
+    "content_body_included": false
+  },
+  "evidence_items": [],
+  "citation_refs": [],
+  "conflict_refs": [],
+  "stale_source_refs": [],
+  "retrieval_errors": [
+    {
+      "error_ref": "error://search-receipt/foundation-current-status/budget-unknown",
+      "source_type": "budget",
+      "error_class": "budget_unknown",
+      "blocking": true,
+      "rationale_refs": [
+        "proof-state://BudgetUnknown",
+        "gap://GAP-SEARCH-003"
+      ]
+    },
+    {
+      "error_ref": "error://search-receipt/foundation-current-status/approval-missing",
+      "source_type": "governance",
+      "error_class": "approval_missing",
+      "blocking": true,
+      "rationale_refs": [
+        "policy://foundation-mode/no-external-retrieval-without-approval",
+        "gap://GAP-SEARCH-004"
+      ]
+    }
+  ],
+  "retrieval_safety_result": {
+    "retrieved_content_authority": "evidence_only",
+    "prompt_injection_guard_applied": true,
+    "prompt_injection_detected": false,
+    "source_instruction_authority_granted": false,
+    "tool_instruction_from_source_allowed": false,
+    "policy_instruction_from_source_allowed": false,
+    "private_source_scope_verified": true,
+    "conflict_handling": "block_current_claim"
+  },
+  "governance_guards": {
+    "execution_authority_granted": false,
+    "connector_authority_granted": false,
+    "answer_claim_authority_granted": false,
+    "terminal_closure": false,
+    "raw_secret_material_included": false,
+    "retrieved_instruction_authority_granted": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "receipt_envelope": {
+    "uao_ref": "uao://search-receipt/foundation-current-status/20260614",
+    "causal_decision_trace_ref": "trace://search-receipt/foundation-current-status/20260614",
+    "receipt_ref": "receipt://search-receipt/foundation-current-status/20260614"
+  },
+  "evidence_refs": [
+    "schemas/search_receipt.schema.json",
+    "examples/search_receipt.foundation.json",
+    "scripts/validate_search_receipt.py",
+    "tests/test_validate_search_receipt.py",
+    "docs/78_search_receipt_contract.md",
+    "docs/maps/MULLUSI_SEARCH_LAYER_MAP.md",
+    "examples/sdlc/requirement_search_receipt_contract_20260614.json",
+    "examples/sdlc/design_search_receipt_contract_20260614.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "retrieval_note": "This receipt proves retrieval was blocked before external access. It does not claim current endpoint status or contain retrieved content."
+  }
+}

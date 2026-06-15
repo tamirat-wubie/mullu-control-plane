@@ -677,6 +677,50 @@ def test_ci_uploads_workspace_preflight_receipt_artifact() -> None:
     assert workflow_text.find(artifact_name) < workflow_text.find(artifact_path)
 
 
+def test_ci_durable_gmail_plan_runs_revocation_recovery_rehearsal() -> None:
+    workflow_text = _ci_workflow_text()
+    timestamp_command = "export MULLU_VALIDATION_TIMESTAMP="
+    plan_command = "python scripts/validate_durable_gmail_connector_runtime_plan.py"
+    emit_account_binding_inputs_command = (
+        "python scripts/emit_durable_gmail_account_binding_operator_input_request.py "
+        "--output .change_assurance/durable_gmail_account_binding_operator_input_request.json --json"
+    )
+    validate_account_binding_inputs_command = (
+        "python scripts/validate_durable_gmail_account_binding_operator_input_request.py "
+        "--request .change_assurance/durable_gmail_account_binding_operator_input_request.json "
+        "--require-blocked --json"
+    )
+    produce_revocation_command = (
+        "python scripts/produce_durable_gmail_revocation_recovery_rehearsal_receipt.py "
+        "--output .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json --strict --json"
+    )
+    validate_revocation_command = (
+        "python scripts/validate_durable_gmail_revocation_recovery_rehearsal_receipt.py "
+        "--receipt .change_assurance/durable_gmail_revocation_recovery_rehearsal_receipt.json "
+        "--max-age-days 14 --require-ready --json"
+    )
+    produce_write_command = (
+        "python scripts/produce_durable_gmail_write_authority_rehearsal_receipt.py "
+        "--output .change_assurance/durable_gmail_write_authority_rehearsal_receipt.json --strict --json"
+    )
+
+    assert timestamp_command in workflow_text
+    assert emit_account_binding_inputs_command in workflow_text
+    assert validate_account_binding_inputs_command in workflow_text
+    assert produce_revocation_command in workflow_text
+    assert validate_revocation_command in workflow_text
+    assert workflow_text.find(timestamp_command) < workflow_text.find(emit_account_binding_inputs_command)
+    assert workflow_text.find(plan_command) < workflow_text.find(emit_account_binding_inputs_command)
+    assert workflow_text.find(emit_account_binding_inputs_command) < workflow_text.find(
+        validate_account_binding_inputs_command
+    )
+    assert workflow_text.find(validate_account_binding_inputs_command) < workflow_text.find(
+        produce_revocation_command
+    )
+    assert workflow_text.find(produce_revocation_command) < workflow_text.find(validate_revocation_command)
+    assert workflow_text.find(validate_revocation_command) < workflow_text.find(produce_write_command)
+
+
 def test_run_check_preserves_failure_evidence() -> None:
     command = runner.CheckCommand(
         "intentional_failure",
@@ -734,6 +778,90 @@ def test_write_receipt_rejects_escape_and_non_json(tmp_path: Path) -> None:
         runner.resolve_receipt_path(Path("../receipt.json"), tmp_path)
     with pytest.raises(ValueError):
         runner.resolve_receipt_path(Path("receipt.txt"), tmp_path)
+
+
+def test_canonical_receipt_refresh_bootstraps_self_validating_example(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand(runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, ("python", "receipt.py")),
+        runner.CheckCommand("omega", ("python", "omega.py")),
+    )
+    written_receipts: list[dict[str, object]] = []
+
+    def fake_run_checks(
+        observed_commands: tuple[runner.CheckCommand, ...],
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        max_workers: int = 1,
+        timeout_seconds: float | None = None,
+    ) -> tuple[runner.CheckResult, ...]:
+        assert [command.name for command in observed_commands] == ["alpha", "omega"]
+        return (
+            runner.CheckResult("alpha", ("python", "alpha.py"), 0, "alpha ok\n", ""),
+            runner.CheckResult("omega", ("python", "omega.py"), 0, "omega ok\n", ""),
+        )
+
+    def fake_run_check(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        assert observed_command.name == runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME
+        assert written_receipts[0]["status"] == "passed"
+        return runner.CheckResult(observed_command.name, observed_command.args, 0, "receipt ok\n", "")
+
+    def fake_write_receipt(
+        receipt: dict[str, object],
+        receipt_path: Path,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+    ) -> Path:
+        written_receipts.append(receipt)
+        return tmp_path / receipt_path.name
+
+    monkeypatch.setattr(runner, "run_checks", fake_run_checks)
+    monkeypatch.setattr(runner, "run_check", fake_run_check)
+    monkeypatch.setattr(runner, "write_receipt", fake_write_receipt)
+
+    results = runner.run_checks_for_canonical_receipt_refresh(commands, Path("receipt.json"), tmp_path)
+
+    assert [result.name for result in results] == ["alpha", runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, "omega"]
+    assert len(written_receipts) == 2
+    assert written_receipts[0]["checks"][1]["stdout"] == "STATUS: passed\n"
+    assert written_receipts[1]["checks"][1]["stdout"] == "receipt ok\n"
+
+
+def test_canonical_receipt_refresh_does_not_mask_prior_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand(runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME, ("python", "receipt.py")),
+    )
+
+    def fake_run_checks(
+        observed_commands: tuple[runner.CheckCommand, ...],
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        max_workers: int = 1,
+        timeout_seconds: float | None = None,
+    ) -> tuple[runner.CheckResult, ...]:
+        return (runner.CheckResult("alpha", ("python", "alpha.py"), 1, "", "alpha failed\n"),)
+
+    def fail_if_receipt_check_runs(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        raise AssertionError("receipt example check should not run after prior failure")
+
+    monkeypatch.setattr(runner, "run_checks", fake_run_checks)
+    monkeypatch.setattr(runner, "run_check", fail_if_receipt_check_runs)
+
+    results = runner.run_checks_for_canonical_receipt_refresh(commands, Path("receipt.json"))
+
+    assert [result.name for result in results] == ["alpha", runner.CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME]
+    assert results[0].passed is False
+    assert results[1].passed is False
+    assert "prior checks failed" in results[1].stderr
 
 
 def test_main_json_emits_machine_readable_receipt() -> None:

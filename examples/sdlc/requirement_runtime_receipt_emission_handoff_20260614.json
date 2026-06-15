@@ -1,0 +1,69 @@
+{
+  "requirement_id": "sdlc_req_runtime_receipt_emission_handoff_20260614",
+  "request_id": "platform_runtime_receipt_emission_handoff_20260614",
+  "problem_statement": "The selected read-only worker path has binding, lease-preflight, rehearsal receipt, and operator-visible projection evidence, but the next runtime proof thread still lacks a governed handoff packet that states what a future runtime receipt emitter must prove before dispatch can be admitted.",
+  "success_criteria": [
+    "ReadOnlyWorkerRuntimeReceiptHandoff validates against a public JSON schema and Foundation Mode example",
+    "the handoff binds the selected worker path to binding, lease preflight, rehearsal receipt, and console projection evidence",
+    "runtime runner registration remains denied",
+    "dispatch endpoint registration remains denied",
+    "runtime receipt emitter registration remains denied",
+    "future dispatch admission is blocked until runtime runner evidence, active lease evidence, UAO evidence, Phi_gov authorization, and failure-receipt obligations exist",
+    "focused tests reject authority drift, guard drift, source-ref drift, schema-ref drift, count drift, and terminal-closure drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no worker runtime registration",
+    "no dispatch endpoint",
+    "no persisted runtime receipt store",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "runtime runner registration remains denied",
+    "runtime receipt emission handoff is a contract artifact and not a live runtime emitter",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "future runtime admission must still require temporal lease evidence, UAO, Phi_gov, recovery evidence, and verification",
+    "WorkerFailureReceipt remains mandatory for failed or partial dispatch evidence",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
+    "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_handoff.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_handoff.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_receipt_emission_handoff_20260614.json",
+    "examples/sdlc/design_runtime_receipt_emission_handoff_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_receipt_handoff.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_receipt_handoff.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-runtime-receipt-emission-handoff-20260614.json"
+  ],
+  "evidence_required": [
+    "runtime receipt handoff validator receipt",
+    "focused pytest receipt for handoff behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/runtime-receipt-emission-handoff/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/runtime-receipt-emission-handoff/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/runtime-receipt-emission-handoff/20260614"
+}

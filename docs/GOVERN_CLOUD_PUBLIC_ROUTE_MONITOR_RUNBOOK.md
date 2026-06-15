@@ -3,6 +3,7 @@ Purpose: Define the repeatable public route monitoring procedure for Govern Clou
 Governance scope: api.mullusi.com public read-route health, blocked-route guard,
   operator response, and rollback evidence.
 Dependencies: scripts/collect_govern_cloud_public_route_monitor.py,
+  scripts/validate_govern_evaluate_route_rollback.py,
   schemas/govern_cloud_public_route_monitor_receipt.schema.json, public HTTPS
   access to api.mullusi.com.
 Invariants: no secret values are required; the monitor does not mutate DNS,
@@ -21,7 +22,7 @@ It covers only:
 |---|---|
 | `GET /v1/health` | HTTP 200 with `status=ok` and `service=mullusi-govern-cloud-staging` |
 | `GET /v1/version` | HTTP 200 with `api=2026.05.v1` and `evaluator=govern-evaluator.v1` |
-| `GET /v1/govern/evaluate` | HTTP 404 because non-allowlisted `/v1/*` routes are not public |
+| `POST /v1/govern/evaluate` | HTTP 404 because non-allowlisted `/v1/*` routes are not public |
 
 ## Collection
 
@@ -42,6 +43,30 @@ The collector emits a receipt with:
 
 The receipt does not contain raw response bodies or secret values.
 
+## Rollback Witness
+
+Run the local rollback witness after any gateway change that touches public
+Govern Cloud proxy routes:
+
+```powershell
+python scripts/validate_govern_evaluate_route_rollback.py
+```
+
+The validator is read-only. It passes only when:
+
+| Check | Required state |
+|---|---|
+| Preserved public read routes | `/v1/health` and `/v1/version` remain allowlisted |
+| Product write route | `/v1/govern/evaluate` is absent from the public proxy allowlist |
+| Rollback probe | `POST /v1/govern/evaluate` returns HTTP 404 |
+| Outbound transport | blocked route does not call the private Govern Cloud service |
+
+Use JSON mode when a machine-readable receipt is needed:
+
+```powershell
+python scripts/validate_govern_evaluate_route_rollback.py --json
+```
+
 ## Failure Handling
 
 If `solver_outcome` is not `SolvedVerified`:
@@ -49,11 +74,12 @@ If `solver_outcome` is not `SolvedVerified`:
 1. Treat the public read-route monitor as `AwaitingEvidence`.
 2. Check whether the failing route is a read-route outage or a blocked-route
    guard failure.
-3. If `/v1/govern/evaluate` returns HTTP 200, immediately disable the public
-   proxy with `MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false` on the gateway and
-   redeploy.
+3. If `POST /v1/govern/evaluate` returns HTTP 200, immediately disable the
+   public proxy with `MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false` on the
+   gateway and redeploy.
 4. Preserve the private Govern Cloud Render service for evidence review.
-5. Rerun the monitor after remediation and keep the new receipt.
+5. Rerun the monitor and rollback witness after remediation and keep the new
+   receipts.
 
 ## Cadence
 

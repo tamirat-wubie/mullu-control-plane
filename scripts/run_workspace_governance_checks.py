@@ -34,6 +34,10 @@ TIMEOUT_RETURN_CODE = 124
 PREFLIGHT_LOCK_RETURN_CODE = 125
 PREFLIGHT_LOCK_ID = "workspace_governance_preflight_lock"
 DEFAULT_PREFLIGHT_LOCK_PATH = WORKSPACE_ROOT / ".tmp" / "workspace-governance-preflight.lock"
+CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME = "workspace_governance_preflight_receipt_example"
+CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_PATH = (
+    WORKSPACE_ROOT / "docs" / "workspace-governance-preflight-receipt-example.json"
+)
 
 
 class PreflightLockError(RuntimeError):
@@ -1014,6 +1018,52 @@ def run_checks(
     return tuple(result for result in results_by_index if result is not None)
 
 
+def run_checks_for_canonical_receipt_refresh(
+    commands: tuple[CheckCommand, ...],
+    receipt_path: Path,
+    workspace_root: Path = WORKSPACE_ROOT,
+    max_workers: int = 1,
+    timeout_seconds: float | None = None,
+) -> tuple[CheckResult, ...]:
+    """Run checks while safely refreshing the self-validating receipt example."""
+
+    receipt_indexes = [
+        index for index, command in enumerate(commands) if command.name == CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME
+    ]
+    if len(receipt_indexes) != 1:
+        raise ValueError("canonical receipt refresh requires exactly one receipt example check")
+
+    receipt_index = receipt_indexes[0]
+    receipt_command = commands[receipt_index]
+    non_receipt_commands = tuple(
+        command for command in commands if command.name != CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME
+    )
+    non_receipt_results = run_checks(
+        non_receipt_commands,
+        workspace_root,
+        max_workers=max_workers,
+        timeout_seconds=timeout_seconds,
+    )
+    if not all(result.passed for result in non_receipt_results):
+        placeholder_result = CheckResult(
+            receipt_command.name,
+            receipt_command.args,
+            1,
+            "",
+            "STATUS: skipped\ncanonical receipt refresh skipped because prior checks failed\n",
+        )
+        return _insert_check_result(non_receipt_results, receipt_index, placeholder_result)
+
+    provisional_result = CheckResult(receipt_command.name, receipt_command.args, 0, "STATUS: passed\n", "")
+    provisional_results = _insert_check_result(non_receipt_results, receipt_index, provisional_result)
+    write_receipt(build_receipt(provisional_results), receipt_path, workspace_root)
+
+    receipt_result = run_check(receipt_command, workspace_root, timeout_seconds)
+    final_results = _insert_check_result(non_receipt_results, receipt_index, receipt_result)
+    write_receipt(build_receipt(final_results), receipt_path, workspace_root)
+    return final_results
+
+
 def select_check_commands(
     commands: tuple[CheckCommand, ...],
     selected_names: tuple[str, ...] = (),
@@ -1053,6 +1103,12 @@ def allows_saved_canonical_receipt(selected_names: tuple[str, ...], shard_count:
     """Return whether this run can persist a canonical preflight receipt."""
 
     return not selected_names and shard_count == 1
+
+
+def is_canonical_receipt_refresh_path(receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT) -> bool:
+    """Return whether a receipt path targets the self-validating canonical example."""
+
+    return resolve_receipt_path(receipt_path, workspace_root) == CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_PATH.resolve()
 
 
 @contextmanager
@@ -1103,6 +1159,18 @@ def build_receipt(results: tuple[CheckResult, ...], generated_at_epoch: float | 
         "check_count": len(results),
         "checks": checks,
     }
+
+
+def _insert_check_result(
+    non_receipt_results: tuple[CheckResult, ...],
+    receipt_index: int,
+    receipt_result: CheckResult,
+) -> tuple[CheckResult, ...]:
+    """Insert the receipt example result back into the canonical result order."""
+
+    ordered_results = list(non_receipt_results)
+    ordered_results.insert(receipt_index, receipt_result)
+    return tuple(ordered_results)
 
 
 def resolve_receipt_path(receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT) -> Path:
@@ -1164,13 +1232,25 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
+        canonical_receipt_refresh = (
+            args.receipt_path is not None and is_canonical_receipt_refresh_path(args.receipt_path)
+        )
         with maybe_full_preflight_lock(requires_full_preflight_lock(selected_names, shard_count)):
-            results = run_checks(
-                commands,
-                WORKSPACE_ROOT,
-                max_workers=int(args.max_workers),
-                timeout_seconds=args.per_check_timeout_seconds,
-            )
+            if canonical_receipt_refresh:
+                results = run_checks_for_canonical_receipt_refresh(
+                    commands,
+                    args.receipt_path,
+                    WORKSPACE_ROOT,
+                    max_workers=int(args.max_workers),
+                    timeout_seconds=args.per_check_timeout_seconds,
+                )
+            else:
+                results = run_checks(
+                    commands,
+                    WORKSPACE_ROOT,
+                    max_workers=int(args.max_workers),
+                    timeout_seconds=args.per_check_timeout_seconds,
+                )
     except PreflightLockError as exc:
         sys.stderr.write(f"[FAIL] preflight-lock: {exc}\nSTATUS: failed\n")
         return PREFLIGHT_LOCK_RETURN_CODE

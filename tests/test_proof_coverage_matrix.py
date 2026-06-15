@@ -159,9 +159,9 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 17
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 17
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -183,7 +183,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 43
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 109
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -262,7 +262,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 24
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 28
     assert surfaces["component_autopsy"]["unanchored_witness_count"] == 0
     assert surfaces["component_autopsy"]["exact_test_anchor_count"] == 5
     assert surfaces["component_request_simulator"]["unanchored_witness_count"] == 0
@@ -866,6 +866,27 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/history"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
+    assert classified_routes["/api/v1/personal-assistant/skills"]["surface_id"] == "assistant_kernel_planning"
+    assert (
+        classified_routes["/api/v1/personal-assistant/requests/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
     assert classified_routes["/api/v1/tool-permissions"]["surface_id"] == "tool_permission_registry"
     assert classified_routes["/api/v1/tool-permissions/evaluate"]["surface_id"] == "tool_permission_registry"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
@@ -890,6 +911,14 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
+    assert (
+        classified_routes["/api/v1/console/personal-assistant"]["surface_id"]
+        == "operator_console_read_models"
+    )
+    assert (
+        classified_routes["/api/v1/console/personal-assistant/view"]["surface_id"]
+        == "operator_console_read_models"
+    )
     assert classified_routes["/api/v1/console/spatial-map"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map/view"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
@@ -1617,14 +1646,18 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
+    assert "terminal_closure_exposes_whqr_replay_ref" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
     assert "command_interpretation_receipt_read_model_schema_valid" in witnesses
     assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "command_interpretation_receipt_replays_from_command_store" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "universal_action_proof_exposes_whqr_replay_ref" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
+    assert "universal_action_orchestration_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
+    assert "operator_universal_action_read_model_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capability_admission_audits_filter_status" in witnesses
     assert "command_capability_admission_read_model_reports_accepted_witness" in witnesses
@@ -2924,6 +2957,137 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "tests/test_validate_team_ops_shared_inbox_live_probe_operator_input_request.py" in connector_surface[
         "evidence_files"
     ]
+    assert "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/mint_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_mint_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
@@ -2967,7 +3131,73 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "team_ops_shared_inbox_probe_input_request_blocks_effect_drift" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_redacts_secret_markers" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_writes_validation_receipt" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 43
+    assert "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_requires_observation_evidence" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_blocks_without_live_probe" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_requires_redacted_observation" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_accepts_assignment_plan" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_blocks_without_routing" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_requires_request_evidence" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_accepts_pending_obligation" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_blocks_without_queue" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_requires_decision_evidence" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_accepts_operator_decisions" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_blocks_without_decision" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_requires_preparation_evidence" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_accepts_approved_packet" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_execution_blocks_without_preparation" in witnesses
+    assert "team_ops_shared_inbox_send_execution_requires_execution_evidence" in witnesses
+    assert "team_ops_shared_inbox_send_execution_accepts_provider_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim" in witnesses
+    assert "team_ops_shared_inbox_send_execution_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_send_execution_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_blocks_without_execution" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_requires_observation_replay" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_missing_secret" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_signs_ready_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_verifies_hmac" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_binds_source_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_raw_secret_or_production_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 109
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
@@ -2981,6 +3211,34 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert closure_actions["publish_team_ops_shared_inbox_live_probe_operator_input_request_contract"][
         "status"
     ] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_live_probe_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_observation_routing_receipt_contract"][
+        "status"
+    ] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_approval_queue_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_approval_decision_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_send_preparation_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_send_execution_receipt_contract"]["status"] == "closed"
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_sent_message_observation_receipt_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_review_packet_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_certificate_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_evidence_bundle_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_anchor_preflight_contract"]["status"]
+        == "closed"
+    )
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
@@ -3309,10 +3567,11 @@ def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> Non
     assert "snet_episode_malformed_answer_bindings_report_errors" in witnesses
     assert "snet_episode_non_json_replay_inputs_report_errors" in witnesses
     assert "snet_episode_malformed_expected_receipt_report_errors" in witnesses
+    assert "snet_episode_malformed_root_reports_errors" in witnesses
     assert "snet_episode_saved_file_validation" in witnesses
     assert "committed_snet_episode_example_replays_to_expected_receipt" in witnesses
     assert "read-only SNet mesh evidence" in replay_surface["notes"]
-    assert replay_integrity["exact_test_anchor_count"] == 10
+    assert replay_integrity["exact_test_anchor_count"] == 11
     assert replay_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
 
@@ -3368,9 +3627,9 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "snet_operator_doc_names_blocked_authorities" in witnesses
     assert "snet_operator_doc_lists_verification_commands" in witnesses
     assert "start_here_links_snet_operator_doc" in witnesses
-    assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
-    assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 20
+    assert "denied execution, connector, filesystem, gateway" in read_model_surface["notes"]
+    assert "terminal-closure authority" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 25
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 

@@ -25,7 +25,8 @@ Invariants: no secret values are recorded; public route health is not treated
 | Claim | Current state | Evidence |
 |---|---|---|
 | Public API read routes | `SolvedVerified` | `.change_assurance/govern_cloud_public_route_monitor_receipt.json` recorded `/v1/health` and `/v1/version` returning `200` on 2026-06-13T21:12:20Z. |
-| Public guarded route | `SolvedVerified` | The same monitor recorded `/v1/govern/evaluate` returning `404`, preserving the blocked evaluator boundary. |
+| Public guarded route | `SolvedVerified` | The same monitor recorded `POST /v1/govern/evaluate` returning `404`, preserving the blocked evaluator boundary. |
+| Product write-route rollback witness | `SolvedVerified` | `python scripts/validate_govern_evaluate_route_rollback.py` verifies `/v1/health` and `/v1/version` stay allowlisted while `POST /v1/govern/evaluate` returns `404` without outbound proxy transport. |
 | DNS target binding | `SolvedVerified` | `.change_assurance/gateway_dns_target_binding_receipt.json` records `api.mullusi.com -> mullu-gateway.onrender.com` through `cloudflare-render`. |
 | DNS resolution | `SolvedVerified` | `.change_assurance/gateway_dns_resolution_receipt.json` records resolved IPv4 and IPv6 addresses. |
 | Published deployment witness | `SolvedVerified` | `DEPLOYMENT_STATUS.md` and `.change_assurance/deployment_witness.json` record a published public-health witness for `https://api.mullusi.com/health`. |
@@ -38,7 +39,7 @@ Invariants: no secret values are recorded; public route health is not treated
 |---|---|---|
 | `GET https://api.mullusi.com/v1/health` | HTTP `200`, service `mullusi-govern-cloud-staging`, status `ok` | Pass |
 | `GET https://api.mullusi.com/v1/version` | HTTP `200`, API `2026.05.v1`, evaluator `govern-evaluator.v1` | Pass |
-| `GET https://api.mullusi.com/v1/govern/evaluate` | HTTP `404` guard | Pass |
+| `POST https://api.mullusi.com/v1/govern/evaluate` | HTTP `404` guard | Pass |
 | Raw secret handling | `raw_secret_values_included=false` | Pass |
 
 ## Remaining Private Evidence
@@ -49,6 +50,7 @@ gate can close.
 
 | Evidence key | Meaning | Current state |
 |---|---|---|
+| `production_image_published` | A versioned production image exists and is selected for deployment. | AwaitingEvidence |
 | `runtime_host_ready` | The intended runtime host is provisioned and reachable through the expected private path. | AwaitingEvidence |
 | `managed_postgres_ready` | The managed PostgreSQL database exists and is bound to the service. | AwaitingEvidence |
 | `schema_applied` | Required database schema or migrations have been applied. | AwaitingEvidence |
@@ -70,6 +72,12 @@ Refresh the public route monitor:
 python scripts/collect_govern_cloud_public_route_monitor.py --json --output .change_assurance/govern_cloud_public_route_monitor_receipt.json
 ```
 
+Validate the public write-route rollback witness:
+
+```powershell
+python scripts/validate_govern_evaluate_route_rollback.py --json
+```
+
 Refresh the upstream blocker receipt after collecting a new upstream report:
 
 ```powershell
@@ -82,7 +90,7 @@ Validate the blocker receipt:
 python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance\deployment_upstream_blocker_receipt.json --output .change_assurance\deployment_upstream_blocker_receipt_validation.json
 ```
 
-Only after the twelve private evidence items are proven, rerun the upstream
+Only after the thirteen private evidence items are proven, rerun the upstream
 checker with `--require-ready` in the upstream site repository:
 
 ```powershell
@@ -96,7 +104,7 @@ This reconciliation does not claim:
 1. Managed database persistence is verified.
 2. Production secret values are correct.
 3. Private runtime witness evidence is complete.
-4. Rollback execution has been tested.
+4. Product runtime rollback beyond the evaluate-route public proxy boundary is complete.
 5. The upstream site checker is fully aligned with the current Render gateway deployment path.
 
 ## Go deeper / where to go next
@@ -113,6 +121,6 @@ Back to [Start Here](START_HERE.md)
 
 STATUS:
   Completeness: 90%
-  Invariants verified: [public-route evidence separated from private readiness evidence, no raw secret values recorded, DNS target and DNS resolution evidence named, upstream blocker preserved]
-  Open issues: [twelve private upstream evidence items remain AwaitingEvidence]
+  Invariants verified: [public-route evidence separated from private readiness evidence, evaluate-route rollback witness named, no raw secret values recorded, DNS target and DNS resolution evidence named, upstream blocker preserved]
+  Open issues: [private upstream evidence items remain AwaitingEvidence beyond the evaluate-route public proxy rollback boundary]
   Next action: collect private evidence or update the upstream checker to recognize the current Render gateway deployment path without weakening the private evidence gate

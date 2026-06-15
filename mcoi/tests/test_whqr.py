@@ -82,6 +82,127 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
     assert first.canonical_hash() == second.canonical_hash()
 
 
+def test_document_semantics_header_must_match_canonical_pair() -> None:
+    root = WHQRNode(role=WHRole.WHAT, target="payment_request")
+
+    with pytest.raises(ValueError, match="canonical WHQR semantics"):
+        WHQRDocument(root=root, whqr_version="0.2.0")
+    with pytest.raises(ValueError, match="canonical WHQR semantics"):
+        WHQRDocument(root=root, semantics_hash="sha256:custom-whqr-semantics")
+    with pytest.raises(ValueError, match="semantics_hash must start"):
+        WHQRDocument(root=root, semantics_hash="custom-whqr-semantics")
+
+
+def test_document_verify_semantics_replays_hash_and_header() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    canonical_hash = document.canonical_hash()
+
+    assert document.verify_semantics() == canonical_hash
+    assert document.verify_semantics(expected_canonical_hash=canonical_hash) == canonical_hash
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        document.verify_semantics(expected_canonical_hash="sha256:different")
+    with pytest.raises(ValueError, match="expected_canonical_hash"):
+        document.verify_semantics(expected_canonical_hash="")
+
+
+def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    version_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    hash_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    root_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+
+    object.__setattr__(version_tampered, "whqr_version", "0.2.0")
+    object.__setattr__(hash_tampered, "semantics_hash", "sha256:other")
+    object.__setattr__(root_tampered, "root", object())
+
+    assert document.verify_semantics() == document.canonical_hash()
+    with pytest.raises(ValueError, match="semantic version mismatch"):
+        version_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="semantics hash mismatch"):
+        hash_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="root"):
+        root_tampered.verify_semantics()
+
+
+def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
+    node_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    logical_tampered = WHQRDocument(
+        root=LogicalExpr(
+            op=LogicalOp.AND,
+            args=(
+                WHQRNode(role=WHRole.WHAT, target="payment_request"),
+                WHQRNode(role=WHRole.WHY, target="invoice_due"),
+            ),
+        )
+    )
+    connector_tampered = WHQRDocument(
+        root=ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+            right=WHQRNode(role=WHRole.WHY, target="invoice_due"),
+        )
+    )
+
+    object.__setattr__(node_tampered.root, "role", "what")
+    object.__setattr__(logical_tampered.root, "args", list(logical_tampered.root.args))
+    object.__setattr__(connector_tampered.root.right, "metadata", {"evidence": object()})
+
+    with pytest.raises(ValueError, match=r"root\.role"):
+        node_tampered.verify_semantics()
+    with pytest.raises(ValueError, match=r"root\.args"):
+        logical_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata value"):
+        connector_tampered.verify_semantics()
+
+
+def test_document_imports_canonical_json_with_replay_hash() -> None:
+    document = WHQRDocument(
+        root=ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=WHQRNode(
+                role=WHRole.WHAT,
+                target="payment_request",
+                node_id="request-node",
+                quantifier=Quantifier.EXISTS,
+                metadata={"priority": 1, "refs": ["invoice:1"]},
+            ),
+            right=WHQRNode(
+                role=WHRole.WHY,
+                target="invoice_due",
+                modality=Adverb.CERTAINLY,
+                evidence_ref="evidence:invoice-1",
+            ),
+        ),
+        source_ref="request:payment-approval",
+        metadata={"tenant": "foundation"},
+    )
+    canonical_json = document.canonical_json()
+    canonical_hash = document.canonical_hash()
+
+    imported = WHQRDocument.from_canonical_json(canonical_json, expected_canonical_hash=canonical_hash)
+
+    assert imported.canonical_json() == canonical_json
+    assert imported.verify_semantics() == canonical_hash
+    assert isinstance(imported.root, ConnectorExpr)
+    assert isinstance(imported.root.left, WHQRNode)
+    assert imported.root.left.metadata["refs"] == ("invoice:1",)
+
+
+def test_document_import_rejects_noncanonical_json_and_unknown_fields() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    payload = json.loads(document.canonical_json())
+    payload["ignored"] = "field"
+
+    with pytest.raises(ValueError, match="canonical JSON"):
+        WHQRDocument.from_canonical_json(json.dumps(json.loads(document.canonical_json())))
+    with pytest.raises(ValueError, match="unknown fields"):
+        WHQRDocument.from_canonical_json(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    with pytest.raises(ValueError, match="known WHRole"):
+        WHQRDocument.from_canonical_json(
+            document.canonical_json().replace('"role":"what"', '"role":"invalid_role"')
+        )
+
+
 def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     document = WHQRDocument(
         root=WHQRNode(
@@ -187,6 +308,15 @@ def test_contract_validation_and_metadata_fail_closed() -> None:
         WHQRNode(role="who", target="actor")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="non-empty string"):
         GateResult(truth=TruthGate.TRUE, metadata={"": "empty"})
+    with pytest.raises(ValueError, match="metadata must be a mapping"):
+        WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata=[])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="metadata must be a mapping"):
+        WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata="")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="root and expr"):
+        WHQRDocument(
+            root=WHQRNode(role=WHRole.WHAT, target="invoice"),
+            expr=WHQRNode(role=WHRole.WHO, target="approver"),
+        )
 
     assert ADVERB_THRESHOLDS[Adverb.ALWAYS][0] >= ADVERB_THRESHOLDS[Adverb.OFTEN][0]
 
@@ -637,10 +767,23 @@ def test_governance_decision_records_static_issue_details() -> None:
     assert decision.decision_id == (
         f"whqr:goal-static-audit:deny:whqr_static_deny:{WHQRDocument(root=expr).canonical_hash()}"
     )
+    replay_document = WHQRDocument.from_canonical_json(
+        decision.metadata["whqr_canonical_json"],
+        expected_canonical_hash=decision.metadata["whqr_canonical_hash"],
+    )
+    tampered_replay_json = decision.metadata["whqr_canonical_json"].replace("send_email", "delete_file")
+
     assert decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=expr).canonical_hash()
+    assert replay_document.root == expr
+    assert replay_document.canonical_hash() == decision.metadata["whqr_canonical_hash"]
     assert decision.metadata["reason_code"] == "whqr_static_deny"
     assert decision.metadata["whqr_semantics_hash"] == WHQRDocument(root=expr).semantics_hash
     assert decision.metadata["whqr_version"] == WHQRDocument(root=expr).whqr_version
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        WHQRDocument.from_canonical_json(
+            tampered_replay_json,
+            expected_canonical_hash=decision.metadata["whqr_canonical_hash"],
+        )
     assert details["truth"] == "true"
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
@@ -670,9 +813,17 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
     assert verdict.detail["policy_status"] == "deny"
     assert verdict.detail["reason_code"] == "whqr_static_deny"
     assert verdict.detail["decision_metadata"]["reason_code"] == "whqr_static_deny"
+    assert verdict.detail["whqr_canonical_json"] == decision.metadata["whqr_canonical_json"]
     assert verdict.detail["whqr_canonical_hash"] == decision.metadata["whqr_canonical_hash"]
     assert verdict.detail["whqr_semantics_hash"] == decision.metadata["whqr_semantics_hash"]
     assert verdict.detail["whqr_version"] == decision.metadata["whqr_version"]
+    assert (
+        WHQRDocument.from_canonical_json(
+            verdict.detail["whqr_canonical_json"],
+            expected_canonical_hash=verdict.detail["whqr_canonical_hash"],
+        ).canonical_hash()
+        == verdict.detail["whqr_canonical_hash"]
+    )
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
 

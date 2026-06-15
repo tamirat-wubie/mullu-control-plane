@@ -307,7 +307,7 @@ def test_default_routers_include_finance_approval_paths() -> None:
     deps.set("finance_approval_store", FinanceApprovalPacketStore())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/finance/approval-packets" in paths
     assert "/api/v1/finance/approval-packets/operator/read-model" in paths

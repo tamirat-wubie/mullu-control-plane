@@ -67,6 +67,10 @@ def test_dockerfile_packages_worker_dependencies_with_guarded_browser_install() 
         "COPY examples/authority_directory_sync_render_pilot.json "
         "./examples/authority_directory_sync_render_pilot.json"
     ) in dockerfile
+    assert (
+        "COPY examples/personal_assistant_skill_registry.json "
+        "./examples/personal_assistant_skill_registry.json"
+    ) in dockerfile
     assert 'pip install --no-cache-dir -e "mcoi[all]"' in dockerfile
     assert 'pip install --no-cache-dir -e "mcoi[persistence,encryption,gateway,voice-worker]" anthropic' in dockerfile
     assert '[ "$MULLU_INSTALL_WORKER_DEPS" = "true" ] && [ "$MULLU_INSTALL_PLAYWRIGHT_BROWSERS" = "true" ]' in dockerfile

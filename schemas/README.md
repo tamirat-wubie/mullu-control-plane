@@ -44,10 +44,19 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `deployment_publication_operator_input_request.schema.json` | Canonical public-safe request for missing deployment publication operator inputs |
 | `deployment_upstream_blocker_receipt.schema.json` | Canonical upstream API/DNS readiness blocker receipt for deployment publication |
 | `durable_gmail_oauth_operator_handoff.schema.json` | Canonical redacted Gmail OAuth provider-setup handoff, recommended defaults, runtime bindings, and live-probe blockers |
+| `durable_gmail_live_write_operator_input_request.schema.json` | Canonical public-safe request for missing durable Gmail live write operator inputs |
 | `team_ops_shared_inbox_operator_handoff.schema.json` | Canonical redacted TeamOps shared inbox operator handoff with assistant profile, owner queue, approval policy, and live-probe blockers |
 | `team_ops_shared_inbox_live_probe_approval_binding.schema.json` | Canonical redacted TeamOps shared inbox live-probe approval binding for downstream authority receipts |
 | `team_ops_shared_inbox_live_probe_authority.schema.json` | Canonical redacted TeamOps shared inbox live-probe authority receipt that admits only approved read-only probes |
 | `team_ops_shared_inbox_live_probe_operator_input_request.schema.json` | Canonical public-safe request for missing TeamOps shared inbox live-probe operator inputs |
+| `team_ops_shared_inbox_live_probe_receipt.schema.json` | Canonical TeamOps shared inbox read-only live-probe receipt binding operator-input readiness to redacted observation evidence |
+| `team_ops_shared_inbox_observation_routing_receipt.schema.json` | Canonical TeamOps shared inbox no-send routing receipt binding redacted observations to classification, owner assignment, and approval obligations |
+| `team_ops_shared_inbox_approval_queue_receipt.schema.json` | Canonical TeamOps shared inbox no-send approval queue receipt binding ready routing evidence to a pending approval obligation |
+| `team_ops_shared_inbox_approval_decision_receipt.schema.json` | Canonical TeamOps shared inbox no-send approval decision receipt binding a pending approval obligation to redacted operator decision evidence |
+| `team_ops_shared_inbox_send_preparation_receipt.schema.json` | Canonical TeamOps shared inbox no-send preparation receipt binding approved decision evidence to redacted send-preparation evidence |
+| `team_ops_shared_inbox_send_execution_receipt.schema.json` | Canonical TeamOps shared inbox send-execution receipt binding ready preparation evidence to redacted provider dispatch evidence without local provider mutation |
+| `team_ops_shared_inbox_sent_message_observation_receipt.schema.json` | Canonical TeamOps shared inbox sent-message observation receipt binding send execution to two redacted provider observations, duplicate-absence evidence, and deterministic replay |
+| `team_ops_shared_inbox_terminal_closure_review_packet.schema.json` | Canonical TeamOps shared inbox terminal closure review packet binding sent-message observation evidence into a non-terminal closure candidate review |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
@@ -154,6 +163,10 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |
 | `world_state.schema.json` | Canonical world-state graph projection |
 | `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
+| `read_only_worker_runtime_receipt_handoff.schema.json` | Canonical Foundation Mode handoff from read-only worker rehearsal evidence to future runtime receipt-emitter obligations |
+| `read_only_worker_runtime_receipt_emitter_dry_run.schema.json` | Canonical Foundation Mode dry-run receipt for future read-only worker runtime receipt-emitter evidence |
+| `read_only_worker_runtime_runner_binding_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker runtime runner registration and runtime receipt schema-binding evidence |
+| `read_only_worker_runtime_receipt_candidate.schema.json` | Canonical Foundation Mode candidate for the future read-only worker runtime receipt envelope |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |

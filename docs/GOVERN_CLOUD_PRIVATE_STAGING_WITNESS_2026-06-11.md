@@ -150,7 +150,7 @@ Live gateway integration evidence:
 |---|---|---|
 | `GET https://api.mullusi.com/v1/health` | HTTP 200 | `{"status":"ok","service":"mullusi-govern-cloud-staging"}` |
 | `GET https://api.mullusi.com/v1/version` | HTTP 200 | `{"api":"2026.05.v1","evaluator":"govern-evaluator.v1"}` |
-| `GET https://api.mullusi.com/v1/govern/evaluate` | HTTP 404 | non-allowlisted `/v1/*` routes are not proxied |
+| `POST https://api.mullusi.com/v1/govern/evaluate` | HTTP 404 | non-allowlisted `/v1/*` routes are not proxied |
 | `GET https://api.mullusi.com/deployment/witness` | HTTP 200 | commit `600d532cca22921fe57c8999a4e2cacddab0fc7f`, runtime `pilot` |
 | `GET https://api.mullusi.com/audit/verify` | HTTP 200 | `valid:true` |
 | `GET https://api.mullusi.com/proof/verify` | HTTP 200 | `valid:true` |

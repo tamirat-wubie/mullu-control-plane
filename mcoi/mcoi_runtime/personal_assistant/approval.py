@@ -57,6 +57,7 @@ class ApprovalDecision(StrEnum):
     APPROVED = "approved"
     REJECTED = "rejected"
     REVISED = "revised"
+    EXPIRED = "expired"
     BLOCKED = "blocked"
 
     @staticmethod
@@ -314,16 +315,35 @@ class PersonalAssistantApprovalQueue:
     def read_model(self) -> dict[str, Any]:
         """Return a deterministic operator-facing approval queue read model."""
         records = tuple(self._records[approval_id] for approval_id in sorted(self._records))
-        state_counts = {state: 0 for state in ("requested", "approved", "rejected", "revised", "blocked")}
+        state_counts = {state: 0 for state in ("requested", "approved", "rejected", "revised", "expired", "blocked")}
         for record in records:
             state = str(record.packet["approval_state"])
             state_counts[state] = state_counts.get(state, 0) + 1
+        receipt_ids = [
+            str(receipt["receipt_id"])
+            for record in records
+            for receipt in record.receipts
+            if isinstance(receipt.get("receipt_id"), str)
+        ]
         return {
             "approval_count": len(records),
             "approval_ids": [record.approval_id for record in records],
             "state_counts": state_counts,
+            "receipt_ids": receipt_ids,
             "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+            "approval_is_execution": False,
             "records": [record.as_dict() for record in records],
+            "metadata": {
+                "foundation_only": True,
+                "queue_projection": "read_model",
+                "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+                "live_connector_execution_allowed": False,
+                "approval_decision_executes_action": False,
+            },
         }
 
 
@@ -433,11 +453,13 @@ def _decision_actions_taken(decision: ApprovalDecision) -> tuple[str, ...]:
         return ("approval_rejection_recorded", "receipt_created")
     if decision is ApprovalDecision.REVISED:
         return ("approval_revision_requested", "receipt_created")
+    if decision is ApprovalDecision.EXPIRED:
+        return ("approval_expiration_recorded", "receipt_created")
     return ("approval_block_recorded", "receipt_created")
 
 
 def _receipt_decision_for(decision: ApprovalDecision) -> str:
-    if decision is ApprovalDecision.REJECTED or decision is ApprovalDecision.BLOCKED:
+    if decision in {ApprovalDecision.REJECTED, ApprovalDecision.EXPIRED, ApprovalDecision.BLOCKED}:
         return "blocked"
     return "deferred"
 

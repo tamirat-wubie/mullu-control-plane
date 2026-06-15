@@ -53,6 +53,8 @@ _ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "connector_payload_projection",
         "chat_log_projection",
         "body_projection",
+        "raw_private_payload_storage_allowed",
+        "secret_value_storage_allowed",
     }
 )
 _BLOCKED_ACTIONS = (
@@ -88,6 +90,26 @@ _EFFECT_BOUNDARY = {
     "deployment_mutation_allowed": False,
     "public_readiness_claim_allowed": False,
 }
+_APPROVAL_FALSE_CONTROLS = (
+    "execution_allowed",
+    "live_connector_execution_allowed",
+    "external_send_allowed",
+    "connector_mutation_allowed",
+    "system_of_record_write_allowed",
+    "approval_is_execution",
+)
+_APPROVAL_METADATA_FALSE_CONTROLS = (
+    "live_connector_execution_allowed",
+    "approval_decision_executes_action",
+)
+_MEMORY_FALSE_CONTROLS = (
+    "live_memory_write_allowed",
+    "nested_mind_live_activation_allowed",
+    "raw_private_payload_storage_allowed",
+    "secret_value_storage_allowed",
+)
+_MEMORY_METADATA_FALSE_CONTROLS = _MEMORY_FALSE_CONTROLS
+_READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
 
 
 def build_personal_assistant_console_read_model(
@@ -113,16 +135,31 @@ def build_personal_assistant_console_read_model(
     timestamp = _require_text(generated_at, "generated_at")
     skill_registry = registry or load_default_skill_registry()
     skill_model = skill_registry.read_model()
-    approval_model = approval_queue.read_model() if approval_queue else _empty_approval_model()
-    memory_model = memory_ledger.read_model() if memory_ledger else _empty_memory_model()
+    approval_model, approval_blockers = _normalize_false_controls(
+        approval_queue.read_model() if approval_queue else _empty_approval_model(),
+        label="approval_queue",
+        controls=_APPROVAL_FALSE_CONTROLS,
+        metadata_controls=_APPROVAL_METADATA_FALSE_CONTROLS,
+    )
+    memory_model, memory_blockers = _normalize_false_controls(
+        memory_ledger.read_model() if memory_ledger else _empty_memory_model(),
+        label="memory",
+        controls=_MEMORY_FALSE_CONTROLS,
+        metadata_controls=_MEMORY_METADATA_FALSE_CONTROLS,
+    )
     request_rows = _panel_items(recent_requests, "recent_requests")
     task_rows = _panel_items(task_items, "task_items")
     receipt_rows = _panel_items(receipts, "receipts")
     teamops_rows = _panel_items(teamops_plans, "teamops_plans")
+    assurance = _build_foundation_assurance(
+        approval_blockers=approval_blockers,
+        memory_blockers=memory_blockers,
+        teamops_rows=teamops_rows,
+    )
     return {
         "console_id": "personal_assistant_console_foundation",
         "status": "foundation_read_only",
-        "solver_outcome": "SolvedVerified",
+        "solver_outcome": assurance["outcome"],
         "generated_at": timestamp,
         "governed": True,
         "sections": {
@@ -157,6 +194,7 @@ def build_personal_assistant_console_read_model(
             "receipt_count": len(receipt_rows),
             "items": receipt_rows,
             "receipt_required_for_actions": True,
+            "viewer_binding": _receipt_viewer_binding(receipt_rows),
         },
         "skills": skill_model,
         "memory": memory_model,
@@ -166,6 +204,7 @@ def build_personal_assistant_console_read_model(
             "mailbox_mutation_allowed": False,
             "provider_call_allowed": False,
         },
+        "assurance": assurance,
         "blocked_actions": list(_BLOCKED_ACTIONS),
         "effect_boundary": dict(_EFFECT_BOUNDARY),
         "private_payload_policy": {
@@ -260,8 +299,21 @@ def _empty_approval_model() -> dict[str, Any]:
         "approval_count": 0,
         "approval_ids": [],
         "state_counts": {"requested": 0, "approved": 0, "rejected": 0, "revised": 0, "blocked": 0},
+        "receipt_ids": [],
         "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+        "approval_is_execution": False,
         "records": [],
+        "metadata": {
+            "foundation_only": True,
+            "queue_projection": "read_model",
+            "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+            "live_connector_execution_allowed": False,
+            "approval_decision_executes_action": False,
+        },
     }
 
 
@@ -272,7 +324,84 @@ def _empty_memory_model() -> dict[str, Any]:
         "memory_types": [],
         "live_memory_write_allowed": False,
         "nested_mind_live_activation_allowed": False,
+        "raw_private_payload_storage_allowed": False,
+        "secret_value_storage_allowed": False,
+        "candidate_only": True,
         "candidates": [],
+        "metadata": {
+            "foundation_only": True,
+            "ledger_projection": "read_model",
+            "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+            "live_memory_write_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+        },
+    }
+
+
+def _normalize_false_controls(
+    model: Mapping[str, Any],
+    *,
+    label: str,
+    controls: Sequence[str],
+    metadata_controls: Sequence[str],
+) -> tuple[dict[str, Any], list[str]]:
+    normalized = _json_ready(model)
+    if not isinstance(normalized, dict):
+        raise PersonalAssistantInvariantError(f"{label} read model must be a mapping")
+    blockers: list[str] = []
+    for control in controls:
+        if normalized.get(control) is not False:
+            blockers.append(f"{label}.{control}")
+        normalized[control] = False
+    metadata = normalized.get("metadata")
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    metadata_dict = dict(metadata)
+    for control in metadata_controls:
+        if metadata_dict.get(control) is not False:
+            blockers.append(f"{label}.metadata.{control}")
+        metadata_dict[control] = False
+    normalized["metadata"] = metadata_dict
+    return normalized, sorted(set(blockers))
+
+
+def _build_foundation_assurance(
+    *,
+    approval_blockers: Sequence[str],
+    memory_blockers: Sequence[str],
+    teamops_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    blockers = list(approval_blockers) + list(memory_blockers)
+    for index, plan in enumerate(teamops_rows):
+        for control in ("live_probe_allowed", "mailbox_mutation_allowed", "provider_call_allowed"):
+            if plan.get(control) is not False and control in plan:
+                blockers.append(f"teamops_plans[{index}].{control}")
+    unique_blockers = sorted(set(blockers))
+    return {
+        "assurance_id": "personal_assistant_foundation_no_effect_assurance",
+        "outcome": "GovernanceBlocked" if unique_blockers else "SolvedVerified",
+        "foundation_only": True,
+        "ready_for_live_execution": False,
+        "ready_for_customer_readiness_claim": False,
+        "authority_drift_detected": bool(unique_blockers),
+        "blocking_reasons": unique_blockers,
+        "checked_controls": [
+            "approval_queue_no_execution",
+            "approval_decision_is_not_execution",
+            "memory_candidate_only",
+            "nested_mind_staging_only",
+            "teamops_no_live_probe",
+            "no_raw_private_payload_serialization",
+            "no_secret_value_serialization",
+            "receipt_viewer_read_only_projection",
+        ],
+        "next_action": (
+            "repair authority-drift controls before any further assistant promotion"
+            if unique_blockers
+            else "continue foundation-stage assistant hardening without enabling live execution"
+        ),
     }
 
 
@@ -317,6 +446,40 @@ def _receipt_refs(
             if isinstance(receipt, Mapping) and isinstance(receipt.get("receipt_id"), str):
                 refs.append(str(receipt["receipt_id"]))
     return sorted(set(refs))
+
+
+def _receipt_viewer_binding(receipt_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    projected_receipt_ids = sorted(
+        {
+            str(row["receipt_id"])
+            for row in receipt_rows
+            if isinstance(row.get("receipt_id"), str) and str(row.get("receipt_id"))
+        }
+    )
+    source_receipt_refs = sorted(
+        {
+            str(row["source_receipt_ref"])
+            for row in receipt_rows
+            if isinstance(row.get("source_receipt_ref"), str) and str(row.get("source_receipt_ref"))
+        }
+    )
+    return {
+        "viewer_id": "foundation_receipt_viewer_binding",
+        "viewer_state": "foundation_read_only",
+        "foundation_only": True,
+        "projection_count": len(projected_receipt_ids),
+        "projected_receipt_ids": projected_receipt_ids,
+        "source_receipt_refs": source_receipt_refs,
+        "read_only_worker_rehearsal_bound": any(
+            row.get("receipt_kind") == _READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND for row in receipt_rows
+        ),
+        "runtime_dispatch_allowed": False,
+        "filesystem_write_allowed": False,
+        "external_effect_allowed": False,
+        "connector_call_allowed": False,
+        "terminal_closure_allowed": False,
+        "success_claim_allowed": False,
+    }
 
 
 def _mapping_value(value: Mapping[str, Any], key: str) -> dict[str, Any]:
