@@ -24,6 +24,8 @@ from gateway.capability_dispatch import (
     register_email_calendar_capabilities,
     register_enterprise_capabilities,
     register_financial_capabilities,
+    register_messaging_capabilities,
+    register_phone_capabilities,
     register_voice_capabilities,
 )
 
@@ -39,6 +41,8 @@ def register_default_capabilities(
     document_worker_client: Any | None = None,
     voice_worker_client: Any | None = None,
     email_calendar_worker_client: Any | None = None,
+    messaging_worker_client: Any | None = None,
+    phone_worker_client: Any | None = None,
     knowledge_base: Any | None = None,
     notification_engine: Any | None = None,
     task_scheduler: Any | None = None,
@@ -61,6 +65,8 @@ def register_default_capabilities(
         dispatcher,
         email_calendar_worker_client=email_calendar_worker_client,
     )
+    register_messaging_capabilities(dispatcher, messaging_worker_client=messaging_worker_client)
+    register_phone_capabilities(dispatcher, phone_worker_client=phone_worker_client)
     register_creative_capabilities(dispatcher)
     register_enterprise_capabilities(
         dispatcher,

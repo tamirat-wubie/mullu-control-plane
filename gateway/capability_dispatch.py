@@ -361,6 +361,58 @@ def register_email_calendar_capabilities(
         ))
 
 
+def register_messaging_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    messaging_worker_client: Any | None = None,
+) -> None:
+    """Register SMS/chat handlers through a signed messaging worker."""
+    for capability_id in (
+        "messaging.sms.send.with_approval",
+        "messaging.sms.draft",
+        "messaging.chat.send.with_approval",
+        "messaging.chat.draft",
+        "messaging.thread.read",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="messaging",
+                capability_id=capability_id,
+                worker_client=messaging_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_messaging_payload,
+            ),
+        ))
+
+
+def register_phone_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    phone_worker_client: Any | None = None,
+) -> None:
+    """Register phone-call handlers through a signed phone worker."""
+    for capability_id in (
+        "phone.call.place.with_approval",
+        "phone.call.receive",
+        "phone.call.transfer.with_approval",
+        "phone.call.terminate",
+        "phone.call.transcript_record",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="phone",
+                capability_id=capability_id,
+                worker_client=phone_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_phone_payload,
+            ),
+        ))
+
+
 def _adapter_worker_dispatch(
     *,
     plane: str,
@@ -591,10 +643,67 @@ def _email_calendar_payload(
     }
 
 
+def _messaging_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    recipients = _string_list(params.get("recipients", ()), "messaging recipients")
+    return {
+        "request_id": _request_id_for("messaging", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "connector_id": str(params.get("connector_id") or _default_messaging_connector_id_for(capability_id)),
+        "body": str(params.get("body") or params.get("message") or params.get("text") or ""),
+        "thread_id": str(params.get("thread_id") or params.get("channel_id") or ""),
+        "query": str(params.get("query") or ""),
+        "recipients": recipients,
+        "approval_id": str(params.get("approval_id") or context.metadata.get("approval_id") or ""),
+        "metadata": _merged_worker_metadata(context, params),
+    }
+
+
+def _phone_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "request_id": _request_id_for("phone", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "connector_id": str(params.get("connector_id") or "twilio"),
+        "call_id": str(params.get("call_id") or ""),
+        "callees": _string_list(params.get("callees", params.get("recipients", ())), "phone callees"),
+        "callers": _string_list(params.get("callers", params.get("from", ())), "phone callers"),
+        "transcript": str(params.get("transcript") or ""),
+        "approval_id": str(params.get("approval_id") or context.metadata.get("approval_id") or ""),
+        "metadata": _merged_worker_metadata(context, params),
+    }
+
+
 def _default_connector_id_for(capability_id: str) -> str:
     if capability_id.startswith("calendar."):
         return "google_calendar"
     return "gmail"
+
+
+def _default_messaging_connector_id_for(capability_id: str) -> str:
+    if capability_id.startswith("messaging.sms."):
+        return "twilio"
+    return "slack"
+
+
+def _string_list(value: Any, field_name: str) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = (value,)
+    if not isinstance(value, (list, tuple)):
+        raise ValueError(f"{field_name} must be an array")
+    return [str(item) for item in value]
 
 
 def _merged_worker_metadata(
@@ -1187,7 +1296,9 @@ def _nested_platform_attribute(platform: Any, container_names: tuple[str, ...], 
     return None
 
 
-def _adapter_worker_clients_for_platform(platform: Any | None) -> tuple[Any | None, Any | None, Any | None, Any | None]:
+def _adapter_worker_clients_for_platform(
+    platform: Any | None,
+) -> tuple[Any | None, Any | None, Any | None, Any | None, Any | None, Any | None]:
     """Resolve adapter worker clients from platform state or environment."""
     if platform is not None:
         bundle = _first_platform_attribute(platform, ("adapter_worker_clients", "_adapter_worker_clients"))
@@ -1197,6 +1308,8 @@ def _adapter_worker_clients_for_platform(platform: Any | None) -> tuple[Any | No
                 getattr(bundle, "document", None),
                 getattr(bundle, "voice", None),
                 getattr(bundle, "email_calendar", None),
+                getattr(bundle, "messaging", None),
+                getattr(bundle, "phone", None),
             )
         browser_client = _first_platform_attribute(platform, ("browser_worker_client", "_browser_worker_client")) or _nested_platform_attribute(
             platform,
@@ -1221,25 +1334,58 @@ def _adapter_worker_clients_for_platform(platform: Any | None) -> tuple[Any | No
             ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
             ("email_calendar_worker_client", "_email_calendar_worker_client"),
         )
-        if any(client is not None for client in (browser_client, document_client, voice_client, email_calendar_client)):
-            return browser_client, document_client, voice_client, email_calendar_client
+        messaging_client = _first_platform_attribute(
+            platform,
+            ("messaging_worker_client", "_messaging_worker_client"),
+        ) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("messaging_worker_client", "_messaging_worker_client"),
+        )
+        phone_client = _first_platform_attribute(
+            platform,
+            ("phone_worker_client", "_phone_worker_client"),
+        ) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("phone_worker_client", "_phone_worker_client"),
+        )
+        adapter_clients = (
+            browser_client,
+            document_client,
+            voice_client,
+            email_calendar_client,
+            messaging_client,
+            phone_client,
+        )
+        if any(client is not None for client in adapter_clients):
+            return adapter_clients
 
     from gateway.adapter_worker_clients import build_adapter_worker_clients_from_env
 
     clients = build_adapter_worker_clients_from_env()
-    return clients.browser, clients.document, clients.voice, clients.email_calendar
+    return clients.browser, clients.document, clients.voice, clients.email_calendar, clients.messaging, clients.phone
 
 
 def build_capability_dispatcher_from_platform(platform: Any | None) -> CapabilityDispatcher:
     """Build a dispatcher from platform-backed providers and default handlers."""
     if platform is None:
         dispatcher = CapabilityDispatcher()
-        browser_client, document_client, voice_client, email_calendar_client = _adapter_worker_clients_for_platform(None)
+        (
+            browser_client,
+            document_client,
+            voice_client,
+            email_calendar_client,
+            messaging_client,
+            phone_client,
+        ) = _adapter_worker_clients_for_platform(None)
         register_computer_capabilities(dispatcher)
         register_browser_capabilities(dispatcher, browser_worker_client=browser_client)
         register_document_capabilities(dispatcher, document_worker_client=document_client)
         register_voice_capabilities(dispatcher, voice_worker_client=voice_client)
         register_email_calendar_capabilities(dispatcher, email_calendar_worker_client=email_calendar_client)
+        register_messaging_capabilities(dispatcher, messaging_worker_client=messaging_client)
+        register_phone_capabilities(dispatcher, phone_worker_client=phone_client)
         register_creative_capabilities(dispatcher)
         register_enterprise_capabilities(dispatcher)
         return dispatcher
@@ -1301,11 +1447,20 @@ def build_capability_dispatcher_from_platform(platform: Any | None) -> Capabilit
         code_adapter=_first_platform_attribute(platform, ("code_adapter", "_code_adapter", "workspace_adapter", "_workspace_adapter")),
         sandbox_runner=_first_platform_attribute(platform, ("sandbox_runner", "_sandbox_runner")),
     )
-    browser_client, document_client, voice_client, email_calendar_client = _adapter_worker_clients_for_platform(platform)
+    (
+        browser_client,
+        document_client,
+        voice_client,
+        email_calendar_client,
+        messaging_client,
+        phone_client,
+    ) = _adapter_worker_clients_for_platform(platform)
     register_browser_capabilities(dispatcher, browser_worker_client=browser_client)
     register_document_capabilities(dispatcher, document_worker_client=document_client)
     register_voice_capabilities(dispatcher, voice_worker_client=voice_client)
     register_email_calendar_capabilities(dispatcher, email_calendar_worker_client=email_calendar_client)
+    register_messaging_capabilities(dispatcher, messaging_worker_client=messaging_client)
+    register_phone_capabilities(dispatcher, phone_worker_client=phone_client)
     register_creative_capabilities(dispatcher)
     register_enterprise_capabilities(
         dispatcher,

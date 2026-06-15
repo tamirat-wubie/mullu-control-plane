@@ -1,0 +1,60 @@
+{
+  "security_review_id": "sdlc_security_adapter_messaging_phone_dispatch_20260615",
+  "change_id": "sdlc_req_adapter_messaging_phone_dispatch_20260615",
+  "impact_categories": [
+    "tenant_scope",
+    "external_api",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Messaging and phone dispatch can cross external communication boundaries when provider workers are configured. The primary risks are ungoverned send or call execution, tenant-scoped participant spoofing, policy bypass through unknown capability fallback, successful external-write receipts without effect evidence, and audit loss for approval and command metadata. The mitigation is to register the capabilities only through signed worker clients, preserve tenant and command metadata in payloads, rely on the existing external-effect receipt assessment for write actions, and fail closed when a worker client is absent.",
+  "required_checks": [
+    {
+      "category": "tenant_scope",
+      "check": "IDOR and tenant-scope check proving tenant and identity metadata are preserved in messaging and phone worker payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_messaging_capability_dispatches_signed_worker_payload"
+    },
+    {
+      "category": "external_api",
+      "check": "external provider execution check proving dispatcher registration does not call SMS, chat, or phone providers directly",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_phone_capability_dispatches_signed_worker_payload"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving missing worker clients fail closed with worker_unavailable instead of falling through to unknown handling",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_adapter_capability_fails_closed_without_worker_client"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving external-write messaging and phone actions retain external-effect assessment before succeeded dispatch",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_messaging_capability_dispatches_signed_worker_payload"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving command_id, approval_id, connector_id, and participant fields are propagated to signed worker payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_adapter_worker_dispatch.py::test_platform_builder_registers_adapter_worker_clients"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "route messaging and phone capabilities only through signed worker clients",
+    "preserve tenant, identity, command, approval, connector, and participant metadata in worker payloads",
+    "reuse the adapter external-effect receipt assessment for external-write SMS, chat, and phone actions",
+    "fail closed when a worker client is absent",
+    "avoid direct provider network calls, credential mutation, or persistence changes in dispatcher registration"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/adapter-messaging-phone-dispatch/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/adapter-messaging-phone-dispatch/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/adapter-messaging-phone-dispatch/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/adapter-messaging-phone-dispatch/20260615"
+}

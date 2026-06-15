@@ -1,7 +1,8 @@
 """Tests for adapter worker capability dispatch.
 
-Purpose: ensure browser, document, and voice capabilities are exposed as
-governed dispatcher records while execution remains in signed workers.
+Purpose: ensure browser, document, voice, communication, messaging, and phone
+capabilities are exposed as governed dispatcher records while execution remains
+in signed workers.
 """
 
 from __future__ import annotations
@@ -25,6 +26,8 @@ from gateway.skill_dispatch import (  # noqa: E402
     register_browser_capabilities,
     register_document_capabilities,
     register_email_calendar_capabilities,
+    register_messaging_capabilities,
+    register_phone_capabilities,
     register_voice_capabilities,
 )
 
@@ -124,6 +127,8 @@ class PlatformWithAdapterWorkerClients:
         self.document_worker_client = RecordingAdapterWorkerClient()
         self.voice_worker_client = RecordingAdapterWorkerClient()
         self.email_calendar_worker_client = RecordingAdapterWorkerClient()
+        self.messaging_worker_client = RecordingAdapterWorkerClient()
+        self.phone_worker_client = RecordingAdapterWorkerClient()
 
 
 def test_browser_capability_dispatches_through_signed_worker_client() -> None:
@@ -216,6 +221,67 @@ def test_email_calendar_capability_dispatches_communication_payload() -> None:
     assert worker_client.payloads[0]["recipients"] == ["user@example.com"]
     assert worker_client.payloads[0]["approval_id"] == "approval-1"
     assert worker_client.payloads[0]["metadata"]["command_id"] == "cmd-email-1"
+
+
+def test_messaging_capability_dispatches_signed_worker_payload() -> None:
+    worker_client = RecordingAdapterWorkerClient()
+    dispatcher = SkillDispatcher()
+    register_messaging_capabilities(dispatcher, messaging_worker_client=worker_client)
+
+    result = dispatcher.dispatch(
+        SkillIntent(
+            "messaging.sms",
+            "send.with_approval",
+            {
+                "connector_id": "twilio",
+                "recipients": ["+15551234567"],
+                "body": "Ready",
+                "approval_id": "approval-sms-1",
+            },
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        command_id="cmd-message-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "messaging.sms.send.with_approval"
+    assert result["receipt_status"] == "succeeded"
+    assert result["external_effect_assessment"]["effect_mode"] == "live_provider"
+    assert worker_client.payloads[0]["connector_id"] == "twilio"
+    assert worker_client.payloads[0]["recipients"] == ["+15551234567"]
+    assert worker_client.payloads[0]["approval_id"] == "approval-sms-1"
+    assert worker_client.payloads[0]["metadata"]["command_id"] == "cmd-message-1"
+
+
+def test_phone_capability_dispatches_signed_worker_payload() -> None:
+    worker_client = RecordingAdapterWorkerClient()
+    dispatcher = SkillDispatcher()
+    register_phone_capabilities(dispatcher, phone_worker_client=worker_client)
+
+    result = dispatcher.dispatch(
+        SkillIntent(
+            "phone.call",
+            "place.with_approval",
+            {
+                "connector_id": "twilio",
+                "callees": ["+15557654321"],
+                "approval_id": "approval-phone-1",
+            },
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        command_id="cmd-phone-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "phone.call.place.with_approval"
+    assert result["receipt_status"] == "succeeded"
+    assert result["external_effect_assessment"]["effect_mode"] == "live_provider"
+    assert worker_client.payloads[0]["connector_id"] == "twilio"
+    assert worker_client.payloads[0]["callees"] == ["+15557654321"]
+    assert worker_client.payloads[0]["approval_id"] == "approval-phone-1"
+    assert worker_client.payloads[0]["metadata"]["command_id"] == "cmd-phone-1"
 
 
 def test_adapter_capability_fails_closed_without_worker_client() -> None:
@@ -319,6 +385,10 @@ def test_platform_builder_registers_adapter_worker_clients(monkeypatch) -> None:
     monkeypatch.delenv("MULLU_VOICE_WORKER_SECRET", raising=False)
     monkeypatch.delenv("MULLU_EMAIL_CALENDAR_WORKER_URL", raising=False)
     monkeypatch.delenv("MULLU_EMAIL_CALENDAR_WORKER_SECRET", raising=False)
+    monkeypatch.delenv("MULLU_MESSAGING_WORKER_URL", raising=False)
+    monkeypatch.delenv("MULLU_MESSAGING_WORKER_SECRET", raising=False)
+    monkeypatch.delenv("MULLU_PHONE_WORKER_URL", raising=False)
+    monkeypatch.delenv("MULLU_PHONE_WORKER_SECRET", raising=False)
     platform = PlatformWithAdapterWorkerClients()
     dispatcher = build_skill_dispatcher_from_platform(platform)
 
@@ -335,6 +405,8 @@ def test_platform_builder_registers_adapter_worker_clients(monkeypatch) -> None:
     assert platform.document_worker_client.payloads == []
     assert platform.voice_worker_client.payloads == []
     assert platform.email_calendar_worker_client.payloads == []
+    assert platform.messaging_worker_client.payloads == []
+    assert platform.phone_worker_client.payloads == []
 
     email_result = dispatcher.dispatch(
         SkillIntent("email", "draft", {"recipients": ["user@example.com"], "body": "hello"}),
@@ -346,3 +418,35 @@ def test_platform_builder_registers_adapter_worker_clients(monkeypatch) -> None:
     assert email_result["capability_id"] == "email.draft"
     assert email_result["receipt_status"] == "succeeded"
     assert platform.email_calendar_worker_client.payloads[0]["connector_id"] == "gmail"
+
+    messaging_result = dispatcher.dispatch(
+        SkillIntent(
+            "messaging.chat",
+            "draft",
+            {"connector_id": "slack", "recipients": ["U123"], "body": "hello"},
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert messaging_result is not None
+    assert messaging_result["capability_id"] == "messaging.chat.draft"
+    assert messaging_result["receipt_status"] == "succeeded"
+    assert platform.messaging_worker_client.payloads[0]["connector_id"] == "slack"
+    assert platform.messaging_worker_client.payloads[0]["recipients"] == ["U123"]
+
+    phone_result = dispatcher.dispatch(
+        SkillIntent(
+            "phone.call",
+            "receive",
+            {"connector_id": "twilio", "callers": ["+15550001111"]},
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert phone_result is not None
+    assert phone_result["capability_id"] == "phone.call.receive"
+    assert phone_result["receipt_status"] == "succeeded"
+    assert platform.phone_worker_client.payloads[0]["connector_id"] == "twilio"
+    assert platform.phone_worker_client.payloads[0]["callers"] == ["+15550001111"]
