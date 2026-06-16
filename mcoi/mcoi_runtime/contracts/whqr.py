@@ -131,6 +131,14 @@ def _require_text(value: str, name: str) -> str:
     return value
 
 
+def _is_sha256_digest_ref(value: str) -> bool:
+    prefix = "sha256:"
+    if not value.startswith(prefix):
+        return False
+    digest = value.removeprefix(prefix)
+    return len(digest) == 64 and all(char in "0123456789abcdef" for char in digest)
+
+
 def _freeze_metadata(metadata: Mapping[str, Any]) -> Mapping[str, Any]:
     if not isinstance(metadata, Mapping):
         raise ValueError("metadata must be a mapping")
@@ -508,8 +516,8 @@ class WHQRDocument:
         canonical_hash = self.canonical_hash()
         if expected_canonical_hash is not None:
             expected = _require_text(expected_canonical_hash, "expected_canonical_hash")
-            if not expected.startswith("sha256:"):
-                raise ValueError("expected_canonical_hash must start with sha256:")
+            if not _is_sha256_digest_ref(expected):
+                raise ValueError("expected_canonical_hash must be sha256:<64 lowercase hex>")
             if canonical_hash != expected:
                 raise ValueError("WHQR replay canonical hash mismatch")
         return canonical_hash
