@@ -478,6 +478,55 @@ def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
     )
 
 
+def test_direct_snet_contracts_reject_sequence_subclass_drift() -> None:
+    class ListSubclass(list):
+        pass
+
+    class TupleSubclass(tuple):
+        pass
+
+    class RaisingList(list):
+        def __iter__(self):
+            raise RuntimeError("iteration leak")
+
+    for invalid_refs in (
+        ListSubclass(["metadata:1"]),
+        TupleSubclass(("metadata:1",)),
+        RaisingList(["metadata:1"]),
+    ):
+        with pytest.raises(ValueError, match="metadata_refs"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs=invalid_refs)
+
+    for invalid_refs in (
+        ListSubclass(["evidence:1"]),
+        TupleSubclass(("evidence:1",)),
+        RaisingList(["evidence:1"]),
+    ):
+        with pytest.raises(ValueError, match="evidence_refs"):
+            SNetAnswer(
+                answer_id="answer:1",
+                question_id="question:1",
+                raw_answer="Seed",
+                ascii_folded_answer="seed",
+                confidence=0.5,
+                evidence_refs=invalid_refs,
+            )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", metadata_refs=["metadata:1"])
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed",
+        ascii_folded_answer="seed",
+        confidence=0.5,
+        evidence_refs=["evidence:1"],
+    )
+
+    assert valid_symbol.metadata_refs == ("metadata:1",)
+    assert valid_answer.evidence_refs == ("evidence:1",)
+    assert valid_answer.raw_answer == "Seed"
+
+
 def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

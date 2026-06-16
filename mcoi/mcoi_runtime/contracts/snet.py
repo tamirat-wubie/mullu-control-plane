@@ -124,7 +124,7 @@ WH_TYPES: tuple[SNetWHType, ...] = (
 
 
 def _freeze_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes)) or not isinstance(values, (list, tuple)):
+    if type(values) not in (list, tuple):
         raise ValueError(f"{field_name} must be an array")
     frozen = freeze_value(list(values))
     if not isinstance(frozen, tuple):
