@@ -171,6 +171,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_runtime_receipt_store_write_path_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker runtime receipt-store write-path evidence |
 | `read_only_worker_runtime_runner_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime runner registration evidence |
 | `read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime dispatch endpoint registration evidence |
+| `read_only_worker_runtime_receipt_emitter_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt emitter registration evidence |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |

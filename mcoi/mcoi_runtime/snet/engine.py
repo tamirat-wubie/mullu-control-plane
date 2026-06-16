@@ -60,7 +60,7 @@ class SNetRecursiveMesh:
     """In-memory local proof engine for recursive WH-driven symbolization."""
 
     def __init__(self, budget: SNetInquiryBudget | None = None) -> None:
-        self.budget = budget or SNetInquiryBudget()
+        self.budget = _require_budget(budget)
         self.symbols: dict[str, SNetSymbol] = {}
         self.questions: dict[str, SNetQuestion] = {}
         self.answers: dict[str, SNetAnswer] = {}
@@ -636,6 +636,14 @@ def _require_validation_state(validation_state: SNetValidationState) -> SNetVali
     if not isinstance(validation_state, SNetValidationState):
         raise ValueError("validation_state must be a SNetValidationState")
     return validation_state
+
+
+def _require_budget(budget: SNetInquiryBudget | None) -> SNetInquiryBudget:
+    if budget is None:
+        return SNetInquiryBudget()
+    if type(budget) is not SNetInquiryBudget:
+        raise ValueError("SNet budget must be a SNetInquiryBudget")
+    return budget
 
 
 def _classify_metadata_difference(
