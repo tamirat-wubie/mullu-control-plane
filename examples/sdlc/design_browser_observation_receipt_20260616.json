@@ -1,0 +1,77 @@
+{
+  "design_id": "DES-browser-observation-receipt-20260616",
+  "requirement_id": "REQ-browser-observation-receipt-20260616",
+  "architecture_summary": "Add a schema-backed, digest-only BrowserObservationReceipt that records hashed URL evidence, DOM and screenshot digest refs, consent scope, capture policy refs, evidence classification refs, UAO refs, privacy guards, and authority-denial flags before any browser-control capability can be considered.",
+  "affected_modules": [
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "docs",
+    "ci",
+    "proof_coverage_matrix"
+  ],
+  "data_model_changes": [
+    "Introduce BrowserObservationReceipt with observation_scope, observation_artifacts, authority_boundary, privacy_guard, receipt_refs, contract_summary, and evidence_refs",
+    "Represent browser evidence through hash and digest refs instead of raw URL, raw DOM, raw screenshot, cookie, session, or secret payloads",
+    "Bind explicit no-navigation, no-click, no-submit, no-keystroke, no-cookie, no-connector, no-publication, and no-terminal-closure flags"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/browser_observation_receipt.schema.json",
+    "schemas/capture_policy_decision_ledger.schema.json",
+    "schemas/evidence_classification_manifest.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_browser_observation_receipt.py",
+    "tests/test_validate_browser_observation_receipt.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_sdlc_security_review.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_public_repository_surface.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Revert the added schema, example, validator, tests, docs, manifest entry, proof matrix entry, generated fixture updates, and CI hook; rerun protocol, proof coverage, SDLC, and workspace governance checks.",
+  "migration_plan": "No runtime migration. This is an additive public contract and Foundation Mode example.",
+  "test_plan": [
+    "python scripts/validate_browser_observation_receipt.py",
+    "python -m pytest tests/test_validate_browser_observation_receipt.py -q",
+    "python -m py_compile scripts/validate_browser_observation_receipt.py scripts/proof_coverage_matrix.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_browser_observation_receipt_20260616.json --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/browser-observation-receipt-preflight-receipt.json"
+  ],
+  "uao_ref": "uao://sdlc/browser-observation-receipt/design",
+  "causal_decision_trace_ref": "trace://sdlc/browser-observation-receipt/design",
+  "receipt_ref": "receipt://sdlc/browser-observation-receipt/design"
+}

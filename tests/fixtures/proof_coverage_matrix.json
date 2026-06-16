@@ -797,6 +797,13 @@
       ]
     },
     {
+      "action_id": "publish_browser_observation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "browser_observation_receipt"
+      ]
+    },
+    {
       "action_id": "publish_worker_receipt_ledger_read_model_contract",
       "status": "closed",
       "surfaces": [
@@ -1161,7 +1168,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 120,
+      "action_proof": 121,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
@@ -1169,7 +1176,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 146,
+      "audit_chain": 147,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1177,21 +1184,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 103
+      "witnessed": 104
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 119
+      "request_proof": 120
     },
-    "surface_count": 149
+    "surface_count": 150
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 149,
+      "strong": 150,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9454,6 +9461,56 @@
       "surface_id": "readiness_waiver_review_packet"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/browser_observation_receipt.schema.json",
+        "examples/browser_observation_receipt.foundation.json",
+        "scripts/validate_browser_observation_receipt.py",
+        "tests/test_validate_browser_observation_receipt.py",
+        "schemas/capture_policy_decision_ledger.schema.json",
+        "schemas/evidence_classification_manifest.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/87_browser_observation_receipt_contract.md"
+      ],
+      "notes": "Browser observation receipts bind hash-only URL evidence, DOM digest refs, screenshot digest refs, consent scope, capture policy refs, evidence classification refs, UAO refs, privacy guards, and authority-denial flags before browser inspection can become operator evidence.",
+      "representative_paths": [
+        "BrowserObservationReceipt",
+        "validate_browser_observation_receipt",
+        "browser_observation_receipt.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "browser_observation_receipt_blocks_browser_authority": [
+          "browser_observation_receipt_passes",
+          "browser_observation_receipt_rejects_authority_drift"
+        ],
+        "browser_observation_receipt_rejects_raw_storage": [
+          "browser_observation_receipt_rejects_raw_storage_drift"
+        ],
+        "browser_observation_receipt_rejects_receipt_ref_and_count_drift": [
+          "browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+        ],
+        "browser_observation_receipt_requires_digest_refs": [
+          "browser_observation_receipt_passes",
+          "browser_observation_receipt_rejects_raw_url_and_digest_drift"
+        ],
+        "browser_observation_receipt_schema_valid": [
+          "browser_observation_receipt_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "browser_observation_receipt_schema_valid",
+        "browser_observation_receipt_blocks_browser_authority",
+        "browser_observation_receipt_requires_digest_refs",
+        "browser_observation_receipt_rejects_raw_storage",
+        "browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+      ],
+      "surface_id": "browser_observation_receipt"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -12851,8 +12908,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1647,
-    "runtime_witness_count": 1647,
+    "exact_test_anchor_count": 1652,
+    "runtime_witness_count": 1652,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20133,6 +20190,47 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "readiness_waiver_review_packet",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_passes"
+            ],
+            "witness": "browser_observation_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_passes",
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_authority_drift"
+            ],
+            "witness": "browser_observation_receipt_blocks_browser_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_passes",
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_raw_url_and_digest_drift"
+            ],
+            "witness": "browser_observation_receipt_requires_digest_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_raw_storage_drift"
+            ],
+            "witness": "browser_observation_receipt_rejects_raw_storage"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "browser_observation_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

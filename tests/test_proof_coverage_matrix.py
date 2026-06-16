@@ -4320,6 +4320,36 @@ def test_readiness_waiver_review_packet_blocks_readiness_authority() -> None:
     assert closure_actions["publish_readiness_waiver_review_packet_contract"]["status"] == "closed"
 
 
+def test_browser_observation_receipt_blocks_browser_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    browser_surface = surfaces["browser_observation_receipt"]
+    browser_witness_surface = witness_surfaces["browser_observation_receipt"]
+    witnesses = set(browser_surface["runtime_witnesses"])
+
+    assert browser_surface["coverage_state"] == "witnessed"
+    assert browser_surface["request_proof"] == "request_proof"
+    assert browser_surface["action_proof"] == "action_proof"
+    assert browser_surface["audit"] == "audit_chain"
+    assert "schemas/browser_observation_receipt.schema.json" in browser_surface["evidence_files"]
+    assert "examples/browser_observation_receipt.foundation.json" in browser_surface["evidence_files"]
+    assert "scripts/validate_browser_observation_receipt.py" in browser_surface["evidence_files"]
+    assert "tests/test_validate_browser_observation_receipt.py" in browser_surface["evidence_files"]
+    assert "browser_observation_receipt_schema_valid" in witnesses
+    assert "browser_observation_receipt_blocks_browser_authority" in witnesses
+    assert "browser_observation_receipt_requires_digest_refs" in witnesses
+    assert "browser_observation_receipt_rejects_raw_storage" in witnesses
+    assert browser_witness_surface["exact_test_anchor_count"] == 5
+    assert browser_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_browser_observation_receipt_contract"]["status"] == "closed"
+
+
 def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

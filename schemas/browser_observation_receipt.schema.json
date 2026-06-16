@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:browser-observation-receipt:1",
+  "title": "Browser Observation Receipt",
+  "description": "Digest-only, non-mutating browser inspection receipt for operator evidence before any browser-control authority is considered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "generated_at",
+    "observation_scope",
+    "observation_artifacts",
+    "authority_boundary",
+    "privacy_guard",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "minLength": 1},
+    "receipt_version": {"const": "browser_observation_receipt.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "observation_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_url_hash",
+        "url_redaction_policy",
+        "observation_mode",
+        "browser_surface",
+        "consent_scope",
+        "consent_ref",
+        "tenant_scope",
+        "uao_ref"
+      ],
+      "properties": {
+        "source_url_hash": {"type": "string", "minLength": 1},
+        "url_redaction_policy": {
+          "type": "string",
+          "enum": [
+            "hash_only_no_raw_url",
+            "operator_redacted_url_ref"
+          ]
+        },
+        "observation_mode": {
+          "type": "string",
+          "enum": [
+            "read_only_operator_supplied",
+            "read_only_digest_replay",
+            "manual_screenshot_digest"
+          ]
+        },
+        "browser_surface": {
+          "type": "string",
+          "enum": [
+            "mullu_inspect",
+            "mullu_browser",
+            "external_browser",
+            "manual_capture"
+          ]
+        },
+        "consent_scope": {
+          "type": "string",
+          "enum": [
+            "operator_local_explicit",
+            "public_page_observation",
+            "sandbox_only_observation"
+          ]
+        },
+        "consent_ref": {"type": "string", "minLength": 1},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "observation_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dom_digest_ref",
+        "screenshot_digest_ref",
+        "title_digest_ref",
+        "viewport_ref",
+        "capture_policy_ref",
+        "evidence_classification_ref"
+      ],
+      "properties": {
+        "dom_digest_ref": {"type": "string", "minLength": 1},
+        "screenshot_digest_ref": {"type": "string", "minLength": 1},
+        "title_digest_ref": {"type": "string", "minLength": 1},
+        "viewport_ref": {"type": "string", "minLength": 1},
+        "capture_policy_ref": {"type": "string", "minLength": 1},
+        "evidence_classification_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "navigation_performed",
+        "click_performed",
+        "form_submit_performed",
+        "keystroke_injection_performed",
+        "cookie_or_session_read",
+        "secret_captured",
+        "external_write_performed",
+        "file_write_performed",
+        "connector_call_performed",
+        "publication_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "navigation_performed": {"type": "boolean"},
+        "click_performed": {"type": "boolean"},
+        "form_submit_performed": {"type": "boolean"},
+        "keystroke_injection_performed": {"type": "boolean"},
+        "cookie_or_session_read": {"type": "boolean"},
+        "secret_captured": {"type": "boolean"},
+        "external_write_performed": {"type": "boolean"},
+        "file_write_performed": {"type": "boolean"},
+        "connector_call_performed": {"type": "boolean"},
+        "publication_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "privacy_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_url_stored",
+        "raw_dom_stored",
+        "raw_screenshot_stored",
+        "raw_secret_value_stored",
+        "private_payload_redacted",
+        "operator_review_required",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "raw_url_stored": {"type": "boolean"},
+        "raw_dom_stored": {"type": "boolean"},
+        "raw_screenshot_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "private_payload_redacted": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "retention_policy_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_observation_receipt_schema",
+        "capture_policy_decision_ledger_schema",
+        "evidence_classification_manifest_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "browser_observation_receipt_schema": {"type": "string", "minLength": 1},
+        "capture_policy_decision_ledger_schema": {"type": "string", "minLength": 1},
+        "evidence_classification_manifest_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest_only",
+        "authority_denied",
+        "privacy_guard_count",
+        "authority_denial_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "digest_only": {"type": "boolean"},
+        "authority_denied": {"type": "boolean"},
+        "privacy_guard_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

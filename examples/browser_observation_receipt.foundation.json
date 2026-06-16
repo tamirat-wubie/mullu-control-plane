@@ -1,0 +1,73 @@
+{
+  "receipt_id": "browser-observation-receipt-foundation-20260616",
+  "receipt_version": "browser_observation_receipt.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "observation_scope": {
+    "source_url_hash": "hash://sha256/browser-observation-foundation-redacted-url",
+    "url_redaction_policy": "hash_only_no_raw_url",
+    "observation_mode": "read_only_operator_supplied",
+    "browser_surface": "manual_capture",
+    "consent_scope": "operator_local_explicit",
+    "consent_ref": "consent://browser-observation/operator-local-explicit",
+    "tenant_scope": "foundation-local-only",
+    "uao_ref": "uao://browser-observation/foundation/read-only"
+  },
+  "observation_artifacts": {
+    "dom_digest_ref": "hash://sha256/browser-observation-dom-redacted",
+    "screenshot_digest_ref": "hash://sha256/browser-observation-screenshot-redacted",
+    "title_digest_ref": "hash://sha256/browser-observation-title-redacted",
+    "viewport_ref": "viewport://browser-observation/foundation/desktop-1365x768",
+    "capture_policy_ref": "schemas/capture_policy_decision_ledger.schema.json",
+    "evidence_classification_ref": "schemas/evidence_classification_manifest.schema.json"
+  },
+  "authority_boundary": {
+    "navigation_performed": false,
+    "click_performed": false,
+    "form_submit_performed": false,
+    "keystroke_injection_performed": false,
+    "cookie_or_session_read": false,
+    "secret_captured": false,
+    "external_write_performed": false,
+    "file_write_performed": false,
+    "connector_call_performed": false,
+    "publication_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "privacy_guard": {
+    "raw_url_stored": false,
+    "raw_dom_stored": false,
+    "raw_screenshot_stored": false,
+    "raw_secret_value_stored": false,
+    "private_payload_redacted": true,
+    "operator_review_required": true,
+    "retention_policy_ref": "retention://browser-observation/digest-only"
+  },
+  "receipt_refs": {
+    "browser_observation_receipt_schema": "schemas/browser_observation_receipt.schema.json",
+    "capture_policy_decision_ledger_schema": "schemas/capture_policy_decision_ledger.schema.json",
+    "evidence_classification_manifest_schema": "schemas/evidence_classification_manifest.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "digest_only": true,
+    "authority_denied": true,
+    "privacy_guard_count": 7,
+    "authority_denial_count": 12,
+    "receipt_ref_count": 5,
+    "evidence_ref_count": 10
+  },
+  "evidence_refs": [
+    "schemas/browser_observation_receipt.schema.json",
+    "examples/browser_observation_receipt.foundation.json",
+    "scripts/validate_browser_observation_receipt.py",
+    "tests/test_validate_browser_observation_receipt.py",
+    "docs/87_browser_observation_receipt_contract.md",
+    "schemas/capture_policy_decision_ledger.schema.json",
+    "schemas/evidence_classification_manifest.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "docs/82_cross_repo_opportunity_map.md"
+  ]
+}

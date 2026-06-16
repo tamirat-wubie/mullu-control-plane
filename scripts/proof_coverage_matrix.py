@@ -5892,6 +5892,56 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "browser_observation_receipt",
+            [
+                "BrowserObservationReceipt",
+                "validate_browser_observation_receipt",
+                "browser_observation_receipt.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/browser_observation_receipt.schema.json",
+                "examples/browser_observation_receipt.foundation.json",
+                "scripts/validate_browser_observation_receipt.py",
+                "tests/test_validate_browser_observation_receipt.py",
+                "schemas/capture_policy_decision_ledger.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/87_browser_observation_receipt_contract.md",
+            ],
+            "Browser observation receipts bind hash-only URL evidence, DOM digest refs, screenshot digest refs, consent scope, capture policy refs, evidence classification refs, UAO refs, privacy guards, and authority-denial flags before browser inspection can become operator evidence.",
+            [
+                "browser_observation_receipt_schema_valid",
+                "browser_observation_receipt_blocks_browser_authority",
+                "browser_observation_receipt_requires_digest_refs",
+                "browser_observation_receipt_rejects_raw_storage",
+                "browser_observation_receipt_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "browser_observation_receipt_schema_valid": [
+                    "browser_observation_receipt_passes"
+                ],
+                "browser_observation_receipt_blocks_browser_authority": [
+                    "browser_observation_receipt_passes",
+                    "browser_observation_receipt_rejects_authority_drift",
+                ],
+                "browser_observation_receipt_requires_digest_refs": [
+                    "browser_observation_receipt_passes",
+                    "browser_observation_receipt_rejects_raw_url_and_digest_drift",
+                ],
+                "browser_observation_receipt_rejects_raw_storage": [
+                    "browser_observation_receipt_rejects_raw_storage_drift"
+                ],
+                "browser_observation_receipt_rejects_receipt_ref_and_count_drift": [
+                    "browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "worker_receipt_ledger_read_model",
             [
                 "WorkerReceiptLedgerReadModel",
@@ -9902,6 +9952,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_readiness_waiver_review_packet_contract",
             "surfaces": ["readiness_waiver_review_packet"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_browser_observation_receipt_contract",
+            "surfaces": ["browser_observation_receipt"],
             "status": "closed",
         },
         {

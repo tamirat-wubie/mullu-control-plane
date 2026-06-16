@@ -1,0 +1,94 @@
+{
+  "security_review_id": "SEC-browser-observation-receipt-20260616",
+  "change_id": "browser-observation-receipt-20260616",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "tenant_scope",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Browser observation can accidentally become browser control or private-data capture if URL, DOM, screenshot, cookie, session, secret, click, submit, keystroke, navigation, connector, or publication boundaries are not explicit. The mitigation is a digest-only receipt schema and validator that reject raw storage and deny all mutation authority in Foundation Mode.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "browser navigation, click, submit, keystroke, connector, publication, and terminal authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms URL, DOM, screenshot, and title evidence remain digest refs",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_raw_url_and_digest_drift"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR check confirms raw URL, DOM, screenshot, and secret storage remain denied and tenant scope stays foundation-local-only",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_raw_storage_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms capture policy, evidence classification, UAO, and LifeMeaningJudgment refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_browser_observation_receipt.py::test_browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms schema and protocol manifest validation retain browser observation receipt evidence",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "proof coverage matrix includes the browser observation receipt surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_browser_observation_receipt_blocks_browser_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "browser-observation-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode receipt blocks browser navigation, click, submit, keystroke injection, cookie/session reads, connector calls, external writes, publication, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/browser_observation_receipt.schema.json",
+        "scripts/validate_browser_observation_receipt.py",
+        "tests/test_validate_browser_observation_receipt.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "browser-observation-private-payload-capture",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode receipt requires hash-only URL evidence, digest refs, raw storage denial, private payload redaction, and operator review.",
+      "evidence_refs": [
+        "examples/browser_observation_receipt.foundation.json",
+        "tests/test_validate_browser_observation_receipt.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep BrowserObservationReceipt validation non-live and deterministic",
+    "require digest refs instead of raw URL, DOM, screenshot, title, cookie, session, or secret payloads",
+    "require operator-local consent and UAO refs",
+    "deny browser navigation, click, submit, keystroke injection, connector calls, and external writes",
+    "deny publication, terminal closure, and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/browser_observation_receipt.schema.json",
+    "examples/browser_observation_receipt.foundation.json",
+    "scripts/validate_browser_observation_receipt.py",
+    "tests/test_validate_browser_observation_receipt.py",
+    "receipt://sdlc/browser-observation-receipt/security"
+  ],
+  "uao_ref": "uao://sdlc/browser-observation-receipt/security",
+  "causal_decision_trace_ref": "trace://sdlc/browser-observation-receipt/security",
+  "receipt_ref": "receipt://sdlc/browser-observation-receipt/security"
+}

@@ -35,6 +35,7 @@ The control plane already absorbed several high-fit ideas:
 | Personal-assistant projections without effects | personal-assistant read-only, approval, research, GitHub/Codex, and math projections | Implemented |
 | Mfidel substrate conformance witness | `MfidelSubstrateConformanceReceipt` | Implemented |
 | Readiness gate and waiver review | `ReadinessWaiverReviewPacket` | Implemented |
+| Browser inspection boundary | `BrowserObservationReceipt` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -69,9 +70,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `BrowserObservationReceipt`
-   - Enables inspection evidence without granting browser mutation authority.
-   - Should precede any browser-control or site-verification automation.
+2. `ResearchSourceConflictMap`
+   - Preserves disagreements across sources before future research synthesis or retrieval expansion.
+   - Should remain read-only and citation-bound.
 
 ## 6. Project Discipline Mesh Findings
 

@@ -473,6 +473,12 @@
       "surface": "readiness"
     },
     {
+      "schema_id": "browser-observation-receipt",
+      "path": "schemas/browser_observation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:browser-observation-receipt:1",
+      "surface": "capture"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
