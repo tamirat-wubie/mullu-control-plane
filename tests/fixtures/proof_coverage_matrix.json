@@ -993,6 +993,13 @@
       ]
     },
     {
+      "action_id": "publish_scheduler_worker_runtime_receipt_emitter_dry_run_contract",
+      "status": "closed",
+      "surfaces": [
+        "scheduler_worker_runtime_receipt_emitter_dry_run"
+      ]
+    },
+    {
       "action_id": "publish_temporal_rate_limit_window_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -1119,7 +1126,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 117,
+      "action_proof": 118,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1127,7 +1134,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 141,
+      "audit_chain": 142,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1135,21 +1142,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 98
+      "witnessed": 99
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 116
+      "request_proof": 117
     },
-    "surface_count": 144
+    "surface_count": 145
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 144,
+      "strong": 145,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11004,6 +11011,59 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+        "examples/scheduler_worker_runtime_receipt_emitter_dry_run.foundation.json",
+        "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+        "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py"
+      ],
+      "notes": "Scheduler worker runtime receipt emitter dry-runs bind SchedulerWorkerRuntimeReceiptHandoff evidence into a simulated future runtime receipt emitter envelope while denying scheduler dispatch, runtime registration, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, runtime receipt emission, worker mesh dispatch receipt emission, terminal closure, and success claims.",
+      "representative_paths": [
+        "SchedulerWorkerRuntimeReceiptEmitterDryRun",
+        "validate_scheduler_worker_runtime_receipt_emitter_dry_run",
+        "scheduler_worker_runtime_receipt_emitter_dry_run.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts": [
+          "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+          "emitter_dry_run_rejects_top_level_and_contract_drift"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch": [
+          "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+          "emitter_dry_run_rejects_result_and_admission_drift"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift": [
+          "emitter_dry_run_rejects_authority_drift"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs": [
+          "emitter_dry_run_rejects_missing_required_refs"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift": [
+          "emitter_dry_run_rejects_receipt_ref_and_count_drift"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift": [
+          "emitter_dry_run_rejects_result_and_admission_drift"
+        ],
+        "scheduler_worker_runtime_emitter_dry_run_schema_valid": [
+          "scheduler_worker_runtime_receipt_emitter_dry_run_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "scheduler_worker_runtime_emitter_dry_run_schema_valid",
+        "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch",
+        "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts",
+        "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift",
+        "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs",
+        "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift",
+        "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift"
+      ],
+      "surface_id": "scheduler_worker_runtime_receipt_emitter_dry_run"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_rate_limit_window.py",
         "schemas/temporal_rate_limit_window_receipt.schema.json",
         "tests/test_gateway/test_temporal_rate_limit_window.py"
@@ -12473,8 +12533,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1607,
-    "runtime_witness_count": 1607,
+    "exact_test_anchor_count": 1614,
+    "runtime_witness_count": 1614,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21952,6 +22012,59 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "scheduler_worker_runtime_receipt_handoff",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_scheduler_worker_runtime_receipt_emitter_dry_run_passes"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_result_and_admission_drift"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_top_level_and_contract_drift"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_authority_drift"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_missing_required_refs"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_result_and_admission_drift"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "scheduler_worker_runtime_receipt_emitter_dry_run",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
