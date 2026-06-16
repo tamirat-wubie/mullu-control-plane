@@ -14,6 +14,7 @@ Invariants:
   - Read-only skills cannot declare mutation authority.
   - Draft-only skills cannot send externally.
   - Math skills stay connector-free, planning/read-only, and non-mutating.
+  - Planning skills stay connector-free, planning/read-only, and non-mutating.
   - P3, P4, and P5 skills require explicit approval.
   - Receipts and UAO boundaries are required for every registered skill.
   - Raw secret-like values are never admitted in the registry.
@@ -92,6 +93,18 @@ MATH_SAFE_ACTIONS = frozenset(
         "plan",
         "compare",
         "optimize",
+        "ask_clarification",
+        "produce_receipt",
+        "classify",
+        "detect",
+    }
+)
+
+PLANNING_SAFE_ACTIONS = frozenset(
+    {
+        "plan",
+        "optimize",
+        "recommend",
         "ask_clarification",
         "produce_receipt",
         "classify",
@@ -225,6 +238,15 @@ def _validate_skill_semantics(skill: dict[str, Any], errors: list[str]) -> None:
             effect_boundary=effect_boundary,
             errors=errors,
         )
+    if (group == "planning" or skill_id.startswith("planning.")) and skill_id != "personal_assistant.clarification.request":
+        _validate_planning_skill_contract(
+            skill=skill,
+            skill_id=skill_id,
+            mode=mode,
+            allowed_actions=allowed_actions,
+            effect_boundary=effect_boundary,
+            errors=errors,
+        )
 
     if risk_level in APPROVAL_REQUIRED_LEVELS or writes_allowed:
         if skill.get("requires_approval") is not True:
@@ -259,6 +281,33 @@ def _validate_math_skill_contract(
 
     if mode not in {"planning_only", "read_only"}:
         errors.append(f"{skill_id}: math skill must be planning_only or read_only")
+
+
+def _validate_planning_skill_contract(
+    *,
+    skill: dict[str, Any],
+    skill_id: str,
+    mode: str,
+    allowed_actions: set[str],
+    effect_boundary: dict[str, Any],
+    errors: list[str],
+) -> None:
+    connectors = sorted(_string_list(skill, "connectors"))
+    if connectors:
+        errors.append(f"{skill_id}: planning skill cannot require connectors {connectors}")
+    if skill.get("private_connector_required") is True:
+        errors.append(f"{skill_id}: planning skill cannot require private connectors")
+
+    unsafe_actions = sorted(allowed_actions.difference(PLANNING_SAFE_ACTIONS))
+    if unsafe_actions:
+        errors.append(f"{skill_id}: planning skill allows unsafe actions {unsafe_actions}")
+
+    for field_name in WRITE_BOUNDARY_FIELDS:
+        if effect_boundary.get(field_name) is True:
+            errors.append(f"{skill_id}: planning skill sets {field_name}=true")
+
+    if mode not in {"planning_only", "read_only"}:
+        errors.append(f"{skill_id}: planning skill must be planning_only or read_only")
 
 
 def _result(
