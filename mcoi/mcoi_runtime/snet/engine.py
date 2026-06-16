@@ -624,7 +624,7 @@ def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, 
 
 
 def _require_confidence(confidence: float) -> float:
-    if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
+    if type(confidence) not in (int, float):
         raise ValueError("SNet confidence must be a finite number in [0.0, 1.0]")
     confidence_value = float(confidence)
     if not isfinite(confidence_value) or not 0.0 <= confidence_value <= 1.0:

@@ -28,6 +28,7 @@ from mcoi_runtime.contracts.snet import (
     SNetSymbol,
     SNetTickStatus,
     SNetTickResult,
+    SNetUnknown,
     SNetValidationState,
     SNetWHType,
     WH_TYPES,
@@ -237,13 +238,24 @@ def test_mesh_receipt_changes_for_different_same_count_mesh_state() -> None:
 
 
 def test_budget_rejects_zero_question_and_zero_unknown_threshold() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     with pytest.raises(ValueError, match="max_questions_per_symbol"):
         SNetInquiryBudget(max_questions_per_symbol=0)
     with pytest.raises(ValueError, match="finite SNet WH spine"):
         SNetInquiryBudget(max_questions_per_symbol=len(WH_TYPES) + 1)
     with pytest.raises(ValueError, match="unknown_gravity_threshold"):
         SNetInquiryBudget(unknown_gravity_threshold=0)
+    with pytest.raises(ValueError, match="max_depth"):
+        SNetInquiryBudget(max_depth=IntSubclass(1))
+    with pytest.raises(ValueError, match="promotion_threshold"):
+        SNetInquiryBudget(promotion_threshold=FloatSubclass(0.5))
     assert SNetInquiryBudget(max_questions_per_symbol=1, unknown_gravity_threshold=1).max_questions_per_symbol == 1
+    assert SNetInquiryBudget(max_depth=1, promotion_threshold=0.5).promotion_threshold == 0.5
 
 
 def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
@@ -336,6 +348,12 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
     class TextSubclass(str):
         pass
 
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     tick = mesh.generate_wh_tick(seed.symbol_id)
@@ -352,6 +370,17 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
             facet="identity",
             ascii_folded_value="seed",
             confidence=float("nan"),
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.ingest_answer(question_id, "Seed", confidence=IntSubclass(1))
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.ingest_answer(question_id, "Seed", confidence=FloatSubclass(0.5))
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value="seed",
+            confidence=IntSubclass(1),
             validation_state=SNetValidationState.SUPPORTED,
         )
     with pytest.raises(ValueError, match="facet"):
@@ -464,6 +493,60 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
     assert seed.symbol_id in mesh.symbols
     assert mesh.questions == {}
     assert mesh.answers == {}
+
+
+def test_direct_snet_contracts_reject_numeric_shape_drift() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
+    with pytest.raises(ValueError, match="depth"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", depth=IntSubclass(1))
+    with pytest.raises(ValueError, match="confidence"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=FloatSubclass(0.5),
+        )
+    with pytest.raises(ValueError, match="promotion_score"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            promotion_score=FloatSubclass(0.5),
+        )
+    with pytest.raises(ValueError, match="importance_score"):
+        SNetUnknown(
+            unknown_id="unknown:1",
+            symbol_id="symbol:1",
+            missing_facet="identity",
+            question_id="question:1",
+            importance_score=FloatSubclass(0.5),
+            blocking_reason="answer_missing",
+        )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", depth=1)
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed",
+        ascii_folded_answer="seed",
+        confidence=0.5,
+    )
+
+    assert valid_symbol.depth == 1
+    assert valid_answer.confidence == 0.5
 
 
 def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
@@ -1021,6 +1104,12 @@ def test_mesh_receipt_rejects_boolean_flag_shape_drift() -> None:
 
 
 def test_mesh_receipt_rejects_direct_contract_drift() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
@@ -1036,4 +1125,18 @@ def test_mesh_receipt_rejects_direct_contract_drift() -> None:
         SNetMeshReceipt(**{**receipt_payload, "mesh_digest": "sha256:nothex"})
     with pytest.raises(ValueError, match="evidence_refs"):
         SNetMeshReceipt(**{**receipt_payload, "evidence_refs": []})
+    with pytest.raises(ValueError, match="symbol_count"):
+        SNetMeshReceipt(**{**receipt_payload, "symbol_count": IntSubclass(receipt_payload["symbol_count"])})
+    with pytest.raises(ValueError, match="promotion_threshold"):
+        SNetMeshReceipt(**{**receipt_payload, "promotion_threshold": FloatSubclass(receipt_payload["promotion_threshold"])})
+    with pytest.raises(ValueError, match="settlement_counts.value"):
+        SNetMeshReceipt(
+            **{
+                **receipt_payload,
+                "settlement_counts": {
+                    **receipt_payload["settlement_counts"],
+                    "active": IntSubclass(receipt_payload["settlement_counts"]["active"]),
+                },
+            }
+        )
     assert receipt_payload["mesh_digest"].startswith("sha256:")
