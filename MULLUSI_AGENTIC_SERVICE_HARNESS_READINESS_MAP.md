@@ -17,7 +17,7 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 
 | Area | Status | Judgment |
 | --- | --- | --- |
-| 1. Public API foundation | READY | Live public API/evidence endpoints respond, and the live deployment witness now reports current `origin/main` commit `abf22a2d...`. |
+| 1. Public API foundation | READY | Live public API/evidence endpoints respond, and the live deployment witness reported deployed commit sample `0b047bb9...` during the 2026-06-16 verification pass. |
 | 2. User/project/tenant model | PARTIAL | Schema and read-model examples exist; durable harness-owned persistence and exact ApprovalRequest/LoopStatus bindings are incomplete. |
 | 3. Agent service harness contract | PARTIAL | Contract schema, examples, read-only route, and blocked live-producer gates exist; live producer and adapter execution remain intentionally absent. |
 | 4. First MVP adapter path | PARTIAL | GitHub/Codex-style concepts exist as no-effect planning projections and lower-level code-worker/sandbox pieces; no approved branch/PR execution path exists. |
@@ -31,10 +31,10 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 
 | Evidence | Observation |
 | --- | --- |
-| Current main | `origin/main = abf22a2d3cb0a39e8ed3e55759998c3621410110` |
-| Latest mainline receipt merges | `#1806` added readiness waiver review packet evidence; `#1807` added Personal Assistant foundation evidence receipt; `#1810` aligned the Personal Assistant foundation evidence surface after that merge; `#1811` refreshed this harness readiness map. These are read-only governance/evidence surfaces and grant no harness execution authority. |
+| Observed main baseline | `origin/main = 0b047bb94c75488ac77bd0b8fa532127147afaae` during the 2026-06-16 verification pass; later doc-only merges may advance `main` without changing harness authority. |
+| Latest mainline receipt merges | `#1806` added readiness waiver review packet evidence; `#1807` added Personal Assistant foundation evidence receipt; `#1810` aligned the Personal Assistant foundation evidence surface after that merge; `#1811` refreshed this harness readiness map; `#1809` added read-only TeamOps provider observation receipt gates; `#1813` refreshed live witness readiness evidence. These are read-only governance/evidence surfaces and grant no harness execution authority. |
 | Live health probe | `GET https://api.mullusi.com/health -> 200`, sample status `healthy` |
-| Live deployment witness | `GET https://api.mullusi.com/deployment/witness -> 200`, deployed commit sample `abf22a2d3cb0a39e8ed3e55759998c3621410110` |
+| Live deployment witness | `GET https://api.mullusi.com/deployment/witness -> 200`, deployed commit sample `0b047bb94c75488ac77bd0b8fa532127147afaae` |
 | Live capability evidence | `GET https://api.mullusi.com/capabilities/evidence -> 200`, sample capability count `81` |
 | Live audit verify | `GET https://api.mullusi.com/audit/verify -> 200`, sample `valid=true` |
 | Live proof verify | `GET https://api.mullusi.com/proof/verify -> 200`, sample `valid=true` |
@@ -49,8 +49,8 @@ Area status: READY
 | Item | Status | Evidence | Smallest next PR when not READY |
 | --- | --- | --- | --- |
 | api.mullusi.com health | READY | Live unauthenticated `GET /health` returned `200` with `healthy` status on 2026-06-16. | - |
-| deployment witness | READY | Live `GET /deployment/witness` returned `200`, and witness commit matches current `origin/main` `abf22a2d...`. | - |
-| runtime conformance | READY | Live deployment witness includes passed `runtime_conformance` check and certificate `conf-290f78a0872d2bf5` for `abf22a2d...`. | - |
+| deployment witness | READY | Live `GET /deployment/witness` returned `200`, and witness commit sample `0b047bb9...` matched the observed `origin/main` baseline during verification. | - |
+| runtime conformance | READY | Live deployment witness includes passed `runtime_conformance` check and certificate `conf-29c78b9fbd6a4565` for observed commit sample `0b047bb9...`. | - |
 | proof verify | READY | Live `GET /proof/verify` returned `200` with `valid=true`. | - |
 | audit verify | READY | Live `GET /audit/verify` returned `200` with `valid=true`. | - |
 | loop read model | READY | `scripts/report_holistic_loop_read_model.py` and `scripts/validate_holistic_loop_read_model.py` exist, and harness read model examples reference `loop://holistic-loop-read-model`. | - |
