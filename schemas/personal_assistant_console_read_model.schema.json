@@ -19,6 +19,7 @@
     "skills",
     "memory",
     "teamops",
+    "lane_status",
     "assurance",
     "blocked_actions",
     "effect_boundary",
@@ -35,7 +36,7 @@
     "sections": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["chat", "tasks", "approvals", "receipts", "skills", "memory", "teamops"],
+      "required": ["chat", "tasks", "approvals", "receipts", "skills", "memory", "teamops", "lane_status"],
       "properties": {
         "chat": {"$ref": "#/$defs/chat_section"},
         "tasks": {"$ref": "#/$defs/task_section"},
@@ -43,7 +44,8 @@
         "receipts": {"$ref": "#/$defs/receipt_section"},
         "skills": {"$ref": "#/$defs/skill_section"},
         "memory": {"$ref": "#/$defs/memory_section"},
-        "teamops": {"$ref": "#/$defs/teamops_section"}
+        "teamops": {"$ref": "#/$defs/teamops_section"},
+        "lane_status": {"$ref": "#/$defs/lane_status_section"}
       }
     },
     "chat": {
@@ -108,6 +110,7 @@
         "provider_call_allowed": {"const": false}
       }
     },
+    "lane_status": {"$ref": "#/$defs/lane_status"},
     "assurance": {"$ref": "#/$defs/assurance"},
     "blocked_actions": {
       "type": "array",
@@ -181,6 +184,15 @@
       "properties": {
         "item_count": {"type": "integer", "minimum": 0},
         "live_probe_allowed": {"const": false}
+      }
+    },
+    "lane_status_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "execution_allowed"],
+      "properties": {
+        "item_count": {"type": "integer", "minimum": 1},
+        "execution_allowed": {"const": false}
       }
     },
     "approval_queue": {
@@ -297,6 +309,100 @@
           "items": {"type": "string", "minLength": 1}
         },
         "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "lane_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status_id",
+        "foundation_only",
+        "lane_count",
+        "runtime_preview_lane_count",
+        "read_model_lane_count",
+        "projection_only_lane_count",
+        "governed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+        "lanes"
+      ],
+      "properties": {
+        "status_id": {"const": "personal_assistant_foundation_lane_status"},
+        "foundation_only": {"const": true},
+        "lane_count": {"type": "integer", "minimum": 1},
+        "runtime_preview_lane_count": {"type": "integer", "minimum": 1},
+        "read_model_lane_count": {"type": "integer", "minimum": 1},
+        "projection_only_lane_count": {"type": "integer", "minimum": 1},
+        "governed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_effect_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "lanes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/lane_status_entry"}
+        }
+      }
+    },
+    "lane_status_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_id",
+        "display_name",
+        "stage",
+        "state",
+        "route_refs",
+        "schema_refs",
+        "validator_refs",
+        "foundation_only",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+        "receipt_required"
+      ],
+      "properties": {
+        "lane_id": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string", "minLength": 1},
+        "stage": {
+          "enum": [
+            "runtime_preview",
+            "runtime_read_model",
+            "projection_only",
+            "candidate_only",
+            "read_model"
+          ]
+        },
+        "state": {"enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]},
+        "route_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "schema_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "foundation_only": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_effect_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "receipt_required": {"const": true}
       }
     },
     "receipt_viewer_binding": {

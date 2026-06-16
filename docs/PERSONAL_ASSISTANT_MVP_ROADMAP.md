@@ -21,7 +21,7 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 10 | Research source comparison and citation pack | No live web search, source contact, external submission, public posting, paid subscription, raw source body storage, or memory write |
 | 11 | Math reasoning planning | No money movement, paid subscription action, system-of-record write, connector mutation, external submission, public posting, deployment, raw private payload storage, or memory write |
 | 12 | Schedule planning preview | No calendar write, task write, invite, message, connector mutation, system-of-record write, money movement, deployment, raw private payload storage, or memory write |
-| 13 | User-facing assistant console | No customer/SaaS readiness claim |
+| 13 | User-facing assistant console read model and lane-status inventory | No customer/SaaS readiness claim; no approval execution; no connector call |
 
 ## PR 1 Acceptance Criteria
 
@@ -158,6 +158,17 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw private payloads, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
 7. Receipts record schedule planning, capacity projection, assignment preview, and actions not taken: calendar event not created, task not written, invite not sent, person not messaged, system of record not written, connector state not mutated, external submission not sent, public post not created, payment not moved, deployment not started, memory not written, and Nested Mind not activated.
 8. Proof coverage classifies schedule planning previews under the assistant planning surface.
+
+## PR 13 Acceptance Criteria
+
+1. Console read models validate against `schemas/personal_assistant_console_read_model.schema.json`.
+2. Public routes expose `/api/v1/console/personal-assistant` and `/api/v1/console/personal-assistant/view` as read-model surfaces only.
+3. The console exposes chat, task, approval, receipt, skill, memory, TeamOps, and lane-status sections without executing skills or approvals.
+4. Lane status records enumerate request intake, skill registry, approval queue, memory observation, read-only projection, draft projection, TeamOps, GitHub/Codex, research, math, schedule planning, and operator console lanes with route refs, schema refs, validator refs, and receipt requirements.
+5. `execution_allowed`, `live_connector_execution_allowed`, `connector_mutation_allowed`, `external_effect_allowed`, `customer_readiness_claim_allowed`, and `nested_mind_live_activation_allowed` remain false at the lane-status root and on every lane.
+6. Raw private payloads, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected before rendering.
+7. The HTML view escapes operator-visible values and does not expose raw private message bodies.
+8. Proof coverage classifies the personal-assistant console lane-status read model under the operator console read-model surface while the lane entries reference the assistant routes they summarize.
 
 ## Handoff Risks
 

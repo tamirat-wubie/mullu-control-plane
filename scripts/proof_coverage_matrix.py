@@ -1679,8 +1679,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_operator_console.py",
                 "mcoi/tests/test_console.py",
                 "mcoi/tests/test_inceptadive_shadow_routes.py",
+                "tests/test_personal_assistant_console.py",
+                "tests/test_validate_personal_assistant_console_read_model.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant lane-status, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
@@ -1693,6 +1695,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_fails_closed_without_store_path",
                 "console_personal_assistant_panel_read_model",
                 "console_personal_assistant_html_view_renders_read_only_panel",
+                "console_personal_assistant_lane_status_public_safe",
                 "full_console_includes_spatial_map_read_model",
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
@@ -1727,6 +1730,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "console_personal_assistant_html_view_renders_read_only_panel": [
                     "console_personal_assistant_html_view_renders_read_only_panel",
+                ],
+                "console_personal_assistant_lane_status_public_safe": [
+                    "console_read_model_exposes_read_only_foundation_sections",
+                    "personal_assistant_console_fixture_binds_rehearsal_receipt_viewer",
+                    "personal_assistant_console_validator_rejects_lane_authority_drift",
+                    "personal_assistant_console_read_model_fixture_validates",
                 ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",
