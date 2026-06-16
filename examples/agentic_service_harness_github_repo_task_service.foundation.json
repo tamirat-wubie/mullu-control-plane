@@ -1,0 +1,142 @@
+{
+  "report_id": "agentic_service_harness_github_repo_task_service",
+  "schema_version": 1,
+  "generated_at": "2026-06-16T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "default_branch": "main",
+    "foundation_phase": "foundation_contract_only",
+    "read_only": true,
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "secret_values_serialized": false
+  },
+  "repository_metadata_probe": {
+    "probe_id": "github-repo-metadata-probe-foundation",
+    "provider": "github",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "probe_mode": "contract_only_metadata_probe",
+    "metadata_fields": [
+      "repository_slug",
+      "default_branch",
+      "installation_ref",
+      "permission_scope",
+      "latest_main_ref",
+      "branch_protection_ref",
+      "open_pull_request_refs"
+    ],
+    "source_refs": [
+      "read-model://repositories/repo-mullu-control-plane",
+      "policy://harness/no-secret-serialization",
+      "policy://harness/no-branch-write-without-approval"
+    ],
+    "credential_binding_ref": "credential-binding://github/read-only-installation",
+    "live_probe_executed": false,
+    "writes_repository": false,
+    "creates_branch": false,
+    "opens_pull_request": false,
+    "secret_values_serialized": false,
+    "read_only": true
+  },
+  "task_service": {
+    "service_id": "github-repo-task-service-read-only-foundation",
+    "task_ref": "task://agentic-service-harness/github-repo-read-only",
+    "allowed_action_classes": [
+      "read_only"
+    ],
+    "forbidden_action_classes": [
+      "write_to_branch",
+      "open_pr",
+      "blocked_high_risk"
+    ],
+    "required_evidence_refs": [
+      "schemas/agentic_service_harness.schema.json#/$defs/repository_connection",
+      "schemas/agentic_service_harness_github_repo_task_service.schema.json",
+      "examples/agentic_service_harness_read_models.foundation.json"
+    ],
+    "approval_required_for_effects": true,
+    "read_only": true,
+    "mutation_route": false,
+    "route_admitted": false,
+    "executes_adapter": false,
+    "creates_branch": false,
+    "opens_pull_request": false,
+    "writes_repository": false,
+    "secret_values_serialized": false
+  },
+  "adapter_descriptors": [
+    {
+      "adapter_id": "adapter.github-readonly",
+      "adapter_kind": "github_repo_task",
+      "status": "contract_only",
+      "allowed_modes": [
+        "read_only"
+      ],
+      "required_evidence_refs": [
+        "read-model://repositories/repo-mullu-control-plane",
+        "metadata-probe://github-repo-metadata-probe-foundation"
+      ],
+      "requires_workspace_sandbox": true,
+      "authority_class": "read_only",
+      "external_adapter_integrated": false,
+      "executes_adapter": false,
+      "creates_branch": false,
+      "opens_pull_request": false,
+      "writes_repository": false,
+      "receipt_schema_ref": "schema://agentic-service-harness/github-repo-task-service",
+      "secret_values_serialized": false
+    },
+    {
+      "adapter_id": "adapter.contract-only-codex-style",
+      "adapter_kind": "codex_style_coding",
+      "status": "contract_only",
+      "allowed_modes": [
+        "read_only",
+        "dry_run"
+      ],
+      "required_evidence_refs": [
+        "workspace://harness/read-model-foundation/read-only",
+        "policy://harness/no-adapter-execution"
+      ],
+      "requires_workspace_sandbox": true,
+      "authority_class": "approval_required",
+      "external_adapter_integrated": false,
+      "executes_adapter": false,
+      "creates_branch": false,
+      "opens_pull_request": false,
+      "writes_repository": false,
+      "receipt_schema_ref": "schema://agentic-service-harness/agent-run-receipt",
+      "secret_values_serialized": false
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-repo-task-service",
+      "command": "python scripts/validate_agentic_service_harness_github_repo_task_service.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add receipt-emitter dry-run and append gate after the read-only GitHub task service contract validates.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
