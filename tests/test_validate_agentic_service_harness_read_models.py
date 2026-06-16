@@ -50,6 +50,11 @@ def test_agentic_service_harness_read_models_accept_default_example() -> None:
         for binding in payload["durable_entity_bindings"]["entity_bindings"]
     }
     assert observed_entity_kinds == set(EXPECTED_DURABLE_ENTITY_KINDS)
+    allocation = payload["workspace_allocations"][0]
+    assert allocation["sandbox_id"] == payload["runs"][0]["sandbox_id"]
+    assert allocation["workspace_created"] is False
+    assert allocation["commands_executed"] is False
+    assert allocation["files_written"] is False
 
 
 def test_agentic_service_harness_read_models_reject_mutation_flag(
@@ -160,6 +165,23 @@ def test_agentic_service_harness_read_models_reject_enabled_durable_append(
     assert validation.ok is False
     assert "durable_entity_bindings.append_enabled" in serialized_errors
     assert "durable entity binding User append_enabled" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_workspace_allocation_effect(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["workspace_allocations"][0]["workspace_created"] = True
+    payload["workspace_allocations"][0]["commands_executed"] = True
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "workspace_created" in serialized_errors
+    assert "commands_executed" in serialized_errors
+    assert "must remain false" in serialized_errors
 
 
 def test_agentic_service_harness_read_models_writer_and_cli_honor_strict(

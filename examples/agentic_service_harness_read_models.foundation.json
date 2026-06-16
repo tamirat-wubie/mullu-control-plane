@@ -188,6 +188,41 @@
       "terminal_closure": false
     }
   ],
+  "workspace_allocations": [
+    {
+      "allocation_id": "workspace-allocation-read-model-foundation",
+      "sandbox_id": "sandbox-read-only-foundation",
+      "project_id": "project-agentic-service-harness",
+      "run_ids": [
+        "run-read-model-foundation"
+      ],
+      "branch_workspace_ref": "workspace://harness/read-model-foundation/read-only",
+      "base_branch": "main",
+      "working_branch_ref": "branch://none/read-only-projection",
+      "command_allowlist": [
+        "git.status",
+        "git.diff",
+        "python.validator"
+      ],
+      "path_allowlist": [
+        "."
+      ],
+      "timeout_seconds": 120,
+      "network_policy": "none",
+      "cleanup_receipt_ref": "receipt://sandbox-cleanup-read-model-foundation",
+      "command_log_collection_ref": "logs://harness/read-model-foundation/commands",
+      "test_log_collection_ref": "logs://harness/read-model-foundation/tests",
+      "diff_collection_ref": "diff://none/read-only-projection",
+      "redaction_policy": "hash_or_reference_only",
+      "read_only": true,
+      "workspace_created": false,
+      "commands_executed": false,
+      "files_written": false,
+      "cleanup_executed": false,
+      "production_mutation_allowed": false,
+      "secret_values_serialized": false
+    }
+  ],
   "durable_entity_bindings": {
     "store_contract_ref": "scripts/validate_agentic_service_harness_read_model_persistence.py",
     "store_mode": "append_only_jsonl_rehearsal",
@@ -341,6 +376,28 @@
         "secret_values_serialized": false,
         "evidence_refs": [
           "scripts/validate_agentic_service_harness_read_model_persistence.py"
+        ]
+      },
+      {
+        "entity_kind": "WorkspaceAllocation",
+        "record_kind": "workspace_allocation",
+        "collection_ref": "read-model://workspace_allocations",
+        "primary_key": "allocation_id",
+        "tenant_key": "project_id",
+        "owner_ref_fields": [
+          "project_id",
+          "sandbox_id",
+          "run_ids",
+          "cleanup_receipt_ref"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness_read_models.schema.json#/$defs/harness_workspace_allocation_read_model",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "workspace://harness/read-model-foundation/read-only"
         ]
       },
       {

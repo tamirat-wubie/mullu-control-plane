@@ -71,6 +71,7 @@ COLLECTION_ID_FIELDS = {
     "receipt": ("receipts", "receipt_id"),
     "evidence": ("evidence", "bundle_id"),
     "result_summary": ("result_summaries", "summary_id"),
+    "workspace_allocation": ("workspace_allocations", "allocation_id"),
 }
 SINGLETON_KINDS = {
     "report_header",

@@ -19,6 +19,7 @@
     "receipts",
     "evidence",
     "result_summaries",
+    "workspace_allocations",
     "durable_entity_bindings",
     "permission_snapshot",
     "validators",
@@ -98,6 +99,13 @@
       "minItems": 1,
       "items": {
         "$ref": "#/$defs/harness_result_summary_read_model"
+      }
+    },
+    "workspace_allocations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/harness_workspace_allocation_read_model"
       }
     },
     "durable_entity_bindings": {
@@ -190,6 +198,24 @@
         "blocked"
       ]
     },
+    "sandbox_command": {
+      "type": "string",
+      "enum": [
+        "git.status",
+        "git.diff",
+        "python.pytest",
+        "python.validator",
+        "npm.test",
+        "cargo.test"
+      ]
+    },
+    "sandbox_network_policy": {
+      "type": "string",
+      "enum": [
+        "none",
+        "proxy_allowlist"
+      ]
+    },
     "risk_level": {
       "type": "string",
       "enum": [
@@ -209,6 +235,7 @@
         "AgentRun",
         "ApprovalRequest",
         "Receipt",
+        "WorkspaceAllocation",
         "LoopStatus"
       ]
     },
@@ -250,7 +277,7 @@
         },
         "entity_bindings": {
           "type": "array",
-          "minItems": 8,
+          "minItems": 9,
           "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/durable_entity_binding"
@@ -929,6 +956,121 @@
           "const": true
         },
         "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "harness_workspace_allocation_read_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allocation_id",
+        "sandbox_id",
+        "project_id",
+        "run_ids",
+        "branch_workspace_ref",
+        "base_branch",
+        "working_branch_ref",
+        "command_allowlist",
+        "path_allowlist",
+        "timeout_seconds",
+        "network_policy",
+        "cleanup_receipt_ref",
+        "command_log_collection_ref",
+        "test_log_collection_ref",
+        "diff_collection_ref",
+        "redaction_policy",
+        "read_only",
+        "workspace_created",
+        "commands_executed",
+        "files_written",
+        "cleanup_executed",
+        "production_mutation_allowed",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "allocation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sandbox_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "branch_workspace_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "base_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "working_branch_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "command_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sandbox_command"
+          }
+        },
+        "path_allowlist": {
+          "$ref": "#/$defs/text_list"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "network_policy": {
+          "$ref": "#/$defs/sandbox_network_policy"
+        },
+        "cleanup_receipt_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "command_log_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "test_log_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "diff_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "redaction_policy": {
+          "type": "string",
+          "const": "hash_or_reference_only"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "workspace_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "commands_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "files_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "cleanup_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
           "type": "boolean",
           "const": false
         }

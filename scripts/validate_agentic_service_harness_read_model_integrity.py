@@ -143,12 +143,27 @@ def _validate_source_projection_identity(
     projected_runs = _by_id(projection.get("runs"), "run_id", errors, f"{label}: projected runs")
     source_receipts = _by_id(source.get("receipts"), "receipt_id", errors, f"{label}: source receipts")
     projected_receipts = _by_id(projection.get("receipts"), "receipt_id", errors, f"{label}: projected receipts")
+    source_sandboxes = _by_id(
+        source.get("workspace_sandboxes"),
+        "sandbox_id",
+        errors,
+        f"{label}: source workspace_sandboxes",
+    )
+    projected_allocations = _by_id(
+        projection.get("workspace_allocations"),
+        "sandbox_id",
+        errors,
+        f"{label}: projected workspace_allocations",
+    )
 
     if set(source_runs) != set(projected_runs):
         errors.append(f"{label}: source/projected run id set mismatch")
     checked += 1
     if set(source_receipts) != set(projected_receipts):
         errors.append(f"{label}: source/projected receipt id set mismatch")
+    checked += 1
+    if set(source_sandboxes) != set(projected_allocations):
+        errors.append(f"{label}: source/projected sandbox id set mismatch")
     checked += 1
 
     source_tasks = _by_id(source.get("agent_tasks"), "task_id", errors, f"{label}: source agent_tasks")
@@ -184,6 +199,22 @@ def _validate_source_projection_identity(
         _compare_list_field(source_receipt, projected_receipt, "evidence_refs", errors, label, receipt_id)
         checked += 5
 
+    for sandbox_id, source_sandbox in source_sandboxes.items():
+        projected_allocation = projected_allocations.get(sandbox_id)
+        if not projected_allocation:
+            continue
+        _compare_field(source_sandbox, projected_allocation, "project_id", errors, label, sandbox_id)
+        _compare_field(source_sandbox, projected_allocation, "timeout_seconds", errors, label, sandbox_id)
+        _compare_field(source_sandbox, projected_allocation, "network_policy", errors, label, sandbox_id)
+        _compare_field(source_sandbox, projected_allocation, "cleanup_receipt_ref", errors, label, sandbox_id)
+        _compare_list_field(source_sandbox, projected_allocation, "command_allowlist", errors, label, sandbox_id)
+        _compare_list_field(source_sandbox, projected_allocation, "path_allowlist", errors, label, sandbox_id)
+        if projected_allocation.get("workspace_created") is not False:
+            errors.append(f"{label}: sandbox {sandbox_id} workspace_created must remain false")
+        if projected_allocation.get("commands_executed") is not False:
+            errors.append(f"{label}: sandbox {sandbox_id} commands_executed must remain false")
+        checked += 8
+
     return checked
 
 
@@ -200,6 +231,12 @@ def _validate_projection_identity_mesh(
     receipts = _by_id(projection.get("receipts"), "receipt_id", errors, f"{label}: receipts")
     evidence = _by_id(projection.get("evidence"), "bundle_id", errors, f"{label}: evidence")
     summaries = _by_id(projection.get("result_summaries"), "summary_id", errors, f"{label}: result_summaries")
+    allocations = _by_id(
+        projection.get("workspace_allocations"),
+        "allocation_id",
+        errors,
+        f"{label}: workspace_allocations",
+    )
 
     scope = projection.get("projection_scope") if isinstance(projection.get("projection_scope"), dict) else {}
     for project_id, project in projects.items():
@@ -236,6 +273,15 @@ def _validate_projection_identity_mesh(
     for run_id, run in runs.items():
         if run.get("project_id") not in projects:
             errors.append(f"{label}: run {run_id} project_id missing")
+        run_allocations = [
+            allocation
+            for allocation in allocations.values()
+            if allocation.get("sandbox_id") == run.get("sandbox_id")
+        ]
+        if len(run_allocations) != 1:
+            errors.append(f"{label}: run {run_id} sandbox allocation missing")
+        elif run_id not in set(str(item) for item in run_allocations[0].get("run_ids", ())):
+            errors.append(f"{label}: run {run_id} missing from sandbox allocation")
         run_approval_ids = {
             gate_id
             for gate_id, approval in approvals.items()
@@ -272,7 +318,7 @@ def _validate_projection_identity_mesh(
                 changed_refs = changed_files.get("changed_file_refs")
                 if isinstance(changed_refs, list) and changed_files.get("changed_file_count") != len(changed_refs):
                     errors.append(f"{label}: run {run_id} changed_file_refs count mismatch")
-        checked += 10
+        checked += 11
 
     for gate_id, approval in approvals.items():
         run_id = str(approval.get("run_id"))
