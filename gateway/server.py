@@ -469,6 +469,40 @@ def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
     return model.dict()
 
 
+def _valid_whqr_semver(version: str) -> bool:
+    parts = version.split(".")
+    return len(parts) == 3 and all(part.isdigit() for part in parts)
+
+
+def _validated_whqr_replay_binding(source: Any) -> dict[str, str]:
+    if not isinstance(source, Mapping):
+        return {}
+    replay_ref = source.get("replay_ref")
+    canonical_hash = source.get("canonical_hash")
+    semantics_hash = source.get("semantics_hash")
+    version = source.get("version")
+    if not (
+        isinstance(replay_ref, str)
+        and isinstance(canonical_hash, str)
+        and isinstance(semantics_hash, str)
+        and isinstance(version, str)
+    ):
+        return {}
+    if not (
+        canonical_hash.startswith("sha256:")
+        and semantics_hash.startswith("sha256:")
+        and replay_ref == f"whqr://replay/{canonical_hash}"
+        and _valid_whqr_semver(version)
+    ):
+        return {}
+    return {
+        "replay_ref": replay_ref,
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    }
+
+
 def create_gateway_app(
     platform: Any = None,
     *,
@@ -4012,9 +4046,10 @@ def create_gateway_app(
                 raise HTTPException(404, detail="command not found")
             raise HTTPException(404, detail="universal action proof not found")
         proof_payload = asdict(proof)
-        whqr_replay_binding = proof_payload.get("whqr_replay_binding")
-        if not isinstance(whqr_replay_binding, Mapping):
-            whqr_replay_binding = {}
+        whqr_replay_binding = _validated_whqr_replay_binding(
+            proof_payload.get("whqr_replay_binding")
+        )
+        proof_payload["whqr_replay_binding"] = whqr_replay_binding
         whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
@@ -4045,14 +4080,16 @@ def create_gateway_app(
             if isinstance(closure, Mapping)
             else None
         )
-        whqr_replay_ref = (
-            str(whqr_replay_binding.get("replay_ref", ""))
-            if isinstance(whqr_replay_binding, Mapping)
-            else ""
-        )
+        whqr_replay_binding = _validated_whqr_replay_binding(whqr_replay_binding)
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
+        record_payload = dict(record)
+        if isinstance(closure, Mapping):
+            closure_payload = dict(closure)
+            closure_payload["whqr_replay_binding"] = whqr_replay_binding
+            record_payload["closure"] = closure_payload
         return {
             "command_id": command_id,
-            "universal_action_orchestration": record,
+            "universal_action_orchestration": record_payload,
             "orchestration_id": record.get("orchestration_id", ""),
             "decision_status": decision_status,
             "closure_state": record.get("closure_state", ""),
@@ -4090,13 +4127,11 @@ def create_gateway_app(
             payload["intent"] = command.intent
             payload["command_state"] = command.state.value
             payload["created_at"] = command.created_at
-            whqr_replay_binding = payload.get("whqr_replay_binding")
-            if isinstance(whqr_replay_binding, Mapping):
-                payload["whqr_replay_ref"] = str(
-                    whqr_replay_binding.get("replay_ref", "")
-                )
-            else:
-                payload["whqr_replay_ref"] = ""
+            whqr_replay_binding = _validated_whqr_replay_binding(
+                payload.get("whqr_replay_binding")
+            )
+            payload["whqr_replay_binding"] = whqr_replay_binding
+            payload["whqr_replay_ref"] = str(whqr_replay_binding.get("replay_ref", ""))
             proofs.append(payload)
         page, page_meta = _read_model_page(
             tuple(proofs),
@@ -5472,12 +5507,12 @@ def _whqr_replay_binding_from_terminal_certificate_payload(
         and version
     ):
         return {}
-    return {
+    return _validated_whqr_replay_binding({
         "replay_ref": f"whqr://replay/{canonical_hash}",
         "canonical_hash": canonical_hash,
         "semantics_hash": semantics_hash,
         "version": version,
-    }
+    })
 
 
 def _gateway_request_receipt(
