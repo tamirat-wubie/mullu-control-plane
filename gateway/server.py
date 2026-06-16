@@ -81,6 +81,7 @@ from mcoi_runtime.personal_assistant import (
     plan_github_codex_review,
     plan_math_reasoning,
     plan_research_source_compare,
+    plan_schedule_optimization,
     plan_teamops_shared_inbox,
     prepare_memory_observation,
     review_memory_observation_candidate,
@@ -415,6 +416,54 @@ class GatewayPersonalAssistantMathPreviewRequest(BaseModel):
     constraints: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
     requested_result: str = "compare scenarios, check units, and explain assumptions"
+
+
+class GatewayPersonalAssistantPlanningWindow(BaseModel):
+    """Bounded operator-supplied time window for schedule planning preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    window_ref: str
+    label: str
+    start: str
+    end: str
+    capacity_minutes: int
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantPlanningWorkItem(BaseModel):
+    """Bounded operator-supplied work item for schedule planning preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    item_ref: str
+    title: str
+    estimated_minutes: int
+    priority: int = 3
+    earliest_start: str = ""
+    due: str = ""
+    required_window_ref: str = ""
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantPlanningPreviewRequest(BaseModel):
+    """Stateless schedule planning preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Optimize schedule with operator supplied windows and work items."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    objective: str
+    time_windows: list[GatewayPersonalAssistantPlanningWindow] = Field(default_factory=list)
+    work_items: list[GatewayPersonalAssistantPlanningWorkItem] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_result: str = "assign work items to available windows and identify blockers"
 
 
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
@@ -2404,6 +2453,68 @@ def create_gateway_app(
                 "connector_mutation_allowed": False,
                 "external_submission_allowed": False,
                 "public_post_allowed": False,
+                "deployment_allowed": False,
+                "memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/planning/schedule/preview")
+    def preview_personal_assistant_schedule_planning(req: GatewayPersonalAssistantPlanningPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_schedule_optimization(
+                intent,
+                generated_at=now,
+                objective=req.objective,
+                time_windows=tuple(_pydantic_payload(window) for window in req.time_windows),
+                work_items=tuple(_pydantic_payload(item) for item in req.work_items),
+                assumptions=tuple(req.assumptions),
+                constraints=tuple(req.constraints),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_result=req.requested_result,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant schedule planning preview",
+                    "error_code": "invalid_personal_assistant_planning_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "planning_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "calendar_write_allowed": False,
+                "task_write_allowed": False,
+                "invite_allowed": False,
+                "message_person_allowed": False,
+                "system_of_record_write_allowed": False,
+                "connector_mutation_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "money_movement_allowed": False,
+                "paid_subscription_allowed": False,
                 "deployment_allowed": False,
                 "memory_write_allowed": False,
                 "nested_mind_live_activation_allowed": False,

@@ -48,7 +48,7 @@ def test_gateway_personal_assistant_skills_route_is_read_only() -> None:
     assert payload["governed"] is True
     assert payload["execution_allowed"] is False
     assert payload["live_connector_execution_allowed"] is False
-    assert payload["registry"]["skill_count"] >= 14
+    assert payload["registry"]["skill_count"] >= 15
     assert "email.response.draft" in payload["registry"]["skill_ids"]
 
 
@@ -773,6 +773,154 @@ def test_gateway_personal_assistant_math_preview_rejects_raw_private_value() -> 
     assert response.status_code == 422
     assert "private spreadsheet body" not in serialized
     assert "calculation_plan_created" not in serialized
+
+
+def test_gateway_personal_assistant_planning_preview_assigns_without_effects() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/planning/schedule/preview",
+        json={
+            "request_id": "pa_request_gateway_planning_001",
+            "submitted_at": "2026-06-16T04:00:00+00:00",
+            "generated_at": "2026-06-16T04:01:00+00:00",
+            "objective": "Plan the operator work day from supplied windows and tasks.",
+            "time_windows": [
+                {
+                    "window_ref": "morning",
+                    "label": "Morning focus",
+                    "start": "2026-06-16T09:00:00-04:00",
+                    "end": "2026-06-16T11:00:00-04:00",
+                    "capacity_minutes": 120,
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+                {
+                    "window_ref": "afternoon",
+                    "label": "Afternoon review",
+                    "start": "2026-06-16T13:00:00-04:00",
+                    "end": "2026-06-16T14:30:00-04:00",
+                    "capacity_minutes": 90,
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+            ],
+            "work_items": [
+                {
+                    "item_ref": "memo",
+                    "title": "Write launch memo",
+                    "estimated_minutes": 60,
+                    "priority": 1,
+                    "due": "2026-06-16T12:00:00-04:00",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+                {
+                    "item_ref": "receipts",
+                    "title": "Review receipts",
+                    "estimated_minutes": 45,
+                    "priority": 2,
+                    "due": "2026-06-16T15:00:00-04:00",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+                {
+                    "item_ref": "followups",
+                    "title": "Triage followups",
+                    "estimated_minutes": 30,
+                    "priority": 3,
+                    "due": "2026-06-16T17:00:00-04:00",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+            ],
+            "assumptions": ["values are operator supplied"],
+            "constraints": ["do not create calendar events", "do not write tasks"],
+            "evidence_refs": ["proof://operator/planning-values"],
+        },
+    )
+    payload = response.json()
+    projection = payload["planning_projection"]
+    plan = projection["plan"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert payload["effect_boundary"]["task_write_allowed"] is False
+    assert payload["effect_boundary"]["invite_allowed"] is False
+    assert payload["effect_boundary"]["connector_mutation_allowed"] is False
+    assert payload["effect_boundary"]["deployment_allowed"] is False
+    assert projection["skill_id"] == "planning.optimize_schedule"
+    assert plan["capacity_summary"][0]["assigned_minutes"] == "105"
+    assert plan["capacity_summary"][0]["remaining_minutes"] == "15"
+    assert plan["capacity_summary"][1]["assigned_minutes"] == "30"
+    assert plan["capacity_summary"][1]["remaining_minutes"] == "60"
+    assert [assignment["window_ref"] for assignment in plan["assignment_plan"]] == ["morning", "morning", "afternoon"]
+    assert "calendar_event_not_created" in receipt["actions_not_taken"]
+    assert "task_not_written" in receipt["actions_not_taken"]
+    assert receipt["connectors_used"] == []
+
+
+def test_gateway_personal_assistant_planning_preview_rejects_non_planning_intent() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/planning/schedule/preview",
+        json={
+            "request_id": "pa_request_gateway_planning_wrong_intent_001",
+            "submitted_at": "2026-06-16T04:00:00+00:00",
+            "user_request": "Check my inbox.",
+            "objective": "Plan supplied work.",
+            "time_windows": [],
+            "work_items": [],
+            "evidence_refs": [],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_planning_preview"
+
+
+def test_gateway_personal_assistant_planning_preview_rejects_raw_private_item() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/planning/schedule/preview",
+        json={
+            "request_id": "pa_request_gateway_planning_raw_001",
+            "submitted_at": "2026-06-16T04:00:00+00:00",
+            "objective": "Plan supplied work.",
+            "time_windows": [
+                {
+                    "window_ref": "morning",
+                    "label": "Morning",
+                    "start": "2026-06-16T09:00:00-04:00",
+                    "end": "2026-06-16T10:00:00-04:00",
+                    "capacity_minutes": 60,
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                }
+            ],
+            "work_items": [
+                {
+                    "item_ref": "raw",
+                    "title": "Raw task",
+                    "estimated_minutes": 30,
+                    "source_ref": "operator_supplied",
+                    "raw_body": "private calendar body",
+                }
+            ],
+            "evidence_refs": ["proof://raw"],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "private calendar body" not in serialized
+    assert "schedule_plan_created" not in serialized
 
 
 def _approval_preview_payload() -> dict[str, object]:

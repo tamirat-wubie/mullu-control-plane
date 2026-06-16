@@ -6,7 +6,8 @@ Invariants:
   - Registered skills are immutable after admission.
   - Risk, approval, connector, UAO, receipt, and effect boundaries are explicit.
   - Foundation contracts do not authorize live connector execution.
-  - Math skills remain connector-free, planning/read-only, and non-mutating.
+  - Math and planning skills remain connector-free, planning/read-only, and
+    non-mutating.
 """
 
 from __future__ import annotations
@@ -132,6 +133,18 @@ MATH_SAFE_ACTIONS = frozenset(
         "plan",
         "compare",
         "optimize",
+        "ask_clarification",
+        "produce_receipt",
+        "classify",
+        "detect",
+    }
+)
+
+PLANNING_SAFE_ACTIONS = frozenset(
+    {
+        "plan",
+        "optimize",
+        "recommend",
         "ask_clarification",
         "produce_receipt",
         "classify",
@@ -298,6 +311,7 @@ class PersonalAssistantSkill:
 
         self._assert_mode_boundaries()
         self._assert_math_boundaries()
+        self._assert_planning_boundaries()
         if self.risk_level.requires_explicit_approval or self.effect_boundary.writes_allowed:
             if not self.requires_approval:
                 raise PersonalAssistantInvariantError(
@@ -366,6 +380,34 @@ class PersonalAssistantSkill:
         if self.mode not in {SkillMode.PLANNING_ONLY, SkillMode.READ_ONLY}:
             raise PersonalAssistantInvariantError(
                 f"{self.skill_id}: math skill must be planning_only or read_only"
+            )
+
+    def _assert_planning_boundaries(self) -> None:
+        if self.group != "planning" and not self.skill_id.startswith("planning."):
+            return
+        if self.skill_id == "personal_assistant.clarification.request":
+            return
+        if self.connectors:
+            raise PersonalAssistantInvariantError(
+                f"{self.skill_id}: planning skill cannot require connectors {list(self.connectors)}"
+            )
+        if self.private_connector_required:
+            raise PersonalAssistantInvariantError(
+                f"{self.skill_id}: planning skill cannot require private connectors"
+            )
+        unsafe_actions = sorted(set(self.allowed_actions).difference(PLANNING_SAFE_ACTIONS))
+        if unsafe_actions:
+            raise PersonalAssistantInvariantError(
+                f"{self.skill_id}: planning skill allows unsafe actions {unsafe_actions}"
+            )
+        for field_name in WRITE_BOUNDARY_FIELDS:
+            if getattr(self.effect_boundary, field_name):
+                raise PersonalAssistantInvariantError(
+                    f"{self.skill_id}: planning skill sets {field_name}=true"
+                )
+        if self.mode not in {SkillMode.PLANNING_ONLY, SkillMode.READ_ONLY}:
+            raise PersonalAssistantInvariantError(
+                f"{self.skill_id}: planning skill must be planning_only or read_only"
             )
 
     def supports_capabilities(self, capability_refs: tuple[str, ...]) -> bool:

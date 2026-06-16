@@ -9,7 +9,8 @@ fixture.
 Invariants:
   - Loading the registry never executes connectors.
   - Duplicate or policy-invalid skill definitions fail closed.
-  - Math skills remain connector-free, planning/read-only, and non-mutating.
+  - Math and planning skills remain connector-free, planning/read-only, and
+    non-mutating.
   - Queries return deterministic skill selections.
   - Read models do not expose live execution authority.
 """
@@ -40,10 +41,11 @@ def test_default_registry_loads_foundation_skills() -> None:
     skill_ids = registry.skill_ids()
     inbox_summary = registry.get("email.inbox.summarize")
 
-    assert registry.count == 14
+    assert registry.count == 15
     assert skill_ids == tuple(sorted(skill_ids))
     assert "email.inbox.summarize" in skill_ids
     assert "math.reasoning.plan" in skill_ids
+    assert "planning.optimize_schedule" in skill_ids
     assert "task.create_draft" in skill_ids
     assert inbox_summary.mode is SkillMode.READ_ONLY
     assert inbox_summary.risk_level is SkillRiskLevel.P1
@@ -96,7 +98,7 @@ def test_duplicate_skill_id_is_rejected() -> None:
 
     assert "duplicate skill_id" in str(exc_info.value)
     assert "email.inbox.summarize" in str(exc_info.value)
-    assert len(registry_payload["skills"]) == 15
+    assert len(registry_payload["skills"]) == 16
 
 
 def test_read_only_mutation_is_rejected_by_runtime_contract() -> None:
@@ -159,6 +161,38 @@ def test_math_skill_mutation_is_rejected_by_runtime_contract() -> None:
     assert "math skill must be planning_only or read_only" in str(mode_exc.value)
 
 
+def test_planning_skill_mutation_is_rejected_by_runtime_contract() -> None:
+    connector_payload = _load_registry_payload()
+    _skill_by_id(connector_payload, "planning.optimize_schedule")["connectors"] = ["google_calendar"]
+
+    with pytest.raises(PersonalAssistantInvariantError) as connector_exc:
+        PersonalAssistantSkillRegistry.from_mapping(connector_payload)
+
+    unsafe_action_payload = _load_registry_payload()
+    _skill_by_id(unsafe_action_payload, "planning.optimize_schedule")["allowed_actions"].append("read")
+
+    with pytest.raises(PersonalAssistantInvariantError) as action_exc:
+        PersonalAssistantSkillRegistry.from_mapping(unsafe_action_payload)
+
+    write_payload = _load_registry_payload()
+    _skill_by_id(write_payload, "planning.optimize_schedule")["effect_boundary"]["system_of_record_write_allowed"] = True
+
+    with pytest.raises(PersonalAssistantInvariantError) as write_exc:
+        PersonalAssistantSkillRegistry.from_mapping(write_payload)
+
+    mode_payload = _load_registry_payload()
+    _skill_by_id(mode_payload, "planning.optimize_schedule")["mode"] = "approval_required"
+
+    with pytest.raises(PersonalAssistantInvariantError) as mode_exc:
+        PersonalAssistantSkillRegistry.from_mapping(mode_payload)
+
+    assert "planning.optimize_schedule" in str(connector_exc.value)
+    assert "planning skill cannot require connectors" in str(connector_exc.value)
+    assert "planning skill allows unsafe actions" in str(action_exc.value)
+    assert "planning skill sets system_of_record_write_allowed=true" in str(write_exc.value)
+    assert "planning skill must be planning_only or read_only" in str(mode_exc.value)
+
+
 def test_high_risk_or_write_capable_skill_requires_approval() -> None:
     registry_payload = _load_registry_payload()
     skill = _skill_by_id(registry_payload, "email.send.with_approval")
@@ -179,7 +213,7 @@ def test_read_model_preserves_non_execution_boundary() -> None:
     send_skill = skills_by_id["email.send.with_approval"]
     memory_skill = skills_by_id["memory.observe"]
 
-    assert read_model["skill_count"] == 14
+    assert read_model["skill_count"] == 15
     assert read_model["risk_levels"]["P4"] == 1
     assert read_model["risk_levels"]["P5"] == 1
     assert send_skill["metadata"]["execution_enabled"] is False
