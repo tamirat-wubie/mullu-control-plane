@@ -139,7 +139,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
 | `temporal_sla_receipt.schema.json` | Canonical governed SLA, business-window, and escalation receipt |
-| `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
+| `terminal_closure_certificate.schema.json` | Canonical final command closure certificate; TeamOps use binds provider-observation receipt identity through certificate metadata and graph refs |
 | `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
 | `trust_ledger_anchor_submission_receipt.schema.json` | Canonical signed operator submission receipt for externally anchored trust-ledger exports |
 | `trust_ledger_anchor_verification_report.schema.json` | Canonical offline verifier report for trust ledger anchor and package replay |
