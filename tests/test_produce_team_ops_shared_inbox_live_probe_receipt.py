@@ -33,6 +33,10 @@ from scripts.produce_team_ops_shared_inbox_live_probe_receipt import (
     produce_team_ops_shared_inbox_live_probe_receipt,
     write_team_ops_shared_inbox_live_probe_receipt,
 )
+from scripts.produce_team_ops_shared_inbox_provider_observation_receipt import (
+    produce_team_ops_shared_inbox_provider_observation_receipt,
+    write_team_ops_shared_inbox_provider_observation_receipt,
+)
 from scripts.produce_team_ops_shared_inbox_operator_handoff import (
     TEAM_OPS_WITNESS_REF_SIGNAL_NAMES,
     produce_team_ops_shared_inbox_operator_handoff,
@@ -83,21 +87,21 @@ def test_team_ops_shared_inbox_live_probe_receipt_requires_observation_evidence(
     assert receipt.live_probe_observation_bound is False
     assert receipt.response_digest == ""
     assert receipt.evidence_refs == ()
-    assert receipt.blocked_until == ("redacted_live_probe_observation_missing",)
+    assert receipt.provider_observation_receipt_valid is False
+    assert receipt.blocked_until == ("provider_observation_receipt_missing_or_unready",)
 
 
 def test_team_ops_shared_inbox_live_probe_receipt_accepts_read_only_observation(
     tmp_path: Path,
 ) -> None:
     operator_input_path = _write_ready_operator_input(tmp_path)
+    provider_observation_path = _write_ready_provider_observation(tmp_path, operator_input_path)
 
     receipt = produce_team_ops_shared_inbox_live_probe_receipt(
         operator_input_path=operator_input_path,
         schema_path=SCHEMA_PATH,
         checked_at="2026-06-14T00:00:00+00:00",
-        response_digest="a" * 64,
-        observed_message_count=2,
-        evidence_refs=("team_ops_live_probe_observation:aaaaaaaaaaaaaaaa",),
+        provider_observation_path=provider_observation_path,
     )
 
     assert receipt.status == "passed"
@@ -105,10 +109,15 @@ def test_team_ops_shared_inbox_live_probe_receipt_accepts_read_only_observation(
     assert receipt.proof_state == "Pass"
     assert receipt.connector_id == "gmail"
     assert receipt.provider_operation == "email.search"
+    assert receipt.provider_observation_receipt_ref.endswith("team_ops_shared_inbox_provider_observation_receipt.json")
+    assert receipt.provider_observation_receipt_id.startswith("teamops-shared-inbox-provider-observation-receipt-")
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.max_message_count == 12
     assert receipt.observed_message_count == 2
-    assert receipt.response_digest == "a" * 64
-    assert receipt.evidence_refs == ("team_ops_live_probe_observation:aaaaaaaaaaaaaaaa",)
+    assert receipt.response_digest == "b" * 64
+    assert receipt.evidence_refs == (
+        f"team_ops_provider_observation_receipt:{receipt.provider_observation_receipt_id}",
+    )
     assert receipt.blocked_until == ()
     assert receipt.live_probe_observation_bound is True
 
@@ -162,6 +171,7 @@ def test_team_ops_shared_inbox_live_probe_receipt_cli_writes_report(
     capsys,
 ) -> None:
     operator_input_path = _write_ready_operator_input(tmp_path)
+    provider_observation_path = _write_ready_provider_observation(tmp_path, operator_input_path)
     output_path = tmp_path / "team_ops_shared_inbox_live_probe_receipt.json"
     receipt = produce_team_ops_shared_inbox_live_probe_receipt(
         operator_input_path=operator_input_path,
@@ -180,12 +190,8 @@ def test_team_ops_shared_inbox_live_probe_receipt_cli_writes_report(
             str(output_path),
             "--checked-at",
             "2026-06-14T00:00:00+00:00",
-            "--response-digest",
-            "a" * 64,
-            "--observed-message-count",
-            "2",
-            "--evidence-ref",
-            "team_ops_live_probe_observation:aaaaaaaaaaaaaaaa",
+            "--provider-observation",
+            str(provider_observation_path),
             "--json",
         ]
     )
@@ -196,7 +202,8 @@ def test_team_ops_shared_inbox_live_probe_receipt_cli_writes_report(
     assert written == output_path
     assert exit_code == 0
     assert payload["status"] == "passed"
-    assert payload["response_digest"] == "a" * 64
+    assert payload["provider_observation_receipt_valid"] is True
+    assert payload["response_digest"] == "b" * 64
     assert stdout_payload["receipt_id"] == payload["receipt_id"]
     assert captured.err == ""
 
@@ -237,6 +244,20 @@ def _write_ready_operator_input(tmp_path: Path) -> Path:
     request = emit_team_ops_live_probe_operator_input_request(authority_path=authority_path)
     operator_input_path.write_text(json.dumps(request.as_dict()), encoding="utf-8")
     return operator_input_path
+
+
+def _write_ready_provider_observation(tmp_path: Path, operator_input_path: Path) -> Path:
+    provider_observation_path = tmp_path / "team_ops_shared_inbox_provider_observation_receipt.json"
+    receipt = produce_team_ops_shared_inbox_provider_observation_receipt(
+        operator_input_path=operator_input_path,
+        checked_at="2026-06-14T00:00:00+00:00",
+        provider_receipt_ref="provider://gmail/read-only-observation/20260614",
+        provider_response_digest="a" * 64,
+        redacted_response_digest="b" * 64,
+        observed_message_count=2,
+    )
+    write_team_ops_shared_inbox_provider_observation_receipt(receipt, provider_observation_path)
+    return provider_observation_path
 
 
 def _write_ready_handoff(tmp_path: Path) -> Path:
