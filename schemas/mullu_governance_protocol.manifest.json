@@ -1679,6 +1679,12 @@
       "surface": "assistant"
     },
     {
+      "schema_id": "personal-assistant-coherence-ledger-receipt",
+      "path": "schemas/personal_assistant_coherence_ledger_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-coherence-ledger-receipt:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "durable-gmail-account-binding-operator-input-request",
       "path": "schemas/durable_gmail_account_binding_operator_input_request.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
