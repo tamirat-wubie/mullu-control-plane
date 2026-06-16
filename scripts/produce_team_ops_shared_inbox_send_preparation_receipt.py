@@ -9,6 +9,7 @@ Dependencies: schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json
 and scripts.validate_team_ops_shared_inbox_approval_decision_receipt.
 Invariants:
   - Only ready approved approval-decision receipts can prepare a send packet.
+  - Passed receipts retain the upstream provider-observation witness from the decision.
   - This producer prepares evidence only; it never executes a send.
   - This producer never drafts, writes a mailbox, or mutates a provider.
   - Raw recipient, subject, body, message content, and secret-shaped values are rejected.
@@ -63,6 +64,9 @@ class TeamOpsSharedInboxSendPreparationReceipt:
     source_approval_decision_receipt_id: str
     approval_decision_receipt_valid: bool
     approval_decision_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -150,6 +154,7 @@ def produce_team_ops_shared_inbox_send_preparation_receipt(
         receipt_id=_receipt_id(
             approval_decision_receipt_path=approval_decision_receipt_path,
             source_approval_decision_receipt_id=str(decision_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(decision_receipt.get("provider_observation_receipt_id", "")),
             send_preparation_ref=clean_send_preparation_ref,
             prepared_message_ref=clean_prepared_message_ref,
             recipient_hash=clean_recipient_hash,
@@ -162,6 +167,9 @@ def produce_team_ops_shared_inbox_send_preparation_receipt(
         source_approval_decision_receipt_id=str(decision_receipt.get("receipt_id", "")),
         approval_decision_receipt_valid=decision_validation.valid,
         approval_decision_receipt_ready=decision_validation.ready,
+        provider_observation_receipt_ref=str(decision_receipt.get("provider_observation_receipt_ref", "")),
+        provider_observation_receipt_id=str(decision_receipt.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=decision_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -318,6 +326,7 @@ def _receipt_id(
     *,
     approval_decision_receipt_path: Path,
     source_approval_decision_receipt_id: str,
+    provider_observation_receipt_id: str,
     send_preparation_ref: str,
     prepared_message_ref: str,
     recipient_hash: str,
@@ -327,6 +336,7 @@ def _receipt_id(
     material = {
         "decision_ref": _artifact_ref(approval_decision_receipt_path),
         "source_approval_decision_receipt_id": source_approval_decision_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "send_preparation_ref": send_preparation_ref,
         "prepared_message_ref": prepared_message_ref,
         "recipient_hash": recipient_hash,
