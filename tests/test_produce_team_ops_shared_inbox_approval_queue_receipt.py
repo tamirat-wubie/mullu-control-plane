@@ -44,6 +44,9 @@ def test_team_ops_shared_inbox_approval_queue_blocks_without_routing_ready(
     assert receipt.proof_state == "Unknown"
     assert receipt.routing_receipt_valid is True
     assert receipt.routing_receipt_ready is False
+    assert receipt.provider_observation_receipt_ref == ""
+    assert receipt.provider_observation_receipt_id == ""
+    assert receipt.provider_observation_receipt_valid is False
     assert receipt.external_send_allowed is False
     assert receipt.approval_decision_performed_by_producer is False
     assert receipt.draft_created_by_producer is False
@@ -67,6 +70,10 @@ def test_team_ops_shared_inbox_approval_queue_requires_request_evidence(
 
     assert receipt.status == "blocked"
     assert receipt.routing_receipt_ready is True
+    assert receipt.provider_observation_receipt_ref == (
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.approval_queue_id == "team_ops.external_send_approval"
     assert receipt.approval_request_ref == ""
     assert receipt.approval_state == "missing"
@@ -92,6 +99,10 @@ def test_team_ops_shared_inbox_approval_queue_accepts_pending_obligation(
     assert receipt.status == "passed"
     assert receipt.solver_outcome == "SolvedVerified"
     assert receipt.proof_state == "Pass"
+    assert receipt.provider_observation_receipt_id == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.approval_queue_id == "team_ops.external_send_approval"
     assert receipt.required_approver_role == "team_ops_manager"
     assert receipt.approval_state == "pending"
@@ -169,6 +180,7 @@ def test_team_ops_shared_inbox_approval_queue_cli_writes_report(
     assert written == output_path
     assert exit_code == 0
     assert payload["status"] == "passed"
+    assert payload["provider_observation_receipt_valid"] is True
     assert payload["approval_state"] == "pending"
     assert stdout_payload["receipt_id"] == payload["receipt_id"]
     assert captured.err == ""
@@ -201,6 +213,9 @@ def _ready_routing_receipt() -> dict[str, object]:
     return _base_routing_receipt() | {
         "live_probe_receipt_valid": True,
         "live_probe_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -227,6 +242,9 @@ def _base_routing_receipt() -> dict[str, object]:
         "workflow_id": "team_ops.shared_inbox_triage",
         "source_live_probe_receipt_ref": ".change_assurance/team_ops_shared_inbox_live_probe_receipt.json",
         "source_live_probe_receipt_id": "teamops-shared-inbox-live-probe-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "routed_at": "2026-06-14T00:00:00+00:00",
         "assignment_required": True,
         "draft_response_required": True,
