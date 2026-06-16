@@ -525,12 +525,18 @@ def _valid_whqr_semver(version: str) -> bool:
 
 
 def _valid_sha256_digest_ref(value: str) -> bool:
-    return value.startswith("sha256:") and len(value) > len("sha256:")
+    prefix = "sha256:"
+    return value.startswith(prefix) and _valid_non_whitespace_suffix(value, prefix)
 
 
 def _valid_whqr_replay_ref(value: str) -> bool:
     prefix = "whqr://replay/sha256:"
-    return value.startswith(prefix) and len(value) > len(prefix)
+    return value.startswith(prefix) and _valid_non_whitespace_suffix(value, prefix)
+
+
+def _valid_non_whitespace_suffix(value: str, prefix: str) -> bool:
+    suffix = value[len(prefix):]
+    return bool(suffix) and all(not char.isspace() for char in suffix)
 
 
 _WHQR_REPLAY_BINDING_FIELDS = frozenset(

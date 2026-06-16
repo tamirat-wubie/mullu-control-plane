@@ -2395,12 +2395,18 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
 
 
 def _has_sha256_digest_ref(value: str) -> bool:
-    return value.startswith("sha256:") and len(value) > len("sha256:")
+    prefix = "sha256:"
+    return value.startswith(prefix) and _has_non_whitespace_suffix(value, prefix)
 
 
 def _has_whqr_sha256_digest_ref(value: str) -> bool:
     prefix = "whqr://replay/sha256:"
-    return value.startswith(prefix) and len(value) > len(prefix)
+    return value.startswith(prefix) and _has_non_whitespace_suffix(value, prefix)
+
+
+def _has_non_whitespace_suffix(value: str, prefix: str) -> bool:
+    suffix = value[len(prefix):]
+    return bool(suffix) and all(not char.isspace() for char in suffix)
 
 
 def _is_semver_core(value: str) -> bool:
