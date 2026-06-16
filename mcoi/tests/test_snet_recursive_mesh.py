@@ -667,6 +667,70 @@ def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     assert valid_metadata.promoted_symbol_id == ""
 
 
+def test_direct_snet_contracts_reject_optional_text_comparison_drift() -> None:
+    class AlwaysEqualToEmpty:
+        def __eq__(self, other: object) -> bool:
+            return True
+
+    class RaisingEquality:
+        def __eq__(self, other: object) -> bool:
+            raise RuntimeError("comparison leak")
+
+    for invalid_value in (AlwaysEqualToEmpty(), RaisingEquality()):
+        with pytest.raises(ValueError, match="sense_id"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", sense_id=invalid_value)
+        with pytest.raises(ValueError, match="parent_question_id"):
+            SNetQuestion(
+                question_id="question:1",
+                target_symbol_id="symbol:1",
+                wh_type=SNetWHType.WHAT,
+                text="What is Seed?",
+                facet="identity",
+                parent_question_id=invalid_value,
+            )
+        with pytest.raises(ValueError, match="promoted_symbol_id"):
+            SNetMetadata(
+                metadata_id="metadata:1",
+                parent_symbol_id="symbol:1",
+                question_id="question:1",
+                answer_id="answer:1",
+                facet="identity",
+                value="Seed",
+                context="general",
+                perspective="general",
+                confidence=0.5,
+                validation_state=SNetValidationState.SUPPORTED,
+                promoted_symbol_id=invalid_value,
+            )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", sense_id="")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        parent_question_id="",
+    )
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed",
+        context="general",
+        perspective="general",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+        promoted_symbol_id="",
+    )
+
+    assert valid_symbol.sense_id == ""
+    assert valid_question.parent_question_id == ""
+    assert valid_metadata.promoted_symbol_id == ""
+
+
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
     budgeted_mesh = SNetRecursiveMesh(SNetInquiryBudget(max_questions_per_symbol=1))
     budgeted_seed = budgeted_mesh.add_symbol("Budgeted seed", symbol_type="physical_biological_object")
