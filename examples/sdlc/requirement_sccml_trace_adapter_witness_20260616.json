@@ -1,0 +1,69 @@
+{
+  "requirement_id": "REQ-sccml-trace-adapter-witness-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-sccml-trace-adapter-witness",
+  "problem_statement": "SCCML can provide deterministic execution-chain trace semantics, but the control plane needs a witness-only boundary before accepting any SCCML kernel trace as governance proof.",
+  "success_criteria": [
+    "SccmlTraceAdapterWitness validates against a public JSON schema and Foundation Mode example",
+    "SccmlTraceAdapterWitness binds instruction-trace refs, pre-state hash refs, post-state hash refs, proof refs, unsupported-operation gap refs, UAO refs, LifeMeaningJudgment refs, KernelProof refs, and TraceEntry refs",
+    "SccmlTraceAdapterWitness blocks live kernel execution, subprocess execution, external repository reads, instruction replay, state mutation, proof commitment, governance proof acceptance, unsupported-operation silence, connector calls, external writes, file writes, raw trace storage, raw state storage, raw secret storage, terminal closure, and success claims",
+    "SccmlTraceAdapterWitness rejects authority drift, unsupported-operation silence, raw trace or state retention, digest and scope drift, missing evidence refs, receipt ref drift, and summary count drift",
+    "SccmlTraceAdapterWitness is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live kernel execution",
+    "no subprocess execution",
+    "no external repository read",
+    "no instruction replay",
+    "no state mutation",
+    "no proof commitment",
+    "no governance proof acceptance",
+    "no unsupported-operation silence",
+    "no connector call authority",
+    "no external write",
+    "no file write",
+    "no raw trace retention",
+    "no raw state retention",
+    "no raw secret retention",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "SCCML trace evidence remains witness-only",
+    "instruction trace, state, proof, unsupported-operation gap, and adapter manifest evidence remain digest refs",
+    "unsupported operations must be declared and cannot be ignored",
+    "KernelProof, TraceEntry, UAO, and LifeMeaningJudgment refs remain explicit",
+    "live execution, replay, mutation, and proof acceptance remain false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/sccml_trace_adapter_witness.schema.json",
+    "examples/sccml_trace_adapter_witness.foundation.json",
+    "scripts/validate_sccml_trace_adapter_witness.py",
+    "tests/test_validate_sccml_trace_adapter_witness.py",
+    "docs/90_sccml_trace_adapter_witness_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_sccml_trace_adapter_witness.py",
+    "python -m pytest tests/test_validate_sccml_trace_adapter_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_sccml_trace_adapter_witness_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/sccml_trace_adapter_witness.schema.json",
+    "examples/sccml_trace_adapter_witness.foundation.json",
+    "scripts/validate_sccml_trace_adapter_witness.py",
+    "tests/test_validate_sccml_trace_adapter_witness.py",
+    "docs/90_sccml_trace_adapter_witness_contract.md",
+    "examples/sdlc/design_sccml_trace_adapter_witness_20260616.json",
+    "examples/sdlc/security_review_sccml_trace_adapter_witness_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/sccml-trace-adapter-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/sccml-trace-adapter-witness/requirement",
+  "receipt_ref": "receipt://sdlc/sccml-trace-adapter-witness/requirement"
+}

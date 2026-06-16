@@ -38,6 +38,7 @@ The control plane already absorbed several high-fit ideas:
 | Browser inspection boundary | `BrowserObservationReceipt` | Implemented |
 | Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
 | Capture policy and trusted reality evidence packet | `TrustedCaptureEvidencePacket` | Implemented |
+| SCCML trace adapter boundary | `SccmlTraceAdapterWitness` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -72,9 +73,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `SccmlTraceAdapterWitness`
-   - Creates the boundary before any SCCML execution-chain trace can become governance proof.
-   - Should remain witness-only until instruction-trace refs, state-hash refs, proof refs, and unsupported-op gaps are validated.
+2. `ChaosRehearsalExecutionReport`
+   - Records dry-run resilience evidence before any production chaos or invariant-fuzz claim.
+   - Should remain scenario-only with rollback obligations and no runtime disruption authority.
 
 ## 6. Project Discipline Mesh Findings
 

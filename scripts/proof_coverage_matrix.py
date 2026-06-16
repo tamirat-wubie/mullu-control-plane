@@ -5997,6 +5997,64 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "sccml_trace_adapter_witness",
+            [
+                "SccmlTraceAdapterWitness",
+                "validate_sccml_trace_adapter_witness",
+                "sccml_trace_adapter_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/sccml_trace_adapter_witness.schema.json",
+                "examples/sccml_trace_adapter_witness.foundation.json",
+                "scripts/validate_sccml_trace_adapter_witness.py",
+                "tests/test_validate_sccml_trace_adapter_witness.py",
+                "schemas/kernel_proof.schema.json",
+                "schemas/trace_entry.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/90_sccml_trace_adapter_witness_contract.md",
+            ],
+            "SCCML trace adapter witnesses bind instruction-trace digest refs, pre-state and post-state hash refs, proof digest refs, unsupported-operation gap refs, KernelProof refs, TraceEntry refs, UAO refs, LifeMeaningJudgment refs, integrity guards, and authority-denial flags before SCCML traces can become governance proof.",
+            [
+                "sccml_trace_adapter_witness_schema_valid",
+                "sccml_trace_adapter_witness_blocks_kernel_authority",
+                "sccml_trace_adapter_witness_requires_digest_refs",
+                "sccml_trace_adapter_witness_rejects_unsupported_op_silence",
+                "sccml_trace_adapter_witness_rejects_raw_trace_retention",
+                "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift",
+                "sccml_trace_adapter_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "sccml_trace_adapter_witness_schema_valid": [
+                    "sccml_trace_adapter_witness_passes"
+                ],
+                "sccml_trace_adapter_witness_blocks_kernel_authority": [
+                    "sccml_trace_adapter_witness_passes",
+                    "sccml_trace_adapter_witness_rejects_authority_drift",
+                ],
+                "sccml_trace_adapter_witness_requires_digest_refs": [
+                    "sccml_trace_adapter_witness_passes",
+                    "sccml_trace_adapter_witness_rejects_digest_and_scope_drift",
+                ],
+                "sccml_trace_adapter_witness_rejects_unsupported_op_silence": [
+                    "sccml_trace_adapter_witness_rejects_unsupported_op_silence"
+                ],
+                "sccml_trace_adapter_witness_rejects_raw_trace_retention": [
+                    "sccml_trace_adapter_witness_rejects_raw_trace_and_state_retention"
+                ],
+                "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift": [
+                    "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift"
+                ],
+                "sccml_trace_adapter_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_sccml_trace_adapter_witness"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -10072,6 +10130,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_trusted_capture_evidence_packet_contract",
             "surfaces": ["trusted_capture_evidence_packet"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_sccml_trace_adapter_witness_contract",
+            "surfaces": ["sccml_trace_adapter_witness"],
             "status": "closed",
         },
         {
