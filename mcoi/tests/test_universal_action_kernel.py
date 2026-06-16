@@ -65,6 +65,10 @@ from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureDisposition,
 )
 from mcoi_runtime.contracts.whqr import WHQRDocument, WHQRNode, WHRole
+
+WHQR_CANONICAL_HASH = "sha256:" + ("a" * 64)
+WHQR_SEMANTICS_HASH = "sha256:" + ("b" * 64)
+WHQR_REPLAY_REF = f"whqr://replay/{WHQR_CANONICAL_HASH}"
 from mcoi_runtime.contracts.world_state import (
     ContradictionRecord,
     ContradictionStrategy,
@@ -1281,6 +1285,51 @@ def test_universal_action_proof_hash_rejects_whitespace_whqr_digest_refs() -> No
     assert malformed_detail["whqr_replay_binding"]["semantics_hash"].endswith("\t")
 
 
+def test_universal_action_proof_hash_rejects_nonhex_whqr_digest_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-nonhex-digest",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:" + ("g" * 64),
+        "canonical_hash": "sha256:" + ("g" * 64),
+        "semantics_hash": "sha256:" + ("A" * 64),
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["canonical_hash"].endswith("g" * 64)
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"].endswith("A" * 64)
+
+
 def test_universal_action_proof_hash_rejects_leading_zero_whqr_version() -> None:
     kernel, _executor = _kernel_with_capability()
     store = InMemoryCommandLedgerStore()
@@ -1313,9 +1362,9 @@ def test_universal_action_proof_hash_rejects_leading_zero_whqr_version() -> None
     )
     malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
     malformed_detail["whqr_replay_binding"] = {
-        "replay_ref": "whqr://replay/sha256:runtime-canonical",
-        "canonical_hash": "sha256:runtime-canonical",
-        "semantics_hash": "sha256:runtime-semantics",
+        "replay_ref": WHQR_REPLAY_REF,
+        "canonical_hash": WHQR_CANONICAL_HASH,
+        "semantics_hash": WHQR_SEMANTICS_HASH,
         "version": "01.002.0003",
     }
 
@@ -1358,9 +1407,9 @@ def test_universal_action_proof_hash_rejects_non_ascii_decimal_whqr_version() ->
     )
     malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
     malformed_detail["whqr_replay_binding"] = {
-        "replay_ref": "whqr://replay/sha256:runtime-canonical",
-        "canonical_hash": "sha256:runtime-canonical",
-        "semantics_hash": "sha256:runtime-semantics",
+        "replay_ref": WHQR_REPLAY_REF,
+        "canonical_hash": WHQR_CANONICAL_HASH,
+        "semantics_hash": WHQR_SEMANTICS_HASH,
         "version": "\u0661.2.3",
     }
 

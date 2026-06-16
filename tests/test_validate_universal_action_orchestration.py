@@ -53,6 +53,11 @@ DEFERRED_STALE_EVIDENCE_PATH = (
 SIMULATED_LOW_RISK_READONLY_PATH = (
     WORKSPACE_ROOT / "examples" / "uao" / "simulated_low_risk_readonly.json"
 )
+WHQR_CANONICAL_HASH = "sha256:" + ("a" * 64)
+WHQR_OTHER_CANONICAL_HASH = "sha256:" + ("b" * 64)
+WHQR_SEMANTICS_HASH = "sha256:" + ("c" * 64)
+WHQR_REPLAY_REF = f"whqr://replay/{WHQR_CANONICAL_HASH}"
+WHQR_OTHER_REPLAY_REF = f"whqr://replay/{WHQR_OTHER_CANONICAL_HASH}"
 
 
 def _load_validator_module():
@@ -133,15 +138,15 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             set(whqr_replay_binding["properties"]),
         )
         self.assertEqual(
-            "^whqr://replay/sha256:\\S+$",
+            "^whqr://replay/sha256:[0-9a-f]{64}$",
             whqr_replay_binding["properties"]["replay_ref"]["pattern"],
         )
         self.assertEqual(
-            "^sha256:\\S+$",
+            "^sha256:[0-9a-f]{64}$",
             whqr_replay_binding["properties"]["semantics_hash"]["pattern"],
         )
         self.assertEqual(
-            "^sha256:\\S+$",
+            "^sha256:[0-9a-f]{64}$",
             whqr_replay_binding["properties"]["canonical_hash"]["pattern"],
         )
         self.assertEqual(
@@ -344,9 +349,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:wrong-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "replay_ref": WHQR_OTHER_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "0.1.0",
         }
 
@@ -362,7 +367,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             errors,
         )
         self.assertEqual(
-            "whqr://replay/sha256:wrong-canonical-hash",
+            WHQR_OTHER_REPLAY_REF,
             invalid_record["closure"]["whqr_replay_binding"]["replay_ref"],
         )
 
@@ -370,9 +375,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "0.1.0",
             "authority_override": "not-permitted",
         }
@@ -397,8 +402,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
             "semantics_hash": "expected-semantics",
             "version": "0.1.0",
         }
@@ -425,7 +430,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         invalid_record["closure"]["whqr_replay_binding"] = {
             "replay_ref": "whqr://replay/expected-canonical-hash",
             "canonical_hash": "expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "0.1.0",
         }
 
@@ -459,15 +464,15 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
 
         self.assertGreaterEqual(len(errors), 4)
         self.assertIn(
-            "closure.whqr_replay_binding.replay_ref must include a sha256 digest",
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
-            "closure.whqr_replay_binding.canonical_hash must include a sha256 digest",
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
-            "closure.whqr_replay_binding.semantics_hash must include a sha256 digest",
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
@@ -493,15 +498,15 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
 
         self.assertGreaterEqual(len(errors), 4)
         self.assertIn(
-            "closure.whqr_replay_binding.replay_ref must include a sha256 digest",
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
-            "closure.whqr_replay_binding.canonical_hash must include a sha256 digest",
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
-            "closure.whqr_replay_binding.semantics_hash must include a sha256 digest",
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
             errors,
         )
         self.assertIn(
@@ -513,13 +518,39 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             invalid_record["closure"]["whqr_replay_binding"]["semantics_hash"],
         )
 
+    def test_whqr_replay_binding_rejects_nonhex_digest_refs(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:" + ("g" * 64),
+            "canonical_hash": "sha256:" + ("g" * 64),
+            "semantics_hash": "sha256:" + ("A" * 64),
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 3)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+
     def test_whqr_replay_binding_rejects_unhashed_replay_ref(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
             "replay_ref": "whqr://replay/expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "0.1.0",
         }
 
@@ -547,9 +578,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "draft",
         }
 
@@ -573,9 +604,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "01.002.0003",
         }
 
@@ -599,9 +630,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["closure"]["whqr_replay_binding"] = {
-            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
-            "canonical_hash": "sha256:expected-canonical-hash",
-            "semantics_hash": "sha256:expected-semantics",
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
             "version": "\u0661.2.3",
         }
 
