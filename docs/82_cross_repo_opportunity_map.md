@@ -33,6 +33,7 @@ The control plane already absorbed several high-fit ideas:
 | Scheduler-worker runtime receipt dry-run | `SchedulerWorkerRuntimeReceiptEmitterDryRun` | Implemented |
 | Worker receipt ledger projection | `WorkerReceiptLedgerReadModel` | Implemented |
 | Personal-assistant projections without effects | personal-assistant read-only, approval, research, GitHub/Codex, and math projections | Implemented |
+| Mfidel substrate conformance witness | `MfidelSubstrateConformanceReceipt` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -67,15 +68,11 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `MfidelSubstrateConformanceReceipt`
-   - Protects the hardest symbolic invariant across Python, TypeScript, and Rust surfaces.
-   - Should be added before importing more SDK/kernel work.
-
-3. `ReadinessWaiverReviewPacket`
+2. `ReadinessWaiverReviewPacket`
    - Turns waiver and accepted-risk handling into a typed review path.
    - Useful before any deployment or promotion claim.
 
-4. `BrowserObservationReceipt`
+3. `BrowserObservationReceipt`
    - Enables inspection evidence without granting browser mutation authority.
    - Should precede any browser-control or site-verification automation.
 

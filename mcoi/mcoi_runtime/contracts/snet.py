@@ -124,7 +124,7 @@ WH_TYPES: tuple[SNetWHType, ...] = (
 
 
 def _freeze_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
-    if isinstance(values, (str, bytes)) or not isinstance(values, (list, tuple)):
+    if type(values) not in (list, tuple):
         raise ValueError(f"{field_name} must be an array")
     frozen = freeze_value(list(values))
     if not isinstance(frozen, tuple):
@@ -184,9 +184,11 @@ def _require_text(value: object, field_name: str) -> str:
 
 
 def _require_optional_text(value: object, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be a non-empty string")
     if value == "":
         return ""
-    return _require_text(value, field_name)
+    return require_non_empty_text(value, field_name)
 
 
 def _require_literal_bool(value: object, expected: bool, field_name: str) -> bool:

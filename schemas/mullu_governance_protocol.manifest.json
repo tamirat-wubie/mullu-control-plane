@@ -1481,6 +1481,12 @@
       "surface": "observability"
     },
     {
+      "schema_id": "personal-assistant-public-console-probe-receipt",
+      "path": "schemas/personal_assistant_public_console_probe_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1",
+      "surface": "observability"
+    },
+    {
       "schema_id": "public-naming-readiness",
       "path": "schemas/public_naming_readiness.schema.json",
       "urn": "urn:mullusi:schema:public-naming-readiness:1",
@@ -1721,6 +1727,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "mfidel-substrate-conformance-receipt",
+      "path": "schemas/mfidel_substrate_conformance_receipt.schema.json",
+      "urn": "urn:mullusi:schema:mfidel-substrate-conformance-receipt:1",
+      "surface": "mfidel"
+    },
+    {
       "schema_id": "read-only-worker-binding",
       "path": "schemas/read_only_worker_binding.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-binding:1",
@@ -1766,6 +1778,12 @@
       "schema_id": "read-only-worker-runtime-receipt-schema-binding-witness",
       "path": "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-witness:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-store-write-path-witness",
+      "path": "schemas/read_only_worker_runtime_receipt_store_write_path_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-store-write-path-witness:1",
       "surface": "worker"
     }
   ],

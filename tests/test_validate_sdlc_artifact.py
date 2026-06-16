@@ -726,3 +726,20 @@ def test_load_json_object_rejects_non_object_json(tmp_path: Path) -> None:
 
     assert payload_path.exists()
     assert payload_path.suffix == ".json"
+
+
+def test_mfidel_substrate_conformance_receipt_requirement_and_design_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_mfidel_substrate_conformance_receipt_20260616.json")
+    design_path = Path("examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json")
+    requirement = validator.load_json_object(requirement_path, "mfidel substrate requirement")
+    design = validator.load_json_object(design_path, "mfidel substrate design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement)
+    design_errors = validator.validate_artifact_record("design_decision", design)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design["requirement_id"] == requirement["requirement_id"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in requirement["affected_surfaces"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in design["schema_changes"]
+    assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in design["validator_changes"]

@@ -797,6 +797,13 @@
       ]
     },
     {
+      "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "mfidel_substrate_conformance_receipt"
+      ]
+    },
+    {
       "action_id": "publish_collaboration_case_contract",
       "status": "closed",
       "surfaces": [
@@ -1148,14 +1155,14 @@
   "coverage_summary": {
     "by_action_proof": {
       "action_proof": 119,
-      "audit_chain": 0,
+      "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 144,
+      "audit_chain": 145,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1163,21 +1170,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 101
+      "witnessed": 102
     },
     "by_request_proof": {
       "action_proof": 1,
-      "audit_chain": 0,
+      "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
       "request_proof": 118
     },
-    "surface_count": 147
+    "surface_count": 148
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 147,
+      "strong": 148,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9441,6 +9448,64 @@
       "surface_id": "worker_receipt_ledger_read_model"
     },
     {
+      "action_proof": "audit_chain",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/mfidel_substrate_conformance_receipt.schema.json",
+        "examples/mfidel_substrate_conformance_receipt.foundation.json",
+        "scripts/validate_mfidel_substrate_conformance_receipt.py",
+        "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+        "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+        "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+        "mcoi/mcoi_runtime/contracts/mfidel.py",
+        "mcoi/tests/test_mfidel_atomicity.py",
+        "mcoi/tests/test_mfidel_matrix.py",
+        "docs/85_mfidel_substrate_conformance_receipt_contract.md"
+      ],
+      "notes": "Mfidel substrate conformance receipts bind local Python substrate digests, grid bounds, exact-preservation witnesses, no-normalization proof refs, and TypeScript/Rust SDK/kernel evidence gaps while denying Unicode normalization, fidel decomposition, live runtime import authority, cross-runtime closure, and terminal closure.",
+      "representative_paths": [
+        "MfidelSubstrateConformanceReceipt",
+        "validate_mfidel_substrate_conformance_receipt",
+        "mfidel_substrate_conformance_receipt.v1"
+      ],
+      "request_proof": "audit_chain",
+      "runtime_witness_anchor_aliases": {
+        "mfidel_substrate_conformance_receipt_preserves_atomicity": [
+          "mfidel_substrate_conformance_receipt_passes",
+          "mfidel_substrate_conformance_receipt_rejects_decomposed_like_input"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_digest_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_digest_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_guard_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_schema_valid": [
+          "mfidel_substrate_conformance_receipt_passes"
+        ],
+        "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_mfidel_substrate_conformance_receipt"
+        ]
+      },
+      "runtime_witnesses": [
+        "mfidel_substrate_conformance_receipt_schema_valid",
+        "mfidel_substrate_conformance_receipt_preserves_atomicity",
+        "mfidel_substrate_conformance_receipt_rejects_guard_drift",
+        "mfidel_substrate_conformance_receipt_rejects_digest_drift",
+        "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift",
+        "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift",
+        "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid"
+      ],
+      "surface_id": "mfidel_substrate_conformance_receipt"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -12727,8 +12792,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1634,
-    "runtime_witness_count": 1634,
+    "exact_test_anchor_count": 1641,
+    "runtime_witness_count": 1641,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20009,6 +20074,58 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "worker_receipt_ledger_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_passes"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_passes",
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_decomposed_like_input"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_preserves_atomicity"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_guard_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_digest_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_digest_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_sdlc_requirement_and_design_validate_for_mfidel_substrate_conformance_receipt"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "mfidel_substrate_conformance_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

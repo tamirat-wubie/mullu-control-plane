@@ -4320,6 +4320,37 @@ def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
     assert closure_actions["publish_worker_receipt_ledger_read_model_contract"]["status"] == "closed"
 
 
+def test_mfidel_substrate_conformance_receipt_preserves_atomicity() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    mfidel_surface = surfaces["mfidel_substrate_conformance_receipt"]
+    mfidel_witness_surface = witness_surfaces["mfidel_substrate_conformance_receipt"]
+    witnesses = set(mfidel_surface["runtime_witnesses"])
+
+    assert mfidel_surface["coverage_state"] == "witnessed"
+    assert mfidel_surface["request_proof"] == "audit_chain"
+    assert mfidel_surface["action_proof"] == "audit_chain"
+    assert "MfidelSubstrateConformanceReceipt" in mfidel_surface["representative_paths"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in mfidel_surface["evidence_files"]
+    assert "examples/mfidel_substrate_conformance_receipt.foundation.json" in mfidel_surface["evidence_files"]
+    assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in mfidel_surface["evidence_files"]
+    assert "tests/test_validate_mfidel_substrate_conformance_receipt.py" in mfidel_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/substrate/mfidel/grid.py" in mfidel_surface["evidence_files"]
+    assert "mfidel_substrate_conformance_receipt_schema_valid" in witnesses
+    assert "mfidel_substrate_conformance_receipt_preserves_atomicity" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_guard_drift" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_digest_drift" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift" in witnesses
+    assert mfidel_witness_surface["exact_test_anchor_count"] == 7
+    assert mfidel_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_mfidel_substrate_conformance_receipt_contract"]["status"] == "closed"
+
+
 def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

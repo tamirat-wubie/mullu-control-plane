@@ -5893,6 +5893,64 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "mfidel_substrate_conformance_receipt",
+            [
+                "MfidelSubstrateConformanceReceipt",
+                "validate_mfidel_substrate_conformance_receipt",
+                "mfidel_substrate_conformance_receipt.v1",
+            ],
+            "audit_chain",
+            "audit_chain",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/mfidel_substrate_conformance_receipt.schema.json",
+                "examples/mfidel_substrate_conformance_receipt.foundation.json",
+                "scripts/validate_mfidel_substrate_conformance_receipt.py",
+                "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+                "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+                "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+                "mcoi/mcoi_runtime/contracts/mfidel.py",
+                "mcoi/tests/test_mfidel_atomicity.py",
+                "mcoi/tests/test_mfidel_matrix.py",
+                "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+            ],
+            "Mfidel substrate conformance receipts bind local Python substrate digests, grid bounds, exact-preservation witnesses, no-normalization proof refs, and TypeScript/Rust SDK/kernel evidence gaps while denying Unicode normalization, fidel decomposition, live runtime import authority, cross-runtime closure, and terminal closure.",
+            [
+                "mfidel_substrate_conformance_receipt_schema_valid",
+                "mfidel_substrate_conformance_receipt_preserves_atomicity",
+                "mfidel_substrate_conformance_receipt_rejects_guard_drift",
+                "mfidel_substrate_conformance_receipt_rejects_digest_drift",
+                "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift",
+                "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift",
+                "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "mfidel_substrate_conformance_receipt_schema_valid": [
+                    "mfidel_substrate_conformance_receipt_passes"
+                ],
+                "mfidel_substrate_conformance_receipt_preserves_atomicity": [
+                    "mfidel_substrate_conformance_receipt_passes",
+                    "mfidel_substrate_conformance_receipt_rejects_decomposed_like_input",
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_guard_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_digest_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_digest_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_mfidel_substrate_conformance_receipt"
+                ],
+            },
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -9792,6 +9850,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_worker_receipt_ledger_read_model_contract",
             "surfaces": ["worker_receipt_ledger_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
+            "surfaces": ["mfidel_substrate_conformance_receipt"],
             "status": "closed",
         },
         {

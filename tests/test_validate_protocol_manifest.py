@@ -489,6 +489,17 @@ def test_protocol_manifest_indexes_govern_cloud_public_route_monitor_receipt() -
     assert monitor_entry["surface"] == "observability"
 
 
+def test_protocol_manifest_indexes_personal_assistant_public_console_probe_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    probe_entry = entries["personal-assistant-public-console-probe-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert probe_entry["path"] == "schemas/personal_assistant_public_console_probe_receipt.schema.json"
+    assert probe_entry["urn"] == "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1"
+    assert probe_entry["surface"] == "observability"
+
+
 def test_protocol_manifest_indexes_governed_swarm_production_readiness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -1352,6 +1363,19 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_schema_bindi
     assert validate_protocol_manifest(manifest) == []
     assert witness_entry["path"] == "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json"
     assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_store_write_path_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-receipt-store-write-path-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_receipt_store_write_path_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-store-write-path-witness:1"
+    )
     assert witness_entry["surface"] == "worker"
 
 
