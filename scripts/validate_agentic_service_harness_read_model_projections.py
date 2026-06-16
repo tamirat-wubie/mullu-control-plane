@@ -147,6 +147,7 @@ def project_contract_to_read_model(
         task["task_id"]: task
         for task in _objects(contract.get("agent_tasks"))
     }
+    run_ids_by_sandbox = _run_ids_by_sandbox(contract)
     project = _objects(contract.get("projects"))[0]
     scenario = str(contract.get("scenario"))
 
@@ -219,6 +220,10 @@ def project_contract_to_read_model(
         "result_summaries": [
             _project_summary(summary)
             for summary in _objects(contract.get("result_summaries"))
+        ],
+        "workspace_allocations": [
+            _project_workspace_allocation(sandbox, run_ids_by_sandbox)
+            for sandbox in _objects(contract.get("workspace_sandboxes"))
         ],
         "durable_entity_bindings": _project_durable_entity_bindings(contract_ref),
         "permission_snapshot": _project_permission_snapshot(contract["permission_model"]),
@@ -369,6 +374,38 @@ def _project_summary(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _project_workspace_allocation(
+    sandbox: dict[str, Any],
+    run_ids_by_sandbox: dict[str, list[str]],
+) -> dict[str, Any]:
+    sandbox_id = sandbox["sandbox_id"]
+    return {
+        "allocation_id": f"workspace-allocation.{sandbox_id}",
+        "sandbox_id": sandbox_id,
+        "project_id": sandbox["project_id"],
+        "run_ids": run_ids_by_sandbox.get(sandbox_id, []),
+        "branch_workspace_ref": f"workspace://harness/{sandbox_id}/contract-only",
+        "base_branch": "main",
+        "working_branch_ref": f"branch://pending/{sandbox_id}",
+        "command_allowlist": list(sandbox["command_allowlist"]),
+        "path_allowlist": list(sandbox["path_allowlist"]),
+        "timeout_seconds": sandbox["timeout_seconds"],
+        "network_policy": sandbox["network_policy"],
+        "cleanup_receipt_ref": sandbox["cleanup_receipt_ref"],
+        "command_log_collection_ref": f"logs://harness/{sandbox_id}/commands",
+        "test_log_collection_ref": f"logs://harness/{sandbox_id}/tests",
+        "diff_collection_ref": f"diff://harness/{sandbox_id}",
+        "redaction_policy": "hash_or_reference_only",
+        "read_only": True,
+        "workspace_created": False,
+        "commands_executed": False,
+        "files_written": False,
+        "cleanup_executed": False,
+        "production_mutation_allowed": False,
+        "secret_values_serialized": False,
+    }
+
+
 def _project_durable_entity_bindings(contract_ref: str) -> dict[str, Any]:
     return {
         "store_contract_ref": "scripts/validate_agentic_service_harness_read_model_persistence.py",
@@ -461,6 +498,24 @@ def _project_durable_entity_bindings(contract_ref: str) -> dict[str, Any]:
                 owner_ref_fields=("run_id", "task_request_ref", "evidence_refs"),
                 identity_source_ref=(
                     "schemas/agentic_service_harness.schema.json#/$defs/agent_run_receipt"
+                ),
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="WorkspaceAllocation",
+                record_kind="workspace_allocation",
+                collection_ref="read-model://workspace_allocations",
+                primary_key="allocation_id",
+                tenant_key="project_id",
+                owner_ref_fields=(
+                    "project_id",
+                    "sandbox_id",
+                    "run_ids",
+                    "cleanup_receipt_ref",
+                ),
+                identity_source_ref=(
+                    "schemas/agentic_service_harness_read_models.schema.json#/$defs/"
+                    "harness_workspace_allocation_read_model"
                 ),
                 contract_ref=contract_ref,
             ),
@@ -579,6 +634,13 @@ def _validate_projection_matches_source(
 
 def _ids(collection: Any, key: str) -> set[str]:
     return {str(item.get(key)) for item in _objects(collection) if item.get(key)}
+
+
+def _run_ids_by_sandbox(contract: dict[str, Any]) -> dict[str, list[str]]:
+    run_ids_by_sandbox: dict[str, list[str]] = {}
+    for run in _objects(contract.get("agent_runs")):
+        run_ids_by_sandbox.setdefault(str(run["sandbox_id"]), []).append(str(run["run_id"]))
+    return run_ids_by_sandbox
 
 
 def _objects(collection: Any) -> tuple[dict[str, Any], ...]:
