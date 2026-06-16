@@ -258,6 +258,23 @@ def test_budget_rejects_zero_question_and_zero_unknown_threshold() -> None:
     assert SNetInquiryBudget(max_depth=1, promotion_threshold=0.5).promotion_threshold == 0.5
 
 
+def test_mesh_constructor_rejects_budget_shape_drift() -> None:
+    class BudgetSubclass(SNetInquiryBudget):
+        pass
+
+    exact_budget = SNetInquiryBudget(max_depth=1)
+    default_mesh = SNetRecursiveMesh(None)
+    exact_mesh = SNetRecursiveMesh(exact_budget)
+
+    assert default_mesh.budget == SNetInquiryBudget()
+    assert exact_mesh.budget is exact_budget
+    assert exact_mesh.budget.max_depth == 1
+
+    for invalid_budget in (0, False, object(), {"max_depth": 1}, BudgetSubclass(max_depth=1)):
+        with pytest.raises(ValueError, match="SNet budget"):
+            SNetRecursiveMesh(invalid_budget)  # type: ignore[arg-type]
+
+
 def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
