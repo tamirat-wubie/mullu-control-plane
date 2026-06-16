@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-foundation-evidence-receipt:1",
+  "title": "Mullu Personal Assistant Foundation Evidence Receipt",
+  "description": "No-effect aggregate receipt binding the personal-assistant console read model, public console probe, and component witness into one replayable foundation evidence set without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "receipt_is_not_execution_authority",
+    "receipt_is_not_terminal_closure",
+    "evidence_items",
+    "effect_boundary",
+    "summary",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "personal_assistant.foundation_evidence_receipt.v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^personal-assistant-foundation-evidence-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": [
+        "Pass",
+        "Fail"
+      ]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "evidence_items": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/evidence_item"
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+        "secret_values_serialized",
+        "raw_private_payloads_serialized"
+      ],
+      "properties": {
+        "execution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_effect_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "customer_readiness_claim_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "raw_private_payloads_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_item_count",
+        "console_read_model_verified",
+        "public_console_probe_verified",
+        "component_witness_verified",
+        "no_effect_boundary_verified",
+        "foundation_evidence_closed"
+      ],
+      "properties": {
+        "evidence_item_count": {
+          "type": "integer",
+          "const": 3
+        },
+        "console_read_model_verified": {
+          "type": "boolean"
+        },
+        "public_console_probe_verified": {
+          "type": "boolean"
+        },
+        "component_witness_verified": {
+          "type": "boolean"
+        },
+        "no_effect_boundary_verified": {
+          "type": "boolean"
+        },
+        "foundation_evidence_closed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_deltas",
+        "rejected_deltas"
+      ],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lineage_delta"
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lineage_delta"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id",
+        "source_ref",
+        "evidence_kind",
+        "proof_state",
+        "solver_outcome",
+        "closed",
+        "no_effect_boundary_verified"
+      ],
+      "properties": {
+        "item_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "evidence_kind": {
+          "type": "string",
+          "enum": [
+            "console_read_model",
+            "public_console_probe",
+            "component_witness"
+          ]
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass",
+            "Fail"
+          ]
+        },
+        "solver_outcome": {
+          "type": "string",
+          "enum": [
+            "SolvedVerified",
+            "AwaitingEvidence"
+          ]
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "no_effect_boundary_verified": {
+          "type": "boolean"
+        }
+      }
+    },
+    "lineage_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_id",
+        "reason",
+        "logged_in_lineage"
+      ],
+      "properties": {
+        "delta_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "logged_in_lineage": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    }
+  }
+}

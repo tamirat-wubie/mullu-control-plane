@@ -1,0 +1,67 @@
+{
+  "receipt_id": "personal-assistant-foundation-evidence-7892c43aefaa8bb4",
+  "schema_version": "personal_assistant.foundation_evidence_receipt.v1",
+  "generated_at": "2026-06-16T09:10:03Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "evidence_items": [
+    {
+      "item_id": "personal_assistant_console_read_model",
+      "source_ref": "examples/personal_assistant_console_read_model.json",
+      "evidence_kind": "console_read_model",
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closed": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "item_id": "personal_assistant_public_console_probe",
+      "source_ref": "examples/personal_assistant_public_console_probe_receipt.json",
+      "evidence_kind": "public_console_probe",
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closed": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "item_id": "personal_assistant_component_witness",
+      "source_ref": "examples/personal_assistant_component_witness_receipt.json",
+      "evidence_kind": "component_witness",
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closed": true,
+      "no_effect_boundary_verified": true
+    }
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "secret_values_serialized": false,
+    "raw_private_payloads_serialized": false
+  },
+  "summary": {
+    "evidence_item_count": 3,
+    "console_read_model_verified": true,
+    "public_console_probe_verified": true,
+    "component_witness_verified": true,
+    "no_effect_boundary_verified": true,
+    "foundation_evidence_closed": true
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-foundation-evidence-2026-06-16",
+        "reason": "Recorded aggregate Personal Assistant foundation evidence while preserving no-effect authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}
