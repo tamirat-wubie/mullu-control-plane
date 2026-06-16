@@ -1542,6 +1542,15 @@ def _valid_whqr_semver(version: str) -> bool:
     return len(parts) == 3 and all(part.isdigit() for part in parts)
 
 
+def _valid_sha256_digest_ref(value: str) -> bool:
+    return value.startswith("sha256:") and len(value) > len("sha256:")
+
+
+def _valid_whqr_replay_ref(value: str) -> bool:
+    prefix = "whqr://replay/sha256:"
+    return value.startswith(prefix) and len(value) > len(prefix)
+
+
 def _normalized_whqr_replay_binding(value: Any) -> dict[str, str] | None:
     if value is None:
         return {}
@@ -1567,9 +1576,9 @@ def _normalized_whqr_replay_binding(value: Any) -> dict[str, str] | None:
     ):
         return None
     if not (
-        replay_ref.startswith("whqr://replay/sha256:")
-        and canonical_hash.startswith("sha256:")
-        and semantics_hash.startswith("sha256:")
+        _valid_whqr_replay_ref(replay_ref)
+        and _valid_sha256_digest_ref(canonical_hash)
+        and _valid_sha256_digest_ref(semantics_hash)
         and replay_ref == f"whqr://replay/{canonical_hash}"
         and _valid_whqr_semver(version)
     ):

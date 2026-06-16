@@ -2353,6 +2353,10 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             errors.append(
                 "closure.whqr_replay_binding.replay_ref must start with whqr://replay/sha256:"
             )
+        elif not _has_whqr_sha256_digest_ref(replay_ref):
+            errors.append(
+                "closure.whqr_replay_binding.replay_ref must include a sha256 digest"
+            )
     if isinstance(replay_ref, str) and isinstance(canonical_hash, str):
         if replay_ref != f"whqr://replay/{canonical_hash}":
             errors.append(
@@ -2363,10 +2367,18 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             errors.append(
                 "closure.whqr_replay_binding.canonical_hash must start with sha256:"
             )
+        elif not _has_sha256_digest_ref(canonical_hash):
+            errors.append(
+                "closure.whqr_replay_binding.canonical_hash must include a sha256 digest"
+            )
     if isinstance(semantics_hash, str) and semantics_hash:
         if not semantics_hash.startswith("sha256:"):
             errors.append(
                 "closure.whqr_replay_binding.semantics_hash must start with sha256:"
+            )
+        elif not _has_sha256_digest_ref(semantics_hash):
+            errors.append(
+                "closure.whqr_replay_binding.semantics_hash must include a sha256 digest"
             )
     if isinstance(version, str) and version:
         if not _is_semver_core(version):
@@ -2380,6 +2392,15 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             + ", ".join(sorted(extra_keys))
         )
     return errors
+
+
+def _has_sha256_digest_ref(value: str) -> bool:
+    return value.startswith("sha256:") and len(value) > len("sha256:")
+
+
+def _has_whqr_sha256_digest_ref(value: str) -> bool:
+    prefix = "whqr://replay/sha256:"
+    return value.startswith(prefix) and len(value) > len(prefix)
 
 
 def _is_semver_core(value: str) -> bool:
