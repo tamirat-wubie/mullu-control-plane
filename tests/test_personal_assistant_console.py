@@ -44,6 +44,17 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert payload["receipts"]["viewer_binding"]["read_only_worker_rehearsal_bound"] is False
     assert payload["receipts"]["viewer_binding"]["runtime_dispatch_allowed"] is False
     assert payload["receipts"]["viewer_binding"]["success_claim_allowed"] is False
+    assert payload["sections"]["lane_status"]["item_count"] == payload["lane_status"]["lane_count"]
+    assert payload["lane_status"]["lane_count"] >= 12
+    assert payload["lane_status"]["execution_allowed"] is False
+    assert payload["lane_status"]["live_connector_execution_allowed"] is False
+    assert payload["lane_status"]["customer_readiness_claim_allowed"] is False
+    assert payload["lane_status"]["nested_mind_live_activation_allowed"] is False
+    assert payload["lane_status"]["lanes"][-1]["lane_id"] == "operator_console"
+    assert payload["lane_status"]["lanes"][-1]["route_refs"] == [
+        "/api/v1/console/personal-assistant",
+        "/api/v1/console/personal-assistant/view",
+    ]
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]

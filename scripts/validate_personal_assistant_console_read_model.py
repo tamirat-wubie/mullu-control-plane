@@ -99,6 +99,30 @@ FALSE_REHEARSAL_RECEIPT_PROJECTION_FIELDS = frozenset(
         "success_claim_allowed",
     }
 )
+FALSE_LANE_STATUS_FIELDS = frozenset(
+    {
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+    }
+)
+EXPECTED_LANE_IDS = (
+    "request_intake_whqr",
+    "skill_registry",
+    "approval_queue",
+    "memory_observation",
+    "read_only_projection",
+    "draft_projection",
+    "teamops_shared_inbox",
+    "github_codex_review",
+    "research_source_compare",
+    "math_reasoning",
+    "schedule_planning",
+    "operator_console",
+)
 READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
 READ_ONLY_WORKER_REHEARSAL_RECEIPT_ID = "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
 READ_ONLY_WORKER_REHEARSAL_RECEIPT_REF = "examples/read_only_worker_rehearsal_receipt.foundation.json"
@@ -220,6 +244,7 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     memory_metadata = _mapping(read_model.get("memory")).get("metadata")
     _require_false_fields(memory_metadata, FALSE_MEMORY_FIELDS, "memory.metadata", errors)
     _require_false_fields(read_model.get("teamops"), FALSE_TEAMOPS_FIELDS, "teamops", errors)
+    _validate_lane_status(read_model, errors)
     _validate_receipt_viewer(read_model, errors)
 
     memory = _mapping(read_model.get("memory"))
@@ -247,6 +272,71 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     if private_policy.get("secret_values_serialized") is not False:
         errors.append("private_payload_policy.secret_values_serialized must be false")
     return tuple(errors)
+
+
+def _validate_lane_status(read_model: dict[str, Any], errors: list[str]) -> None:
+    lane_status = _mapping(read_model.get("lane_status"))
+    if not lane_status:
+        errors.append("lane_status must be an object")
+        return
+    _require_false_fields(lane_status, FALSE_LANE_STATUS_FIELDS, "lane_status", errors)
+    if lane_status.get("foundation_only") is not True:
+        errors.append("lane_status.foundation_only must be true")
+    lanes = lane_status.get("lanes")
+    if not isinstance(lanes, list):
+        errors.append("lane_status.lanes must be a list")
+        lanes = []
+    lane_ids = [
+        str(lane.get("lane_id"))
+        for lane in lanes
+        if isinstance(lane, dict) and isinstance(lane.get("lane_id"), str)
+    ]
+    if tuple(lane_ids) != EXPECTED_LANE_IDS:
+        errors.append("lane_status.lanes must preserve the expected foundation lane order")
+    if lane_status.get("lane_count") != len(lanes):
+        errors.append("lane_status.lane_count must match lane count")
+    if _mapping(_mapping(read_model.get("sections")).get("lane_status")).get("item_count") != len(lanes):
+        errors.append("sections.lane_status.item_count must match lane count")
+    runtime_preview_count = 0
+    read_model_count = 0
+    projection_only_count = 0
+    for index, lane in enumerate(lanes):
+        if not isinstance(lane, dict):
+            errors.append(f"lane_status.lanes[{index}] must be an object")
+            continue
+        label = f"lane_status.lanes[{index}]"
+        _require_false_fields(lane, FALSE_LANE_STATUS_FIELDS, label, errors)
+        if lane.get("foundation_only") is not True:
+            errors.append(f"{label}.foundation_only must be true")
+        if lane.get("receipt_required") is not True:
+            errors.append(f"{label}.receipt_required must be true")
+        if lane.get("state") not in {"SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"}:
+            errors.append(f"{label}.state must be a solver outcome")
+        schema_refs = lane.get("schema_refs")
+        validator_refs = lane.get("validator_refs")
+        if not isinstance(schema_refs, list) or not schema_refs:
+            errors.append(f"{label}.schema_refs must be a non-empty list")
+        if not isinstance(validator_refs, list) or not validator_refs:
+            errors.append(f"{label}.validator_refs must be a non-empty list")
+        stage = lane.get("stage")
+        if stage == "runtime_preview":
+            runtime_preview_count += 1
+            if not lane.get("route_refs"):
+                errors.append(f"{label}.route_refs must be non-empty for runtime preview lanes")
+        elif stage in {"runtime_read_model", "read_model"}:
+            read_model_count += 1
+            if not lane.get("route_refs"):
+                errors.append(f"{label}.route_refs must be non-empty for read-model lanes")
+        elif stage in {"projection_only", "candidate_only"}:
+            projection_only_count += 1
+        else:
+            errors.append(f"{label}.stage is invalid")
+    if lane_status.get("runtime_preview_lane_count") != runtime_preview_count:
+        errors.append("lane_status.runtime_preview_lane_count must match runtime preview lane count")
+    if lane_status.get("read_model_lane_count") != read_model_count:
+        errors.append("lane_status.read_model_lane_count must match read-model lane count")
+    if lane_status.get("projection_only_lane_count") != projection_only_count:
+        errors.append("lane_status.projection_only_lane_count must match projection-only lane count")
 
 
 def _validate_receipt_viewer(read_model: dict[str, Any], errors: list[str]) -> None:
