@@ -9,7 +9,8 @@ Dependencies: schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json
 and scripts.validate_team_ops_shared_inbox_observation_routing_receipt.
 Invariants:
   - This producer never approves, drafts, sends, writes a mailbox, or mutates a provider.
-  - Passed receipts require a ready routing receipt and a redacted approval request ref.
+  - Passed receipts require a ready routing receipt, retained provider-observation identity,
+    and a redacted approval request ref.
   - Approval decision evidence is a later receipt, not produced here.
   - Raw message content and secret-shaped values are rejected before serialization.
 """
@@ -68,6 +69,9 @@ class TeamOpsSharedInboxApprovalQueueReceipt:
     source_observation_routing_receipt_id: str
     routing_receipt_valid: bool
     routing_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -134,6 +138,7 @@ def produce_team_ops_shared_inbox_approval_queue_receipt(
         receipt_id=_receipt_id(
             routing_receipt_path=routing_receipt_path,
             source_observation_routing_receipt_id=str(source_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(source_receipt.get("provider_observation_receipt_id", "")),
             approval_request_ref=clean_approval_request_ref,
             required_approver_role=clean_role,
             status=status,
@@ -144,6 +149,9 @@ def produce_team_ops_shared_inbox_approval_queue_receipt(
         source_observation_routing_receipt_id=str(source_receipt.get("receipt_id", "")),
         routing_receipt_valid=routing_validation.valid,
         routing_receipt_ready=routing_validation.ready,
+        provider_observation_receipt_ref=str(source_receipt.get("provider_observation_receipt_ref", "")),
+        provider_observation_receipt_id=str(source_receipt.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=source_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -254,6 +262,7 @@ def _receipt_id(
     *,
     routing_receipt_path: Path,
     source_observation_routing_receipt_id: str,
+    provider_observation_receipt_id: str,
     approval_request_ref: str,
     required_approver_role: str,
     status: str,
@@ -261,6 +270,7 @@ def _receipt_id(
     material = {
         "routing_ref": _artifact_ref(routing_receipt_path),
         "source_observation_routing_receipt_id": source_observation_routing_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "approval_request_ref": approval_request_ref,
         "required_approver_role": required_approver_role,
         "status": status,

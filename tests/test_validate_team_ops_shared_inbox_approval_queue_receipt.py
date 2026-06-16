@@ -44,6 +44,7 @@ def test_team_ops_shared_inbox_approval_queue_validation_accepts_blocked_receipt
     assert validation.solver_outcome == "AwaitingEvidence"
     assert validation.proof_state == "Unknown"
     assert validation.routing_receipt_ready is False
+    assert validation.provider_observation_receipt_valid is False
     assert validation.blocked_until == ("observation_routing_receipt_not_ready",)
 
 
@@ -81,6 +82,7 @@ def test_team_ops_shared_inbox_approval_queue_validation_accepts_ready_receipt(
     assert validation.status == "passed"
     assert validation.solver_outcome == "SolvedVerified"
     assert validation.proof_state == "Pass"
+    assert validation.provider_observation_receipt_valid is True
     assert validation.approval_queue_id == "team_ops.external_send_approval"
     assert validation.approval_state == "pending"
     assert validation.blocked_until == ()
@@ -146,6 +148,29 @@ def test_team_ops_shared_inbox_approval_queue_validation_rejects_missing_request
     assert validation.valid is False
     assert validation.ready is False
     assert "passed receipt requires approval_request_ref" in validation.errors
+
+
+def test_team_ops_shared_inbox_approval_queue_validation_rejects_missing_provider_observation(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "team_ops_shared_inbox_approval_queue_receipt.json"
+    payload = _ready_receipt() | {
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_approval_queue_receipt(
+        receipt_path=receipt_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "passed receipt requires provider_observation_receipt_ref" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_id" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_valid=true" in validation.errors
 
 
 def test_team_ops_shared_inbox_approval_queue_validation_rejects_approval_decision_claim(
@@ -257,6 +282,9 @@ def _ready_receipt() -> dict[str, object]:
     return _base_receipt() | {
         "routing_receipt_valid": True,
         "routing_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -278,6 +306,9 @@ def _base_receipt() -> dict[str, object]:
         "workflow_id": "team_ops.shared_inbox_triage",
         "source_observation_routing_receipt_ref": ".change_assurance/team_ops_shared_inbox_observation_routing_receipt.json",
         "source_observation_routing_receipt_id": "teamops-shared-inbox-observation-routing-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "queued_at": "2026-06-14T00:00:00+00:00",
         "approval_decision_ref": "",
         "approval_required_before_external_send": True,
