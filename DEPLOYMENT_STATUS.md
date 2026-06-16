@@ -91,6 +91,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Public production health | Declared from a verified published deployment witness; `https://api.mullusi.com/health` is the public health endpoint, `.change_assurance/deployment_witness.json` records `deployment_claim=published`, and `.change_assurance/public_production_health_declaration.json` records the operator-approved declaration receipt | Reflected |
 | Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `GET /v1/health`, `GET /v1/version`, and the blocked `POST /v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
 | Govern Cloud evaluate-route rollback witness | `scripts/validate_govern_evaluate_route_rollback.py` verifies `/v1/health` and `/v1/version` remain public read routes while `POST /v1/govern/evaluate` returns 404 without outbound proxy transport | Reflected |
+| Personal assistant public console probe | `scripts/collect_personal_assistant_public_console_probe.py` writes `examples/personal_assistant_public_console_probe_receipt.json` from the public read-only JSON and HTML console routes while preserving no-effect authority boundaries | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -196,3 +197,5 @@ Before this witness can claim public deployment health, the repository must name
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
 | General-agent promotion validation | `python scripts/validate_general_agent_promotion.py --strict` |
 | Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
+| Personal assistant public console probe | `python scripts/collect_personal_assistant_public_console_probe.py --output examples/personal_assistant_public_console_probe_receipt.json --json` |
+| Personal assistant public console probe validation | `python scripts/validate_personal_assistant_public_console_probe_receipt.py --receipt examples/personal_assistant_public_console_probe_receipt.json --output .change_assurance/personal_assistant_public_console_probe_validation.json --require-closed --json` |
