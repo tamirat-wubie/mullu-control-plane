@@ -51,6 +51,10 @@ from .math_reasoning import (
     MathReasoningProjection,
     plan_math_reasoning,
 )
+from .planning import (
+    PlanningScheduleProjection,
+    plan_schedule_optimization,
+)
 from .research import (
     ResearchSourceCompareProjection,
     plan_research_source_compare,
@@ -120,6 +124,7 @@ __all__ = (
     "NestedMindStatus",
     "PersonalAssistantMemoryObservationLedger",
     "PersonalAssistantPlanningEnvelope",
+    "PlanningScheduleProjection",
     "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
@@ -150,6 +155,7 @@ __all__ = (
     "plan_teamops_shared_inbox",
     "plan_github_codex_review",
     "plan_math_reasoning",
+    "plan_schedule_optimization",
     "plan_research_source_compare",
     "render_personal_assistant_console_html",
     "summarize_calendar_day_read_only",

@@ -1172,11 +1172,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 276,
+      "proven": 277,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 436,
+    "route_count": 437,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2466,6 +2466,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/memory-observations/review/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/planning/schedule/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -4233,6 +4238,7 @@
         "mcoi/mcoi_runtime/personal_assistant/teamops.py",
         "mcoi/mcoi_runtime/personal_assistant/github_codex.py",
         "mcoi/mcoi_runtime/personal_assistant/research.py",
+        "mcoi/mcoi_runtime/personal_assistant/planning.py",
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py",
         "tests/test_gateway/test_personal_assistant_public_routes.py",
@@ -4249,6 +4255,7 @@
         "tests/test_validate_personal_assistant_github_codex_projection.py",
         "tests/test_validate_personal_assistant_research_projection.py",
         "tests/test_validate_personal_assistant_math_projection.py",
+        "tests/test_validate_personal_assistant_planning_projection.py",
         "schemas/personal_assistant_approval_queue.schema.json",
         "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
@@ -4260,6 +4267,7 @@
         "schemas/personal_assistant_github_codex_projection.schema.json",
         "schemas/personal_assistant_research_projection.schema.json",
         "schemas/personal_assistant_math_projection.schema.json",
+        "schemas/personal_assistant_planning_projection.schema.json",
         "examples/personal_assistant_approval_queue_read_model.json",
         "examples/personal_assistant_approval_decision_evidence.json",
         "examples/personal_assistant_read_only_projection.json",
@@ -4270,6 +4278,7 @@
         "examples/personal_assistant_github_codex_projection.json",
         "examples/personal_assistant_research_projection.json",
         "examples/personal_assistant_math_projection.json",
+        "examples/personal_assistant_planning_projection.json",
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
@@ -4279,9 +4288,10 @@
         "scripts/validate_personal_assistant_teamops_projection.py",
         "scripts/validate_personal_assistant_github_codex_projection.py",
         "scripts/validate_personal_assistant_research_projection.py",
-        "scripts/validate_personal_assistant_math_projection.py"
+        "scripts/validate_personal_assistant_math_projection.py",
+        "scripts/validate_personal_assistant_planning_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -4296,7 +4306,8 @@
         "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
         "/api/v1/personal-assistant/github-codex/review/preview",
         "/api/v1/personal-assistant/research/source-compare/preview",
-        "/api/v1/personal-assistant/math/reasoning/preview"
+        "/api/v1/personal-assistant/math/reasoning/preview",
+        "/api/v1/personal-assistant/planning/schedule/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -4391,6 +4402,18 @@
           "gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
           "gateway_personal_assistant_memory_review_preview_rejects_raw_payload"
         ],
+        "personal_assistant_planning_schedule_no_effect": [
+          "personal_assistant_planning_projection_fixture_validates",
+          "runtime_planning_projection_blocks_effect_boundaries_and_assigns_capacity",
+          "planning_projection_validator_rejects_calendar_or_task_authority",
+          "planning_projection_validator_rejects_receipt_drift",
+          "planning_projection_validator_rejects_raw_private_and_secret",
+          "planning_projection_validator_requires_ready_and_blocked_items",
+          "planning_projection_runtime_rejects_secret_like_value",
+          "gateway_personal_assistant_planning_preview_assigns_without_effects",
+          "gateway_personal_assistant_planning_preview_rejects_non_planning_intent",
+          "gateway_personal_assistant_planning_preview_rejects_raw_private_item"
+        ],
         "personal_assistant_preview_blocks_with_whqr_step": [
           "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
           "preview_planner_blocks_unknown_request_with_clarification_skill"
@@ -4457,7 +4480,8 @@
         "personal_assistant_teamops_shared_inbox_plan_no_effect",
         "personal_assistant_github_codex_review_no_effect",
         "personal_assistant_research_source_compare_no_effect",
-        "personal_assistant_math_reasoning_no_effect"
+        "personal_assistant_math_reasoning_no_effect",
+        "personal_assistant_planning_schedule_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -12593,8 +12617,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1620,
-    "runtime_witness_count": 1620,
+    "exact_test_anchor_count": 1621,
+    "runtime_witness_count": 1621,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13742,10 +13766,25 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_math_preview_rejects_raw_private_value"
             ],
             "witness": "personal_assistant_math_reasoning_no_effect"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_personal_assistant_planning_projection.py::test_personal_assistant_planning_projection_fixture_validates",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_runtime_planning_projection_blocks_effect_boundaries_and_assigns_capacity",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_planning_projection_validator_rejects_calendar_or_task_authority",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_planning_projection_validator_rejects_receipt_drift",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_planning_projection_validator_rejects_raw_private_and_secret",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_planning_projection_validator_requires_ready_and_blocked_items",
+              "tests/test_validate_personal_assistant_planning_projection.py::test_planning_projection_runtime_rejects_secret_like_value",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_planning_preview_assigns_without_effects",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_planning_preview_rejects_non_planning_intent",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_planning_preview_rejects_raw_private_item"
+            ],
+            "witness": "personal_assistant_planning_schedule_no_effect"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

@@ -189,6 +189,15 @@ approval_required = false
 actions_not_taken include payment, subscription, system-of-record write, connector mutation, external submission, public post, and publication denial witnesses
 ```
 
+Planning receipts add a schedule-preview proof boundary:
+
+```text
+connectors_used = []
+connector_payload_projection = no_connector_payload
+approval_required = false
+actions_not_taken include calendar event creation, task write, invite, message, system-of-record write, connector mutation, external submission, public post, money movement, deployment, memory write, and Nested Mind activation denial witnesses
+```
+
 ## Memory Contract
 
 Memory observations are governed claims, not chat logs. Each observation must carry:
@@ -329,6 +338,38 @@ subscriptions, write systems of record, mutate connectors, submit externally,
 post publicly, deploy services, write memory, serialize raw private payloads or
 secrets, activate Nested Mind, or claim customer readiness.
 
+## Schedule Planning Contract
+
+Schedule planning plans are operator-supplied time-window and work-item
+projections, not calendar, task-system, messaging, record-writing, payment, or
+deployment operations. A planning preview may assign bounded work items into
+bounded time windows, compute capacity remaining, list assumptions and
+constraints, and emit a receipt. It must keep:
+
+```text
+execution_allowed = false
+live_connector_execution_allowed = false
+calendar_write_allowed = false
+task_write_allowed = false
+invite_allowed = false
+message_person_allowed = false
+system_of_record_write_allowed = false
+connector_mutation_allowed = false
+external_submission_allowed = false
+public_post_allowed = false
+money_movement_allowed = false
+deployment_allowed = false
+memory_write_allowed = false
+```
+
+The public preview route is
+`/api/v1/personal-assistant/planning/schedule/preview`. It accepts bounded
+operator-supplied time windows and work items only. It does not create, move,
+or cancel calendar events, write tasks, invite or message people, mutate
+connectors, write systems of record, submit externally, post publicly, move
+money, deploy services, write memory, serialize raw private payloads or
+secrets, activate Nested Mind, or claim customer readiness.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
@@ -347,13 +388,14 @@ python scripts/validate_personal_assistant_teamops_projection.py
 python scripts/validate_personal_assistant_github_codex_projection.py
 python scripts/validate_personal_assistant_research_projection.py
 python scripts/validate_personal_assistant_math_projection.py
+python scripts/validate_personal_assistant_planning_projection.py
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_validate_personal_assistant_planning_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

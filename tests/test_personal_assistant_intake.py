@@ -121,6 +121,24 @@ def test_math_request_preserves_planning_only_boundary() -> None:
     assert payload["metadata"]["system_of_record_write_allowed"] is False
 
 
+def test_schedule_planning_request_preserves_preview_only_boundary() -> None:
+    intent = interpret_user_request(
+        "Plan my day with a capacity plan and time blocks.",
+        request_id="pa_request_runtime_planning_001",
+        submitted_at=SUBMITTED_AT,
+    )
+    payload = intent.as_request_dict()
+
+    assert _validate_schema_instance(_load_schema(REQUEST_SCHEMA_PATH), payload) == []
+    assert intent.requested_skill_ids == ("planning.optimize_schedule",)
+    assert intent.connector_refs == ()
+    assert intent.risk_level is SkillRiskLevel.P2
+    assert intent.execution_mode is RequestExecutionMode.PREVIEW
+    assert "create_event" in intent.blocked_actions
+    assert "task.create_draft" not in intent.requested_skill_ids
+    assert payload["metadata"]["system_of_record_write_allowed"] is False
+
+
 def test_task_request_compiles_to_connector_free_draft_intent() -> None:
     intent = interpret_user_request(
         "Create a task draft for the release checklist.",

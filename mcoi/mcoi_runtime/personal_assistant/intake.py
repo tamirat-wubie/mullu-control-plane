@@ -275,6 +275,8 @@ def _select_skill_ids_and_gaps(request_text: str) -> tuple[tuple[str, ...], tupl
         return ("github.pr.summarize",), ()
     if any(term in normalized for term in ("research", "web search", "source", "citation", "cite", "compare sources")):
         return ("research.web_search",), ()
+    if _looks_like_schedule_planning(normalized):
+        return ("planning.optimize_schedule",), ()
     if any(term in normalized for term in ("inbox", "email", "reply", "respond")):
         skill_ids = ["email.inbox.summarize"]
         if any(term in normalized for term in ("draft", "reply", "respond", "response")):
@@ -325,6 +327,27 @@ def _select_skill_ids_and_gaps(request_text: str) -> tuple[tuple[str, ...], tupl
 
 def _looks_like_ambiguous_send(normalized: str) -> bool:
     return "send it to" in normalized or ("send" in normalized and "daniel" in normalized and "it" in normalized)
+
+
+def _looks_like_schedule_planning(normalized: str) -> bool:
+    if any(term in normalized for term in ("meeting", "calendar", "invite", "event")):
+        return False
+    return any(
+        term in normalized
+        for term in (
+            "optimize schedule",
+            "schedule plan",
+            "planning schedule",
+            "plan my day",
+            "capacity plan",
+            "capacity planning",
+            "resource allocate",
+            "resource allocation",
+            "priority plan",
+            "prioritize my day",
+            "time block",
+        )
+    )
 
 
 def _connector_binding_gaps(

@@ -20,7 +20,8 @@ Invariants: each PR has one bounded authority increase; live execution and publi
 | 9 | GitHub and Codex review planning | No GitHub calls, repository reads, PR mutation, branch push, issue creation, review submission, merge, or deployment |
 | 10 | Research source comparison and citation pack | No live web search, source contact, external submission, public posting, paid subscription, raw source body storage, or memory write |
 | 11 | Math reasoning planning | No money movement, paid subscription action, system-of-record write, connector mutation, external submission, public posting, deployment, raw private payload storage, or memory write |
-| 12 | User-facing assistant console | No customer/SaaS readiness claim |
+| 12 | Schedule planning preview | No calendar write, task write, invite, message, connector mutation, system-of-record write, money movement, deployment, raw private payload storage, or memory write |
+| 13 | User-facing assistant console | No customer/SaaS readiness claim |
 
 ## PR 1 Acceptance Criteria
 
@@ -46,6 +47,7 @@ schema witness
 -> TeamOps shared-inbox witness
 -> research citation witness
 -> math reasoning witness
+-> schedule planning witness
 -> console witness
 ```
 
@@ -145,6 +147,17 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw private payloads, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
 7. Receipts record calculation planning, scenario total projection, unit checking, and actions not taken: payment not moved, paid subscription not changed, system of record not written, connector state not mutated, external submission not sent, public post not created, deployment not started, memory not written, and Nested Mind not activated.
 8. Proof coverage classifies math reasoning previews under the assistant planning surface.
+
+## PR 12 Acceptance Criteria
+
+1. Schedule planning projections validate against `schemas/personal_assistant_planning_projection.schema.json`.
+2. Projection envelopes embed schema-valid personal-assistant receipts.
+3. Public routes expose stateless schedule planning previews only.
+4. `execution_allowed`, `live_connector_execution_allowed`, `calendar_write_allowed`, `task_write_allowed`, `invite_allowed`, `message_person_allowed`, `system_of_record_write_allowed`, `connector_mutation_allowed`, `external_submission_allowed`, `public_post_allowed`, `money_movement_allowed`, `deployment_allowed`, `memory_write_allowed`, and `nested_mind_live_activation_allowed` remain false.
+5. Ready evidence is treated as operator-supplied planning readiness only; no calendar event creation, task write, invite, message, connector mutation, system-of-record write, external submission, public post, money movement, deployment, memory write, or customer-readiness claim is performed.
+6. Raw private payloads, raw connector payloads, credentials, tokens, private keys, and secret-like values are rejected.
+7. Receipts record schedule planning, capacity projection, assignment preview, and actions not taken: calendar event not created, task not written, invite not sent, person not messaged, system of record not written, connector state not mutated, external submission not sent, public post not created, payment not moved, deployment not started, memory not written, and Nested Mind not activated.
+8. Proof coverage classifies schedule planning previews under the assistant planning surface.
 
 ## Handoff Risks
 

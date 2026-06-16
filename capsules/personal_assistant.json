@@ -14,6 +14,7 @@
     "personal_assistant.github_codex.review",
     "personal_assistant.research.source_compare",
     "personal_assistant.math.reasoning_plan",
+    "personal_assistant.planning.schedule_preview",
     "personal_assistant.clarification.request"
   ],
   "policy_refs": [
@@ -29,7 +30,7 @@
   "owner_team": "platform-ops",
   "certification_status": "draft",
   "metadata": {
-    "purpose": "Foundation capsule for governed personal-assistant planning, approval classification, receipt projection, memory observation preparation, memory review evidence, TeamOps shared-inbox planning, GitHub/Codex review planning, research source-compare planning, and planning-only math reasoning without live connector execution"
+    "purpose": "Foundation capsule for governed personal-assistant planning, approval classification, receipt projection, memory observation preparation, memory review evidence, TeamOps shared-inbox planning, GitHub/Codex review planning, research source-compare planning, planning-only math reasoning, and schedule planning preview without live connector execution"
   },
   "extensions": {
     "foundation_mode_required": true,
