@@ -53,6 +53,156 @@
       "surface": "governance"
     },
     {
+      "schema_id": "component-route-family-ownership",
+      "path": "schemas/component_route_family_ownership.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-ownership:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-preflight",
+      "path": "schemas/component_route_family_promotion_preflight.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-preflight:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-witness-requirements",
+      "path": "schemas/component_route_family_promotion_witness_requirements.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-witness-requirements:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-witness-evidence",
+      "path": "schemas/component_route_family_promotion_witness_evidence.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-witness-evidence:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-approval-candidates",
+      "path": "schemas/component_route_family_promotion_approval_candidates.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-approval-candidates:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-approval-intake",
+      "path": "schemas/component_route_family_promotion_approval_intake.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-approval-intake:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-submitted-evidence-verifier",
+      "path": "schemas/component_route_family_promotion_submitted_evidence_verifier.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-verifier:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-submitted-evidence-records",
+      "path": "schemas/component_route_family_promotion_submitted_evidence_records.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-records:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-submitted-evidence-payload-examples",
+      "path": "schemas/component_route_family_promotion_submitted_evidence_payload_examples.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-payload-examples:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-operator-submitted-evidence-records",
+      "path": "schemas/component_route_family_promotion_operator_submitted_evidence_records.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-operator-submitted-evidence-records:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-gate-satisfaction-evaluator",
+      "path": "schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-gate-satisfaction-evaluator:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-authority-decision-report",
+      "path": "schemas/component_route_family_promotion_authority_decision_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-authority-decision-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-route-binding-decision-report",
+      "path": "schemas/component_route_family_promotion_route_binding_decision_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-route-binding-decision-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-lifecycle-transition-decision-report",
+      "path": "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-lifecycle-transition-decision-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-authority-upgrade-witness-decision-report",
+      "path": "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-authority-upgrade-witness-decision-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-product-ownership-decision-report",
+      "path": "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-product-ownership-decision-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-terminal-closure-denial-report",
+      "path": "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-terminal-closure-denial-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-missing-evidence-ledger",
+      "path": "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-missing-evidence-ledger:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-candidate",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_candidate.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-candidate:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-requirements",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_requirements.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-requirements:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-minting-preflight",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_preflight.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-minting-preflight:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-minting-denial-report",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-minting-denial-report:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-remediation-plan",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-plan:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request-status-ledger",
+      "path": "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.schema.json",
+      "urn": "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request-status-ledger:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "component-proof-binding",
       "path": "schemas/component_proof_binding.schema.json",
       "urn": "urn:mullusi:schema:component-proof-binding:1",
@@ -92,6 +242,12 @@
       "schema_id": "component-lifecycle-transition-receipts",
       "path": "schemas/component_lifecycle_transition_receipts.schema.json",
       "urn": "urn:mullusi:schema:component-lifecycle-transition-receipts:1",
+      "surface": "governance"
+    },
+    {
+      "schema_id": "component-authority-envelope-witnesses",
+      "path": "schemas/component_authority_envelope_witnesses.schema.json",
+      "urn": "urn:mullusi:schema:component-authority-envelope-witnesses:1",
       "surface": "governance"
     },
     {
@@ -362,6 +518,30 @@
       "schema_id": "operator-receipt-viewer-read-model",
       "path": "schemas/operator_receipt_viewer_read_model.schema.json",
       "urn": "urn:mullusi:schema:operator-receipt-viewer-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "operator-approval-history-read-model",
+      "path": "schemas/operator_approval_history_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-approval-history-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "operator-plan-review-read-model",
+      "path": "schemas/operator_plan_review_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-plan-review-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "operator-budget-report-read-model",
+      "path": "schemas/operator_budget_report_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-budget-report-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "operator-plan-receipt-export-read-model",
+      "path": "schemas/operator_plan_receipt_export_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-plan-receipt-export-read-model:1",
       "surface": "operator"
     },
     {

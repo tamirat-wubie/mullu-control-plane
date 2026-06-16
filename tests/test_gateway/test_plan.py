@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from gateway.command_spine import canonical_hash
+from gateway.command_spine import CapabilityPassport, canonical_hash
 from gateway.capability_fabric import build_default_capability_admission_gate
 from gateway.plan import (
     CapabilityPlan,
@@ -247,9 +247,102 @@ def test_plan_preview_redacts_goal_and_params_and_matches_schema() -> None:
         "enterprise.notification_send",
     ]
     assert payload["steps"][1]["depends_on"] == ["step-1"]
+    assert payload["budget"] == {
+        "budget_required": True,
+        "budget_gate": "budget_reserved",
+        "estimate_state": "not_calculated",
+        "estimate_source": "runtime_budget_gate_required",
+        "estimated_cost_units": None,
+        "used_cost_units": 0,
+        "used_cost_source": "preview_execution_not_started",
+        "limit_cost_units": None,
+        "remaining_cost_units": None,
+        "currency": "cost_units",
+        "required_by_steps": ["step-2"],
+        "not_required_by_steps": ["step-1"],
+        "execution_spend_allowed": False,
+    }
+    assert payload["tools"] == [
+        {
+            "step_id": "step-1",
+            "capability_id": "enterprise.knowledge_search",
+            "tool_name": "knowledge_base",
+            "tool_type": "external_system",
+            "permission_state": "read_only",
+            "budget_required": False,
+            "estimated_cost_units": None,
+            "external_system": "knowledge_base",
+            "mutates_world": False,
+            "authority_required": ["operator"],
+            "requires": ["tenant_bound", "provider_scope", "read_only"],
+            "execution_allowed": False,
+        },
+        {
+            "step_id": "step-2",
+            "capability_id": "enterprise.notification_send",
+            "tool_name": "external_webhook",
+            "tool_type": "external_system",
+            "permission_state": "approval_required",
+            "budget_required": True,
+            "estimated_cost_units": None,
+            "external_system": "external_webhook",
+            "mutates_world": True,
+            "authority_required": ["operator"],
+            "requires": ["tenant_bound", "budget_reserved", "idempotency_key"],
+            "execution_allowed": False,
+        },
+    ]
     assert payload["execution_allowed"] is False
     assert payload["safe_default"] == "await_approval_or_explicit_execution"
     assert "secret-token-123" not in str(payload)
+
+
+def test_plan_preview_uses_capability_cost_model_estimates() -> None:
+    def passport_loader(capability_id: str) -> CapabilityPassport:
+        return CapabilityPassport(
+            capability=capability_id,
+            version="test-v1",
+            risk_tier="medium",
+            input_schema=f"{capability_id}.input",
+            output_schema=f"{capability_id}.output",
+            authority_required=("operator",),
+            requires=("tenant_bound", "budget_reserved"),
+            mutates_world=True,
+            external_system="test_worker",
+            rollback_type="compensatable",
+            cost_model={"max_estimated_cost": 2.5},
+        )
+
+    plan = CapabilityPlan(
+        plan_id="plan-0123456789abcdef",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="notify",
+        steps=(
+            CapabilityPlanStep(
+                step_id="step-1",
+                capability_id="enterprise.notification_send",
+                params={"body": "notify"},
+            ),
+        ),
+        risk_tier="medium",
+        approval_required=True,
+        evidence_required=(),
+    )
+    preview = preview_for_plan(
+        plan=plan,
+        created_at="2026-06-11T12:00:00+00:00",
+        capability_passport_loader=passport_loader,
+    )
+    payload = preview.to_dict()
+    errors = _validate_schema_instance(_load_schema(_CAPABILITY_PLAN_PREVIEW_SCHEMA), payload)
+
+    assert errors == []
+    assert payload["budget"]["estimate_state"] == "estimated"
+    assert payload["budget"]["estimate_source"] == "capability_cost_model"
+    assert payload["budget"]["estimated_cost_units"] == 2.5
+    assert payload["tools"][0]["estimated_cost_units"] == 2.5
+    assert payload["metadata"]["step_contracts"][0]["max_estimated_cost_units"] == 2.5
 
 
 def test_plan_validation_rejects_unknown_dependency() -> None:

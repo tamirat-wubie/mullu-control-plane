@@ -66,6 +66,9 @@ class TestChannelFromPath:
             ("/authority/obligations/escalate-overdue", "authority"),
             ("/capability-fabric/capsule-admissions", "capability-fabric"),
             ("/capability-plans/plan-1/recover", "capability-plans"),
+            ("/deployment/tenant-mappings", "deployment"),
+            ("/operator/goal-intake/approve", "operator"),
+            ("/operator/current-task/approval", "operator"),
             ("/random/path", "other"),
             ("/webhook/", "webhook"),
             ("/", "other"),
@@ -226,6 +229,10 @@ class TestMiddlewareCertifies:
             "/capability-fabric/capsule-admissions",
             "/capability-plans/plan-1/recover",
             "/deployment/tenant-mappings",
+            "/operator/goal-intake/preview",
+            "/operator/goal-intake/approve",
+            "/operator/goal-intake/deny",
+            "/operator/current-task/approval",
         ]
         for p in certified_paths:
             client.post(p, json={})

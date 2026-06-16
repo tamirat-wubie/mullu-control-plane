@@ -632,6 +632,15 @@ class TestMessageRouting:
         ]
         assert preview["steps"][1]["depends_on"] == ["step-1"]
         assert preview["approval_required"] is True
+        assert preview["budget"]["budget_required"] is True
+        assert preview["budget"]["used_cost_units"] == 0
+        assert preview["budget"]["required_by_steps"] == ["step-2"]
+        assert preview["budget"]["execution_spend_allowed"] is False
+        assert preview["tools"][0]["tool_name"] == "knowledge_base"
+        assert preview["tools"][0]["permission_state"] == "read_only"
+        assert preview["tools"][1]["tool_name"] == "external_webhook"
+        assert preview["tools"][1]["budget_required"] is True
+        assert all(tool["execution_allowed"] is False for tool in preview["tools"])
         assert "secret-token-123" not in str(response.metadata)
         assert platform.sessions_opened == 0
         assert ledger.summary()["commands"] == 0

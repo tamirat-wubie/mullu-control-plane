@@ -34,6 +34,8 @@ def summarize_operational_math_receipt(receipt: Mapping[str, Any]) -> dict[str, 
     target_id = _text_value(receipt.get("target_id"))
     unresolved_ids = _text_list(receipt.get("unresolved_principle_ids"))
     applied_ids = _text_list(receipt.get("applied_principle_ids"))
+    result_payload = receipt.get("result")
+    unverified_control_ids = _unverified_control_ids(receipt, result_payload)
     iteration_count = _non_negative_int(receipt.get("iteration_count"), "iteration_count")
     event_count = _non_negative_int(receipt.get("event_count"), "event_count")
 
@@ -42,6 +44,8 @@ def summarize_operational_math_receipt(receipt: Mapping[str, Any]) -> dict[str, 
         review_signals.append("operational_math_status_not_passed")
     if unresolved_ids:
         review_signals.append("operational_math_unresolved_principles")
+    if unverified_control_ids:
+        review_signals.append("operational_math_unverified_controls")
     if solver_outcome != "SolvedVerified":
         review_signals.append("operational_math_solver_not_verified")
 
@@ -56,6 +60,8 @@ def summarize_operational_math_receipt(receipt: Mapping[str, Any]) -> dict[str, 
         "applied_principle_count": len(applied_ids),
         "unresolved_principle_count": len(unresolved_ids),
         "unresolved_principle_ids": unresolved_ids,
+        "unverified_control_count": len(unverified_control_ids),
+        "unverified_control_ids": unverified_control_ids,
         "requires_operator_review": bool(review_signals),
         "review_signals": review_signals,
     }
@@ -133,6 +139,17 @@ def _text_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, str) and item.strip()]
+
+
+def _unverified_control_ids(
+    receipt: Mapping[str, Any],
+    result_payload: Any,
+) -> list[str]:
+    if isinstance(result_payload, Mapping):
+        nested_ids = _text_list(result_payload.get("unverified_control_ids"))
+        if nested_ids:
+            return nested_ids
+    return _text_list(receipt.get("unverified_control_ids"))
 
 
 def _non_negative_int(value: Any, field_name: str) -> int:

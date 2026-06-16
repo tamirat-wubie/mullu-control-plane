@@ -4,7 +4,7 @@
   "live_connector_send_enabled": false,
   "live_execution_enabled": false,
   "mode": "foundation",
-  "next_action": "Extend selected route inventory toward remaining declared route families without enabling live execution.",
+  "next_action": "Promote selected route-family classifications into component-owned route bindings only after proof, lifecycle, and authority witnesses exist.",
   "purpose": "Bind currently declared component-owned route families to registered component IDs and proof surfaces while preserving blocked-action authority boundaries.",
   "route_bindings": [
     {
@@ -274,9 +274,2097 @@
       "can_enable_live_action": false,
       "component_id": "nested_mind_bridge",
       "expected_routes": [],
+      "missing_evidence": [
+        "proof_matrix_surface",
+        "memory_topology_activation_witness"
+      ],
       "notes": "Nested Mind bridge has no declared route binding in foundation posture.",
       "proof_surface_ids": [],
       "route_prefixes": []
+    }
+  ],
+  "route_family_classifications": [
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 9,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/agent/action-request",
+        "/api/v1/agent/action-result",
+        "/api/v1/agent/adapter/summary",
+        "/api/v1/agent/checkpoint",
+        "/api/v1/agent/heartbeat"
+      ],
+      "surface_id": "agent_adapter_protocol"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/chain/execute",
+        "/api/v1/chain/history"
+      ],
+      "surface_id": "agent_chain_execution_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/memory/search",
+        "/api/v1/memory/store",
+        "/api/v1/memory/summary"
+      ],
+      "surface_id": "agent_memory_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/orchestration",
+        "/api/v1/orchestration/handoff",
+        "/api/v1/orchestration/plans",
+        "/api/v1/orchestration/plans/{plan_id}"
+      ],
+      "surface_id": "agent_orchestration_lifecycle"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/harness/status"
+      ],
+      "surface_id": "agentic_service_harness_status_read_model"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "gmail_account_binding_gate"
+      ],
+      "component_lane": "connector_action_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/api-keys",
+        "/api/v1/api-keys/{key_id}"
+      ],
+      "surface_id": "api_key_lifecycle"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "personal_assistant",
+        "teamops_shared_inbox"
+      ],
+      "component_lane": "assistant_product_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/assistant/finance-ops/plans",
+        "/api/v1/assistant/profiles",
+        "/api/v1/assistant/team-ops/plans"
+      ],
+      "surface_id": "assistant_kernel_planning"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 7,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/audit",
+        "/api/v1/audit/anchor",
+        "/api/v1/audit/anchor/{anchor_id}/verify",
+        "/api/v1/audit/anchors",
+        "/api/v1/audit/summary"
+      ],
+      "surface_id": "audit_chain_api"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 5,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/authority/escalations",
+        "/authority/obligations",
+        "/authority/responsibility",
+        "/authority/witness",
+        "/commands/{command_id}/authority"
+      ],
+      "surface_id": "authority_obligation_mesh"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 8,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/authority/approval-chains/close-expired",
+        "/authority/approval-chains/expire-overdue",
+        "/authority/obligations/escalate-overdue",
+        "/authority/obligations/{obligation_id}/satisfy",
+        "/authority/operator"
+      ],
+      "surface_id": "authority_operator_controls"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/runtime/self/capability-improvement-portfolio"
+      ],
+      "surface_id": "autonomous_capability_upgrade"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "worker_runtime",
+        "capability_workers"
+      ],
+      "component_lane": "execution_tooling_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/capability-plans/read-model",
+        "/capability-plans/{plan_id}/closure",
+        "/capability-plans/{plan_id}/recover"
+      ],
+      "surface_id": "capability_plan_evidence_bundle"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "capability_workers"
+      ],
+      "component_lane": "execution_tooling_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/capability/execute"
+      ],
+      "surface_id": "capability_worker_execution"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/daemon/force",
+        "/api/v1/daemon/status",
+        "/api/v1/daemon/tick"
+      ],
+      "surface_id": "certification_daemon_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/compliance/audit-package",
+        "/api/v1/compliance/incident-package",
+        "/api/v1/compliance/mapping",
+        "/api/v1/compliance/summary"
+      ],
+      "surface_id": "compliance_evidence_exports"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/components/{component_id}/autopsy"
+      ],
+      "surface_id": "component_autopsy"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/components/read-model"
+      ],
+      "surface_id": "component_harness_read_model"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/components/simulate"
+      ],
+      "surface_id": "component_request_simulator"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/conversation/message",
+        "/api/v1/conversation/{conversation_id}",
+        "/api/v1/conversations"
+      ],
+      "surface_id": "conversation_memory_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/coordination/checkpoint",
+        "/api/v1/coordination/restore"
+      ],
+      "surface_id": "coordination_checkpoint_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 6,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/budget",
+        "/api/v1/costs",
+        "/api/v1/costs/by-model",
+        "/api/v1/costs/top-spenders",
+        "/api/v1/costs/{tenant_id}"
+      ],
+      "surface_id": "cost_budget_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/export",
+        "/api/v1/export/sources"
+      ],
+      "surface_id": "data_export_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 8,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/data-governance/classify",
+        "/api/v1/data-governance/evaluate",
+        "/api/v1/data-governance/policies",
+        "/api/v1/data-governance/privacy-rules",
+        "/api/v1/data-governance/redaction-rules"
+      ],
+      "surface_id": "data_governance_controls"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/engineering-puzzle/candidates/judge",
+        "/api/v1/engineering-puzzle/goal-delta"
+      ],
+      "surface_id": "engineering_puzzle_governance"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/events",
+        "/api/v1/events/publish",
+        "/api/v1/events/store/summary",
+        "/api/v1/events/summary"
+      ],
+      "surface_id": "event_bus_operations"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/federation/clusters",
+        "/api/v1/federation/policies",
+        "/api/v1/federation/policy-sync",
+        "/api/v1/federation/summary"
+      ],
+      "surface_id": "federated_control_plane"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "personal_assistant"
+      ],
+      "component_lane": "assistant_product_core",
+      "declared_route_count": 5,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/finance/approval-packets",
+        "/api/v1/finance/approval-packets/operator/read-model",
+        "/api/v1/finance/approval-packets/{case_id}",
+        "/api/v1/finance/approval-packets/{case_id}/approval",
+        "/api/v1/finance/approval-packets/{case_id}/proof"
+      ],
+      "surface_id": "finance_approval_packets"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/authority/approval-chains",
+        "/webhook/approve/{request_id}"
+      ],
+      "surface_id": "gateway_approval_resolution"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 14,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/capability-fabric/admission-audits",
+        "/capability-fabric/capsule-admission-receipts",
+        "/capability-fabric/capsule-admissions",
+        "/capability-fabric/read-model",
+        "/commands/{command_id}/capability-admission"
+      ],
+      "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/anchors/latest",
+        "/gateway/witness",
+        "/runtime/witness"
+      ],
+      "surface_id": "gateway_runtime_witness"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/webhook/slack",
+        "/webhook/telegram",
+        "/webhook/web"
+      ],
+      "surface_id": "gateway_webhook_ingress"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 14,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/god-mode/agreements/{agreement_id}/withdraw",
+        "/api/v1/god-mode/capabilities",
+        "/api/v1/god-mode/capabilities/{module}/{name}",
+        "/api/v1/god-mode/capabilities/{module}/{name}/agree-to-register",
+        "/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket"
+      ],
+      "surface_id": "god_mode_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/explain/action",
+        "/api/v1/explain/audit/{entry_index}",
+        "/api/v1/explain/summary"
+      ],
+      "surface_id": "governance_explanation_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 7,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/scheduler/execute",
+        "/api/v1/scheduler/history",
+        "/api/v1/scheduler/jobs",
+        "/api/v1/scheduler/jobs/{job_id}",
+        "/api/v1/scheduler/jobs/{job_id}/disable"
+      ],
+      "surface_id": "governed_background_scheduler"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "gmail_account_binding_gate"
+      ],
+      "component_lane": "connector_action_core",
+      "declared_route_count": 7,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/connectors",
+        "/api/v1/connectors/history",
+        "/api/v1/connectors/invoke",
+        "/api/v1/connectors/register",
+        "/api/v1/connectors/summary"
+      ],
+      "surface_id": "governed_connector_framework"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 9,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/knowledge/contradictions",
+        "/api/v1/knowledge/contradictions/unresolved",
+        "/api/v1/knowledge/entities",
+        "/api/v1/knowledge/entities/{entity_id}/links",
+        "/api/v1/knowledge/links"
+      ],
+      "surface_id": "governed_operational_intelligence"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/loops/read-model"
+      ],
+      "surface_id": "holistic_loop_read_model_kernel"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/sandbox/lineage/{trace_id}",
+        "/api/v1/sandbox/policy-evaluations",
+        "/api/v1/sandbox/summary",
+        "/api/v1/sandbox/traces"
+      ],
+      "surface_id": "hosted_demo_sandbox"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 5,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/lineage/artifact/{artifact_id}",
+        "/api/v1/lineage/command/{command_id}",
+        "/api/v1/lineage/output/{output_id}",
+        "/api/v1/lineage/resolve",
+        "/api/v1/lineage/{trace_id}"
+      ],
+      "surface_id": "lineage_query_api"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/certify",
+        "/api/v1/certify/history"
+      ],
+      "surface_id": "live_path_certification_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/chat",
+        "/api/v1/chat/workflow",
+        "/api/v1/chat/workflow/history"
+      ],
+      "surface_id": "llm_chat_workflow"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/complete",
+        "/api/v1/complete/auto",
+        "/api/v1/complete/safe"
+      ],
+      "surface_id": "llm_completion"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/chat/stream",
+        "/api/v1/stream"
+      ],
+      "surface_id": "llm_streaming"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/ab-test",
+        "/api/v1/ab-test/summary",
+        "/api/v1/models"
+      ],
+      "surface_id": "model_experiment_control"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 7,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/multi-agent/conflict",
+        "/api/v1/multi-agent/conflicts/unresolved",
+        "/api/v1/multi-agent/delegate",
+        "/api/v1/multi-agent/delegate/resolve",
+        "/api/v1/multi-agent/handoff"
+      ],
+      "surface_id": "multi_agent_coordination_runtime"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 38,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/backpressure",
+        "/api/v1/cache/stats",
+        "/api/v1/canary",
+        "/api/v1/capabilities",
+        "/api/v1/circuits/dashboard"
+      ],
+      "surface_id": "operational_health_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/dashboard/operational-math"
+      ],
+      "surface_id": "operational_math_loop"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 14,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/bootstrap",
+        "/api/v1/circuit-breaker",
+        "/api/v1/dependencies",
+        "/api/v1/dependencies/{name}/impact",
+        "/api/v1/flags"
+      ],
+      "surface_id": "operational_platform_read_models"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "inceptadive_shadow",
+        "personal_assistant"
+      ],
+      "component_lane": "assistant_product_core",
+      "declared_route_count": 15,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/console",
+        "/api/v1/console/audit",
+        "/api/v1/console/checkpoints",
+        "/api/v1/console/home",
+        "/api/v1/console/note-memory"
+      ],
+      "surface_id": "operator_console_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/ops/benchmarks",
+        "/api/v1/ops/imports",
+        "/api/v1/ops/proof-bridge"
+      ],
+      "surface_id": "ops_proof_surface"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 47,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/cases",
+        "/api/v1/cases/launch-gateway-pilot",
+        "/api/v1/cases/{case_id}",
+        "/api/v1/cases/{case_id}/approvals",
+        "/api/v1/cases/{case_id}/audit-explorer"
+      ],
+      "surface_id": "orgos_case_governance_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/pilots/provision",
+        "/api/v1/pilots/provisions",
+        "/api/v1/pilots/provisions/{pilot_id}"
+      ],
+      "surface_id": "pilot_provisioning"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 6,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/policies/{policy_id}/diff",
+        "/api/v1/policies/{policy_id}/rollback",
+        "/api/v1/policies/{policy_id}/shadow/{shadow_version}",
+        "/api/v1/policies/{policy_id}/versions",
+        "/api/v1/policies/{policy_id}/versions/{version}"
+      ],
+      "surface_id": "policy_version_registry"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/prompts",
+        "/api/v1/prompts/render"
+      ],
+      "surface_id": "prompt_template_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/rbac/bindings",
+        "/api/v1/rbac/identities",
+        "/api/v1/rbac/roles",
+        "/api/v1/rbac/summary"
+      ],
+      "surface_id": "rbac_access_governance"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/replay/reports",
+        "/api/v1/replay/reports/{replay_id}",
+        "/api/v1/replay/{trace_id}/determinism"
+      ],
+      "surface_id": "replay_determinism"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/replay/traces"
+      ],
+      "surface_id": "replay_trace_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 6,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/browser/execute",
+        "/document/execute",
+        "/email-calendar/execute",
+        "/messaging/execute",
+        "/phone/execute"
+      ],
+      "surface_id": "restricted_adapter_worker_boundaries"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 11,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/mil-audit/admit-runbook",
+        "/api/v1/mil-audit/runbooks",
+        "/api/v1/mil-audit/runbooks/{runbook_id}",
+        "/api/v1/runbooks",
+        "/api/v1/runbooks/analyze"
+      ],
+      "surface_id": "runbook_learning_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 6,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/config",
+        "/api/v1/config/drift",
+        "/api/v1/config/history",
+        "/api/v1/config/rollback",
+        "/api/v1/config/update"
+      ],
+      "surface_id": "runtime_config_management"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/runtime/conformance"
+      ],
+      "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 9,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/runtime/self/certify",
+        "/runtime/self/deployment-witnesses",
+        "/runtime/self/diagnose",
+        "/runtime/self/evaluate",
+        "/runtime/self/health"
+      ],
+      "surface_id": "runtime_reflex_engine"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/state",
+        "/api/v1/state/save",
+        "/api/v1/state/{state_type}"
+      ],
+      "surface_id": "runtime_state_persistence_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/schemas",
+        "/api/v1/schemas/validate"
+      ],
+      "surface_id": "schema_validation_registry"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "nested_mind_bridge"
+      ],
+      "component_lane": "data_memory_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/search",
+        "/api/v1/search/stats"
+      ],
+      "surface_id": "semantic_search_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/output/parse",
+        "/api/v1/output/schemas"
+      ],
+      "surface_id": "structured_output_validation"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "worker_runtime",
+        "capability_workers"
+      ],
+      "component_lane": "execution_tooling_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/queue/process",
+        "/api/v1/queue/result/{task_id}",
+        "/api/v1/queue/status",
+        "/api/v1/queue/submit"
+      ],
+      "surface_id": "task_queue_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 8,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/temporal/monitor",
+        "/api/v1/temporal/schedules",
+        "/api/v1/temporal/schedules/{schedule_id}",
+        "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "/api/v1/temporal/schedules/{schedule_id}/lease/reclaim"
+      ],
+      "surface_id": "temporal_kernel"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 18,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/analytics/{tenant_id}",
+        "/api/v1/isolation/summary",
+        "/api/v1/isolation/verify",
+        "/api/v1/partitions",
+        "/api/v1/quotas/summary"
+      ],
+      "surface_id": "tenant_governance_lifecycle"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/tools/invoke",
+        "/api/v1/workflow/tools"
+      ],
+      "surface_id": "tool_invocation"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 2,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/tool-permissions",
+        "/api/v1/tool-permissions/evaluate"
+      ],
+      "surface_id": "tool_permission_registry"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 3,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/tools",
+        "/api/v1/tools/history",
+        "/api/v1/tools/llm-format"
+      ],
+      "surface_id": "tool_registry_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 4,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/traces",
+        "/api/v1/traces/slow",
+        "/api/v1/traces/summary",
+        "/api/v1/traces/{trace_id}"
+      ],
+      "surface_id": "trace_observability_read_models"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/evidence/bundles/{command_id}"
+      ],
+      "surface_id": "trust_ledger"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 5,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/webhooks",
+        "/api/v1/webhooks/deliveries",
+        "/api/v1/webhooks/retry/dead-letters",
+        "/api/v1/webhooks/retry/summary",
+        "/api/v1/webhooks/subscribe"
+      ],
+      "surface_id": "webhooks_proof_surface"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "component_lane": "runtime_core",
+      "declared_route_count": 11,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/cognitive/shadow/observations",
+        "/api/v1/execute",
+        "/api/v1/ledger",
+        "/api/v1/pipeline/execute",
+        "/api/v1/pipeline/history"
+      ],
+      "surface_id": "workflow_execution_lifecycle"
     }
   ],
   "router_inventory_is_not_execution_authority": true,

@@ -103,6 +103,8 @@ CapabilityPlanPreview {
   risk_tier
   approval_required
   evidence_required
+  budget
+  tools
   execution_allowed
   safe_default
   created_at
@@ -112,10 +114,37 @@ CapabilityPlanPreview {
 Preview rule:
 
 ```text
-The preview exposes plan topology, risk, approval, and evidence obligations.
+The preview exposes plan topology, risk, approval, evidence obligations, budget display state, and tool requirements.
 It does not grant execution authority.
 It does not store raw goal text or raw step params.
+Budget values that require the runtime budget gate remain explicit as not calculated.
 ```
+
+Goal Intake binding:
+
+```text
+/operator/goal-intake
+-> form submission
+-> /operator/goal-intake/preview
+-> CapabilityPlanBuilder
+-> CapabilityPlanPreview
+-> redacted HTML review
+-> /operator/goal-intake/approve or /operator/goal-intake/deny
+-> approved preview uses internal operator_goal_intake channel
+-> governed router handoff
+-> /operator/current-task/read-model projects preview id, goal hash, plan id,
+   step id, and approval request id
+-> /operator/current-task/approval resolves request-bound approval and resumes
+   waiting plans when terminal command evidence exists
+```
+
+The preview binding blocks non-compilable goals and does not create commands,
+write plan witnesses, echo raw goal text, or grant execution authority. Approval
+and denial forms carry only `preview_id`; raw goal text stays server-side until
+an explicit approved handoff sends it into the governed router. The handoff UI
+renders allowlisted ids and statuses only. Current Task recovery forms carry
+only `request_id` and a decision value; tenant, channel, command, and plan
+context are loaded from governed ledger state.
 
 Receipt rule:
 

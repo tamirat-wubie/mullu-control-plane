@@ -1090,3 +1090,4 @@ class TestGatewayReceiptMiddlewareStatus:
         assert status["reason"] == "active"
         assert "/webhook/" in status["certified_prefixes"]
         assert "/authority/" in status["certified_prefixes"]
+        assert "/operator/" in status["certified_prefixes"]

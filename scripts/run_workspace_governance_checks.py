@@ -183,12 +183,164 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_component_lifecycle_transition_receipts.py"),
         ),
         CheckCommand(
+            "component_authority_envelope_witnesses",
+            (python_executable, "scripts/validate_component_authority_envelope_witnesses.py"),
+        ),
+        CheckCommand(
             "component_router_inventory",
             (python_executable, "scripts/validate_component_router_inventory.py"),
         ),
         CheckCommand(
             "component_proof_binding",
             (python_executable, "scripts/validate_component_proof_binding.py"),
+        ),
+        CheckCommand(
+            "component_route_family_ownership",
+            (python_executable, "scripts/validate_component_route_family_ownership.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_preflight",
+            (python_executable, "scripts/validate_component_route_family_promotion_preflight.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_witness_requirements",
+            (python_executable, "scripts/validate_component_route_family_promotion_witness_requirements.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_witness_evidence",
+            (python_executable, "scripts/validate_component_route_family_promotion_witness_evidence.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_approval_candidates",
+            (python_executable, "scripts/validate_component_route_family_promotion_approval_candidates.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_approval_intake",
+            (python_executable, "scripts/validate_component_route_family_promotion_approval_intake.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_submitted_evidence_verifier",
+            (python_executable, "scripts/validate_component_route_family_promotion_submitted_evidence_verifier.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_submitted_evidence_records",
+            (python_executable, "scripts/validate_component_route_family_promotion_submitted_evidence_records.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_submitted_evidence_payload_examples",
+            (python_executable, "scripts/validate_component_route_family_promotion_submitted_evidence_payload_examples.py"),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_operator_submitted_evidence_records",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_operator_submitted_evidence_records.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_gate_satisfaction_evaluator",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_gate_satisfaction_evaluator.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_authority_decision_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_authority_decision_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_route_binding_decision_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_route_binding_decision_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_lifecycle_transition_decision_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_authority_upgrade_witness_decision_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_product_ownership_decision_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_product_ownership_decision_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_terminal_closure_denial_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_terminal_closure_denial_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_missing_evidence_ledger",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_missing_evidence_ledger.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_candidate",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_candidate.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_requirements",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_requirements.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py",
+            ),
+        ),
+        CheckCommand(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
+            (
+                python_executable,
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py",
+            ),
         ),
         CheckCommand(
             "component_read_model",
@@ -698,7 +850,7 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         ),
         CheckCommand(
             "public_repository_surface",
-            (python_executable, "scripts/validate_public_repository_surface.py"),
+            (python_executable, "scripts/validate_public_repository_surface.py", "--local-only"),
         ),
         CheckCommand("proprietary_boundary", (python_executable, "scripts/validate_proprietary_boundary.py")),
         CheckCommand(

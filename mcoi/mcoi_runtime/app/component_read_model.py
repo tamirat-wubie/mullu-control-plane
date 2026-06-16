@@ -40,6 +40,7 @@ def build_component_read_model(
     router_inventory_path: Path | None = None,
     proof_binding_path: Path | None = None,
     lifecycle_receipts_path: Path | None = None,
+    authority_witnesses_path: Path | None = None,
 ) -> dict[str, Any]:
     """Return the deterministic foundation Component Harness read model.
 
@@ -59,27 +60,35 @@ def build_component_read_model(
         lifecycle_receipts_path
         or repo_root / "examples" / "component_lifecycle_transition_receipts.foundation.json"
     )
+    effective_authority_witnesses_path = (
+        authority_witnesses_path
+        or repo_root / "examples" / "component_authority_envelope_witnesses.foundation.json"
+    )
 
     registry = _load_json_object(effective_registry_path, "component registry")
     router_inventory = _load_json_object(effective_router_inventory_path, "component router inventory")
     proof_binding = _load_json_object(effective_proof_binding_path, "component proof binding")
     lifecycle_receipts = _load_json_object(effective_lifecycle_receipts_path, "component lifecycle transition receipts")
+    authority_witnesses = _load_json_object(effective_authority_witnesses_path, "component authority envelope witnesses")
 
     components = _component_records(
         registry=registry,
         router_inventory=router_inventory,
         proof_binding=proof_binding,
         lifecycle_receipts=lifecycle_receipts,
+        authority_witnesses=authority_witnesses,
     )
     bundles = _bundle_records(registry)
     live_execution_enabled = (
         _registry_guardrail(registry, "live_execution_enabled")
         or bool(router_inventory.get("live_execution_enabled"))
         or bool(proof_binding.get("live_execution_enabled"))
+        or bool(authority_witnesses.get("live_execution_enabled"))
     )
     live_connector_send_enabled = (
         _registry_guardrail(registry, "live_connector_send_enabled")
         or bool(router_inventory.get("live_connector_send_enabled"))
+        or bool(authority_witnesses.get("live_connector_send_enabled"))
     )
     return {
         "schema_version": SCHEMA_VERSION,
@@ -96,12 +105,16 @@ def build_component_read_model(
             "router_inventory": _path_label(effective_router_inventory_path, repo_root),
             "proof_binding": _path_label(effective_proof_binding_path, repo_root),
             "lifecycle_transition_receipts": _path_label(effective_lifecycle_receipts_path, repo_root),
+            "authority_envelope_witnesses": _path_label(effective_authority_witnesses_path, repo_root),
         },
         "summary": {
             "component_count": len(components),
             "bundle_count": len(bundles),
             "lifecycle_receipt_count": sum(
                 1 for component in components if component["lifecycle_receipt"]["receipt_id"]
+            ),
+            "authority_witness_count": sum(
+                1 for component in components if component["authority_witness"]["witness_id"]
             ),
             "proof_bound_count": sum(
                 1 for component in components if component["proof_binding"]["state"] == "proof_bound"
@@ -110,6 +123,8 @@ def build_component_read_model(
                 1 for component in components if component["proof_binding"]["state"] == "awaiting_binding"
             ),
             "bound_route_count": sum(component["route_binding"]["route_count"] for component in components),
+            "route_family_classification_count": _route_family_classification_count(router_inventory),
+            "classified_declared_route_count": _classified_declared_route_count(router_inventory),
             "blocked_component_count": sum(
                 1 for component in components if component["mode"] == "blocked"
             ),
@@ -119,6 +134,7 @@ def build_component_read_model(
         "validators": [
             "component_registry_validator",
             "component_lifecycle_transition_receipts_validator",
+            "component_authority_envelope_witnesses_validator",
             "component_router_inventory_validator",
             "component_proof_binding_validator",
             "component_read_model_validator",
@@ -132,6 +148,7 @@ def _component_records(
     router_inventory: dict[str, Any],
     proof_binding: dict[str, Any],
     lifecycle_receipts: dict[str, Any],
+    authority_witnesses: dict[str, Any],
 ) -> list[dict[str, Any]]:
     components = registry.get("components")
     if not isinstance(components, list):
@@ -151,6 +168,11 @@ def _component_records(
         id_field="component_id",
         source_label="component lifecycle transition receipts transition_receipts",
     )
+    authority_witnesses_by_component = _object_by_id(
+        authority_witnesses.get("authority_witnesses"),
+        id_field="component_id",
+        source_label="component authority envelope witnesses authority_witnesses",
+    )
     next_transitions_by_state = _next_transitions_by_state(lifecycle_receipts)
     records: list[dict[str, Any]] = []
     for component in components:
@@ -162,6 +184,9 @@ def _component_records(
         lifecycle_receipt = lifecycle_receipts_by_component.get(component_id)
         if lifecycle_receipt is None:
             raise ComponentReadModelError(f"component {component_id} is missing lifecycle transition receipt")
+        authority_witness = authority_witnesses_by_component.get(component_id)
+        if authority_witness is None:
+            raise ComponentReadModelError(f"component {component_id} is missing authority envelope witness")
         proof_surface = component.get("proof_surface")
         if not isinstance(proof_surface, dict):
             raise ComponentReadModelError(f"component {component_id} proof_surface must be an object")
@@ -188,6 +213,11 @@ def _component_records(
                     current_state=current_state,
                     lifecycle_receipt=lifecycle_receipt,
                     next_transition_candidates=next_transitions_by_state.get(current_state, ()),
+                ),
+                "authority_witness": _authority_witness_summary(
+                    component_id=component_id,
+                    component=component,
+                    authority_witness=authority_witness,
                 ),
                 "health": {
                     "status": "known" if health_source.get("type") != "none" else "unknown",
@@ -260,6 +290,37 @@ def _lifecycle_receipt_summary(
     }
 
 
+def _authority_witness_summary(
+    *,
+    component_id: str,
+    component: dict[str, Any],
+    authority_witness: dict[str, Any],
+) -> dict[str, Any]:
+    witness_id = _required_text(authority_witness, "witness_id", f"component {component_id} authority witness")
+    for field_name in ("lifecycle_state", "wiring_state", "authority_level"):
+        if authority_witness.get(field_name) != component.get(field_name):
+            raise ComponentReadModelError(
+                f"component {component_id} authority witness {field_name} does not match registry"
+            )
+    if authority_witness.get("authority") != component.get("authority"):
+        raise ComponentReadModelError(f"component {component_id} authority witness does not match registry authority")
+    return {
+        "witness_id": witness_id,
+        "proof_state": _required_text(authority_witness, "proof_state", f"component {component_id} authority witness"),
+        "authority_matches_registry": bool(authority_witness.get("authority_matches_registry")),
+        "witness_is_not_execution_authority": bool(
+            authority_witness.get("witness_is_not_execution_authority")
+        ),
+        "can_claim_terminal_closure": authority_witness.get("witness_is_not_terminal_closure") is not True,
+        "authority_upgrade_requires_separate_witness": bool(
+            authority_witness.get("authority_upgrade_requires_separate_witness")
+        ),
+        "external_effect": bool(authority_witness.get("external_effect")),
+        "evidence_refs": _string_list(authority_witness.get("evidence_refs")),
+        "validator_refs": _string_list(authority_witness.get("required_validator_refs")),
+    }
+
+
 def _next_transitions_by_state(lifecycle_receipts: dict[str, Any]) -> dict[str, tuple[dict[str, Any], ...]]:
     transition_graph = lifecycle_receipts.get("allowed_transition_graph")
     if not isinstance(transition_graph, list):
@@ -294,6 +355,24 @@ def _bundle_records(registry: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
     return records
+
+
+def _route_family_classification_count(router_inventory: dict[str, Any]) -> int:
+    classifications = router_inventory.get("route_family_classifications")
+    if not isinstance(classifications, list):
+        raise ComponentReadModelError("component router inventory route_family_classifications must be a list")
+    return len(classifications)
+
+
+def _classified_declared_route_count(router_inventory: dict[str, Any]) -> int:
+    classifications = router_inventory.get("route_family_classifications")
+    if not isinstance(classifications, list):
+        raise ComponentReadModelError("component router inventory route_family_classifications must be a list")
+    return sum(
+        int(classification.get("declared_route_count", 0))
+        for classification in classifications
+        if isinstance(classification, dict)
+    )
 
 
 def _object_by_id(

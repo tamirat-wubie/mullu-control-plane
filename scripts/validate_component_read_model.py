@@ -38,6 +38,9 @@ from scripts.validate_component_proof_binding import validate_component_proof_bi
 from scripts.validate_component_lifecycle_transition_receipts import (  # noqa: E402
     validate_component_lifecycle_transition_receipts,
 )
+from scripts.validate_component_authority_envelope_witnesses import (  # noqa: E402
+    validate_component_authority_envelope_witnesses,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -56,6 +59,8 @@ class ComponentReadModelValidation:
     example_path: str
     component_count: int
     bound_route_count: int
+    route_family_classification_count: int
+    classified_declared_route_count: int
     proof_bound_count: int
 
     def as_dict(self) -> dict[str, Any]:
@@ -87,6 +92,12 @@ def validate_component_read_model(
             f"component lifecycle transition receipt validation failed: {error}"
             for error in lifecycle_validation.errors
         )
+    authority_witness_validation = validate_component_authority_envelope_witnesses()
+    if not authority_witness_validation.ok:
+        errors.extend(
+            f"component authority envelope witness validation failed: {error}"
+            for error in authority_witness_validation.errors
+        )
 
     expected_read_model = build_component_read_model()
     if schema and example:
@@ -106,6 +117,12 @@ def validate_component_read_model(
         example_path=_path_label(example_path),
         component_count=int(summary.get("component_count", 0)) if isinstance(summary, dict) else 0,
         bound_route_count=int(summary.get("bound_route_count", 0)) if isinstance(summary, dict) else 0,
+        route_family_classification_count=int(summary.get("route_family_classification_count", 0))
+        if isinstance(summary, dict)
+        else 0,
+        classified_declared_route_count=int(summary.get("classified_declared_route_count", 0))
+        if isinstance(summary, dict)
+        else 0,
         proof_bound_count=int(summary.get("proof_bound_count", 0)) if isinstance(summary, dict) else 0,
     )
 
@@ -141,6 +158,15 @@ def _validate_read_model_semantics(
         errors.append(f"{label}: live_connector_send_enabled must be false")
     if read_model.get("terminal_closure_required") is not True:
         errors.append(f"{label}: terminal_closure_required must be true")
+
+    summary = read_model.get("summary")
+    if not isinstance(summary, dict):
+        errors.append(f"{label}: summary must be an object")
+    else:
+        if int(summary.get("route_family_classification_count", 0)) <= 0:
+            errors.append(f"{label}: route_family_classification_count must be positive")
+        if int(summary.get("classified_declared_route_count", 0)) < int(summary.get("bound_route_count", 0)):
+            errors.append(f"{label}: classified_declared_route_count must cover bound routes")
 
     components = read_model.get("components")
     if not isinstance(components, list):
@@ -185,6 +211,24 @@ def _validate_read_model_semantics(
             errors.append(f"{label}: component {component_id} lifecycle receipt cannot claim terminal closure")
         if not isinstance(lifecycle_receipt.get("evidence_refs"), list) or not lifecycle_receipt["evidence_refs"]:
             errors.append(f"{label}: component {component_id} lifecycle receipt must list evidence refs")
+        authority_witness = component.get("authority_witness")
+        if not isinstance(authority_witness, dict):
+            errors.append(f"{label}: component {component_id} authority_witness must be an object")
+            continue
+        if authority_witness.get("proof_state") != "Pass":
+            errors.append(f"{label}: component {component_id} authority witness proof_state must be Pass")
+        if authority_witness.get("authority_matches_registry") is not True:
+            errors.append(f"{label}: component {component_id} authority witness must match registry")
+        if authority_witness.get("witness_is_not_execution_authority") is not True:
+            errors.append(f"{label}: component {component_id} authority witness must not grant execution authority")
+        if authority_witness.get("can_claim_terminal_closure") is not False:
+            errors.append(f"{label}: component {component_id} authority witness cannot claim terminal closure")
+        if authority_witness.get("authority_upgrade_requires_separate_witness") is not True:
+            errors.append(f"{label}: component {component_id} authority witness must require separate upgrade witness")
+        if authority_witness.get("external_effect") is not False:
+            errors.append(f"{label}: component {component_id} authority witness external_effect must be false")
+        if not isinstance(authority_witness.get("evidence_refs"), list) or not authority_witness["evidence_refs"]:
+            errors.append(f"{label}: component {component_id} authority witness must list evidence refs")
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

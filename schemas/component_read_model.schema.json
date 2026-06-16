@@ -67,7 +67,8 @@
         "registry",
         "router_inventory",
         "proof_binding",
-        "lifecycle_transition_receipts"
+        "lifecycle_transition_receipts",
+        "authority_envelope_witnesses"
       ],
       "properties": {
         "registry": {
@@ -81,6 +82,9 @@
         },
         "lifecycle_transition_receipts": {
           "$ref": "#/$defs/repo_path"
+        },
+        "authority_envelope_witnesses": {
+          "$ref": "#/$defs/repo_path"
         }
       }
     },
@@ -91,9 +95,12 @@
         "component_count",
         "bundle_count",
         "lifecycle_receipt_count",
+        "authority_witness_count",
         "proof_bound_count",
         "awaiting_binding_count",
         "bound_route_count",
+        "route_family_classification_count",
+        "classified_declared_route_count",
         "blocked_component_count"
       ],
       "properties": {
@@ -109,6 +116,10 @@
           "type": "integer",
           "minimum": 0
         },
+        "authority_witness_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "proof_bound_count": {
           "type": "integer",
           "minimum": 0
@@ -118,6 +129,14 @@
           "minimum": 0
         },
         "bound_route_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "route_family_classification_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "classified_declared_route_count": {
           "type": "integer",
           "minimum": 0
         },
@@ -161,6 +180,12 @@
       "minLength": 1,
       "maxLength": 256,
       "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
     },
     "blocked_action": {
       "type": "string",
@@ -274,6 +299,7 @@
         "authority",
         "receipt_required",
         "lifecycle_receipt",
+        "authority_witness",
         "health",
         "proof_surface",
         "route_binding",
@@ -313,6 +339,9 @@
         },
         "lifecycle_receipt": {
           "$ref": "#/$defs/lifecycle_receipt"
+        },
+        "authority_witness": {
+          "$ref": "#/$defs/authority_witness"
         },
         "health": {
           "type": "object",
@@ -473,7 +502,7 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/repo_path"
+            "$ref": "#/$defs/evidence_ref"
           }
         },
         "validator_refs": {
@@ -534,6 +563,68 @@
         "external_effect": {
           "type": "boolean",
           "const": false
+        }
+      }
+    },
+    "authority_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_id",
+        "proof_state",
+        "authority_matches_registry",
+        "witness_is_not_execution_authority",
+        "can_claim_terminal_closure",
+        "authority_upgrade_requires_separate_witness",
+        "external_effect",
+        "evidence_refs",
+        "validator_refs"
+      ],
+      "properties": {
+        "witness_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass"
+          ]
+        },
+        "authority_matches_registry": {
+          "type": "boolean",
+          "const": true
+        },
+        "witness_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "authority_upgrade_requires_separate_witness": {
+          "type": "boolean",
+          "const": true
+        },
+        "external_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
         }
       }
     },

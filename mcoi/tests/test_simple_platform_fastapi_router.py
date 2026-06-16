@@ -33,7 +33,7 @@ def _request(**overrides: object) -> dict[str, object]:
 def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
     specs = SimplePlatformFastAPIAdapter.route_specs()
 
-    assert len(specs) == 8
+    assert len(specs) == 12
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/simple/home", "simple_home"),
         ("GET", "/api/v1/simple/actions", "action_menu"),
@@ -41,8 +41,12 @@ def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
         ("GET", "/api/v1/simple/documents/wiring", "document_manipulation_wiring"),
         ("GET", "/api/v1/simple/documents/wiring/contract", "document_manipulation_wiring_contract"),
         ("POST", "/api/v1/simple/actions/check", "check_action"),
+        ("POST", "/api/v1/simple/actions/experience", "check_action_experience"),
+        ("POST", "/api/v1/simple/actions/check/audit", "check_action_audit"),
         ("POST", "/api/v1/simple/tasks/check", "check_task"),
+        ("POST", "/api/v1/simple/tasks/check/audit", "check_task_audit"),
         ("POST", "/api/v1/simple/workflows/check", "check_workflow"),
+        ("POST", "/api/v1/simple/workflows/check/audit", "check_workflow_audit"),
     ]
     assert all(spec.purpose for spec in specs)
 
@@ -70,6 +74,11 @@ def test_simple_platform_runtime_menu_is_plain_and_governed() -> None:
         "needs_review",
         "blocked",
     ]
+    assert [item["visibility_level"] for item in envelope["payload"]["visibility_levels"]] == [
+        "normal_user",
+        "operator",
+        "auditor_developer",
+    ]
 
 
 def test_simple_platform_fastapi_adapter_returns_simple_home() -> None:
@@ -87,12 +96,59 @@ def test_simple_platform_fastapi_adapter_returns_simple_home() -> None:
 def test_simple_platform_fastapi_adapter_returns_ready_envelope() -> None:
     adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
     envelope = adapter.check_action(_request())
+    experience = envelope["payload"]["experience"]
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert experience["status_label"] == "Ready"
+    assert experience["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in experience
+
+
+def test_simple_platform_fastapi_adapter_returns_action_audit_envelope() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_action_audit(_request())
 
     assert envelope["governed"] is True
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["check"]["title"] == "Ready"
     assert envelope["payload"]["check"]["proof_stamp_ref"].startswith("proof-")
+
+
+def test_simple_platform_fastapi_adapter_returns_normal_user_experience() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_action_experience(
+        _request(
+            goal="Notify support",
+            action="send",
+            target="support@mullusi.com",
+            allowed_area="support@mullusi.com",
+        )
+    )
+    experience = envelope["payload"]["experience"]
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is False
+    assert envelope["status"] == "needs_review"
+    assert experience["visibility_level"] == "normal_user"
+    assert experience["risk"] == "External message"
+    assert experience["approval_needed"] is True
+    assert experience["audit_details_available"] is True
+    assert experience["audit_details_visible"] is False
+    assert "operator_details" not in experience
+
+
+def test_simple_platform_fastapi_adapter_returns_auditor_experience() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_action_experience(_request(visibility_level="auditor_developer"))
+    experience = envelope["payload"]["experience"]
+
+    assert envelope["status"] == "ready"
+    assert experience["visibility_level"] == "auditor_developer"
+    assert experience["operator_details"]["proof_stamp_ref"].startswith("proof-")
+    assert experience["auditor_details"]["raw_decision"] == "allow"
 
 
 def test_simple_platform_fastapi_adapter_returns_start_guide() -> None:
@@ -145,7 +201,9 @@ def test_simple_platform_fastapi_adapter_returns_task_envelope() -> None:
     assert envelope["governed"] is True
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
-    assert envelope["payload"]["check"]["title"] == "Ready"
+    assert envelope["payload"]["experience"]["status_label"] == "Ready"
+    assert envelope["payload"]["experience"]["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in envelope["payload"]["experience"]
 
 
 def test_simple_platform_fastapi_adapter_returns_workflow_envelope() -> None:
@@ -162,7 +220,25 @@ def test_simple_platform_fastapi_adapter_returns_workflow_envelope() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["workflow"]["ready_count"] == 3
-    assert envelope["payload"]["workflow"]["checks"][0]["title"] == "Ready"
+    assert envelope["payload"]["workflow"]["steps"][0]["status_label"] == "Ready"
+    assert envelope["payload"]["workflow"]["proof_details_hidden"] is True
+    assert "checks" not in envelope["payload"]["workflow"]
+
+
+def test_simple_platform_fastapi_adapter_returns_workflow_audit_envelope() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_workflow_audit(
+        {
+            "workflow": "docs_update",
+            "target": "docs/README.md",
+            "actor_id": "simple-http-test",
+        }
+    )
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["workflow"]["checks"][0]["proof_stamp_ref"].startswith("proof-")
 
 
 def test_simple_platform_fastapi_adapter_returns_review_envelope() -> None:
@@ -179,8 +255,10 @@ def test_simple_platform_fastapi_adapter_returns_review_envelope() -> None:
     assert envelope["governed"] is True
     assert envelope["ok"] is False
     assert envelope["status"] == "needs_review"
-    assert envelope["payload"]["check"]["review_reasons"] == ["External changes require approval."]
-    assert envelope["payload"]["check"]["blocked_reasons"] == []
+    assert envelope["payload"]["experience"]["status_label"] == "Needs approval"
+    assert envelope["payload"]["experience"]["risk"] == "External message"
+    assert envelope["payload"]["experience"]["audit_details_visible"] is False
+    assert "review_reasons" not in envelope["payload"]["experience"]
 
 
 def test_simple_platform_fastapi_adapter_rejects_invalid_requests() -> None:

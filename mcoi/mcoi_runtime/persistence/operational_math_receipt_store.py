@@ -109,6 +109,17 @@ def _text_list_field(receipt: Mapping[str, Any], field_name: str) -> list[str]:
     return list(value)
 
 
+def _optional_result_text_list_field(result: Mapping[str, Any], field_name: str) -> list[str]:
+    if field_name not in result:
+        return []
+    value = result.get(field_name)
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item.strip() for item in value):
+        raise CorruptedDataError(
+            f"operational math receipt result.{field_name} must be a list of non-empty strings"
+        )
+    return list(value)
+
+
 def _validated_receipt(raw_receipt: Mapping[str, Any]) -> OperationalMathReceipt:
     if not isinstance(raw_receipt, Mapping):
         raise CorruptedDataError("operational math receipt payload must be an object")
@@ -126,6 +137,7 @@ def _validated_receipt(raw_receipt: Mapping[str, Any]) -> OperationalMathReceipt
     _text_list_field(receipt, "unresolved_principle_ids")
     if not isinstance(receipt["result"], dict):
         raise CorruptedDataError("operational math receipt result must be an object")
+    _optional_result_text_list_field(receipt["result"], "unverified_control_ids")
     return receipt
 
 
@@ -134,15 +146,28 @@ def _requires_review(receipt: Mapping[str, Any]) -> bool:
         receipt["status"] != "passed"
         or receipt["solver_outcome"] != "SolvedVerified"
         or bool(receipt["unresolved_principle_ids"])
+        or bool(_unverified_control_ids(receipt))
     )
 
 
 def _review_reason(receipt: Mapping[str, Any]) -> str:
     if receipt["status"] != "passed":
         return "operational_math_receipt_not_passed"
+    if _unverified_control_ids(receipt):
+        return "operational_math_unverified_controls"
     if receipt["solver_outcome"] != "SolvedVerified":
         return "operational_math_solver_not_verified"
     return "operational_math_unresolved_principles"
+
+
+def _unverified_control_ids(receipt: Mapping[str, Any]) -> list[str]:
+    result = receipt.get("result")
+    if not isinstance(result, Mapping):
+        return []
+    value = result.get("unverified_control_ids")
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item.strip()]
 
 
 class OperationalMathReceiptStore:
@@ -229,6 +254,8 @@ class OperationalMathReceiptStore:
                 "status": receipt["status"],
                 "solver_outcome": receipt["solver_outcome"],
                 "unresolved_principle_count": len(receipt["unresolved_principle_ids"]),
+                "unverified_control_count": len(_unverified_control_ids(receipt)),
+                "unverified_control_ids": _unverified_control_ids(receipt),
                 "reason": _review_reason(receipt),
             }
             for receipt in review_receipts[:10]

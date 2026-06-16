@@ -196,6 +196,12 @@ class TestHappyPaths:
         assert receipt.to_json_dict()["decision_summary"]["decision_value"] == 4.0
         assert len(receipt.receipt_hash) == 64
 
+    def test_math_solver_receipt_rejects_structured_evidence_refs(self):
+        with pytest.raises(ValueError) as exc_info:
+            _solver_receipt(evidence_refs=({"proof": "math-request:req-1"},))
+
+        assert str(exc_info.value) == "evidence_refs must be a non-empty string"
+
 
 # ---------------------------------------------------------------------------
 # Inf / NaN rejection

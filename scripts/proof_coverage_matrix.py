@@ -449,6 +449,1197 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "component_route_family_ownership",
+            ["component_route_family_ownership"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_ownership.py",
+                "schemas/component_route_family_ownership.schema.json",
+                "examples/component_route_family_ownership.foundation.json",
+                "scripts/validate_component_route_family_ownership.py",
+                "tests/test_validate_component_route_family_ownership.py",
+            ],
+            "Component Harness route-family ownership readiness separates selected-bound route families from blocked promotions and requires proof, lifecycle, route-binding, and authority evidence before ownership promotion without granting execution or terminal closure authority.",
+            [
+                "component_route_family_ownership_schema_valid",
+                "component_route_family_ownership_example_matches_runtime_projection",
+                "component_route_family_ownership_blocks_authority_drift",
+                "component_route_family_ownership_blocks_platform_promotion_overclaim",
+                "component_route_family_ownership_reports_blocked_promotions",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_ownership_schema_valid": [
+                    "component_route_family_ownership_schema_valid_and_write",
+                ],
+                "component_route_family_ownership_example_matches_runtime_projection": [
+                    "component_route_family_ownership_example_matches_runtime_projection",
+                ],
+                "component_route_family_ownership_blocks_authority_drift": [
+                    "component_route_family_ownership_rejects_authority_and_summary_drift",
+                ],
+                "component_route_family_ownership_blocks_platform_promotion_overclaim": [
+                    "component_route_family_ownership_rejects_platform_promotion_overclaim",
+                ],
+                "component_route_family_ownership_reports_blocked_promotions": [
+                    "component_route_family_ownership_schema_valid_and_write",
+                    "component_route_family_ownership_example_matches_runtime_projection",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_preflight",
+            ["component_route_family_promotion_preflight"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_preflight.py",
+                "schemas/component_route_family_promotion_preflight.schema.json",
+                "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
+                "scripts/validate_component_route_family_promotion_preflight.py",
+                "tests/test_validate_component_route_family_promotion_preflight.py",
+            ],
+            "Component Harness route-family promotion preflight blocks governed connector framework promotion until product-specific route ownership, lifecycle, and authority witnesses exist without granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_preflight_schema_valid",
+                "component_route_family_promotion_preflight_example_matches_runtime_projection",
+                "component_route_family_promotion_preflight_blocks_authority_overclaim",
+                "component_route_family_promotion_preflight_rejects_gate_drift",
+                "component_route_family_promotion_preflight_rejects_selected_bound_target",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_preflight_schema_valid": [
+                    "component_route_family_promotion_preflight_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_preflight_example_matches_runtime_projection": [
+                    "component_route_family_promotion_preflight_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_preflight_blocks_authority_overclaim": [
+                    "component_route_family_promotion_preflight_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_preflight_rejects_gate_drift": [
+                    "component_route_family_promotion_preflight_rejects_gate_drift",
+                ],
+                "component_route_family_promotion_preflight_rejects_selected_bound_target": [
+                    "component_route_family_promotion_preflight_rejects_selected_bound_target",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_witness_requirements",
+            ["component_route_family_promotion_witness_requirements"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_witness_requirements.py",
+                "schemas/component_route_family_promotion_witness_requirements.schema.json",
+                "examples/component_route_family_promotion_witness_requirements.governed_connector_framework.json",
+                "scripts/validate_component_route_family_promotion_witness_requirements.py",
+                "tests/test_validate_component_route_family_promotion_witness_requirements.py",
+            ],
+            "Component Harness promotion witness requirements compile the exact satisfied and missing witnesses for governed connector framework promotion without granting route ownership, execution, connector action, or terminal closure authority.",
+            [
+                "component_route_family_promotion_witness_requirements_schema_valid",
+                "component_route_family_promotion_witness_requirements_example_matches_runtime_projection",
+                "component_route_family_promotion_witness_requirements_rejects_authority_overclaim",
+                "component_route_family_promotion_witness_requirements_rejects_missing_requirement",
+                "component_route_family_promotion_witness_requirements_rejects_blocker_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_witness_requirements_schema_valid": [
+                    "component_route_family_promotion_witness_requirements_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_witness_requirements_example_matches_runtime_projection": [
+                    "component_route_family_promotion_witness_requirements_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_witness_requirements_rejects_authority_overclaim": [
+                    "component_route_family_promotion_witness_requirements_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_witness_requirements_rejects_missing_requirement": [
+                    "component_route_family_promotion_witness_requirements_rejects_missing_requirement",
+                ],
+                "component_route_family_promotion_witness_requirements_rejects_blocker_drift": [
+                    "component_route_family_promotion_witness_requirements_rejects_blocker_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_witness_evidence",
+            ["component_route_family_promotion_witness_evidence"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_witness_evidence.py",
+                "schemas/component_route_family_promotion_witness_evidence.schema.json",
+                "examples/component_route_family_promotion_witness_evidence.governed_connector_framework.json",
+                "scripts/validate_component_route_family_promotion_witness_evidence.py",
+                "tests/test_validate_component_route_family_promotion_witness_evidence.py",
+            ],
+            "Component Harness promotion witness evidence records concrete denials for all hard promotion blockers without mutating router inventory or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_witness_evidence_schema_valid",
+                "component_route_family_promotion_witness_evidence_example_matches_runtime_projection",
+                "component_route_family_promotion_witness_evidence_rejects_authority_overclaim",
+                "component_route_family_promotion_witness_evidence_rejects_missing_route_binding_witness",
+                "component_route_family_promotion_witness_evidence_rejects_satisfied_product_ownership_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_witness_evidence_schema_valid": [
+                    "component_route_family_promotion_witness_evidence_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_witness_evidence_example_matches_runtime_projection": [
+                    "component_route_family_promotion_witness_evidence_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_witness_evidence_rejects_authority_overclaim": [
+                    "component_route_family_promotion_witness_evidence_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_witness_evidence_rejects_missing_route_binding_witness": [
+                    "component_route_family_promotion_witness_evidence_rejects_missing_route_binding_witness",
+                ],
+                "component_route_family_promotion_witness_evidence_rejects_satisfied_product_ownership_drift": [
+                    "component_route_family_promotion_witness_evidence_rejects_satisfied_product_ownership_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_approval_candidates",
+            ["component_route_family_promotion_approval_candidates"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_approval_candidates.py",
+                "schemas/component_route_family_promotion_approval_candidates.schema.json",
+                "examples/component_route_family_promotion_approval_candidates.governed_connector_framework.json",
+                "scripts/validate_component_route_family_promotion_approval_candidates.py",
+                "tests/test_validate_component_route_family_promotion_approval_candidates.py",
+            ],
+            "Component Harness promotion approval candidates describe draft-only route-binding, lifecycle, authority-upgrade, and product-specific ownership candidates without approving promotion, mutating router inventory, or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_approval_candidates_schema_valid",
+                "component_route_family_promotion_approval_candidates_example_matches_runtime_projection",
+                "component_route_family_promotion_approval_candidates_rejects_authority_overclaim",
+                "component_route_family_promotion_approval_candidates_rejects_missing_candidate",
+                "component_route_family_promotion_approval_candidates_rejects_approval_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_approval_candidates_schema_valid": [
+                    "component_route_family_promotion_approval_candidates_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_approval_candidates_example_matches_runtime_projection": [
+                    "component_route_family_promotion_approval_candidates_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_approval_candidates_rejects_authority_overclaim": [
+                    "component_route_family_promotion_approval_candidates_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_approval_candidates_rejects_missing_candidate": [
+                    "component_route_family_promotion_approval_candidates_rejects_missing_candidate",
+                ],
+                "component_route_family_promotion_approval_candidates_rejects_approval_drift": [
+                    "component_route_family_promotion_approval_candidates_rejects_approval_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_approval_intake",
+            ["component_route_family_promotion_approval_intake"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_approval_intake.py",
+                "schemas/component_route_family_promotion_approval_intake.schema.json",
+                "examples/component_route_family_promotion_approval_intake.governed_connector_framework.json",
+                "scripts/validate_component_route_family_promotion_approval_intake.py",
+                "tests/test_validate_component_route_family_promotion_approval_intake.py",
+            ],
+            "Component Harness promotion approval intake exposes open operator evidence requests for blocked route-binding, lifecycle, authority-upgrade, and product-specific ownership gates without accepting evidence, approving promotion, mutating router inventory, or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_approval_intake_schema_valid",
+                "component_route_family_promotion_approval_intake_example_matches_runtime_projection",
+                "component_route_family_promotion_approval_intake_rejects_authority_overclaim",
+                "component_route_family_promotion_approval_intake_rejects_missing_request",
+                "component_route_family_promotion_approval_intake_rejects_submission_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_approval_intake_schema_valid": [
+                    "component_route_family_promotion_approval_intake_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_approval_intake_example_matches_runtime_projection": [
+                    "component_route_family_promotion_approval_intake_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_approval_intake_rejects_authority_overclaim": [
+                    "component_route_family_promotion_approval_intake_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_approval_intake_rejects_missing_request": [
+                    "component_route_family_promotion_approval_intake_rejects_missing_request",
+                ],
+                "component_route_family_promotion_approval_intake_rejects_submission_drift": [
+                    "component_route_family_promotion_approval_intake_rejects_submission_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_submitted_evidence_verifier",
+            ["component_route_family_promotion_submitted_evidence_verifier"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_verifier.py",
+                "schemas/component_route_family_promotion_submitted_evidence_verifier.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_submitted_evidence_verifier.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_submitted_evidence_verifier.py",
+                "tests/test_validate_component_route_family_promotion_submitted_evidence_verifier.py",
+            ],
+            "Component Harness submitted-evidence verifier records that all promotion intake requests are awaiting submitted evidence, not verified, and still blocked without approving promotion, mutating router inventory, or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_submitted_evidence_verifier_schema_valid",
+                "component_route_family_promotion_submitted_evidence_verifier_example_matches_runtime_projection",
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_authority_overclaim",
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_missing_request",
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_submission_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_submitted_evidence_verifier_schema_valid": [
+                    "component_route_family_promotion_submitted_evidence_verifier_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_submitted_evidence_verifier_example_matches_runtime_projection": [
+                    "component_route_family_promotion_submitted_evidence_verifier_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_authority_overclaim": [
+                    "component_route_family_promotion_submitted_evidence_verifier_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_missing_request": [
+                    "component_route_family_promotion_submitted_evidence_verifier_rejects_missing_request",
+                ],
+                "component_route_family_promotion_submitted_evidence_verifier_rejects_submission_drift": [
+                    "component_route_family_promotion_submitted_evidence_verifier_rejects_submission_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_submitted_evidence_records",
+            ["component_route_family_promotion_submitted_evidence_records"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_records.py",
+                "schemas/component_route_family_promotion_submitted_evidence_records.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_submitted_evidence_records.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_submitted_evidence_records.py",
+                "tests/test_validate_component_route_family_promotion_submitted_evidence_records.py",
+            ],
+            "Component Harness submitted-evidence record envelopes define template-only payload requirements for blocked promotion verifier requests without accepting payloads, approving promotion, mutating router inventory, or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_submitted_evidence_records_schema_valid",
+                "component_route_family_promotion_submitted_evidence_records_example_matches_runtime_projection",
+                "component_route_family_promotion_submitted_evidence_records_rejects_authority_overclaim",
+                "component_route_family_promotion_submitted_evidence_records_rejects_missing_envelope",
+                "component_route_family_promotion_submitted_evidence_records_rejects_payload_submission_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_submitted_evidence_records_schema_valid": [
+                    "component_route_family_promotion_submitted_evidence_records_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_submitted_evidence_records_example_matches_runtime_projection": [
+                    "component_route_family_promotion_submitted_evidence_records_example_matches_runtime_projection",
+                ],
+                "component_route_family_promotion_submitted_evidence_records_rejects_authority_overclaim": [
+                    "component_route_family_promotion_submitted_evidence_records_rejects_authority_overclaim",
+                ],
+                "component_route_family_promotion_submitted_evidence_records_rejects_missing_envelope": [
+                    "component_route_family_promotion_submitted_evidence_records_rejects_missing_envelope",
+                ],
+                "component_route_family_promotion_submitted_evidence_records_rejects_payload_submission_drift": [
+                    "component_route_family_promotion_submitted_evidence_records_rejects_payload_submission_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_submitted_evidence_payload_examples",
+            ["component_route_family_promotion_submitted_evidence_payload_examples"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_payload_examples.py",
+                "schemas/component_route_family_promotion_submitted_evidence_payload_examples.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_submitted_evidence_payload_examples.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_submitted_evidence_payload_examples.py",
+                "tests/test_validate_component_route_family_promotion_submitted_evidence_payload_examples.py",
+            ],
+            "Component Harness submitted-evidence payload examples define concrete example payload values and acceptance-rule contracts for blocked promotion record envelopes without submitting evidence, applying rules, approving promotion, mutating router inventory, or granting execution, connector, mutation, or terminal closure authority.",
+            [
+                "component_route_family_promotion_submitted_evidence_payload_examples_schema_valid",
+                "component_route_family_promotion_submitted_evidence_payload_examples_match_runtime_projection",
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_authority_overclaim",
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_missing_payload",
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_submission_drift",
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_rule_application_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_submitted_evidence_payload_examples_schema_valid": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_submitted_evidence_payload_examples_match_runtime_projection": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_match_runtime_projection",
+                ],
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_authority_overclaim": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_reject_authority_overclaim",
+                ],
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_missing_payload": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_reject_missing_payload",
+                ],
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_submission_drift": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_reject_submission_drift",
+                ],
+                "component_route_family_promotion_submitted_evidence_payload_examples_reject_rule_application_drift": [
+                    "component_route_family_promotion_submitted_evidence_payload_examples_reject_rule_application_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_operator_submitted_evidence_records",
+            ["component_route_family_promotion_operator_submitted_evidence_records"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_operator_submitted_evidence_records.py",
+                "schemas/component_route_family_promotion_operator_submitted_evidence_records.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_operator_submitted_evidence_records.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_operator_submitted_evidence_records.py",
+                "tests/test_validate_component_route_family_promotion_operator_submitted_evidence_records.py",
+            ],
+            "Component Harness operator-submitted evidence records apply defined acceptance rules to submitted-for-review promotion payload records while keeping promotion blocked and denying execution, connector, mutation, router-inventory, and terminal closure authority.",
+            [
+                "component_route_family_promotion_operator_submitted_evidence_records_schema_valid",
+                "component_route_family_promotion_operator_submitted_evidence_records_match_runtime_projection",
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_authority_overclaim",
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_missing_record",
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_unapplied_rule_drift",
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_promotion_satisfaction_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_operator_submitted_evidence_records_schema_valid": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_operator_submitted_evidence_records_match_runtime_projection": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_match_runtime_projection",
+                ],
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_authority_overclaim": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_reject_authority_overclaim",
+                ],
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_missing_record": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_reject_missing_record",
+                ],
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_unapplied_rule_drift": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_reject_unapplied_rule_drift",
+                ],
+                "component_route_family_promotion_operator_submitted_evidence_records_reject_promotion_satisfaction_drift": [
+                    "component_route_family_promotion_operator_submitted_evidence_records_reject_promotion_satisfaction_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_gate_satisfaction_evaluator",
+            ["component_route_family_promotion_gate_satisfaction_evaluator"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_gate_satisfaction_evaluator.py",
+                "schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_gate_satisfaction_evaluator.py",
+                "tests/test_validate_component_route_family_promotion_gate_satisfaction_evaluator.py",
+            ],
+            "Component Harness promotion gate-satisfaction evaluator consumes accepted record-only evidence to mark evidence gates satisfied while action gates, promotion approval, route mutation, execution, connector, mutation, and terminal-closure authority remain blocked.",
+            [
+                "component_route_family_promotion_gate_satisfaction_evaluator_schema_valid",
+                "component_route_family_promotion_gate_satisfaction_evaluator_match_runtime_projection",
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_authority_overclaim",
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_missing_gate",
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_record_satisfaction_drift",
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_promotion_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_gate_satisfaction_evaluator_schema_valid": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_gate_satisfaction_evaluator_match_runtime_projection": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_match_runtime_projection",
+                ],
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_authority_overclaim": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_reject_authority_overclaim",
+                ],
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_missing_gate": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_reject_missing_gate",
+                ],
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_record_satisfaction_drift": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_reject_record_satisfaction_drift",
+                ],
+                "component_route_family_promotion_gate_satisfaction_evaluator_reject_promotion_authority_drift": [
+                    "component_route_family_promotion_gate_satisfaction_evaluator_reject_promotion_authority_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_authority_decision_report",
+            ["component_route_family_promotion_authority_decision_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_decision_report.py",
+                "schemas/component_route_family_promotion_authority_decision_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_authority_decision_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_authority_decision_report.py",
+                "tests/test_validate_component_route_family_promotion_authority_decision_report.py",
+            ],
+            "Component Harness promotion authority decision report consumes gate-satisfaction evidence and records four denial-only authority decisions while route binding, lifecycle transition, promotion approval, execution, connector, mutation, and terminal-closure authority remain blocked.",
+            [
+                "component_route_family_promotion_authority_decision_report_schema_valid",
+                "component_route_family_promotion_authority_decision_report_match_runtime_projection",
+                "component_route_family_promotion_authority_decision_report_reject_authority_grant_overclaim",
+                "component_route_family_promotion_authority_decision_report_reject_missing_decision",
+                "component_route_family_promotion_authority_decision_report_reject_record_satisfaction_drift",
+                "component_route_family_promotion_authority_decision_report_reject_promotion_approval_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_authority_decision_report_schema_valid": [
+                    "component_route_family_promotion_authority_decision_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_authority_decision_report_match_runtime_projection": [
+                    "component_route_family_promotion_authority_decision_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_authority_decision_report_reject_authority_grant_overclaim": [
+                    "component_route_family_promotion_authority_decision_report_reject_authority_grant_overclaim",
+                ],
+                "component_route_family_promotion_authority_decision_report_reject_missing_decision": [
+                    "component_route_family_promotion_authority_decision_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_authority_decision_report_reject_record_satisfaction_drift": [
+                    "component_route_family_promotion_authority_decision_report_reject_record_satisfaction_drift",
+                ],
+                "component_route_family_promotion_authority_decision_report_reject_promotion_approval_drift": [
+                    "component_route_family_promotion_authority_decision_report_reject_promotion_approval_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_route_binding_decision_report",
+            ["component_route_family_promotion_route_binding_decision_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_route_binding_decision_report.py",
+                "schemas/component_route_family_promotion_route_binding_decision_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_route_binding_decision_report.py",
+                "tests/test_validate_component_route_family_promotion_route_binding_decision_report.py",
+            ],
+            "Component Harness promotion route-binding decision report consumes a denied authority decision and records one denial-only route-binding decision while router inventory mutation, selected-component binding, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            [
+                "component_route_family_promotion_route_binding_decision_report_schema_valid",
+                "component_route_family_promotion_route_binding_decision_report_match_runtime_projection",
+                "component_route_family_promotion_route_binding_decision_report_reject_route_authorization_overclaim",
+                "component_route_family_promotion_route_binding_decision_report_reject_missing_decision",
+                "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
+                "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_route_binding_decision_report_schema_valid": [
+                    "component_route_family_promotion_route_binding_decision_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_route_binding_decision_report_match_runtime_projection": [
+                    "component_route_family_promotion_route_binding_decision_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_route_binding_decision_report_reject_route_authorization_overclaim": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_route_authorization_overclaim",
+                ],
+                "component_route_family_promotion_route_binding_decision_report_reject_missing_decision": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
+                ],
+                "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_lifecycle_transition_decision_report",
+            ["component_route_family_promotion_lifecycle_transition_decision_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_lifecycle_transition_decision_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "tests/test_validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
+            ],
+            "Component Harness promotion lifecycle-transition decision report consumes a denied route-binding decision and records one denial-only lifecycle decision while lifecycle state change, lifecycle receipts, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            [
+                "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid",
+                "component_route_family_promotion_lifecycle_transition_decision_report_match_runtime_projection",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_state_change_overclaim",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_missing_decision",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_match_runtime_projection": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_state_change_overclaim": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_state_change_overclaim",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_missing_decision": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_authority_upgrade_witness_decision_report",
+            ["component_route_family_promotion_authority_upgrade_witness_decision_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "tests/test_validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+            ],
+            "Component Harness promotion authority-upgrade witness decision report consumes a denied lifecycle-transition decision and records one denial-only authority-upgrade decision while authority grants, witness emission, authority-envelope mutation, execution, connector calls, and terminal closure remain blocked.",
+            [
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_match_runtime_projection",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_overclaim",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_missing_decision",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_match_runtime_projection": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_overclaim": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_overclaim",
+                ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_missing_decision": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
+                ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_product_ownership_decision_report",
+            ["component_route_family_promotion_product_ownership_decision_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_product_ownership_decision_report.py",
+                "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_product_ownership_decision_report.py",
+                "tests/test_validate_component_route_family_promotion_product_ownership_decision_report.py",
+            ],
+            "Component Harness promotion product-ownership decision report consumes a denied authority-upgrade decision and records one denial-only product-specific ownership decision while product ownership, product bundle binding, authority grants, execution, connector calls, router mutation, and terminal closure remain blocked.",
+            [
+                "component_route_family_promotion_product_ownership_decision_report_schema_valid",
+                "component_route_family_promotion_product_ownership_decision_report_match_runtime_projection",
+                "component_route_family_promotion_product_ownership_decision_report_reject_ownership_overclaim",
+                "component_route_family_promotion_product_ownership_decision_report_reject_missing_decision",
+                "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
+                "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_product_ownership_decision_report_schema_valid": [
+                    "component_route_family_promotion_product_ownership_decision_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_product_ownership_decision_report_match_runtime_projection": [
+                    "component_route_family_promotion_product_ownership_decision_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_ownership_overclaim": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_ownership_overclaim",
+                ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_missing_decision": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_terminal_closure_denial_report",
+            ["component_route_family_promotion_terminal_closure_denial_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_terminal_closure_denial_report.py",
+                "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_terminal_closure_denial_report.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_terminal_closure_denial_report.py",
+                "tests/test_validate_component_route_family_promotion_terminal_closure_denial_report.py",
+            ],
+            "Component Harness promotion terminal-closure denial report consumes a denied product-ownership decision and records one denial-only terminal-closure decision while terminal certificates, closure claims, promotion approval, authority grants, execution, connector calls, and router mutation remain blocked.",
+            [
+                "component_route_family_promotion_terminal_closure_denial_report_schema_valid",
+                "component_route_family_promotion_terminal_closure_denial_report_match_runtime_projection",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_closure_overclaim",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_missing_decision",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_terminal_closure_denial_report_schema_valid": [
+                    "component_route_family_promotion_terminal_closure_denial_report_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_match_runtime_projection": [
+                    "component_route_family_promotion_terminal_closure_denial_report_match_runtime_projection",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_closure_overclaim": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_closure_overclaim",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_missing_decision": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_missing_decision",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_missing_evidence_ledger",
+            ["component_route_family_promotion_missing_evidence_ledger"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_missing_evidence_ledger.py",
+                "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_missing_evidence_ledger.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_missing_evidence_ledger.py",
+                "tests/test_validate_component_route_family_promotion_missing_evidence_ledger.py",
+            ],
+            "Component Harness promotion missing-evidence ledger consumes terminal-closure denial and records six missing promotion blockers without creating witnesses, terminal certificates, authority grants, promotion approvals, execution, connector calls, or router mutation.",
+            [
+                "component_route_family_promotion_missing_evidence_ledger_schema_valid",
+                "component_route_family_promotion_missing_evidence_ledger_match_runtime_projection",
+                "component_route_family_promotion_missing_evidence_ledger_reject_evidence_overclaim",
+                "component_route_family_promotion_missing_evidence_ledger_reject_missing_record",
+                "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_missing_evidence_ledger_schema_valid": [
+                    "component_route_family_promotion_missing_evidence_ledger_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_match_runtime_projection": [
+                    "component_route_family_promotion_missing_evidence_ledger_match_runtime_projection",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_evidence_overclaim": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_evidence_overclaim",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_missing_record": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_missing_record",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_candidate",
+            ["component_route_family_promotion_router_inventory_delta_candidate"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_candidate.py",
+                "schemas/component_route_family_promotion_router_inventory_delta_candidate.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_candidate.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_candidate.py",
+                "tests/test_validate_component_route_family_promotion_router_inventory_delta_candidate.py",
+            ],
+            "Component Harness promotion router-inventory delta candidate consumes the missing-evidence ledger and defines a dry-run selected-component delta path without applying a delta, mutating router inventory, creating evidence, granting authority, approving promotion, or claiming closure.",
+            [
+                "component_route_family_promotion_router_inventory_delta_candidate_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_candidate_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_delta_overclaim",
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_missing_candidate",
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_source_ref_drift",
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_witness_mutation_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_candidate_schema_valid": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_router_inventory_delta_candidate_match_runtime_projection": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_match_runtime_projection",
+                ],
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_delta_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_reject_delta_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_missing_candidate": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_reject_missing_candidate",
+                ],
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_source_ref_drift": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_router_inventory_delta_candidate_reject_witness_mutation_drift": [
+                    "component_route_family_promotion_router_inventory_delta_candidate_reject_witness_mutation_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_requirements",
+            ["component_route_family_promotion_router_inventory_delta_witness_requirements"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_requirements.py",
+                "schemas/component_route_family_promotion_router_inventory_delta_witness_requirements.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements.governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_requirements.py",
+                "tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_requirements.py",
+            ],
+            "Component Harness promotion router-inventory delta witness requirements consume the dry-run candidate and declare six unmet requirements before a selected-component router-inventory delta witness can be minted, without applying a delta, mutating router inventory, granting authority, approving promotion, or claiming closure.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_witness_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_missing_requirement",
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_source_ref_drift",
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_mutation_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_schema_valid": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_match_runtime_projection": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_match_runtime_projection",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_witness_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_witness_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_missing_requirement": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_missing_requirement",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_source_ref_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_mutation_authority_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_mutation_authority_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+            ["component_route_family_promotion_router_inventory_delta_witness_minting_preflight"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                (
+                    "mcoi/mcoi_runtime/app/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py"
+                ),
+                (
+                    "schemas/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_preflight.schema.json"
+                ),
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_preflight."
+                    "governed_connector_framework.json"
+                ),
+                (
+                    "scripts/"
+                    "validate_component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py"
+                ),
+                (
+                    "tests/"
+                    "test_validate_component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py"
+                ),
+            ],
+            "Component Harness promotion router-inventory delta witness minting preflight consumes unmet witness requirements and blocks witness minting while preserving zero applied deltas, zero router inventory mutations, zero selected-component bindings, zero authority grants, zero promotion approvals, and zero terminal closure claims.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_witness_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_missing_check",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_source_ref_drift",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_mutation_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_schema_valid": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "schema_valid_and_write"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_match_runtime_projection": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "match_runtime_projection"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_witness_overclaim": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "reject_witness_overclaim"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_missing_check": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "reject_missing_check"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_source_ref_drift": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "reject_source_ref_drift"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_mutation_authority_drift": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_"
+                        "reject_mutation_authority_drift"
+                    ),
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+            ["component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                (
+                    "mcoi/mcoi_runtime/app/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py"
+                ),
+                (
+                    "schemas/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.schema.json"
+                ),
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report."
+                    "governed_connector_framework.json"
+                ),
+                (
+                    "scripts/"
+                    "validate_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py"
+                ),
+                (
+                    "tests/"
+                    "test_validate_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py"
+                ),
+            ],
+            "Component Harness promotion router-inventory delta witness minting denial report consumes the blocked minting preflight and records a denied witness-minting decision without minting a witness, applying a delta, mutating router inventory, granting authority, approving promotion, or claiming closure.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_witness_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_missing_decision",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_source_ref_drift",
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_mutation_authority_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_schema_valid": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "schema_valid_and_write"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_match_runtime_projection": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "match_runtime_projection"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_witness_overclaim": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "reject_witness_overclaim"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_missing_decision": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "reject_missing_decision"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_source_ref_drift": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "reject_source_ref_drift"
+                    ),
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_mutation_authority_drift": [
+                    (
+                        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_"
+                        "reject_mutation_authority_drift"
+                    ),
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+            ["component_route_family_promotion_router_inventory_delta_witness_remediation_plan"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py",
+                "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan."
+                    "governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py",
+                "tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py",
+            ],
+            "Component Harness promotion router-inventory delta witness remediation plan consumes the minting denial report and declares six plan-only evidence obligations without submitting evidence, accepting evidence, authorizing witness minting, minting a witness, applying a delta, mutating router inventory, or granting authority.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_evidence_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_missing_step",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_source_ref_drift",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_mutation_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_schema_valid": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_match_runtime_projection": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_match_runtime_projection",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_evidence_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_evidence_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_missing_step": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_missing_step",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_source_ref_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_mutation_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_mutation_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+            ["component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py",
+                "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request."
+                    "governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py",
+                "tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py",
+            ],
+            "Component Harness promotion router-inventory delta witness remediation evidence request consumes the remediation plan and exposes six operator evidence request slots without submitting evidence, accepting evidence, authorizing witness minting, minting a witness, applying a delta, mutating router inventory, or granting authority.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_submission_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_acceptance_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_missing_slot",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_mutation_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_schema_valid": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_match_runtime_projection": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_match_runtime_projection",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_submission_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_submission_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_acceptance_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_acceptance_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_missing_slot": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_missing_slot",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_mutation_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_mutation_drift",
+                ],
+            },
+        ),
+        _surface(
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
+            ["component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py",
+                "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.schema.json",
+                (
+                    "examples/"
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger."
+                    "governed_connector_framework.json"
+                ),
+                "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py",
+                "tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py",
+            ],
+            "Component Harness promotion router-inventory delta witness remediation evidence request status ledger consumes the evidence request and exposes six read-only unresolved request statuses without submitting evidence, accepting evidence, rejecting evidence, authorizing witness minting, minting a witness, applying a delta, mutating router inventory, or granting authority.",
+            [
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_schema_valid",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_match_runtime_projection",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_submission_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_acceptance_and_rejection_overclaim",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_missing_status_record",
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_mutation_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_schema_valid": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_schema_valid_and_write",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_match_runtime_projection": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_match_runtime_projection",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_submission_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_submission_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_acceptance_and_rejection_overclaim": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_acceptance_and_rejection_overclaim",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_missing_status_record": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_missing_status_record",
+                ],
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_mutation_drift": [
+                    "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_mutation_drift",
+                ],
+            },
+        ),
+        _surface(
             "component_graph",
             ["component_graph"],
             "read_model",
@@ -566,6 +1757,46 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_lifecycle_transition_receipts_reject_missing_evidence": [
                     "component_lifecycle_transition_receipts_reject_missing_evidence",
+                ],
+            },
+        ),
+        _surface(
+            "component_authority_envelope_witnesses",
+            ["component_authority_envelope_witnesses"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_authority_envelope_witnesses.py",
+                "schemas/component_authority_envelope_witnesses.schema.json",
+                "examples/component_authority_envelope_witnesses.foundation.json",
+                "scripts/validate_component_authority_envelope_witnesses.py",
+                "tests/test_validate_component_authority_envelope_witnesses.py",
+            ],
+            "Component Harness authority envelope witnesses bind each registered component to its current registry authority posture, deny live effects, and require separate upgrade witnesses before promotion.",
+            [
+                "component_authority_envelope_witnesses_validate_and_write",
+                "component_authority_envelope_witnesses_reject_missing_component_witness",
+                "component_authority_envelope_witnesses_reject_authority_drift",
+                "component_authority_envelope_witnesses_reject_state_drift",
+                "component_authority_envelope_witnesses_reject_missing_evidence",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_authority_envelope_witnesses_validate_and_write": [
+                    "component_authority_envelope_witnesses_validate_and_write",
+                ],
+                "component_authority_envelope_witnesses_reject_missing_component_witness": [
+                    "component_authority_envelope_witnesses_reject_missing_component_witness",
+                ],
+                "component_authority_envelope_witnesses_reject_authority_drift": [
+                    "component_authority_envelope_witnesses_reject_authority_drift",
+                ],
+                "component_authority_envelope_witnesses_reject_state_drift": [
+                    "component_authority_envelope_witnesses_reject_state_drift",
+                ],
+                "component_authority_envelope_witnesses_reject_missing_evidence": [
+                    "component_authority_envelope_witnesses_reject_missing_evidence",
                 ],
             },
         ),
@@ -7462,13 +8693,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "operational_math_loop_applies_all_audit_principles",
                 "operational_math_loop_stops_at_iteration_budget_with_open_gaps",
+                "operational_math_loop_blocks_solvedverified_without_control_binding",
+                "operational_math_loop_blocks_solvedverified_with_failed_control_binding",
                 "operational_math_cli_emits_saturated_receipt",
                 "operational_math_cli_reports_bounded_incomplete_receipt",
                 "operational_math_cli_writes_dashboard_projection",
                 "operational_math_cli_appends_receipt_store",
                 "memory_store_appends_queries_and_summarizes_receipts",
+                "memory_store_surfaces_unverified_control_review_reason",
                 "file_store_persists_and_reloads_receipts",
                 "summary_marks_incomplete_receipt_for_review",
+                "summary_marks_unverified_controls_for_review",
                 "registers_operational_math_observability_source",
                 "registers_operational_math_store_observability_source",
                 "server_wires_operational_math_store_into_dashboard",
@@ -7837,6 +9072,133 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_component_route_family_ownership",
+            "surfaces": ["component_route_family_ownership"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_preflight",
+            "surfaces": ["component_route_family_promotion_preflight"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_witness_requirements",
+            "surfaces": ["component_route_family_promotion_witness_requirements"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_witness_evidence",
+            "surfaces": ["component_route_family_promotion_witness_evidence"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_approval_candidates",
+            "surfaces": ["component_route_family_promotion_approval_candidates"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_approval_intake",
+            "surfaces": ["component_route_family_promotion_approval_intake"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_submitted_evidence_verifier",
+            "surfaces": ["component_route_family_promotion_submitted_evidence_verifier"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_submitted_evidence_records",
+            "surfaces": ["component_route_family_promotion_submitted_evidence_records"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_submitted_evidence_payload_examples",
+            "surfaces": ["component_route_family_promotion_submitted_evidence_payload_examples"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_operator_submitted_evidence_records",
+            "surfaces": ["component_route_family_promotion_operator_submitted_evidence_records"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_gate_satisfaction_evaluator",
+            "surfaces": ["component_route_family_promotion_gate_satisfaction_evaluator"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_authority_decision_report",
+            "surfaces": ["component_route_family_promotion_authority_decision_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_route_binding_decision_report",
+            "surfaces": ["component_route_family_promotion_route_binding_decision_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_lifecycle_transition_decision_report",
+            "surfaces": ["component_route_family_promotion_lifecycle_transition_decision_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_authority_upgrade_witness_decision_report",
+            "surfaces": ["component_route_family_promotion_authority_upgrade_witness_decision_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_product_ownership_decision_report",
+            "surfaces": ["component_route_family_promotion_product_ownership_decision_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_terminal_closure_denial_report",
+            "surfaces": ["component_route_family_promotion_terminal_closure_denial_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_missing_evidence_ledger",
+            "surfaces": ["component_route_family_promotion_missing_evidence_ledger"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_candidate",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_candidate"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_requirements",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_witness_requirements"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_witness_minting_preflight"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_witness_remediation_plan"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+            "surfaces": ["component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
+            "surfaces": [
+                "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+            ],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_component_graph",
             "surfaces": ["component_graph"],
             "status": "closed",
@@ -7849,6 +9211,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_component_lifecycle_transition_receipts",
             "surfaces": ["component_lifecycle_transition_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_authority_envelope_witnesses",
+            "surfaces": ["component_authority_envelope_witnesses"],
             "status": "closed",
         },
         {

@@ -246,6 +246,38 @@ def _receipt_safe_value(value: Any) -> Any:
     return value
 
 
+def _stability_metadata(
+    *,
+    max_constraint_violation: float,
+    verdict: str | None = None,
+) -> dict[str, Any]:
+    bounded_violation = max(0.0, _bounded_number(max_constraint_violation))
+    return {
+        "numeric_tolerance": _LINEAR_TOLERANCE,
+        "max_constraint_violation": bounded_violation,
+        "stability_verdict": verdict
+        or ("passed" if bounded_violation <= _LINEAR_TOLERANCE else "failed"),
+    }
+
+
+def _interval_max_constraint_violation(decision_value: float, lower_bound: float, upper_bound: float) -> float:
+    violations = [0.0]
+    if math.isfinite(lower_bound):
+        violations.append(lower_bound - decision_value)
+    if math.isfinite(upper_bound):
+        violations.append(decision_value - upper_bound)
+    return max(violations)
+
+
+def _linear_max_constraint_violation(
+    inequalities: tuple[tuple[tuple[float, ...], float], ...],
+    decision: tuple[float, ...],
+) -> float:
+    if not inequalities:
+        return 0.0
+    return max(max(0.0, _dot(coefficients, decision) - bound) for coefficients, bound in inequalities)
+
+
 class MathRuntimeEngine:
     """Engine for governed math / optimization / units runtime."""
 
@@ -582,6 +614,16 @@ class MathRuntimeEngine:
         objective_value = decision_value * objective.weight
         metadata["decision_value"] = decision_value
         metadata["weighted_objective_value"] = objective_value
+        metadata |= _stability_metadata(
+            max_constraint_violation=_interval_max_constraint_violation(
+                decision_value,
+                lower_bound,
+                upper_bound,
+            )
+            if status is OptimizationStatus.OPTIMAL
+            else 0.0,
+            verdict=None if status is OptimizationStatus.OPTIMAL else "not_applicable",
+        )
 
         self.record_trace_step(
             trace_id=trace_id,
@@ -691,7 +733,9 @@ class MathRuntimeEngine:
                 disposition=SolverDisposition.FAILED,
                 objective_value=objective.target_value * objective.weight,
                 iterations=0,
-                metadata=metadata | {"reason": "infeasible_variable_bounds", "decision_values": {}},
+                metadata=metadata
+                | {"reason": "infeasible_variable_bounds", "decision_values": {}}
+                | _stability_metadata(max_constraint_violation=0.0, verdict="not_applicable"),
             )
 
         if any(math.isinf(lower_bounds[name]) or math.isinf(upper_bounds[name]) for name in variable_names):
@@ -703,7 +747,9 @@ class MathRuntimeEngine:
                 disposition=SolverDisposition.FAILED,
                 objective_value=objective.target_value * objective.weight,
                 iterations=0,
-                metadata=metadata | {"reason": "unbounded_linear_domain", "decision_values": {}},
+                metadata=metadata
+                | {"reason": "unbounded_linear_domain", "decision_values": {}}
+                | _stability_metadata(max_constraint_violation=0.0, verdict="not_applicable"),
             )
 
         if integer_variables:
@@ -718,7 +764,9 @@ class MathRuntimeEngine:
                     disposition=SolverDisposition.FAILED,
                     objective_value=objective.target_value * objective.weight,
                     iterations=0,
-                    metadata=metadata | {"reason": "infeasible_integer_domain", "decision_values": {}},
+                    metadata=metadata
+                    | {"reason": "infeasible_integer_domain", "decision_values": {}}
+                    | _stability_metadata(max_constraint_violation=0.0, verdict="not_applicable"),
                 )
             candidates = self._linear_integer_candidate_points(
                 tuple(active_inequalities),
@@ -744,7 +792,9 @@ class MathRuntimeEngine:
                 disposition=SolverDisposition.FAILED,
                 objective_value=objective.target_value * objective.weight,
                 iterations=len(candidates),
-                metadata=metadata | {"reason": "infeasible_linear_constraints", "decision_values": {}},
+                metadata=metadata
+                | {"reason": "infeasible_linear_constraints", "decision_values": {}}
+                | _stability_metadata(max_constraint_violation=0.0, verdict="not_applicable"),
             )
 
         if objective.direction is ObjectiveDirection.MINIMIZE:
@@ -765,7 +815,13 @@ class MathRuntimeEngine:
                 "reason": "bounded_linear_optimum",
                 "decision_values": decision_values,
                 "weighted_objective_value": objective_value,
-            },
+            }
+            | _stability_metadata(
+                max_constraint_violation=_linear_max_constraint_violation(
+                    tuple(active_inequalities),
+                    decision,
+                ),
+            ),
         )
 
     def _linear_variable_names(
@@ -1070,6 +1126,9 @@ class MathRuntimeEngine:
             "integer_assignment_count",
             "integer_assignment_limit",
             "weighted_objective_value",
+            "numeric_tolerance",
+            "max_constraint_violation",
+            "stability_verdict",
         )
         decision_summary = {
             key: _receipt_safe_value(metadata[key])

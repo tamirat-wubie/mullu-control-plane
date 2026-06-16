@@ -38,15 +38,35 @@ class SimplePlatformFastAPIAdapter:
     def check_action(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
         """Handle POST /actions/check."""
 
+        return self.runtime.check_action_experience(request_body).to_dict()
+
+    def check_action_audit(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /actions/check/audit."""
+
         return self.runtime.check_action(request_body).to_dict()
+
+    def check_action_experience(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /actions/experience."""
+
+        return self.runtime.check_action_experience(request_body).to_dict()
 
     def check_task(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
         """Handle POST /tasks/check."""
+
+        return self.runtime.check_task_experience(request_body).to_dict()
+
+    def check_task_audit(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /tasks/check/audit."""
 
         return self.runtime.check_task(request_body).to_dict()
 
     def check_workflow(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
         """Handle POST /workflows/check."""
+
+        return self.runtime.check_workflow_experience(request_body).to_dict()
+
+    def check_workflow_audit(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /workflows/check/audit."""
 
         return self.runtime.check_workflow(request_body).to_dict()
 
@@ -115,19 +135,43 @@ class SimplePlatformFastAPIAdapter:
                 method="POST",
                 path=f"{normalized}/actions/check",
                 handler_name="check_action",
-                purpose="check whether a plain task is ready, needs approval, or is blocked",
+                purpose="show the normal user shell for a plain action check",
+            ),
+            SimplePlatformRouteSpec(
+                method="POST",
+                path=f"{normalized}/actions/experience",
+                handler_name="check_action_experience",
+                purpose="show the normal user shell while keeping audit details hidden by default",
+            ),
+            SimplePlatformRouteSpec(
+                method="POST",
+                path=f"{normalized}/actions/check/audit",
+                handler_name="check_action_audit",
+                purpose="show proof-bearing action check details for operator audit surfaces",
             ),
             SimplePlatformRouteSpec(
                 method="POST",
                 path=f"{normalized}/tasks/check",
                 handler_name="check_task",
-                purpose="check a template-backed task without requiring a manual allowed area",
+                purpose="show the normal user shell for a template-backed task check",
+            ),
+            SimplePlatformRouteSpec(
+                method="POST",
+                path=f"{normalized}/tasks/check/audit",
+                handler_name="check_task_audit",
+                purpose="show proof-bearing task check details for operator audit surfaces",
             ),
             SimplePlatformRouteSpec(
                 method="POST",
                 path=f"{normalized}/workflows/check",
                 handler_name="check_workflow",
-                purpose="check a common workflow as one plain outcome",
+                purpose="show the normal user shell for a common workflow check",
+            ),
+            SimplePlatformRouteSpec(
+                method="POST",
+                path=f"{normalized}/workflows/check/audit",
+                handler_name="check_workflow_audit",
+                purpose="show proof-bearing workflow check details for operator audit surfaces",
             ),
         )
 
@@ -172,13 +216,29 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
     def check_action(request_body: dict[str, Any] = Body(...)):
         return adapter.check_action(request_body)
 
+    @router.post("/actions/experience")
+    def check_action_experience(request_body: dict[str, Any] = Body(...)):
+        return adapter.check_action_experience(request_body)
+
+    @router.post("/actions/check/audit")
+    def check_action_audit(request_body: dict[str, Any] = Body(...)):
+        return adapter.check_action_audit(request_body)
+
     @router.post("/tasks/check")
     def check_task(request_body: dict[str, Any] = Body(...)):
         return adapter.check_task(request_body)
 
+    @router.post("/tasks/check/audit")
+    def check_task_audit(request_body: dict[str, Any] = Body(...)):
+        return adapter.check_task_audit(request_body)
+
     @router.post("/workflows/check")
     def check_workflow(request_body: dict[str, Any] = Body(...)):
         return adapter.check_workflow(request_body)
+
+    @router.post("/workflows/check/audit")
+    def check_workflow_audit(request_body: dict[str, Any] = Body(...)):
+        return adapter.check_workflow_audit(request_body)
 
     return router
 

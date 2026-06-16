@@ -146,15 +146,15 @@ No external channel approval without request binding and identity check.
 | Tenant identity resolver | implemented / partial | `gateway/router.py`, `gateway/tenant_identity.py` | Add channel trust and approval-strength rules. |
 | Message deduplication | implemented / partial | `gateway/router.py`, `gateway/dedup.py` | Include cross-channel replay and webhook duplicate cases in map tests. |
 | Capability intent resolver | implemented / partial | `gateway/intent_resolver.py`, `gateway/interpretation.py` | Add schema and UI readback for `InterpretedRequest` and interpretation receipts. |
-| Ask / Goal Box UI | missing / unknown | no dedicated map evidence | Build web-only governed goal intake before external channel expansion. |
+| Ask / Goal Box UI | implemented / partial | `/operator/goal-intake`, `/operator/goal-intake/preview`, `/operator/goal-intake/approve`, `/operator/goal-intake/deny`, `/operator/current-task/approval`, `/operator/plan-review` | Add cross-channel approval-strength policy after web flow is stable. |
 | Clarification engine | missing / partial | no dedicated map evidence | Add missing-slot detection and focused clarification questions. |
 | Command ledger | implemented / partial | `gateway/command_spine.py` | Bind all user-visible task states to ledger states. |
-| Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py` | Add user-facing Approval Center map and cross-channel approval rules. |
-| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py` | Add UI binding, budget fields, and explicit execution approval path for plan previews. |
+| Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py`, `/operator/approvals/read-model`, `/operator/approvals`, `/operator/approvals/{request_id}` | Add cross-channel approval-strength policy. |
+| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays | Add deeper Plan Review receipt exports. |
 | Causal closure kernel | implemented / partial | `gateway/causal_closure_kernel.py` | Ensure every success response is certificate-backed. |
 | Search layer | partial / unknown | `enterprise.knowledge_search` intent pattern | Add freshness, cache, source, budget, and receipt gates. |
 | Worker layer | partial | `gateway/capability_worker.py`, worker-related docs | Define one contract per worker type. |
-| Receipt viewer | missing / unknown | no dedicated map evidence | Build user-facing receipt display after receipt model is mapped. |
+| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, and Plan Review budget/history links including explicit cost-estimate source and optional tenant budget-report drilldowns. | Add deeper plan receipt exports. |
 | Admin console | missing / unknown | no dedicated map evidence | Map tenant, policy, budget, worker, and receipt admin screens. |
 
 ## 5. Component contract template
@@ -335,10 +335,9 @@ causal closure, and capability-intent pattern matching surfaces.
 Fracture delta:
 
 ```text
-The current product map still needs a durable InterpretedRequest object,
-interpretation receipts, a web Goal Intake UI, clarification handling,
-search cost and freshness gates, production channel hardening,
-receipt viewer UX, and explicit component status tracking.
+The current product map still needs deeper plan receipt exports, clarification
+handling, search cost and freshness gates, production channel hardening, and
+explicit component status tracking.
 ```
 
 Refinement:

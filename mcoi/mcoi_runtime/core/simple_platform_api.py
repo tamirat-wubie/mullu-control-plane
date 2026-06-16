@@ -6,9 +6,10 @@ Governance scope: API boundary only; SimplePlatform owns the governance SDK
 call and MVK remains the action authority.
 Dependencies: dataclasses, typing, simple platform facade, and invariant
 helpers.
-Invariants: invalid requests fail closed with explicit causal context, valid
-responses preserve proof and witness references, and no API handler bypasses
-the simple platform facade.
+Invariants: invalid requests fail closed with explicit causal context, default
+user responses hide proof and witness references, raw audit responses preserve
+proof and witness references, and no API handler bypasses the simple platform
+facade.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .invariants import RuntimeCoreInvariantError
-from .simple_platform import SimplePlatform
+from .simple_platform import SimplePlatform, SimpleVisibilityLevel
 
 DOCUMENT_MANIPULATION_WIRING_CLIENT_CONTRACT: dict[str, object] = {
     "contract_ref": "simple_platform.document_manipulation_wiring.v1",
@@ -91,6 +92,54 @@ class SimplePlatformRuntime:
                 error=str(exc),
             )
 
+    def check_action_experience(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate one action and return the visibility-filtered shell."""
+
+        try:
+            visibility_level, action_body = _visibility_scoped_request(request_body)
+            experience = self.platform.check_action_experience(
+                action_body,
+                visibility_level=visibility_level,
+            )
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=experience.outcome == "ready",
+                status=experience.outcome,
+                payload={"experience": experience.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
+    def check_task_experience(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate one template-backed task and return the visibility-filtered shell."""
+
+        try:
+            visibility_level, task_body = _visibility_scoped_request(request_body)
+            experience = self.platform.check_task_experience(
+                task_body,
+                visibility_level=visibility_level,
+            )
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=experience.outcome == "ready",
+                status=experience.outcome,
+                payload={"experience": experience.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
     def check_task(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
         """Validate and check one template-backed task request."""
 
@@ -101,6 +150,30 @@ class SimplePlatformRuntime:
                 ok=check.ok_to_continue,
                 status=check.outcome,
                 payload={"check": check.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
+    def check_workflow_experience(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate one workflow and return the visibility-filtered shell."""
+
+        try:
+            visibility_level, workflow_body = _visibility_scoped_request(request_body)
+            experience = self.platform.check_workflow_experience(
+                workflow_body,
+                visibility_level=visibility_level,
+            )
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=experience.outcome == "ready",
+                status=experience.outcome,
+                payload={"workflow": experience.to_dict()},
             )
         except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
             return SimplePlatformEnvelope(
@@ -167,6 +240,23 @@ class SimplePlatformRuntime:
                     {"outcome": "needs_review", "label": "Needs approval"},
                     {"outcome": "blocked", "label": "Blocked"},
                 ],
+                "visibility_levels": [
+                    {
+                        "visibility_level": "normal_user",
+                        "label": "Normal user",
+                        "purpose": "Show simple status, risk, approval need, and choices.",
+                    },
+                    {
+                        "visibility_level": "operator",
+                        "label": "Operator",
+                        "purpose": "Show simple status plus receipt and blocked-reason references.",
+                    },
+                    {
+                        "visibility_level": "auditor_developer",
+                        "label": "Auditor/developer",
+                        "purpose": "Show proof refs, raw decision, and governance trace fields.",
+                    },
+                ],
                 "workflows": [template.to_dict() for template in self.platform.workflow_templates()],
             },
         )
@@ -210,3 +300,25 @@ class SimplePlatformRuntime:
             status="listed",
             payload={"guide": self.platform.onboarding_guide().to_dict()},
         )
+
+
+def _visibility_scoped_request(
+    request_body: Mapping[str, Any],
+) -> tuple[SimpleVisibilityLevel, dict[str, object]]:
+    """Split optional visibility from a simple request without reflection."""
+
+    visibility_value = request_body.get("visibility_level", "normal_user")
+    if not isinstance(visibility_value, str):
+        raise RuntimeCoreInvariantError("visibility_level must be text")
+    action_body = dict(request_body)
+    action_body.pop("visibility_level", None)
+    return _visibility_level_from_text(visibility_value), action_body
+
+
+def _visibility_level_from_text(value: str) -> SimpleVisibilityLevel:
+    normalized = value.strip().replace("-", "_")
+    if normalized in {"normal_user", "operator", "auditor_developer"}:
+        return normalized  # type: ignore[return-value]
+    raise RuntimeCoreInvariantError(
+        "visibility_level must be one of: normal_user, operator, auditor_developer"
+    )

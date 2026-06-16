@@ -67,6 +67,22 @@
         "can_write_files": false
       },
       "authority_level": "read_only_advisory",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.governance_core.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -173,6 +189,22 @@
         "can_write_files": false
       },
       "authority_level": "read_only",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.agentic_service_harness.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -271,6 +303,23 @@
         "can_write_files": false
       },
       "authority_level": "read_only_advisory",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/73_snet_operator_read_model.md",
+          "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.snet.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "connector_call",
         "external_send",
@@ -369,6 +418,23 @@
         "can_write_files": false
       },
       "authority_level": "read_only_advisory",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/inceptadive-shadow-pass.md",
+          "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.inceptadive_shadow.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "connector_call",
         "external_send",
@@ -467,6 +533,23 @@
         "can_write_files": false
       },
       "authority_level": "draft_only",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+          "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.personal_assistant.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "calendar_write",
         "connector_call",
@@ -561,6 +644,22 @@
         "can_write_files": false
       },
       "authority_level": "live_probe",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.teamops_shared_inbox.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "external_send",
         "mailbox_mutation",
@@ -651,6 +750,23 @@
         "can_write_files": false
       },
       "authority_level": "approval_required",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/64_durable_gmail_connector_runtime_plan.md",
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.gmail_account_binding_gate.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "account_binding_claim",
         "connector_call",
@@ -742,6 +858,22 @@
         "can_write_files": false
       },
       "authority_level": "approval_required",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.worker_runtime.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "autonomous_execution",
         "filesystem_write",
@@ -831,6 +963,23 @@
         "can_write_files": false
       },
       "authority_level": "approval_required",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#capability_worker_execution",
+          "docs/40_proof_coverage_matrix.md#restricted_adapter_worker_boundaries"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.capability_workers.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -922,6 +1071,23 @@
         "can_write_files": false
       },
       "authority_level": "blocked",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+          "docs/runbooks/nested-mind-record-observation-staging.md"
+        ],
+        "external_effect": false,
+        "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.nested_mind_bridge.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
       "blocked_actions": [
         "external_send",
         "memory_topology_activation",
@@ -1001,24 +1167,29 @@
   "route": "/api/v1/components/read-model",
   "schema_version": 1,
   "source_refs": {
+    "authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json",
     "lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json",
     "proof_binding": "examples/component_proof_binding.foundation.json",
     "registry": "examples/component_registry.foundation.json",
     "router_inventory": "examples/component_router_inventory.foundation.json"
   },
   "summary": {
+    "authority_witness_count": 10,
     "awaiting_binding_count": 1,
     "blocked_component_count": 1,
     "bound_route_count": 30,
     "bundle_count": 3,
+    "classified_declared_route_count": 424,
     "component_count": 10,
     "lifecycle_receipt_count": 10,
-    "proof_bound_count": 9
+    "proof_bound_count": 9,
+    "route_family_classification_count": 76
   },
   "terminal_closure_required": true,
   "validators": [
     "component_registry_validator",
     "component_lifecycle_transition_receipts_validator",
+    "component_authority_envelope_witnesses_validator",
     "component_router_inventory_validator",
     "component_proof_binding_validator",
     "component_read_model_validator"
