@@ -1739,6 +1739,12 @@
       "surface": "mfidel"
     },
     {
+      "schema_id": "readiness-waiver-review-packet",
+      "path": "schemas/readiness_waiver_review_packet.schema.json",
+      "urn": "urn:mullusi:schema:readiness-waiver-review-packet:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "read-only-worker-binding",
       "path": "schemas/read_only_worker_binding.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-binding:1",

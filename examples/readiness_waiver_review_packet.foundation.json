@@ -1,0 +1,104 @@
+{
+  "receipt_id": "readiness-waiver-review-packet-foundation-20260616",
+  "receipt_version": "readiness_waiver_review_packet.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "source_readiness_ref": "docs/CURRENT_READINESS_SNAPSHOT.md",
+  "waiver_scope": {
+    "waiver_id": "waiver-foundation-deployment-readiness-20260616",
+    "target_gate": "deployment_publication_readiness",
+    "target_environment": "foundation_local",
+    "requested_disposition": "review_only",
+    "requested_by": "local-control-studio-operator",
+    "risk_class": "high",
+    "violated_readiness_checks": [
+      "readiness://deployment/publication",
+      "readiness://operator/approval",
+      "readiness://rollback/recovery",
+      "readiness://accepted-risk/expiry"
+    ],
+    "uao_ref": "uao://readiness-waiver-review/foundation-local",
+    "phi_gov_ref": null
+  },
+  "review_controls": {
+    "operator_approval_present": false,
+    "approval_refs": [],
+    "approval_quorum_required": 1,
+    "expiry_at": "2026-06-23T00:00:00Z",
+    "expiry_required": true,
+    "compensating_controls": [
+      {
+        "control_id": "control-foundation-deny-deployment-mutation",
+        "description": "Keep deployment mutation denied while waiver approval, accepted-risk, rollback, and incident evidence remain incomplete.",
+        "evidence_ref": "docs/FOUNDATION_MODE.md",
+        "status": "planned"
+      },
+      {
+        "control_id": "control-local-proof-only",
+        "description": "Limit the waiver packet to repository-local review evidence without changing runtime, deployment, account, billing, or customer state.",
+        "evidence_ref": "docs/82_cross_repo_opportunity_map.md",
+        "status": "planned"
+      }
+    ],
+    "accepted_risk_ref_present": false,
+    "rollback_recovery_ref_present": false,
+    "incident_handoff_ref_present": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "gate_decision": {
+    "decision": "WAIVER_BLOCKED_AWAITING_APPROVAL",
+    "waiver_granted": false,
+    "deployment_mutation_allowed": false,
+    "production_promotion_allowed": false,
+    "terminal_closure_allowed": false,
+    "readiness_success_claim_allowed": false,
+    "external_exposure_allowed": false,
+    "raw_secret_material_included": false,
+    "operator_approval_required": true,
+    "expiry_required": true,
+    "required_evidence_refs": [
+      "evidence://readiness-waiver/phi-gov-authorization",
+      "evidence://readiness-waiver/operator-approval",
+      "evidence://readiness-waiver/accepted-risk-expiry",
+      "evidence://readiness-waiver/compensating-controls",
+      "evidence://readiness-waiver/rollback-recovery",
+      "evidence://readiness-waiver/incident-handoff"
+    ],
+    "blocked_reason_refs": [
+      "blocked://readiness-waiver/phi-gov-authorization-missing",
+      "blocked://readiness-waiver/operator-approval-missing",
+      "blocked://readiness-waiver/accepted-risk-expiry-missing",
+      "blocked://readiness-waiver/rollback-recovery-missing",
+      "blocked://readiness-waiver/incident-handoff-missing"
+    ]
+  },
+  "receipt_refs": {
+    "readiness_waiver_review_packet_schema": "schemas/readiness_waiver_review_packet.schema.json",
+    "sdlc_release_candidate_schema": "schemas/sdlc_release_candidate.schema.json",
+    "sdlc_deployment_candidate_schema": "schemas/sdlc_deployment_candidate.schema.json",
+    "temporal_accepted_risk_expiry_receipt_schema": "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+    "sdlc_security_review_schema": "schemas/sdlc_security_review.schema.json",
+    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "waiver_granted": false,
+    "required_evidence_ref_count": 6,
+    "blocked_reason_ref_count": 5,
+    "approval_ref_count": 0,
+    "compensating_control_count": 2,
+    "receipt_ref_count": 8,
+    "evidence_ref_count": 9
+  },
+  "evidence_refs": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "docs/86_readiness_waiver_review_packet_contract.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/temporal_accepted_risk_expiry_receipt.schema.json"
+  ]
+}

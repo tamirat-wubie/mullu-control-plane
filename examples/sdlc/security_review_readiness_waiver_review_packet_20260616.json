@@ -1,0 +1,96 @@
+{
+  "security_review_id": "SEC-readiness-waiver-review-packet-20260616",
+  "change_id": "readiness-waiver-review-packet-20260616",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "deployment",
+    "secrets",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Readiness waiver review can become a policy bypass if waiver grant, deployment mutation, production promotion, accepted-risk expiry, rollback evidence, and incident handoff are conflated. The main risks are treating missing evidence as approval, allowing deployment mutation from a review packet, serializing secret material, using a waiver as terminal closure, or claiming readiness success from compensating controls alone. The mitigation is a non-executing packet schema and validator that require expiry, approval evidence, accepted-risk evidence, rollback/recovery, incident handoff, blocked reason refs, and explicit denial flags in Foundation Mode.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "waiver authority remains false in Foundation example",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_authority_drift"
+    },
+    {
+      "category": "deployment",
+      "check": "deployment witness boundary confirms mutation and production promotion remain denied",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_readiness_waiver_review_packet.py"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw secret material remains denied",
+      "status": "passed",
+      "evidence_ref": "examples/readiness_waiver_review_packet.foundation.json"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms waiver cannot bypass Phi_gov, operator approval, accepted-risk expiry, rollback, or incident handoff",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_authority_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms required evidence and blocked reason refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_missing_refs_and_count_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "expiry and compensating control drift are rejected",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_expiry_and_control_drift"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the waiver review surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_readiness_waiver_review_packet_blocks_deployment_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "readiness-waiver-policy-bypass",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode packet blocks waiver grant, deployment mutation, production promotion, terminal closure, and readiness success claims until named evidence refs exist.",
+      "evidence_refs": [
+        "schemas/readiness_waiver_review_packet.schema.json",
+        "scripts/validate_readiness_waiver_review_packet.py",
+        "tests/test_validate_readiness_waiver_review_packet.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ReadinessWaiverReviewPacket validation non-live and deterministic",
+    "require Phi_gov and operator approval refs before waiver grant can be reconsidered",
+    "require accepted-risk expiry evidence before any temporary waiver",
+    "require rollback and incident handoff evidence before deployment mutation",
+    "reject raw secret material and readiness success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "receipt://sdlc/readiness-waiver-review-packet/security"
+  ],
+  "uao_ref": "uao://sdlc/readiness-waiver-review-packet/security",
+  "causal_decision_trace_ref": "trace://sdlc/readiness-waiver-review-packet/security",
+  "receipt_ref": "receipt://sdlc/readiness-waiver-review-packet/security"
+}

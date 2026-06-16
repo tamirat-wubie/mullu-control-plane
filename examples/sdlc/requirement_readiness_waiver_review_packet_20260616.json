@@ -1,0 +1,63 @@
+{
+  "requirement_id": "REQ-readiness-waiver-review-packet-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-readiness-waiver-review-packet",
+  "problem_statement": "Readiness gates and accepted-risk notes exist, but the control plane lacks a schema-backed review packet that captures waiver scope, expiry, compensating controls, approval needs, rollback evidence, incident handoff, and blocked promotion authority before any readiness waiver can be considered.",
+  "success_criteria": [
+    "ReadinessWaiverReviewPacket validates against a public JSON schema and Foundation Mode example",
+    "ReadinessWaiverReviewPacket binds source readiness, violated readiness checks, UAO ref, expiry, compensating controls, approval status, accepted-risk status, rollback status, and incident handoff status",
+    "ReadinessWaiverReviewPacket blocks waiver grant, deployment mutation, production promotion, external exposure, terminal closure, and readiness success claims in Foundation Mode",
+    "ReadinessWaiverReviewPacket records required evidence refs and blocked reason refs",
+    "ReadinessWaiverReviewPacket is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no waiver grant",
+    "no deployment mutation",
+    "no production promotion",
+    "no external exposure",
+    "no terminal closure",
+    "no readiness success claim",
+    "no secret serialization"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "waiver_granted remains false in the Foundation example",
+    "deployment_mutation_allowed remains false in the Foundation example",
+    "Phi_gov authorization remains absent until future evidence exists",
+    "operator approval remains absent until future evidence exists",
+    "accepted-risk expiry evidence remains absent until future evidence exists",
+    "rollback recovery evidence remains absent until future evidence exists",
+    "incident handoff evidence remains absent until future evidence exists",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "docs/86_readiness_waiver_review_packet_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_readiness_waiver_review_packet.py",
+    "python -m pytest tests/test_validate_readiness_waiver_review_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_readiness_waiver_review_packet_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "docs/86_readiness_waiver_review_packet_contract.md",
+    "examples/sdlc/design_readiness_waiver_review_packet_20260616.json",
+    "examples/sdlc/security_review_readiness_waiver_review_packet_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/readiness-waiver-review-packet/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/readiness-waiver-review-packet/requirement",
+  "receipt_ref": "receipt://sdlc/readiness-waiver-review-packet/requirement"
+}

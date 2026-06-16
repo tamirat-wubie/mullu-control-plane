@@ -4351,6 +4351,37 @@ def test_mfidel_substrate_conformance_receipt_preserves_atomicity() -> None:
     assert closure_actions["publish_mfidel_substrate_conformance_receipt_contract"]["status"] == "closed"
 
 
+def test_readiness_waiver_review_packet_blocks_deployment_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    waiver_surface = surfaces["readiness_waiver_review_packet"]
+    waiver_witness_surface = witness_surfaces["readiness_waiver_review_packet"]
+    witnesses = set(waiver_surface["runtime_witnesses"])
+
+    assert waiver_surface["coverage_state"] == "witnessed"
+    assert waiver_surface["request_proof"] == "request_proof"
+    assert waiver_surface["action_proof"] == "action_proof"
+    assert "ReadinessWaiverReviewPacket" in waiver_surface["representative_paths"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in waiver_surface["evidence_files"]
+    assert "examples/readiness_waiver_review_packet.foundation.json" in waiver_surface["evidence_files"]
+    assert "scripts/validate_readiness_waiver_review_packet.py" in waiver_surface["evidence_files"]
+    assert "tests/test_validate_readiness_waiver_review_packet.py" in waiver_surface["evidence_files"]
+    assert "readiness_waiver_review_packet_schema_valid" in witnesses
+    assert "readiness_waiver_review_packet_blocks_deployment_authority" in witnesses
+    assert "readiness_waiver_review_packet_requires_expiry" in witnesses
+    assert "readiness_waiver_review_packet_rejects_authority_drift" in witnesses
+    assert "readiness_waiver_review_packet_rejects_missing_refs" in witnesses
+    assert "readiness_waiver_review_packet_sdlc_artifacts_valid" in witnesses
+    assert waiver_witness_surface["exact_test_anchor_count"] == 6
+    assert waiver_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_readiness_waiver_review_packet_contract"]["status"] == "closed"
+
+
 def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

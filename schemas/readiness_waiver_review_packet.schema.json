@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:readiness-waiver-review-packet:1",
+  "title": "Readiness Waiver Review Packet",
+  "description": "Non-executing review packet for readiness waiver requests, expiry, compensating controls, approval evidence, and blocked promotion authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "generated_at",
+    "source_readiness_ref",
+    "waiver_scope",
+    "review_controls",
+    "gate_decision",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "minLength": 1},
+    "receipt_version": {"const": "readiness_waiver_review_packet.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_readiness_ref": {"type": "string", "minLength": 1},
+    "waiver_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "waiver_id",
+        "target_gate",
+        "target_environment",
+        "requested_disposition",
+        "requested_by",
+        "risk_class",
+        "violated_readiness_checks",
+        "uao_ref",
+        "phi_gov_ref"
+      ],
+      "properties": {
+        "waiver_id": {"type": "string", "minLength": 1},
+        "target_gate": {"type": "string", "minLength": 1},
+        "target_environment": {
+          "type": "string",
+          "enum": ["foundation_local", "pilot", "staging", "production"]
+        },
+        "requested_disposition": {
+          "type": "string",
+          "enum": ["review_only", "temporary_waiver", "deny"]
+        },
+        "requested_by": {"type": "string", "minLength": 1},
+        "risk_class": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+        "violated_readiness_checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "uao_ref": {"type": "string", "minLength": 1},
+        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "review_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_approval_present",
+        "approval_refs",
+        "approval_quorum_required",
+        "expiry_at",
+        "expiry_required",
+        "compensating_controls",
+        "accepted_risk_ref_present",
+        "rollback_recovery_ref_present",
+        "incident_handoff_ref_present",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "operator_approval_present": {"type": "boolean"},
+        "approval_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "approval_quorum_required": {"type": "integer", "minimum": 1},
+        "expiry_at": {"type": "string", "format": "date-time"},
+        "expiry_required": {"type": "boolean"},
+        "compensating_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/compensating_control"},
+          "uniqueItems": true
+        },
+        "accepted_risk_ref_present": {"type": "boolean"},
+        "rollback_recovery_ref_present": {"type": "boolean"},
+        "incident_handoff_ref_present": {"type": "boolean"},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true}
+      }
+    },
+    "gate_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "waiver_granted",
+        "deployment_mutation_allowed",
+        "production_promotion_allowed",
+        "terminal_closure_allowed",
+        "readiness_success_claim_allowed",
+        "external_exposure_allowed",
+        "raw_secret_material_included",
+        "operator_approval_required",
+        "expiry_required",
+        "required_evidence_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "WAIVER_BLOCKED_AWAITING_APPROVAL",
+            "WAIVER_READY_FOR_OPERATOR_REVIEW",
+            "WAIVER_DENIED",
+            "WAIVER_GRANTED_TEMPORARY"
+          ]
+        },
+        "waiver_granted": {"type": "boolean"},
+        "deployment_mutation_allowed": {"type": "boolean"},
+        "production_promotion_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "readiness_success_claim_allowed": {"type": "boolean"},
+        "external_exposure_allowed": {"type": "boolean"},
+        "raw_secret_material_included": {"type": "boolean"},
+        "operator_approval_required": {"type": "boolean"},
+        "expiry_required": {"type": "boolean"},
+        "required_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocked_reason_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_waiver_review_packet_schema",
+        "sdlc_release_candidate_schema",
+        "sdlc_deployment_candidate_schema",
+        "temporal_accepted_risk_expiry_receipt_schema",
+        "sdlc_security_review_schema",
+        "sdlc_recovery_handoff_receipt_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "readiness_waiver_review_packet_schema": {"type": "string", "minLength": 1},
+        "sdlc_release_candidate_schema": {"type": "string", "minLength": 1},
+        "sdlc_deployment_candidate_schema": {"type": "string", "minLength": 1},
+        "temporal_accepted_risk_expiry_receipt_schema": {"type": "string", "minLength": 1},
+        "sdlc_security_review_schema": {"type": "string", "minLength": 1},
+        "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "waiver_granted",
+        "required_evidence_ref_count",
+        "blocked_reason_ref_count",
+        "approval_ref_count",
+        "compensating_control_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "waiver_granted": {"type": "boolean"},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 0},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 0},
+        "approval_ref_count": {"type": "integer", "minimum": 0},
+        "compensating_control_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "compensating_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "description", "evidence_ref", "status"],
+      "properties": {
+        "control_id": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["planned", "active", "verified"]}
+      }
+    }
+  }
+}

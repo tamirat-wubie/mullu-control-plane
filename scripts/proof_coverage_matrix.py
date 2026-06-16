@@ -5951,6 +5951,60 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "readiness_waiver_review_packet",
+            [
+                "ReadinessWaiverReviewPacket",
+                "validate_readiness_waiver_review_packet",
+                "readiness_waiver_review_packet.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/readiness_waiver_review_packet.schema.json",
+                "examples/readiness_waiver_review_packet.foundation.json",
+                "scripts/validate_readiness_waiver_review_packet.py",
+                "tests/test_validate_readiness_waiver_review_packet.py",
+                "docs/86_readiness_waiver_review_packet_contract.md",
+                "docs/CURRENT_READINESS_SNAPSHOT.md",
+                "docs/FOUNDATION_MODE.md",
+                "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+            ],
+            "Readiness waiver review packets bind readiness gaps, expiry, approval, accepted-risk, compensating-control, rollback, and incident-handoff evidence while denying waiver grant, deployment mutation, production promotion, external exposure, readiness success claims, and terminal closure.",
+            [
+                "readiness_waiver_review_packet_schema_valid",
+                "readiness_waiver_review_packet_blocks_deployment_authority",
+                "readiness_waiver_review_packet_requires_expiry",
+                "readiness_waiver_review_packet_rejects_authority_drift",
+                "readiness_waiver_review_packet_rejects_missing_refs",
+                "readiness_waiver_review_packet_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "readiness_waiver_review_packet_schema_valid": [
+                    "readiness_waiver_review_packet_passes"
+                ],
+                "readiness_waiver_review_packet_blocks_deployment_authority": [
+                    "readiness_waiver_review_packet_passes",
+                    "readiness_waiver_review_packet_rejects_authority_drift",
+                ],
+                "readiness_waiver_review_packet_requires_expiry": [
+                    "readiness_waiver_review_packet_passes",
+                    "readiness_waiver_review_packet_rejects_expiry_and_control_drift",
+                ],
+                "readiness_waiver_review_packet_rejects_authority_drift": [
+                    "readiness_waiver_review_packet_rejects_authority_drift"
+                ],
+                "readiness_waiver_review_packet_rejects_missing_refs": [
+                    "readiness_waiver_review_packet_rejects_missing_refs_and_count_drift"
+                ],
+                "readiness_waiver_review_packet_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_readiness_waiver_review_packet"
+                ],
+            },
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -9855,6 +9909,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
             "surfaces": ["mfidel_substrate_conformance_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_readiness_waiver_review_packet_contract",
+            "surfaces": ["readiness_waiver_review_packet"],
             "status": "closed",
         },
         {

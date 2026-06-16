@@ -743,3 +743,24 @@ def test_mfidel_substrate_conformance_receipt_requirement_and_design_validate() 
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in requirement["affected_surfaces"]
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in design["schema_changes"]
     assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in design["validator_changes"]
+
+
+def test_readiness_waiver_review_packet_requirement_and_design_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_readiness_waiver_review_packet_20260616.json")
+    design_path = Path("examples/sdlc/design_readiness_waiver_review_packet_20260616.json")
+    requirement = validator.load_json_object(requirement_path, "readiness waiver requirement")
+    design = validator.load_json_object(design_path, "readiness waiver design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement)
+    design_errors = validator.validate_artifact_record("design_decision", design)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design["requirement_id"] == requirement["requirement_id"]
+    assert "ReadinessWaiverReviewPacket" in design["architecture_summary"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in requirement["affected_surfaces"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in design["schema_changes"]
+    assert "no deployment mutation" in requirement["non_goals"]
+    assert "scripts/validate_readiness_waiver_review_packet.py" in design["validator_changes"]
+    assert "tests/test_validate_readiness_waiver_review_packet.py" in design["validator_changes"]
+    assert ".github/workflows/ci.yml" in design["validator_changes"]
