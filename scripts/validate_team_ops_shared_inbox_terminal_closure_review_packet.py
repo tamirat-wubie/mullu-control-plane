@@ -8,6 +8,7 @@ binding, duplicate-action protection, and no-terminal-closure-overclaim checks.
 Dependencies: schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json.
 Invariants:
   - Ready packets require ready sent-message observation evidence.
+  - Ready packets require retained provider-observation receipt identity.
   - Terminal closure review is not terminal closure certificate minting.
   - Raw message/provider fields and producer effect claims are rejected.
 """
@@ -38,6 +39,9 @@ DEFAULT_VALIDATION_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_terminal_closure_review_packet_validation.json"
 )
 RECEIPT_ID_PATTERN = re.compile(r"^teamops-shared-inbox-terminal-closure-review-packet-[0-9a-f]{16}$")
+PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN = re.compile(
+    r"^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+)
 RAW_FIELD_NAMES = {
     "raw_subject",
     "subject",
@@ -90,6 +94,7 @@ class TeamOpsSharedInboxTerminalClosureReviewPacketValidation:
     solver_outcome: str
     proof_state: str
     sent_message_observation_receipt_ready: bool
+    provider_observation_receipt_valid: bool
     closure_review_state: str
     closure_review_ready: bool
     terminal_closure_candidate_ready: bool
@@ -140,6 +145,7 @@ def validate_team_ops_shared_inbox_terminal_closure_review_packet(
         solver_outcome=str(packet.get("solver_outcome", "")),
         proof_state=str(packet.get("proof_state", "")),
         sent_message_observation_receipt_ready=packet.get("sent_message_observation_receipt_ready") is True,
+        provider_observation_receipt_valid=packet.get("provider_observation_receipt_valid") is True,
         closure_review_state=str(packet.get("closure_review_state", "")),
         closure_review_ready=packet.get("closure_review_ready") is True,
         terminal_closure_candidate_ready=packet.get("terminal_closure_candidate_ready") is True,
@@ -198,6 +204,14 @@ def _validate_ready_packet(packet: dict[str, Any], errors: list[str]) -> None:
         errors.append("passed packet requires valid sent-message observation receipt")
     if packet.get("sent_message_observation_receipt_ready") is not True:
         errors.append("passed packet requires ready sent-message observation receipt")
+    if not str(packet.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("passed packet requires provider_observation_receipt_ref")
+    if PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+        str(packet.get("provider_observation_receipt_id", ""))
+    ) is None:
+        errors.append("passed packet requires provider_observation_receipt_id")
+    if packet.get("provider_observation_receipt_valid") is not True:
+        errors.append("passed packet requires provider_observation_receipt_valid=true")
     if packet.get("solver_outcome") != "SolvedVerified":
         errors.append("passed packet requires solver_outcome=SolvedVerified")
     if packet.get("proof_state") != "Pass":
@@ -243,9 +257,9 @@ def _validate_ready_packet(packet: dict[str, Any], errors: list[str]) -> None:
         errors.append("second_observation_hash must match provider_message_hash")
     if not isinstance(packet.get("required_terminal_evidence_refs"), list) or len(
         packet.get("required_terminal_evidence_refs", [])
-    ) < 8:
+    ) < 9:
         errors.append("passed packet requires all required terminal evidence refs")
-    if not isinstance(packet.get("evidence_refs"), list) or len(packet.get("evidence_refs", [])) < 8:
+    if not isinstance(packet.get("evidence_refs"), list) or len(packet.get("evidence_refs", [])) < 9:
         errors.append("passed packet requires evidence_refs")
     if packet.get("blocked_until") != []:
         errors.append("passed packet must not carry blockers")
@@ -284,6 +298,12 @@ def _packet_ready(packet: dict[str, Any]) -> bool:
         and packet.get("proof_state") == "Pass"
         and packet.get("sent_message_observation_receipt_valid") is True
         and packet.get("sent_message_observation_receipt_ready") is True
+        and bool(str(packet.get("provider_observation_receipt_ref", "")).strip())
+        and PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+            str(packet.get("provider_observation_receipt_id", ""))
+        )
+        is not None
+        and packet.get("provider_observation_receipt_valid") is True
         and packet.get("closure_review_state") == "assembled"
         and packet.get("closure_review_ready") is True
         and packet.get("terminal_closure_candidate_ready") is True
@@ -298,9 +318,9 @@ def _packet_ready(packet: dict[str, Any]) -> bool:
         and packet.get("no_secret_values_serialized") is True
         and packet.get("report_is_not_terminal_closure") is True
         and isinstance(packet.get("required_terminal_evidence_refs"), list)
-        and len(packet.get("required_terminal_evidence_refs", [])) >= 8
+        and len(packet.get("required_terminal_evidence_refs", [])) >= 9
         and isinstance(packet.get("evidence_refs"), list)
-        and len(packet.get("evidence_refs", [])) >= 8
+        and len(packet.get("evidence_refs", [])) >= 9
         and packet.get("blocked_until") == []
     )
 

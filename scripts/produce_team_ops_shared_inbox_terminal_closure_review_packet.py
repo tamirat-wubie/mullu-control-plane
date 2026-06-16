@@ -9,6 +9,7 @@ Dependencies: schemas/team_ops_shared_inbox_terminal_closure_review_packet.schem
 and scripts.validate_team_ops_shared_inbox_sent_message_observation_receipt.
 Invariants:
   - Only ready sent-message observation receipts can assemble closure review.
+  - Ready review packets retain provider-observation receipt identity from observation evidence.
   - Review packets bind evidence refs and hashes; raw message/provider data is rejected.
   - The producer does not call providers, send messages, create drafts, or mint closure certificates.
 """
@@ -60,6 +61,9 @@ class TeamOpsSharedInboxTerminalClosureReviewPacket:
     source_sent_message_observation_receipt_id: str
     sent_message_observation_receipt_valid: bool
     sent_message_observation_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -159,6 +163,15 @@ def produce_team_ops_shared_inbox_terminal_closure_review_packet(
         source_sent_message_observation_receipt_id=str(observation_receipt.get("receipt_id", "")),
         sent_message_observation_receipt_valid=observation_validation.valid,
         sent_message_observation_receipt_ready=observation_ready,
+        provider_observation_receipt_ref=str(observation_receipt.get("provider_observation_receipt_ref", ""))
+        if passed
+        else "",
+        provider_observation_receipt_id=str(observation_receipt.get("provider_observation_receipt_id", ""))
+        if passed
+        else "",
+        provider_observation_receipt_valid=observation_receipt.get("provider_observation_receipt_valid") is True
+        if passed
+        else False,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -259,6 +272,7 @@ def _derive_status(
 def _derive_required_terminal_evidence_refs(receipt: Mapping[str, Any]) -> tuple[str, ...]:
     refs = (
         str(receipt.get("source_send_execution_receipt_ref", "")),
+        str(receipt.get("provider_observation_receipt_ref", "")),
         str(receipt.get("send_execution_ref", "")),
         str(receipt.get("dispatch_receipt_ref", "")),
         str(receipt.get("provider_message_ref", "")),
@@ -273,6 +287,7 @@ def _derive_required_terminal_evidence_refs(receipt: Mapping[str, Any]) -> tuple
 def _review_packet_hash(receipt: Mapping[str, Any], evidence_refs: Sequence[str]) -> str:
     material = {
         "source_receipt_id": str(receipt.get("receipt_id", "")),
+        "provider_observation_receipt_id": str(receipt.get("provider_observation_receipt_id", "")),
         "provider_message_hash": str(receipt.get("provider_message_hash", "")),
         "first_observation_hash": str(receipt.get("first_observation_hash", "")),
         "second_observation_hash": str(receipt.get("second_observation_hash", "")),
@@ -315,6 +330,9 @@ def _receipt_id(
     material = {
         "source_ref": _artifact_ref(sent_message_observation_receipt_path),
         "source_sent_message_observation_receipt_id": source_sent_message_observation_receipt_id,
+        "provider_observation_receipt_id": str(
+            _load_json_object(sent_message_observation_receipt_path).get("provider_observation_receipt_id", "")
+        ),
         "status": status,
         "evidence_refs": list(evidence_refs),
     }
