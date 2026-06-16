@@ -175,6 +175,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 146. Distributed lease execution receipts are public contracts when they bind execution plan hash, adapter registry receipt hash, claim receipt hash, operation payload hash, execution mode, readiness or delegation status, blocked reasons, no-secret serialization, and no-live-backend/no-scheduler-mutation/no-worker-dispatch flags before any distributed lease execution boundary can be treated as admissible.
 147. Scheduler worker runtime receipt handoffs are public contracts when they bind temporal scheduler receipts, distributed lease execution receipts, worker mesh receipts, worker failure receipts, UAO refs, runtime witness refs, and effect reconciliation obligations while denying scheduler dispatch, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, terminal closure, and success claims.
 148. Scheduler worker runtime receipt emitter dry-runs are public contracts when they bind scheduler-worker handoff evidence into a simulated future runtime receipt emitter envelope while denying scheduler dispatch, runtime registration, runtime receipt schema binding, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, runtime receipt emission, worker mesh dispatch receipt emission, terminal closure, and success claims.
+149. Connector action promotion gates are public contracts when they bind connector descriptor evidence, connector result evidence, UAO refs, Phi_gov authorization state, operator approval state, secret-access receipt state, connector-worker execution receipt state, rollback evidence, and blocked reason refs before any connector action can leave plan-only status while denying live connector calls, external writes, secret access, runtime dispatch, deployment mutation, terminal closure, and success claims.
 
 ## Verification
 
@@ -187,7 +188,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 288 schemas
+protocol manifest ok: 289 schemas
 ```
 
 STATUS:

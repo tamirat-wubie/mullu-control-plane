@@ -776,6 +776,13 @@
       ]
     },
     {
+      "action_id": "publish_connector_action_promotion_gate_contract",
+      "status": "closed",
+      "surfaces": [
+        "connector_action_promotion_gate"
+      ]
+    },
+    {
       "action_id": "publish_collaboration_case_contract",
       "status": "closed",
       "surfaces": [
@@ -1126,7 +1133,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 118,
+      "action_proof": 119,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 25,
@@ -1134,7 +1141,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 142,
+      "audit_chain": 143,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1142,21 +1149,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 99
+      "witnessed": 100
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 27,
-      "request_proof": 117
+      "request_proof": 118
     },
-    "surface_count": 145
+    "surface_count": 146
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 145,
+      "strong": 146,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9251,6 +9258,59 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/connector_action_promotion_gate.schema.json",
+        "examples/connector_action_promotion_gate.foundation.json",
+        "scripts/validate_connector_action_promotion_gate.py",
+        "tests/test_validate_connector_action_promotion_gate.py",
+        "schemas/connector_descriptor.schema.json",
+        "schemas/connector_result.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "docs/83_connector_action_promotion_gate_contract.md"
+      ],
+      "notes": "Connector action promotion gates bind connector descriptor/result evidence, UAO refs, Phi_gov authorization state, approval state, secret-access receipt state, connector-worker execution receipt state, rollback evidence, and blocked reason refs before any connector action can leave plan-only status.",
+      "representative_paths": [
+        "ConnectorActionPromotionGate",
+        "validate_connector_action_promotion_gate",
+        "connector_action_promotion_gate.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "connector_action_promotion_gate_binds_source_fixtures": [
+          "connector_action_promotion_gate_passes",
+          "connector_action_promotion_gate_rejects_source_mismatch"
+        ],
+        "connector_action_promotion_gate_blocks_live_calls": [
+          "connector_action_promotion_gate_passes",
+          "connector_action_promotion_gate_rejects_authority_drift"
+        ],
+        "connector_action_promotion_gate_rejects_authority_drift": [
+          "connector_action_promotion_gate_rejects_authority_drift"
+        ],
+        "connector_action_promotion_gate_rejects_missing_refs": [
+          "connector_action_promotion_gate_rejects_missing_refs"
+        ],
+        "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift": [
+          "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+        ],
+        "connector_action_promotion_gate_schema_valid": [
+          "connector_action_promotion_gate_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "connector_action_promotion_gate_schema_valid",
+        "connector_action_promotion_gate_blocks_live_calls",
+        "connector_action_promotion_gate_binds_source_fixtures",
+        "connector_action_promotion_gate_rejects_authority_drift",
+        "connector_action_promotion_gate_rejects_missing_refs",
+        "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+      ],
+      "surface_id": "connector_action_promotion_gate"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/collaboration_cases.py",
         "schemas/collaboration_case.schema.json",
         "tests/test_gateway/test_collaboration_cases.py"
@@ -12533,8 +12593,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1614,
-    "runtime_witness_count": 1614,
+    "exact_test_anchor_count": 1620,
+    "runtime_witness_count": 1620,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19657,6 +19717,53 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "connector_self_healing",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_passes"
+            ],
+            "witness": "connector_action_promotion_gate_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_passes",
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_authority_drift"
+            ],
+            "witness": "connector_action_promotion_gate_blocks_live_calls"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_passes",
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_source_mismatch"
+            ],
+            "witness": "connector_action_promotion_gate_binds_source_fixtures"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_authority_drift"
+            ],
+            "witness": "connector_action_promotion_gate_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_missing_refs"
+            ],
+            "witness": "connector_action_promotion_gate_rejects_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "connector_action_promotion_gate",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

@@ -461,6 +461,12 @@
       "surface": "connector"
     },
     {
+      "schema_id": "connector-action-promotion-gate",
+      "path": "schemas/connector_action_promotion_gate.schema.json",
+      "urn": "urn:mullusi:schema:connector-action-promotion-gate:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",

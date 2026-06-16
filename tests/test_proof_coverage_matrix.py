@@ -4237,6 +4237,35 @@ def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> Non
     assert closure_actions["publish_connector_self_healing_receipt_contract"]["status"] == "closed"
 
 
+def test_connector_action_promotion_gate_blocks_live_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    gate_surface = surfaces["connector_action_promotion_gate"]
+    gate_witness_surface = witness_surfaces["connector_action_promotion_gate"]
+    witnesses = set(gate_surface["runtime_witnesses"])
+
+    assert gate_surface["coverage_state"] == "witnessed"
+    assert gate_surface["request_proof"] == "request_proof"
+    assert gate_surface["action_proof"] == "action_proof"
+    assert "ConnectorActionPromotionGate" in gate_surface["representative_paths"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in gate_surface["evidence_files"]
+    assert "examples/connector_action_promotion_gate.foundation.json" in gate_surface["evidence_files"]
+    assert "scripts/validate_connector_action_promotion_gate.py" in gate_surface["evidence_files"]
+    assert "tests/test_validate_connector_action_promotion_gate.py" in gate_surface["evidence_files"]
+    assert "connector_action_promotion_gate_schema_valid" in witnesses
+    assert "connector_action_promotion_gate_blocks_live_calls" in witnesses
+    assert "connector_action_promotion_gate_binds_source_fixtures" in witnesses
+    assert "connector_action_promotion_gate_rejects_authority_drift" in witnesses
+    assert gate_witness_surface["exact_test_anchor_count"] == 6
+    assert gate_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_connector_action_promotion_gate_contract"]["status"] == "closed"
+
+
 def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
