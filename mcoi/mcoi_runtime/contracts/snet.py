@@ -184,9 +184,11 @@ def _require_text(value: object, field_name: str) -> str:
 
 
 def _require_optional_text(value: object, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be a non-empty string")
     if value == "":
         return ""
-    return _require_text(value, field_name)
+    return require_non_empty_text(value, field_name)
 
 
 def _require_literal_bool(value: object, expected: bool, field_name: str) -> bool:
