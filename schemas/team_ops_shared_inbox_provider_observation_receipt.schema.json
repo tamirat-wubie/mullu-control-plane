@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-receipt:1",
-  "title": "TeamOps Shared Inbox Live Probe Receipt",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-provider-observation-receipt:1",
+  "title": "TeamOps Shared Inbox Provider Observation Receipt",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,21 +18,20 @@
     "checked_at",
     "connector_id",
     "provider_operation",
-    "provider_observation_receipt_ref",
-    "provider_observation_receipt_id",
-    "provider_observation_receipt_valid",
     "query_hash",
     "max_message_count",
     "observed_message_count",
-    "response_digest",
-    "evidence_refs",
-    "no_secret_values_serialized",
-    "live_probe_observation_bound",
-    "external_provider_call_performed_by_producer",
+    "provider_receipt_ref",
+    "provider_response_digest",
+    "redacted_response_digest",
+    "provider_call_observed_by_operator",
+    "provider_call_performed_by_producer",
     "external_mailbox_write_performed",
     "external_message_sent",
     "provider_mutation_performed",
-    "forbidden_effects_observed",
+    "raw_provider_payload_serialized",
+    "no_secret_values_serialized",
+    "read_only_observation_bound",
     "blocked_until",
     "recovery_actions",
     "validation_commands"
@@ -40,7 +39,7 @@
   "properties": {
     "receipt_id": {
       "type": "string",
-      "pattern": "^teamops-shared-inbox-live-probe-receipt-[0-9a-f]{16}$"
+      "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
     },
     "schema_version": {
       "type": "integer",
@@ -87,15 +86,6 @@
       "type": "string",
       "enum": ["", "email.search", "messaging.thread.search"]
     },
-    "provider_observation_receipt_ref": {
-      "type": "string"
-    },
-    "provider_observation_receipt_id": {
-      "type": "string"
-    },
-    "provider_observation_receipt_valid": {
-      "type": "boolean"
-    },
     "query_hash": {
       "$ref": "#/$defs/sha256_hex"
     },
@@ -109,24 +99,19 @@
       "minimum": 0,
       "maximum": 50
     },
-    "response_digest": {
+    "provider_receipt_ref": {
       "type": "string"
     },
-    "evidence_refs": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
+    "provider_response_digest": {
+      "type": "string"
     },
-    "no_secret_values_serialized": {
-      "type": "boolean",
-      "const": true
+    "redacted_response_digest": {
+      "type": "string"
     },
-    "live_probe_observation_bound": {
+    "provider_call_observed_by_operator": {
       "type": "boolean"
     },
-    "external_provider_call_performed_by_producer": {
+    "provider_call_performed_by_producer": {
       "type": "boolean",
       "const": false
     },
@@ -142,9 +127,16 @@
       "type": "boolean",
       "const": false
     },
-    "forbidden_effects_observed": {
+    "raw_provider_payload_serialized": {
       "type": "boolean",
       "const": false
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only_observation_bound": {
+      "type": "boolean"
     },
     "blocked_until": {
       "type": "array",
@@ -199,22 +191,19 @@
           "provider_operation": {
             "enum": ["email.search", "messaging.thread.search"]
           },
-          "provider_observation_receipt_ref": {
+          "provider_receipt_ref": {
             "minLength": 1
           },
-          "provider_observation_receipt_id": {
-            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
-          },
-          "provider_observation_receipt_valid": {
-            "const": true
-          },
-          "response_digest": {
+          "provider_response_digest": {
             "$ref": "#/$defs/sha256_hex"
           },
-          "evidence_refs": {
-            "minItems": 1
+          "redacted_response_digest": {
+            "$ref": "#/$defs/sha256_hex"
           },
-          "live_probe_observation_bound": {
+          "provider_call_observed_by_operator": {
+            "const": true
+          },
+          "read_only_observation_bound": {
             "const": true
           },
           "blocked_until": {

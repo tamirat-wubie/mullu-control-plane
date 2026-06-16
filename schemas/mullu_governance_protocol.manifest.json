@@ -1679,6 +1679,12 @@
       "surface": "team_ops"
     },
     {
+      "schema_id": "team-ops-shared-inbox-provider-observation-receipt",
+      "path": "schemas/team_ops_shared_inbox_provider_observation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-provider-observation-receipt:1",
+      "surface": "team_ops"
+    },
+    {
       "schema_id": "team-ops-shared-inbox-observation-routing-receipt",
       "path": "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-observation-routing-receipt:1",

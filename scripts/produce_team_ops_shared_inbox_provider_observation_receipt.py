@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Produce a TeamOps shared inbox read-only live-probe receipt.
+"""Produce a TeamOps shared inbox provider observation receipt.
 
-Purpose: bind a TeamOps live-probe operator input request to redacted
-observation evidence without running a mailbox connector.
-Governance scope: TeamOps shared inbox read-only observation, operator-input
-readiness, evidence redaction, and external-effect separation.
-Dependencies: schemas/team_ops_shared_inbox_live_probe_receipt.schema.json and
-scripts.validate_team_ops_shared_inbox_live_probe_operator_input_request.
+Purpose: bind an operator-observed read-only provider response to the TeamOps
+live-probe chain without calling a mailbox connector or serializing raw payload.
+Governance scope: TeamOps shared inbox live evidence, provider-observation
+witnessing, redaction, read-only bounds, and no-effect producer separation.
+Dependencies: schemas/team_ops_shared_inbox_provider_observation_receipt.schema.json
+and scripts.validate_team_ops_shared_inbox_live_probe_operator_input_request.
 Invariants:
   - This producer never calls Gmail, Teams, Slack, Microsoft Graph, or any
     external mailbox provider.
-  - Ready receipts require an admitted operator-input request and redacted
-    observation evidence.
-  - Raw query text is hashed before serialization.
+  - Passed receipts require admitted operator input, a redacted provider
+    receipt ref, raw-response digest, redacted-response digest, and bounded
+    observed message count.
+  - Raw provider payload, mailbox content, secret values, and query text are not
+    serialized.
   - External writes, sends, and provider mutations remain false.
 """
 
@@ -27,7 +29,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -41,21 +43,19 @@ from scripts.validate_team_ops_shared_inbox_live_probe_operator_input_request im
     validate_team_ops_live_probe_operator_input_request,
 )
 
-DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "team_ops_shared_inbox_live_probe_receipt.schema.json"
-DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_live_probe_receipt.json"
-DEFAULT_PROVIDER_OBSERVATION = (
-    REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_provider_observation_receipt.json"
-)
+
+DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "team_ops_shared_inbox_provider_observation_receipt.schema.json"
+DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_provider_observation_receipt.json"
 SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 VALIDATION_COMMANDS = (
-    "python scripts/validate_team_ops_shared_inbox_live_probe_receipt.py --require-ready",
+    "python scripts/validate_team_ops_shared_inbox_provider_observation_receipt.py --require-ready",
     "python scripts/validate_schemas.py --strict",
 )
 
 
 @dataclass(frozen=True, slots=True)
-class TeamOpsSharedInboxLiveProbeReceipt:
-    """Receipt for one TeamOps shared inbox read-only live-probe boundary."""
+class TeamOpsSharedInboxProviderObservationReceipt:
+    """Receipt for one operator-observed read-only provider response."""
 
     receipt_id: str
     schema_version: int
@@ -70,87 +70,70 @@ class TeamOpsSharedInboxLiveProbeReceipt:
     checked_at: str
     connector_id: str
     provider_operation: str
-    provider_observation_receipt_ref: str
-    provider_observation_receipt_id: str
-    provider_observation_receipt_valid: bool
     query_hash: str
     max_message_count: int
     observed_message_count: int
-    response_digest: str
-    evidence_refs: tuple[str, ...]
-    no_secret_values_serialized: bool
-    live_probe_observation_bound: bool
-    external_provider_call_performed_by_producer: bool
+    provider_receipt_ref: str
+    provider_response_digest: str
+    redacted_response_digest: str
+    provider_call_observed_by_operator: bool
+    provider_call_performed_by_producer: bool
     external_mailbox_write_performed: bool
     external_message_sent: bool
     provider_mutation_performed: bool
-    forbidden_effects_observed: bool
+    raw_provider_payload_serialized: bool
+    no_secret_values_serialized: bool
+    read_only_observation_bound: bool
     blocked_until: tuple[str, ...]
     recovery_actions: tuple[str, ...]
     validation_commands: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a JSON-ready receipt."""
+        """Return a JSON-ready provider observation receipt."""
 
         payload = asdict(self)
-        payload["evidence_refs"] = list(self.evidence_refs)
         payload["blocked_until"] = list(self.blocked_until)
         payload["recovery_actions"] = list(self.recovery_actions)
         payload["validation_commands"] = list(self.validation_commands)
         return payload
 
 
-def produce_team_ops_shared_inbox_live_probe_receipt(
+def produce_team_ops_shared_inbox_provider_observation_receipt(
     *,
     operator_input_path: Path = DEFAULT_REQUEST,
     schema_path: Path = DEFAULT_SCHEMA,
     checked_at: str | None = None,
     connector_id: str = "gmail",
     provider_operation: str = "email.search",
-    provider_observation_path: Path | None = None,
-    response_digest: str = "",
+    provider_receipt_ref: str = "",
+    provider_response_digest: str = "",
+    redacted_response_digest: str = "",
     observed_message_count: int = 0,
-    evidence_refs: Sequence[str] = (),
-) -> TeamOpsSharedInboxLiveProbeReceipt:
-    """Produce a read-only TeamOps shared inbox live-probe receipt."""
+) -> TeamOpsSharedInboxProviderObservationReceipt:
+    """Produce a TeamOps provider observation receipt from redacted evidence."""
 
     request = _load_json_object(operator_input_path)
     validation = validate_team_ops_live_probe_operator_input_request(request_path=operator_input_path)
-    provider_observation = _load_provider_observation(provider_observation_path)
-    provider_observation_ready = _provider_observation_ready(provider_observation_path)
-    summary = request.get("allowed_probe_summary", {}) if isinstance(request, dict) else {}
-    query_hash = _hash_text(str(summary.get("query", "")))
-    max_message_count = _bounded_max_message_count(summary.get("max_message_count", 1))
-    if provider_observation_ready:
-        response_digest = str(provider_observation.get("redacted_response_digest", ""))
-        observed_message_count = int(provider_observation.get("observed_message_count", 0))
-        evidence_refs = (
-            *tuple(evidence_refs),
-            f"team_ops_provider_observation_receipt:{provider_observation.get('receipt_id', '')}",
-        )
-    safe_evidence_refs = tuple(_clean_evidence_refs(evidence_refs))
-    evidence_supplied = bool(response_digest) or bool(safe_evidence_refs)
-    has_redacted_observation = (
-        bool(response_digest)
-        and SHA256_HEX_PATTERN.fullmatch(response_digest) is not None
-        and bool(safe_evidence_refs)
-    )
+    allowed_probe = request.get("allowed_probe_summary", {}) if isinstance(request, dict) else {}
+    max_message_count = _bounded_max_message_count(allowed_probe.get("max_message_count", 1))
+    query_hash = _hash_text(str(allowed_probe.get("query", "")))
+    clean_provider_receipt_ref = _clean_provider_receipt_ref(provider_receipt_ref)
     status, solver_outcome, proof_state, blocked_until, recovery_actions = _derive_status(
         operator_input_valid=validation.valid,
         probe_allowed=validation.probe_allowed,
-        has_redacted_observation=has_redacted_observation,
-        provider_observation_ready=provider_observation_ready,
+        provider_receipt_ref=clean_provider_receipt_ref,
+        provider_response_digest=provider_response_digest,
+        redacted_response_digest=redacted_response_digest,
         observed_message_count=observed_message_count,
         max_message_count=max_message_count,
-        response_digest=response_digest,
-        evidence_supplied=evidence_supplied,
     )
-    receipt = TeamOpsSharedInboxLiveProbeReceipt(
+    receipt = TeamOpsSharedInboxProviderObservationReceipt(
         receipt_id=_receipt_id(
             operator_input_path=operator_input_path,
             source_authority_id=str(request.get("authority_id", "")),
-            response_digest=response_digest,
-            evidence_refs=safe_evidence_refs,
+            provider_receipt_ref=clean_provider_receipt_ref,
+            provider_response_digest=provider_response_digest,
+            redacted_response_digest=redacted_response_digest,
             status=status,
         ),
         schema_version=1,
@@ -165,23 +148,20 @@ def produce_team_ops_shared_inbox_live_probe_receipt(
         checked_at=checked_at or datetime.now(UTC).replace(microsecond=0).isoformat(),
         connector_id=connector_id if validation.probe_allowed else "",
         provider_operation=provider_operation if validation.probe_allowed else "",
-        provider_observation_receipt_ref=_artifact_ref(provider_observation_path)
-        if provider_observation_path
-        else "",
-        provider_observation_receipt_id=str(provider_observation.get("receipt_id", "")),
-        provider_observation_receipt_valid=provider_observation_ready,
         query_hash=query_hash,
         max_message_count=max_message_count,
         observed_message_count=observed_message_count,
-        response_digest=response_digest,
-        evidence_refs=safe_evidence_refs,
-        no_secret_values_serialized=True,
-        live_probe_observation_bound=status == "passed",
-        external_provider_call_performed_by_producer=False,
+        provider_receipt_ref=clean_provider_receipt_ref,
+        provider_response_digest=provider_response_digest,
+        redacted_response_digest=redacted_response_digest,
+        provider_call_observed_by_operator=status == "passed",
+        provider_call_performed_by_producer=False,
         external_mailbox_write_performed=False,
         external_message_sent=False,
         provider_mutation_performed=False,
-        forbidden_effects_observed=False,
+        raw_provider_payload_serialized=False,
+        no_secret_values_serialized=True,
+        read_only_observation_bound=status == "passed",
         blocked_until=blocked_until,
         recovery_actions=recovery_actions,
         validation_commands=VALIDATION_COMMANDS,
@@ -191,11 +171,11 @@ def produce_team_ops_shared_inbox_live_probe_receipt(
     return receipt
 
 
-def write_team_ops_shared_inbox_live_probe_receipt(
-    receipt: TeamOpsSharedInboxLiveProbeReceipt,
+def write_team_ops_shared_inbox_provider_observation_receipt(
+    receipt: TeamOpsSharedInboxProviderObservationReceipt,
     output_path: Path,
 ) -> Path:
-    """Write one TeamOps shared inbox live-probe receipt."""
+    """Write one TeamOps provider observation receipt."""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(receipt.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -206,12 +186,11 @@ def _derive_status(
     *,
     operator_input_valid: bool,
     probe_allowed: bool,
-    has_redacted_observation: bool,
-    provider_observation_ready: bool,
+    provider_receipt_ref: str,
+    provider_response_digest: str,
+    redacted_response_digest: str,
     observed_message_count: int,
     max_message_count: int,
-    response_digest: str,
-    evidence_supplied: bool,
 ) -> tuple[str, str, str, tuple[str, ...], tuple[str, ...]]:
     if not operator_input_valid:
         return (
@@ -227,7 +206,7 @@ def _derive_status(
             "AwaitingEvidence",
             "Unknown",
             ("operator_input_request_not_ready",),
-            ("close TeamOps live-probe operator inputs before binding observation evidence",),
+            ("close TeamOps live-probe operator inputs before binding provider observation evidence",),
         )
     if observed_message_count > max_message_count:
         return (
@@ -235,31 +214,22 @@ def _derive_status(
             "GovernanceBlocked",
             "Fail",
             ("observed_message_count_exceeds_authority",),
-            ("rerun the read-only probe with the authority-bounded max_message_count",),
+            ("rerun the read-only provider observation with the authority-bounded max_message_count",),
         )
-    if evidence_supplied and not SHA256_HEX_PATTERN.fullmatch(response_digest):
-        return (
-            "failed",
-            "GovernanceBlocked",
-            "Fail",
-            ("response_digest_invalid",),
-            ("supply a lowercase SHA-256 hex response digest for redacted observation evidence",),
-        )
-    if not provider_observation_ready:
-        return (
-            "blocked",
-            "AwaitingEvidence",
-            "Unknown",
-            ("provider_observation_receipt_missing_or_unready",),
-            ("produce and validate the TeamOps provider observation receipt before live-probe closure",),
-        )
-    if not has_redacted_observation:
+    missing: list[str] = []
+    if not provider_receipt_ref:
+        missing.append("provider_receipt_ref_missing")
+    if not SHA256_HEX_PATTERN.fullmatch(provider_response_digest):
+        missing.append("provider_response_digest_missing_or_invalid")
+    if not SHA256_HEX_PATTERN.fullmatch(redacted_response_digest):
+        missing.append("redacted_response_digest_missing_or_invalid")
+    if missing:
         return (
             "blocked",
             "AwaitingEvidence",
             "Unknown",
-            ("redacted_live_probe_observation_missing",),
-            ("run the approved read-only live probe outside this producer and bind redacted evidence refs",),
+            tuple(missing),
+            ("bind redacted read-only provider observation evidence, then regenerate this receipt",),
         )
     return ("passed", "SolvedVerified", "Pass", (), ())
 
@@ -271,43 +241,15 @@ def _load_json_object(path: Path) -> dict[str, Any]:
         payload = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant)
     except (json.JSONDecodeError, ValueError):
         return {}
-    if not isinstance(payload, dict):
-        return {}
-    return payload
+    return payload if isinstance(payload, dict) else {}
 
 
-def _load_provider_observation(path: Path | None) -> dict[str, Any]:
-    if path is None or not path.exists():
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant)
-    except (json.JSONDecodeError, ValueError):
-        return {}
-    if not isinstance(payload, dict):
-        return {}
-    return payload
-
-
-def _provider_observation_ready(path: Path | None) -> bool:
-    if path is None:
-        return False
-    from scripts.validate_team_ops_shared_inbox_provider_observation_receipt import (  # noqa: PLC0415
-        validate_team_ops_shared_inbox_provider_observation_receipt,
-    )
-
-    validation = validate_team_ops_shared_inbox_provider_observation_receipt(receipt_path=path)
-    return validation.ready
-
-
-def _clean_evidence_refs(values: Sequence[str]) -> tuple[str, ...]:
-    cleaned: list[str] = []
-    for value in values:
-        ref = str(value).strip()
-        if not ref:
-            continue
-        _assert_redacted({"evidence_ref": ref})
-        cleaned.append(ref)
-    return tuple(dict.fromkeys(cleaned))
+def _clean_provider_receipt_ref(value: str) -> str:
+    ref = str(value).strip()
+    if not ref:
+        return ""
+    _assert_redacted({"provider_receipt_ref": ref})
+    return ref
 
 
 def _bounded_max_message_count(value: Any) -> int:
@@ -326,19 +268,21 @@ def _receipt_id(
     *,
     operator_input_path: Path,
     source_authority_id: str,
-    response_digest: str,
-    evidence_refs: Sequence[str],
+    provider_receipt_ref: str,
+    provider_response_digest: str,
+    redacted_response_digest: str,
     status: str,
 ) -> str:
     material = {
         "operator_input_ref": _artifact_ref(operator_input_path),
         "source_authority_id": source_authority_id,
-        "response_digest": response_digest,
-        "evidence_refs": list(evidence_refs),
+        "provider_receipt_ref": provider_receipt_ref,
+        "provider_response_digest": provider_response_digest,
+        "redacted_response_digest": redacted_response_digest,
         "status": status,
     }
     digest = hashlib.sha256(json.dumps(material, sort_keys=True).encode("utf-8")).hexdigest()
-    return f"teamops-shared-inbox-live-probe-receipt-{digest[:16]}"
+    return f"teamops-shared-inbox-provider-observation-receipt-{digest[:16]}"
 
 
 def _artifact_ref(path: Path) -> str:
@@ -359,17 +303,19 @@ def _assert_redacted(payload: Mapping[str, Any]) -> None:
     serialized = json.dumps(payload, sort_keys=True)
     for marker in SECRET_VALUE_MARKERS:
         if marker.lower() in serialized.lower():
-            raise ValueError(f"TeamOps live-probe receipt contains secret marker: {marker}")
+            raise ValueError(f"TeamOps provider observation receipt contains secret marker: {marker}")
+    if "query" in payload:
+        raise ValueError("TeamOps provider observation receipt must not serialize raw query")
 
 
 def _validate_receipt_against_schema(
-    receipt: TeamOpsSharedInboxLiveProbeReceipt,
+    receipt: TeamOpsSharedInboxProviderObservationReceipt,
     schema_path: Path,
 ) -> None:
     schema = _load_schema(schema_path)
     errors = _validate_schema_instance(schema, receipt.as_dict())
     if errors:
-        raise RuntimeError(f"TeamOps live-probe receipt schema validation failed: {errors}")
+        raise RuntimeError(f"TeamOps provider observation receipt schema validation failed: {errors}")
 
 
 def _reject_json_constant(raw_constant: str) -> None:
@@ -377,40 +323,40 @@ def _reject_json_constant(raw_constant: str) -> None:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse TeamOps shared inbox live-probe receipt arguments."""
+    """Parse TeamOps provider observation receipt arguments."""
 
-    parser = argparse.ArgumentParser(description="Produce TeamOps shared inbox live-probe receipt.")
+    parser = argparse.ArgumentParser(description="Produce TeamOps shared inbox provider observation receipt.")
     parser.add_argument("--operator-input", default=str(DEFAULT_REQUEST))
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--checked-at")
     parser.add_argument("--connector-id", default="gmail")
     parser.add_argument("--provider-operation", default="email.search")
-    parser.add_argument("--provider-observation", type=Path, default=None)
-    parser.add_argument("--response-digest", default="")
+    parser.add_argument("--provider-receipt-ref", default="")
+    parser.add_argument("--provider-response-digest", default="")
+    parser.add_argument("--redacted-response-digest", default="")
     parser.add_argument("--observed-message-count", type=int, default=0)
-    parser.add_argument("--evidence-ref", action="append", default=[])
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point for TeamOps shared inbox live-probe receipt production."""
+    """CLI entry point for TeamOps provider observation receipt production."""
 
     args = parse_args(argv)
     try:
-        receipt = produce_team_ops_shared_inbox_live_probe_receipt(
+        receipt = produce_team_ops_shared_inbox_provider_observation_receipt(
             operator_input_path=Path(args.operator_input),
             schema_path=Path(args.schema),
             checked_at=args.checked_at,
             connector_id=str(args.connector_id),
             provider_operation=str(args.provider_operation),
-            provider_observation_path=args.provider_observation,
-            response_digest=str(args.response_digest),
+            provider_receipt_ref=str(args.provider_receipt_ref),
+            provider_response_digest=str(args.provider_response_digest),
+            redacted_response_digest=str(args.redacted_response_digest),
             observed_message_count=int(args.observed_message_count),
-            evidence_refs=tuple(str(ref) for ref in args.evidence_ref),
         )
-        write_team_ops_shared_inbox_live_probe_receipt(receipt, Path(args.output))
+        write_team_ops_shared_inbox_provider_observation_receipt(receipt, Path(args.output))
     except (RuntimeError, ValueError) as exc:
         if args.json:
             print(
@@ -425,12 +371,12 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
         else:
-            print(f"TeamOps shared inbox live-probe receipt failed: {exc}")
+            print(f"TeamOps provider observation receipt failed: {exc}")
         return 1
     if args.json:
         print(json.dumps(receipt.as_dict(), indent=2, sort_keys=True))
     else:
-        print(f"TeamOps shared inbox live-probe receipt written: {receipt.receipt_id}")
+        print(f"TeamOps provider observation receipt written: {receipt.receipt_id}")
     return 0
 
 
