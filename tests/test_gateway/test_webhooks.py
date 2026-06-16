@@ -3035,11 +3035,8 @@ class TestGatewayStatus:
 
         resp = client.get(f"/commands/{command.command_id}/universal-action-proof")
 
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["whqr_replay_binding"] == {}
-        assert data["whqr_replay_ref"] == ""
-        assert data["universal_action_proof"]["whqr_replay_binding"] == {}
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "universal action proof not found"
 
     def test_command_universal_action_proof_missing_returns_404(
         self, gateway_app, client

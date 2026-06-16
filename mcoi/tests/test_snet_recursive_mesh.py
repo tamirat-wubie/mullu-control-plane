@@ -509,6 +509,39 @@ def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
     assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
 
 
+def test_mesh_receipt_rejects_settlement_counts_map_boundary_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    class DuplicateSettlementCounts(Mapping):
+        def __getitem__(self, key):
+            return receipt_payload["settlement_counts"][key]
+
+        def __iter__(self):
+            keys = tuple(receipt_payload["settlement_counts"]) + ("active",)
+            return iter(keys)
+
+        def __len__(self):
+            return len(receipt_payload["settlement_counts"]) + 1
+
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": None})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": []})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": "active"})
+    with pytest.raises(ValueError, match="duplicate keys"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": DuplicateSettlementCounts()})
+
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_receipt.settlement_counts["active"] == receipt_payload["settlement_counts"]["active"]
+    assert sum(valid_receipt.settlement_counts.values()) == valid_receipt.symbol_count
+    assert set(valid_receipt.settlement_counts) == {state.value for state in SNetSettlementState}
+
+
 def test_direct_snet_contracts_reject_nested_metadata_key_shape_drift() -> None:
     with pytest.raises(ValueError, match="metadata.outer.key"):
         SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"outer": {1: "numeric nested key"}})

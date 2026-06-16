@@ -84,6 +84,7 @@ from mcoi_runtime.personal_assistant import (
     plan_schedule_optimization,
     plan_teamops_shared_inbox,
     prepare_memory_observation,
+    render_personal_assistant_console_html,
     review_memory_observation_candidate,
 )
 
@@ -1954,6 +1955,18 @@ def create_gateway_app(
             "live_connector_execution_allowed": False,
             "governed": True,
         }
+
+    @app.get("/api/v1/console/personal-assistant")
+    def personal_assistant_console_read_model():
+        return build_personal_assistant_console_read_model(generated_at=_clock())
+
+    @app.get("/api/v1/console/personal-assistant/view", response_class=HTMLResponse)
+    def personal_assistant_console_view():
+        return HTMLResponse(
+            render_personal_assistant_console_html(
+                build_personal_assistant_console_read_model(generated_at=_clock())
+            )
+        )
 
     @app.post("/api/v1/personal-assistant/requests/preview")
     def preview_personal_assistant_request(req: GatewayPersonalAssistantPreviewRequest):
