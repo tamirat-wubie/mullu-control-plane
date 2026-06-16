@@ -1158,11 +1158,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 275,
+      "proven": 276,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 435,
+    "route_count": 436,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2432,6 +2432,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/github-codex/review/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/math/reasoning/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -4229,6 +4234,7 @@
         "tests/test_validate_personal_assistant_teamops_projection.py",
         "tests/test_validate_personal_assistant_github_codex_projection.py",
         "tests/test_validate_personal_assistant_research_projection.py",
+        "tests/test_validate_personal_assistant_math_projection.py",
         "schemas/personal_assistant_approval_queue.schema.json",
         "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
@@ -4239,6 +4245,7 @@
         "schemas/personal_assistant_teamops_projection.schema.json",
         "schemas/personal_assistant_github_codex_projection.schema.json",
         "schemas/personal_assistant_research_projection.schema.json",
+        "schemas/personal_assistant_math_projection.schema.json",
         "examples/personal_assistant_approval_queue_read_model.json",
         "examples/personal_assistant_approval_decision_evidence.json",
         "examples/personal_assistant_read_only_projection.json",
@@ -4248,6 +4255,7 @@
         "examples/personal_assistant_teamops_projection.json",
         "examples/personal_assistant_github_codex_projection.json",
         "examples/personal_assistant_research_projection.json",
+        "examples/personal_assistant_math_projection.json",
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
@@ -4256,9 +4264,10 @@
         "scripts/validate_personal_assistant_memory_review.py",
         "scripts/validate_personal_assistant_teamops_projection.py",
         "scripts/validate_personal_assistant_github_codex_projection.py",
-        "scripts/validate_personal_assistant_research_projection.py"
+        "scripts/validate_personal_assistant_research_projection.py",
+        "scripts/validate_personal_assistant_math_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -4272,7 +4281,8 @@
         "/api/v1/personal-assistant/memory-observations/review/preview",
         "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
         "/api/v1/personal-assistant/github-codex/review/preview",
-        "/api/v1/personal-assistant/research/source-compare/preview"
+        "/api/v1/personal-assistant/research/source-compare/preview",
+        "/api/v1/personal-assistant/math/reasoning/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -4331,6 +4341,18 @@
           "gateway_personal_assistant_github_codex_preview_reviews_without_github_call",
           "gateway_personal_assistant_github_codex_preview_rejects_missing_connector_proof",
           "gateway_personal_assistant_github_codex_preview_rejects_secret_like_summary"
+        ],
+        "personal_assistant_math_reasoning_no_effect": [
+          "personal_assistant_math_projection_fixture_validates",
+          "runtime_math_projection_blocks_effect_boundaries",
+          "math_projection_validator_rejects_money_or_write_authority",
+          "math_projection_validator_rejects_receipt_drift",
+          "math_projection_validator_rejects_raw_private_and_secret",
+          "math_projection_validator_requires_ready_and_blocked_items",
+          "math_projection_runtime_rejects_secret_like_value",
+          "gateway_personal_assistant_math_preview_compares_without_effects",
+          "gateway_personal_assistant_math_preview_rejects_non_math_intent",
+          "gateway_personal_assistant_math_preview_rejects_raw_private_value"
         ],
         "personal_assistant_memory_observation_preview_candidate_only": [
           "prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
@@ -4420,7 +4442,8 @@
         "personal_assistant_memory_observation_review_no_effect",
         "personal_assistant_teamops_shared_inbox_plan_no_effect",
         "personal_assistant_github_codex_review_no_effect",
-        "personal_assistant_research_source_compare_no_effect"
+        "personal_assistant_research_source_compare_no_effect",
+        "personal_assistant_math_reasoning_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -12450,8 +12473,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1606,
-    "runtime_witness_count": 1606,
+    "exact_test_anchor_count": 1607,
+    "runtime_witness_count": 1607,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13584,10 +13607,25 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_research_preview_rejects_raw_source_body"
             ],
             "witness": "personal_assistant_research_source_compare_no_effect"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_personal_assistant_math_projection.py::test_personal_assistant_math_projection_fixture_validates",
+              "tests/test_validate_personal_assistant_math_projection.py::test_runtime_math_projection_blocks_effect_boundaries",
+              "tests/test_validate_personal_assistant_math_projection.py::test_math_projection_validator_rejects_money_or_write_authority",
+              "tests/test_validate_personal_assistant_math_projection.py::test_math_projection_validator_rejects_receipt_drift",
+              "tests/test_validate_personal_assistant_math_projection.py::test_math_projection_validator_rejects_raw_private_and_secret",
+              "tests/test_validate_personal_assistant_math_projection.py::test_math_projection_validator_requires_ready_and_blocked_items",
+              "tests/test_validate_personal_assistant_math_projection.py::test_math_projection_runtime_rejects_secret_like_value",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_math_preview_compares_without_effects",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_math_preview_rejects_non_math_intent",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_math_preview_rejects_raw_private_value"
+            ],
+            "witness": "personal_assistant_math_reasoning_no_effect"
           }
         ],
-        "exact_test_anchor_count": 20,
-        "runtime_witness_count": 20,
+        "exact_test_anchor_count": 21,
+        "runtime_witness_count": 21,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

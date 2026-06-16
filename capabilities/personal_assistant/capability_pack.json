@@ -665,6 +665,98 @@
       }
     },
     {
+      "capability_id": "personal_assistant.math.reasoning_plan",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_math_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["math_reasoning_projection_emitted"],
+        "forbidden_effects": [
+          "money_moved",
+          "paid_subscription_changed",
+          "system_of_record_mutated",
+          "connector_state_mutated",
+          "external_submission_sent",
+          "public_post_created",
+          "deployment_started",
+          "raw_private_payload_stored",
+          "raw_connector_payload_stored",
+          "secret_value_serialized",
+          "memory_written"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "operator_supplied_known_value",
+          "unit_check",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Project planning-only math reasoning",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["math.reasoning.plan"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "money_moved",
+            "paid_subscription_changed",
+            "system_of_record_mutated",
+            "connector_state_mutated",
+            "external_submission_sent",
+            "public_post_created",
+            "deployment_started",
+            "raw_private_payload_stored",
+            "raw_connector_payload_stored",
+            "secret_value_serialized",
+            "memory_written"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
       "capability_id": "personal_assistant.clarification.request",
       "domain": "personal_assistant",
       "version": "0.1.0",

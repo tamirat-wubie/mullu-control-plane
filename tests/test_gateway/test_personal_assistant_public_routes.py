@@ -668,6 +668,113 @@ def test_gateway_personal_assistant_research_preview_rejects_raw_source_body() -
     assert "research_source_compare_plan_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_math_preview_compares_without_effects() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/math/reasoning/preview",
+        json={
+            "request_id": "pa_request_gateway_math_001",
+            "submitted_at": "2026-06-15T14:00:00+00:00",
+            "generated_at": "2026-06-15T14:01:00+00:00",
+            "problem_statement": "Compare baseline and proposed monthly software costs.",
+            "known_values": [
+                {
+                    "label": "baseline platform",
+                    "scenario_ref": "baseline",
+                    "value": "100",
+                    "unit": "usd_per_month",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+                {
+                    "label": "proposed platform",
+                    "scenario_ref": "proposed",
+                    "value": "80",
+                    "unit": "usd_per_month",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                },
+            ],
+            "assumptions": ["values are operator supplied"],
+            "constraints": ["do not move money", "do not write records"],
+            "evidence_refs": ["proof://operator/math-values"],
+        },
+    )
+    payload = response.json()
+    projection = payload["math_projection"]
+    plan = projection["plan"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["money_movement_allowed"] is False
+    assert payload["effect_boundary"]["system_of_record_write_allowed"] is False
+    assert payload["effect_boundary"]["connector_mutation_allowed"] is False
+    assert payload["effect_boundary"]["deployment_allowed"] is False
+    assert projection["skill_id"] == "math.reasoning.plan"
+    assert plan["scenario_totals"] == [
+        {"scenario_ref": "baseline", "unit": "usd_per_month", "total": "100"},
+        {"scenario_ref": "proposed", "unit": "usd_per_month", "total": "80"},
+    ]
+    assert plan["evidence_gate"]["money_movement_performed"] is False
+    assert plan["answer_claim_authority"] == "operator_supplied_values_only"
+    assert "payment_not_moved" in receipt["actions_not_taken"]
+    assert "system_of_record_not_written" in receipt["actions_not_taken"]
+    assert receipt["connectors_used"] == []
+
+
+def test_gateway_personal_assistant_math_preview_rejects_non_math_intent() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/math/reasoning/preview",
+        json={
+            "request_id": "pa_request_gateway_math_wrong_intent_001",
+            "submitted_at": "2026-06-15T14:00:00+00:00",
+            "user_request": "Check my inbox.",
+            "problem_statement": "Compare costs.",
+            "known_values": [],
+            "evidence_refs": [],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_math_preview"
+
+
+def test_gateway_personal_assistant_math_preview_rejects_raw_private_value() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/math/reasoning/preview",
+        json={
+            "request_id": "pa_request_gateway_math_raw_001",
+            "submitted_at": "2026-06-15T14:00:00+00:00",
+            "problem_statement": "Compare costs.",
+            "known_values": [
+                {
+                    "label": "baseline",
+                    "scenario_ref": "baseline",
+                    "value": "100",
+                    "unit": "usd_per_month",
+                    "source_ref": "operator_supplied",
+                    "notes": "planning estimate",
+                    "raw_body": "private spreadsheet body",
+                }
+            ],
+            "evidence_refs": ["proof://raw"],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "private spreadsheet body" not in serialized
+    assert "calculation_plan_created" not in serialized
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",

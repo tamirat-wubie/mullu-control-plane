@@ -47,6 +47,10 @@ from .github_codex import (
     GitHubCodexReviewProjection,
     plan_github_codex_review,
 )
+from .math_reasoning import (
+    MathReasoningProjection,
+    plan_math_reasoning,
+)
 from .research import (
     ResearchSourceCompareProjection,
     plan_research_source_compare,
@@ -116,6 +120,7 @@ __all__ = (
     "NestedMindStatus",
     "PersonalAssistantMemoryObservationLedger",
     "PersonalAssistantPlanningEnvelope",
+    "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
     "RedactedInboxMessage",
@@ -144,6 +149,7 @@ __all__ = (
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
     "plan_github_codex_review",
+    "plan_math_reasoning",
     "plan_research_source_compare",
     "render_personal_assistant_console_html",
     "summarize_calendar_day_read_only",
