@@ -1,0 +1,97 @@
+{
+  "security_review_id": "SEC-worker-receipt-ledger-read-model-20260616",
+  "change_id": "worker-receipt-ledger-read-model-20260616",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A worker receipt ledger projection can accidentally become live receipt-store access or dispatch authority if read-model state is conflated with runtime execution. The main risks are reading a live database from validation, dispatching workers, emitting runtime receipts, calling connectors, serializing raw worker payloads or secrets, and treating a failure receipt as terminal closure. The mitigation is a schema-backed Foundation projection and validator that deny live reads, dispatch, receipt emission, connector authority, writes, terminal closure, and success claims while recomputing summary counts from bounded receipt refs.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "worker dispatch and runtime receipt emission remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_live_authority"
+    },
+    {
+      "category": "external_api",
+      "check": "live receipt-store reads and connector calls remain denied",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_worker_receipt_ledger_read_model.py"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw payload and raw secret material remain denied",
+      "status": "passed",
+      "evidence_ref": "examples/worker_receipt_ledger_read_model.foundation.json"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms terminal closure and success claims remain blocked per chain",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms status and contract summary counts cannot drift from projected receipt chains",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_summary_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "required receipt refs and evidence refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_missing_refs"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the read model surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_worker_receipt_ledger_read_model_blocks_live_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "worker-receipt-ledger-live-authority",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "Foundation Mode read model blocks live receipt-store reads, dispatch, connector calls, writes, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/worker_receipt_ledger_read_model.schema.json",
+        "scripts/validate_worker_receipt_ledger_read_model.py",
+        "tests/test_validate_worker_receipt_ledger_read_model.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep WorkerReceiptLedgerReadModel validation non-live and deterministic",
+    "deny live receipt-store reads and worker dispatch in Foundation Mode",
+    "deny runtime receipt emission and connector authority",
+    "reject raw payload and secret material",
+    "require recovery refs for recovery-required chains",
+    "reject terminal closure and success claims from read-model projections"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/worker_receipt_ledger_read_model.schema.json",
+    "examples/worker_receipt_ledger_read_model.foundation.json",
+    "scripts/validate_worker_receipt_ledger_read_model.py",
+    "tests/test_validate_worker_receipt_ledger_read_model.py",
+    "receipt://sdlc/worker-receipt-ledger-read-model/security"
+  ],
+  "uao_ref": "uao://sdlc/worker-receipt-ledger-read-model/security",
+  "causal_decision_trace_ref": "trace://sdlc/worker-receipt-ledger-read-model/security",
+  "receipt_ref": "receipt://sdlc/worker-receipt-ledger-read-model/security"
+}

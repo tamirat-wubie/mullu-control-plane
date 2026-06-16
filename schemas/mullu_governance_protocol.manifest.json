@@ -1709,6 +1709,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "worker-receipt-ledger-read-model",
+      "path": "schemas/worker_receipt_ledger_read_model.schema.json",
+      "urn": "urn:mullusi:schema:worker-receipt-ledger-read-model:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "read-only-worker-binding",
       "path": "schemas/read_only_worker_binding.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-binding:1",

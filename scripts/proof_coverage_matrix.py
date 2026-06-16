@@ -5806,6 +5806,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "worker_receipt_ledger_read_model",
+            [
+                "WorkerReceiptLedgerReadModel",
+                "validate_worker_receipt_ledger_read_model",
+                "worker_receipt_ledger_read_model.v1",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/worker_receipt_ledger_read_model.schema.json",
+                "examples/worker_receipt_ledger_read_model.foundation.json",
+                "scripts/validate_worker_receipt_ledger_read_model.py",
+                "tests/test_validate_worker_receipt_ledger_read_model.py",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+                "schemas/connector_action_promotion_gate.schema.json",
+                "docs/84_worker_receipt_ledger_read_model_contract.md",
+                "schemas/universal_action_orchestration.schema.json",
+            ],
+            "Worker receipt ledger read models project scheduler, lease, read-only worker, runtime receipt, failure, and connector-promotion refs into bounded operator chain summaries while denying live receipt-store reads, worker dispatch, runtime receipt emission, connector calls, writes, terminal closure, and success claims.",
+            [
+                "worker_receipt_ledger_read_model_schema_valid",
+                "worker_receipt_ledger_read_model_blocks_live_authority",
+                "worker_receipt_ledger_read_model_rejects_chain_guard_drift",
+                "worker_receipt_ledger_read_model_rejects_summary_drift",
+                "worker_receipt_ledger_read_model_rejects_missing_refs",
+                "worker_receipt_ledger_read_model_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "worker_receipt_ledger_read_model_schema_valid": [
+                    "worker_receipt_ledger_read_model_passes"
+                ],
+                "worker_receipt_ledger_read_model_blocks_live_authority": [
+                    "worker_receipt_ledger_read_model_passes",
+                    "worker_receipt_ledger_read_model_rejects_live_authority",
+                ],
+                "worker_receipt_ledger_read_model_rejects_chain_guard_drift": [
+                    "worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+                ],
+                "worker_receipt_ledger_read_model_rejects_summary_drift": [
+                    "worker_receipt_ledger_read_model_rejects_summary_drift"
+                ],
+                "worker_receipt_ledger_read_model_rejects_missing_refs": [
+                    "worker_receipt_ledger_read_model_rejects_missing_refs"
+                ],
+                "worker_receipt_ledger_read_model_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_worker_receipt_ledger_read_model"
+                ],
+            },
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -9695,6 +9748,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_connector_action_promotion_gate_contract",
             "surfaces": ["connector_action_promotion_gate"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_worker_receipt_ledger_read_model_contract",
+            "surfaces": ["worker_receipt_ledger_read_model"],
             "status": "closed",
         },
         {
