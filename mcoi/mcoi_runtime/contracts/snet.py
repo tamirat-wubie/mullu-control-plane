@@ -561,9 +561,14 @@ class SNetMeshReceipt(ContractRecord):
             "promotion_threshold",
             require_unit_float(self.promotion_threshold, "promotion_threshold"),
         )
+        if not isinstance(self.settlement_counts, Mapping):
+            raise ValueError("settlement_counts must be a mapping")
         settlement_count_map: dict[str, int] = {}
         for key, value in self.settlement_counts.items():
-            settlement_count_map[_require_text_key(key, "settlement_counts.key")] = require_non_negative_int(
+            settlement_key = _require_text_key(key, "settlement_counts.key")
+            if settlement_key in settlement_count_map:
+                raise ValueError("settlement_counts must not contain duplicate keys")
+            settlement_count_map[settlement_key] = require_non_negative_int(
                 value,
                 "settlement_counts.value",
             )
