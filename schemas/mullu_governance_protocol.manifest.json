@@ -47,6 +47,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-task-receipt-emitter-dry-run",
+      "path": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-task-receipt-emitter-dry-run:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",

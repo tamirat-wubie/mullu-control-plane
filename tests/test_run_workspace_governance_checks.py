@@ -56,6 +56,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_model_integrity",
         "agentic_service_harness_read_model_persistence",
         "agentic_service_harness_github_repo_task_service",
+        "agentic_service_harness_github_task_receipt_emitter_dry_run",
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
