@@ -638,7 +638,7 @@
         "replay_ref": { "type": "string", "pattern": "^whqr://replay/sha256:\\S+$" },
         "canonical_hash": { "type": "string", "pattern": "^sha256:\\S+$" },
         "semantics_hash": { "type": "string", "pattern": "^sha256:\\S+$" },
-        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+        "version": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$" }
       }
     },
     "lineage": {

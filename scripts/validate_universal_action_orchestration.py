@@ -2411,7 +2411,13 @@ def _has_non_whitespace_suffix(value: str, prefix: str) -> bool:
 
 def _is_semver_core(value: str) -> bool:
     parts = value.split(".")
-    return len(parts) == 3 and all(part.isdecimal() for part in parts)
+    return len(parts) == 3 and all(_is_semver_core_identifier(part) for part in parts)
+
+
+def _is_semver_core_identifier(value: str) -> bool:
+    if not value.isascii() or not value.isdecimal():
+        return False
+    return value == "0" or not value.startswith("0")
 
 
 def _whqr_replay_confirmation_payload(binding: Any) -> dict[str, str]:

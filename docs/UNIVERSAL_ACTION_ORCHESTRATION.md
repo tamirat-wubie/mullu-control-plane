@@ -107,7 +107,7 @@ terminal_certificate.metadata.whqr_canonical_hash present -> closure.whqr_replay
 closure.whqr_replay_binding.replay_ref present -> replay_ref starts with whqr://replay/sha256: and includes a non-whitespace digest suffix
 closure.whqr_replay_binding.canonical_hash present -> canonical_hash starts with sha256: and includes a non-whitespace digest suffix
 closure.whqr_replay_binding.semantics_hash present -> semantics_hash starts with sha256: and includes a non-whitespace digest suffix
-closure.whqr_replay_binding.version present -> version uses major.minor.patch
+closure.whqr_replay_binding.version present -> version uses major.minor.patch without leading-zero numeric identifiers
 closure.whqr_replay_binding present -> reject fields outside replay_ref, canonical_hash, semantics_hash, version
 decision.execution_allowed -> fracture_report.status = passed
 decision.execution_allowed -> empty(fracture_report.blocking_check_ids)

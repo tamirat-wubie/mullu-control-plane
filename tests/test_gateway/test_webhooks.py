@@ -1774,6 +1774,30 @@ class TestGatewayStatus:
         assert binding.get("replay_ref", "") == ""
         assert binding.get("canonical_hash", "") == ""
 
+    def test_gateway_whqr_replay_binding_rejects_leading_zero_version(self):
+        binding = _validated_whqr_replay_binding({
+            "replay_ref": "whqr://replay/sha256:proof-canonical-hash",
+            "canonical_hash": "sha256:proof-canonical-hash",
+            "semantics_hash": "sha256:proof-semantics-hash",
+            "version": "01.002.0003",
+        })
+
+        assert binding == {}
+        assert binding.get("version", "") == ""
+        assert binding.get("replay_ref", "") == ""
+
+    def test_gateway_whqr_replay_binding_rejects_non_ascii_decimal_version(self):
+        binding = _validated_whqr_replay_binding({
+            "replay_ref": "whqr://replay/sha256:proof-canonical-hash",
+            "canonical_hash": "sha256:proof-canonical-hash",
+            "semantics_hash": "sha256:proof-semantics-hash",
+            "version": "\u0661.2.3",
+        })
+
+        assert binding == {}
+        assert binding.get("version", "") == ""
+        assert binding.get("canonical_hash", "") == ""
+
     def test_status(self, client):
         resp = client.get("/gateway/status")
         assert resp.status_code == 200
