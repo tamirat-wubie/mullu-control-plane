@@ -146,17 +146,20 @@
       "run_id": "run-read-model-foundation",
       "evidence_refs": [
         "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
-        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_ONLY_STATUS_ROUTE_DESIGN.md"
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_ONLY_STATUS_ROUTE_DESIGN.md",
+        "examples/agentic_service_harness_github_repo_task_service.foundation.json"
       ],
       "command_log_refs": [
         "command://validator/agentic-service-harness-read-models",
         "command://validator/agentic-service-harness-read-model-persistence",
+        "command://validator/agentic-service-harness-github-repo-task-service",
         "command://validator/agentic-service-harness-read-only-status-route-design",
         "command://validator/agentic-service-harness-read-only-status-route"
       ],
       "test_log_refs": [
         "test://pytest/test-agentic-service-harness-read-models",
         "test://pytest/test-agentic-service-harness-read-model-persistence",
+        "test://pytest/test-agentic-service-harness-github-repo-task-service",
         "test://pytest/test-agentic-service-harness-read-only-status-route-design",
         "test://pytest/test-agentic-service-harness-read-only-status-route"
       ],
@@ -459,6 +462,11 @@
     {
       "validator_id": "agentic-service-harness-read-model-persistence",
       "command": "python scripts/validate_agentic_service_harness_read_model_persistence.py",
+      "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-github-repo-task-service",
+      "command": "python scripts/validate_agentic_service_harness_github_repo_task_service.py --strict",
       "required_for_closure": true
     },
     {

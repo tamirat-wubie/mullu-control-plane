@@ -1,0 +1,450 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-repo-task-service:1",
+  "title": "Agentic Service Harness GitHub Repository Task Service Contract",
+  "description": "Read-only contract for the first GitHub repository task service and Codex-style adapter descriptors. This schema does not admit UI routes, mutation endpoints, live adapter execution, branch writes, pull-request creation, deployment, DNS mutation, secret mutation, destructive operations, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "scope",
+    "repository_metadata_probe",
+    "task_service",
+    "adapter_descriptors",
+    "authority_denials",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_repo_task_service"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "scope": {
+      "$ref": "#/$defs/service_scope"
+    },
+    "repository_metadata_probe": {
+      "$ref": "#/$defs/repository_metadata_probe"
+    },
+    "task_service": {
+      "$ref": "#/$defs/task_service"
+    },
+    "adapter_descriptors": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/adapter_descriptor"
+      }
+    },
+    "authority_denials": {
+      "$ref": "#/$defs/authority_denials"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "text_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "service_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "default_branch",
+        "foundation_phase",
+        "read_only",
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_contract_only"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "ui_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_endpoints_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_adapter_integrated": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "repository_metadata_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "probe_id",
+        "provider",
+        "repository_connection_id",
+        "repository_slug",
+        "probe_mode",
+        "metadata_fields",
+        "source_refs",
+        "credential_binding_ref",
+        "live_probe_executed",
+        "writes_repository",
+        "creates_branch",
+        "opens_pull_request",
+        "secret_values_serialized",
+        "read_only"
+      ],
+      "properties": {
+        "probe_id": { "$ref": "#/$defs/identifier" },
+        "provider": {
+          "type": "string",
+          "const": "github"
+        },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "probe_mode": {
+          "type": "string",
+          "const": "contract_only_metadata_probe"
+        },
+        "metadata_fields": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "repository_slug",
+              "default_branch",
+              "installation_ref",
+              "permission_scope",
+              "latest_main_ref",
+              "branch_protection_ref",
+              "open_pull_request_refs"
+            ]
+          }
+        },
+        "source_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "credential_binding_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "live_probe_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "writes_repository": {
+          "type": "boolean",
+          "const": false
+        },
+        "creates_branch": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_pull_request": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "task_service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service_id",
+        "task_ref",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_evidence_refs",
+        "approval_required_for_effects",
+        "read_only",
+        "mutation_route",
+        "route_admitted",
+        "executes_adapter",
+        "creates_branch",
+        "opens_pull_request",
+        "writes_repository",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "service_id": { "$ref": "#/$defs/identifier" },
+        "task_ref": { "$ref": "#/$defs/evidence_ref" },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["read_only"]
+          }
+        },
+        "forbidden_action_classes": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["write_to_branch", "open_pr", "blocked_high_risk"]
+          }
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "approval_required_for_effects": {
+          "type": "boolean",
+          "const": true
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "mutation_route": {
+          "type": "boolean",
+          "const": false
+        },
+        "route_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "executes_adapter": {
+          "type": "boolean",
+          "const": false
+        },
+        "creates_branch": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_pull_request": {
+          "type": "boolean",
+          "const": false
+        },
+        "writes_repository": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "adapter_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_id",
+        "adapter_kind",
+        "status",
+        "allowed_modes",
+        "required_evidence_refs",
+        "requires_workspace_sandbox",
+        "authority_class",
+        "external_adapter_integrated",
+        "executes_adapter",
+        "creates_branch",
+        "opens_pull_request",
+        "writes_repository",
+        "receipt_schema_ref",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "adapter_id": { "$ref": "#/$defs/identifier" },
+        "adapter_kind": {
+          "type": "string",
+          "enum": ["github_repo_task", "codex_style_coding"]
+        },
+        "status": {
+          "type": "string",
+          "const": "contract_only"
+        },
+        "allowed_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["read_only", "dry_run"]
+          }
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "requires_workspace_sandbox": {
+          "type": "boolean",
+          "const": true
+        },
+        "authority_class": {
+          "type": "string",
+          "enum": ["read_only", "approval_required"]
+        },
+        "external_adapter_integrated": {
+          "type": "boolean",
+          "const": false
+        },
+        "executes_adapter": {
+          "type": "boolean",
+          "const": false
+        },
+        "creates_branch": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_pull_request": {
+          "type": "boolean",
+          "const": false
+        },
+        "writes_repository": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_schema_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
