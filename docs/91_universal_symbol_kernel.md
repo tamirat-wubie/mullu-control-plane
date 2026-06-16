@@ -73,6 +73,19 @@ terminal_closure_allowed=false
 success_claim_allowed=false
 ```
 
+## Audit and refinement pass
+
+The first audit found these weakness classes and applied the refinements below:
+
+| Finding | Risk | Refinement |
+| --- | --- | --- |
+| Validator checked governance invariants but did not validate the example against the JSON Schema. | A malformed symbol could pass local semantic checks while violating the wire contract. | The validator now runs Draft 2020-12 JSON Schema validation with format checking. |
+| Evidence references were checked for presence in the example but not for local file existence. | A stale evidence reference could silently remain in the symbol packet. | The validator now rejects local evidence refs whose files are missing. |
+| Edge-case coverage did not test unknown fields or invalid symbol kinds. | Schema drift could enter without test coverage. | Tests now reject additional properties and invalid `symbol_kind` values. |
+| Authority drift tests covered one connector field only. | Other authority fields still rely on shared validator logic. | The validator centralizes all authority-denial fields and verifies the denial count. |
+
+The refinement keeps the boundary narrow: schema validity, evidence-file existence, and no-authority invariants are stronger, but runtime dispatch and automatic skill symbolization remain blocked.
+
 ## Verification
 
 Run:
@@ -111,6 +124,6 @@ public SaaS readiness
 The next real implementation step is a Symbol Skill Adapter that converts existing TeamOps, software_dev, SCCML, worker, and component receipts into `UniversalSymbol` records while preserving their existing authority boundaries.
 
 STATUS:
-  Completeness: foundation boundary added
-  Invariants verified by validator and tests: symbol-native envelope, everything-symbolizable flag, authority denial, no raw private payload, no raw secret, no terminal closure
+  Completeness: foundation boundary added and audit-refined
+  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, everything-symbolizable flag, evidence-file presence, authority denial, no raw private payload, no raw secret, no terminal closure
   Open issues: runtime symbol adapter, protocol manifest registration, proof coverage matrix binding, and skill-by-skill symbolization remain AwaitingEvidence
