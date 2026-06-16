@@ -47,6 +47,7 @@ def test_team_ops_shared_inbox_send_execution_validation_accepts_blocked_receipt
     assert validation.status == "blocked"
     assert validation.proof_state == "Unknown"
     assert validation.send_preparation_receipt_ready is False
+    assert validation.provider_observation_receipt_valid is False
     assert validation.send_execution_ready is False
     assert validation.external_message_sent is False
     assert validation.blocked_until == ("send_preparation_receipt_not_ready",)
@@ -84,6 +85,7 @@ def test_team_ops_shared_inbox_send_execution_validation_accepts_ready_receipt(
     assert validation.valid is True
     assert validation.ready is True
     assert validation.solver_outcome == "SolvedVerified"
+    assert validation.provider_observation_receipt_valid is True
     assert validation.decision == "approved"
     assert validation.send_execution_state == "sent"
     assert validation.external_message_sent is True
@@ -157,6 +159,29 @@ def test_team_ops_shared_inbox_send_execution_validation_rejects_missing_executi
     assert validation.ready is False
     assert any("send_execution_ref" in error for error in validation.errors)
     assert "passed receipt requires evidence_refs" in validation.errors
+
+
+def test_team_ops_shared_inbox_send_execution_validation_rejects_missing_provider_witness(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "team_ops_shared_inbox_send_execution_receipt.json"
+    payload = _ready_receipt() | {
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_send_execution_receipt(
+        receipt_path=receipt_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "passed receipt requires provider_observation_receipt_ref" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_id" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_valid=true" in validation.errors
 
 
 def test_team_ops_shared_inbox_send_execution_validation_rejects_bad_hash(
@@ -248,6 +273,9 @@ def _blocked_receipt() -> dict[str, object]:
     return _base_receipt() | {
         "send_preparation_receipt_valid": True,
         "send_preparation_receipt_ready": False,
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "status": "blocked",
         "solver_outcome": "AwaitingEvidence",
         "proof_state": "Unknown",
@@ -323,6 +351,9 @@ def _base_receipt() -> dict[str, object]:
         "workflow_id": "team_ops.shared_inbox_triage",
         "source_send_preparation_receipt_ref": ".change_assurance/team_ops_shared_inbox_send_preparation_receipt.json",
         "source_send_preparation_receipt_id": "teamops-shared-inbox-send-preparation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "executed_at": "2026-06-14T00:00:00+00:00",
         "send_execution_performed_by_producer": False,
         "external_message_sent_by_producer": False,
