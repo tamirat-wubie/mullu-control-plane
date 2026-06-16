@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-capsule-alignment-receipt:1",
+  "title": "Mullu Personal Assistant Capsule Alignment Receipt",
+  "description": "No-effect receipt proving the Personal Assistant capsule, capability pack, schema references, and authority coverage receipt are aligned without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "receipt_is_not_execution_authority",
+    "receipt_is_not_terminal_closure",
+    "source_refs",
+    "alignment_summary",
+    "capability_binding_records",
+    "schema_binding_records",
+    "capsule_boundary",
+    "effect_boundary",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "personal_assistant.capsule_alignment_receipt.v1" },
+    "receipt_id": { "type": "string", "pattern": "^personal-assistant-capsule-alignment-[0-9a-f]{16}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+    "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+    "governed": { "type": "boolean", "const": true },
+    "receipt_is_not_execution_authority": { "type": "boolean", "const": true },
+    "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "source_refs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_ref" }
+    },
+    "alignment_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capsule_alignment_closed",
+        "authority_coverage_closed",
+        "capsule_capability_count",
+        "pack_capability_count",
+        "schema_ref_count",
+        "capsule_refs_match_pack",
+        "all_capability_refs_bound",
+        "all_schema_refs_bound",
+        "all_policy_refs_bound",
+        "all_test_fixture_refs_bound",
+        "all_capabilities_candidate_only",
+        "all_capabilities_fixture_only",
+        "all_capabilities_secretless",
+        "all_capabilities_networkless",
+        "all_capabilities_non_world_mutating",
+        "all_capabilities_receipted",
+        "capsule_foundation_mode_required",
+        "capsule_live_connector_execution_blocked",
+        "capsule_live_nested_mind_activation_blocked",
+        "no_effect_boundary_verified",
+        "production_ready",
+        "customer_ready",
+        "next_allowed_action"
+      ],
+      "properties": {
+        "capsule_alignment_closed": { "type": "boolean" },
+        "authority_coverage_closed": { "type": "boolean" },
+        "capsule_capability_count": { "type": "integer", "minimum": 1 },
+        "pack_capability_count": { "type": "integer", "minimum": 1 },
+        "schema_ref_count": { "type": "integer", "minimum": 1 },
+        "capsule_refs_match_pack": { "type": "boolean" },
+        "all_capability_refs_bound": { "type": "boolean" },
+        "all_schema_refs_bound": { "type": "boolean" },
+        "all_policy_refs_bound": { "type": "boolean" },
+        "all_test_fixture_refs_bound": { "type": "boolean" },
+        "all_capabilities_candidate_only": { "type": "boolean" },
+        "all_capabilities_fixture_only": { "type": "boolean" },
+        "all_capabilities_secretless": { "type": "boolean" },
+        "all_capabilities_networkless": { "type": "boolean" },
+        "all_capabilities_non_world_mutating": { "type": "boolean" },
+        "all_capabilities_receipted": { "type": "boolean" },
+        "capsule_foundation_mode_required": { "type": "boolean" },
+        "capsule_live_connector_execution_blocked": { "type": "boolean" },
+        "capsule_live_nested_mind_activation_blocked": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "customer_ready": { "type": "boolean", "const": false },
+        "next_allowed_action": { "type": "string", "const": "continue_foundation_hardening_only" }
+      }
+    },
+    "capability_binding_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability_binding_record" }
+    },
+    "schema_binding_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/schema_binding_record" }
+    },
+    "capsule_boundary": { "$ref": "#/$defs/capsule_boundary" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_ref", "source_kind", "bound"],
+      "properties": {
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "type": "string",
+          "enum": ["capsule", "capability_pack", "protocol_manifest", "authority_coverage_receipt"]
+        },
+        "bound": { "type": "boolean" }
+      }
+    },
+    "capability_binding_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "in_capsule",
+        "in_capability_pack",
+        "input_schema_ref",
+        "input_schema_bound",
+        "output_schema_ref",
+        "output_schema_bound",
+        "certification_status",
+        "fixture_only",
+        "production_ready",
+        "secret_scope",
+        "network_allowlist_empty",
+        "world_mutating",
+        "receipt_required",
+        "alignment_covered"
+      ],
+      "properties": {
+        "capability_id": { "type": "string", "minLength": 1 },
+        "in_capsule": { "type": "boolean" },
+        "in_capability_pack": { "type": "boolean" },
+        "input_schema_ref": { "type": "string", "minLength": 1 },
+        "input_schema_bound": { "type": "boolean" },
+        "output_schema_ref": { "type": "string", "minLength": 1 },
+        "output_schema_bound": { "type": "boolean" },
+        "certification_status": { "type": "string", "enum": ["candidate", "draft"] },
+        "fixture_only": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "secret_scope": { "type": "string", "enum": ["none"] },
+        "network_allowlist_empty": { "type": "boolean" },
+        "world_mutating": { "type": "boolean" },
+        "receipt_required": { "type": "boolean" },
+        "alignment_covered": { "type": "boolean" }
+      }
+    },
+    "schema_binding_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_id", "manifest_bound", "file_bound"],
+      "properties": {
+        "schema_ref": { "type": "string", "minLength": 1 },
+        "schema_id": { "type": "string", "minLength": 1 },
+        "manifest_bound": { "type": "boolean" },
+        "file_bound": { "type": "boolean" }
+      }
+    },
+    "capsule_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_mode_required",
+        "production_ready",
+        "live_connector_execution_allowed",
+        "live_nested_mind_activation_allowed"
+      ],
+      "properties": {
+        "foundation_mode_required": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "live_nested_mind_activation_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "money_legal_public_allowed",
+        "production_ready_claim_allowed",
+        "customer_ready_claim_allowed",
+        "live_nested_mind_activation_allowed"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "external_effect_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "money_legal_public_allowed": { "type": "boolean", "const": false },
+        "production_ready_claim_allowed": { "type": "boolean", "const": false },
+        "customer_ready_claim_allowed": { "type": "boolean", "const": false },
+        "live_nested_mind_activation_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        }
+      }
+    },
+    "lineage_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_id", "reason", "logged_in_lineage"],
+      "properties": {
+        "delta_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "logged_in_lineage": { "type": "boolean" }
+      }
+    }
+  }
+}

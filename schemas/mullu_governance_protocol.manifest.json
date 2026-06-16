@@ -1895,6 +1895,12 @@
       "surface": "assistant"
     },
     {
+      "schema_id": "personal-assistant-capsule-alignment-receipt",
+      "path": "schemas/personal_assistant_capsule_alignment_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-capsule-alignment-receipt:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "durable-gmail-account-binding-operator-input-request",
       "path": "schemas/durable_gmail_account_binding_operator_input_request.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-account-binding-operator-input-request:1",
