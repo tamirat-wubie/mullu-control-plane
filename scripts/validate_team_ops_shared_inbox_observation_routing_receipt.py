@@ -7,8 +7,8 @@ Governance scope: TeamOps no-send routing, redacted observation evidence,
 assignment obligation, approval gating, and external-effect rejection.
 Dependencies: schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json.
 Invariants:
-  - Ready routing receipts require a ready live-probe receipt and redacted
-    observation hashes.
+  - Ready routing receipts require a ready live-probe receipt, its validated
+    provider-observation receipt identity, and redacted observation hashes.
   - Raw subject, sender, recipient, message body, and query fields are forbidden.
   - Draft creation, external sends, mailbox writes, and provider mutations fail closed.
 """
@@ -73,6 +73,7 @@ class TeamOpsSharedInboxObservationRoutingReceiptValidation:
     solver_outcome: str
     proof_state: str
     live_probe_receipt_ready: bool
+    provider_observation_receipt_valid: bool
     classification: str
     owner_queue: str
     blocked_until: tuple[str, ...]
@@ -119,6 +120,7 @@ def validate_team_ops_shared_inbox_observation_routing_receipt(
         solver_outcome=str(receipt.get("solver_outcome", "")),
         proof_state=str(receipt.get("proof_state", "")),
         live_probe_receipt_ready=receipt.get("live_probe_receipt_ready") is True,
+        provider_observation_receipt_valid=receipt.get("provider_observation_receipt_valid") is True,
         classification=str(receipt.get("classification", "")),
         owner_queue=str(receipt.get("owner_queue", "")),
         blocked_until=tuple(str(item) for item in receipt.get("blocked_until", ()))
@@ -179,6 +181,14 @@ def _validate_ready_receipt(receipt: dict[str, Any], errors: list[str]) -> None:
         errors.append("passed receipt requires valid live-probe receipt")
     if receipt.get("live_probe_receipt_ready") is not True:
         errors.append("passed receipt requires ready live-probe receipt")
+    if not str(receipt.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("passed receipt requires provider_observation_receipt_ref")
+    if not str(receipt.get("provider_observation_receipt_id", "")).startswith(
+        "teamops-shared-inbox-provider-observation-receipt-"
+    ):
+        errors.append("passed receipt requires provider_observation_receipt_id")
+    if receipt.get("provider_observation_receipt_valid") is not True:
+        errors.append("passed receipt requires provider_observation_receipt_valid=true")
     if receipt.get("solver_outcome") != "SolvedVerified":
         errors.append("passed receipt requires solver_outcome=SolvedVerified")
     if receipt.get("proof_state") != "Pass":
@@ -225,6 +235,11 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and receipt.get("proof_state") == "Pass"
         and receipt.get("live_probe_receipt_valid") is True
         and receipt.get("live_probe_receipt_ready") is True
+        and bool(str(receipt.get("provider_observation_receipt_ref", "")).strip())
+        and str(receipt.get("provider_observation_receipt_id", "")).startswith(
+            "teamops-shared-inbox-provider-observation-receipt-"
+        )
+        and receipt.get("provider_observation_receipt_valid") is True
         and all(
             SHA256_HEX_PATTERN.fullmatch(str(receipt.get(field_name, ""))) is not None
             for field_name in ("observation_digest", "message_digest", "thread_digest", "subject_hash", "sender_hash")

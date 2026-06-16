@@ -7,7 +7,8 @@ producer claims, assignment gating, and AwaitingEvidence defaults.
 Dependencies: scripts.produce_team_ops_shared_inbox_observation_routing_receipt.
 Invariants:
   - Blocked live-probe evidence keeps routing blocked.
-  - Ready routing requires redacted observation hashes and evidence refs.
+  - Ready routing requires provider-observation identity, redacted observation
+    hashes, and evidence refs.
   - Passed routing never creates drafts, sends messages, or mutates providers.
 """
 
@@ -44,6 +45,7 @@ def test_team_ops_shared_inbox_observation_routing_blocks_without_live_probe_rea
     assert receipt.proof_state == "Unknown"
     assert receipt.live_probe_receipt_valid is True
     assert receipt.live_probe_receipt_ready is False
+    assert receipt.provider_observation_receipt_valid is False
     assert receipt.external_send_allowed is False
     assert receipt.draft_created_by_producer is False
     assert receipt.external_mailbox_write_performed is False
@@ -66,6 +68,7 @@ def test_team_ops_shared_inbox_observation_routing_requires_redacted_observation
 
     assert receipt.status == "blocked"
     assert receipt.live_probe_receipt_ready is True
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.observation_digest == ""
     assert receipt.message_digest == ""
     assert receipt.recipient_hashes == ()
@@ -98,6 +101,11 @@ def test_team_ops_shared_inbox_observation_routing_accepts_assignment_plan(
     assert receipt.status == "passed"
     assert receipt.solver_outcome == "SolvedVerified"
     assert receipt.proof_state == "Pass"
+    assert receipt.provider_observation_receipt_ref.endswith("team_ops_shared_inbox_provider_observation_receipt.json")
+    assert receipt.provider_observation_receipt_id.startswith(
+        "teamops-shared-inbox-provider-observation-receipt-"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.classification == "support_request"
     assert receipt.priority == "high"
     assert receipt.owner_queue == "support"
@@ -129,6 +137,7 @@ def test_team_ops_shared_inbox_observation_routing_blocks_unknown_classification
     )
 
     assert receipt.status == "blocked"
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.classification == "unknown"
     assert receipt.owner_queue == "triage"
     assert receipt.blocked_until == ("routing_classification_missing",)
@@ -236,6 +245,9 @@ def _blocked_live_probe_receipt() -> dict[str, object]:
         "proof_state": "Unknown",
         "connector_id": "",
         "provider_operation": "",
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "observed_message_count": 0,
         "response_digest": "",
         "evidence_refs": [],
@@ -254,6 +266,9 @@ def _ready_live_probe_receipt() -> dict[str, object]:
         "proof_state": "Pass",
         "connector_id": "gmail",
         "provider_operation": "email.search",
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "observed_message_count": 1,
         "response_digest": "a" * 64,
         "evidence_refs": ["team_ops_live_probe_observation:aaaaaaaaaaaaaaaa"],
