@@ -118,6 +118,9 @@ _UAO_BASE_REQUIRED_RECEIPT_KINDS = frozenset({"trace", "admission", "closure"})
 _UAO_ALLOW_REQUIRED_RECEIPT_KINDS = _UAO_BASE_REQUIRED_RECEIPT_KINDS | frozenset(
     {"execution", "reconciliation"}
 )
+_WHQR_REPLAY_BINDING_FIELDS = frozenset(
+    {"replay_ref", "canonical_hash", "semantics_hash", "version"}
+)
 _UAO_RECEIPT_TIER_BY_KIND = {
     "trace": frozenset({"R1"}),
     "admission": frozenset({"R1"}),
@@ -399,6 +402,11 @@ def universal_command_proof_view(
 
     if universal_detail is None:
         return None
+    whqr_replay_binding = _normalized_whqr_replay_binding(
+        universal_detail.get("whqr_replay_binding")
+    )
+    if whqr_replay_binding is None:
+        return None
 
     return UniversalCommandProofView(
         command_id=command_id,
@@ -414,9 +422,7 @@ def universal_command_proof_view(
         closure_state=str(universal_detail.get("closure_state", "")),
         reconciliation_ref=_text_detail(universal_detail.get("reconciliation_ref")),
         memory_ref=_text_detail(universal_detail.get("memory_ref")),
-        whqr_replay_binding=_mapping_detail(
-            universal_detail.get("whqr_replay_binding")
-        ),
+        whqr_replay_binding=whqr_replay_binding,
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
         dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
@@ -931,10 +937,10 @@ def _recomputed_universal_action_proof_hash(
         universal_detail.get("operating_substrate_evidence_refs")
     ):
         return None
-    whqr_replay_binding = universal_detail.get("whqr_replay_binding", {})
+    whqr_replay_binding = _normalized_whqr_replay_binding(
+        universal_detail.get("whqr_replay_binding")
+    )
     if whqr_replay_binding is None:
-        whqr_replay_binding = {}
-    if not isinstance(whqr_replay_binding, Mapping):
         return None
     payload = {
         "action_id": universal_detail["action_id"],
@@ -1529,6 +1535,51 @@ def _mapping_detail(value: Any) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         return {}
     return dict(value)
+
+
+def _valid_whqr_semver(version: str) -> bool:
+    parts = version.split(".")
+    return len(parts) == 3 and all(part.isdigit() for part in parts)
+
+
+def _normalized_whqr_replay_binding(value: Any) -> dict[str, str] | None:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        return None
+    if not value:
+        return {}
+    if set(value) != _WHQR_REPLAY_BINDING_FIELDS:
+        return None
+    replay_ref = value.get("replay_ref")
+    canonical_hash = value.get("canonical_hash")
+    semantics_hash = value.get("semantics_hash")
+    version = value.get("version")
+    if not (
+        isinstance(replay_ref, str)
+        and isinstance(canonical_hash, str)
+        and isinstance(semantics_hash, str)
+        and isinstance(version, str)
+        and replay_ref
+        and canonical_hash
+        and semantics_hash
+        and version
+    ):
+        return None
+    if not (
+        replay_ref.startswith("whqr://replay/sha256:")
+        and canonical_hash.startswith("sha256:")
+        and semantics_hash.startswith("sha256:")
+        and replay_ref == f"whqr://replay/{canonical_hash}"
+        and _valid_whqr_semver(version)
+    ):
+        return None
+    return {
+        "replay_ref": replay_ref,
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    }
 
 
 def _text_detail(value: Any) -> str:
