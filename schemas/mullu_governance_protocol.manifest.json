@@ -1613,6 +1613,12 @@
       "surface": "assistant"
     },
     {
+      "schema_id": "personal-assistant-math-projection",
+      "path": "schemas/personal_assistant_math_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-math-projection:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "personal-assistant-console-read-model",
       "path": "schemas/personal_assistant_console_read_model.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1",
