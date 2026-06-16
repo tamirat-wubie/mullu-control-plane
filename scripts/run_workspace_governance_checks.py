@@ -61,6 +61,8 @@ class CheckResult:
     return_code: int
     stdout: str
     stderr: str
+    termination_reason: str = "completed"
+    termination_signal: int | None = None
 
     @property
     def passed(self) -> bool:
@@ -988,8 +990,24 @@ def run_check(
         if stderr and not stderr.endswith("\n"):
             stderr += "\n"
         stderr += f"[TIMEOUT] {command.name} exceeded {timeout_seconds} seconds: {' '.join(command.args)}\n"
-        return CheckResult(command.name, command.args, TIMEOUT_RETURN_CODE, stdout, stderr)
-    return CheckResult(command.name, command.args, int(completed.returncode), completed.stdout, completed.stderr)
+        return CheckResult(
+            command.name,
+            command.args,
+            TIMEOUT_RETURN_CODE,
+            stdout,
+            stderr,
+            termination_reason="timeout",
+        )
+    return_code = int(completed.returncode)
+    return CheckResult(
+        command.name,
+        command.args,
+        return_code,
+        completed.stdout,
+        completed.stderr,
+        termination_reason=_termination_reason(return_code),
+        termination_signal=_termination_signal(return_code),
+    )
 
 
 def run_checks(
@@ -1280,6 +1298,18 @@ def _normalize_timeout_output(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return value
+
+
+def _termination_reason(return_code: int) -> str:
+    if return_code < 0:
+        return "terminated"
+    return "completed"
+
+
+def _termination_signal(return_code: int) -> int | None:
+    if return_code < 0:
+        return abs(return_code)
+    return None
 
 
 def _process_is_active(pid: int) -> bool:

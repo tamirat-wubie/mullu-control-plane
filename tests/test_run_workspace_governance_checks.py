@@ -15,6 +15,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -732,6 +733,40 @@ def test_run_check_preserves_failure_evidence() -> None:
     assert result.passed is False
     assert result.return_code == 7
     assert "observed failure" in result.stdout
+    assert result.termination_reason == "completed"
+    assert result.termination_signal is None
+
+
+def test_run_check_records_timeout_diagnosis() -> None:
+    command = runner.CheckCommand(
+        "intentional_timeout",
+        (sys.executable, "-c", "import time; time.sleep(5)"),
+    )
+
+    result = runner.run_check(command, runner.WORKSPACE_ROOT, timeout_seconds=0.01)
+
+    assert result.passed is False
+    assert result.return_code == runner.TIMEOUT_RETURN_CODE
+    assert result.termination_reason == "timeout"
+    assert result.termination_signal is None
+    assert "[TIMEOUT] intentional_timeout exceeded" in result.stderr
+
+
+def test_run_check_records_signal_termination_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:
+    command = runner.CheckCommand("terminated_check", ("python", "terminated.py"))
+
+    def fake_subprocess_run(*args: object, **kwargs: object) -> SimpleNamespace:
+        return SimpleNamespace(returncode=-15, stdout="", stderr="terminated\n")
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_subprocess_run)
+
+    result = runner.run_check(command, runner.WORKSPACE_ROOT)
+
+    assert result.passed is False
+    assert result.return_code == -15
+    assert result.termination_reason == "terminated"
+    assert result.termination_signal == 15
+    assert result.stderr == "terminated\n"
 
 
 def test_select_check_commands_filters_and_shards() -> None:
@@ -764,6 +799,8 @@ def test_build_receipt_records_pass_and_failure() -> None:
     assert receipt["generated_at_epoch"] == 12345.5
     assert receipt["check_count"] == 2
     assert receipt["checks"][1]["passed"] is False
+    assert receipt["checks"][0]["termination_reason"] == "completed"
+    assert receipt["checks"][1]["termination_signal"] is None
 
 
 def test_write_receipt_rejects_escape_and_non_json(tmp_path: Path) -> None:

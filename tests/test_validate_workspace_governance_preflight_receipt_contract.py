@@ -67,6 +67,8 @@ def test_sample_receipts_have_expected_statuses() -> None:
     assert passed_receipt["check_count"] == len(validator.REQUIRED_PREFLIGHT_CHECK_NAMES)
     assert passed_receipt["terminal_closure_required"] is True
     assert failed_receipt["receipt_is_not_terminal_closure"] is True
+    assert passed_receipt["checks"][0]["termination_reason"] == "completed"
+    assert passed_receipt["checks"][0]["termination_signal"] is None
 
 
 def test_invalid_receipt_status_and_check_flag_are_reported() -> None:
@@ -95,6 +97,28 @@ def test_unexpected_receipt_fields_are_reported() -> None:
     assert "receipt has unexpected field: execution_receipt_ref" in errors
     assert "check 0 has unexpected field: unexpected_payload" in errors
     assert len(errors) >= 2
+
+
+def test_optional_termination_diagnosis_is_validated() -> None:
+    passed_receipt, _failed_receipt = validator.build_sample_receipts()
+    terminated_receipt = copy.deepcopy(passed_receipt)
+    terminated_receipt["checks"][0]["return_code"] = -15
+    terminated_receipt["checks"][0]["passed"] = False
+    terminated_receipt["checks"][0]["termination_reason"] = "terminated"
+    terminated_receipt["checks"][0]["termination_signal"] = 15
+    terminated_receipt["status"] = "failed"
+    invalid_reason = copy.deepcopy(passed_receipt)
+    invalid_reason["checks"][0]["termination_reason"] = "unknown"
+    invalid_signal = copy.deepcopy(passed_receipt)
+    invalid_signal["checks"][0]["termination_signal"] = 15
+
+    terminated_errors = validator.validate_receipt(terminated_receipt)
+    reason_errors = validator.validate_receipt(invalid_reason)
+    signal_errors = validator.validate_receipt(invalid_signal)
+
+    assert terminated_errors == []
+    assert "check 0 termination_reason is invalid" in reason_errors
+    assert "check 0 non-terminated checks must not set termination_signal" in signal_errors
 
 
 def test_check_count_type_drift_is_reported() -> None:

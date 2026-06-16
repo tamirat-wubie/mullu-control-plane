@@ -261,6 +261,21 @@
         },
         "stderr": {
           "type": "string"
+        },
+        "termination_reason": {
+          "type": "string",
+          "enum": [
+            "completed",
+            "timeout",
+            "terminated"
+          ]
+        },
+        "termination_signal": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
         }
       }
     }
