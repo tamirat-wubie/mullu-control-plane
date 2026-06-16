@@ -8,6 +8,7 @@ duplicate-action protection, redacted observation, and local provider-effect den
 Dependencies: schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json.
 Invariants:
   - Ready observation requires ready send-execution evidence.
+  - Ready observation retains the upstream provider-observation witness.
   - Two provider observations must match the send-execution provider message hash.
   - Replay and duplicate-absence evidence are required before closure readiness.
 """
@@ -38,6 +39,9 @@ DEFAULT_VALIDATION_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_sent_message_observation_receipt_validation.json"
 )
 RECEIPT_ID_PATTERN = re.compile(r"^teamops-shared-inbox-sent-message-observation-receipt-[0-9a-f]{16}$")
+PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN = re.compile(
+    r"^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+)
 RAW_FIELD_NAMES = {
     "raw_subject",
     "subject",
@@ -86,6 +90,7 @@ class TeamOpsSharedInboxSentMessageObservationReceiptValidation:
     solver_outcome: str
     proof_state: str
     send_execution_receipt_ready: bool
+    provider_observation_receipt_valid: bool
     sent_message_observation_state: str
     sent_message_observation_ready: bool
     observation_count: int
@@ -136,6 +141,7 @@ def validate_team_ops_shared_inbox_sent_message_observation_receipt(
         solver_outcome=str(receipt.get("solver_outcome", "")),
         proof_state=str(receipt.get("proof_state", "")),
         send_execution_receipt_ready=receipt.get("send_execution_receipt_ready") is True,
+        provider_observation_receipt_valid=receipt.get("provider_observation_receipt_valid") is True,
         sent_message_observation_state=str(receipt.get("sent_message_observation_state", "")),
         sent_message_observation_ready=receipt.get("sent_message_observation_ready") is True,
         observation_count=int(receipt.get("observation_count", 0)) if isinstance(receipt.get("observation_count", 0), int) else 0,
@@ -195,6 +201,12 @@ def _validate_ready_receipt(receipt: dict[str, Any], errors: list[str]) -> None:
         errors.append("passed receipt requires valid send execution receipt")
     if receipt.get("send_execution_receipt_ready") is not True:
         errors.append("passed receipt requires ready send execution receipt")
+    if not str(receipt.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("passed receipt requires provider_observation_receipt_ref")
+    if not _valid_provider_observation_receipt_id(receipt):
+        errors.append("passed receipt requires provider_observation_receipt_id")
+    if receipt.get("provider_observation_receipt_valid") is not True:
+        errors.append("passed receipt requires provider_observation_receipt_valid=true")
     if receipt.get("solver_outcome") != "SolvedVerified":
         errors.append("passed receipt requires solver_outcome=SolvedVerified")
     if receipt.get("proof_state") != "Pass":
@@ -266,6 +278,9 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and receipt.get("proof_state") == "Pass"
         and receipt.get("send_execution_receipt_valid") is True
         and receipt.get("send_execution_receipt_ready") is True
+        and bool(str(receipt.get("provider_observation_receipt_ref", "")).strip())
+        and _valid_provider_observation_receipt_id(receipt)
+        and receipt.get("provider_observation_receipt_valid") is True
         and bool(str(receipt.get("send_execution_ref", "")).strip())
         and bool(str(receipt.get("dispatch_receipt_ref", "")).strip())
         and bool(str(receipt.get("provider_message_ref", "")).strip())
@@ -289,6 +304,15 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and isinstance(receipt.get("evidence_refs"), list)
         and len(receipt.get("evidence_refs", [])) >= 4
         and receipt.get("blocked_until") == []
+    )
+
+
+def _valid_provider_observation_receipt_id(receipt: dict[str, Any]) -> bool:
+    return (
+        PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+            str(receipt.get("provider_observation_receipt_id", ""))
+        )
+        is not None
     )
 
 

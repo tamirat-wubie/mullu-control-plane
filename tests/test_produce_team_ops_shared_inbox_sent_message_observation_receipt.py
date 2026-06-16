@@ -47,6 +47,9 @@ def test_team_ops_sent_message_observation_blocks_without_send_execution_ready(
     assert receipt.proof_state == "Unknown"
     assert receipt.send_execution_receipt_valid is True
     assert receipt.send_execution_receipt_ready is False
+    assert receipt.provider_observation_receipt_ref == ""
+    assert receipt.provider_observation_receipt_id == ""
+    assert receipt.provider_observation_receipt_valid is False
     assert receipt.sent_message_observation_ready is False
     assert receipt.workflow_closure_ready is False
     assert receipt.provider_call_performed_by_producer is False
@@ -68,6 +71,10 @@ def test_team_ops_sent_message_observation_requires_observation_and_replay_evide
 
     assert receipt.status == "blocked"
     assert receipt.send_execution_receipt_ready is True
+    assert receipt.provider_observation_receipt_ref == (
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.send_execution_ref == "send-execution:aaaaaaaaaaaaaaaa"
     assert receipt.provider_message_hash == HEX_A
     assert receipt.sent_message_observation_state == "missing"
@@ -101,6 +108,10 @@ def test_team_ops_sent_message_observation_accepts_two_observations_and_replay(
     assert receipt.status == "passed"
     assert receipt.solver_outcome == "SolvedVerified"
     assert receipt.proof_state == "Pass"
+    assert receipt.provider_observation_receipt_id == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.sent_message_observation_state == "observed"
     assert receipt.sent_message_observation_ready is True
     assert receipt.observation_count == 2
@@ -225,6 +236,7 @@ def test_team_ops_sent_message_observation_cli_writes_report(
     assert exit_code == 0
     assert payload["status"] == "passed"
     assert payload["workflow_closure_ready"] is True
+    assert payload["provider_observation_receipt_valid"] is True
     assert payload["provider_call_performed_by_producer"] is False
     assert stdout_payload["receipt_id"] == payload["receipt_id"]
     assert captured.err == ""
