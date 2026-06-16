@@ -60,6 +60,8 @@ def test_projected_read_only_contract_preserves_core_refs() -> None:
     assert projection["runs"][0]["executes_adapter"] is False
     assert projection["receipts"][0]["receipt_is_not_terminal_closure"] is True
     assert projection["receipts"][0]["terminal_closure"] is False
+    assert projection["durable_entity_bindings"]["read_only"] is True
+    assert projection["durable_entity_bindings"]["entity_bindings"][0]["read_model_source"] == "fixture_projection"
     assert projection["permission_snapshot"]["can_merge"] is False
 
 

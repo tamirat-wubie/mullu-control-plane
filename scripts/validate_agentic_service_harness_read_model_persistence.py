@@ -75,6 +75,7 @@ COLLECTION_ID_FIELDS = {
 SINGLETON_KINDS = {
     "report_header",
     "projection_scope",
+    "durable_entity_bindings",
     "permission_snapshot",
 }
 ALLOWED_RECORD_KINDS = set(COLLECTION_ID_FIELDS) | SINGLETON_KINDS
@@ -333,6 +334,14 @@ def persist_read_model_records(
         payload=scope,
         causal_ref=causal_ref,
     )
+    store.append(
+        record_kind="durable_entity_bindings",
+        record_id=project_id,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        payload=_required_object(read_model.get("durable_entity_bindings"), "durable_entity_bindings"),
+        causal_ref=causal_ref,
+    )
     for record_kind, (collection_name, id_field) in COLLECTION_ID_FIELDS.items():
         for record in _objects(read_model.get(collection_name)):
             store.append(
@@ -361,11 +370,16 @@ def rebuild_read_model(entries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
     header = _single_payload(by_kind["report_header"], "report_header")
     projection_scope = _single_payload(by_kind["projection_scope"], "projection_scope")
+    durable_entity_bindings = _single_payload(
+        by_kind["durable_entity_bindings"],
+        "durable_entity_bindings",
+    )
     permission_snapshot = _single_payload(by_kind["permission_snapshot"], "permission_snapshot")
     rebuilt: dict[str, Any] = {field_name: header[field_name] for field_name in HEADER_FIELDS}
     rebuilt["projection_scope"] = projection_scope
     for record_kind, (collection_name, _id_field) in COLLECTION_ID_FIELDS.items():
         rebuilt[collection_name] = [dict(entry["payload"]) for entry in by_kind[record_kind]]
+    rebuilt["durable_entity_bindings"] = durable_entity_bindings
     rebuilt["permission_snapshot"] = permission_snapshot
     return rebuilt
 
