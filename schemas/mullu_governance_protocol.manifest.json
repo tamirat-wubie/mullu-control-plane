@@ -467,6 +467,12 @@
       "surface": "connector"
     },
     {
+      "schema_id": "readiness-waiver-review-packet",
+      "path": "schemas/readiness_waiver_review_packet.schema.json",
+      "urn": "urn:mullusi:schema:readiness-waiver-review-packet:1",
+      "surface": "readiness"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",

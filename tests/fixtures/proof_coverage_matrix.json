@@ -790,6 +790,13 @@
       ]
     },
     {
+      "action_id": "publish_readiness_waiver_review_packet_contract",
+      "status": "closed",
+      "surfaces": [
+        "readiness_waiver_review_packet"
+      ]
+    },
+    {
       "action_id": "publish_worker_receipt_ledger_read_model_contract",
       "status": "closed",
       "surfaces": [
@@ -1154,7 +1161,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 119,
+      "action_proof": 120,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
@@ -1162,7 +1169,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 145,
+      "audit_chain": 146,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1170,21 +1177,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 102
+      "witnessed": 103
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 118
+      "request_proof": 119
     },
-    "surface_count": 148
+    "surface_count": 149
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 148,
+      "strong": 149,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9395,6 +9402,58 @@
       "surface_id": "connector_action_promotion_gate"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/readiness_waiver_review_packet.schema.json",
+        "examples/readiness_waiver_review_packet.foundation.json",
+        "scripts/validate_readiness_waiver_review_packet.py",
+        "tests/test_validate_readiness_waiver_review_packet.py",
+        "schemas/sdlc_release_candidate.schema.json",
+        "schemas/sdlc_deployment_candidate.schema.json",
+        "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+        "docs/86_readiness_waiver_review_packet_contract.md"
+      ],
+      "notes": "Readiness waiver review packets bind readiness evidence, target artifact refs, UAO refs, Phi_gov authorization state, approval state, security review state, rollback evidence, accepted-risk status, expiry policy, compensating controls, required evidence refs, and blocked reason refs before any waiver can be reviewed.",
+      "representative_paths": [
+        "ReadinessWaiverReviewPacket",
+        "validate_readiness_waiver_review_packet",
+        "readiness_waiver_review_packet.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "readiness_waiver_review_packet_blocks_readiness_authority": [
+          "readiness_waiver_review_packet_passes",
+          "readiness_waiver_review_packet_rejects_authority_drift"
+        ],
+        "readiness_waiver_review_packet_rejects_compensating_control_drift": [
+          "readiness_waiver_review_packet_rejects_compensating_control_drift"
+        ],
+        "readiness_waiver_review_packet_rejects_expiry_drift": [
+          "readiness_waiver_review_packet_rejects_expiry_drift"
+        ],
+        "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift": [
+          "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+        ],
+        "readiness_waiver_review_packet_requires_evidence_refs": [
+          "readiness_waiver_review_packet_rejects_missing_refs"
+        ],
+        "readiness_waiver_review_packet_schema_valid": [
+          "readiness_waiver_review_packet_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "readiness_waiver_review_packet_schema_valid",
+        "readiness_waiver_review_packet_blocks_readiness_authority",
+        "readiness_waiver_review_packet_requires_evidence_refs",
+        "readiness_waiver_review_packet_rejects_expiry_drift",
+        "readiness_waiver_review_packet_rejects_compensating_control_drift",
+        "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+      ],
+      "surface_id": "readiness_waiver_review_packet"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -12792,8 +12851,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1641,
-    "runtime_witness_count": 1641,
+    "exact_test_anchor_count": 1647,
+    "runtime_witness_count": 1647,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20028,6 +20087,52 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "connector_action_promotion_gate",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_passes"
+            ],
+            "witness": "readiness_waiver_review_packet_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_passes",
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_authority_drift"
+            ],
+            "witness": "readiness_waiver_review_packet_blocks_readiness_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_missing_refs"
+            ],
+            "witness": "readiness_waiver_review_packet_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_expiry_drift"
+            ],
+            "witness": "readiness_waiver_review_packet_rejects_expiry_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_compensating_control_drift"
+            ],
+            "witness": "readiness_waiver_review_packet_rejects_compensating_control_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "readiness_waiver_review_packet",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
