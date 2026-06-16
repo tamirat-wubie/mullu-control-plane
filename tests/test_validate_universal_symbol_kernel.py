@@ -49,3 +49,28 @@ def test_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
     changed["contract_summary"]["evidence_ref_count"] = 999
     with pytest.raises(UniversalSymbolValidationError, match="evidence_ref_count drift"):
         validate_universal_symbol_kernel(_write_case(tmp_path, changed), DEFAULT_SCHEMA_PATH)
+
+
+def test_rejects_additional_property_schema_drift(tmp_path: Path) -> None:
+    symbol = json.loads(DEFAULT_SYMBOL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(symbol)
+    changed["silent_extra_field"] = True
+    with pytest.raises(UniversalSymbolValidationError, match="schema validation failed"):
+        validate_universal_symbol_kernel(_write_case(tmp_path, changed), DEFAULT_SCHEMA_PATH)
+
+
+def test_rejects_bad_symbol_kind_schema_drift(tmp_path: Path) -> None:
+    symbol = json.loads(DEFAULT_SYMBOL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(symbol)
+    changed["symbol_identity"]["symbol_kind"] = "runtime_magic"
+    with pytest.raises(UniversalSymbolValidationError, match="schema validation failed"):
+        validate_universal_symbol_kernel(_write_case(tmp_path, changed), DEFAULT_SCHEMA_PATH)
+
+
+def test_rejects_missing_evidence_file(tmp_path: Path) -> None:
+    symbol = json.loads(DEFAULT_SYMBOL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(symbol)
+    changed["evidence_refs"].append("docs/DOES_NOT_EXIST_UNIVERSAL_SYMBOL.md")
+    changed["contract_summary"]["evidence_ref_count"] = len(changed["evidence_refs"])
+    with pytest.raises(UniversalSymbolValidationError, match="evidence ref file missing"):
+        validate_universal_symbol_kernel(_write_case(tmp_path, changed), DEFAULT_SCHEMA_PATH)
