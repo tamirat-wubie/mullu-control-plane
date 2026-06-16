@@ -52,6 +52,68 @@ def test_gateway_personal_assistant_skills_route_is_read_only() -> None:
     assert "email.response.draft" in payload["registry"]["skill_ids"]
 
 
+def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/console/personal-assistant")
+    post_response = client.post("/api/v1/console/personal-assistant", json={})
+    payload = response.json()
+    lane_status = payload["lane_status"]
+    lane_ids = [lane["lane_id"] for lane in lane_status["lanes"]]
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert payload["console_id"] == "personal_assistant_console_foundation"
+    assert payload["status"] == "foundation_read_only"
+    assert payload["solver_outcome"] == "SolvedVerified"
+    assert payload["governed"] is True
+    assert lane_status["lane_count"] == 12
+    assert lane_ids == [
+        "request_intake_whqr",
+        "skill_registry",
+        "approval_queue",
+        "memory_observation",
+        "read_only_projection",
+        "draft_projection",
+        "teamops_shared_inbox",
+        "github_codex_review",
+        "research_source_compare",
+        "math_reasoning",
+        "schedule_planning",
+        "operator_console",
+    ]
+    assert lane_status["execution_allowed"] is False
+    assert lane_status["live_connector_execution_allowed"] is False
+    assert lane_status["connector_mutation_allowed"] is False
+    assert lane_status["external_effect_allowed"] is False
+    assert lane_status["customer_readiness_claim_allowed"] is False
+    assert lane_status["nested_mind_live_activation_allowed"] is False
+    assert all(lane["receipt_required"] is True for lane in lane_status["lanes"])
+    assert all(lane["execution_allowed"] is False for lane in lane_status["lanes"])
+    assert all(lane["live_connector_execution_allowed"] is False for lane in lane_status["lanes"])
+    assert all(lane["connector_mutation_allowed"] is False for lane in lane_status["lanes"])
+    assert all(lane["external_effect_allowed"] is False for lane in lane_status["lanes"])
+    assert all(lane["customer_readiness_claim_allowed"] is False for lane in lane_status["lanes"])
+    assert all(lane["nested_mind_live_activation_allowed"] is False for lane in lane_status["lanes"])
+
+
+def test_gateway_personal_assistant_console_html_view_is_read_only() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/console/personal-assistant/view")
+    post_response = client.post("/api/v1/console/personal-assistant/view", json={})
+    body = response.text
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert "Mullu Personal Assistant Console" in body
+    assert "Foundation Lanes" in body
+    assert "foundation_read_only" in body
+    assert "/api/v1/console/personal-assistant" in body
+    assert "Execution Allowed" in body
+    assert "False" in body
+
+
 def test_gateway_personal_assistant_preview_blocks_effects_and_emits_receipt() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
