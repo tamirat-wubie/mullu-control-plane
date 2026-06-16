@@ -22,8 +22,6 @@ from ._base import (
     ContractRecord,
     freeze_value,
     require_non_empty_text,
-    require_non_negative_int,
-    require_unit_float,
 )
 
 
@@ -209,6 +207,25 @@ def _require_literal_bool(value: object, expected: bool, field_name: str) -> boo
     return expected
 
 
+def _require_non_negative_int(value: object, field_name: str) -> int:
+    if type(value) is not int:
+        raise ValueError(f"{field_name} must be an integer")
+    if value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return value
+
+
+def _require_unit_float(value: object, field_name: str) -> float:
+    if type(value) not in (int, float):
+        raise ValueError(f"{field_name} must be a number")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value):
+        raise ValueError(f"{field_name} must be finite")
+    if not 0.0 <= numeric_value <= 1.0:
+        raise ValueError(f"{field_name} must be between 0.0 and 1.0")
+    return numeric_value
+
+
 @dataclass(frozen=True, slots=True)
 class SNetInquiryBudget(ContractRecord):
     """Hard budget for one local recursive inquiry pass."""
@@ -219,8 +236,8 @@ class SNetInquiryBudget(ContractRecord):
     unknown_gravity_threshold: int = 3
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "max_depth", require_non_negative_int(self.max_depth, "max_depth"))
-        max_questions_per_symbol = require_non_negative_int(
+        object.__setattr__(self, "max_depth", _require_non_negative_int(self.max_depth, "max_depth"))
+        max_questions_per_symbol = _require_non_negative_int(
             self.max_questions_per_symbol,
             "max_questions_per_symbol",
         )
@@ -232,9 +249,9 @@ class SNetInquiryBudget(ContractRecord):
         object.__setattr__(
             self,
             "promotion_threshold",
-            require_unit_float(self.promotion_threshold, "promotion_threshold"),
+            _require_unit_float(self.promotion_threshold, "promotion_threshold"),
         )
-        unknown_gravity_threshold = require_non_negative_int(
+        unknown_gravity_threshold = _require_non_negative_int(
             self.unknown_gravity_threshold,
             "unknown_gravity_threshold",
         )
@@ -272,7 +289,7 @@ class SNetSymbol(ContractRecord):
             raise ValueError("ontology_status must be a SNetOntologyStatus")
         if not isinstance(self.settlement_state, SNetSettlementState):
             raise ValueError("settlement_state must be a SNetSettlementState")
-        object.__setattr__(self, "depth", require_non_negative_int(self.depth, "depth"))
+        object.__setattr__(self, "depth", _require_non_negative_int(self.depth, "depth"))
         object.__setattr__(self, "parent_context", _require_optional_text(self.parent_context, "parent_context"))
         object.__setattr__(
             self,
@@ -310,7 +327,7 @@ class SNetQuestion(ContractRecord):
         object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
         object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
         object.__setattr__(self, "context", _require_text(self.context, "context"))
-        object.__setattr__(self, "depth", require_non_negative_int(self.depth, "depth"))
+        object.__setattr__(self, "depth", _require_non_negative_int(self.depth, "depth"))
         object.__setattr__(
             self,
             "parent_question_id",
@@ -346,7 +363,7 @@ class SNetAnswer(ContractRecord):
             "ascii_folded_answer",
             _require_text(self.ascii_folded_answer, "ascii_folded_answer"),
         )
-        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
+        object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         if not isinstance(self.validation_state, SNetValidationState):
             raise ValueError("validation_state must be a SNetValidationState")
         object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
@@ -381,10 +398,10 @@ class SNetMetadata(ContractRecord):
         object.__setattr__(self, "value", _require_text(self.value, "value"))
         object.__setattr__(self, "context", _require_text(self.context, "context"))
         object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
-        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
+        object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         if not isinstance(self.validation_state, SNetValidationState):
             raise ValueError("validation_state must be a SNetValidationState")
-        object.__setattr__(self, "promotion_score", require_unit_float(self.promotion_score, "promotion_score"))
+        object.__setattr__(self, "promotion_score", _require_unit_float(self.promotion_score, "promotion_score"))
         object.__setattr__(
             self,
             "promoted_symbol_id",
@@ -413,7 +430,7 @@ class SNetRelation(ContractRecord):
         object.__setattr__(self, "source_symbol_id", _require_text(self.source_symbol_id, "source_symbol_id"))
         object.__setattr__(self, "relation_type", _require_text(self.relation_type, "relation_type"))
         object.__setattr__(self, "target_symbol_id", _require_text(self.target_symbol_id, "target_symbol_id"))
-        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
+        object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "context", _require_text(self.context, "context"))
         object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
         object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
@@ -466,7 +483,7 @@ class SNetUnknown(ContractRecord):
         object.__setattr__(self, "symbol_id", _require_text(self.symbol_id, "symbol_id"))
         object.__setattr__(self, "missing_facet", _require_text(self.missing_facet, "missing_facet"))
         object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
-        object.__setattr__(self, "importance_score", require_unit_float(self.importance_score, "importance_score"))
+        object.__setattr__(self, "importance_score", _require_unit_float(self.importance_score, "importance_score"))
         object.__setattr__(self, "blocking_reason", _require_text(self.blocking_reason, "blocking_reason"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
@@ -557,22 +574,22 @@ class SNetMeshReceipt(ContractRecord):
         object.__setattr__(self, "surface", _require_text(self.surface, "surface"))
         if self.surface != SNET_READ_ONLY_SURFACE:
             raise ValueError("surface must be the read-only SNet operator surface")
-        object.__setattr__(self, "symbol_count", require_non_negative_int(self.symbol_count, "symbol_count"))
-        object.__setattr__(self, "question_count", require_non_negative_int(self.question_count, "question_count"))
-        object.__setattr__(self, "answer_count", require_non_negative_int(self.answer_count, "answer_count"))
-        object.__setattr__(self, "metadata_count", require_non_negative_int(self.metadata_count, "metadata_count"))
-        object.__setattr__(self, "relation_count", require_non_negative_int(self.relation_count, "relation_count"))
-        object.__setattr__(self, "unknown_count", require_non_negative_int(self.unknown_count, "unknown_count"))
+        object.__setattr__(self, "symbol_count", _require_non_negative_int(self.symbol_count, "symbol_count"))
+        object.__setattr__(self, "question_count", _require_non_negative_int(self.question_count, "question_count"))
+        object.__setattr__(self, "answer_count", _require_non_negative_int(self.answer_count, "answer_count"))
+        object.__setattr__(self, "metadata_count", _require_non_negative_int(self.metadata_count, "metadata_count"))
+        object.__setattr__(self, "relation_count", _require_non_negative_int(self.relation_count, "relation_count"))
+        object.__setattr__(self, "unknown_count", _require_non_negative_int(self.unknown_count, "unknown_count"))
         object.__setattr__(
             self,
             "contradiction_count",
-            require_non_negative_int(self.contradiction_count, "contradiction_count"),
+            _require_non_negative_int(self.contradiction_count, "contradiction_count"),
         )
-        object.__setattr__(self, "max_depth", require_non_negative_int(self.max_depth, "max_depth"))
+        object.__setattr__(self, "max_depth", _require_non_negative_int(self.max_depth, "max_depth"))
         object.__setattr__(
             self,
             "promotion_threshold",
-            require_unit_float(self.promotion_threshold, "promotion_threshold"),
+            _require_unit_float(self.promotion_threshold, "promotion_threshold"),
         )
         if type(self.settlement_counts) is not dict:
             raise ValueError("settlement_counts must be a mapping")
@@ -581,7 +598,7 @@ class SNetMeshReceipt(ContractRecord):
             settlement_key = _require_text_key(key, "settlement_counts.key")
             if settlement_key in settlement_count_map:
                 raise ValueError("settlement_counts must not contain duplicate keys")
-            settlement_count_map[settlement_key] = require_non_negative_int(
+            settlement_count_map[settlement_key] = _require_non_negative_int(
                 value,
                 "settlement_counts.value",
             )
