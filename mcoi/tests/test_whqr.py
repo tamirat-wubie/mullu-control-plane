@@ -332,10 +332,27 @@ def test_nested_metadata_keys_must_remain_text_for_canonical_identity() -> None:
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")
+    with pytest.raises(ValueError, match="blank"):
+        WHQRNode(role=WHRole.WHO, target="   ")
     with pytest.raises(ValueError, match="role"):
         WHQRNode(role="who", target="actor")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="non-empty string"):
         GateResult(truth=TruthGate.TRUE, metadata={"": "empty"})
+    with pytest.raises(ValueError, match="blank"):
+        GateResult(truth=TruthGate.TRUE, reason="\t")
+    with pytest.raises(ValueError, match="blank"):
+        WHQRNode(role=WHRole.WHAT, target="invoice", node_id=" ")
+    with pytest.raises(ValueError, match="blank"):
+        WHQRNode(role=WHRole.WHAT, target="invoice", entity_ref="\r\n")
+    with pytest.raises(ValueError, match="blank"):
+        WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), source_ref=" ")
+    with pytest.raises(ValueError, match="blank"):
+        WHQRDocument.from_canonical_json("  ")
+    with pytest.raises(ValueError, match="metadata key"):
+        WHQRDocument(
+            root=WHQRNode(role=WHRole.WHAT, target="invoice"),
+            metadata={" ": "blank-key"},
+        )
     with pytest.raises(ValueError, match="metadata must be a mapping"):
         WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata=[])  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="metadata must be a mapping"):

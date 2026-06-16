@@ -126,8 +126,8 @@ ADVERB_THRESHOLDS: Mapping[Adverb, tuple[float, float]] = {
 
 
 def _require_text(value: str, name: str) -> str:
-    if not isinstance(value, str) or value == "":
-        raise ValueError(f"{name} must be a non-empty string")
+    if not isinstance(value, str) or value == "" or value.strip() == "":
+        raise ValueError(f"{name} must be a non-empty string and must not be blank")
     return value
 
 
