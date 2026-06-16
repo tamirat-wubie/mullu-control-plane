@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 import math
+from types import MappingProxyType
 from typing import Any, Mapping
 
 from ._base import (
@@ -135,23 +136,33 @@ def _freeze_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
 
 
 def _freeze_metadata(metadata: Mapping[str, Any], field_name: str = "metadata") -> Mapping[str, Any]:
-    if not isinstance(metadata, Mapping):
+    if type(metadata) not in (dict, MappingProxyType):
         raise ValueError(f"{field_name} must be a mapping")
     sorted_metadata: dict[str, Any] = {}
-    for key, value in metadata.items():
+    try:
+        metadata_items = tuple(metadata.items())
+    except Exception as exc:
+        raise ValueError(f"{field_name} must be a mapping") from exc
+    for key, value in metadata_items:
         metadata_key = _require_text_key(key, f"{field_name}.key")
         sorted_metadata[metadata_key] = _freeze_metadata_value(value, f"{field_name}.{metadata_key}")
     return freeze_value(dict(sorted(sorted_metadata.items(), key=lambda item: item[0])))
 
 
 def _freeze_metadata_value(value: object, field_name: str) -> object:
-    if isinstance(value, Mapping):
+    if type(value) in (dict, MappingProxyType):
         sorted_metadata: dict[str, object] = {}
-        for key, item in value.items():
+        try:
+            metadata_items = tuple(value.items())
+        except Exception as exc:
+            raise ValueError(f"{field_name} must be a mapping") from exc
+        for key, item in metadata_items:
             metadata_key = _require_text_key(key, f"{field_name}.key")
             sorted_metadata[metadata_key] = _freeze_metadata_value(item, f"{field_name}.{metadata_key}")
         return freeze_value(dict(sorted(sorted_metadata.items(), key=lambda item: item[0])))
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, Mapping):
+        raise ValueError(f"{field_name} must be a mapping")
+    if type(value) in (list, tuple):
         return freeze_value(
             [
                 _freeze_metadata_value(item, f"{field_name}[{index}]")
@@ -563,7 +574,7 @@ class SNetMeshReceipt(ContractRecord):
             "promotion_threshold",
             require_unit_float(self.promotion_threshold, "promotion_threshold"),
         )
-        if not isinstance(self.settlement_counts, Mapping):
+        if type(self.settlement_counts) is not dict:
             raise ValueError("settlement_counts must be a mapping")
         settlement_count_map: dict[str, int] = {}
         for key, value in self.settlement_counts.items():

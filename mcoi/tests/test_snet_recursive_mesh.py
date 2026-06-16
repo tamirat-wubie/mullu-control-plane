@@ -12,6 +12,7 @@ Invariants:
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 
 import pytest
 
@@ -558,6 +559,74 @@ def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
     assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
 
 
+def test_direct_snet_contracts_reject_metadata_map_subclass_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    class DictSubclass(dict):
+        pass
+
+    class MappingSubclass(Mapping):
+        def __getitem__(self, key):
+            if key == "source":
+                return "test"
+            raise KeyError(key)
+
+        def __iter__(self):
+            return iter(("source",))
+
+        def __len__(self):
+            return 1
+
+        def items(self):
+            return (("source", "test"),)
+
+    class RaisingItems(dict):
+        def items(self):
+            raise RuntimeError("items leak")
+
+    class ListSubclass(list):
+        pass
+
+    for invalid_metadata in (
+        DictSubclass({"source": "test"}),
+        MappingSubclass(),
+        RaisingItems({"source": "test"}),
+        MappingProxyType(RaisingItems({"source": "test"})),
+    ):
+        with pytest.raises(ValueError, match="metadata"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", metadata=invalid_metadata)
+        with pytest.raises(ValueError, match="metadata"):
+            SNetAnswer(
+                answer_id="answer:1",
+                question_id="question:1",
+                raw_answer="Seed",
+                ascii_folded_answer="seed",
+                confidence=0.5,
+                metadata=invalid_metadata,
+            )
+
+    with pytest.raises(ValueError, match="metadata.outer"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"outer": DictSubclass({"inner": "ok"})})
+    with pytest.raises(ValueError, match="metadata.items"):
+        SNetSymbol(symbol_id="symbol:3", label="Seed", metadata={"items": ListSubclass(["ok"])})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": DictSubclass(receipt_payload["settlement_counts"])})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:4",
+        label="Seed",
+        metadata={"outer": {"inner": "ok"}, "items": ["ok"]},
+    )
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_symbol.metadata["outer"]["inner"] == "ok"
+    assert valid_symbol.metadata["items"] == ("ok",)
+    assert valid_receipt.settlement_counts["active"] == receipt_payload["settlement_counts"]["active"]
+
+
 def test_mesh_receipt_rejects_settlement_counts_map_boundary_drift() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
@@ -581,7 +650,7 @@ def test_mesh_receipt_rejects_settlement_counts_map_boundary_drift() -> None:
         SNetMeshReceipt(**{**receipt_payload, "settlement_counts": []})
     with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
         SNetMeshReceipt(**{**receipt_payload, "settlement_counts": "active"})
-    with pytest.raises(ValueError, match="duplicate keys"):
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
         SNetMeshReceipt(**{**receipt_payload, "settlement_counts": DuplicateSettlementCounts()})
 
     valid_receipt = SNetMeshReceipt(**receipt_payload)
