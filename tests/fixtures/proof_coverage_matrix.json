@@ -783,6 +783,13 @@
       ]
     },
     {
+      "action_id": "publish_worker_receipt_ledger_read_model_contract",
+      "status": "closed",
+      "surfaces": [
+        "worker_receipt_ledger_read_model"
+      ]
+    },
+    {
       "action_id": "publish_collaboration_case_contract",
       "status": "closed",
       "surfaces": [
@@ -1136,12 +1143,12 @@
       "action_proof": 119,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 25,
+      "read_model": 26,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 143,
+      "audit_chain": 144,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1149,21 +1156,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 100
+      "witnessed": 101
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 27,
+      "read_model": 28,
       "request_proof": 118
     },
-    "surface_count": 146
+    "surface_count": 147
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 146,
+      "strong": 147,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9331,6 +9338,59 @@
       "surface_id": "connector_action_promotion_gate"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/worker_receipt_ledger_read_model.schema.json",
+        "examples/worker_receipt_ledger_read_model.foundation.json",
+        "scripts/validate_worker_receipt_ledger_read_model.py",
+        "tests/test_validate_worker_receipt_ledger_read_model.py",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+        "schemas/connector_action_promotion_gate.schema.json",
+        "docs/84_worker_receipt_ledger_read_model_contract.md",
+        "schemas/universal_action_orchestration.schema.json"
+      ],
+      "notes": "Worker receipt ledger read models project scheduler, lease, read-only worker, runtime receipt, failure, and connector-promotion refs into bounded operator chain summaries while denying live receipt-store reads, worker dispatch, runtime receipt emission, connector calls, writes, terminal closure, and success claims.",
+      "representative_paths": [
+        "WorkerReceiptLedgerReadModel",
+        "validate_worker_receipt_ledger_read_model",
+        "worker_receipt_ledger_read_model.v1"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "worker_receipt_ledger_read_model_blocks_live_authority": [
+          "worker_receipt_ledger_read_model_passes",
+          "worker_receipt_ledger_read_model_rejects_live_authority"
+        ],
+        "worker_receipt_ledger_read_model_rejects_chain_guard_drift": [
+          "worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+        ],
+        "worker_receipt_ledger_read_model_rejects_missing_refs": [
+          "worker_receipt_ledger_read_model_rejects_missing_refs"
+        ],
+        "worker_receipt_ledger_read_model_rejects_summary_drift": [
+          "worker_receipt_ledger_read_model_rejects_summary_drift"
+        ],
+        "worker_receipt_ledger_read_model_schema_valid": [
+          "worker_receipt_ledger_read_model_passes"
+        ],
+        "worker_receipt_ledger_read_model_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_worker_receipt_ledger_read_model"
+        ]
+      },
+      "runtime_witnesses": [
+        "worker_receipt_ledger_read_model_schema_valid",
+        "worker_receipt_ledger_read_model_blocks_live_authority",
+        "worker_receipt_ledger_read_model_rejects_chain_guard_drift",
+        "worker_receipt_ledger_read_model_rejects_summary_drift",
+        "worker_receipt_ledger_read_model_rejects_missing_refs",
+        "worker_receipt_ledger_read_model_sdlc_artifacts_valid"
+      ],
+      "surface_id": "worker_receipt_ledger_read_model"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -12617,8 +12677,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1621,
-    "runtime_witness_count": 1621,
+    "exact_test_anchor_count": 1627,
+    "runtime_witness_count": 1627,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19803,6 +19863,52 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "connector_action_promotion_gate",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_passes"
+            ],
+            "witness": "worker_receipt_ledger_read_model_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_passes",
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_live_authority"
+            ],
+            "witness": "worker_receipt_ledger_read_model_blocks_live_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+            ],
+            "witness": "worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_summary_drift"
+            ],
+            "witness": "worker_receipt_ledger_read_model_rejects_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_worker_receipt_ledger_read_model_rejects_missing_refs"
+            ],
+            "witness": "worker_receipt_ledger_read_model_rejects_missing_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_worker_receipt_ledger_read_model.py::test_sdlc_requirement_and_design_validate_for_worker_receipt_ledger_read_model"
+            ],
+            "witness": "worker_receipt_ledger_read_model_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "worker_receipt_ledger_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

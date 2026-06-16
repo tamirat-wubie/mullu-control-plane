@@ -537,6 +537,27 @@ def test_connector_action_promotion_gate_sdlc_artifacts_validate() -> None:
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
+def test_worker_receipt_ledger_read_model_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_worker_receipt_ledger_read_model_20260616.json")
+    design_path = Path("examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "worker receipt ledger requirement")
+    design_record = validator.load_json_object(design_path, "worker receipt ledger design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "WorkerReceiptLedgerReadModel" in design_record["architecture_summary"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in design_record["schema_changes"]
+    assert "no worker dispatch" in requirement_record["non_goals"]
+    assert "scripts/validate_worker_receipt_ledger_read_model.py" in design_record["validator_changes"]
+    assert "tests/test_validate_worker_receipt_ledger_read_model.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
     implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
     implementation["changed_files"][0]["path"] = "../outside.py"

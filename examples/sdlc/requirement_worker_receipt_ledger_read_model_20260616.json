@@ -1,0 +1,64 @@
+{
+  "requirement_id": "REQ-worker-receipt-ledger-read-model-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-worker-receipt-ledger-read-model",
+  "problem_statement": "Scheduler-worker, read-only worker, failure receipt, and connector-promotion proof threads exist, but operators lack one schema-backed read model that summarizes worker receipt chain status without admitting live receipt-store reads or dispatch.",
+  "success_criteria": [
+    "WorkerReceiptLedgerReadModel validates against a public JSON schema and Foundation Mode example",
+    "WorkerReceiptLedgerReadModel projects worker, lease, runtime receipt, failure, and connector-promotion refs into bounded chain summaries",
+    "WorkerReceiptLedgerReadModel blocks live receipt-store reads, worker dispatch, runtime receipt emission, connector calls, writes, terminal closure, and success claims",
+    "WorkerReceiptLedgerReadModel rejects summary-count drift from projected receipt chains",
+    "WorkerReceiptLedgerReadModel is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live receipt store reads",
+    "no worker dispatch",
+    "no runtime receipt emission",
+    "no connector calls",
+    "no filesystem writes",
+    "no secret access",
+    "no terminal closure",
+    "no production readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "source_receipt_store_live_read_performed remains false in the Foundation example",
+    "worker_dispatch_allowed remains false in the Foundation example",
+    "runtime_receipt_emission_allowed remains false in the Foundation example",
+    "connector_call_allowed remains false in the Foundation example",
+    "terminal_closure_allowed remains false in the Foundation example",
+    "success_claim_allowed remains false in the Foundation example",
+    "raw payloads and raw secrets remain excluded",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/worker_receipt_ledger_read_model.schema.json",
+    "examples/worker_receipt_ledger_read_model.foundation.json",
+    "scripts/validate_worker_receipt_ledger_read_model.py",
+    "tests/test_validate_worker_receipt_ledger_read_model.py",
+    "docs/84_worker_receipt_ledger_read_model_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_worker_receipt_ledger_read_model.py",
+    "python -m pytest tests/test_validate_worker_receipt_ledger_read_model.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_worker_receipt_ledger_read_model_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/worker_receipt_ledger_read_model.schema.json",
+    "examples/worker_receipt_ledger_read_model.foundation.json",
+    "scripts/validate_worker_receipt_ledger_read_model.py",
+    "tests/test_validate_worker_receipt_ledger_read_model.py",
+    "docs/84_worker_receipt_ledger_read_model_contract.md",
+    "examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json",
+    "examples/sdlc/security_review_worker_receipt_ledger_read_model_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/worker-receipt-ledger-read-model/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/worker-receipt-ledger-read-model/requirement",
+  "receipt_ref": "receipt://sdlc/worker-receipt-ledger-read-model/requirement"
+}

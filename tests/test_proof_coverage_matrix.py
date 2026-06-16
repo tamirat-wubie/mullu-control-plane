@@ -4266,6 +4266,35 @@ def test_connector_action_promotion_gate_blocks_live_authority() -> None:
     assert closure_actions["publish_connector_action_promotion_gate_contract"]["status"] == "closed"
 
 
+def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    ledger_surface = surfaces["worker_receipt_ledger_read_model"]
+    ledger_witness_surface = witness_surfaces["worker_receipt_ledger_read_model"]
+    witnesses = set(ledger_surface["runtime_witnesses"])
+
+    assert ledger_surface["coverage_state"] == "witnessed"
+    assert ledger_surface["request_proof"] == "read_model"
+    assert ledger_surface["action_proof"] == "read_model"
+    assert "WorkerReceiptLedgerReadModel" in ledger_surface["representative_paths"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in ledger_surface["evidence_files"]
+    assert "examples/worker_receipt_ledger_read_model.foundation.json" in ledger_surface["evidence_files"]
+    assert "scripts/validate_worker_receipt_ledger_read_model.py" in ledger_surface["evidence_files"]
+    assert "tests/test_validate_worker_receipt_ledger_read_model.py" in ledger_surface["evidence_files"]
+    assert "worker_receipt_ledger_read_model_schema_valid" in witnesses
+    assert "worker_receipt_ledger_read_model_blocks_live_authority" in witnesses
+    assert "worker_receipt_ledger_read_model_rejects_summary_drift" in witnesses
+    assert "worker_receipt_ledger_read_model_rejects_missing_refs" in witnesses
+    assert ledger_witness_surface["exact_test_anchor_count"] == 6
+    assert ledger_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_worker_receipt_ledger_read_model_contract"]["status"] == "closed"
+
+
 def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
