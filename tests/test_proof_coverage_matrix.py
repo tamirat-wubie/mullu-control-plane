@@ -4320,6 +4320,43 @@ def test_readiness_waiver_review_packet_blocks_readiness_authority() -> None:
     assert closure_actions["publish_readiness_waiver_review_packet_contract"]["status"] == "closed"
 
 
+def test_resilience_rehearsal_reports_block_live_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    chaos_surface = surfaces["chaos_rehearsal_execution_report"]
+    fuzz_surface = surfaces["invariant_fuzz_execution_report"]
+    chaos_witness_surface = witness_surfaces["chaos_rehearsal_execution_report"]
+    fuzz_witness_surface = witness_surfaces["invariant_fuzz_execution_report"]
+    chaos_witnesses = set(chaos_surface["runtime_witnesses"])
+    fuzz_witnesses = set(fuzz_surface["runtime_witnesses"])
+
+    assert chaos_surface["coverage_state"] == "witnessed"
+    assert fuzz_surface["coverage_state"] == "witnessed"
+    assert chaos_surface["request_proof"] == "request_proof"
+    assert fuzz_surface["action_proof"] == "action_proof"
+    assert "ChaosRehearsalExecutionReport" in chaos_surface["representative_paths"]
+    assert "InvariantFuzzExecutionReport" in fuzz_surface["representative_paths"]
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in chaos_surface["evidence_files"]
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in fuzz_surface["evidence_files"]
+    assert "scripts/validate_resilience_rehearsal_reports.py" in chaos_surface["evidence_files"]
+    assert "tests/test_validate_resilience_rehearsal_reports.py" in fuzz_surface["evidence_files"]
+    assert "chaos_rehearsal_execution_report_blocks_runtime_execution" in chaos_witnesses
+    assert "chaos_rehearsal_execution_report_rejects_rollback_drift" in chaos_witnesses
+    assert "invariant_fuzz_execution_report_blocks_live_fuzzing" in fuzz_witnesses
+    assert "invariant_fuzz_execution_report_rejects_case_drift" in fuzz_witnesses
+    assert chaos_witness_surface["exact_test_anchor_count"] == 6
+    assert fuzz_witness_surface["exact_test_anchor_count"] == 6
+    assert chaos_witness_surface["unanchored_witness_count"] == 0
+    assert fuzz_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_chaos_rehearsal_execution_report_contract"]["status"] == "closed"
+    assert closure_actions["publish_invariant_fuzz_execution_report_contract"]["status"] == "closed"
+
+
 def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

@@ -204,6 +204,23 @@ def test_github_branch_protection_reconcile_receipt_boundary_security_review_pas
     assert review["receipt_ref"] in review["security_receipts"]
 
 
+def test_resilience_rehearsal_reports_security_review_passes_strict() -> None:
+    review_path = Path("examples/sdlc/security_review_resilience_rehearsal_reports_20260616.json")
+    review = validate_sdlc_artifact.load_json_object(review_path, "resilience rehearsal reports security review")
+
+    errors = validator.validate_contract(review_path, strict=True)
+
+    assert errors == []
+    assert "auth" in review["impact_categories"]
+    assert "policy" in review["impact_categories"]
+    assert "deployment" in review["impact_categories"]
+    assert "filesystem" in review["impact_categories"]
+    assert "receipts" in review["impact_categories"]
+    assert review["release_blocked"] is False
+    assert review["residual_risk"] == "low"
+    assert review["receipt_ref"] in review["security_receipts"]
+
+
 def test_distributed_lease_claim_receipt_boundary_security_review_passes_strict() -> None:
     review_path = Path("examples/sdlc/security_review_distributed_lease_claim_receipt_boundary_20260615.json")
     review = validate_sdlc_artifact.load_json_object(review_path, "distributed lease claim security review")

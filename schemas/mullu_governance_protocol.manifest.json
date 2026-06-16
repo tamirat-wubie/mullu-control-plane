@@ -1815,6 +1815,18 @@
       "path": "schemas/read_only_worker_runtime_runner_registration_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "chaos-rehearsal-execution-report",
+      "path": "schemas/chaos_rehearsal_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "invariant-fuzz-execution-report",
+      "path": "schemas/invariant_fuzz_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+      "surface": "governance"
     }
   ],
   "uri_schemes": [

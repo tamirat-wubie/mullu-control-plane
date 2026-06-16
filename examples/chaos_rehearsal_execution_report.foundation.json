@@ -1,0 +1,87 @@
+{
+  "report_id": "chaos-rehearsal-foundation-20260616",
+  "report_version": "chaos_rehearsal_execution_report.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "rehearsal_scope": {
+    "target_surface": "worker",
+    "scenario_set_ref": "scenario-set://foundation/worker-runtime-receipt-resilience",
+    "owner": "Mullusi Foundation Mode",
+    "execution_mode": "dry_run",
+    "uao_ref": "uao://foundation/chaos-rehearsal-execution-report",
+    "phi_gov_ref": null
+  },
+  "rehearsal_result": {
+    "decision": "CHAOS_REHEARSAL_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE",
+    "runtime_execution_performed": false,
+    "external_effects_performed": false,
+    "filesystem_mutation_performed": false,
+    "deployment_mutation_allowed": false,
+    "production_readiness_claim_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "required_evidence_refs": [
+      "evidence://chaos-rehearsal/operator-approval",
+      "evidence://chaos-rehearsal/runtime-sandbox",
+      "evidence://chaos-rehearsal/rollback-rehearsal",
+      "evidence://chaos-rehearsal/incident-handoff",
+      "evidence://chaos-rehearsal/monitoring-witness"
+    ],
+    "blocked_reason_refs": [
+      "blocked://chaos-rehearsal/runtime-sandbox-missing",
+      "blocked://chaos-rehearsal/operator-approval-missing",
+      "blocked://chaos-rehearsal/rollback-rehearsal-missing",
+      "blocked://production-readiness/denied"
+    ]
+  },
+  "scenarios": [
+    {
+      "scenario_id": "worker-timeout-receipt-preservation",
+      "scenario_class": "worker_timeout",
+      "input_fixture_ref": "fixtures://worker/runtime-timeout-dry-run",
+      "expected_invariant_ref": "invariant://worker/no-success-without-receipt",
+      "expected_result": "worker timeout remains a failure receipt with rollback obligation",
+      "observed_result": "not_executed_dry_run",
+      "rollback_obligation_ref": "rollback://worker/runtime-timeout-rehearsal",
+      "incident_handoff_ref": "incident://worker/runtime-timeout-handoff"
+    },
+    {
+      "scenario_id": "lease-contention-fencing-token",
+      "scenario_class": "lease_contention",
+      "input_fixture_ref": "fixtures://worker/lease-contention-dry-run",
+      "expected_invariant_ref": "invariant://lease/fencing-token-required",
+      "expected_result": "lease contention cannot dispatch without a valid fencing token",
+      "observed_result": "not_executed_dry_run",
+      "rollback_obligation_ref": "rollback://lease/contention-rehearsal",
+      "incident_handoff_ref": "incident://lease/contention-handoff"
+    }
+  ],
+  "rollback_recovery": {
+    "rollback_required_before_live_execution": true,
+    "rollback_plan_ref": "rollback://chaos-rehearsal/foundation-plan",
+    "replay_bundle_ref": "replay://chaos-rehearsal/foundation-dry-run",
+    "incident_handoff_required": true,
+    "terminal_closure_ref": null
+  },
+  "receipt_refs": {
+    "chaos_rehearsal_execution_report_schema": "schemas/chaos_rehearsal_execution_report.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json"
+  },
+  "contract_summary": {
+    "scenario_count": 2,
+    "required_evidence_ref_count": 5,
+    "blocked_reason_ref_count": 4,
+    "receipt_ref_count": 4,
+    "evidence_ref_count": 7
+  },
+  "evidence_refs": [
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "examples/chaos_rehearsal_execution_report.foundation.json",
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "docs/87_resilience_rehearsal_reports_contract.md",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/worker_failure_receipt.schema.json"
+  ]
+}
