@@ -1,0 +1,67 @@
+{
+  "requirement_id": "REQ-mfidel-substrate-conformance-receipt-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-mfidel-substrate-conformance",
+  "problem_statement": "Mfidel atomicity is enforced in local Python runtime tests, but cross-runtime SDK and kernel drift can still occur without a schema-backed receipt that records substrate digests, grid bounds, exact-preservation witnesses, no-normalization proof refs, and pending TypeScript/Rust evidence gaps.",
+  "success_criteria": [
+    "MfidelSubstrateConformanceReceipt validates against a public JSON schema and Foundation Mode example",
+    "MfidelSubstrateConformanceReceipt records canonical grid bounds, vector dimension, known empty slots, overlay exceptions, and sound-only overlay metadata",
+    "MfidelSubstrateConformanceReceipt verifies local Python runtime digests for the substrate grid, legacy matrix view, and Mfidel contracts",
+    "MfidelSubstrateConformanceReceipt rejects Unicode normalization, decomposition, recomposition, root-letter modeling, consonant/vowel splitting, structural overlay decomposition, and terminal closure claims",
+    "MfidelSubstrateConformanceReceipt keeps TypeScript and Rust SDK/kernel bindings in AwaitingEvidence until digests and exact-preservation fixtures exist",
+    "MfidelSubstrateConformanceReceipt is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no Unicode normalization",
+    "no Unicode decomposition",
+    "no Unicode recomposition",
+    "no root-letter modeling",
+    "no consonant/vowel splitting",
+    "no lossy transliteration as canonical identity",
+    "no external SDK import",
+    "no live runtime call",
+    "no terminal closure",
+    "no production readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "each fidel remains an atomic symbol",
+    "grid reference remains f[row][col] with row in [1,34] and col in [1,8]",
+    "row 17 remains sound overlay metadata, not structural decomposition",
+    "cross_runtime_closure_claimed remains false in the Foundation example",
+    "TypeScript and Rust bindings remain AwaitingEvidence until local evidence exists",
+    "raw secrets remain excluded",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "python -m pytest tests/test_validate_mfidel_substrate_conformance_receipt.py -q",
+    "python -m pytest mcoi/tests/test_mfidel_atomicity.py mcoi/tests/test_mfidel_matrix.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_mfidel_substrate_conformance_receipt_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+    "examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/security_review_mfidel_substrate_conformance_receipt_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/mfidel-substrate-conformance-receipt/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/mfidel-substrate-conformance-receipt/requirement",
+  "receipt_ref": "receipt://sdlc/mfidel-substrate-conformance-receipt/requirement"
+}

@@ -1,0 +1,97 @@
+{
+  "security_review_id": "SEC-mfidel-substrate-conformance-receipt-20260616",
+  "change_id": "mfidel-substrate-conformance-receipt-20260616",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "An Mfidel conformance receipt can become unsafe if it treats normalized Unicode, root-letter modeling, consonant/vowel splitting, or lossy transliteration as equivalent symbolic identity. It can also become an authority bypass if external SDK/kernel bindings are marked validated without local digest and exact-preservation evidence. The mitigation is a schema-backed receipt that denies normalization/decomposition operations, validates local Python digests and exact sequence witnesses, and keeps TypeScript/Rust bindings in AwaitingEvidence with explicit gap refs.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "live runtime import authority and terminal closure remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external TypeScript/Rust SDK and kernel bindings remain AwaitingEvidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw secret material remains excluded",
+      "status": "passed",
+      "evidence_ref": "examples/mfidel_substrate_conformance_receipt.foundation.json"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Unicode normalization, Unicode decomposition, root-letter modeling, consonant/vowel splitting, and overlay structural decomposition remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms local implementation digests and summary counts cannot drift silently",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_digest_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "exact-preservation witnesses reject decomposed-like input",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_decomposed_like_input"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the conformance receipt surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_mfidel_substrate_conformance_receipt_preserves_atomicity"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "mfidel-cross-runtime-drift",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "Foundation Mode receipt validates local Python substrate evidence and keeps TypeScript/Rust SDK/kernel bindings AwaitingEvidence until digest, no-normalization, and exact-preservation refs exist.",
+      "evidence_refs": [
+        "schemas/mfidel_substrate_conformance_receipt.schema.json",
+        "scripts/validate_mfidel_substrate_conformance_receipt.py",
+        "tests/test_validate_mfidel_substrate_conformance_receipt.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "deny Unicode normalization, decomposition, and recomposition",
+    "deny root-letter modeling and consonant/vowel splitting",
+    "deny structural overlay decomposition",
+    "hash local Python substrate implementations",
+    "verify exact fidel sequence preservation through runtime lookup",
+    "keep external SDK/kernel bindings AwaitingEvidence until witnessed"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "receipt://sdlc/mfidel-substrate-conformance-receipt/security"
+  ],
+  "uao_ref": "uao://sdlc/mfidel-substrate-conformance-receipt/security",
+  "causal_decision_trace_ref": "trace://sdlc/mfidel-substrate-conformance-receipt/security",
+  "receipt_ref": "receipt://sdlc/mfidel-substrate-conformance-receipt/security"
+}

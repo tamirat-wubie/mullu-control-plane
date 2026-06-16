@@ -1,0 +1,277 @@
+{
+  "receipt_id": "mfidel-substrate-conformance-receipt-foundation-20260616",
+  "receipt_version": "mfidel_substrate_conformance_receipt.v1",
+  "checked_at": "2026-06-16T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "substrate_scope": {
+    "projection_mode": "foundation_cross_runtime_conformance",
+    "foundation_mode": true,
+    "grid_rows": 34,
+    "grid_cols": 8,
+    "vector_dimension": 272,
+    "non_empty_fidel_count": 269,
+    "empty_slot_count": 3,
+    "vowel_overlay_row": 17,
+    "cross_runtime_closure_claimed": false
+  },
+  "runtime_bindings": [
+    {
+      "binding_id": "python-substrate-grid",
+      "runtime_language": "python",
+      "implementation_ref": "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+      "conformance_status": "validated",
+      "digest_sha256": "19170c7796c64b4ddc7cf9e89d1d723bfc0313d99485ef45ad723e623b2da5e5",
+      "fixture_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py",
+        "mcoi/tests/test_mfidel_matrix.py"
+      ],
+      "no_normalization_proof_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py::test_mfidel_runtime_does_not_import_unicode_normalization"
+      ],
+      "exact_preservation_proof_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py::test_whole_fidel_glyph_is_atomic_lookup_unit",
+        "mcoi/tests/test_mfidel_atomicity.py::test_multi_fidel_text_is_sequence_not_single_symbol"
+      ],
+      "gap_refs": []
+    },
+    {
+      "binding_id": "python-legacy-matrix-view",
+      "runtime_language": "python",
+      "implementation_ref": "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+      "conformance_status": "validated",
+      "digest_sha256": "0ac7a41015414e8234cd1571a8397faceb623384262927dba8c71bc670ca56da",
+      "fixture_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py",
+        "mcoi/tests/test_mfidel_matrix.py"
+      ],
+      "no_normalization_proof_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py::test_mfidel_runtime_does_not_import_unicode_normalization"
+      ],
+      "exact_preservation_proof_refs": [
+        "mcoi/tests/test_mfidel_matrix.py::TestVectorize::test_text_to_fidel_sequence",
+        "mcoi/tests/test_mfidel_matrix.py::TestVectorize::test_text_to_fidel_sequence_allows_whitespace_separators"
+      ],
+      "gap_refs": []
+    },
+    {
+      "binding_id": "python-contracts-mfidel",
+      "runtime_language": "python",
+      "implementation_ref": "mcoi/mcoi_runtime/contracts/mfidel.py",
+      "conformance_status": "validated",
+      "digest_sha256": "fa6c2f2854888bc0ad85c81f948764fe5601307220ba3e8412bf6a1c898b6658",
+      "fixture_refs": [
+        "mcoi/tests/test_mfidel_matrix.py"
+      ],
+      "no_normalization_proof_refs": [
+        "mcoi/tests/test_mfidel_atomicity.py::test_mfidel_runtime_does_not_import_unicode_normalization"
+      ],
+      "exact_preservation_proof_refs": [
+        "mcoi/tests/test_mfidel_matrix.py::TestContractAtomicity::test_fidel_rejects_bad_row"
+      ],
+      "gap_refs": []
+    },
+    {
+      "binding_id": "typescript-msic-sdk",
+      "runtime_language": "typescript",
+      "implementation_ref": "external://msic-sdk/mfidel-substrate",
+      "conformance_status": "awaiting_evidence",
+      "digest_sha256": null,
+      "fixture_refs": [
+        "fixture://mfidel-substrate/cross-runtime/exact-preservation-pending"
+      ],
+      "no_normalization_proof_refs": [],
+      "exact_preservation_proof_refs": [],
+      "gap_refs": [
+        "gap://mfidel/typescript-sdk-digest-missing",
+        "gap://mfidel/typescript-sdk-no-normalization-proof-missing",
+        "gap://mfidel/typescript-sdk-exact-preservation-fixture-missing"
+      ]
+    },
+    {
+      "binding_id": "rust-tatoken-kernel",
+      "runtime_language": "rust",
+      "implementation_ref": "external://tatoken-kernel/mfidel-substrate",
+      "conformance_status": "awaiting_evidence",
+      "digest_sha256": null,
+      "fixture_refs": [
+        "fixture://mfidel-substrate/cross-runtime/exact-preservation-pending"
+      ],
+      "no_normalization_proof_refs": [],
+      "exact_preservation_proof_refs": [],
+      "gap_refs": [
+        "gap://mfidel/tatoken-kernel-digest-missing",
+        "gap://mfidel/tatoken-kernel-no-normalization-proof-missing",
+        "gap://mfidel/tatoken-kernel-exact-preservation-fixture-missing"
+      ]
+    },
+    {
+      "binding_id": "rust-tarc-core",
+      "runtime_language": "rust",
+      "implementation_ref": "external://tarc-core/mfidel-substrate",
+      "conformance_status": "awaiting_evidence",
+      "digest_sha256": null,
+      "fixture_refs": [
+        "fixture://mfidel-substrate/cross-runtime/exact-preservation-pending"
+      ],
+      "no_normalization_proof_refs": [],
+      "exact_preservation_proof_refs": [],
+      "gap_refs": [
+        "gap://mfidel/tarc-core-digest-missing",
+        "gap://mfidel/tarc-core-no-normalization-proof-missing",
+        "gap://mfidel/tarc-core-exact-preservation-fixture-missing"
+      ]
+    }
+  ],
+  "grid_contract": {
+    "coordinate_reference": "f[row][col]",
+    "row_min": 1,
+    "row_max": 34,
+    "col_min": 1,
+    "col_max": 8,
+    "vowel_overlay_row": 17,
+    "empty_slots": [
+      {
+        "row": 20,
+        "col": 8
+      },
+      {
+        "row": 21,
+        "col": 8
+      },
+      {
+        "row": 24,
+        "col": 8
+      }
+    ],
+    "overlay_exceptions": [
+      {
+        "source": {
+          "row": 1,
+          "col": 1
+        },
+        "overlay": {
+          "row": 17,
+          "col": 8
+        }
+      },
+      {
+        "source": {
+          "row": 3,
+          "col": 1
+        },
+        "overlay": {
+          "row": 17,
+          "col": 8
+        }
+      }
+    ],
+    "column_8_derivation": "f[r][8] = f[r][2] + f[17][4]",
+    "overlay_is_sound_metadata_only": true
+  },
+  "atomicity_guards": {
+    "unicode_normalization_allowed": false,
+    "unicode_decomposition_allowed": false,
+    "unicode_recomposition_allowed": false,
+    "root_letter_model_allowed": false,
+    "consonant_vowel_split_allowed": false,
+    "lossy_transliteration_canonical_allowed": false,
+    "phoneme_identity_substitution_allowed": false,
+    "overlay_structural_decomposition_allowed": false,
+    "raw_secret_material_included": false,
+    "live_runtime_import_authority_allowed": false,
+    "terminal_closure_allowed": false
+  },
+  "exact_preservation_witnesses": [
+    {
+      "sample_id": "ha-la-sequence",
+      "input_sequence": "\u1200\u1208",
+      "codepoints": [
+        "U+1200",
+        "U+1208"
+      ],
+      "expected_positions": [
+        {
+          "row": 1,
+          "col": 1
+        },
+        {
+          "row": 2,
+          "col": 1
+        }
+      ],
+      "preservation_status": "exact",
+      "normalization_applied": false
+    },
+    {
+      "sample_id": "vowel-overlay-row",
+      "input_sequence": "\u12a7\u12a0",
+      "codepoints": [
+        "U+12A7",
+        "U+12A0"
+      ],
+      "expected_positions": [
+        {
+          "row": 17,
+          "col": 1
+        },
+        {
+          "row": 17,
+          "col": 8
+        }
+      ],
+      "preservation_status": "exact",
+      "normalization_applied": false
+    },
+    {
+      "sample_id": "column-eight-overlay-boundary",
+      "input_sequence": "\u124b\u12a3",
+      "codepoints": [
+        "U+124B",
+        "U+12A3"
+      ],
+      "expected_positions": [
+        {
+          "row": 9,
+          "col": 8
+        },
+        {
+          "row": 17,
+          "col": 4
+        }
+      ],
+      "preservation_status": "exact",
+      "normalization_applied": false
+    }
+  ],
+  "receipt_refs": {
+    "mfidel_substrate_conformance_schema": "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "mfidel_grid_runtime": "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+    "mfidel_matrix_runtime": "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+    "mfidel_contract_runtime": "mcoi/mcoi_runtime/contracts/mfidel.py",
+    "mfidel_atomicity_tests": "mcoi/tests/test_mfidel_atomicity.py",
+    "mfidel_matrix_tests": "mcoi/tests/test_mfidel_matrix.py"
+  },
+  "contract_summary": {
+    "runtime_binding_count": 6,
+    "validated_binding_count": 3,
+    "awaiting_evidence_binding_count": 3,
+    "exact_preservation_witness_count": 3,
+    "evidence_ref_count": 14
+  },
+  "evidence_refs": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+    "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+    "mcoi/mcoi_runtime/contracts/mfidel.py",
+    "mcoi/tests/test_mfidel_atomicity.py",
+    "mcoi/tests/test_mfidel_matrix.py",
+    "docs/27_mfidel_semantic_layer.md",
+    "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+    "examples/sdlc/requirement_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/security_review_mfidel_substrate_conformance_receipt_20260616.json"
+  ]
+}
