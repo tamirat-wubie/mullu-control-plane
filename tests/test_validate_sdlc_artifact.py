@@ -516,6 +516,27 @@ def test_scheduler_worker_runtime_receipt_emitter_dry_run_sdlc_artifacts_validat
     assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
 
 
+def test_connector_action_promotion_gate_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_connector_action_promotion_gate_20260616.json")
+    design_path = Path("examples/sdlc/design_connector_action_promotion_gate_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "connector action promotion gate requirement")
+    design_record = validator.load_json_object(design_path, "connector action promotion gate design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "ConnectorActionPromotionGate" in design_record["architecture_summary"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in design_record["schema_changes"]
+    assert "no live connector invocation" in requirement_record["non_goals"]
+    assert "scripts/validate_connector_action_promotion_gate.py" in design_record["validator_changes"]
+    assert "tests/test_validate_connector_action_promotion_gate.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
     implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
     implementation["changed_files"][0]["path"] = "../outside.py"

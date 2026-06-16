@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:connector-action-promotion-gate:1",
+  "title": "Connector Action Promotion Gate",
+  "description": "Non-executing gate for classifying whether a connector action may move beyond plan-only status.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "generated_at",
+    "source_connector_descriptor_ref",
+    "source_connector_result_ref",
+    "promotion_scope",
+    "authority_preflight",
+    "gate_decision",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "minLength": 1},
+    "receipt_version": {"const": "connector_action_promotion_gate.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_connector_descriptor_ref": {"type": "string", "minLength": 1},
+    "source_connector_result_ref": {"type": "string", "minLength": 1},
+    "promotion_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector_id",
+        "action_id",
+        "tenant_id",
+        "requested_effect_class",
+        "trust_class",
+        "credential_scope_id",
+        "promotion_target",
+        "uao_ref",
+        "phi_gov_ref"
+      ],
+      "properties": {
+        "connector_id": {"type": "string", "minLength": 1},
+        "action_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "requested_effect_class": {
+          "type": "string",
+          "enum": ["internal_pure", "external_read", "external_write", "human_mediated", "privileged"]
+        },
+        "trust_class": {
+          "type": "string",
+          "enum": ["trusted_internal", "bounded_external", "untrusted_external"]
+        },
+        "credential_scope_id": {"type": "string", "minLength": 1},
+        "promotion_target": {
+          "type": "string",
+          "enum": ["plan_only", "read_only_probe", "live_external_read", "live_external_write", "privileged_action"]
+        },
+        "uao_ref": {"type": "string", "minLength": 1},
+        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "authority_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector_descriptor_bound",
+        "connector_result_bound",
+        "credential_scope_bound",
+        "uao_ref_present",
+        "phi_gov_authorization_present",
+        "operator_approval_present",
+        "life_meaning_judgment_present",
+        "rollback_recovery_ref_present",
+        "secret_access_receipt_present",
+        "connector_worker_execution_receipt_present",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "connector_descriptor_bound": {"type": "boolean"},
+        "connector_result_bound": {"type": "boolean"},
+        "credential_scope_bound": {"type": "boolean"},
+        "uao_ref_present": {"type": "boolean"},
+        "phi_gov_authorization_present": {"type": "boolean"},
+        "operator_approval_present": {"type": "boolean"},
+        "life_meaning_judgment_present": {"type": "boolean"},
+        "rollback_recovery_ref_present": {"type": "boolean"},
+        "secret_access_receipt_present": {"type": "boolean"},
+        "connector_worker_execution_receipt_present": {"type": "boolean"},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true}
+      }
+    },
+    "gate_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "promotion_allowed",
+        "live_connector_call_allowed",
+        "external_write_allowed",
+        "secret_access_allowed",
+        "runtime_dispatch_allowed",
+        "deployment_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "raw_secret_material_included",
+        "operator_approval_required",
+        "required_live_evidence_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "PROMOTION_BLOCKED_AWAITING_LIVE_EVIDENCE",
+            "PROMOTION_READY_FOR_OPERATOR_REVIEW",
+            "PROMOTION_ADMITTED"
+          ]
+        },
+        "promotion_allowed": {"type": "boolean"},
+        "live_connector_call_allowed": {"type": "boolean"},
+        "external_write_allowed": {"type": "boolean"},
+        "secret_access_allowed": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"type": "boolean"},
+        "deployment_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"},
+        "raw_secret_material_included": {"type": "boolean"},
+        "operator_approval_required": {"type": "boolean"},
+        "required_live_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocked_reason_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connector_action_promotion_gate_schema",
+        "connector_descriptor_schema",
+        "connector_result_schema",
+        "universal_action_orchestration_schema",
+        "connector_self_healing_receipt_schema",
+        "worker_failure_receipt_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "connector_action_promotion_gate_schema": {"type": "string", "minLength": 1},
+        "connector_descriptor_schema": {"type": "string", "minLength": 1},
+        "connector_result_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "connector_self_healing_receipt_schema": {"type": "string", "minLength": 1},
+        "worker_failure_receipt_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "promotion_allowed",
+        "required_live_evidence_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "promotion_allowed": {"type": "boolean"},
+        "required_live_evidence_ref_count": {"type": "integer", "minimum": 0},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "requirement_id": "REQ-connector-action-promotion-gate-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-connector-action-promotion-gate",
+  "problem_statement": "Connector descriptors and UAO refs exist, but the control plane lacks a schema-backed gate that blocks connector action promotion until live evidence, approval, secret-access, connector-worker execution, and rollback receipts exist.",
+  "success_criteria": [
+    "ConnectorActionPromotionGate validates against a public JSON schema and Foundation Mode example",
+    "ConnectorActionPromotionGate binds ConnectorDescriptor and ConnectorResult fixture evidence",
+    "ConnectorActionPromotionGate blocks live connector calls, secret access, runtime dispatch, deployment mutation, terminal closure, and success claims",
+    "ConnectorActionPromotionGate records required live evidence refs and blocked reason refs",
+    "ConnectorActionPromotionGate is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live connector invocation",
+    "no secret access",
+    "no connector worker execution",
+    "no runtime dispatch",
+    "no deployment mutation",
+    "no terminal closure",
+    "no production readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "promotion_allowed remains false in the Foundation example",
+    "live_connector_call_allowed remains false in the Foundation example",
+    "Phi_gov authorization remains absent until future evidence exists",
+    "operator approval remains absent until future evidence exists",
+    "secret access receipt remains absent until future evidence exists",
+    "connector worker execution receipt remains absent until future evidence exists",
+    "rollback recovery receipt remains absent until future evidence exists",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/connector_action_promotion_gate.schema.json",
+    "examples/connector_action_promotion_gate.foundation.json",
+    "scripts/validate_connector_action_promotion_gate.py",
+    "tests/test_validate_connector_action_promotion_gate.py",
+    "docs/83_connector_action_promotion_gate_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_connector_action_promotion_gate.py",
+    "python -m pytest tests/test_validate_connector_action_promotion_gate.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_connector_action_promotion_gate_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/connector_action_promotion_gate.schema.json",
+    "examples/connector_action_promotion_gate.foundation.json",
+    "scripts/validate_connector_action_promotion_gate.py",
+    "tests/test_validate_connector_action_promotion_gate.py",
+    "docs/83_connector_action_promotion_gate_contract.md",
+    "examples/sdlc/design_connector_action_promotion_gate_20260616.json",
+    "examples/sdlc/security_review_connector_action_promotion_gate_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/connector-action-promotion-gate/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/connector-action-promotion-gate/requirement",
+  "receipt_ref": "receipt://sdlc/connector-action-promotion-gate/requirement"
+}

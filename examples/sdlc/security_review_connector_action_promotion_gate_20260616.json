@@ -1,0 +1,103 @@
+{
+  "security_review_id": "SEC-connector-action-promotion-gate-20260616",
+  "change_id": "connector-action-promotion-gate-20260616",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Connector action promotion can accidentally become live connector execution if connector descriptor evidence, UAO admission, Phi_gov authorization, operator approval, secret access receipts, connector-worker execution receipts, and rollback evidence are conflated. The main risks are calling a connector from a validation path, serializing secret material, treating a prior ConnectorResult as authority for a new live call, granting external write authority, bypassing UAO, and claiming terminal closure without effect reconciliation. The mitigation is a non-executing gate schema and validator that bind source connector fixtures, require live evidence refs, deny live calls and secrets in Foundation Mode, and retain blocked reason refs.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "promotion authority remains false in Foundation example",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "live connector calls remain denied",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_connector_action_promotion_gate.py"
+    },
+    {
+      "category": "secrets",
+      "check": "secret access and raw secret material remain denied",
+      "status": "passed",
+      "evidence_ref": "examples/connector_action_promotion_gate.foundation.json"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms no secret values or raw provider responses are serialized",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_connector_action_promotion_gate.py"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms promotion cannot bypass UAO, Phi_gov, or operator approval",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_authority_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "required live evidence and blocked reason refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_missing_refs"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_connector_action_promotion_gate.py::test_connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the gate surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_connector_action_promotion_gate_blocks_live_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "connector-action-promotion-live-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode gate blocks promotion and all live connector authority until named evidence refs exist.",
+      "evidence_refs": [
+        "schemas/connector_action_promotion_gate.schema.json",
+        "scripts/validate_connector_action_promotion_gate.py",
+        "tests/test_validate_connector_action_promotion_gate.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ConnectorActionPromotionGate validation non-live and deterministic",
+    "require UAO and Phi_gov refs before promotion can be reconsidered",
+    "require operator approval before live connector calls",
+    "require secret access receipts and connector-worker execution receipts before live execution",
+    "require rollback and recovery evidence before terminal closure",
+    "reject raw secret material and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/connector_action_promotion_gate.schema.json",
+    "examples/connector_action_promotion_gate.foundation.json",
+    "scripts/validate_connector_action_promotion_gate.py",
+    "tests/test_validate_connector_action_promotion_gate.py",
+    "receipt://sdlc/connector-action-promotion-gate/security"
+  ],
+  "uao_ref": "uao://sdlc/connector-action-promotion-gate/security",
+  "causal_decision_trace_ref": "trace://sdlc/connector-action-promotion-gate/security",
+  "receipt_ref": "receipt://sdlc/connector-action-promotion-gate/security"
+}

@@ -5744,6 +5744,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "connector_action_promotion_gate",
+            [
+                "ConnectorActionPromotionGate",
+                "validate_connector_action_promotion_gate",
+                "connector_action_promotion_gate.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/connector_action_promotion_gate.schema.json",
+                "examples/connector_action_promotion_gate.foundation.json",
+                "scripts/validate_connector_action_promotion_gate.py",
+                "tests/test_validate_connector_action_promotion_gate.py",
+                "schemas/connector_descriptor.schema.json",
+                "schemas/connector_result.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "docs/83_connector_action_promotion_gate_contract.md",
+            ],
+            "Connector action promotion gates bind connector descriptor/result evidence, UAO refs, Phi_gov authorization state, approval state, secret-access receipt state, connector-worker execution receipt state, rollback evidence, and blocked reason refs before any connector action can leave plan-only status.",
+            [
+                "connector_action_promotion_gate_schema_valid",
+                "connector_action_promotion_gate_blocks_live_calls",
+                "connector_action_promotion_gate_binds_source_fixtures",
+                "connector_action_promotion_gate_rejects_authority_drift",
+                "connector_action_promotion_gate_rejects_missing_refs",
+                "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "connector_action_promotion_gate_schema_valid": [
+                    "connector_action_promotion_gate_passes"
+                ],
+                "connector_action_promotion_gate_blocks_live_calls": [
+                    "connector_action_promotion_gate_passes",
+                    "connector_action_promotion_gate_rejects_authority_drift",
+                ],
+                "connector_action_promotion_gate_binds_source_fixtures": [
+                    "connector_action_promotion_gate_passes",
+                    "connector_action_promotion_gate_rejects_source_mismatch",
+                ],
+                "connector_action_promotion_gate_rejects_authority_drift": [
+                    "connector_action_promotion_gate_rejects_authority_drift"
+                ],
+                "connector_action_promotion_gate_rejects_missing_refs": [
+                    "connector_action_promotion_gate_rejects_missing_refs"
+                ],
+                "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift": [
+                    "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -9628,6 +9681,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_connector_self_healing_receipt_contract",
             "surfaces": ["connector_self_healing"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_connector_action_promotion_gate_contract",
+            "surfaces": ["connector_action_promotion_gate"],
             "status": "closed",
         },
         {

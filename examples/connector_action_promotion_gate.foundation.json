@@ -1,0 +1,89 @@
+{
+  "receipt_id": "connector-action-promotion-gate-foundation-20260616",
+  "receipt_version": "connector_action_promotion_gate.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "source_connector_descriptor_ref": "integration/contracts_compat/fixtures/connector_descriptor.json",
+  "source_connector_result_ref": "integration/contracts_compat/fixtures/connector_result.json",
+  "promotion_scope": {
+    "connector_id": "connector-github-read",
+    "action_id": "github-readonly-source-metadata-probe",
+    "tenant_id": "foundation-local-tenant",
+    "requested_effect_class": "external_read",
+    "trust_class": "bounded_external",
+    "credential_scope_id": "cred-scope-github-read",
+    "promotion_target": "live_external_read",
+    "uao_ref": "uao://connector-action-promotion-gate/foundation/read-only-probe",
+    "phi_gov_ref": null
+  },
+  "authority_preflight": {
+    "connector_descriptor_bound": true,
+    "connector_result_bound": true,
+    "credential_scope_bound": true,
+    "uao_ref_present": true,
+    "phi_gov_authorization_present": false,
+    "operator_approval_present": false,
+    "life_meaning_judgment_present": true,
+    "rollback_recovery_ref_present": false,
+    "secret_access_receipt_present": false,
+    "connector_worker_execution_receipt_present": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "gate_decision": {
+    "decision": "PROMOTION_BLOCKED_AWAITING_LIVE_EVIDENCE",
+    "promotion_allowed": false,
+    "live_connector_call_allowed": false,
+    "external_write_allowed": false,
+    "secret_access_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "deployment_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "raw_secret_material_included": false,
+    "operator_approval_required": true,
+    "required_live_evidence_refs": [
+      "evidence://connector-action/uao-admission",
+      "evidence://connector-action/phi-gov-authorization",
+      "evidence://connector-action/operator-approval",
+      "evidence://connector-action/credential-scope-live-bound",
+      "evidence://connector-action/secret-access-receipt",
+      "evidence://connector-action/connector-worker-execution-receipt",
+      "evidence://connector-action/rollback-recovery-receipt"
+    ],
+    "blocked_reason_refs": [
+      "blocked://phi-gov/authorization-missing",
+      "blocked://operator-approval/missing",
+      "blocked://secret-access-receipt/missing",
+      "blocked://connector-worker-execution-receipt/missing",
+      "blocked://rollback-recovery/missing"
+    ]
+  },
+  "receipt_refs": {
+    "connector_action_promotion_gate_schema": "schemas/connector_action_promotion_gate.schema.json",
+    "connector_descriptor_schema": "schemas/connector_descriptor.schema.json",
+    "connector_result_schema": "schemas/connector_result.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "connector_self_healing_receipt_schema": "schemas/connector_self_healing_receipt.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "promotion_allowed": false,
+    "required_live_evidence_ref_count": 7,
+    "blocked_reason_ref_count": 5,
+    "receipt_ref_count": 7,
+    "evidence_ref_count": 11
+  },
+  "evidence_refs": [
+    "schemas/connector_action_promotion_gate.schema.json",
+    "examples/connector_action_promotion_gate.foundation.json",
+    "scripts/validate_connector_action_promotion_gate.py",
+    "tests/test_validate_connector_action_promotion_gate.py",
+    "schemas/connector_descriptor.schema.json",
+    "schemas/connector_result.schema.json",
+    "integration/contracts_compat/fixtures/connector_descriptor.json",
+    "integration/contracts_compat/fixtures/connector_result.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/connector_self_healing_receipt.schema.json",
+    "docs/10_external_integration_plane.md"
+  ]
+}
