@@ -46,6 +46,9 @@ def test_team_ops_shared_inbox_send_preparation_blocks_without_decision_ready(
     assert receipt.proof_state == "Unknown"
     assert receipt.approval_decision_receipt_valid is True
     assert receipt.approval_decision_receipt_ready is False
+    assert receipt.provider_observation_receipt_ref == ""
+    assert receipt.provider_observation_receipt_id == ""
+    assert receipt.provider_observation_receipt_valid is False
     assert receipt.send_preparation_ready is False
     assert receipt.send_execution_performed_by_producer is False
     assert receipt.draft_created_by_producer is False
@@ -69,6 +72,10 @@ def test_team_ops_shared_inbox_send_preparation_requires_preparation_evidence(
 
     assert receipt.status == "blocked"
     assert receipt.approval_decision_receipt_ready is True
+    assert receipt.provider_observation_receipt_ref == (
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.decision == "approved"
     assert receipt.external_send_authorized_by_decision is True
     assert receipt.send_preparation_state == "missing"
@@ -98,6 +105,10 @@ def test_team_ops_shared_inbox_send_preparation_accepts_approved_packet(
     assert receipt.status == "passed"
     assert receipt.solver_outcome == "SolvedVerified"
     assert receipt.proof_state == "Pass"
+    assert receipt.provider_observation_receipt_id == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert receipt.provider_observation_receipt_valid is True
     assert receipt.approval_state == "approved"
     assert receipt.send_preparation_state == "prepared"
     assert receipt.send_preparation_ready is True
@@ -212,6 +223,7 @@ def test_team_ops_shared_inbox_send_preparation_cli_writes_report(
     assert written == output_path
     assert exit_code == 0
     assert payload["status"] == "passed"
+    assert payload["provider_observation_receipt_valid"] is True
     assert payload["send_preparation_ready"] is True
     assert stdout_payload["receipt_id"] == payload["receipt_id"]
     assert captured.err == ""
