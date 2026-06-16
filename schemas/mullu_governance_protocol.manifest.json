@@ -1703,6 +1703,12 @@
       "surface": "team_ops"
     },
     {
+      "schema_id": "team-ops-shared-inbox-terminal-closure-anchor-receipt",
+      "path": "schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-receipt:1",
+      "surface": "team_ops"
+    },
+    {
       "schema_id": "worker-failure-receipt",
       "path": "schemas/worker_failure_receipt.schema.json",
       "urn": "urn:mullusi:schema:worker-failure-receipt:1",
