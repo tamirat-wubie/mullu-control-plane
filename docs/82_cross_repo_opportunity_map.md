@@ -37,6 +37,7 @@ The control plane already absorbed several high-fit ideas:
 | Readiness gate and waiver review | `ReadinessWaiverReviewPacket` | Implemented |
 | Browser inspection boundary | `BrowserObservationReceipt` | Implemented |
 | Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
+| Capture policy and trusted reality evidence packet | `TrustedCaptureEvidencePacket` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -71,9 +72,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `TrustedCaptureEvidencePacket`
-   - Extends the capture policy lineage toward future browser, screen, video, and sensor receipts.
-   - Should remain dry-run and media-capture-denied until capture witnesses exist.
+2. `SccmlTraceAdapterWitness`
+   - Creates the boundary before any SCCML execution-chain trace can become governance proof.
+   - Should remain witness-only until instruction-trace refs, state-hash refs, proof refs, and unsupported-op gaps are validated.
 
 ## 6. Project Discipline Mesh Findings
 

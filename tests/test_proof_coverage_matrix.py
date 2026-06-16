@@ -4350,6 +4350,39 @@ def test_browser_observation_receipt_blocks_browser_authority() -> None:
     assert closure_actions["publish_browser_observation_receipt_contract"]["status"] == "closed"
 
 
+def test_trusted_capture_evidence_packet_blocks_capture_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    capture_surface = surfaces["trusted_capture_evidence_packet"]
+    capture_witness_surface = witness_surfaces["trusted_capture_evidence_packet"]
+    witnesses = set(capture_surface["runtime_witnesses"])
+
+    assert capture_surface["coverage_state"] == "witnessed"
+    assert capture_surface["request_proof"] == "request_proof"
+    assert capture_surface["action_proof"] == "action_proof"
+    assert capture_surface["audit"] == "audit_chain"
+    assert "TrustedCaptureEvidencePacket" in capture_surface["representative_paths"]
+    assert "schemas/trusted_capture_evidence_packet.schema.json" in capture_surface["evidence_files"]
+    assert "examples/trusted_capture_evidence_packet.foundation.json" in capture_surface["evidence_files"]
+    assert "scripts/validate_trusted_capture_evidence_packet.py" in capture_surface["evidence_files"]
+    assert "tests/test_validate_trusted_capture_evidence_packet.py" in capture_surface["evidence_files"]
+    assert "trusted_capture_evidence_packet_schema_valid" in witnesses
+    assert "trusted_capture_evidence_packet_blocks_capture_authority" in witnesses
+    assert "trusted_capture_evidence_packet_requires_digest_refs" in witnesses
+    assert "trusted_capture_evidence_packet_rejects_raw_media_retention" in witnesses
+    assert "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "trusted_capture_evidence_packet_sdlc_artifacts_valid" in witnesses
+    assert capture_witness_surface["exact_test_anchor_count"] == 6
+    assert capture_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_trusted_capture_evidence_packet_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

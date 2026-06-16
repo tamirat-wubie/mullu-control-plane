@@ -1,0 +1,82 @@
+{
+  "packet_id": "trusted-capture-evidence-packet-foundation-20260616",
+  "packet_version": "trusted_capture_evidence_packet.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "capture_scope": {
+    "source_surface_hash": "hash://sha256/trusted-capture-redacted-source-surface",
+    "surface_redaction_policy": "digest_only_no_raw_surface",
+    "capture_mode": "dry_run_operator_supplied_digest",
+    "capture_surface": "manual_capture",
+    "consent_scope": "operator_local_explicit",
+    "consent_ref": "consent://trusted-capture/operator-local-explicit",
+    "tenant_scope": "foundation-local-only",
+    "capture_policy_ref": "schemas/capture_policy_decision_ledger.schema.json",
+    "evidence_classification_ref": "schemas/evidence_classification_manifest.schema.json",
+    "uao_ref": "uao://trusted-capture/foundation/digest-only"
+  },
+  "capture_artifacts": {
+    "surface_digest_ref": "hash://sha256/trusted-capture-surface-redacted",
+    "frame_digest_ref": "hash://sha256/trusted-capture-frame-redacted",
+    "media_digest_ref": "hash://sha256/trusted-capture-media-redacted",
+    "transcript_digest_ref": "hash://sha256/trusted-capture-transcript-redacted",
+    "sensor_digest_ref": "hash://sha256/trusted-capture-sensor-redacted",
+    "artifact_manifest_ref": "hash://sha256/trusted-capture-artifact-manifest-redacted",
+    "browser_observation_ref": "schemas/browser_observation_receipt.schema.json"
+  },
+  "authority_boundary": {
+    "live_capture_performed": false,
+    "media_recording_performed": false,
+    "screen_recording_performed": false,
+    "microphone_capture_performed": false,
+    "camera_capture_performed": false,
+    "sensor_read_performed": false,
+    "file_write_performed": false,
+    "connector_call_performed": false,
+    "external_write_performed": false,
+    "raw_media_stored": false,
+    "raw_source_body_stored": false,
+    "raw_secret_value_stored": false,
+    "publication_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "privacy_guard": {
+    "raw_surface_stored": false,
+    "raw_media_stored": false,
+    "raw_audio_stored": false,
+    "raw_sensor_payload_stored": false,
+    "raw_secret_value_stored": false,
+    "private_payload_redacted": true,
+    "operator_review_required": true,
+    "retention_policy_ref": "retention://trusted-capture/digest-only"
+  },
+  "receipt_refs": {
+    "trusted_capture_evidence_packet_schema": "schemas/trusted_capture_evidence_packet.schema.json",
+    "capture_policy_decision_ledger_schema": "schemas/capture_policy_decision_ledger.schema.json",
+    "evidence_classification_manifest_schema": "schemas/evidence_classification_manifest.schema.json",
+    "browser_observation_receipt_schema": "schemas/browser_observation_receipt.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "digest_only": true,
+    "capture_authority_denied": true,
+    "authority_denial_count": 15,
+    "privacy_guard_count": 8,
+    "receipt_ref_count": 6,
+    "evidence_ref_count": 11
+  },
+  "evidence_refs": [
+    "schemas/trusted_capture_evidence_packet.schema.json",
+    "examples/trusted_capture_evidence_packet.foundation.json",
+    "scripts/validate_trusted_capture_evidence_packet.py",
+    "tests/test_validate_trusted_capture_evidence_packet.py",
+    "docs/89_trusted_capture_evidence_packet_contract.md",
+    "schemas/capture_policy_decision_ledger.schema.json",
+    "schemas/evidence_classification_manifest.schema.json",
+    "schemas/browser_observation_receipt.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "docs/82_cross_repo_opportunity_map.md"
+  ]
+}

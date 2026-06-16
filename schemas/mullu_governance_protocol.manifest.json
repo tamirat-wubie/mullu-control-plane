@@ -479,6 +479,12 @@
       "surface": "capture"
     },
     {
+      "schema_id": "trusted-capture-evidence-packet",
+      "path": "schemas/trusted_capture_evidence_packet.schema.json",
+      "urn": "urn:mullusi:schema:trusted-capture-evidence-packet:1",
+      "surface": "capture"
+    },
+    {
       "schema_id": "research-source-conflict-map",
       "path": "schemas/research_source_conflict_map.schema.json",
       "urn": "urn:mullusi:schema:research-source-conflict-map:1",
