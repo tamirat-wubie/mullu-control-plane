@@ -10,8 +10,8 @@ and scripts.validate_team_ops_shared_inbox_live_probe_receipt.
 Invariants:
   - This producer never calls mailbox providers or connector workers.
   - This producer never creates drafts, sends messages, or mutates provider state.
-  - Ready routing receipts require a ready live-probe receipt and redacted
-    observation hashes.
+  - Ready routing receipts require a ready live-probe receipt, its validated
+    provider-observation receipt identity, and redacted observation hashes.
   - Raw subject, sender, recipient, message body, and query text are not
     accepted as serialized fields.
 """
@@ -74,6 +74,9 @@ class TeamOpsSharedInboxObservationRoutingReceipt:
     source_live_probe_receipt_id: str
     live_probe_receipt_valid: bool
     live_probe_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -166,6 +169,7 @@ def produce_team_ops_shared_inbox_observation_routing_receipt(
         receipt_id=_receipt_id(
             live_probe_receipt_path=live_probe_receipt_path,
             source_live_probe_receipt_id=str(source_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(source_receipt.get("provider_observation_receipt_id", "")),
             observation_digest=observation_digest,
             message_digest=message_digest,
             classification=normalized_classification,
@@ -179,6 +183,9 @@ def produce_team_ops_shared_inbox_observation_routing_receipt(
         source_live_probe_receipt_id=str(source_receipt.get("receipt_id", "")),
         live_probe_receipt_valid=live_validation.valid,
         live_probe_receipt_ready=live_validation.ready,
+        provider_observation_receipt_ref=str(source_receipt.get("provider_observation_receipt_ref", "")),
+        provider_observation_receipt_id=str(source_receipt.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=source_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -359,6 +366,7 @@ def _receipt_id(
     *,
     live_probe_receipt_path: Path,
     source_live_probe_receipt_id: str,
+    provider_observation_receipt_id: str,
     observation_digest: str,
     message_digest: str,
     classification: str,
@@ -369,6 +377,7 @@ def _receipt_id(
     material = {
         "live_probe_ref": _artifact_ref(live_probe_receipt_path),
         "source_live_probe_receipt_id": source_live_probe_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "observation_digest": observation_digest,
         "message_digest": message_digest,
         "classification": classification,

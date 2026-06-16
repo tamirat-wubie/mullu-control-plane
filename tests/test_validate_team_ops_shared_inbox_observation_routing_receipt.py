@@ -7,7 +7,8 @@ validation, assignment gating, and validation receipt emission.
 Dependencies: scripts.validate_team_ops_shared_inbox_observation_routing_receipt.
 Invariants:
   - Blocked routing receipts remain valid non-ready evidence.
-  - Ready routing receipts require redacted hashes, owner assignment, and approval.
+  - Ready routing receipts require provider-observation identity, redacted hashes,
+    owner assignment, and approval.
   - Effect drift, raw content leakage, and secret markers fail closed.
 """
 
@@ -44,6 +45,7 @@ def test_team_ops_shared_inbox_observation_routing_validation_accepts_blocked_re
     assert validation.solver_outcome == "AwaitingEvidence"
     assert validation.proof_state == "Unknown"
     assert validation.live_probe_receipt_ready is False
+    assert validation.provider_observation_receipt_valid is False
     assert validation.blocked_until == ("live_probe_receipt_not_ready",)
 
 
@@ -81,6 +83,7 @@ def test_team_ops_shared_inbox_observation_routing_validation_accepts_ready_rece
     assert validation.status == "passed"
     assert validation.solver_outcome == "SolvedVerified"
     assert validation.proof_state == "Pass"
+    assert validation.provider_observation_receipt_valid is True
     assert validation.classification == "support_request"
     assert validation.owner_queue == "support"
     assert validation.blocked_until == ()
@@ -164,6 +167,29 @@ def test_team_ops_shared_inbox_observation_routing_validation_rejects_missing_ow
     assert validation.valid is False
     assert validation.ready is False
     assert "passed receipt requires assigned_owner_ref when assignment_required" in validation.errors
+
+
+def test_team_ops_shared_inbox_observation_routing_validation_rejects_missing_provider_observation(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "team_ops_shared_inbox_observation_routing_receipt.json"
+    payload = _ready_receipt() | {
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_observation_routing_receipt(
+        receipt_path=receipt_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "passed receipt requires provider_observation_receipt_ref" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_id" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_valid=true" in validation.errors
 
 
 def test_team_ops_shared_inbox_observation_routing_validation_rejects_secret_marker(
@@ -263,6 +289,9 @@ def _ready_receipt() -> dict[str, object]:
     return _base_receipt() | {
         "live_probe_receipt_valid": True,
         "live_probe_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -289,6 +318,9 @@ def _base_receipt() -> dict[str, object]:
         "workflow_id": "team_ops.shared_inbox_triage",
         "source_live_probe_receipt_ref": ".change_assurance/team_ops_shared_inbox_live_probe_receipt.json",
         "source_live_probe_receipt_id": "teamops-shared-inbox-live-probe-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "routed_at": "2026-06-14T00:00:00+00:00",
         "assignment_required": True,
         "draft_response_required": True,
