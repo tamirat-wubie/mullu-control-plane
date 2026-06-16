@@ -130,6 +130,14 @@ def load_json_object(json_path: Path, label: str) -> dict[str, Any]:
     return payload
 
 
+def canonical_source_digest(source_path: Path) -> str:
+    """Return the repository-stable SHA-256 digest for a text source file."""
+
+    source_text = source_path.read_text(encoding="utf-8")
+    canonical_text = source_text.replace("\r\n", "\n")
+    return hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()
+
+
 def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     """Return deterministic schema artifact errors."""
 
@@ -355,7 +363,7 @@ def _validate_runtime_bindings(bindings: Any, errors: list[str]) -> None:
             for pattern in SOURCE_NORMALIZATION_PATTERNS:
                 if pattern in source_text:
                     errors.append(f"runtime_bindings[{index}] source contains forbidden normalization pattern: {pattern}")
-            actual_digest = hashlib.sha256(source_path.read_bytes()).hexdigest()
+            actual_digest = canonical_source_digest(source_path)
             if digest != actual_digest:
                 errors.append(f"runtime_bindings[{index}].digest_sha256 does not match implementation_ref")
             if not binding.get("no_normalization_proof_refs"):

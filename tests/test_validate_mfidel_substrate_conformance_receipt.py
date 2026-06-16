@@ -16,6 +16,20 @@ from scripts import validate_mfidel_substrate_conformance_receipt as validator
 from scripts import validate_sdlc_artifact as sdlc_validator
 
 
+def test_mfidel_substrate_conformance_digest_is_line_ending_stable(tmp_path: Path) -> None:
+    lf_source = tmp_path / "source_lf.py"
+    crlf_source = tmp_path / "source_crlf.py"
+    lf_source.write_text("FIDELS = ('ሀ', 'ለ')\nVALUE = 1\n", encoding="utf-8", newline="\n")
+    crlf_source.write_text("FIDELS = ('ሀ', 'ለ')\nVALUE = 1\n", encoding="utf-8", newline="\r\n")
+
+    lf_digest = validator.canonical_source_digest(lf_source)
+    crlf_digest = validator.canonical_source_digest(crlf_source)
+
+    assert lf_digest == crlf_digest
+    assert len(lf_digest) == 64
+    assert all(character in "0123456789abcdef" for character in lf_digest)
+
+
 def test_mfidel_substrate_conformance_receipt_passes() -> None:
     errors = validator.validate_mfidel_substrate_conformance_receipt()
     receipt = validator.load_json_object(

@@ -20,7 +20,7 @@
       "runtime_language": "python",
       "implementation_ref": "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
       "conformance_status": "validated",
-      "digest_sha256": "a98d1543a4f82c646e31c0e94af7a23fb82d1c5e39c3d97e76b74d6dedb79305",
+      "digest_sha256": "19170c7796c64b4ddc7cf9e89d1d723bfc0313d99485ef45ad723e623b2da5e5",
       "fixture_refs": [
         "mcoi/tests/test_mfidel_atomicity.py",
         "mcoi/tests/test_mfidel_matrix.py"
@@ -39,7 +39,7 @@
       "runtime_language": "python",
       "implementation_ref": "mcoi/mcoi_runtime/core/mfidel_matrix.py",
       "conformance_status": "validated",
-      "digest_sha256": "73742a75f8799e431b6363aefe88401638d4be2766bb7b8082a44367c66e3ebb",
+      "digest_sha256": "0ac7a41015414e8234cd1571a8397faceb623384262927dba8c71bc670ca56da",
       "fixture_refs": [
         "mcoi/tests/test_mfidel_atomicity.py",
         "mcoi/tests/test_mfidel_matrix.py"
@@ -58,7 +58,7 @@
       "runtime_language": "python",
       "implementation_ref": "mcoi/mcoi_runtime/contracts/mfidel.py",
       "conformance_status": "validated",
-      "digest_sha256": "da7618347bb78a580485d8b7f91e27f1219b3f050d2d80f237d92c7423210c9e",
+      "digest_sha256": "fa6c2f2854888bc0ad85c81f948764fe5601307220ba3e8412bf6a1c898b6658",
       "fixture_refs": [
         "mcoi/tests/test_mfidel_matrix.py"
       ],
