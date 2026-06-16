@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-component-witness-receipt:1",
+  "title": "Mullu Personal Assistant Component Witness Receipt",
+  "description": "No-effect witness receipt proving the personal-assistant component remains draft-only, bundle-previewed, request-path gated, and lifecycle-bound without granting connector or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "receipt_is_not_execution_authority",
+    "receipt_is_not_terminal_closure",
+    "component_id",
+    "bundle_id",
+    "evidence_refs",
+    "component_witness",
+    "request_path_witness",
+    "lifecycle_witness",
+    "effect_boundary",
+    "summary",
+    "forbidden_claims_preserved",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "personal_assistant.component_witness_receipt.v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^personal-assistant-component-witness-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": [
+        "Pass",
+        "Fail"
+      ]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "component_id": {
+      "type": "string",
+      "const": "personal_assistant"
+    },
+    "bundle_id": {
+      "type": "string",
+      "const": "personal_assistant_v0"
+    },
+    "evidence_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_graph",
+        "component_bundle_compilation",
+        "component_lifecycle_transition_receipts"
+      ],
+      "properties": {
+        "component_graph": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_bundle_compilation": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_lifecycle_transition_receipts": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "component_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_present",
+        "mode",
+        "state",
+        "authority_level",
+        "proof_binding_state",
+        "route_binding_state",
+        "bundle_membership_is_not_execution_authority"
+      ],
+      "properties": {
+        "component_present": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "draft_only",
+            "missing"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "draft_only",
+            "missing"
+          ]
+        },
+        "authority_level": {
+          "type": "string",
+          "enum": [
+            "draft_only",
+            "missing"
+          ]
+        },
+        "proof_binding_state": {
+          "type": "string",
+          "enum": [
+            "proof_bound",
+            "missing"
+          ]
+        },
+        "route_binding_state": {
+          "type": "string",
+          "enum": [
+            "bound",
+            "missing"
+          ]
+        },
+        "bundle_membership_is_not_execution_authority": {
+          "type": "boolean"
+        }
+      }
+    },
+    "request_path_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inbox_probe_path_bound",
+        "send_email_path_blocked",
+        "gmail_gate_required",
+        "approval_required",
+        "inbox_probe_outcome",
+        "send_email_outcome",
+        "blocked_actions"
+      ],
+      "properties": {
+        "inbox_probe_path_bound": {
+          "type": "boolean"
+        },
+        "send_email_path_blocked": {
+          "type": "boolean"
+        },
+        "gmail_gate_required": {
+          "type": "boolean"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "inbox_probe_outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "missing"
+          ]
+        },
+        "send_email_outcome": {
+          "type": "string",
+          "enum": [
+            "GovernanceBlocked",
+            "missing"
+          ]
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocked_action"
+          }
+        }
+      }
+    },
+    "lifecycle_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "from_state",
+        "to_state",
+        "authority_level",
+        "external_effect",
+        "operator_approval_required",
+        "receipt_is_not_execution_authority",
+        "receipt_is_not_terminal_closure"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "from_state": {
+          "type": "string",
+          "const": "mounted"
+        },
+        "to_state": {
+          "type": "string",
+          "const": "draft_only"
+        },
+        "authority_level": {
+          "type": "string",
+          "const": "draft_only"
+        },
+        "external_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "operator_approval_required": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "receipt_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_execution_enabled",
+        "live_connector_send_enabled",
+        "can_execute",
+        "can_mutate",
+        "can_call_connector",
+        "can_claim_terminal_closure",
+        "can_send_external_message",
+        "can_write_files",
+        "secret_values_serialized",
+        "raw_private_connector_payloads_serialized"
+      ],
+      "properties": {
+        "live_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "live_connector_send_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_execute": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_call_connector": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_send_external_message": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_write_files": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "raw_private_connector_payloads_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_witness_verified",
+        "request_path_witness_verified",
+        "lifecycle_witness_verified",
+        "no_effect_boundary_verified",
+        "witness_closed"
+      ],
+      "properties": {
+        "component_witness_verified": {
+          "type": "boolean"
+        },
+        "request_path_witness_verified": {
+          "type": "boolean"
+        },
+        "lifecycle_witness_verified": {
+          "type": "boolean"
+        },
+        "no_effect_boundary_verified": {
+          "type": "boolean"
+        },
+        "witness_closed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "forbidden_claims_preserved": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": {
+        "const": "live_gmail_enabled"
+      },
+      "items": {
+        "$ref": "#/$defs/forbidden_claim"
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_deltas",
+        "rejected_deltas"
+      ],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/lineage_delta"
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/lineage_delta"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "blocked_action": {
+      "type": "string",
+      "enum": [
+        "account_binding_claim",
+        "autonomous_execution",
+        "calendar_write",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "provider_write",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "send_email",
+        "terminal_closure"
+      ]
+    },
+    "forbidden_claim": {
+      "type": "string",
+      "enum": [
+        "production_ready",
+        "customer_ready",
+        "live_gmail_enabled",
+        "autonomous_execution",
+        "compliance_certified",
+        "enterprise_sla",
+        "nested_mind_live"
+      ]
+    },
+    "lineage_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_id",
+        "reason",
+        "logged_in_lineage"
+      ],
+      "properties": {
+        "delta_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "logged_in_lineage": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
