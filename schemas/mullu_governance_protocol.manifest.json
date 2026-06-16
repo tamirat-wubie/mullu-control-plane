@@ -1821,6 +1821,12 @@
       "path": "schemas/read_only_worker_runtime_runner_registration_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-dispatch-endpoint-registration-witness",
+      "path": "schemas/read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-dispatch-endpoint-registration-witness:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [
