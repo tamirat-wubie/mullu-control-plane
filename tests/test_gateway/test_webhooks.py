@@ -1762,6 +1762,18 @@ class TestGatewayStatus:
         assert binding.get("canonical_hash", "") == ""
         assert binding.get("semantics_hash", "") == ""
 
+    def test_gateway_whqr_replay_binding_rejects_whitespace_digest_refs(self):
+        binding = _validated_whqr_replay_binding({
+            "replay_ref": "whqr://replay/sha256:   ",
+            "canonical_hash": "sha256:   ",
+            "semantics_hash": "sha256:\t",
+            "version": "0.1.0",
+        })
+
+        assert binding == {}
+        assert binding.get("replay_ref", "") == ""
+        assert binding.get("canonical_hash", "") == ""
+
     def test_status(self, client):
         resp = client.get("/gateway/status")
         assert resp.status_code == 200

@@ -635,9 +635,9 @@
       "additionalProperties": false,
       "required": ["replay_ref", "canonical_hash", "semantics_hash", "version"],
       "properties": {
-        "replay_ref": { "type": "string", "pattern": "^whqr://replay/sha256:.+$" },
-        "canonical_hash": { "type": "string", "pattern": "^sha256:.+$" },
-        "semantics_hash": { "type": "string", "pattern": "^sha256:.+$" },
+        "replay_ref": { "type": "string", "pattern": "^whqr://replay/sha256:\\S+$" },
+        "canonical_hash": { "type": "string", "pattern": "^sha256:\\S+$" },
+        "semantics_hash": { "type": "string", "pattern": "^sha256:\\S+$" },
         "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" }
       }
     },

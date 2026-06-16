@@ -1236,6 +1236,51 @@ def test_universal_action_proof_hash_rejects_empty_whqr_digest_refs() -> None:
     assert malformed_detail["whqr_replay_binding"]["semantics_hash"] == "sha256:"
 
 
+def test_universal_action_proof_hash_rejects_whitespace_whqr_digest_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-whitespace-digest",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:   ",
+        "canonical_hash": "sha256:   ",
+        "semantics_hash": "sha256:\t",
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["replay_ref"].endswith("   ")
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"].endswith("\t")
+
+
 def test_universal_command_proof_view_rejects_malformed_whqr_replay_binding() -> None:
     kernel, _executor = _kernel_with_capability()
     store = InMemoryCommandLedgerStore()
