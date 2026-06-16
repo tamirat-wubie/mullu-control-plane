@@ -16,7 +16,9 @@ import json
 
 
 WHQR_VERSION = "0.1.0"
-SEMANTICS_HASH = "sha256:whqr-v0.1.0-split-gates-side-effect-free"
+SEMANTICS_HASH = (
+    "sha256:a11656674c84e7dde0a0351af3805e2362429c570a97f256ff6ffded1698dc88"
+)
 _EnumT = TypeVar("_EnumT", bound=StrEnum)
 
 

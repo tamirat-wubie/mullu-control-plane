@@ -77,6 +77,12 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
 
     assert first.whqr_version == WHQR_VERSION
     assert first.semantics_hash == SEMANTICS_HASH
+    assert first.semantics_hash.startswith("sha256:")
+    assert len(first.semantics_hash.removeprefix("sha256:")) == 64
+    assert all(
+        char in "0123456789abcdef"
+        for char in first.semantics_hash.removeprefix("sha256:")
+    )
     assert first.canonical_json() == second.canonical_json()
     assert json.loads(first.canonical_json())["root"]["connector"] == "because"
     assert first.canonical_hash() == second.canonical_hash()

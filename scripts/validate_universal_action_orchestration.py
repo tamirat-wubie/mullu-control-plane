@@ -308,6 +308,12 @@ REQUIRED_SCHEMA_DEFS = {
         "memory_ref",
         "next_action",
     ),
+    "whqr_replay_binding": (
+        "replay_ref",
+        "canonical_hash",
+        "semantics_hash",
+        "version",
+    ),
     "lineage": ("delta_ref", "logged_in_lineage", "accepted_deltas", "rejected_deltas"),
 }
 REQUIRED_DOCUMENT_TERMS = (
@@ -2355,7 +2361,7 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             )
         elif not _has_whqr_sha256_digest_ref(replay_ref):
             errors.append(
-                "closure.whqr_replay_binding.replay_ref must include a sha256 digest"
+                "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest"
             )
     if isinstance(replay_ref, str) and isinstance(canonical_hash, str):
         if replay_ref != f"whqr://replay/{canonical_hash}":
@@ -2369,7 +2375,7 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             )
         elif not _has_sha256_digest_ref(canonical_hash):
             errors.append(
-                "closure.whqr_replay_binding.canonical_hash must include a sha256 digest"
+                "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest"
             )
     if isinstance(semantics_hash, str) and semantics_hash:
         if not semantics_hash.startswith("sha256:"):
@@ -2378,7 +2384,7 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
             )
         elif not _has_sha256_digest_ref(semantics_hash):
             errors.append(
-                "closure.whqr_replay_binding.semantics_hash must include a sha256 digest"
+                "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest"
             )
     if isinstance(version, str) and version:
         if not _is_semver_core(version):
@@ -2396,17 +2402,17 @@ def _validate_whqr_replay_binding(binding: Any) -> list[str]:
 
 def _has_sha256_digest_ref(value: str) -> bool:
     prefix = "sha256:"
-    return value.startswith(prefix) and _has_non_whitespace_suffix(value, prefix)
+    return value.startswith(prefix) and _has_sha256_hex_suffix(value, prefix)
 
 
 def _has_whqr_sha256_digest_ref(value: str) -> bool:
     prefix = "whqr://replay/sha256:"
-    return value.startswith(prefix) and _has_non_whitespace_suffix(value, prefix)
+    return value.startswith(prefix) and _has_sha256_hex_suffix(value, prefix)
 
 
-def _has_non_whitespace_suffix(value: str, prefix: str) -> bool:
+def _has_sha256_hex_suffix(value: str, prefix: str) -> bool:
     suffix = value[len(prefix):]
-    return bool(suffix) and all(not char.isspace() for char in suffix)
+    return len(suffix) == 64 and all(char in "0123456789abcdef" for char in suffix)
 
 
 def _is_semver_core(value: str) -> bool:
