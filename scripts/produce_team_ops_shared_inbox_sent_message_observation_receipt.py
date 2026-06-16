@@ -9,6 +9,8 @@ Dependencies: schemas/team_ops_shared_inbox_sent_message_observation_receipt.sch
 and scripts.validate_team_ops_shared_inbox_send_execution_receipt.
 Invariants:
   - Only ready send-execution receipts can close sent-message observation.
+  - Ready sent-message observation receipts retain the upstream
+    provider-observation receipt identity carried by send-execution.
   - Provider state observations are refs and hashes only; raw payloads are rejected.
   - This producer records supplied observation evidence only; it never calls a provider.
 """
@@ -60,6 +62,9 @@ class TeamOpsSharedInboxSentMessageObservationReceipt:
     source_send_execution_receipt_id: str
     send_execution_receipt_valid: bool
     send_execution_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -184,6 +189,7 @@ def produce_team_ops_shared_inbox_sent_message_observation_receipt(
         receipt_id=_receipt_id(
             send_execution_receipt_path=send_execution_receipt_path,
             source_send_execution_receipt_id=str(execution_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(execution_receipt.get("provider_observation_receipt_id", "")),
             first_observation_ref=clean_first_observation_ref,
             second_observation_ref=clean_second_observation_ref,
             replay_ref=clean_replay_ref,
@@ -195,6 +201,14 @@ def produce_team_ops_shared_inbox_sent_message_observation_receipt(
         source_send_execution_receipt_id=str(execution_receipt.get("receipt_id", "")),
         send_execution_receipt_valid=execution_validation.valid,
         send_execution_receipt_ready=execution_validation.ready,
+        provider_observation_receipt_ref=str(execution_receipt.get("provider_observation_receipt_ref", ""))
+        if source_ready
+        else "",
+        provider_observation_receipt_id=str(execution_receipt.get("provider_observation_receipt_id", ""))
+        if source_ready
+        else "",
+        provider_observation_receipt_valid=source_ready
+        and execution_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -364,6 +378,7 @@ def _receipt_id(
     *,
     send_execution_receipt_path: Path,
     source_send_execution_receipt_id: str,
+    provider_observation_receipt_id: str,
     first_observation_ref: str,
     second_observation_ref: str,
     replay_ref: str,
@@ -372,6 +387,7 @@ def _receipt_id(
     material = {
         "source_ref": _artifact_ref(send_execution_receipt_path),
         "source_send_execution_receipt_id": source_send_execution_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "first_observation_ref": first_observation_ref,
         "second_observation_ref": second_observation_ref,
         "replay_ref": replay_ref,
