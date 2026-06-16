@@ -10,6 +10,7 @@ Dependencies: schemas/team_ops_shared_inbox_approval_decision_receipt.schema.jso
 and scripts.validate_team_ops_shared_inbox_approval_queue_receipt.
 Invariants:
   - This producer records operator decision evidence; it does not make the decision.
+  - Passed receipts retain the upstream provider-observation witness from the queue.
   - Approved decisions authorize only a later separate send-preparation receipt.
   - This producer never drafts, sends, writes a mailbox, or mutates a provider.
   - Raw message content, raw decision text, and secret-shaped values are rejected.
@@ -64,6 +65,9 @@ class TeamOpsSharedInboxApprovalDecisionReceipt:
     source_approval_queue_receipt_id: str
     approval_queue_receipt_valid: bool
     approval_queue_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -144,6 +148,7 @@ def produce_team_ops_shared_inbox_approval_decision_receipt(
         receipt_id=_receipt_id(
             approval_queue_receipt_path=approval_queue_receipt_path,
             source_approval_queue_receipt_id=str(queue_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(queue_receipt.get("provider_observation_receipt_id", "")),
             approver_ref=clean_approver_ref,
             approver_role=clean_approver_role,
             decision=clean_decision,
@@ -156,6 +161,9 @@ def produce_team_ops_shared_inbox_approval_decision_receipt(
         source_approval_queue_receipt_id=str(queue_receipt.get("receipt_id", "")),
         approval_queue_receipt_valid=queue_validation.valid,
         approval_queue_receipt_ready=queue_validation.ready,
+        provider_observation_receipt_ref=str(queue_receipt.get("provider_observation_receipt_ref", "")),
+        provider_observation_receipt_id=str(queue_receipt.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=queue_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -289,6 +297,7 @@ def _receipt_id(
     *,
     approval_queue_receipt_path: Path,
     source_approval_queue_receipt_id: str,
+    provider_observation_receipt_id: str,
     approver_ref: str,
     approver_role: str,
     decision: str,
@@ -298,6 +307,7 @@ def _receipt_id(
     material = {
         "queue_ref": _artifact_ref(approval_queue_receipt_path),
         "source_approval_queue_receipt_id": source_approval_queue_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "approver_ref": approver_ref,
         "approver_role": approver_role,
         "decision": decision,

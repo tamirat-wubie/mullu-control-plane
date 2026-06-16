@@ -4350,6 +4350,37 @@ def test_browser_observation_receipt_blocks_browser_authority() -> None:
     assert closure_actions["publish_browser_observation_receipt_contract"]["status"] == "closed"
 
 
+def test_research_source_conflict_map_preserves_source_disagreement() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    conflict_surface = surfaces["research_source_conflict_map"]
+    conflict_witness_surface = witness_surfaces["research_source_conflict_map"]
+    witnesses = set(conflict_surface["runtime_witnesses"])
+
+    assert conflict_surface["coverage_state"] == "witnessed"
+    assert conflict_surface["request_proof"] == "request_proof"
+    assert conflict_surface["action_proof"] == "action_proof"
+    assert conflict_surface["audit"] == "audit_chain"
+    assert "ResearchSourceConflictMap" in conflict_surface["representative_paths"]
+    assert "schemas/research_source_conflict_map.schema.json" in conflict_surface["evidence_files"]
+    assert "examples/research_source_conflict_map.foundation.json" in conflict_surface["evidence_files"]
+    assert "scripts/validate_research_source_conflict_map.py" in conflict_surface["evidence_files"]
+    assert "tests/test_validate_research_source_conflict_map.py" in conflict_surface["evidence_files"]
+    assert "research_source_conflict_map_schema_valid" in witnesses
+    assert "research_source_conflict_map_blocks_live_research_authority" in witnesses
+    assert "research_source_conflict_map_requires_citation_bound_conflicts" in witnesses
+    assert "research_source_conflict_map_rejects_raw_body_retention" in witnesses
+    assert "research_source_conflict_map_rejects_sensing_authority_drift" in witnesses
+    assert conflict_witness_surface["exact_test_anchor_count"] == 6
+    assert conflict_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_research_source_conflict_map_contract"]["status"] == "closed"
+
+
 def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

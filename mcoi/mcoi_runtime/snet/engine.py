@@ -602,19 +602,21 @@ def _coerce_answer_map(answer_map: Mapping[str | SNetWHType, str]) -> dict[SNetW
 
 
 def _require_text(value: str, field_name: str) -> str:
-    if not isinstance(value, str) or not value.strip():
+    if type(value) is not str or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value.strip()
 
 
 def _optional_text(value: str, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be a non-empty string")
     if value == "":
         return ""
     return _require_text(value, field_name)
 
 
 def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
-    if not isinstance(values, tuple):
+    if type(values) is not tuple:
         raise ValueError(f"{field_name} must be a tuple of non-empty strings")
     for index, value in enumerate(values):
         _require_text(value, f"{field_name}[{index}]")
@@ -676,7 +678,7 @@ def _stable_id(prefix: str, *parts: str) -> str:
 
 def _ascii_lower_stripped(value: str) -> str:
     """Lowercase ASCII only so non-Latin symbols remain atomic codepoints."""
-    if not isinstance(value, str):
+    if type(value) is not str:
         raise ValueError("SNet text value must be a string")
     stripped = value.strip()
     return "".join(chr(ord(char) + 32) if "A" <= char <= "Z" else char for char in stripped)

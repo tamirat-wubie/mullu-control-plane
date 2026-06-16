@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:research-source-conflict-map:1",
+  "title": "Research Source Conflict Map",
+  "description": "Read-only receipt contract for preserving citation-backed disagreements across research sources without live retrieval or synthesis authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "map_id",
+    "map_version",
+    "generated_at",
+    "research_scope",
+    "source_set",
+    "conflict_set",
+    "follow_up_sensing",
+    "authority_boundary",
+    "retention_policy",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "map_id": {"type": "string", "minLength": 1},
+    "map_version": {"const": "research_source_conflict_map.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "research_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_question_hash",
+        "source_mode",
+        "search_decision_ref",
+        "search_receipt_ref",
+        "tenant_scope",
+        "uao_ref"
+      ],
+      "properties": {
+        "research_question_hash": {"type": "string", "minLength": 1},
+        "source_mode": {
+          "enum": [
+            "operator_supplied_citation_refs",
+            "search_receipt_conflict_refs",
+            "local_governed_fixture"
+          ]
+        },
+        "search_decision_ref": {"type": "string", "minLength": 1},
+        "search_receipt_ref": {"type": "string", "minLength": 1},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_set": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/source_record"},
+      "uniqueItems": true
+    },
+    "conflict_set": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/conflict_record"},
+      "uniqueItems": true
+    },
+    "follow_up_sensing": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/follow_up_record"},
+      "uniqueItems": true
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_retrieval_performed",
+        "web_search_performed",
+        "connector_call_performed",
+        "source_contact_performed",
+        "raw_source_body_stored",
+        "raw_secret_value_stored",
+        "answer_synthesis_allowed",
+        "current_claim_allowed",
+        "memory_write_performed",
+        "publication_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "external_retrieval_performed": {"type": "boolean"},
+        "web_search_performed": {"type": "boolean"},
+        "connector_call_performed": {"type": "boolean"},
+        "source_contact_performed": {"type": "boolean"},
+        "raw_source_body_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "answer_synthesis_allowed": {"type": "boolean"},
+        "current_claim_allowed": {"type": "boolean"},
+        "memory_write_performed": {"type": "boolean"},
+        "publication_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "retention_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "citation_refs_retained",
+        "raw_source_bodies_retained",
+        "private_payload_redacted",
+        "operator_review_required",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "citation_refs_retained": {"type": "boolean"},
+        "raw_source_bodies_retained": {"type": "boolean"},
+        "private_payload_redacted": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "retention_policy_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_source_conflict_map_schema",
+        "search_decision_schema",
+        "search_receipt_schema",
+        "evidence_classification_manifest_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "research_source_conflict_map_schema": {"type": "string", "minLength": 1},
+        "search_decision_schema": {"type": "string", "minLength": 1},
+        "search_receipt_schema": {"type": "string", "minLength": 1},
+        "evidence_classification_manifest_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_count",
+        "conflict_count",
+        "follow_up_sensing_count",
+        "authority_denial_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_count": {"type": "integer", "minimum": 0},
+        "conflict_count": {"type": "integer", "minimum": 0},
+        "follow_up_sensing_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "source_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ref",
+        "citation_ref",
+        "freshness_status",
+        "trust_tier",
+        "claim_digest_ref",
+        "source_summary_digest_ref",
+        "raw_source_body"
+      ],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "citation_ref": {"type": "string", "pattern": "^citation://.+$"},
+        "freshness_status": {"enum": ["fresh", "stale", "unknown", "not_required"]},
+        "trust_tier": {"enum": ["local_governed", "primary", "official", "secondary", "operator_supplied", "unknown"]},
+        "claim_digest_ref": {"type": "string", "minLength": 1},
+        "source_summary_digest_ref": {"type": "string", "minLength": 1},
+        "raw_source_body": {"type": ["null"], "const": null}
+      }
+    },
+    "conflict_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conflict_ref",
+        "contradiction_class",
+        "severity",
+        "claim_refs",
+        "citation_refs",
+        "freshness_impact",
+        "current_claim_allowed"
+      ],
+      "properties": {
+        "conflict_ref": {"type": "string", "pattern": "^conflict://.+$"},
+        "contradiction_class": {
+          "enum": [
+            "factual_disagreement",
+            "timestamp_mismatch",
+            "metric_mismatch",
+            "scope_mismatch",
+            "definition_mismatch",
+            "unknown"
+          ]
+        },
+        "severity": {"enum": ["low", "medium", "high"]},
+        "claim_refs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "citation_refs": {
+          "type": "array",
+          "minItems": 2,
+          "items": {"type": "string", "pattern": "^citation://.+$"},
+          "uniqueItems": true
+        },
+        "freshness_impact": {"enum": ["none", "current_claim_blocked", "stale_source_present", "unknown_requires_sensing"]},
+        "current_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "follow_up_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sensing_ref",
+        "conflict_ref",
+        "sensing_need",
+        "approval_required",
+        "live_search_allowed",
+        "source_contact_allowed"
+      ],
+      "properties": {
+        "sensing_ref": {"type": "string", "pattern": "^sensing://.+$"},
+        "conflict_ref": {"type": "string", "pattern": "^conflict://.+$"},
+        "sensing_need": {"enum": ["freshness_check", "primary_source_needed", "definition_alignment", "metric_source_needed"]},
+        "approval_required": {"type": "boolean"},
+        "live_search_allowed": {"type": "boolean"},
+        "source_contact_allowed": {"type": "boolean"}
+      }
+    }
+  }
+}

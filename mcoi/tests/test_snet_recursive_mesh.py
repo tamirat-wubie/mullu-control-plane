@@ -333,6 +333,9 @@ def test_run_tick_rejects_invalid_confidence_and_state_before_mutation() -> None
 
 
 def test_direct_answer_and_score_validation_fail_closed() -> None:
+    class TextSubclass(str):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     tick = mesh.generate_wh_tick(seed.symbol_id)
@@ -340,6 +343,8 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
 
     with pytest.raises(ValueError, match="raw_answer"):
         mesh.ingest_answer(question_id, "   ")
+    with pytest.raises(ValueError, match="raw_answer"):
+        mesh.ingest_answer(question_id, TextSubclass("Seed"))
     with pytest.raises(ValueError, match="validation_state"):
         mesh.ingest_answer(question_id, "Seed", validation_state="supported")
     with pytest.raises(ValueError, match="SNet confidence"):
@@ -347,6 +352,20 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
             facet="identity",
             ascii_folded_value="seed",
             confidence=float("nan"),
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="facet"):
+        mesh.score_metadata(
+            facet=TextSubclass("identity"),
+            ascii_folded_value="seed",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="ascii_folded_value"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value=TextSubclass("seed"),
+            confidence=0.5,
             validation_state=SNetValidationState.SUPPORTED,
         )
 
@@ -386,11 +405,30 @@ def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
 
 
 def test_direct_text_inputs_fail_with_explicit_errors() -> None:
+    class TextSubclass(str):
+        pass
+
+    class AlwaysEqualToEmpty:
+        def __eq__(self, other: object) -> bool:
+            raise AssertionError("optional text validation must not compare before type validation")
+
+    class RaisingEquality:
+        def __eq__(self, other: object) -> bool:
+            raise RuntimeError("comparison leak")
+
     mesh = SNetRecursiveMesh()
     with pytest.raises(ValueError, match="label"):
         mesh.add_symbol(123)
+    with pytest.raises(ValueError, match="label"):
+        mesh.add_symbol(TextSubclass("Seed"))
+    with pytest.raises(ValueError, match="label"):
+        mesh.add_symbol(SNetWHType.WHAT)
     with pytest.raises(ValueError, match="sense_id"):
         mesh.add_symbol("Seed", sense_id=0)
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=AlwaysEqualToEmpty())
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=RaisingEquality())
     with pytest.raises(ValueError, match="created_from_metadata_id"):
         mesh.add_symbol("Seed", created_from_metadata_id=None)
     assert mesh.symbols == {}
@@ -402,8 +440,12 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
         mesh.generate_wh_tick(seed.symbol_id, perspective="")
     with pytest.raises(ValueError, match="context"):
         mesh.generate_wh_tick(seed.symbol_id, context=123)
+    with pytest.raises(ValueError, match="context"):
+        mesh.generate_wh_tick(seed.symbol_id, context=TextSubclass("general"))
     with pytest.raises(ValueError, match="parent_question_id"):
         mesh.generate_wh_tick(seed.symbol_id, parent_question_id=0)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        mesh.generate_wh_tick(seed.symbol_id, parent_question_id=RaisingEquality())
     with pytest.raises(ValueError, match="facet"):
         mesh.score_metadata(
             facet="",
@@ -425,6 +467,12 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
 
 
 def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
+    class TextSubclass(str):
+        pass
+
+    class TupleSubclass(tuple):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     tick = mesh.generate_wh_tick(seed.symbol_id)
@@ -434,6 +482,10 @@ def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
         mesh.ingest_answer(question_id, "Seed", evidence_refs="evidence:1")
     with pytest.raises(ValueError, match="evidence_refs"):
         mesh.ingest_answer(question_id, "Seed", evidence_refs=("",))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=TupleSubclass(("evidence:1",)))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=(TextSubclass("evidence:1"),))
     answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
 
     assert mesh.answers == {answer.answer_id: answer}
