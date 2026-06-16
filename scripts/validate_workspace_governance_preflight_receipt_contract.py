@@ -39,6 +39,8 @@ REQUIRED_RECEIPT_FIELDS = (
     "checks",
 )
 REQUIRED_CHECK_FIELDS = ("name", "args", "return_code", "passed", "stdout", "stderr")
+OPTIONAL_CHECK_FIELDS = ("termination_reason", "termination_signal")
+ALLOWED_TERMINATION_REASONS = ("completed", "timeout", "terminated")
 ALLOWED_STATUSES = ("passed", "failed")
 REQUIRED_PREFLIGHT_CHECK_NAMES = tuple(command.name for command in build_check_commands("python"))
 REQUIRED_PREFLIGHT_COMMAND_TAILS_BY_NAME = {
@@ -105,6 +107,9 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     if not isinstance(check_properties, dict):
         errors.append("schema check_result.properties must be an object")
         return errors
+    for field_name in OPTIONAL_CHECK_FIELDS:
+        if field_name not in check_properties:
+            errors.append(f"schema missing optional check property: {field_name}")
     check_name = check_properties.get("name")
     if not isinstance(check_name, dict):
         errors.append("schema check_result.name must be an object")
@@ -231,7 +236,8 @@ def _validate_check_result(check: Any, index: int) -> list[str]:
     for field_name in REQUIRED_CHECK_FIELDS:
         if field_name not in check:
             errors.append(f"check {index} missing field: {field_name}")
-    extra_fields = sorted(set(check) - set(REQUIRED_CHECK_FIELDS))
+    allowed_fields = set(REQUIRED_CHECK_FIELDS) | set(OPTIONAL_CHECK_FIELDS)
+    extra_fields = sorted(set(check) - allowed_fields)
     for field_name in extra_fields:
         errors.append(f"check {index} has unexpected field: {field_name}")
     if errors:
@@ -259,6 +265,28 @@ def _validate_check_result(check: Any, index: int) -> list[str]:
         expected_passed = check["return_code"] == 0
         if check["passed"] != expected_passed:
             errors.append(f"check {index} passed does not match return_code")
+    errors.extend(_validate_optional_termination_diagnosis(check, index))
+    return errors
+
+
+def _validate_optional_termination_diagnosis(check: dict[str, Any], index: int) -> list[str]:
+    errors: list[str] = []
+    termination_reason = check.get("termination_reason")
+    termination_signal = check.get("termination_signal")
+    if "termination_reason" in check:
+        if termination_reason not in ALLOWED_TERMINATION_REASONS:
+            errors.append(f"check {index} termination_reason is invalid")
+        elif termination_reason == "terminated":
+            if (
+                isinstance(termination_signal, bool)
+                or not isinstance(termination_signal, int)
+                or termination_signal <= 0
+            ):
+                errors.append(f"check {index} terminated checks require positive termination_signal")
+        elif termination_signal is not None:
+            errors.append(f"check {index} non-terminated checks must not set termination_signal")
+    elif "termination_signal" in check:
+        errors.append(f"check {index} termination_signal requires termination_reason")
     return errors
 
 
