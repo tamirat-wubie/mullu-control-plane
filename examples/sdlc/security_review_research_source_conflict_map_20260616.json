@@ -1,0 +1,94 @@
+{
+  "security_review_id": "SEC-research-source-conflict-map-20260616",
+  "change_id": "research-source-conflict-map-20260616",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "tenant_scope",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Research source conflict mapping can accidentally become live retrieval, source contact, raw source-body retention, prompt-source instruction authority, answer synthesis, memory write, or publication if evidence and authority boundaries are not explicit. The mitigation is a citation-bound schema and validator that reject raw storage and deny all mutation authority in Foundation Mode.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "research source conflict map live search, source contact, connector, synthesis, publication, and terminal authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms question, claim, and summary evidence remain digest refs and raw source bodies remain null",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_raw_body_and_digest_drift"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR check confirms tenant scope stays foundation-local-only and follow-up sensing cannot contact external sources",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_follow_up_sensing_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms SearchDecision, SearchReceipt, evidence classification, UAO, and LifeMeaningJudgment refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms conflict citation refs are drawn from the source set",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_conflict_citation_drift"
+    },
+    {
+      "category": "audit",
+      "check": "proof coverage matrix includes the research source conflict map surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_research_source_conflict_map_preserves_source_disagreement"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "research-source-conflict-map-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode map blocks live search, source contact, connector calls, answer synthesis, current-claim authority, memory writes, publication, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/research_source_conflict_map.schema.json",
+        "scripts/validate_research_source_conflict_map.py",
+        "tests/test_validate_research_source_conflict_map.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "research-source-conflict-map-private-payload-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode map requires digest refs, null raw source bodies, raw source-body retention denial, private payload redaction, and operator review.",
+      "evidence_refs": [
+        "examples/research_source_conflict_map.foundation.json",
+        "tests/test_validate_research_source_conflict_map.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ResearchSourceConflictMap validation non-live and deterministic",
+    "require citation refs and digest refs instead of raw source bodies or connector payloads",
+    "require SearchDecision, SearchReceipt, UAO, and LifeMeaningJudgment refs",
+    "deny live search, source contact, connector calls, answer synthesis, and memory writes",
+    "deny publication, terminal closure, and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/research_source_conflict_map.schema.json",
+    "examples/research_source_conflict_map.foundation.json",
+    "scripts/validate_research_source_conflict_map.py",
+    "tests/test_validate_research_source_conflict_map.py",
+    "receipt://sdlc/research-source-conflict-map/security"
+  ],
+  "uao_ref": "uao://sdlc/research-source-conflict-map/security",
+  "causal_decision_trace_ref": "trace://sdlc/research-source-conflict-map/security",
+  "receipt_ref": "receipt://sdlc/research-source-conflict-map/security"
+}

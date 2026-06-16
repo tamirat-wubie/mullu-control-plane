@@ -1,0 +1,64 @@
+{
+  "requirement_id": "REQ-research-source-conflict-map-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-research-source-conflict-map",
+  "problem_statement": "Search decisions and receipts can record conflict refs, but without a dedicated conflict map the control plane can lose source disagreements before research synthesis or retrieval expansion.",
+  "success_criteria": [
+    "ResearchSourceConflictMap validates against a public JSON schema and Foundation Mode example",
+    "ResearchSourceConflictMap binds citation refs, source digest refs, contradiction class, freshness impact, and follow-up sensing needs",
+    "ResearchSourceConflictMap blocks live web search, source contact, connector calls, raw source-body storage, secret storage, answer synthesis, current-claim authority, memory writes, publication, terminal closure, and success claims",
+    "ResearchSourceConflictMap rejects authority drift, raw body or digest drift, conflict citation drift, follow-up sensing drift, missing evidence refs, receipt ref drift, and summary count drift",
+    "ResearchSourceConflictMap is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live web search",
+    "no source contact",
+    "no connector call authority",
+    "no answer synthesis authority",
+    "no raw source-body retention",
+    "no raw secret retention",
+    "no memory write",
+    "no external publication",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "research question remains hash-only in the Foundation example",
+    "source claim and summary evidence remain digest refs",
+    "conflict citation refs must be drawn from the source set",
+    "follow-up sensing remains approval-required",
+    "live search and source contact remain false",
+    "SearchDecision, SearchReceipt, LifeMeaningJudgment, and UAO refs remain explicit",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/research_source_conflict_map.schema.json",
+    "examples/research_source_conflict_map.foundation.json",
+    "scripts/validate_research_source_conflict_map.py",
+    "tests/test_validate_research_source_conflict_map.py",
+    "docs/88_research_source_conflict_map_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_research_source_conflict_map.py",
+    "python -m pytest tests/test_validate_research_source_conflict_map.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_research_source_conflict_map_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/research_source_conflict_map.schema.json",
+    "examples/research_source_conflict_map.foundation.json",
+    "scripts/validate_research_source_conflict_map.py",
+    "tests/test_validate_research_source_conflict_map.py",
+    "docs/88_research_source_conflict_map_contract.md",
+    "examples/sdlc/design_research_source_conflict_map_20260616.json",
+    "examples/sdlc/security_review_research_source_conflict_map_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/research-source-conflict-map/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/research-source-conflict-map/requirement",
+  "receipt_ref": "receipt://sdlc/research-source-conflict-map/requirement"
+}

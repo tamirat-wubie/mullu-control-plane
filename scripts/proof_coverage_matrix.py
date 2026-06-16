@@ -5942,6 +5942,61 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "research_source_conflict_map",
+            [
+                "ResearchSourceConflictMap",
+                "validate_research_source_conflict_map",
+                "research_source_conflict_map.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/research_source_conflict_map.schema.json",
+                "examples/research_source_conflict_map.foundation.json",
+                "scripts/validate_research_source_conflict_map.py",
+                "tests/test_validate_research_source_conflict_map.py",
+                "schemas/search_decision.schema.json",
+                "schemas/search_receipt.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/88_research_source_conflict_map_contract.md",
+            ],
+            "Research source conflict maps preserve citation-backed source disagreements, contradiction class, freshness impact, follow-up sensing needs, retention guards, and authority-denial flags before research synthesis or retrieval expansion can be considered.",
+            [
+                "research_source_conflict_map_schema_valid",
+                "research_source_conflict_map_blocks_live_research_authority",
+                "research_source_conflict_map_requires_citation_bound_conflicts",
+                "research_source_conflict_map_rejects_raw_body_retention",
+                "research_source_conflict_map_rejects_sensing_authority_drift",
+                "research_source_conflict_map_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "research_source_conflict_map_schema_valid": [
+                    "research_source_conflict_map_passes"
+                ],
+                "research_source_conflict_map_blocks_live_research_authority": [
+                    "research_source_conflict_map_passes",
+                    "research_source_conflict_map_rejects_authority_drift",
+                ],
+                "research_source_conflict_map_requires_citation_bound_conflicts": [
+                    "research_source_conflict_map_passes",
+                    "research_source_conflict_map_rejects_conflict_citation_drift",
+                ],
+                "research_source_conflict_map_rejects_raw_body_retention": [
+                    "research_source_conflict_map_rejects_raw_body_and_digest_drift"
+                ],
+                "research_source_conflict_map_rejects_sensing_authority_drift": [
+                    "research_source_conflict_map_rejects_follow_up_sensing_drift"
+                ],
+                "research_source_conflict_map_rejects_receipt_ref_and_count_drift": [
+                    "research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "worker_receipt_ledger_read_model",
             [
                 "WorkerReceiptLedgerReadModel",
@@ -9957,6 +10012,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_browser_observation_receipt_contract",
             "surfaces": ["browser_observation_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_research_source_conflict_map_contract",
+            "surfaces": ["research_source_conflict_map"],
             "status": "closed",
         },
         {
