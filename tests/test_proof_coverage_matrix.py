@@ -5279,6 +5279,37 @@ def test_sccml_trace_adapter_witness_blocks_kernel_authority() -> None:
     assert closure_actions["publish_sccml_trace_adapter_witness_contract"]["status"] == "closed"
 
 
+def test_chaos_rehearsal_execution_report_blocks_runtime_disruption() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    chaos_surface = surfaces["chaos_rehearsal_execution_report"]
+    chaos_witness_surface = witness_surfaces["chaos_rehearsal_execution_report"]
+    witnesses = set(chaos_surface["runtime_witnesses"])
+
+    assert chaos_surface["coverage_state"] == "witnessed"
+    assert chaos_surface["request_proof"] == "request_proof"
+    assert chaos_surface["action_proof"] == "action_proof"
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in chaos_surface["evidence_files"]
+    assert "examples/chaos_rehearsal_execution_report.foundation.json" in chaos_surface["evidence_files"]
+    assert "scripts/validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "tests/test_validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "chaos_rehearsal_execution_report_schema_valid" in witnesses
+    assert "chaos_rehearsal_execution_report_blocks_runtime_disruption" in witnesses
+    assert "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_raw_runtime_retention" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_result_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_sdlc_artifacts_valid" in witnesses
+    assert chaos_witness_surface["exact_test_anchor_count"] == 7
+    assert chaos_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_chaos_rehearsal_execution_report_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

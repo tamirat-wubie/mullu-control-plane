@@ -39,6 +39,7 @@ The control plane already absorbed several high-fit ideas:
 | Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
 | Capture policy and trusted reality evidence packet | `TrustedCaptureEvidencePacket` | Implemented |
 | SCCML trace adapter boundary | `SccmlTraceAdapterWitness` | Implemented |
+| Chaos rehearsal dry-run evidence | `ChaosRehearsalExecutionReport` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -73,9 +74,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `ChaosRehearsalExecutionReport`
-   - Records dry-run resilience evidence before any production chaos or invariant-fuzz claim.
-   - Should remain scenario-only with rollback obligations and no runtime disruption authority.
+2. `InvariantFuzzExecutionReport`
+   - Records deterministic invariant-fuzz result banks before any resilience or runtime-hardening claim.
+   - Should remain harness-only with projection-leak checks, unexpected accept/reject counts, and no runtime mutation authority.
 
 ## 6. Project Discipline Mesh Findings
 

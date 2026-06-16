@@ -1000,6 +1000,13 @@
       ]
     },
     {
+      "action_id": "publish_chaos_rehearsal_execution_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "chaos_rehearsal_execution_report"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1371,7 +1378,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 124,
+      "action_proof": 125,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1379,7 +1386,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 176,
+      "audit_chain": 177,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1387,21 +1394,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 107
+      "witnessed": 108
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 123
+      "request_proof": 124
     },
-    "surface_count": 179
+    "surface_count": 180
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 179,
+      "strong": 180,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10992,6 +10999,66 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/chaos_rehearsal_execution_report.schema.json",
+        "examples/chaos_rehearsal_execution_report.foundation.json",
+        "scripts/validate_chaos_rehearsal_execution_report.py",
+        "tests/test_validate_chaos_rehearsal_execution_report.py",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/effect_assurance.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/91_chaos_rehearsal_execution_report_contract.md"
+      ],
+      "notes": "Chaos rehearsal execution reports bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime resilience or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+      "representative_paths": [
+        "ChaosRehearsalExecutionReport",
+        "validate_chaos_rehearsal_execution_report",
+        "chaos_rehearsal_execution_report.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "chaos_rehearsal_execution_report_blocks_runtime_disruption": [
+          "chaos_rehearsal_execution_report_passes",
+          "chaos_rehearsal_execution_report_rejects_authority_drift",
+          "chaos_rehearsal_execution_report_rejects_live_scope_drift"
+        ],
+        "chaos_rehearsal_execution_report_rejects_raw_runtime_retention": [
+          "chaos_rehearsal_execution_report_rejects_raw_runtime_log_retention"
+        ],
+        "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift": [
+          "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+        ],
+        "chaos_rehearsal_execution_report_rejects_result_count_drift": [
+          "chaos_rehearsal_execution_report_rejects_result_and_summary_count_drift"
+        ],
+        "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs": [
+          "chaos_rehearsal_execution_report_rejects_missing_scenario_evidence_and_rollback_refs"
+        ],
+        "chaos_rehearsal_execution_report_schema_valid": [
+          "chaos_rehearsal_execution_report_passes"
+        ],
+        "chaos_rehearsal_execution_report_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_chaos_rehearsal_execution_report"
+        ]
+      },
+      "runtime_witnesses": [
+        "chaos_rehearsal_execution_report_schema_valid",
+        "chaos_rehearsal_execution_report_blocks_runtime_disruption",
+        "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs",
+        "chaos_rehearsal_execution_report_rejects_raw_runtime_retention",
+        "chaos_rehearsal_execution_report_rejects_result_count_drift",
+        "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift",
+        "chaos_rehearsal_execution_report_sdlc_artifacts_valid"
+      ],
+      "surface_id": "chaos_rehearsal_execution_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14444,8 +14511,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1822,
-    "runtime_witness_count": 1822,
+    "exact_test_anchor_count": 1829,
+    "runtime_witness_count": 1829,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -22984,6 +23051,59 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "sccml_trace_adapter_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_passes"
+            ],
+            "witness": "chaos_rehearsal_execution_report_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_passes",
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_authority_drift",
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_live_scope_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_blocks_runtime_disruption"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_missing_scenario_evidence_and_rollback_refs"
+            ],
+            "witness": "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_raw_runtime_log_retention"
+            ],
+            "witness": "chaos_rehearsal_execution_report_rejects_raw_runtime_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_result_and_summary_count_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_rejects_result_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_chaos_rehearsal_execution_report.py::test_sdlc_requirement_and_design_validate_for_chaos_rehearsal_execution_report"
+            ],
+            "witness": "chaos_rehearsal_execution_report_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "chaos_rehearsal_execution_report",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

@@ -1,0 +1,101 @@
+{
+  "security_review_id": "SEC-chaos-rehearsal-execution-report-20260616",
+  "change_id": "chaos-rehearsal-execution-report-20260616",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Chaos rehearsal evidence can accidentally become live fault injection if dry-run scenario evidence, staging or production target refs, runtime disruption authority, rollback execution, and terminal closure are conflated. The main risks are touching a live runtime target, mutating an event chain, retaining raw runtime logs or secrets, calling a connector during validation, bypassing UAO, and claiming resilience closure without rollback or incident handoff evidence. The mitigation is a dry-run-only schema and validator that reject live target drift, destructive authority, raw retention, missing rollback guards, and count drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "live chaos execution, staging or production targeting, runtime disruption, event-chain mutation, rollback execution, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "live runtime target refs remain denied by none:// dry-run target scope",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_live_scope_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw runtime logs and raw secret material remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_raw_runtime_log_retention"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Foundation Mode, dry-run-only mode, and no destructive injection remain enforced",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_chaos_rehearsal_execution_report.py"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms scenario, evidence, rollback, UAO, LifeMeaningJudgment, EffectAssurance, SimulationReceipt, WorkerFailureReceipt, and SDLC recovery refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms scenario result and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_chaos_rehearsal_execution_report.py::test_chaos_rehearsal_execution_report_rejects_result_and_summary_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms the proof coverage matrix includes the chaos rehearsal execution report surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_chaos_rehearsal_execution_report_blocks_runtime_disruption"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "chaos-rehearsal-live-disruption-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode report blocks live chaos execution, staging or production targeting, runtime disruption, event-chain mutation, connector calls, writes, rollback execution, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/chaos_rehearsal_execution_report.schema.json",
+        "scripts/validate_chaos_rehearsal_execution_report.py",
+        "tests/test_validate_chaos_rehearsal_execution_report.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "chaos-rehearsal-raw-runtime-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode report requires scenario and result-bank digest refs and denies raw runtime log and raw secret retention.",
+      "evidence_refs": [
+        "examples/chaos_rehearsal_execution_report.foundation.json",
+        "tests/test_validate_chaos_rehearsal_execution_report.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ChaosRehearsalExecutionReport validation non-live and deterministic",
+    "require scenario refs, invariant refs, expected containment refs, required evidence refs, and rollback guard refs",
+    "require result-bank digest refs instead of raw runtime logs",
+    "deny staging and production targets in Foundation Mode",
+    "deny destructive injection, runtime disruption, event-chain mutation, connector calls, writes, rollback execution, terminal closure, and success claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "examples/chaos_rehearsal_execution_report.foundation.json",
+    "scripts/validate_chaos_rehearsal_execution_report.py",
+    "tests/test_validate_chaos_rehearsal_execution_report.py",
+    "receipt://sdlc/chaos-rehearsal-execution-report/security"
+  ],
+  "uao_ref": "uao://sdlc/chaos-rehearsal-execution-report/security",
+  "causal_decision_trace_ref": "trace://sdlc/chaos-rehearsal-execution-report/security",
+  "receipt_ref": "receipt://sdlc/chaos-rehearsal-execution-report/security"
+}
