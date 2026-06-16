@@ -1,0 +1,95 @@
+{
+  "security_review_id": "SEC-readiness-waiver-review-packet-20260616",
+  "change_id": "readiness-waiver-review-packet-20260616",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Readiness waiver handling can accidentally become deployment authority if operator approval, Phi_gov authorization, accepted-risk refs, expiry receipts, compensating controls, and rollback evidence are conflated. The main risks are indefinite accepted risk, silent readiness claims, unauthorized deployment, runtime promotion without review, and terminal closure without evidence. The mitigation is a non-executing packet schema and validator that require evidence refs, block waiver grants in Foundation Mode, require expiry and compensating controls, and retain blocked reason refs.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "waiver grant and readiness authority remain false in Foundation example",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms deployment and runtime promotion remain denied",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_readiness_waiver_review_packet.py"
+    },
+    {
+      "category": "policy",
+      "check": "expiry cannot be expired, reversed, or silently extended beyond the bounded window",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_expiry_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "required evidence and blocked reason refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_missing_refs"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "compensating controls remain active and evidence-bound",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_readiness_waiver_review_packet.py::test_readiness_waiver_review_packet_rejects_compensating_control_drift"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the packet surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_readiness_waiver_review_packet_blocks_readiness_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "readiness-waiver-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode packet blocks waiver grant, readiness claims, deployment authority, runtime promotion, publication, terminal closure, and success claims until named evidence refs exist.",
+      "evidence_refs": [
+        "schemas/readiness_waiver_review_packet.schema.json",
+        "scripts/validate_readiness_waiver_review_packet.py",
+        "tests/test_validate_readiness_waiver_review_packet.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ReadinessWaiverReviewPacket validation non-live and deterministic",
+    "require UAO and Phi_gov refs before waiver grant can be reconsidered",
+    "require operator approval before readiness claims",
+    "require expiry and compensating controls before accepted-risk handling",
+    "require rollback and recovery evidence before terminal closure",
+    "reject deployment authority and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "receipt://sdlc/readiness-waiver-review-packet/security"
+  ],
+  "uao_ref": "uao://sdlc/readiness-waiver-review-packet/security",
+  "causal_decision_trace_ref": "trace://sdlc/readiness-waiver-review-packet/security",
+  "receipt_ref": "receipt://sdlc/readiness-waiver-review-packet/security"
+}

@@ -4291,6 +4291,35 @@ def test_connector_action_promotion_gate_blocks_live_authority() -> None:
     assert closure_actions["publish_connector_action_promotion_gate_contract"]["status"] == "closed"
 
 
+def test_readiness_waiver_review_packet_blocks_readiness_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    packet_surface = surfaces["readiness_waiver_review_packet"]
+    packet_witness_surface = witness_surfaces["readiness_waiver_review_packet"]
+    witnesses = set(packet_surface["runtime_witnesses"])
+
+    assert packet_surface["coverage_state"] == "witnessed"
+    assert packet_surface["request_proof"] == "request_proof"
+    assert packet_surface["action_proof"] == "action_proof"
+    assert "ReadinessWaiverReviewPacket" in packet_surface["representative_paths"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in packet_surface["evidence_files"]
+    assert "examples/readiness_waiver_review_packet.foundation.json" in packet_surface["evidence_files"]
+    assert "scripts/validate_readiness_waiver_review_packet.py" in packet_surface["evidence_files"]
+    assert "tests/test_validate_readiness_waiver_review_packet.py" in packet_surface["evidence_files"]
+    assert "readiness_waiver_review_packet_schema_valid" in witnesses
+    assert "readiness_waiver_review_packet_blocks_readiness_authority" in witnesses
+    assert "readiness_waiver_review_packet_requires_evidence_refs" in witnesses
+    assert "readiness_waiver_review_packet_rejects_expiry_drift" in witnesses
+    assert packet_witness_surface["exact_test_anchor_count"] == 6
+    assert packet_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_readiness_waiver_review_packet_contract"]["status"] == "closed"
+
+
 def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

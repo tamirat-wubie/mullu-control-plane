@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:readiness-waiver-review-packet:1",
+  "title": "Readiness Waiver Review Packet",
+  "description": "Non-executing review packet for bounded readiness-waiver requests before release, deployment, or runtime-promotion claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "packet_version",
+    "generated_at",
+    "source_readiness_ref",
+    "waiver_scope",
+    "review_chain",
+    "waiver_decision",
+    "compensating_controls",
+    "expiry_policy",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "minLength": 1},
+    "packet_version": {"const": "readiness_waiver_review_packet.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_readiness_ref": {"type": "string", "minLength": 1},
+    "waiver_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_surface",
+        "target_artifact_ref",
+        "requested_waiver_class",
+        "risk_class",
+        "owner",
+        "uao_ref",
+        "phi_gov_ref"
+      ],
+      "properties": {
+        "readiness_surface": {
+          "type": "string",
+          "enum": [
+            "release",
+            "deployment",
+            "runtime_promotion",
+            "connector_promotion",
+            "public_health"
+          ]
+        },
+        "target_artifact_ref": {"type": "string", "minLength": 1},
+        "requested_waiver_class": {
+          "type": "string",
+          "enum": [
+            "temporary_evidence_gap",
+            "accepted_risk_exception",
+            "operator_review_hold",
+            "staged_rehearsal_only"
+          ]
+        },
+        "risk_class": {"type": "string", "enum": ["medium", "high", "critical"]},
+        "owner": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "review_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_review_required",
+        "operator_approval_present",
+        "phi_gov_authorization_present",
+        "security_review_present",
+        "rollback_recovery_ref_present",
+        "life_meaning_judgment_present",
+        "accepted_risk_ref",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "operator_review_required": {"type": "boolean"},
+        "operator_approval_present": {"type": "boolean"},
+        "phi_gov_authorization_present": {"type": "boolean"},
+        "security_review_present": {"type": "boolean"},
+        "rollback_recovery_ref_present": {"type": "boolean"},
+        "life_meaning_judgment_present": {"type": "boolean"},
+        "accepted_risk_ref": {"type": ["string", "null"], "minLength": 1},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true}
+      }
+    },
+    "waiver_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "waiver_granted",
+        "readiness_claim_allowed",
+        "deployment_authority_allowed",
+        "runtime_promotion_allowed",
+        "external_publication_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "operator_approval_required",
+        "required_evidence_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "WAIVER_REVIEW_BLOCKED_AWAITING_APPROVAL",
+            "WAIVER_REVIEW_READY_FOR_OPERATOR_DECISION",
+            "WAIVER_GRANTED"
+          ]
+        },
+        "waiver_granted": {"type": "boolean"},
+        "readiness_claim_allowed": {"type": "boolean"},
+        "deployment_authority_allowed": {"type": "boolean"},
+        "runtime_promotion_allowed": {"type": "boolean"},
+        "external_publication_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"},
+        "operator_approval_required": {"type": "boolean"},
+        "required_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocked_reason_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "compensating_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "control_id",
+          "control_type",
+          "owner",
+          "active",
+          "evidence_ref",
+          "verification_ref"
+        ],
+        "properties": {
+          "control_id": {"type": "string", "minLength": 1},
+          "control_type": {
+            "type": "string",
+            "enum": [
+              "scope_reduction",
+              "manual_review",
+              "time_box",
+              "rollback_rehearsal",
+              "monitoring_gate"
+            ]
+          },
+          "owner": {"type": "string", "minLength": 1},
+          "active": {"type": "boolean"},
+          "evidence_ref": {"type": "string", "minLength": 1},
+          "verification_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "expiry_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expires_at",
+        "max_duration_days",
+        "expired",
+        "renewal_requires_operator_approval",
+        "expiry_receipt_ref"
+      ],
+      "properties": {
+        "expires_at": {"type": "string", "format": "date-time"},
+        "max_duration_days": {"type": "integer", "minimum": 1, "maximum": 30},
+        "expired": {"type": "boolean"},
+        "renewal_requires_operator_approval": {"type": "boolean"},
+        "expiry_receipt_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_waiver_review_packet_schema",
+        "sdlc_release_candidate_schema",
+        "sdlc_deployment_candidate_schema",
+        "sdlc_security_review_schema",
+        "universal_action_orchestration_schema",
+        "temporal_accepted_risk_expiry_receipt_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "readiness_waiver_review_packet_schema": {"type": "string", "minLength": 1},
+        "sdlc_release_candidate_schema": {"type": "string", "minLength": 1},
+        "sdlc_deployment_candidate_schema": {"type": "string", "minLength": 1},
+        "sdlc_security_review_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "temporal_accepted_risk_expiry_receipt_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "waiver_granted",
+        "compensating_control_count",
+        "required_evidence_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "waiver_granted": {"type": "boolean"},
+        "compensating_control_count": {"type": "integer", "minimum": 0},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 0},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

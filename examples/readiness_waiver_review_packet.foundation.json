@@ -1,0 +1,107 @@
+{
+  "packet_id": "readiness-waiver-review-packet-foundation-20260616",
+  "packet_version": "readiness_waiver_review_packet.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "source_readiness_ref": "examples/sdlc/release_candidate_uao_validator.json",
+  "waiver_scope": {
+    "readiness_surface": "deployment",
+    "target_artifact_ref": "examples/sdlc/deployment_candidate_uao_validator.json",
+    "requested_waiver_class": "temporary_evidence_gap",
+    "risk_class": "high",
+    "owner": "foundation-local-operator",
+    "uao_ref": "uao://readiness-waiver-review-packet/foundation/deployment-evidence-gap",
+    "phi_gov_ref": null
+  },
+  "review_chain": {
+    "operator_review_required": true,
+    "operator_approval_present": false,
+    "phi_gov_authorization_present": false,
+    "security_review_present": true,
+    "rollback_recovery_ref_present": true,
+    "life_meaning_judgment_present": true,
+    "accepted_risk_ref": null,
+    "mfidel_atomicity_preserved": true
+  },
+  "waiver_decision": {
+    "decision": "WAIVER_REVIEW_BLOCKED_AWAITING_APPROVAL",
+    "waiver_granted": false,
+    "readiness_claim_allowed": false,
+    "deployment_authority_allowed": false,
+    "runtime_promotion_allowed": false,
+    "external_publication_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "operator_approval_required": true,
+    "required_evidence_refs": [
+      "evidence://readiness-waiver/operator-approval",
+      "evidence://readiness-waiver/phi-gov-authorization",
+      "evidence://readiness-waiver/security-review",
+      "evidence://readiness-waiver/rollback-recovery",
+      "evidence://readiness-waiver/expiry-receipt",
+      "evidence://readiness-waiver/compensating-controls"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/missing",
+      "blocked://phi-gov/authorization-missing",
+      "blocked://accepted-risk/not-issued",
+      "blocked://readiness-claim/denied",
+      "blocked://deployment-authority/denied"
+    ]
+  },
+  "compensating_controls": [
+    {
+      "control_id": "scope-reduction-foundation-local-only",
+      "control_type": "scope_reduction",
+      "owner": "foundation-local-operator",
+      "active": true,
+      "evidence_ref": "docs/FOUNDATION_MODE.md",
+      "verification_ref": "scripts/validate_public_repository_surface.py"
+    },
+    {
+      "control_id": "time-box-waiver-review",
+      "control_type": "time_box",
+      "owner": "foundation-local-operator",
+      "active": true,
+      "evidence_ref": "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+      "verification_ref": "scripts/validate_readiness_waiver_review_packet.py"
+    }
+  ],
+  "expiry_policy": {
+    "expires_at": "2026-06-30T00:00:00Z",
+    "max_duration_days": 14,
+    "expired": false,
+    "renewal_requires_operator_approval": true,
+    "expiry_receipt_ref": "schemas/temporal_accepted_risk_expiry_receipt.schema.json"
+  },
+  "receipt_refs": {
+    "readiness_waiver_review_packet_schema": "schemas/readiness_waiver_review_packet.schema.json",
+    "sdlc_release_candidate_schema": "schemas/sdlc_release_candidate.schema.json",
+    "sdlc_deployment_candidate_schema": "schemas/sdlc_deployment_candidate.schema.json",
+    "sdlc_security_review_schema": "schemas/sdlc_security_review.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "temporal_accepted_risk_expiry_receipt_schema": "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "waiver_granted": false,
+    "compensating_control_count": 2,
+    "required_evidence_ref_count": 6,
+    "blocked_reason_ref_count": 5,
+    "receipt_ref_count": 7,
+    "evidence_ref_count": 12
+  },
+  "evidence_refs": [
+    "schemas/readiness_waiver_review_packet.schema.json",
+    "examples/readiness_waiver_review_packet.foundation.json",
+    "scripts/validate_readiness_waiver_review_packet.py",
+    "tests/test_validate_readiness_waiver_review_packet.py",
+    "docs/86_readiness_waiver_review_packet_contract.md",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "docs/34_accepted_risk_closure.md"
+  ]
+}

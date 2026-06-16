@@ -5840,6 +5840,58 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "readiness_waiver_review_packet",
+            [
+                "ReadinessWaiverReviewPacket",
+                "validate_readiness_waiver_review_packet",
+                "readiness_waiver_review_packet.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/readiness_waiver_review_packet.schema.json",
+                "examples/readiness_waiver_review_packet.foundation.json",
+                "scripts/validate_readiness_waiver_review_packet.py",
+                "tests/test_validate_readiness_waiver_review_packet.py",
+                "schemas/sdlc_release_candidate.schema.json",
+                "schemas/sdlc_deployment_candidate.schema.json",
+                "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+                "docs/86_readiness_waiver_review_packet_contract.md",
+            ],
+            "Readiness waiver review packets bind readiness evidence, target artifact refs, UAO refs, Phi_gov authorization state, approval state, security review state, rollback evidence, accepted-risk status, expiry policy, compensating controls, required evidence refs, and blocked reason refs before any waiver can be reviewed.",
+            [
+                "readiness_waiver_review_packet_schema_valid",
+                "readiness_waiver_review_packet_blocks_readiness_authority",
+                "readiness_waiver_review_packet_requires_evidence_refs",
+                "readiness_waiver_review_packet_rejects_expiry_drift",
+                "readiness_waiver_review_packet_rejects_compensating_control_drift",
+                "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "readiness_waiver_review_packet_schema_valid": [
+                    "readiness_waiver_review_packet_passes"
+                ],
+                "readiness_waiver_review_packet_blocks_readiness_authority": [
+                    "readiness_waiver_review_packet_passes",
+                    "readiness_waiver_review_packet_rejects_authority_drift",
+                ],
+                "readiness_waiver_review_packet_requires_evidence_refs": [
+                    "readiness_waiver_review_packet_rejects_missing_refs"
+                ],
+                "readiness_waiver_review_packet_rejects_expiry_drift": [
+                    "readiness_waiver_review_packet_rejects_expiry_drift"
+                ],
+                "readiness_waiver_review_packet_rejects_compensating_control_drift": [
+                    "readiness_waiver_review_packet_rejects_compensating_control_drift"
+                ],
+                "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift": [
+                    "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "worker_receipt_ledger_read_model",
             [
                 "WorkerReceiptLedgerReadModel",
@@ -9845,6 +9897,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_connector_action_promotion_gate_contract",
             "surfaces": ["connector_action_promotion_gate"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_readiness_waiver_review_packet_contract",
+            "surfaces": ["readiness_waiver_review_packet"],
             "status": "closed",
         },
         {
