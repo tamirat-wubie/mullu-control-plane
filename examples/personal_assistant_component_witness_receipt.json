@@ -1,0 +1,102 @@
+{
+  "receipt_id": "personal-assistant-component-witness-213210034007dd58",
+  "schema_version": "personal_assistant.component_witness_receipt.v1",
+  "generated_at": "2026-06-16T08:30:36Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "component_id": "personal_assistant",
+  "bundle_id": "personal_assistant_v0",
+  "evidence_refs": {
+    "component_graph": "examples/component_graph.foundation.json",
+    "component_bundle_compilation": "examples/component_bundle_compilation.personal_assistant_v0.json",
+    "component_lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json"
+  },
+  "component_witness": {
+    "component_present": true,
+    "mode": "draft_only",
+    "state": "draft_only",
+    "authority_level": "draft_only",
+    "proof_binding_state": "proof_bound",
+    "route_binding_state": "bound",
+    "bundle_membership_is_not_execution_authority": true
+  },
+  "request_path_witness": {
+    "inbox_probe_path_bound": true,
+    "send_email_path_blocked": true,
+    "gmail_gate_required": true,
+    "approval_required": true,
+    "inbox_probe_outcome": "AwaitingEvidence",
+    "send_email_outcome": "GovernanceBlocked",
+    "blocked_actions": [
+      "account_binding_claim",
+      "autonomous_execution",
+      "calendar_write",
+      "connector_call",
+      "customer_exposure",
+      "deploy",
+      "dns_mutation",
+      "external_send",
+      "filesystem_write",
+      "live_dispatch",
+      "mailbox_mutation",
+      "memory_topology_activation",
+      "provider_write",
+      "public_readiness_claim",
+      "runtime_mutation",
+      "secret_mutation",
+      "send_email",
+      "terminal_closure"
+    ]
+  },
+  "lifecycle_witness": {
+    "receipt_id": "component_lifecycle_transition.personal_assistant.mounted_to_draft_only.v1",
+    "from_state": "mounted",
+    "to_state": "draft_only",
+    "authority_level": "draft_only",
+    "external_effect": false,
+    "operator_approval_required": false,
+    "receipt_is_not_execution_authority": true,
+    "receipt_is_not_terminal_closure": true
+  },
+  "effect_boundary": {
+    "live_execution_enabled": false,
+    "live_connector_send_enabled": false,
+    "can_execute": false,
+    "can_mutate": false,
+    "can_call_connector": false,
+    "can_claim_terminal_closure": false,
+    "can_send_external_message": false,
+    "can_write_files": false,
+    "secret_values_serialized": false,
+    "raw_private_connector_payloads_serialized": false
+  },
+  "summary": {
+    "component_witness_verified": true,
+    "request_path_witness_verified": true,
+    "lifecycle_witness_verified": true,
+    "no_effect_boundary_verified": true,
+    "witness_closed": true
+  },
+  "forbidden_claims_preserved": [
+    "production_ready",
+    "customer_ready",
+    "live_gmail_enabled",
+    "autonomous_execution",
+    "compliance_certified",
+    "enterprise_sla",
+    "nested_mind_live"
+  ],
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-component-witness-2026-06-16",
+        "reason": "Recorded local component evidence that Personal Assistant remains draft-only and no-effect.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

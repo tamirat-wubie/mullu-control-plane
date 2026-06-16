@@ -92,6 +92,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `GET /v1/health`, `GET /v1/version`, and the blocked `POST /v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
 | Govern Cloud evaluate-route rollback witness | `scripts/validate_govern_evaluate_route_rollback.py` verifies `/v1/health` and `/v1/version` remain public read routes while `POST /v1/govern/evaluate` returns 404 without outbound proxy transport | Reflected |
 | Personal assistant public console probe | `scripts/collect_personal_assistant_public_console_probe.py` writes `examples/personal_assistant_public_console_probe_receipt.json` from the public read-only JSON and HTML console routes while preserving no-effect authority boundaries | Reflected |
+| Personal assistant component witness | `scripts/collect_personal_assistant_component_witness.py` writes `examples/personal_assistant_component_witness_receipt.json` from local component graph, bundle compilation, and lifecycle receipts while preserving draft-only/no-effect authority boundaries | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -199,3 +200,5 @@ Before this witness can claim public deployment health, the repository must name
 | Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
 | Personal assistant public console probe | `python scripts/collect_personal_assistant_public_console_probe.py --output examples/personal_assistant_public_console_probe_receipt.json --json` |
 | Personal assistant public console probe validation | `python scripts/validate_personal_assistant_public_console_probe_receipt.py --receipt examples/personal_assistant_public_console_probe_receipt.json --output .change_assurance/personal_assistant_public_console_probe_validation.json --require-closed --json` |
+| Personal assistant component witness | `python scripts/collect_personal_assistant_component_witness.py --output examples/personal_assistant_component_witness_receipt.json --json` |
+| Personal assistant component witness validation | `python scripts/validate_personal_assistant_component_witness_receipt.py --receipt examples/personal_assistant_component_witness_receipt.json --output .change_assurance/personal_assistant_component_witness_validation.json --require-closed --json` |
