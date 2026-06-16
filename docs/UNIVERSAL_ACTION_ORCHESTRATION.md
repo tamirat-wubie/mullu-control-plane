@@ -108,6 +108,7 @@ closure.whqr_replay_binding.replay_ref present -> replay_ref starts with whqr://
 closure.whqr_replay_binding.canonical_hash present -> canonical_hash starts with sha256:
 closure.whqr_replay_binding.semantics_hash present -> semantics_hash starts with sha256:
 closure.whqr_replay_binding.version present -> version uses major.minor.patch
+closure.whqr_replay_binding present -> reject fields outside replay_ref, canonical_hash, semantics_hash, version
 decision.execution_allowed -> fracture_report.status = passed
 decision.execution_allowed -> empty(fracture_report.blocking_check_ids)
 stage_order(fracture) < stage_order(execution)

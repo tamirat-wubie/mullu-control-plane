@@ -37,7 +37,10 @@ from gateway.command_spine import (  # noqa: E402
 from gateway.capability_fabric import build_capability_admission_gate_from_env  # noqa: E402
 from gateway.plan import one_step_plan  # noqa: E402
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult  # noqa: E402
-from gateway.server import create_gateway_app  # noqa: E402
+from gateway.server import (  # noqa: E402
+    _validated_whqr_replay_binding,
+    create_gateway_app,
+)
 from gateway.router import TenantMapping  # noqa: E402
 from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
@@ -1734,6 +1737,19 @@ class TestApprovalWebhook:
 
 
 class TestGatewayStatus:
+    def test_gateway_whqr_replay_binding_rejects_unsupported_fields(self):
+        binding = _validated_whqr_replay_binding({
+            "replay_ref": "whqr://replay/sha256:proof-canonical-hash",
+            "canonical_hash": "sha256:proof-canonical-hash",
+            "semantics_hash": "sha256:proof-semantics-hash",
+            "version": "0.1.0",
+            "authority_override": "not-permitted",
+        })
+
+        assert binding == {}
+        assert "authority_override" not in binding
+        assert binding.get("replay_ref", "") == ""
+
     def test_status(self, client):
         resp = client.get("/gateway/status")
         assert resp.status_code == 200

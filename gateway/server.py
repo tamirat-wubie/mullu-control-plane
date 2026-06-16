@@ -524,8 +524,15 @@ def _valid_whqr_semver(version: str) -> bool:
     return len(parts) == 3 and all(part.isdigit() for part in parts)
 
 
+_WHQR_REPLAY_BINDING_FIELDS = frozenset(
+    {"replay_ref", "canonical_hash", "semantics_hash", "version"}
+)
+
+
 def _validated_whqr_replay_binding(source: Any) -> dict[str, str]:
     if not isinstance(source, Mapping):
+        return {}
+    if set(source) != _WHQR_REPLAY_BINDING_FIELDS:
         return {}
     replay_ref = source.get("replay_ref")
     canonical_hash = source.get("canonical_hash")
