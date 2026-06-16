@@ -11,19 +11,19 @@ Date: 2026-06-16
 
 Outcome: `AwaitingEvidence`
 
-This is a readiness audit, not an implementation plan. It maps the current control-plane foundation before any user-facing Agentic Service Harness build. The repository now has a strong planning and read-only contract surface, but the live harness should not start until the missing durable user/project/run/approval/sandbox/receipt foundations are closed in small PRs.
+This is a readiness audit, not an implementation plan. It maps the current control-plane foundation before any user-facing Agentic Service Harness build. The repository now has a strong planning, read-only contract, and durable entity-binding surface, but the live harness should not start until runtime append authority, sandbox allocation, GitHub task service, and approval-gated PR admission are closed in small PRs.
 
 ## Decision Summary
 
 | Area | Status | Judgment |
 | --- | --- | --- |
 | 1. Public API foundation | READY | Live public API/evidence endpoints respond, and the live deployment witness reported deployed commit sample `0b047bb9...` during the 2026-06-16 verification pass. |
-| 2. User/project/tenant model | PARTIAL | Schema and read-model examples exist; durable harness-owned persistence and exact ApprovalRequest/LoopStatus bindings are incomplete. |
+| 2. User/project/tenant model | PARTIAL | Schema, read-model examples, and durable entity bindings exist for the eight foundation entities; harness-owned runtime persistence and effect-bearing append authority remain disabled. |
 | 3. Agent service harness contract | PARTIAL | Contract schema, examples, read-only route, and blocked live-producer gates exist; live producer and adapter execution remain intentionally absent. |
 | 4. First MVP adapter path | PARTIAL | GitHub/Codex-style concepts exist as no-effect planning projections and lower-level code-worker/sandbox pieces; no approved branch/PR execution path exists. |
 | 5. Permission and authority model | READY | Roles, action classes, approval gates, and blocked high-risk actions are encoded and validated with no mutation authority. |
 | 6. Sandbox/workspace safety | PARTIAL | Command/path/time/network safety foundations exist; harness-specific branch workspace binding and live cleanup receipts are missing. |
-| 7. Receipt and evidence model | PARTIAL | Required receipt fields exist in contract examples; durable harness runtime receipt emission/store binding is not implemented. |
+| 7. Receipt and evidence model | PARTIAL | Required receipt fields and durable read-model store bindings exist; runtime receipt emission and append authority are not implemented. |
 | 8. Dashboard/UI requirements | MISSING | No user-facing dashboard should be built yet; only read-only API/status evidence exists. |
 | 9. Explicit non-goals | READY | First-phase non-goals are encoded in harness examples and validator expectations. |
 
@@ -40,6 +40,7 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 | Live proof verify | `GET https://api.mullusi.com/proof/verify -> 200`, sample `valid=true` |
 | Harness route | `GET /api/v1/harness/status` exists in `gateway/server.py`; POST is tested as not admitted. |
 | Harness contract | `schemas/agentic_service_harness.schema.json` plus five examples for read-only, dry-run, branch-write awaiting approval, open-PR awaiting approval, and blocked high-risk. |
+| Durable harness entity bindings | `schemas/agentic_service_harness_read_models.schema.json` requires durable bindings for User, Organization, Project, RepositoryConnection, AgentRun, ApprovalRequest, Receipt, and LoopStatus; append/write authority remains false. |
 | Live producer status | Local rehearsal and blocked admission gates exist; live producer implementation remains denied. |
 
 ## 1. Public API Foundation
@@ -64,11 +65,11 @@ Area status: PARTIAL
 | User | READY | `schemas/agentic_service_harness.schema.json` defines `user`; examples include `user.operator`. | - |
 | Organization | READY | Harness schema defines `organization`; examples include `org.foundation`; organization kernel runtime also exists. | - |
 | Project | READY | Harness schema defines `project` with tenant, repositories, runs, receipts, and loop status ref. | - |
-| RepositoryConnection | PARTIAL | Harness schema defines GitHub repository connections, but examples are presence-only and write authority is false. | Add a durable `RepositoryConnection` store/read model with GitHub App installation ref, scopes, revocation path, and no secret serialization. |
+| RepositoryConnection | PARTIAL | Durable binding exists with no secret serialization and write authority false; GitHub App revocation and scope refresh path is still not live-bound. | Add GitHub App installation revocation/scope freshness witness without serializing secret values. |
 | AgentRun | READY | Harness schema defines `agent_run`; read-model producer projects runs into status output. | - |
-| ApprovalRequest | PARTIAL | Gateway has `ApprovalRequest`; harness schema uses `approval_gate`, but no harness-owned ApprovalRequest persistence/read model exists. | Add a harness ApprovalRequest binding that maps ApprovalGate to gateway approvals without creating mutation routes. |
-| Receipt | PARTIAL | Harness agent-run receipt contract exists; runtime receipt-store write path is still witness-only. | Add a durable read-only harness receipt-store binding and append preflight; keep append disabled until approved. |
-| LoopStatus | PARTIAL | Loop refs exist; no typed harness `LoopStatus` entity is in the harness schema. | Add a `LoopStatus` schema/read-model projection bound to holistic loop readiness reports. |
+| ApprovalRequest | PARTIAL | Durable binding maps ApprovalRequest to approval-gate projections, but approval mutation remains blocked and no approval queue route exists. | Add approval queue read-model contract and validator without creating approval mutation routes. |
+| Receipt | PARTIAL | Durable read-model store binding exists and append is disabled; runtime receipt emission remains witness-only. | Add harness receipt-emitter dry-run and append preflight; keep append disabled until approved. |
+| LoopStatus | PARTIAL | Durable binding maps LoopStatus to project loop refs; no dedicated harness loop-status collection exists. | Add a typed `LoopStatus` read-model projection bound to holistic loop readiness reports. |
 
 ## 3. Agent Service Harness Contract
 
@@ -142,7 +143,7 @@ Area status: PARTIAL
 | risk level | READY | `risk_level` is constrained to low, medium, high, critical. | - |
 | evidence refs | READY | Evidence refs are required on tasks, gates, receipts, and bundles. | - |
 | next action | READY | `next_action` is required on contracts, receipts, summaries, and status projection. | - |
-| durable harness receipt emission | PARTIAL | Existing read-only worker receipt-store path is witness-only; harness runtime receipt writes are not enabled. | Add harness receipt-emitter dry-run and durable store binding validator before any append path. |
+| durable harness receipt emission | PARTIAL | Durable read-model store bindings exist and append is explicitly disabled; harness runtime receipt writes are not enabled. | Add harness receipt-emitter dry-run and append-admission validator before any append path. |
 
 ## 8. Dashboard/UI Requirements
 
@@ -179,24 +180,24 @@ Area status: READY
 | --- | --- | --- | --- |
 | Strategy/Product | Harness should start with GitHub/Codex-style repo task path only. | Pass | Keep non-goals and first adapter path constrained. |
 | Design/Research | Dashboard requirements are known but should not be built yet. | Gap | Define read models and approval/evidence screens before UI implementation. |
-| Engineering | Contracts and read-only route exist; durable stores and execution bindings are incomplete. | Gap | Close user/project/run/approval/sandbox/receipt model PRs first. |
-| Quality/Security | Validators cover contract safety, non-goals, status route denial, and high-risk blocking. | Pass | Extend validators when durable store and branch workspace contracts are added. |
+| Engineering | Contracts, read-only route, and durable entity bindings exist; runtime append stores and execution bindings are incomplete. | Gap | Close sandbox, GitHub task service, receipt-emitter dry-run, and approval-gated PR admission PRs next. |
+| Quality/Security | Validators cover contract safety, non-goals, durable bindings, status route denial, and high-risk blocking. | Pass | Extend validators when branch workspace and adapter contracts are added. |
 | Operations | Public evidence endpoints are live, but latest main is not deployed/witnessed. | Gap | Refresh deployment/runtime witness for current main before public readiness claims. |
 | Business/GTM | No marketplace, billing, or customer-facing launch requirement is admitted. | Pass | Keep first phase internal/foundation until safe GitHub path is closed. |
 
 ## Recommended PR Sequence
 
-1. `audit(harness): bind durable user project run model`
-   Add durable read-model/store contracts for User, Organization, Project, RepositoryConnection, AgentRun, ApprovalRequest, Receipt, and LoopStatus without mutation routes.
-
-2. `audit(harness): add workspace sandbox allocation contract`
+1. `audit(harness): add workspace sandbox allocation contract`
    Add branch workspace, cleanup receipt, command/test/diff collection contracts and validators; keep execution disabled.
 
-3. `audit(harness): add github repo task read-only adapter contract`
+2. `audit(harness): add github repo task read-only adapter contract`
    Add GitHub repo metadata probe receipt and Codex-style adapter descriptor; no branch write, no PR creation.
 
-4. `audit(harness): add approval-gated branch and pr admission preflight`
+3. `audit(harness): add approval-gated branch and pr admission preflight`
    Add preflight validators for write-to-branch and open-PR after approval, tests, diff, and receipt bundle evidence; still no endpoint.
+
+4. `audit(harness): add receipt-emitter dry-run and append gate`
+   Add runtime receipt-emitter dry-run and append-admission validator; append remains disabled until approval.
 
 5. `audit(harness): map dashboard read models`
    Add dashboard information architecture and read-model contracts only after the previous foundations validate.
@@ -208,6 +209,9 @@ Area status: READY
 | `python scripts/validate_agentic_service_harness_contract.py --strict` | PASS |
 | `python scripts/validate_agentic_service_harness_read_only_status_route.py` | PASS |
 | `python scripts/validate_agentic_service_harness_read_model_projections.py` | PASS |
+| `python scripts/validate_agentic_service_harness_read_models.py --strict` | PASS |
+| `python scripts/validate_agentic_service_harness_read_model_integrity.py --strict` | PASS |
+| `python scripts/validate_agentic_service_harness_read_model_persistence.py` | PASS |
 | `python scripts/validate_agentic_service_harness_live_task_run_producer_evidence.py` | PASS |
 | `python scripts/validate_agentic_service_harness_live_task_run_producer_rehearsal.py` | PASS |
 | `python scripts/validate_agentic_service_harness_live_producer_admission_gate.py` | PASS |
@@ -223,14 +227,14 @@ The repository is ready for the next foundation PRs, not ready for the user-faci
 
 Required ordering:
 
-1. Close durable user/project/run/approval/sandbox/receipt models.
+1. Close workspace sandbox/test/diff allocation contracts.
 2. Close read-only GitHub repo task service evidence.
-3. Close branch workspace/test/diff contracts.
+3. Close receipt-emitter dry-run and append-admission validators.
 4. Close approval-gated PR admission preflight.
 5. Only then begin dashboard UI work.
 
 STATUS:
   Completeness: 100%
   Invariants verified: no dashboard, no mutation endpoint, no live coding adapter, no branch/PR/deploy/DNS/secret/destructive authority, no secret serialization claim
-  Open issues: durable harness model, branch workspace contract, GitHub read-only task service, PR admission preflight, dashboard read models
-  Next action: implement the smallest durable user/project/run/approval/sandbox/receipt model PR
+  Open issues: branch workspace contract, GitHub read-only task service, receipt-emitter dry-run, PR admission preflight, dashboard read models
+  Next action: implement the smallest workspace sandbox/test/diff allocation contract PR
