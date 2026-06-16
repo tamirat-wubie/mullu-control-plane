@@ -9,6 +9,10 @@
     "schema_ref",
     "tenant_id_filter",
     "command_id_filter",
+    "receipt_type_filter",
+    "receipt_status_filter",
+    "task_status_filter",
+    "search_filter",
     "limit",
     "offset",
     "next_offset",
@@ -28,6 +32,20 @@
     },
     "tenant_id_filter": {"type": "string"},
     "command_id_filter": {"type": "string"},
+    "receipt_type_filter": {
+      "anyOf": [
+        {"$ref": "#/$defs/receipt_type"},
+        {"type": "string", "const": ""}
+      ]
+    },
+    "receipt_status_filter": {"type": "string", "maxLength": 128},
+    "task_status_filter": {
+      "anyOf": [
+        {"$ref": "#/$defs/task_status"},
+        {"type": "string", "const": ""}
+      ]
+    },
+    "search_filter": {"type": "string", "maxLength": 128},
     "limit": {"type": "integer", "minimum": 1, "maximum": 500},
     "offset": {"type": "integer", "minimum": 0},
     "next_offset": {
@@ -65,6 +83,7 @@
         "created_at",
         "latest_event_hash",
         "event_count",
+        "receipt_types",
         "receipt_count",
         "receipts"
       ],
@@ -81,6 +100,11 @@
         "created_at": {"type": "string", "minLength": 1},
         "latest_event_hash": {"type": "string"},
         "event_count": {"type": "integer", "minimum": 0},
+        "receipt_types": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/receipt_type"},
+          "uniqueItems": true
+        },
         "receipt_count": {"type": "integer", "minimum": 0},
         "receipts": {
           "type": "array",
@@ -100,21 +124,27 @@
         "evidence_refs"
       ],
       "properties": {
-        "receipt_type": {
-          "type": "string",
-          "enum": [
-            "interpretation_receipt",
-            "command_event",
-            "universal_action_proof",
-            "terminal_closure_certificate"
-          ]
-        },
+        "receipt_type": {"$ref": "#/$defs/receipt_type"},
         "receipt_id": {"type": "string"},
         "receipt_hash": {"type": "string"},
         "status": {"type": "string"},
         "details": {"type": "object", "additionalProperties": true},
         "evidence_refs": {"type": "object", "additionalProperties": true}
       }
+    },
+    "receipt_type": {
+      "type": "string",
+      "enum": [
+        "interpretation_receipt",
+        "plan_step_receipt",
+        "approval_receipt",
+        "denial_receipt",
+        "worker_receipt",
+        "delivery_receipt",
+        "command_event",
+        "universal_action_proof",
+        "terminal_closure_certificate"
+      ]
     },
     "task_status": {
       "type": "string",

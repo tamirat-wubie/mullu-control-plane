@@ -16,9 +16,67 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.operational_dashboard_client import (
+    build_normal_user_dashboard_client_view,
+    render_normal_user_dashboard_html,
+    render_normal_user_dashboard_shell,
+)
 from mcoi_runtime.core.operational_dashboard_intelligence import OperationalDashboardState
 
 DashboardStateProvider = Callable[[], OperationalDashboardState]
+
+
+NORMAL_USER_DASHBOARD_CLIENT_CONTRACT: dict[str, object] = {
+    "contract_ref": "operational_dashboard.normal_user_dashboard.v1",
+    "visibility_level": "normal_user",
+    "route": {
+        "method": "GET",
+        "path": "/api/v1/dashboard/simple",
+        "payload_key": "dashboard",
+    },
+    "page_route": {
+        "method": "GET",
+        "path": "/api/v1/dashboard/simple/page",
+        "content_type": "text/html",
+    },
+    "purpose": "Expose the Level 1 dashboard shell for normal users.",
+    "visible_payload_fields": (
+        "visibility_level",
+        "audit_details_visible",
+        "receipts_visible",
+        "proof_details_hidden",
+        "home",
+        "simple_action_summaries",
+        "simple_workflow_summaries",
+        "simple_start_guide",
+        "simple_ready_action_refs",
+        "simple_review_action_refs",
+        "simple_blocked_action_refs",
+        "simple_ready_workflow_refs",
+        "simple_review_workflow_refs",
+        "simple_blocked_workflow_refs",
+        "execution_allowed",
+    ),
+    "hidden_fields": (
+        "auditor_details",
+        "blocked_reasons",
+        "boundary_witness_ref",
+        "checks",
+        "decision_ref",
+        "operator_details",
+        "proof_stamp_ref",
+        "raw_decision",
+        "review_reasons",
+    ),
+    "hidden_ref_prefixes": ("gate-decision-", "proof-", "witness-"),
+    "invariants": (
+        "normal user payloads hide proof and witness references",
+        "normal user payloads use dashboard-local opaque refs",
+        "normal user payloads do not expose raw checks or decisions",
+        "normal user payloads never grant execution authority",
+        "operator and auditor details remain on explicit audit/operator routes",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -74,6 +132,53 @@ class OperationalDashboardRuntime:
         except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
             return _rejected(exc)
 
+    def simple_state(self) -> OperationalDashboardEnvelope:
+        """Return the normal-user dashboard projection with audit details hidden."""
+
+        try:
+            state = self._load_state()
+            simple_dashboard = _normal_user_dashboard_payload(state)
+            return _ok("ready" if simple_dashboard["home"] else "empty", {"dashboard": simple_dashboard})
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            return _rejected(exc)
+
+    def simple_state_contract(self) -> OperationalDashboardEnvelope:
+        """Return the stable normal-user dashboard client contract."""
+
+        return _ok("listed", {"contract": _normal_user_dashboard_client_contract()})
+
+    def simple_client_view(self) -> OperationalDashboardEnvelope:
+        """Return the UI-ready normal-user dashboard client view."""
+
+        try:
+            state = self._load_state()
+            simple_dashboard = _normal_user_dashboard_payload(state)
+            if simple_dashboard["home"] is None:
+                return _ok("empty", {"client_view": None})
+            client_view = build_normal_user_dashboard_client_view(
+                simple_dashboard,
+                contract=_normal_user_dashboard_client_contract(),
+            )
+            return _ok("ready", {"client_view": client_view.to_dict()})
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            return _rejected(exc)
+
+    def simple_client_page(self) -> OperationalDashboardEnvelope:
+        """Return the read-only HTML page for the normal-user dashboard."""
+
+        try:
+            state = self._load_state()
+            simple_dashboard = _normal_user_dashboard_payload(state)
+            if simple_dashboard["home"] is None:
+                return _ok("empty", {"html": _empty_normal_user_dashboard_html()})
+            client_view = build_normal_user_dashboard_client_view(
+                simple_dashboard,
+                contract=_normal_user_dashboard_client_contract(),
+            )
+            return _ok("ready", {"html": render_normal_user_dashboard_html(client_view)})
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            return _rejected(exc)
+
     def sdlc_receipts(self) -> OperationalDashboardEnvelope:
         """Return read-only SDLC validation receipt summaries."""
 
@@ -106,3 +211,72 @@ def _ok(status: str, payload: Mapping[str, Any]) -> OperationalDashboardEnvelope
 
 def _rejected(exc: Exception) -> OperationalDashboardEnvelope:
     return OperationalDashboardEnvelope(governed=True, ok=False, status="rejected", payload={}, error=str(exc))
+
+
+def _normal_user_dashboard_payload(state: OperationalDashboardState) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "visibility_level": "normal_user",
+        "audit_details_visible": False,
+        "receipts_visible": False,
+        "proof_details_hidden": True,
+        "home": state.simple_home_summary.to_dict() if state.simple_home_summary else None,
+        "simple_action_summaries": [summary.to_dict() for summary in state.simple_action_summaries],
+        "simple_workflow_summaries": [summary.to_dict() for summary in state.simple_workflow_summaries],
+        "simple_start_guide": state.simple_start_guide.to_dict() if state.simple_start_guide else None,
+        "simple_ready_action_refs": list(state.simple_ready_action_refs),
+        "simple_review_action_refs": list(state.simple_review_action_refs),
+        "simple_blocked_action_refs": list(state.simple_blocked_action_refs),
+        "simple_ready_workflow_refs": list(state.simple_ready_workflow_refs),
+        "simple_review_workflow_refs": list(state.simple_review_workflow_refs),
+        "simple_blocked_workflow_refs": list(state.simple_blocked_workflow_refs),
+        "execution_allowed": False,
+    }
+    _reject_normal_user_dashboard_leaks(payload)
+    return payload
+
+
+def _normal_user_dashboard_client_contract() -> dict[str, object]:
+    return {
+        key: list(value) if isinstance(value, tuple) else dict(value) if isinstance(value, Mapping) else value
+        for key, value in NORMAL_USER_DASHBOARD_CLIENT_CONTRACT.items()
+    }
+
+
+def _empty_normal_user_dashboard_html() -> str:
+    return render_normal_user_dashboard_shell(
+        document_title="Mullu Dashboard - Empty",
+        body_lines=(
+            "    <h1>Ready</h1>",
+            "    <p>No dashboard items are waiting.</p>",
+        ),
+        evidence_label="No evidence yet",
+    )
+
+
+def _reject_normal_user_dashboard_leaks(value: Any) -> None:
+    if isinstance(value, Mapping):
+        forbidden_keys = {
+            "auditor_details",
+            "blocked_reasons",
+            "boundary_witness_ref",
+            "checks",
+            "decision_ref",
+            "operator_details",
+            "proof_stamp_ref",
+            "raw_decision",
+            "review_reasons",
+        }
+        leaked_keys = sorted(str(key) for key in value if key in forbidden_keys)
+        if leaked_keys:
+            raise RuntimeCoreInvariantError(
+                f"normal user dashboard cannot expose internal fields: {', '.join(leaked_keys)}"
+            )
+        for nested_value in value.values():
+            _reject_normal_user_dashboard_leaks(nested_value)
+        return
+    if isinstance(value, list | tuple):
+        for nested_value in value:
+            _reject_normal_user_dashboard_leaks(nested_value)
+        return
+    if isinstance(value, str) and value.startswith(("gate-decision-", "proof-", "witness-")):
+        raise RuntimeCoreInvariantError("normal user dashboard cannot expose internal governance refs")

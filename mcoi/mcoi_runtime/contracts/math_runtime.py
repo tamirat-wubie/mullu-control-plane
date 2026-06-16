@@ -22,7 +22,6 @@ from ._base import (
     freeze_value,
     require_datetime_text,
     require_non_empty_text,
-    require_non_empty_tuple,
     require_non_negative_float,
     require_non_negative_int,
     require_positive_int,
@@ -108,6 +107,19 @@ def _require_finite_float(value: float, field_name: str) -> float:
     if not math.isfinite(v):
         raise ValueError("numeric value must be finite")
     return v
+
+
+def _require_evidence_refs(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[str] = []
+    for value in values:
+        evidence_ref = require_non_empty_text(value, field_name)
+        if evidence_ref not in normalized:
+            normalized.append(evidence_ref)
+    if not normalized:
+        raise ValueError(f"{field_name} must contain at least one item")
+    return tuple(normalized)
 
 
 # ---------------------------------------------------------------------------
@@ -306,7 +318,7 @@ class MathSolverReceipt(ContractRecord):
         object.__setattr__(self, "objective_value", _require_finite_float(self.objective_value, "objective_value"))
         object.__setattr__(self, "iterations", require_non_negative_int(self.iterations, "iterations"))
         object.__setattr__(self, "decision_summary", freeze_value(dict(self.decision_summary)))
-        object.__setattr__(self, "evidence_refs", require_non_empty_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _require_evidence_refs(self.evidence_refs, "evidence_refs"))
         require_datetime_text(self.emitted_at, "emitted_at")
         object.__setattr__(self, "receipt_hash", require_non_empty_text(self.receipt_hash, "receipt_hash"))
 

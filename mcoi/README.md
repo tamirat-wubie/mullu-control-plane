@@ -52,6 +52,11 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 ## Simple App Surface
 
 - `SimplePlatformRuntime` exposes the same outcomes in JSON envelopes.
+- `SimplePlatformRuntime.check_action_experience()`,
+  `check_task_experience()`, and `check_workflow_experience()` expose the
+  normal-user shell by default: status, risk, approval need, saved evidence,
+  next choices, and an audit-details availability flag without receipt or
+  proof internals.
 - `SimplePlatformRuntime.document_manipulation_wiring()` exposes the read-only
   document manipulation component chain for `docs_update` without granting
   execution authority.
@@ -71,9 +76,19 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   - `GET /api/v1/simple/documents/wiring`
   - `GET /api/v1/simple/documents/wiring/contract`
   - `POST /api/v1/simple/actions/check`
+  - `POST /api/v1/simple/actions/experience`
+  - `POST /api/v1/simple/actions/check/audit`
   - `POST /api/v1/simple/tasks/check`
+  - `POST /api/v1/simple/tasks/check/audit`
   - `POST /api/v1/simple/workflows/check`
-- `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into `simple_action_summaries`, `simple_ready_action_refs`, `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard rendering without granting execution authority.
+  - `POST /api/v1/simple/workflows/check/audit`
+- Default `check` routes return the normal-user shell. The `/audit` routes
+  return proof-bearing checks for operator and auditor surfaces.
+- `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into normal-user
+  `simple_action_summaries` with status, risk, approval need, saved evidence,
+  next choices, and audit availability while keeping proof refs out of the
+  default dashboard payload. Summary refs are dashboard-local opaque refs, not
+  proof, witness, or gate-decision refs.
 - `build_operational_dashboard_state(..., simple_workflow_plans=...,
   simple_start_guide=...)` projects simple workflows and the start guide into
   `simple_workflow_summaries`, `simple_start_guide`, and `simple_home_summary`
@@ -87,8 +102,30 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   `create_operational_dashboard_fastapi_router(runtime)` expose read-only
   dashboard routes for apps:
   - `GET /api/v1/dashboard/home`
+  - `GET /api/v1/dashboard/simple`
+  - `GET /api/v1/dashboard/simple/contract`
+  - `GET /api/v1/dashboard/simple/client-view`
+  - `GET /api/v1/dashboard/simple/page`
   - `GET /api/v1/dashboard/state`
   - `GET /api/v1/dashboard/sdlc/receipts`
+- `GET /api/v1/dashboard/simple` is the normal-user dashboard contract. It
+  exposes the home summary, simple action summaries, simple workflow summaries,
+  start guide, plain counts, and dashboard-local opaque refs while rejecting
+  proof refs, witness refs, gate-decision refs, raw decisions, checks, and
+  operator/auditor detail fields.
+- `GET /api/v1/dashboard/simple/contract` returns the stable client contract
+  for the normal-user dashboard route: visible payload fields, hidden fields,
+  hidden ref prefixes, JSON route metadata, HTML page route metadata, and
+  invariants for Level 1 UI clients.
+- `GET /api/v1/dashboard/simple/client-view` returns a UI-ready Level 1 view
+  with home text, action cards, workflow cards, primary actions, secondary
+  actions, command guidance, and the same proof-hiding and no-execution
+  invariants enforced at the client projection boundary.
+- `GET /api/v1/dashboard/simple/page` returns a read-only HTML Level 1 page
+  built from the same client view. Buttons are rendered as disabled controls
+  until explicit approval/edit/cancel handlers exist.
+- `GET /api/v1/dashboard/state` is the full read-only operational dashboard
+  contract for operator surfaces, not the default normal-user client target.
 - `mount_operational_dashboard_router_from_env(app, env, runtime=...)` mounts
   those dashboard routes only when `MULLU_DASHBOARD_ENABLED=1`, uses
   `MULLU_DASHBOARD_PREFIX` when provided, and requires an explicit dashboard
@@ -120,5 +157,5 @@ mcoi-notes --note-store .\.mullusi\notes rebuild-index
 Focused verification for this package surface:
 
 ```powershell
-python -m pytest mcoi\tests\test_governance_sdk.py mcoi\tests\test_simple_platform.py mcoi\tests\test_simple_platform_fastapi_router.py mcoi\tests\test_swarm_package_metadata.py mcoi\tests\test_note_memory_projection_intelligence.py -q
+python -m pytest mcoi\tests\test_governance_sdk.py mcoi\tests\test_simple_platform.py mcoi\tests\test_simple_platform_fastapi_router.py mcoi\tests\test_operational_dashboard_api.py mcoi\tests\test_operational_dashboard_client.py mcoi\tests\test_swarm_package_metadata.py mcoi\tests\test_note_memory_projection_intelligence.py -q
 ```

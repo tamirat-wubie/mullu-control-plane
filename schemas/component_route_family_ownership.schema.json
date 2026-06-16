@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-ownership:1",
+  "title": "Mullu Component Route-Family Ownership Readiness",
+  "description": "Read-only Component Harness report that explains selected route-family ownership and blocked promotion evidence without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_id",
+    "mode",
+    "governed",
+    "ownership_readiness_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "ownership_records",
+    "expected_receipts",
+    "outcome",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "report_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "ownership_readiness_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_registry",
+        "router_inventory",
+        "component_proof_binding",
+        "component_authority_envelope_witnesses",
+        "proof_matrix"
+      ],
+      "properties": {
+        "component_registry": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_proof_binding": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_authority_envelope_witnesses": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_matrix": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "ownership_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ownership_record"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "SolvedUnverified"
+      ]
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "route_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^/[A-Za-z0-9._~:/{}@+ -]*$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_family_count",
+        "declared_route_count",
+        "selected_component_bound_count",
+        "platform_family_classified_count",
+        "promotion_blocked_count",
+        "proof_binding_gap_count",
+        "route_binding_gap_count",
+        "generic_connector_boundary_count",
+        "live_action_enabled_count",
+        "terminal_closure_claim_count"
+      ],
+      "properties": {
+        "route_family_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "declared_route_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selected_component_bound_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "platform_family_classified_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "promotion_blocked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proof_binding_gap_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "route_binding_gap_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "generic_connector_boundary_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "live_action_enabled_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_closure_claim_count": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "ownership_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface_id",
+        "binding_level",
+        "readiness_state",
+        "component_lane",
+        "component_ids",
+        "selected_bound_component_ids",
+        "candidate_proof_bound_component_ids",
+        "component_route_binding_states",
+        "declared_route_count",
+        "sample_routes",
+        "promotion_blockers",
+        "required_next_evidence",
+        "blocked_actions",
+        "ownership_is_not_execution_authority",
+        "can_enable_live_action",
+        "notes"
+      ],
+      "properties": {
+        "surface_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "binding_level": {
+          "type": "string",
+          "enum": [
+            "platform_family_classified",
+            "selected_component_bound"
+          ]
+        },
+        "readiness_state": {
+          "type": "string",
+          "enum": [
+            "selected_component_bound",
+            "blocked_needs_route_binding_witness",
+            "blocked_needs_proof_binding"
+          ]
+        },
+        "component_lane": {
+          "type": "string",
+          "enum": [
+            "assistant_product_core",
+            "connector_action_core",
+            "data_memory_core",
+            "domain_special_modules",
+            "execution_tooling_core",
+            "governance_core",
+            "platform_operations",
+            "reasoning_symbolic_core",
+            "runtime_core",
+            "tenant_security_access"
+          ]
+        },
+        "component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "selected_bound_component_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "candidate_proof_bound_component_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "component_route_binding_states": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/component_route_binding_state"
+          }
+        },
+        "declared_route_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sample_routes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/route_path"
+          }
+        },
+        "promotion_blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "required_next_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "ownership_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "can_enable_live_action": {
+          "type": "boolean",
+          "const": false
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 360
+        }
+      }
+    },
+    "component_route_binding_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "binding_state",
+        "proof_surface_present_in_route_binding",
+        "route_binding_is_bound"
+      ],
+      "properties": {
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "binding_state": {
+          "type": "string",
+          "enum": [
+            "bound",
+            "deferred",
+            "no_declared_route",
+            "unbound"
+          ]
+        },
+        "proof_surface_present_in_route_binding": {
+          "type": "boolean"
+        },
+        "route_binding_is_bound": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

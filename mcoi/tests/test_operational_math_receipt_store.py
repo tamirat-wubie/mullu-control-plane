@@ -71,8 +71,36 @@ def test_memory_store_appends_queries_and_summarizes_receipts() -> None:
     assert summary["failed_receipt_count"] == 1
     assert summary["requires_operator_review"] is True
     assert summary["review_signal_count"] == 1
+    assert summary["review_signals"][0]["unverified_control_count"] == 0
+    assert summary["review_signals"][0]["unverified_control_ids"] == []
     assert summary["latest_receipt_id"] == "operational_math_loop_receipt:result-2"
     assert summary["governed"] is True
+
+
+def test_memory_store_surfaces_unverified_control_review_reason() -> None:
+    store = OperationalMathReceiptStore()
+    review_receipt = store.append(
+        _receipt(
+            result={
+                "result_id": "result-1",
+                "unverified_control_ids": [
+                    "numerical_stability_bound",
+                    "proof_receipt",
+                ],
+            },
+        )
+    )
+    summary = store.summary()
+
+    assert store.review_receipts() == (review_receipt,)
+    assert summary["requires_operator_review"] is True
+    assert summary["review_signal_count"] == 1
+    assert summary["review_signals"][0]["reason"] == "operational_math_unverified_controls"
+    assert summary["review_signals"][0]["unverified_control_count"] == 2
+    assert summary["review_signals"][0]["unverified_control_ids"] == [
+        "numerical_stability_bound",
+        "proof_receipt",
+    ]
 
 
 def test_memory_store_is_idempotent_and_rejects_id_collision() -> None:
@@ -96,6 +124,10 @@ def test_memory_store_rejects_invalid_receipts_and_limits() -> None:
         store.append({"status": "passed"})
     with pytest.raises(CorruptedDataError, match="event_count"):
         store.append(_receipt(event_count=-1))
+    with pytest.raises(CorruptedDataError, match=r"result\.unverified_control_ids"):
+        store.append(_receipt(result={"result_id": "result-1", "unverified_control_ids": "proof"}))
+    with pytest.raises(CorruptedDataError, match=r"result\.unverified_control_ids"):
+        store.append(_receipt(result={"result_id": "result-1", "unverified_control_ids": [""]}))
     with pytest.raises(PersistenceError, match="limit must be a positive integer"):
         store.list_receipts(limit=0)
     with pytest.raises(PersistenceError, match="limit must be a positive integer"):

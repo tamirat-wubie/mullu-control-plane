@@ -27,6 +27,7 @@ from mcoi_runtime.core.simple_cli import (
     guarded_main,
 )
 from mcoi_runtime.core.simple_platform import (
+    SimpleActionExperience,
     DocumentManipulationComponent,
     DocumentManipulationWiring,
     SimpleActionRequest,
@@ -94,6 +95,99 @@ def test_simple_platform_sends_external_change_to_review() -> None:
     assert check.raw_decision == "escalate"
     assert "External changes require approval." in check.review_reasons
     assert check.blocked_reasons == ()
+
+
+def test_simple_platform_projects_normal_user_experience_without_proof_details() -> None:
+    check = SimplePlatform().check_action(
+        SimpleActionRequest(
+            goal="Notify support",
+            action="send",
+            target="support@mullusi.com",
+            allowed_area="support@mullusi.com",
+            actor_id="simple-test",
+        )
+    )
+    experience = SimplePlatform.action_experience(check).to_dict()
+
+    assert experience["visibility_level"] == "normal_user"
+    assert experience["status_label"] == "Needs approval"
+    assert experience["risk"] == "External message"
+    assert experience["approval_needed"] is True
+    assert experience["evidence_saved"] is True
+    assert experience["choices"] == ["Approve", "Edit", "Cancel", "View audit details"]
+    assert experience["audit_details_available"] is True
+    assert experience["audit_details_visible"] is False
+    assert experience["receipts_visible"] is False
+    assert experience["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in experience
+    assert "operator_details" not in experience
+    assert "auditor_details" not in experience
+
+
+def test_simple_platform_projects_operator_and_auditor_visibility() -> None:
+    check = SimplePlatform().check_action(
+        SimpleActionRequest(
+            goal="Review docs",
+            action="view",
+            target="docs/README.md",
+            allowed_area="docs/**",
+            actor_id="simple-test",
+        )
+    )
+    operator_experience = SimplePlatform.action_experience(check, visibility_level="operator").to_dict()
+    auditor_experience = SimplePlatform.action_experience(check, visibility_level="auditor-developer").to_dict()
+
+    assert operator_experience["audit_details_visible"] is True
+    assert operator_experience["receipts_visible"] is True
+    assert operator_experience["proof_details_hidden"] is False
+    assert operator_experience["operator_details"]["proof_stamp_ref"].startswith("proof-")
+    assert "auditor_details" not in operator_experience
+    assert auditor_experience["visibility_level"] == "auditor_developer"
+    assert auditor_experience["operator_details"]["decision_ref"].startswith("gate-decision-")
+    assert auditor_experience["auditor_details"]["raw_decision"] == "allow"
+    assert auditor_experience["auditor_details"]["raw_reason"]
+
+
+def test_simple_platform_projects_workflow_experience_without_proof_details() -> None:
+    plan = SimplePlatform().check_workflow(
+        SimpleWorkflowRequest(
+            workflow="docs_update",
+            target="docs/README.md",
+            actor_id="simple-test",
+        )
+    )
+    experience = SimplePlatform.workflow_experience(plan).to_dict()
+
+    assert experience["visibility_level"] == "normal_user"
+    assert experience["status_label"] == "Ready"
+    assert experience["ready_count"] == 3
+    assert experience["choices"] == ["Continue", "View audit details"]
+    assert experience["audit_details_available"] is True
+    assert experience["audit_details_visible"] is False
+    assert experience["proof_details_hidden"] is True
+    assert len(experience["steps"]) == 3
+    assert "proof_stamp_ref" not in experience["steps"][0]
+    assert "checks" not in experience
+
+
+def test_simple_platform_rejects_normal_user_experience_with_details() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="normal user experience cannot expose audit details"):
+        SimpleActionExperience(
+            visibility_level="normal_user",
+            outcome="ready",
+            status_label="Ready",
+            message="Ready.",
+            risk="Inside allowed area",
+            approval_needed=False,
+            evidence_saved=True,
+            next_step="Continue.",
+            choices=("Continue",),
+            audit_details_available=True,
+            audit_details_visible=True,
+            receipts_visible=True,
+            proof_details_hidden=False,
+            operator_details={"proof_stamp_ref": "proof-example"},
+        )
 
 
 def test_simple_platform_task_template_infers_safe_scope() -> None:
@@ -360,8 +454,12 @@ def test_simple_cli_outputs_readable_ready_result(capsys) -> None:
 
     assert exit_code == 0
     assert "Outcome: Ready" in output
+    assert "Risk: Inside allowed area" in output
+    assert "Approval needed: no" in output
+    assert "Evidence saved: yes" in output
     assert "Next: Continue with the action." in output
-    assert "Proof: proof-" in output
+    assert "Audit details: available" in output
+    assert "Proof: proof-" not in output
 
 
 def test_simple_cli_outputs_json_for_review_result(capsys) -> None:
@@ -386,7 +484,11 @@ def test_simple_cli_outputs_json_for_review_result(capsys) -> None:
     assert envelope["ok"] is False
     assert envelope["status"] == "needs_review"
     assert envelope["payload"]["outcome"] == "needs_review"
-    assert envelope["payload"]["review_reasons"] == ["External changes require approval."]
+    assert envelope["payload"]["status_label"] == "Needs approval"
+    assert envelope["payload"]["risk"] == "External message"
+    assert envelope["payload"]["audit_details_visible"] is False
+    assert "review_reasons" not in envelope["payload"]
+    assert "proof_stamp_ref" not in envelope["payload"]
 
 
 def test_simple_cli_task_template_outputs_ready_result(capsys) -> None:
@@ -408,6 +510,9 @@ def test_simple_cli_task_template_outputs_ready_result(capsys) -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["outcome"] == "ready"
+    assert envelope["payload"]["status_label"] == "Ready"
+    assert envelope["payload"]["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in envelope["payload"]
 
 
 def test_simple_cli_lists_task_templates_as_readable_catalog(capsys) -> None:
@@ -583,6 +688,9 @@ def test_simple_cli_workflow_outputs_ready_result(capsys) -> None:
     assert envelope["status"] == "ready"
     assert envelope["payload"]["workflow"] == "docs_update"
     assert envelope["payload"]["ready_count"] == 3
+    assert envelope["payload"]["proof_details_hidden"] is True
+    assert "checks" not in envelope["payload"]
+    assert "proof_stamp_ref" not in envelope["payload"]["steps"][0]
 
 
 def test_simple_cli_lists_workflow_templates_as_readable_catalog(capsys) -> None:
@@ -736,6 +844,109 @@ def test_simple_platform_api_projects_ready_check() -> None:
     assert payload["status"] == "ready"
     assert payload["payload"]["check"]["proof_stamp_ref"].startswith("proof-")
     assert payload["error"] == ""
+
+
+def test_simple_platform_api_projects_normal_user_experience() -> None:
+    envelope = SimplePlatformRuntime().check_action_experience(
+        {
+            "goal": "Notify support",
+            "action": "send",
+            "target": "support@mullusi.com",
+            "allowed_area": "support@mullusi.com",
+            "actor_id": "simple-api-test",
+        }
+    )
+    payload = envelope.to_dict()
+    experience = payload["payload"]["experience"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is False
+    assert payload["status"] == "needs_review"
+    assert experience["visibility_level"] == "normal_user"
+    assert experience["risk"] == "External message"
+    assert experience["approval_needed"] is True
+    assert experience["audit_details_visible"] is False
+    assert "operator_details" not in experience
+
+
+def test_simple_platform_api_projects_operator_experience() -> None:
+    envelope = SimplePlatformRuntime().check_action_experience(
+        {
+            "goal": "Review docs",
+            "action": "view",
+            "target": "docs/README.md",
+            "allowed_area": "docs/**",
+            "actor_id": "simple-api-test",
+            "visibility_level": "operator",
+        }
+    )
+    payload = envelope.to_dict()
+    experience = payload["payload"]["experience"]
+
+    assert payload["status"] == "ready"
+    assert experience["visibility_level"] == "operator"
+    assert experience["audit_details_visible"] is True
+    assert experience["operator_details"]["proof_stamp_ref"].startswith("proof-")
+    assert "auditor_details" not in experience
+
+
+def test_simple_platform_api_projects_task_experience_without_proof_details() -> None:
+    envelope = SimplePlatformRuntime().check_task_experience(
+        {
+            "task": "notify_support",
+            "actor_id": "simple-api-test",
+        }
+    )
+    payload = envelope.to_dict()
+    experience = payload["payload"]["experience"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is False
+    assert payload["status"] == "needs_review"
+    assert experience["status_label"] == "Needs approval"
+    assert experience["audit_details_visible"] is False
+    assert experience["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in experience
+
+
+def test_simple_platform_api_projects_workflow_experience_without_proof_details() -> None:
+    envelope = SimplePlatformRuntime().check_workflow_experience(
+        {
+            "workflow": "docs_update",
+            "target": "docs/README.md",
+            "actor_id": "simple-api-test",
+        }
+    )
+    payload = envelope.to_dict()
+    workflow = payload["payload"]["workflow"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "ready"
+    assert workflow["status_label"] == "Ready"
+    assert workflow["ready_count"] == 3
+    assert workflow["proof_details_hidden"] is True
+    assert "checks" not in workflow
+    assert "proof_stamp_ref" not in workflow["steps"][0]
+
+
+def test_simple_platform_api_rejects_invalid_experience_visibility() -> None:
+    envelope = SimplePlatformRuntime().check_action_experience(
+        {
+            "goal": "Review docs",
+            "action": "view",
+            "target": "docs/README.md",
+            "allowed_area": "docs/**",
+            "visibility_level": "everyone",
+        }
+    )
+    payload = envelope.to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is False
+    assert payload["status"] == "rejected"
+    assert payload["payload"] == {}
+    assert "visibility_level must be one of" in payload["error"]
 
 
 def test_simple_platform_api_projects_template_backed_task() -> None:
@@ -900,6 +1111,9 @@ def test_simple_platform_api_lists_action_menu() -> None:
     assert payload["payload"]["tasks"][0]["task"] == "review_docs"
     assert payload["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
     assert payload["payload"]["outcomes"][2]["label"] == "Blocked"
+    assert payload["payload"]["visibility_levels"][0]["visibility_level"] == "normal_user"
+    assert payload["payload"]["visibility_levels"][1]["visibility_level"] == "operator"
+    assert payload["payload"]["visibility_levels"][2]["visibility_level"] == "auditor_developer"
     assert payload["payload"]["workflows"][0]["workflow"] == "docs_update"
 
 

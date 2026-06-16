@@ -1,0 +1,199 @@
+{
+  "approval_evidence_required": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "operator_approval_if_connector_action_requested",
+    "operator_approval_if_external_effect",
+    "product_specific_ownership_decision",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "blocked_actions": [
+    "autonomous_execution",
+    "connector_call",
+    "external_send",
+    "filesystem_write",
+    "live_dispatch",
+    "route_execution",
+    "runtime_mutation",
+    "terminal_closure"
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "decision": "blocked",
+  "evidence_decision": "denied",
+  "evidence_id": "component_route_family_promotion_witness_evidence.governed_connector_framework.v1",
+  "expected_receipts": [
+    "component_route_family_promotion_witness_evidence_receipt",
+    "component_route_family_promotion_approval_candidates_receipt",
+    "component_route_family_promotion_approval_intake_receipt",
+    "component_route_family_promotion_submitted_evidence_verifier_receipt",
+    "component_route_family_promotion_submitted_evidence_records_receipt",
+    "component_route_family_promotion_operator_submitted_evidence_records_receipt",
+    "component_route_family_promotion_gate_satisfaction_evaluator_receipt",
+    "component_route_family_promotion_submitted_evidence_payload_examples_receipt",
+    "component_route_family_promotion_witness_requirements_receipt",
+    "component_route_family_promotion_preflight_receipt",
+    "component_route_binding_receipt",
+    "component_lifecycle_transition_receipt",
+    "authority_upgrade_witness",
+    "product_specific_ownership_decision",
+    "authority_denial_receipt",
+    "terminal_closure_denial_receipt"
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "mutates_router_inventory": false,
+  "next_action": "Replace denial witnesses with approved route-binding, lifecycle, authority-upgrade, and product-specific ownership evidence before any router inventory or authority promotion can be reconsidered.",
+  "outcome": "AwaitingEvidence",
+  "preflight_outcome": "GovernanceBlocked",
+  "ready_for_promotion": false,
+  "remaining_missing_evidence": [],
+  "schema_version": 1,
+  "source_refs": {
+    "component_authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json",
+    "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
+    "promotion_witness_requirements": "examples/component_route_family_promotion_witness_requirements.governed_connector_framework.json",
+    "proof_matrix": "docs/40_proof_coverage_matrix.md",
+    "router_inventory": "examples/component_router_inventory.foundation.json"
+  },
+  "summary": {
+    "approval_evidence_required_count": 8,
+    "original_missing_requirement_count": 4,
+    "remaining_unwitnessed_blocker_count": 0,
+    "satisfied_requirement_count": 0,
+    "unsatisfied_requirement_count": 4,
+    "witness_record_count": 4,
+    "witnessed_blocker_count": 4
+  },
+  "target_component_id": "gmail_account_binding_gate",
+  "target_surface_id": "governed_connector_framework",
+  "terminal_closure_required": true,
+  "validators": [
+    "component_route_family_promotion_witness_evidence_validator",
+    "component_route_family_promotion_witness_evidence_tests",
+    "component_route_family_promotion_witness_requirements_validator"
+  ],
+  "witness_evidence_is_not_execution_authority": true,
+  "witness_records": [
+    {
+      "blocks_promotion": true,
+      "denial_reason": "selected component router binding delta is absent",
+      "evidence_key": "missing_selected_component_route_binding",
+      "gate_id": "route_binding_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "mutates_router_inventory": false,
+      "observed_state": "router inventory classifies governed_connector_framework as proof-surface-bound, not selected-component-bound",
+      "proof_state": "Fail",
+      "required_before_promotion": true,
+      "required_next_artifacts": [
+        "component_route_binding_receipt",
+        "selected_component_bound_router_inventory_delta"
+      ],
+      "requirement_id": "promotion_witness.route_binding_gate",
+      "satisfies_requirement": false,
+      "source_refs": [
+        "examples/component_router_inventory.foundation.json",
+        "examples/component_route_family_ownership.foundation.json"
+      ],
+      "witness_id": "promotion_witness_evidence.governed_connector_framework.route_binding_gate.v1",
+      "witness_is_not_execution_authority": true,
+      "witness_kind": "route_binding",
+      "witness_state": "present_denial"
+    },
+    {
+      "blocks_promotion": true,
+      "denial_reason": "lifecycle transition receipt is absent",
+      "evidence_key": "missing_lifecycle_transition_receipt",
+      "gate_id": "lifecycle_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "mutates_router_inventory": false,
+      "observed_state": "no lifecycle transition receipt upgrades governed_connector_framework from blocked promotion to selected component ownership",
+      "proof_state": "Fail",
+      "required_before_promotion": true,
+      "required_next_artifacts": [
+        "component_lifecycle_transition_receipt",
+        "operator_approval_if_external_effect"
+      ],
+      "requirement_id": "promotion_witness.lifecycle_gate",
+      "satisfies_requirement": false,
+      "source_refs": [
+        "examples/component_lifecycle_transition_receipts.foundation.json",
+        "examples/component_route_family_promotion_witness_requirements.governed_connector_framework.json"
+      ],
+      "witness_id": "promotion_witness_evidence.governed_connector_framework.lifecycle_gate.v1",
+      "witness_is_not_execution_authority": true,
+      "witness_kind": "lifecycle_transition",
+      "witness_state": "present_denial"
+    },
+    {
+      "blocks_promotion": true,
+      "denial_reason": "no authority upgrade witness or operator approval exists",
+      "evidence_key": "missing_authority_upgrade_witness",
+      "gate_id": "authority_upgrade_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "mutates_router_inventory": false,
+      "observed_state": "current authority envelope denies execute, mutate, connector call, external send, and terminal closure",
+      "proof_state": "Fail",
+      "required_before_promotion": true,
+      "required_next_artifacts": [
+        "authority_upgrade_witness",
+        "operator_approval_if_connector_action_requested"
+      ],
+      "requirement_id": "promotion_witness.authority_upgrade_gate",
+      "satisfies_requirement": false,
+      "source_refs": [
+        "examples/component_authority_envelope_witnesses.foundation.json",
+        "examples/component_route_family_promotion_witness_requirements.governed_connector_framework.json"
+      ],
+      "witness_id": "promotion_witness_evidence.governed_connector_framework.authority_upgrade_gate.v1",
+      "witness_is_not_execution_authority": true,
+      "witness_kind": "authority_upgrade",
+      "witness_state": "present_denial"
+    },
+    {
+      "blocks_promotion": true,
+      "denial_reason": "product-specific Gmail ownership decision is absent",
+      "evidence_key": "generic_connector_surface_not_product_specific_authority",
+      "gate_id": "product_specific_boundary_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "mutates_router_inventory": false,
+      "observed_state": "generic governed connector framework is not a product-specific Gmail mailbox ownership surface",
+      "proof_state": "Fail",
+      "required_before_promotion": true,
+      "required_next_artifacts": [
+        "product_specific_ownership_decision",
+        "gmail_account_binding_evidence_receipt"
+      ],
+      "requirement_id": "promotion_witness.product_specific_boundary_gate",
+      "satisfies_requirement": false,
+      "source_refs": [
+        "examples/component_registry.foundation.json",
+        "examples/component_route_family_ownership.foundation.json"
+      ],
+      "witness_id": "promotion_witness_evidence.governed_connector_framework.product_specific_boundary_gate.v1",
+      "witness_is_not_execution_authority": true,
+      "witness_kind": "product_specific_ownership",
+      "witness_state": "present_denial"
+    }
+  ],
+  "witnessed_evidence_keys": [
+    "generic_connector_surface_not_product_specific_authority",
+    "missing_authority_upgrade_witness",
+    "missing_lifecycle_transition_receipt",
+    "missing_selected_component_route_binding"
+  ]
+}

@@ -1,0 +1,471 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-records:1",
+  "title": "Mullu Component Route-Family Promotion Submitted Evidence Records",
+  "description": "Read-only Component Harness report that defines template-only submitted-evidence record envelopes for blocked route-family promotion gates without accepting evidence or granting authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "submitted_evidence_records_id",
+    "mode",
+    "governed",
+    "target_surface_id",
+    "target_component_id",
+    "decision",
+    "preflight_outcome",
+    "outcome",
+    "record_decision",
+    "submitted_evidence_records_are_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "mutates_router_inventory",
+    "ready_for_promotion",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "record_envelopes",
+    "submitted_evidence_refs",
+    "accepted_evidence_refs",
+    "rejected_evidence_refs",
+    "approval_evidence_required",
+    "operator_submission_channels",
+    "blocked_actions",
+    "expected_receipts",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "submitted_evidence_records_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "target_surface_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "target_component_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "decision": {
+      "type": "string",
+      "const": "blocked"
+    },
+    "preflight_outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "record_decision": {
+      "type": "string",
+      "const": "template_only"
+    },
+    "submitted_evidence_records_are_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "mutates_router_inventory": {
+      "type": "boolean",
+      "const": false
+    },
+    "ready_for_promotion": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "submitted_evidence_verifier",
+        "promotion_approval_intake",
+        "promotion_approval_candidates",
+        "promotion_preflight",
+        "proof_matrix"
+      ],
+      "properties": {
+        "submitted_evidence_verifier": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "promotion_approval_intake": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "promotion_approval_candidates": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "promotion_preflight": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_matrix": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "record_envelopes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/record_envelope"
+      }
+    },
+    "submitted_evidence_refs": {
+      "$ref": "#/$defs/empty_refs"
+    },
+    "accepted_evidence_refs": {
+      "$ref": "#/$defs/empty_refs"
+    },
+    "rejected_evidence_refs": {
+      "$ref": "#/$defs/empty_refs"
+    },
+    "approval_evidence_required": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "operator_submission_channels": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 420
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "identifier_or_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#{}@+ -]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "empty_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_envelope_count",
+        "template_only_envelope_count",
+        "not_submitted_envelope_count",
+        "submitted_record_count",
+        "valid_record_count",
+        "accepted_evidence_count",
+        "rejected_evidence_count",
+        "satisfied_requirement_count",
+        "blocking_envelope_count",
+        "approval_artifact_requirement_count",
+        "authority_grant_count"
+      ],
+      "properties": {
+        "record_envelope_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "template_only_envelope_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "not_submitted_envelope_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "submitted_record_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "valid_record_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "accepted_evidence_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "rejected_evidence_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "satisfied_requirement_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "blocking_envelope_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "approval_artifact_requirement_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "authority_grant_count": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "record_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_envelope_id",
+        "source_verifier_request_id",
+        "source_intake_request_id",
+        "gate_id",
+        "record_kind",
+        "evidence_key",
+        "envelope_state",
+        "submission_state",
+        "verification_state",
+        "proof_state",
+        "blocks_promotion",
+        "satisfies_requirement",
+        "record_envelope_is_not_execution_authority",
+        "mutates_router_inventory",
+        "grants_execution_authority",
+        "grants_connector_authority",
+        "grants_terminal_closure",
+        "required_artifacts",
+        "payload_field_names",
+        "validation_rules",
+        "rejection_conditions",
+        "submitted_evidence_refs",
+        "accepted_evidence_refs",
+        "rejected_evidence_refs",
+        "payload_values_present",
+        "operator_submission_state",
+        "missing_submission_reason"
+      ],
+      "properties": {
+        "record_envelope_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_verifier_request_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_intake_request_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "gate_id": {
+          "type": "string",
+          "enum": [
+            "route_binding_gate",
+            "lifecycle_gate",
+            "authority_upgrade_gate",
+            "product_specific_boundary_gate"
+          ]
+        },
+        "record_kind": {
+          "type": "string",
+          "enum": [
+            "route_binding",
+            "lifecycle_transition",
+            "authority_upgrade",
+            "product_specific_ownership"
+          ]
+        },
+        "evidence_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "envelope_state": {
+          "type": "string",
+          "const": "template_only"
+        },
+        "submission_state": {
+          "type": "string",
+          "const": "not_submitted"
+        },
+        "verification_state": {
+          "type": "string",
+          "const": "not_verified"
+        },
+        "proof_state": {
+          "type": "string",
+          "const": "Unknown"
+        },
+        "blocks_promotion": {
+          "type": "boolean",
+          "const": true
+        },
+        "satisfies_requirement": {
+          "type": "boolean",
+          "const": false
+        },
+        "record_envelope_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "mutates_router_inventory": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_execution_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_connector_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "required_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "payload_field_names": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "rejection_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "submitted_evidence_refs": {
+          "$ref": "#/$defs/empty_refs"
+        },
+        "accepted_evidence_refs": {
+          "$ref": "#/$defs/empty_refs"
+        },
+        "rejected_evidence_refs": {
+          "$ref": "#/$defs/empty_refs"
+        },
+        "payload_values_present": {
+          "type": "boolean",
+          "const": false
+        },
+        "operator_submission_state": {
+          "type": "string",
+          "const": "awaiting_operator"
+        },
+        "missing_submission_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    }
+  }
+}

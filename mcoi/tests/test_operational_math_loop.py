@@ -6,6 +6,7 @@ import pytest
 
 from mcoi_runtime.contracts.operational_math import (
     OperationalMathControl,
+    OperationalMathControlBinding,
     OperationalMathLoopStatus,
     OperationalMathPrinciple,
     OperationalMathPriority,
@@ -15,6 +16,7 @@ from mcoi_runtime.contracts.operational_math import (
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.operational_math_loop import (
     OperationalMathLoopEngine,
+    default_operational_math_control_bindings,
     default_operational_math_principles,
 )
 
@@ -42,6 +44,7 @@ def test_operational_math_loop_applies_all_audit_principles() -> None:
     assert result.status is OperationalMathLoopStatus.SATURATED
     assert result.solver_outcome == "SolvedVerified"
     assert result.unresolved_principle_ids == ()
+    assert result.unverified_control_ids == ()
     assert result.applied_principle_ids == EXPECTED_PRIORITY_ORDER
     assert OperationalMathRole.COMPLEXITY_BOUND in result.final_roles
     assert OperationalMathRole.RESOURCE_BOUND in result.final_roles
@@ -49,6 +52,8 @@ def test_operational_math_loop_applies_all_audit_principles() -> None:
     assert OperationalMathRole.ADVERSARIAL_GUARD in result.final_roles
     assert OperationalMathControl.EXECUTABLE_SOLVER in result.final_controls
     assert OperationalMathControl.NUMERICAL_STABILITY_BOUND in result.final_controls
+    assert len(result.control_bindings) == len(result.final_controls)
+    assert all(binding.verified for binding in result.control_bindings)
     assert result.started_at == FIXED_TS
     assert result.completed_at == FIXED_TS
     assert event_spine.event_count == len(result.iterations) + 1
@@ -74,6 +79,63 @@ def test_operational_math_loop_stops_at_iteration_budget_with_open_gaps() -> Non
     assert result.iterations[0].tension_after < result.iterations[0].tension_before
     assert result.iterations[1].tension_after < result.iterations[1].tension_before
     assert result.applied_principle_ids == ("F1", "F2")
+
+
+def test_operational_math_loop_blocks_solvedverified_without_control_binding() -> None:
+    bindings = tuple(
+        binding
+        for binding in default_operational_math_control_bindings()
+        if binding.control is not OperationalMathControl.PROOF_RECEIPT
+    )
+    engine = OperationalMathLoopEngine(control_bindings=bindings, clock=_ts)
+    target = OperationalMathTarget(
+        target_id="unbound-math-core",
+        title="Unbound Math Core",
+        problem_class="missing control binding",
+        max_iterations=16,
+        created_at=_ts(),
+    )
+
+    result = engine.apply_all(target)
+
+    assert result.status is OperationalMathLoopStatus.BLOCKED
+    assert result.solver_outcome == "AwaitingEvidence"
+    assert result.unresolved_principle_ids == ()
+    assert result.unverified_control_ids == (OperationalMathControl.PROOF_RECEIPT.value,)
+    assert OperationalMathControl.PROOF_RECEIPT in result.final_controls
+    assert all(binding.control is not OperationalMathControl.PROOF_RECEIPT for binding in result.control_bindings)
+
+
+def test_operational_math_loop_blocks_solvedverified_with_failed_control_binding() -> None:
+    bindings = tuple(
+        OperationalMathControlBinding(
+            control=binding.control,
+            verifier_id=binding.verifier_id,
+            verified=False,
+            failure_reason="missing live verifier evidence",
+        )
+        if binding.control is OperationalMathControl.NUMERICAL_STABILITY_BOUND
+        else binding
+        for binding in default_operational_math_control_bindings()
+    )
+    engine = OperationalMathLoopEngine(control_bindings=bindings, clock=_ts)
+    target = OperationalMathTarget(
+        target_id="failed-binding-math-core",
+        title="Failed Binding Math Core",
+        problem_class="failed control binding",
+        max_iterations=16,
+        created_at=_ts(),
+    )
+
+    result = engine.apply_all(target)
+
+    assert result.status is OperationalMathLoopStatus.BLOCKED
+    assert result.solver_outcome == "AwaitingEvidence"
+    assert result.unverified_control_ids == (OperationalMathControl.NUMERICAL_STABILITY_BOUND.value,)
+    assert any(
+        binding.control is OperationalMathControl.NUMERICAL_STABILITY_BOUND and not binding.verified
+        for binding in result.control_bindings
+    )
 
 
 def test_operational_math_loop_accepts_existing_roles_and_only_adds_missing_controls() -> None:
@@ -136,5 +198,6 @@ def test_default_operational_math_catalog_is_deterministic_and_complete() -> Non
     assert all(principle.required_roles for principle in first_catalog)
     assert all(principle.required_controls for principle in first_catalog)
     assert first_catalog[0].priority is OperationalMathPriority.P0
+    assert len(default_operational_math_control_bindings()) == len(OperationalMathControl)
     assert engine.state_hash() == OperationalMathLoopEngine(clock=_ts).state_hash()
     assert len(engine.state_hash()) == 64

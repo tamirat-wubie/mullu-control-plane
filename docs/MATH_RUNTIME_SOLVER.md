@@ -100,7 +100,7 @@ Each solver records:
 1. One `OptimizationTrace`.
 2. One `SolverResult`.
 3. Event-spine records for trace and result writes.
-4. Metadata with solver id, bound envelope, objective direction, decision value, weighted objective value, and reason.
+4. Metadata with solver id, bound envelope, objective direction, decision value, weighted objective value, numerical stability posture, and reason.
 5. A `solver_receipt` metadata object that conforms to `schemas/math_solver_receipt.schema.json`.
 
 ### Solver Receipt
@@ -113,12 +113,23 @@ The receipt records:
 1. `receipt_id`: deterministic `math-solver-receipt-*` id.
 2. `request_ref`, `result_id`, and `trace_id`.
 3. `solver`, `status`, `disposition`, and bounded `reason`.
-4. `decision_summary`: bounded decision evidence such as bounds, selected value, decision variables, integer assignment count, and weighted objective value.
+4. `decision_summary`: bounded decision evidence such as bounds, selected value, decision variables, integer assignment count, weighted objective value, `numeric_tolerance`, `max_constraint_violation`, and `stability_verdict`.
 5. `evidence_refs`: `math-request:*`, `math-result:*`, and `math-trace:*` references.
 6. `receipt_hash`: SHA-256 hash over the receipt material before the hash field is added.
 
 Non-finite bounds inside receipt summaries are represented as strings such as
 `Infinity` or `-Infinity` so receipt JSON remains deterministic.
+
+### Numerical Stability Evidence
+
+Every built-in solver receipt carries a bounded numerical stability posture:
+
+1. `numeric_tolerance`: the deterministic tolerance used for bound and constraint checks.
+2. `max_constraint_violation`: the maximum non-negative violation measured after solving.
+3. `stability_verdict`: `passed` when the measured violation is within tolerance, `failed` when it exceeds tolerance, and `not_applicable` for infeasible or unbounded outcomes where no solved decision exists.
+
+This evidence is receipt material, so it participates in the deterministic
+`receipt_hash`.
 
 ## Outcomes
 

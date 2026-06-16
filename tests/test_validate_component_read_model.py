@@ -43,6 +43,8 @@ def test_component_read_model_schema_valid(tmp_path: Path) -> None:
     assert validation.ok is True
     assert validation.component_count == 10
     assert validation.bound_route_count == 30
+    assert validation.route_family_classification_count == 77
+    assert validation.classified_declared_route_count == 437
     assert validation.proof_bound_count == 9
     assert written_payload["errors"] == []
     assert written_payload["ok"] is True
@@ -58,7 +60,11 @@ def test_component_read_model_example_matches_runtime_projection() -> None:
     assert example["live_execution_enabled"] is False
     assert example["summary"]["component_count"] == 10
     assert example["summary"]["lifecycle_receipt_count"] == 10
+    assert example["summary"]["authority_witness_count"] == 10
+    assert example["summary"]["route_family_classification_count"] == 77
+    assert example["summary"]["classified_declared_route_count"] == 437
     assert example["components"][0]["lifecycle_receipt"]["proof_state"] == "Pass"
+    assert example["components"][0]["authority_witness"]["proof_state"] == "Pass"
 
 
 def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> None:
@@ -74,6 +80,9 @@ def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> No
     lifecycle_receipt = first_component["lifecycle_receipt"]
     assert isinstance(lifecycle_receipt, dict)
     lifecycle_receipt["external_effect"] = True
+    authority_witness = first_component["authority_witness"]
+    assert isinstance(authority_witness, dict)
+    authority_witness["witness_is_not_execution_authority"] = False
 
     validation = validate_component_read_model(example_path=_write_payload(tmp_path, payload))
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
@@ -82,4 +91,5 @@ def test_component_read_model_rejects_live_authority_drift(tmp_path: Path) -> No
     assert "live_execution_enabled" in serialized_errors
     assert "authority.can_execute" in serialized_errors
     assert "lifecycle receipt external_effect" in serialized_errors
+    assert "authority witness must not grant execution authority" in serialized_errors
     assert "example does not match runtime projection" in serialized_errors

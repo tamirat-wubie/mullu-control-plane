@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-approval-history-read-model:1",
+  "title": "Operator Approval History Read Model",
+  "description": "Operator-gated, bounded approval request history reconstructed from command transition witnesses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "tenant_id_filter",
+    "request_id_filter",
+    "command_id_filter",
+    "status_filter",
+    "search_filter",
+    "limit",
+    "offset",
+    "next_offset",
+    "total",
+    "count",
+    "status_counts",
+    "approvals",
+    "raw_message_exposed",
+    "execution_allowed",
+    "write_allowed",
+    "governed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:operator-approval-history-read-model:1"
+    },
+    "tenant_id_filter": {"type": "string"},
+    "request_id_filter": {"type": "string"},
+    "command_id_filter": {"type": "string"},
+    "status_filter": {
+      "anyOf": [
+        {"$ref": "#/$defs/approval_status"},
+        {"type": "string", "const": ""}
+      ]
+    },
+    "search_filter": {"type": "string", "maxLength": 128},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500},
+    "offset": {"type": "integer", "minimum": 0},
+    "next_offset": {
+      "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "total": {"type": "integer", "minimum": 0},
+    "count": {"type": "integer", "minimum": 0},
+    "status_counts": {"$ref": "#/$defs/status_counts"},
+    "approvals": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/approval"}
+    },
+    "raw_message_exposed": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "write_allowed": {"type": "boolean", "const": false},
+    "governed": {"type": "boolean", "const": true}
+  },
+  "$defs": {
+    "approval_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "denied", "expired", "unknown"]
+    },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pending", "approved", "denied", "expired", "unknown"],
+      "properties": {
+        "pending": {"type": "integer", "minimum": 0},
+        "approved": {"type": "integer", "minimum": 0},
+        "denied": {"type": "integer", "minimum": 0},
+        "expired": {"type": "integer", "minimum": 0},
+        "unknown": {"type": "integer", "minimum": 0}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_request_id",
+        "tenant_id",
+        "actor_id",
+        "source",
+        "intent",
+        "command_id",
+        "command_state",
+        "task_status",
+        "risk_tier",
+        "status",
+        "requested_at",
+        "resolved_at",
+        "resolved_by",
+        "event_count",
+        "latest_event_hash",
+        "trace_id",
+        "payload_hash",
+        "receipt_href",
+        "current_task_href"
+      ],
+      "properties": {
+        "approval_request_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "actor_id": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "intent": {"type": "string", "minLength": 1},
+        "command_id": {"type": "string", "minLength": 1},
+        "command_state": {"type": "string", "minLength": 1},
+        "task_status": {"type": "string", "minLength": 1},
+        "risk_tier": {"type": "string"},
+        "status": {"$ref": "#/$defs/approval_status"},
+        "requested_at": {"type": "string", "minLength": 1},
+        "resolved_at": {"type": "string"},
+        "resolved_by": {"type": "string"},
+        "event_count": {"type": "integer", "minimum": 1},
+        "latest_event_hash": {"type": "string", "minLength": 1},
+        "trace_id": {"type": "string", "minLength": 1},
+        "payload_hash": {"type": "string", "minLength": 1},
+        "receipt_href": {"type": "string", "pattern": "^/operator/receipts/"},
+        "current_task_href": {"type": "string", "pattern": "^/operator/current-task"}
+      }
+    }
+  }
+}

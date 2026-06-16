@@ -1,0 +1,248 @@
+{
+  "accepted_evidence_refs": [],
+  "accepted_record_refs": [
+    "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1"
+  ],
+  "action_requirement_satisfied": false,
+  "approval_evidence_required": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "operator_approval_if_connector_action_requested",
+    "operator_approval_if_external_effect",
+    "product_specific_ownership_decision",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "authority_envelope_mutated": false,
+  "authority_envelope_mutation_refs": [],
+  "authority_grant_refs": [],
+  "authority_granted": false,
+  "authority_level_changed": false,
+  "authority_upgrade_authorized": false,
+  "authority_upgrade_decision_is_not_authority_envelope_mutation": true,
+  "authority_upgrade_decision_is_not_authority_grant": true,
+  "authority_upgrade_decision_is_not_authority_witness": true,
+  "authority_upgrade_decision_is_not_promotion_approval": true,
+  "authority_upgrade_decision_refs": [
+    "promotion_authority_upgrade_decision.governed_connector_framework.authority_upgrade_gate.v1"
+  ],
+  "authority_upgrade_decision_state": "denied_pending_authority_upgrade_witness",
+  "authority_upgrade_decisions": [
+    {
+      "accepted_evidence_refs": [],
+      "accepted_record_refs": [
+        "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1"
+      ],
+      "action_requirement_satisfied": false,
+      "authority_envelope_mutated": false,
+      "authority_envelope_mutation_refs": [],
+      "authority_grant_refs": [],
+      "authority_granted": false,
+      "authority_level_changed": false,
+      "authority_upgrade_authorized": false,
+      "authority_upgrade_decision_id": "promotion_authority_upgrade_decision.governed_connector_framework.authority_upgrade_gate.v1",
+      "authority_upgrade_witness_refs": [],
+      "authority_witness_emitted": false,
+      "can_call_connector": false,
+      "can_claim_terminal_closure": false,
+      "can_execute": false,
+      "can_mutate": false,
+      "current_authority_level": "approval_required",
+      "decision_basis": "lifecycle_transition_decision_denial",
+      "decision_is_not_authority_envelope_mutation": true,
+      "decision_is_not_authority_grant": true,
+      "decision_is_not_authority_witness": true,
+      "decision_is_not_promotion_approval": true,
+      "decision_reason": "authority_upgrade_gate remains denied because authority-upgrade, lifecycle, route-binding, and router-inventory witnesses are absent",
+      "decision_state": "denied",
+      "foundation_fixture_decision_is_not_live_operator_evidence": true,
+      "gate_id": "authority_upgrade_gate",
+      "lifecycle_transition_authorized": false,
+      "lifecycle_transition_receipt_refs": [],
+      "missing_authority_upgrade_witnesses": [
+        "authority_upgrade_witness",
+        "component_lifecycle_transition_receipt",
+        "component_route_binding_receipt",
+        "selected_component_bound_router_inventory_delta"
+      ],
+      "mutates_router_inventory": false,
+      "promotion_approval_refs": [],
+      "promotion_approved": false,
+      "proof_state": "Pass",
+      "record_evidence_satisfied": true,
+      "record_kind": "authority_upgrade",
+      "rejected_evidence_refs": [],
+      "requested_authority_level": "approved_live_action",
+      "requires_authority_upgrade_witness": true,
+      "requires_component_route_binding_receipt": true,
+      "requires_lifecycle_transition_receipt": true,
+      "requires_product_ownership_decision": true,
+      "requires_router_inventory_delta": true,
+      "requires_terminal_closure": true,
+      "resulting_authority_level": "approval_required",
+      "route_binding_authorized": false,
+      "route_binding_receipt_refs": [],
+      "route_family_ownership_authorized": false,
+      "router_inventory_delta_authorized": false,
+      "router_inventory_delta_refs": [],
+      "satisfied_gate_evaluation_refs": [
+        "promotion_gate_satisfaction_evaluation.governed_connector_framework.route_binding_gate.v1"
+      ],
+      "selected_component_binding_authorized": false,
+      "selected_component_binding_refs": [],
+      "source_authority_decision_id": "promotion_authority_decision.governed_connector_framework.route_binding_gate.v1",
+      "source_authority_decision_refs": [
+        "promotion_authority_decision.governed_connector_framework.route_binding_gate.v1"
+      ],
+      "source_gate_evaluation_id": "promotion_gate_satisfaction_evaluation.governed_connector_framework.route_binding_gate.v1",
+      "source_lifecycle_transition_decision_denied": true,
+      "source_lifecycle_transition_decision_id": "promotion_lifecycle_transition_decision.governed_connector_framework.lifecycle_transition_gate.v1",
+      "source_lifecycle_transition_decision_refs": [
+        "promotion_lifecycle_transition_decision.governed_connector_framework.lifecycle_transition_gate.v1"
+      ],
+      "source_operator_submitted_record_id": "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1",
+      "source_route_binding_decision_id": "promotion_route_binding_decision.governed_connector_framework.route_binding_gate.v1",
+      "source_route_binding_decision_refs": [
+        "promotion_route_binding_decision.governed_connector_framework.route_binding_gate.v1"
+      ]
+    }
+  ],
+  "authority_upgrade_witness_decision_report_id": "component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.v1",
+  "authority_upgrade_witness_refs": [],
+  "authority_witness_emitted": false,
+  "blocked_actions": [
+    "autonomous_execution",
+    "connector_call",
+    "external_send",
+    "filesystem_write",
+    "live_dispatch",
+    "route_execution",
+    "runtime_mutation",
+    "terminal_closure"
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "current_authority_level": "approval_required",
+  "decision": "blocked",
+  "expected_receipts": [
+    "component_route_family_promotion_authority_upgrade_witness_decision_report_receipt",
+    "component_route_family_promotion_lifecycle_transition_decision_report_receipt",
+    "component_route_family_promotion_route_binding_decision_report_receipt",
+    "component_route_family_promotion_authority_decision_report_receipt",
+    "component_route_binding_receipt",
+    "selected_component_bound_router_inventory_delta",
+    "component_lifecycle_transition_receipt",
+    "authority_upgrade_witness",
+    "product_specific_ownership_decision",
+    "operator_approval_required_receipt",
+    "terminal_closure_denial_receipt"
+  ],
+  "foundation_fixture_decision_is_not_live_operator_evidence": true,
+  "governed": true,
+  "lifecycle_transition_authorized": false,
+  "lifecycle_transition_decision_state": "denied_pending_route_binding_witness",
+  "lifecycle_transition_receipt_refs": [],
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "missing_authority_upgrade_witnesses": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "mode": "foundation",
+  "mutates_router_inventory": false,
+  "next_action": "Create a product-specific ownership decision while authority upgrade remains denied until separate authority-upgrade, lifecycle-transition, route-binding, and router-inventory evidence exists.",
+  "operator_submission_channels": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "operator_approval_if_connector_action_requested",
+    "operator_approval_if_external_effect",
+    "product_specific_ownership_decision",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "outcome": "AwaitingEvidence",
+  "preflight_outcome": "GovernanceBlocked",
+  "promotion_approval_refs": [],
+  "promotion_decision": "blocked_authority_upgrade_not_authorized",
+  "ready_for_promotion": false,
+  "record_evidence_satisfied": true,
+  "rejected_evidence_refs": [],
+  "requested_authority_level": "approved_live_action",
+  "required_followup_decisions": [
+    "component_route_binding_receipt",
+    "selected_component_bound_router_inventory_delta",
+    "component_lifecycle_transition_receipt",
+    "authority_upgrade_witness",
+    "product_specific_ownership_decision",
+    "terminal_closure_decision"
+  ],
+  "resulting_authority_level": "approval_required",
+  "route_binding_authorized": false,
+  "route_binding_receipt_refs": [],
+  "route_family_ownership_authorized": false,
+  "router_inventory_delta_authorized": false,
+  "router_inventory_delta_refs": [],
+  "satisfied_gate_evaluation_refs": [
+    "promotion_gate_satisfaction_evaluation.governed_connector_framework.route_binding_gate.v1"
+  ],
+  "schema_version": 1,
+  "selected_component_binding_authorized": false,
+  "selected_component_binding_refs": [],
+  "separate_authority_upgrade_witness_required": true,
+  "separate_lifecycle_transition_receipt_required": true,
+  "separate_product_ownership_decision_required": true,
+  "separate_route_binding_receipt_required": true,
+  "separate_router_inventory_delta_required": true,
+  "source_authority_decision_refs": [
+    "promotion_authority_decision.governed_connector_framework.route_binding_gate.v1"
+  ],
+  "source_lifecycle_transition_decision_refs": [
+    "promotion_lifecycle_transition_decision.governed_connector_framework.lifecycle_transition_gate.v1"
+  ],
+  "source_refs": {
+    "authority_decision_report": "examples/component_route_family_promotion_authority_decision_report.governed_connector_framework.json",
+    "lifecycle_transition_decision_report": "examples/component_route_family_promotion_lifecycle_transition_decision_report.governed_connector_framework.json",
+    "proof_matrix": "docs/40_proof_coverage_matrix.md",
+    "route_binding_decision_report": "examples/component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
+  },
+  "source_route_binding_decision_refs": [
+    "promotion_route_binding_decision.governed_connector_framework.route_binding_gate.v1"
+  ],
+  "summary": {
+    "accepted_evidence_count": 0,
+    "accepted_record_count": 1,
+    "approval_artifact_requirement_count": 8,
+    "authority_envelope_mutation_count": 0,
+    "authority_envelope_mutation_ref_count": 0,
+    "authority_grant_count": 0,
+    "authority_level_change_count": 0,
+    "authority_upgrade_authorization_count": 0,
+    "authority_upgrade_decision_count": 1,
+    "authority_upgrade_denial_count": 1,
+    "authority_upgrade_witness_count": 0,
+    "authority_witness_emission_count": 0,
+    "lifecycle_transition_authorization_count": 0,
+    "promotion_approval_count": 0,
+    "rejected_evidence_count": 0,
+    "required_followup_decision_count": 6,
+    "route_binding_authorization_count": 0,
+    "router_inventory_mutation_count": 0,
+    "selected_component_binding_count": 0,
+    "terminal_closure_count": 0
+  },
+  "target_component_id": "gmail_account_binding_gate",
+  "target_surface_id": "governed_connector_framework",
+  "terminal_closure_refs": [],
+  "terminal_closure_required": true,
+  "validators": [
+    "component_route_family_promotion_authority_upgrade_witness_decision_report_validator",
+    "component_route_family_promotion_authority_upgrade_witness_decision_report_tests",
+    "component_route_family_promotion_lifecycle_transition_decision_report_validator"
+  ]
+}

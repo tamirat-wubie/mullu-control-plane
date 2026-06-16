@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from mcoi_runtime.core.operational_dashboard_api import OperationalDashboardRuntime
+from mcoi_runtime.core.operational_dashboard_client import render_normal_user_dashboard_shell
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,32 @@ class OperationalDashboardFastAPIAdapter:
         """Handle GET /home."""
 
         return self.runtime.simple_home().to_dict()
+
+    def simple_state(self) -> dict[str, Any]:
+        """Handle GET /simple."""
+
+        return self.runtime.simple_state().to_dict()
+
+    def simple_state_contract(self) -> dict[str, Any]:
+        """Handle GET /simple/contract."""
+
+        return self.runtime.simple_state_contract().to_dict()
+
+    def simple_client_view(self) -> dict[str, Any]:
+        """Handle GET /simple/client-view."""
+
+        return self.runtime.simple_client_view().to_dict()
+
+    def simple_client_page(self) -> str:
+        """Handle GET /simple/page."""
+
+        envelope = self.runtime.simple_client_page().to_dict()
+        if not envelope["ok"]:
+            return _blocked_normal_user_dashboard_html()
+        html = envelope["payload"]["html"]
+        if not isinstance(html, str):
+            return _blocked_normal_user_dashboard_html()
+        return html
 
     def state(self) -> dict[str, Any]:
         """Handle GET /state."""
@@ -63,9 +90,33 @@ class OperationalDashboardFastAPIAdapter:
             ),
             OperationalDashboardRouteSpec(
                 method="GET",
+                path=f"{normalized}/simple",
+                handler_name="simple_state",
+                purpose="return the normal-user dashboard projection with audit details hidden",
+            ),
+            OperationalDashboardRouteSpec(
+                method="GET",
+                path=f"{normalized}/simple/contract",
+                handler_name="simple_state_contract",
+                purpose="return the normal-user dashboard client contract",
+            ),
+            OperationalDashboardRouteSpec(
+                method="GET",
+                path=f"{normalized}/simple/client-view",
+                handler_name="simple_client_view",
+                purpose="return the UI-ready normal-user dashboard client view",
+            ),
+            OperationalDashboardRouteSpec(
+                method="GET",
+                path=f"{normalized}/simple/page",
+                handler_name="simple_client_page",
+                purpose="return the read-only normal-user dashboard HTML page",
+            ),
+            OperationalDashboardRouteSpec(
+                method="GET",
                 path=f"{normalized}/state",
                 handler_name="state",
-                purpose="return the full read-only operational dashboard state",
+                purpose="return the full read-only operational dashboard state for operator surfaces",
             ),
             OperationalDashboardRouteSpec(
                 method="GET",
@@ -94,6 +145,24 @@ def create_operational_dashboard_fastapi_router(
     def simple_home():
         return adapter.simple_home()
 
+    @router.get("/simple")
+    def simple_state():
+        return adapter.simple_state()
+
+    @router.get("/simple/contract")
+    def simple_state_contract():
+        return adapter.simple_state_contract()
+
+    @router.get("/simple/client-view")
+    def simple_client_view():
+        return adapter.simple_client_view()
+
+    @router.get("/simple/page")
+    def simple_client_page():
+        from fastapi.responses import HTMLResponse
+
+        return HTMLResponse(content=adapter.simple_client_page())
+
     @router.get("/state")
     def state():
         return adapter.state()
@@ -103,3 +172,14 @@ def create_operational_dashboard_fastapi_router(
         return adapter.sdlc_receipts()
 
     return router
+
+
+def _blocked_normal_user_dashboard_html() -> str:
+    return render_normal_user_dashboard_shell(
+        document_title="Mullu Dashboard - Blocked",
+        body_lines=(
+            "    <h1>Blocked for safety</h1>",
+            "    <p>This dashboard view could not be prepared.</p>",
+        ),
+        evidence_label="Evidence unavailable",
+    )

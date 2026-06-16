@@ -173,6 +173,10 @@ class GatewayRouter:
         """Resolve tenant from channel user identity."""
         return self._tenant_identities.resolve(channel, sender_id)
 
+    def lookup_approval_request(self, request_id: str) -> ApprovalRequest | None:
+        """Return a pending approval request by id, expiring stale requests first."""
+        return self._approval.lookup_request(request_id)
+
     def governed_memory_for(self, mapping: TenantMapping, *, allowed_use: str, scope: str = "") -> list[Any]:
         """Return governed memory cells usable for one mapped identity."""
         return self._memory.query(

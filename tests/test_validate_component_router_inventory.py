@@ -38,6 +38,8 @@ def test_component_router_inventory_accepts_default_foundation_example() -> None
     assert validation.errors == ()
     assert validation.route_binding_count == 10
     assert validation.bound_route_count == 30
+    assert validation.route_family_classification_count == 77
+    assert validation.classified_route_count == validation.discovered_route_count
     assert validation.discovered_route_count >= validation.bound_route_count
     assert validation.unclassified_route_count == 0
 
@@ -134,6 +136,43 @@ def test_component_router_inventory_rejects_no_declared_route_with_routes(
     assert "component snet no_declared_route binding must not list expected_routes" in serialized_errors
 
 
+def test_component_router_inventory_records_nested_mind_missing_evidence() -> None:
+    payload = _default_payload()
+    nested_mind_binding = next(
+        binding
+        for binding in payload["route_bindings"]
+        if binding["component_id"] == "nested_mind_bridge"
+    )
+
+    assert nested_mind_binding["binding_state"] == "no_declared_route"
+    assert nested_mind_binding["proof_surface_ids"] == []
+    assert set(nested_mind_binding["missing_evidence"]) == {
+        "proof_matrix_surface",
+        "memory_topology_activation_witness",
+    }
+    assert "memory_topology_activation" in nested_mind_binding["blocked_actions"]
+
+
+def test_component_router_inventory_rejects_unbound_empty_proof_without_missing_evidence(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    nested_mind_binding = next(
+        binding
+        for binding in payload["route_bindings"]
+        if binding["component_id"] == "nested_mind_bridge"
+    )
+    del nested_mind_binding["missing_evidence"]
+    inventory_path = _write_inventory(tmp_path, payload)
+
+    validation = validate_component_router_inventory(inventory_path=inventory_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "component nested_mind_bridge no_declared_route binding without proof_surface_ids" in serialized_errors
+    assert "must list missing_evidence" in serialized_errors
+
+
 def test_component_router_inventory_rejects_guardrail_drift(tmp_path: Path) -> None:
     payload = _default_payload()
     payload["live_execution_enabled"] = True
@@ -164,6 +203,77 @@ def test_component_router_inventory_rejects_validator_declaration_drift(
     assert validation.ok is False
     assert "validator component_router_inventory_validator command must be" in serialized_errors
     assert "validator component_router_inventory_tests must be required_for_closure" in serialized_errors
+
+
+def test_component_router_inventory_rejects_missing_route_family_classification(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    removed = payload["route_family_classifications"].pop()
+    inventory_path = _write_inventory(tmp_path, payload)
+
+    validation = validate_component_router_inventory(inventory_path=inventory_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "declared route surfaces missing family classification" in serialized_errors
+    assert removed["surface_id"] in serialized_errors
+
+
+def test_component_router_inventory_rejects_route_family_count_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["route_family_classifications"][0]["declared_route_count"] += 1
+    payload["route_family_classifications"][0]["sample_routes"] = ["/missing-route"]
+    inventory_path = _write_inventory(tmp_path, payload)
+
+    validation = validate_component_router_inventory(inventory_path=inventory_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "declared_route_count must be" in serialized_errors
+    assert "sample routes are not declared for this surface" in serialized_errors
+    assert "/missing-route" in serialized_errors
+
+
+def test_component_router_inventory_rejects_route_family_authority_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["route_family_classifications"][0]["classification_is_not_execution_authority"] = False
+    payload["route_family_classifications"][0]["can_enable_live_action"] = True
+    payload["route_family_classifications"][0]["blocked_actions"].remove("route_execution")
+    inventory_path = _write_inventory(tmp_path, payload)
+
+    validation = validate_component_router_inventory(inventory_path=inventory_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "must not be execution authority" in serialized_errors
+    assert "cannot enable live action" in serialized_errors
+    assert "must block route_execution" in serialized_errors
+
+
+def test_component_router_inventory_rejects_selected_family_binding_level_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    family = next(
+        item
+        for item in payload["route_family_classifications"]
+        if item["surface_id"] == "component_harness_read_model"
+    )
+    family["binding_level"] = "platform_family_classified"
+    family["component_ids"] = ["snet"]
+    inventory_path = _write_inventory(tmp_path, payload)
+
+    validation = validate_component_router_inventory(inventory_path=inventory_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "must use selected_component_bound" in serialized_errors
+    assert "must include at least one bound component" in serialized_errors
 
 
 def test_component_router_inventory_writer_and_cli_fail_closed(
