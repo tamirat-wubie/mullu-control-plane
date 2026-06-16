@@ -12,6 +12,9 @@
     "source_send_preparation_receipt_id",
     "send_preparation_receipt_valid",
     "send_preparation_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
     "status",
     "solver_outcome",
     "proof_state",
@@ -78,6 +81,16 @@
       "type": "boolean"
     },
     "send_preparation_receipt_ready": {
+      "type": "boolean"
+    },
+    "provider_observation_receipt_ref": {
+      "type": "string"
+    },
+    "provider_observation_receipt_id": {
+      "type": "string",
+      "pattern": "^$|^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "provider_observation_receipt_valid": {
       "type": "boolean"
     },
     "status": {
@@ -261,6 +274,15 @@
             "const": true
           },
           "send_preparation_receipt_ready": {
+            "const": true
+          },
+          "provider_observation_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": {
             "const": true
           },
           "solver_outcome": {

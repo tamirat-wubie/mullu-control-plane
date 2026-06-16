@@ -10,6 +10,8 @@ Dependencies: schemas/team_ops_shared_inbox_send_execution_receipt.schema.json
 and scripts.validate_team_ops_shared_inbox_send_preparation_receipt.
 Invariants:
   - Only ready send-preparation receipts can admit provider send evidence.
+  - Ready send-execution receipts retain the upstream provider-observation
+    receipt identity carried by send-preparation.
   - This producer records observed execution evidence only; it never calls a provider.
   - Raw recipient, subject, body, message content, provider response, and
     secret-shaped values are rejected.
@@ -64,6 +66,9 @@ class TeamOpsSharedInboxSendExecutionReceipt:
     source_send_preparation_receipt_id: str
     send_preparation_receipt_valid: bool
     send_preparation_receipt_ready: bool
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     status: str
     solver_outcome: str
     proof_state: str
@@ -167,6 +172,7 @@ def produce_team_ops_shared_inbox_send_execution_receipt(
         receipt_id=_receipt_id(
             send_preparation_receipt_path=send_preparation_receipt_path,
             source_send_preparation_receipt_id=str(preparation_receipt.get("receipt_id", "")),
+            provider_observation_receipt_id=str(preparation_receipt.get("provider_observation_receipt_id", "")),
             send_execution_ref=clean_send_execution_ref,
             dispatch_receipt_ref=clean_dispatch_receipt_ref,
             provider_message_ref=clean_provider_message_ref,
@@ -179,6 +185,14 @@ def produce_team_ops_shared_inbox_send_execution_receipt(
         source_send_preparation_receipt_id=str(preparation_receipt.get("receipt_id", "")),
         send_preparation_receipt_valid=preparation_validation.valid,
         send_preparation_receipt_ready=preparation_validation.ready,
+        provider_observation_receipt_ref=str(preparation_receipt.get("provider_observation_receipt_ref", ""))
+        if source_ready
+        else "",
+        provider_observation_receipt_id=str(preparation_receipt.get("provider_observation_receipt_id", ""))
+        if source_ready
+        else "",
+        provider_observation_receipt_valid=source_ready
+        and preparation_receipt.get("provider_observation_receipt_valid") is True,
         status=status,
         solver_outcome=solver_outcome,
         proof_state=proof_state,
@@ -347,6 +361,7 @@ def _receipt_id(
     *,
     send_preparation_receipt_path: Path,
     source_send_preparation_receipt_id: str,
+    provider_observation_receipt_id: str,
     send_execution_ref: str,
     dispatch_receipt_ref: str,
     provider_message_ref: str,
@@ -356,6 +371,7 @@ def _receipt_id(
     material = {
         "source_ref": _artifact_ref(send_preparation_receipt_path),
         "source_send_preparation_receipt_id": source_send_preparation_receipt_id,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "send_execution_ref": send_execution_ref,
         "dispatch_receipt_ref": dispatch_receipt_ref,
         "provider_message_ref": provider_message_ref,
