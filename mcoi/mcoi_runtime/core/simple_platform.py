@@ -26,6 +26,7 @@ from .invariants import RuntimeCoreInvariantError
 SimpleActionKind = Literal["view", "change", "send", "verify"]
 SimpleOutcome = Literal["ready", "needs_review", "blocked"]
 SimpleTaskKind = Literal["review_docs", "update_docs", "notify_support", "verify_artifact"]
+SimpleVisibilityLevel = Literal["normal_user", "operator", "auditor_developer"]
 SimpleWorkflowKind = Literal["docs_update", "support_notice", "artifact_review"]
 
 
@@ -252,6 +253,77 @@ class SimpleActionCheck:
 
 
 @dataclass(frozen=True)
+class SimpleActionExperience:
+    """Visibility-filtered shell for one governed action check."""
+
+    visibility_level: SimpleVisibilityLevel
+    outcome: SimpleOutcome
+    status_label: str
+    message: str
+    risk: str
+    approval_needed: bool
+    evidence_saved: bool
+    next_step: str
+    choices: tuple[str, ...]
+    audit_details_available: bool
+    audit_details_visible: bool
+    receipts_visible: bool
+    proof_details_hidden: bool
+    operator_details: Mapping[str, object] | None = None
+    auditor_details: Mapping[str, object] | None = None
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("simple action experience cannot allow execution")
+        _visibility_level(self.visibility_level)
+        for field_name, field_value in {
+            "status_label": self.status_label,
+            "message": self.message,
+            "risk": self.risk,
+            "next_step": self.next_step,
+        }.items():
+            _require_trimmed_text(field_value, f"simple action experience {field_name}")
+        if not self.choices:
+            raise RuntimeCoreInvariantError("simple action experience requires at least one choice")
+        for choice in self.choices:
+            _require_trimmed_text(choice, "simple action experience choice")
+        if self.visibility_level == "normal_user" and (
+            self.audit_details_visible
+            or self.receipts_visible
+            or not self.proof_details_hidden
+            or self.operator_details is not None
+            or self.auditor_details is not None
+        ):
+            raise RuntimeCoreInvariantError("normal user experience cannot expose audit details")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible visibility-filtered experience."""
+
+        payload: dict[str, object] = {
+            "visibility_level": self.visibility_level,
+            "outcome": self.outcome,
+            "status_label": self.status_label,
+            "message": self.message,
+            "risk": self.risk,
+            "approval_needed": self.approval_needed,
+            "evidence_saved": self.evidence_saved,
+            "next_step": self.next_step,
+            "choices": list(self.choices),
+            "audit_details_available": self.audit_details_available,
+            "audit_details_visible": self.audit_details_visible,
+            "receipts_visible": self.receipts_visible,
+            "proof_details_hidden": self.proof_details_hidden,
+            "execution_allowed": self.execution_allowed,
+        }
+        if self.operator_details is not None:
+            payload["operator_details"] = dict(self.operator_details)
+        if self.auditor_details is not None:
+            payload["auditor_details"] = dict(self.auditor_details)
+        return payload
+
+
+@dataclass(frozen=True)
 class SimpleWorkflowPlan:
     """Plain outcome for a workflow composed from governed task checks."""
 
@@ -302,6 +374,90 @@ class SimpleWorkflowPlan:
             "review_count": self.review_count,
             "blocked_count": self.blocked_count,
             "checks": [check.to_dict() for check in self.checks],
+        }
+
+
+@dataclass(frozen=True)
+class SimpleWorkflowExperience:
+    """Visibility-filtered shell for one governed workflow plan."""
+
+    visibility_level: SimpleVisibilityLevel
+    workflow: SimpleWorkflowKind
+    label: str
+    outcome: SimpleOutcome
+    status_label: str
+    message: str
+    next_step: str
+    ready_count: int
+    review_count: int
+    blocked_count: int
+    steps: tuple[SimpleActionExperience, ...]
+    choices: tuple[str, ...]
+    audit_details_available: bool
+    audit_details_visible: bool
+    receipts_visible: bool
+    proof_details_hidden: bool
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("simple workflow experience cannot allow execution")
+        _visibility_level(self.visibility_level)
+        if self.outcome not in {"ready", "needs_review", "blocked"}:
+            raise RuntimeCoreInvariantError("simple workflow experience outcome is unsupported")
+        if self.status_label not in {"Ready", "Needs approval", "Blocked"}:
+            raise RuntimeCoreInvariantError("simple workflow experience status label is unsupported")
+        if min(self.ready_count, self.review_count, self.blocked_count) < 0:
+            raise RuntimeCoreInvariantError("simple workflow experience counts cannot be negative")
+        if self.ready_count + self.review_count + self.blocked_count != len(self.steps):
+            raise RuntimeCoreInvariantError("simple workflow experience counts must match steps")
+        if any(step.visibility_level != self.visibility_level for step in self.steps):
+            raise RuntimeCoreInvariantError("simple workflow experience step visibility must match workflow visibility")
+        for field_name, field_value in {
+            "label": self.label,
+            "status_label": self.status_label,
+            "message": self.message,
+            "next_step": self.next_step,
+        }.items():
+            _require_trimmed_text(field_value, f"simple workflow experience {field_name}")
+        if not self.choices:
+            raise RuntimeCoreInvariantError("simple workflow experience requires at least one choice")
+        for choice in self.choices:
+            _require_trimmed_text(choice, "simple workflow experience choice")
+        if self.visibility_level == "normal_user" and (
+            self.audit_details_visible or self.receipts_visible or not self.proof_details_hidden
+        ):
+            raise RuntimeCoreInvariantError("normal user workflow experience cannot expose audit details")
+
+    @property
+    def ok_to_continue(self) -> bool:
+        """Return whether the workflow can proceed without extra review."""
+
+        return self.outcome == "ready"
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible visibility-filtered workflow experience."""
+
+        return {
+            "visibility_level": self.visibility_level,
+            "workflow": self.workflow,
+            "label": self.label,
+            "outcome": self.outcome,
+            "title": self.status_label,
+            "status_label": self.status_label,
+            "message": self.message,
+            "next_step": self.next_step,
+            "ok_to_continue": self.ok_to_continue,
+            "ready_count": self.ready_count,
+            "review_count": self.review_count,
+            "blocked_count": self.blocked_count,
+            "steps": [step.to_dict() for step in self.steps],
+            "choices": list(self.choices),
+            "audit_details_available": self.audit_details_available,
+            "audit_details_visible": self.audit_details_visible,
+            "receipts_visible": self.receipts_visible,
+            "proof_details_hidden": self.proof_details_hidden,
+            "execution_allowed": self.execution_allowed,
         }
 
 
@@ -470,12 +626,64 @@ class SimplePlatform:
             boundary_witness_ref=result.boundary_witness_ref,
         )
 
+    def check_action_experience(
+        self,
+        request: SimpleActionRequest | Mapping[str, object],
+        *,
+        visibility_level: SimpleVisibilityLevel = "normal_user",
+    ) -> SimpleActionExperience:
+        """Check one action and return the requested visibility projection."""
+
+        return _project_action_experience(
+            check=self.check_action(request),
+            visibility_level=_visibility_level(visibility_level),
+        )
+
+    @staticmethod
+    def action_experience(
+        check: SimpleActionCheck,
+        *,
+        visibility_level: SimpleVisibilityLevel = "normal_user",
+    ) -> SimpleActionExperience:
+        """Return a visibility-filtered projection for an existing check."""
+
+        return _project_action_experience(
+            check=check,
+            visibility_level=_visibility_level(visibility_level),
+        )
+
+    @staticmethod
+    def workflow_experience(
+        plan: SimpleWorkflowPlan,
+        *,
+        visibility_level: SimpleVisibilityLevel = "normal_user",
+    ) -> SimpleWorkflowExperience:
+        """Return a visibility-filtered projection for an existing workflow plan."""
+
+        return _project_workflow_experience(
+            plan=plan,
+            visibility_level=_visibility_level(visibility_level),
+        )
+
     def check_task(self, request: SimpleTaskRequest | Mapping[str, object]) -> SimpleActionCheck:
         """Check one template-backed task without requiring users to pick scope."""
 
         task_request = _task_request_from_mapping(request) if isinstance(request, Mapping) else request
         task_request.validate()
         return self.check_action(_action_request_from_task(task_request))
+
+    def check_task_experience(
+        self,
+        request: SimpleTaskRequest | Mapping[str, object],
+        *,
+        visibility_level: SimpleVisibilityLevel = "normal_user",
+    ) -> SimpleActionExperience:
+        """Check one template-backed task and return the requested visibility shell."""
+
+        return _project_action_experience(
+            check=self.check_task(request),
+            visibility_level=_visibility_level(visibility_level),
+        )
 
     def check_workflow(self, request: SimpleWorkflowRequest | Mapping[str, object]) -> SimpleWorkflowPlan:
         """Check a common user workflow as one plain outcome."""
@@ -498,6 +706,19 @@ class SimplePlatform:
             for task in template.tasks
         )
         return _project_workflow_plan(template=template, checks=checks)
+
+    def check_workflow_experience(
+        self,
+        request: SimpleWorkflowRequest | Mapping[str, object],
+        *,
+        visibility_level: SimpleVisibilityLevel = "normal_user",
+    ) -> SimpleWorkflowExperience:
+        """Check a common workflow and return the requested visibility shell."""
+
+        return _project_workflow_experience(
+            plan=self.check_workflow(request),
+            visibility_level=_visibility_level(visibility_level),
+        )
 
     @staticmethod
     def task_templates() -> tuple[SimpleTaskTemplate, ...]:
@@ -774,6 +995,115 @@ def _project_check(
     raise RuntimeCoreInvariantError(f"unsupported governance decision: {raw_decision}")
 
 
+def _project_action_experience(
+    *,
+    check: SimpleActionCheck,
+    visibility_level: SimpleVisibilityLevel,
+) -> SimpleActionExperience:
+    """Translate a proof-bearing check into a visibility-bounded shell."""
+
+    normalized_visibility = _visibility_level(visibility_level)
+    audit_details_visible = normalized_visibility != "normal_user"
+    receipts_visible = normalized_visibility != "normal_user"
+    return SimpleActionExperience(
+        visibility_level=normalized_visibility,
+        outcome=check.outcome,
+        status_label=check.title,
+        message=check.message,
+        risk=_risk_label(check),
+        approval_needed=check.outcome == "needs_review",
+        evidence_saved=bool(check.proof_stamp_ref and check.boundary_witness_ref),
+        next_step=check.next_step,
+        choices=_experience_choices(check),
+        audit_details_available=True,
+        audit_details_visible=audit_details_visible,
+        receipts_visible=receipts_visible,
+        proof_details_hidden=not receipts_visible,
+        operator_details=_operator_details(check) if audit_details_visible else None,
+        auditor_details=_auditor_details(check) if normalized_visibility == "auditor_developer" else None,
+    )
+
+
+def _project_workflow_experience(
+    *,
+    plan: SimpleWorkflowPlan,
+    visibility_level: SimpleVisibilityLevel,
+) -> SimpleWorkflowExperience:
+    """Translate a proof-bearing workflow plan into a visibility-bounded shell."""
+
+    normalized_visibility = _visibility_level(visibility_level)
+    audit_details_visible = normalized_visibility != "normal_user"
+    receipts_visible = normalized_visibility != "normal_user"
+    return SimpleWorkflowExperience(
+        visibility_level=normalized_visibility,
+        workflow=plan.workflow,
+        label=plan.label,
+        outcome=plan.outcome,
+        status_label=plan.title,
+        message=plan.message,
+        next_step=plan.next_step,
+        ready_count=plan.ready_count,
+        review_count=plan.review_count,
+        blocked_count=plan.blocked_count,
+        steps=tuple(
+            _project_action_experience(check=check, visibility_level=normalized_visibility)
+            for check in plan.checks
+        ),
+        choices=_workflow_choices(plan),
+        audit_details_available=True,
+        audit_details_visible=audit_details_visible,
+        receipts_visible=receipts_visible,
+        proof_details_hidden=not receipts_visible,
+    )
+
+
+def _risk_label(check: SimpleActionCheck) -> str:
+    if check.outcome == "ready":
+        return "Inside allowed area"
+    if any("External changes require approval." == reason for reason in check.review_reasons):
+        return "External message"
+    if check.outcome == "needs_review":
+        return "Approval boundary"
+    if any("Mfidel atomicity would be violated." == reason for reason in check.blocked_reasons):
+        return "Mfidel atomicity"
+    return "Safety boundary"
+
+
+def _experience_choices(check: SimpleActionCheck) -> tuple[str, ...]:
+    if check.outcome == "ready":
+        return ("Continue", "View audit details")
+    if check.outcome == "needs_review":
+        return ("Approve", "Edit", "Cancel", "View audit details")
+    return ("Edit request", "Cancel", "View audit details")
+
+
+def _workflow_choices(plan: SimpleWorkflowPlan) -> tuple[str, ...]:
+    if plan.outcome == "ready":
+        return ("Continue", "View audit details")
+    if plan.outcome == "needs_review":
+        return ("Approve", "Edit workflow", "Cancel", "View audit details")
+    return ("Edit workflow", "Cancel", "View audit details")
+
+
+def _operator_details(check: SimpleActionCheck) -> dict[str, object]:
+    return {
+        "decision_ref": check.decision_ref,
+        "proof_stamp_ref": check.proof_stamp_ref,
+        "boundary_witness_ref": check.boundary_witness_ref,
+        "blocked_reasons": list(check.blocked_reasons),
+        "review_reasons": list(check.review_reasons),
+    }
+
+
+def _auditor_details(check: SimpleActionCheck) -> dict[str, object]:
+    return {
+        "raw_decision": check.raw_decision,
+        "raw_reason": check.raw_reason,
+        "proof_stamp_ref": check.proof_stamp_ref,
+        "boundary_witness_ref": check.boundary_witness_ref,
+    }
+
+
 def _project_workflow_plan(
     *,
     template: SimpleWorkflowTemplate,
@@ -900,6 +1230,15 @@ def _action_kind(value: str) -> SimpleActionKind:
     if value in {"view", "change", "send", "verify"}:
         return value  # type: ignore[return-value]
     raise RuntimeCoreInvariantError("action must be one of: view, change, send, verify")
+
+
+def _visibility_level(value: str) -> SimpleVisibilityLevel:
+    normalized = value.strip().replace("-", "_")
+    if normalized in {"normal_user", "operator", "auditor_developer"}:
+        return normalized  # type: ignore[return-value]
+    raise RuntimeCoreInvariantError(
+        "visibility_level must be one of: normal_user, operator, auditor_developer"
+    )
 
 
 def _task_kind(value: str) -> SimpleTaskKind:

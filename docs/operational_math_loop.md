@@ -15,6 +15,7 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 | `OperationalMathTarget` | Declares the system surface that receives the loop. |
 | `OperationalMathLoopEngine` | Applies missing requirements one principle per iteration. |
 | `OperationalMathLoopIteration` | Records added roles, added controls, tension before/after, and proof refs. |
+| `OperationalMathControlBinding` | Binds one control to a verifier, evidence refs, and pass/fail status. |
 | `OperationalMathLoopResult` | Records saturation or remaining gaps without silent completion. |
 | `OperationalMathReceiptStore` | Stores JSON loop receipts with append-only, idempotent receipt-id semantics. |
 | `operational_math` observability source | Exposes store counts, bounded store persistence posture, latest receipt posture, and review signals through the server dashboard. |
@@ -28,8 +29,9 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 5. Record a proof reference and optional event-spine record.
 6. Recompute tension.
 7. Repeat until saturated or `max_iterations` is reached.
-8. Return `SolvedVerified` only when no gaps remain.
-9. Return `AwaitingEvidence` when the iteration budget is exhausted with gaps.
+8. Verify every final control has a passing control binding.
+9. Return `SolvedVerified` only when no principle gaps remain and every final control is verified.
+10. Return `AwaitingEvidence` when the iteration budget is exhausted or any final control lacks verified evidence.
 
 ## F1-F10 Operational Mapping
 
@@ -38,7 +40,7 @@ solvers, invariants, bounds, controllers, metrics, and verification gates.
 | F1 | Constraint, transformation, invariant, proof receipt. |
 | F2 | Executable solver, bounded approximation, optimizer, verification gate. |
 | F3 | Complexity bound and tractability classification. |
-| F4 | Numerical stability and convergence/error bounds. |
+| F4 | Numerical stability and convergence/error bounds, including solver receipt `numeric_tolerance`, `max_constraint_violation`, and `stability_verdict`. |
 | F5 | Decision rule and uncertainty model. |
 | F6 | Adversarial guard and stress case. |
 | F7 | Belief-space metric for advanced uncertainty routing. |
@@ -116,6 +118,7 @@ dashboard telemetry as `degraded` and requires operator review.
 Expected proof outcome:
 
 ```text
-SolvedVerified when max_iterations >= 10
+SolvedVerified when max_iterations >= 10 and all final controls have verified bindings
 AwaitingEvidence when max_iterations is exhausted before all gaps close
+AwaitingEvidence when a final control is missing or failing its verifier binding
 ```

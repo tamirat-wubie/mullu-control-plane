@@ -15,12 +15,14 @@ Invariants:
   - Prefix drift is explicit: a new route under a bound prefix fails until the
     inventory records the route.
   - Components without declared routes are explicitly marked no_declared_route.
+  - Empty proof surfaces on unbound components require explicit missing evidence.
 """
 
 from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 import json
 from pathlib import Path
 import sys
@@ -73,6 +75,8 @@ class ComponentRouterInventoryValidation:
     bound_route_count: int
     discovered_route_count: int
     unclassified_route_count: int
+    route_family_classification_count: int
+    classified_route_count: int
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -98,15 +102,14 @@ def validate_component_router_inventory(
             for error in _validate_schema_instance(schema, inventory)
         )
 
-    registry_validation = validate_component_registry(example_paths=(registry_path,))
+    registry_validation = _validate_component_registry_cached(str(registry_path))
     if not registry_validation.ok:
         errors.extend(
             f"{_path_label(registry_path)}: registry validation failed: {error}"
             for error in registry_validation.errors
         )
 
-    matrix = proof_coverage_matrix()
-    route_report = route_coverage_report(matrix["surfaces"], discover_declared_routes())
+    matrix, route_report = _router_inventory_route_context()
     route_records = {
         str(record["route"]): record
         for record in route_report["routes"]
@@ -126,6 +129,8 @@ def validate_component_router_inventory(
         )
 
     bound_route_count = _bound_route_count(inventory)
+    route_family_classification_count = _route_family_classification_count(inventory)
+    classified_route_count = _classified_route_count(inventory)
     return ComponentRouterInventoryValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -136,6 +141,8 @@ def validate_component_router_inventory(
         bound_route_count=bound_route_count,
         discovered_route_count=route_report["route_count"],
         unclassified_route_count=route_report["unclassified_route_count"],
+        route_family_classification_count=route_family_classification_count,
+        classified_route_count=classified_route_count,
     )
 
 
@@ -151,6 +158,21 @@ def write_component_router_inventory_validation(
         encoding="utf-8",
     )
     return output_path
+
+
+@lru_cache(maxsize=16)
+def _validate_component_registry_cached(registry_path: str) -> Any:
+    """Return cached registry validation for stable router-inventory inputs."""
+
+    return validate_component_registry(example_paths=(Path(registry_path),))
+
+
+@lru_cache(maxsize=1)
+def _router_inventory_route_context() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return the generated proof matrix and route coverage report once per process."""
+
+    matrix = proof_coverage_matrix()
+    return matrix, route_coverage_report(matrix["surfaces"], discover_declared_routes())
 
 
 def _validate_inventory_semantics(
@@ -194,6 +216,114 @@ def _validate_inventory_semantics(
             owner_by_route=owner_by_route,
             errors=errors,
             label=label,
+        )
+    _validate_route_family_classifications(
+        inventory=inventory,
+        bindings=bindings,
+        component_ids=component_ids,
+        route_records=route_records,
+        errors=errors,
+        label=label,
+    )
+
+
+def _validate_route_family_classifications(
+    *,
+    inventory: dict[str, Any],
+    bindings: list[Any],
+    component_ids: set[str],
+    route_records: dict[str, dict[str, Any]],
+    errors: list[str],
+    label: str,
+) -> None:
+    classifications = inventory.get("route_family_classifications")
+    if not isinstance(classifications, list):
+        errors.append(f"{label}: route_family_classifications must be a list")
+        return
+
+    routes_by_surface = _routes_by_surface(route_records)
+    bound_surface_owners = _bound_surface_owners(bindings)
+    family_surface_ids = [
+        str(classification.get("surface_id"))
+        for classification in classifications
+        if isinstance(classification, dict) and classification.get("surface_id")
+    ]
+    duplicate_surface_ids = sorted(_duplicates(family_surface_ids))
+    if duplicate_surface_ids:
+        errors.append(f"{label}: duplicate route family classifications {duplicate_surface_ids}")
+    missing_surface_ids = sorted(set(routes_by_surface) - set(family_surface_ids))
+    extra_surface_ids = sorted(set(family_surface_ids) - set(routes_by_surface))
+    if missing_surface_ids:
+        errors.append(f"{label}: declared route surfaces missing family classification {missing_surface_ids}")
+    if extra_surface_ids:
+        errors.append(f"{label}: route family classifications reference surfaces without declared routes {extra_surface_ids}")
+
+    for classification in classifications:
+        if not isinstance(classification, dict):
+            errors.append(f"{label}: route_family_classifications entries must be objects")
+            continue
+        _validate_route_family_classification(
+            classification=classification,
+            component_ids=component_ids,
+            routes_by_surface=routes_by_surface,
+            bound_surface_owners=bound_surface_owners,
+            errors=errors,
+            label=label,
+        )
+
+
+def _validate_route_family_classification(
+    *,
+    classification: dict[str, Any],
+    component_ids: set[str],
+    routes_by_surface: dict[str, tuple[str, ...]],
+    bound_surface_owners: dict[str, set[str]],
+    errors: list[str],
+    label: str,
+) -> None:
+    surface_id = str(classification.get("surface_id", "<missing>"))
+    binding_level = str(classification.get("binding_level", "<missing>"))
+    declared_routes = routes_by_surface.get(surface_id, tuple())
+    classification_component_ids = set(_string_list(classification.get("component_ids")))
+    missing_components = sorted(classification_component_ids - component_ids)
+    if missing_components:
+        errors.append(
+            f"{label}: route family {surface_id} references unregistered components {missing_components}"
+        )
+    if classification.get("classification_is_not_execution_authority") is not True:
+        errors.append(f"{label}: route family {surface_id} must not be execution authority")
+    if classification.get("can_enable_live_action") is not False:
+        errors.append(f"{label}: route family {surface_id} cannot enable live action")
+    blocked_actions = set(_string_list(classification.get("blocked_actions")))
+    for required_action in ("route_execution", "terminal_closure"):
+        if required_action not in blocked_actions:
+            errors.append(f"{label}: route family {surface_id} must block {required_action}")
+    if classification.get("declared_route_count") != len(declared_routes):
+        errors.append(
+            f"{label}: route family {surface_id} declared_route_count must be {len(declared_routes)}"
+        )
+    sample_routes = set(_string_list(classification.get("sample_routes")))
+    if not sample_routes:
+        errors.append(f"{label}: route family {surface_id} must list sample_routes")
+    unknown_samples = sorted(sample_routes - set(declared_routes))
+    if unknown_samples:
+        errors.append(
+            f"{label}: route family {surface_id} sample routes are not declared for this surface {unknown_samples}"
+        )
+    bound_owners = bound_surface_owners.get(surface_id, set())
+    if bound_owners:
+        if binding_level != "selected_component_bound":
+            errors.append(
+                f"{label}: route family {surface_id} must use selected_component_bound because it appears in route_bindings"
+            )
+        if classification_component_ids and not classification_component_ids.intersection(bound_owners):
+            errors.append(
+                f"{label}: route family {surface_id} must include at least one bound component {sorted(bound_owners)}"
+            )
+        return
+    if binding_level != "platform_family_classified":
+        errors.append(
+            f"{label}: route family {surface_id} must use platform_family_classified because it is not a selected component binding"
         )
 
 
@@ -253,6 +383,7 @@ def _validate_route_binding(
     component_id = str(binding.get("component_id", "<missing>"))
     binding_state = str(binding.get("binding_state", "<missing>"))
     proof_surface_ids = _string_list(binding.get("proof_surface_ids"))
+    missing_evidence = _string_list(binding.get("missing_evidence"))
     route_prefixes = _string_list(binding.get("route_prefixes"))
     expected_routes = _string_list(binding.get("expected_routes"))
     blocked_actions = _string_list(binding.get("blocked_actions"))
@@ -286,6 +417,11 @@ def _validate_route_binding(
             errors.append(f"{label}: component {component_id} {binding_state} binding must not list route_prefixes")
         if expected_routes:
             errors.append(f"{label}: component {component_id} {binding_state} binding must not list expected_routes")
+        if not proof_surface_ids and not missing_evidence:
+            errors.append(
+                f"{label}: component {component_id} {binding_state} binding without proof_surface_ids "
+                "must list missing_evidence"
+            )
         return
     errors.append(f"{label}: component {component_id} has unknown binding_state {binding_state}")
 
@@ -361,6 +497,47 @@ def _bound_route_count(inventory: dict[str, Any]) -> int:
         if isinstance(binding, dict):
             routes.update(_string_list(binding.get("expected_routes")))
     return len(routes)
+
+
+def _route_family_classification_count(inventory: dict[str, Any]) -> int:
+    classifications = inventory.get("route_family_classifications", ())
+    return len(classifications) if isinstance(classifications, list) else 0
+
+
+def _classified_route_count(inventory: dict[str, Any]) -> int:
+    classifications = inventory.get("route_family_classifications", ())
+    if not isinstance(classifications, list):
+        return 0
+    return sum(
+        int(classification.get("declared_route_count", 0))
+        for classification in classifications
+        if isinstance(classification, dict)
+    )
+
+
+def _routes_by_surface(route_records: dict[str, dict[str, Any]]) -> dict[str, tuple[str, ...]]:
+    routes_by_surface: dict[str, list[str]] = {}
+    for route, record in route_records.items():
+        surface_id = str(record.get("surface_id", ""))
+        if surface_id:
+            routes_by_surface.setdefault(surface_id, []).append(route)
+    return {
+        surface_id: tuple(sorted(routes))
+        for surface_id, routes in routes_by_surface.items()
+    }
+
+
+def _bound_surface_owners(bindings: list[Any]) -> dict[str, set[str]]:
+    owners: dict[str, set[str]] = {}
+    for binding in bindings:
+        if not isinstance(binding, dict):
+            continue
+        if binding.get("binding_state") != "bound":
+            continue
+        component_id = str(binding.get("component_id", ""))
+        for surface_id in _string_list(binding.get("proof_surface_ids")):
+            owners.setdefault(surface_id, set()).add(component_id)
+    return owners
 
 
 def _string_list(value: object) -> tuple[str, ...]:

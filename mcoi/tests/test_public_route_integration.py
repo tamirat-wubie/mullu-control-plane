@@ -155,15 +155,45 @@ def test_simple_dashboard_runtime_projects_non_executing_home() -> None:
     )
 
     home = runtime.simple_home().to_dict()
+    simple = runtime.simple_state().to_dict()
     state = runtime.state().to_dict()
     home_payload = home["payload"]["home"]
+    simple_payload = simple["payload"]["dashboard"]
     dashboard_payload = state["payload"]["dashboard"]
 
     assert home["governed"] is True
     assert home["ok"] is True
+    assert simple["governed"] is True
+    assert simple["ok"] is True
+    assert simple_payload["visibility_level"] == "normal_user"
+    assert simple_payload["audit_details_visible"] is False
+    assert simple_payload["receipts_visible"] is False
+    assert simple_payload["proof_details_hidden"] is True
+    assert "sdlc_receipt_summaries" not in simple_payload
     assert home_payload["execution_allowed"] is False
     assert home_payload["start_here"]["execution_allowed"] is False
+    assert simple_payload["execution_allowed"] is False
+    assert simple_payload["simple_start_guide"]["execution_allowed"] is False
     assert dashboard_payload["execution_allowed"] is False
     assert dashboard_payload["simple_start_guide"]["execution_allowed"] is False
+    assert simple_payload["simple_workflow_summaries"]
     assert dashboard_payload["simple_workflow_summaries"]
+    assert simple_payload["simple_workflow_summaries"][0]["action_refs"][0].startswith(
+        "dashboard-simple-action-"
+    )
+    assert dashboard_payload["simple_workflow_summaries"][0]["action_refs"][0].startswith(
+        "dashboard-simple-action-"
+    )
+    assert all(
+        not action_ref.startswith(("gate-decision-", "proof-", "witness-"))
+        for summary in dashboard_payload["simple_workflow_summaries"]
+        for action_ref in summary["action_refs"]
+    )
+    assert all(
+        not action_ref.startswith(("gate-decision-", "proof-", "witness-"))
+        for summary in simple_payload["simple_workflow_summaries"]
+        for action_ref in summary["action_refs"]
+    )
+    assert all("checks" not in summary for summary in simple_payload["simple_workflow_summaries"])
+    assert all("decision_ref" not in summary for summary in simple_payload["simple_action_summaries"])
     assert dashboard_payload["workflow_health"] == "ready"

@@ -269,12 +269,164 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["component_request_simulator"]["exact_test_anchor_count"] == 5
     assert surfaces["component_bundle_compiler"]["unanchored_witness_count"] == 0
     assert surfaces["component_bundle_compiler"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_ownership"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_ownership"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_preflight"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_preflight"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_witness_requirements"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_witness_requirements"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_witness_evidence"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_witness_evidence"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_approval_candidates"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_approval_candidates"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_approval_intake"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_approval_intake"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_submitted_evidence_verifier"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_submitted_evidence_verifier"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_submitted_evidence_records"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_submitted_evidence_records"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_route_family_promotion_submitted_evidence_payload_examples"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_submitted_evidence_payload_examples"]["exact_test_anchor_count"] == 6
+    assert surfaces["component_route_family_promotion_operator_submitted_evidence_records"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_operator_submitted_evidence_records"]["exact_test_anchor_count"] == 6
+    assert surfaces["component_route_family_promotion_gate_satisfaction_evaluator"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_gate_satisfaction_evaluator"]["exact_test_anchor_count"] == 6
+    assert surfaces["component_route_family_promotion_authority_decision_report"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_authority_decision_report"]["exact_test_anchor_count"] == 6
+    assert surfaces["component_route_family_promotion_route_binding_decision_report"]["unanchored_witness_count"] == 0
+    assert surfaces["component_route_family_promotion_route_binding_decision_report"]["exact_test_anchor_count"] == 6
+    assert (
+        surfaces["component_route_family_promotion_lifecycle_transition_decision_report"]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_lifecycle_transition_decision_report"]["exact_test_anchor_count"]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_authority_upgrade_witness_decision_report"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_authority_upgrade_witness_decision_report"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_product_ownership_decision_report"]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_product_ownership_decision_report"]["exact_test_anchor_count"]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_terminal_closure_denial_report"]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_terminal_closure_denial_report"]["exact_test_anchor_count"]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_missing_evidence_ledger"]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_missing_evidence_ledger"]["exact_test_anchor_count"]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_candidate"]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_candidate"]["exact_test_anchor_count"]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_requirements"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_requirements"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_minting_preflight"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_minting_preflight"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_remediation_plan"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_remediation_plan"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        surfaces["component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"][
+            "exact_test_anchor_count"
+        ]
+        == 6
+    )
+    assert (
+        surfaces[
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+        ]["unanchored_witness_count"]
+        == 0
+    )
+    assert (
+        surfaces[
+            "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+        ]["exact_test_anchor_count"]
+        == 6
+    )
     assert surfaces["component_graph"]["unanchored_witness_count"] == 0
     assert surfaces["component_graph"]["exact_test_anchor_count"] == 5
     assert surfaces["component_dead_detector"]["unanchored_witness_count"] == 0
     assert surfaces["component_dead_detector"]["exact_test_anchor_count"] == 5
     assert surfaces["component_lifecycle_transition_receipts"]["unanchored_witness_count"] == 0
     assert surfaces["component_lifecycle_transition_receipts"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_authority_envelope_witnesses"]["unanchored_witness_count"] == 0
+    assert surfaces["component_authority_envelope_witnesses"]["exact_test_anchor_count"] == 5
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -732,6 +884,696 @@ def test_component_bundle_compiler_surface_is_preview_only() -> None:
     assert closure_actions["publish_component_bundle_compiler"]["status"] == "closed"
 
 
+def test_component_route_family_ownership_surface_is_read_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    ownership_surface = surfaces["component_route_family_ownership"]
+    witnesses = set(ownership_surface["runtime_witnesses"])
+
+    assert ownership_surface["coverage_state"] == "proven"
+    assert ownership_surface["representative_paths"] == ["component_route_family_ownership"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_ownership.py" in ownership_surface["evidence_files"]
+    assert "schemas/component_route_family_ownership.schema.json" in ownership_surface["evidence_files"]
+    assert "component_route_family_ownership_schema_valid" in witnesses
+    assert "component_route_family_ownership_blocks_platform_promotion_overclaim" in witnesses
+    assert closure_actions["publish_component_route_family_ownership"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_preflight_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    preflight_surface = surfaces["component_route_family_promotion_preflight"]
+    witnesses = set(preflight_surface["runtime_witnesses"])
+
+    assert preflight_surface["coverage_state"] == "proven"
+    assert preflight_surface["representative_paths"] == ["component_route_family_promotion_preflight"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_promotion_preflight.py" in preflight_surface["evidence_files"]
+    assert "schemas/component_route_family_promotion_preflight.schema.json" in preflight_surface["evidence_files"]
+    assert "component_route_family_promotion_preflight_schema_valid" in witnesses
+    assert "component_route_family_promotion_preflight_blocks_authority_overclaim" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_preflight"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_witness_requirements_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    requirements_surface = surfaces["component_route_family_promotion_witness_requirements"]
+    witnesses = set(requirements_surface["runtime_witnesses"])
+
+    assert requirements_surface["coverage_state"] == "proven"
+    assert requirements_surface["representative_paths"] == ["component_route_family_promotion_witness_requirements"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_promotion_witness_requirements.py" in requirements_surface["evidence_files"]
+    assert "schemas/component_route_family_promotion_witness_requirements.schema.json" in requirements_surface["evidence_files"]
+    assert "component_route_family_promotion_witness_requirements_schema_valid" in witnesses
+    assert "component_route_family_promotion_witness_requirements_rejects_blocker_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_witness_requirements"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_witness_evidence_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    evidence_surface = surfaces["component_route_family_promotion_witness_evidence"]
+    witnesses = set(evidence_surface["runtime_witnesses"])
+
+    assert evidence_surface["coverage_state"] == "proven"
+    assert evidence_surface["representative_paths"] == ["component_route_family_promotion_witness_evidence"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_promotion_witness_evidence.py" in evidence_surface["evidence_files"]
+    assert "schemas/component_route_family_promotion_witness_evidence.schema.json" in evidence_surface["evidence_files"]
+    assert "component_route_family_promotion_witness_evidence_schema_valid" in witnesses
+    assert "component_route_family_promotion_witness_evidence_rejects_satisfied_product_ownership_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_witness_evidence"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_approval_candidates_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    candidate_surface = surfaces["component_route_family_promotion_approval_candidates"]
+    witnesses = set(candidate_surface["runtime_witnesses"])
+
+    assert candidate_surface["coverage_state"] == "proven"
+    assert candidate_surface["representative_paths"] == ["component_route_family_promotion_approval_candidates"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_promotion_approval_candidates.py" in candidate_surface["evidence_files"]
+    assert "schemas/component_route_family_promotion_approval_candidates.schema.json" in candidate_surface["evidence_files"]
+    assert "component_route_family_promotion_approval_candidates_schema_valid" in witnesses
+    assert "component_route_family_promotion_approval_candidates_rejects_approval_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_approval_candidates"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_approval_intake_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    intake_surface = surfaces["component_route_family_promotion_approval_intake"]
+    witnesses = set(intake_surface["runtime_witnesses"])
+
+    assert intake_surface["coverage_state"] == "proven"
+    assert intake_surface["representative_paths"] == ["component_route_family_promotion_approval_intake"]
+    assert "mcoi/mcoi_runtime/app/component_route_family_promotion_approval_intake.py" in intake_surface["evidence_files"]
+    assert "schemas/component_route_family_promotion_approval_intake.schema.json" in intake_surface["evidence_files"]
+    assert "component_route_family_promotion_approval_intake_schema_valid" in witnesses
+    assert "component_route_family_promotion_approval_intake_rejects_submission_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_approval_intake"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_submitted_evidence_verifier_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    verifier_surface = surfaces["component_route_family_promotion_submitted_evidence_verifier"]
+    witnesses = set(verifier_surface["runtime_witnesses"])
+
+    assert verifier_surface["coverage_state"] == "proven"
+    assert verifier_surface["representative_paths"] == [
+        "component_route_family_promotion_submitted_evidence_verifier"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_verifier.py"
+        in verifier_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_submitted_evidence_verifier.schema.json"
+        in verifier_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_submitted_evidence_verifier_schema_valid" in witnesses
+    assert "component_route_family_promotion_submitted_evidence_verifier_rejects_submission_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_submitted_evidence_verifier"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_submitted_evidence_records_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    records_surface = surfaces["component_route_family_promotion_submitted_evidence_records"]
+    witnesses = set(records_surface["runtime_witnesses"])
+
+    assert records_surface["coverage_state"] == "proven"
+    assert records_surface["representative_paths"] == [
+        "component_route_family_promotion_submitted_evidence_records"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_records.py"
+        in records_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_submitted_evidence_records.schema.json"
+        in records_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_submitted_evidence_records_schema_valid" in witnesses
+    assert "component_route_family_promotion_submitted_evidence_records_rejects_payload_submission_drift" in witnesses
+    assert closure_actions["publish_component_route_family_promotion_submitted_evidence_records"]["status"] == "closed"
+
+
+def test_component_route_family_promotion_submitted_evidence_payload_examples_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    payload_surface = surfaces["component_route_family_promotion_submitted_evidence_payload_examples"]
+    witnesses = set(payload_surface["runtime_witnesses"])
+
+    assert payload_surface["coverage_state"] == "proven"
+    assert payload_surface["representative_paths"] == [
+        "component_route_family_promotion_submitted_evidence_payload_examples"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_submitted_evidence_payload_examples.py"
+        in payload_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_submitted_evidence_payload_examples.schema.json"
+        in payload_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_submitted_evidence_payload_examples_schema_valid" in witnesses
+    assert "component_route_family_promotion_submitted_evidence_payload_examples_reject_rule_application_drift" in witnesses
+    assert (
+        closure_actions["publish_component_route_family_promotion_submitted_evidence_payload_examples"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_operator_submitted_evidence_records_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    submitted_records_surface = surfaces["component_route_family_promotion_operator_submitted_evidence_records"]
+    witnesses = set(submitted_records_surface["runtime_witnesses"])
+
+    assert submitted_records_surface["coverage_state"] == "proven"
+    assert submitted_records_surface["representative_paths"] == [
+        "component_route_family_promotion_operator_submitted_evidence_records"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_operator_submitted_evidence_records.py"
+        in submitted_records_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_operator_submitted_evidence_records.schema.json"
+        in submitted_records_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_operator_submitted_evidence_records_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_operator_submitted_evidence_records_reject_promotion_satisfaction_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_operator_submitted_evidence_records"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_gate_satisfaction_evaluator_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    evaluator_surface = surfaces["component_route_family_promotion_gate_satisfaction_evaluator"]
+    witnesses = set(evaluator_surface["runtime_witnesses"])
+
+    assert evaluator_surface["coverage_state"] == "proven"
+    assert evaluator_surface["representative_paths"] == [
+        "component_route_family_promotion_gate_satisfaction_evaluator"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_gate_satisfaction_evaluator.py"
+        in evaluator_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json"
+        in evaluator_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_gate_satisfaction_evaluator_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_gate_satisfaction_evaluator_reject_promotion_authority_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_gate_satisfaction_evaluator"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_authority_decision_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_authority_decision_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_authority_decision_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_decision_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_authority_decision_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_authority_decision_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_authority_decision_report_reject_promotion_approval_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_authority_decision_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_route_binding_decision_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_route_binding_decision_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_route_binding_decision_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_route_binding_decision_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_route_binding_decision_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_route_binding_decision_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_route_binding_decision_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_lifecycle_transition_decision_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_lifecycle_transition_decision_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_lifecycle_transition_decision_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_lifecycle_transition_decision_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_lifecycle_transition_decision_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_authority_upgrade_witness_decision_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_authority_upgrade_witness_decision_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_authority_upgrade_witness_decision_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_upgrade_witness_decision_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_authority_upgrade_witness_decision_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_product_ownership_decision_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_product_ownership_decision_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_product_ownership_decision_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_product_ownership_decision_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_product_ownership_decision_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_product_ownership_decision_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_terminal_closure_denial_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    decision_surface = surfaces["component_route_family_promotion_terminal_closure_denial_report"]
+    witnesses = set(decision_surface["runtime_witnesses"])
+
+    assert decision_surface["coverage_state"] == "proven"
+    assert decision_surface["representative_paths"] == [
+        "component_route_family_promotion_terminal_closure_denial_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_terminal_closure_denial_report.py"
+        in decision_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json"
+        in decision_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_terminal_closure_denial_report_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_terminal_closure_denial_report"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_missing_evidence_ledger_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    ledger_surface = surfaces["component_route_family_promotion_missing_evidence_ledger"]
+    witnesses = set(ledger_surface["runtime_witnesses"])
+
+    assert ledger_surface["coverage_state"] == "proven"
+    assert ledger_surface["representative_paths"] == [
+        "component_route_family_promotion_missing_evidence_ledger"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_missing_evidence_ledger.py"
+        in ledger_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json"
+        in ledger_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_missing_evidence_ledger_schema_valid" in witnesses
+    assert "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift" in witnesses
+    assert (
+        closure_actions["publish_component_route_family_promotion_missing_evidence_ledger"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_candidate_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    candidate_surface = surfaces["component_route_family_promotion_router_inventory_delta_candidate"]
+    witnesses = set(candidate_surface["runtime_witnesses"])
+
+    assert candidate_surface["coverage_state"] == "proven"
+    assert candidate_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_candidate"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_candidate.py"
+        in candidate_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_candidate.schema.json"
+        in candidate_surface["evidence_files"]
+    )
+    assert "component_route_family_promotion_router_inventory_delta_candidate_schema_valid" in witnesses
+    assert (
+        "component_route_family_promotion_router_inventory_delta_candidate_reject_witness_mutation_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions["publish_component_route_family_promotion_router_inventory_delta_candidate"]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_requirements_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    requirements_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_requirements"
+    ]
+    witnesses = set(requirements_surface["runtime_witnesses"])
+
+    assert requirements_surface["coverage_state"] == "proven"
+    assert requirements_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_requirements"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_requirements.py"
+        in requirements_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_requirements.schema.json"
+        in requirements_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_requirements_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_requirements_reject_mutation_authority_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_requirements"
+        ]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_minting_preflight_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    minting_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight"
+    ]
+    witnesses = set(minting_surface["runtime_witnesses"])
+
+    assert minting_surface["coverage_state"] == "proven"
+    assert minting_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py"
+        in minting_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_preflight.schema.json"
+        in minting_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight_reject_mutation_authority_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_minting_preflight"
+        ]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    denial_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"
+    ]
+    witnesses = set(denial_surface["runtime_witnesses"])
+
+    assert denial_surface["coverage_state"] == "proven"
+    assert denial_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py"
+        in denial_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.schema.json"
+        in denial_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report_reject_mutation_authority_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report"
+        ]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_remediation_plan_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    remediation_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan"
+    ]
+    witnesses = set(remediation_surface["runtime_witnesses"])
+
+    assert remediation_surface["coverage_state"] == "proven"
+    assert remediation_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py"
+        in remediation_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.schema.json"
+        in remediation_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan_reject_mutation_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_plan"
+        ]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    evidence_request_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"
+    ]
+    witnesses = set(evidence_request_surface["runtime_witnesses"])
+
+    assert evidence_request_surface["coverage_state"] == "proven"
+    assert evidence_request_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py"
+        in evidence_request_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.schema.json"
+        in evidence_request_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_reject_mutation_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request"
+        ]["status"]
+        == "closed"
+    )
+
+
+def test_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_surface_is_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    status_ledger_surface = surfaces[
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+    ]
+    witnesses = set(status_ledger_surface["runtime_witnesses"])
+
+    assert status_ledger_surface["coverage_state"] == "proven"
+    assert status_ledger_surface["representative_paths"] == [
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+    ]
+    assert (
+        "mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py"
+        in status_ledger_surface["evidence_files"]
+    )
+    assert (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.schema.json"
+        in status_ledger_surface["evidence_files"]
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_schema_valid"
+        in witnesses
+    )
+    assert (
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_reject_mutation_drift"
+        in witnesses
+    )
+    assert (
+        closure_actions[
+            "publish_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger"
+        ]["status"]
+        == "closed"
+    )
+
+
 def test_component_lifecycle_transition_receipts_surface_is_preview_only() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -746,6 +1588,22 @@ def test_component_lifecycle_transition_receipts_surface_is_preview_only() -> No
     assert "component_lifecycle_transition_receipts_validate_and_write" in witnesses
     assert "component_lifecycle_transition_receipts_reject_live_authority_drift" in witnesses
     assert closure_actions["publish_component_lifecycle_transition_receipts"]["status"] == "closed"
+
+
+def test_component_authority_envelope_witnesses_surface_is_preview_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    authority_surface = surfaces["component_authority_envelope_witnesses"]
+    witnesses = set(authority_surface["runtime_witnesses"])
+
+    assert authority_surface["coverage_state"] == "proven"
+    assert authority_surface["representative_paths"] == ["component_authority_envelope_witnesses"]
+    assert "schemas/component_authority_envelope_witnesses.schema.json" in authority_surface["evidence_files"]
+    assert "scripts/validate_component_authority_envelope_witnesses.py" in authority_surface["evidence_files"]
+    assert "component_authority_envelope_witnesses_validate_and_write" in witnesses
+    assert "component_authority_envelope_witnesses_reject_authority_drift" in witnesses
+    assert closure_actions["publish_component_authority_envelope_witnesses"]["status"] == "closed"
 
 
 def test_component_autopsy_surface_is_read_only() -> None:
@@ -3625,12 +4483,16 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "mcoi/tests/test_operational_math_observability.py" in math_surface["evidence_files"]
     assert "operational_math_loop_applies_all_audit_principles" in witnesses
     assert "operational_math_loop_stops_at_iteration_budget_with_open_gaps" in witnesses
+    assert "operational_math_loop_blocks_solvedverified_without_control_binding" in witnesses
+    assert "operational_math_loop_blocks_solvedverified_with_failed_control_binding" in witnesses
     assert "operational_math_cli_writes_dashboard_projection" in witnesses
     assert "operational_math_cli_appends_receipt_store" in witnesses
     assert "memory_store_appends_queries_and_summarizes_receipts" in witnesses
+    assert "memory_store_surfaces_unverified_control_review_reason" in witnesses
     assert "file_store_persists_and_reloads_receipts" in witnesses
     assert "server_wires_operational_math_store_into_dashboard" in witnesses
     assert "summary_marks_incomplete_receipt_for_review" in witnesses
+    assert "summary_marks_unverified_controls_for_review" in witnesses
     assert "append-only JSON receipt stores" in math_surface["notes"]
     assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
 

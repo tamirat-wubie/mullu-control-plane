@@ -20,10 +20,10 @@ import json
 import logging
 import re
 import threading
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Mapping
 from uuid import uuid4
 
 from mcoi_runtime.contracts.effect_assurance import (
@@ -231,6 +231,7 @@ class CapabilityPassport:
     forbidden_effects: tuple[str, ...] = ()
     evidence_required: tuple[str, ...] = ()
     graph_projection: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    cost_model: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -1718,7 +1719,17 @@ def capability_passport_from_registry_entry(entry: CoreCapabilityRegistryEntry) 
             "nodes": ("command", "capability", "provider_action", "verification", "evidence"),
             "edges": ("admitted_by", "verified_by", "produced"),
         },
+        cost_model=_capability_cost_model_payload(entry.cost_model),
     )
+
+
+def _capability_cost_model_payload(cost_model: Any) -> dict[str, Any]:
+    """Project registry cost models into serializable passport payloads."""
+    if is_dataclass(cost_model):
+        return dict(asdict(cost_model))
+    if isinstance(cost_model, Mapping):
+        return dict(cost_model)
+    return {}
 
 
 def _require_passport_effect_contract(passport: CapabilityPassport) -> None:

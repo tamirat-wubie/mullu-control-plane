@@ -10,12 +10,13 @@ Invariants:
   - Step dependencies must reference earlier declared steps.
   - Plan risk is the maximum step risk.
   - Plan evidence is the union of step evidence obligations.
+  - Plan previews expose budget/tool guard state without execution authority.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from gateway.command_spine import (
     CapabilityPassport,
@@ -89,6 +90,8 @@ class CapabilityPlanPreview:
     risk_tier: str
     approval_required: bool
     evidence_required: tuple[str, ...]
+    budget: dict[str, Any]
+    tools: tuple[dict[str, Any], ...]
     execution_allowed: bool
     safe_default: str
     created_at: str
@@ -107,6 +110,8 @@ class CapabilityPlanPreview:
             "risk_tier": self.risk_tier,
             "approval_required": self.approval_required,
             "evidence_required": list(self.evidence_required),
+            "budget": dict(self.budget),
+            "tools": [dict(tool) for tool in self.tools],
             "execution_allowed": self.execution_allowed,
             "safe_default": self.safe_default,
             "created_at": self.created_at,
@@ -162,6 +167,7 @@ class CapabilityPlanBuilder:
         validated_steps = _validate_steps_with_loader(proposed_steps, self._capability_passport_loader)
         risk_tier = _max_risk(validated_steps, self._capability_passport_loader)
         evidence_required = _union_evidence(validated_steps, self._capability_passport_loader)
+        step_contracts = _step_contracts(validated_steps, self._capability_passport_loader)
         plan_id = _stable_plan_id(
             tenant_id=tenant_id,
             identity_id=identity_id,
@@ -181,6 +187,7 @@ class CapabilityPlanBuilder:
                 "step_count": len(validated_steps),
                 "builder": "deterministic_capability_plan_builder",
                 "admission_source": self._admission_source,
+                "step_contracts": list(step_contracts),
             },
         )
 
@@ -226,6 +233,7 @@ def one_step_plan(
     step = CapabilityPlanStep(step_id="step-1", capability_id=capability_id, params=dict(params))
     validated_steps = _validate_steps((step,))
     risk_tier = _max_risk(validated_steps)
+    step_contracts = _step_contracts(validated_steps, capability_passport_for)
     return CapabilityPlan(
         plan_id=_stable_plan_id(
             tenant_id=tenant_id,
@@ -240,11 +248,16 @@ def one_step_plan(
         risk_tier=risk_tier,
         approval_required=risk_tier in {"medium", "high"},
         evidence_required=_union_evidence(validated_steps),
-        metadata={"step_count": 1, "builder": "one_step_plan"},
+        metadata={"step_count": 1, "builder": "one_step_plan", "step_contracts": list(step_contracts)},
     )
 
 
-def preview_for_plan(*, plan: CapabilityPlan, created_at: str) -> CapabilityPlanPreview:
+def preview_for_plan(
+    *,
+    plan: CapabilityPlan,
+    created_at: str,
+    capability_passport_loader: Callable[[str], CapabilityPassport] = capability_passport_for,
+) -> CapabilityPlanPreview:
     """Build a read-only, redacted preview for a governed capability plan.
 
     Input contract: ``plan`` has already passed capability passport validation.
@@ -263,12 +276,17 @@ def preview_for_plan(*, plan: CapabilityPlan, created_at: str) -> CapabilityPlan
         for step in plan.steps
     )
     goal_hash = canonical_hash({"goal": plan.goal})
+    step_contracts = _preview_step_contracts(plan, capability_passport_loader)
+    budget = _preview_budget(step_contracts)
+    tools = _preview_tools(step_contracts)
     preview_payload = {
         "plan_id": plan.plan_id,
         "goal_hash": goal_hash,
         "steps": [step.to_dict() for step in steps],
         "risk_tier": plan.risk_tier,
         "approval_required": plan.approval_required,
+        "budget": budget,
+        "tools": list(tools),
         "created_at": created_at,
     }
     return CapabilityPlanPreview(
@@ -282,12 +300,15 @@ def preview_for_plan(*, plan: CapabilityPlan, created_at: str) -> CapabilityPlan
         risk_tier=plan.risk_tier,
         approval_required=plan.approval_required,
         evidence_required=tuple(plan.evidence_required),
+        budget=budget,
+        tools=tools,
         execution_allowed=False,
         safe_default="await_approval_or_explicit_execution",
         created_at=created_at,
         metadata={
             "builder": str(plan.metadata.get("builder", "")),
             "admission_source": str(plan.metadata.get("admission_source", "")),
+            "step_contracts": list(step_contracts),
             "read_only": True,
         },
     )
@@ -361,6 +382,138 @@ def _union_evidence(
             if item not in evidence:
                 evidence.append(item)
     return tuple(evidence)
+
+
+def _step_contracts(
+    steps: tuple[CapabilityPlanStep, ...],
+    capability_passport_loader: Callable[[str], CapabilityPassport],
+) -> tuple[dict[str, Any], ...]:
+    contracts: list[dict[str, Any]] = []
+    for step in steps:
+        passport = capability_passport_loader(step.capability_id)
+        contracts.append({
+            "step_id": step.step_id,
+            "capability_id": step.capability_id,
+            "risk_tier": passport.risk_tier,
+            "requires": list(passport.requires),
+            "authority_required": list(passport.authority_required),
+            "external_system": passport.external_system,
+            "mutates_world": passport.mutates_world,
+            "max_estimated_cost_units": _cost_model_max_estimated_cost(passport.cost_model),
+        })
+    return tuple(contracts)
+
+
+def _preview_step_contracts(
+    plan: CapabilityPlan,
+    capability_passport_loader: Callable[[str], CapabilityPassport] = capability_passport_for,
+) -> tuple[dict[str, Any], ...]:
+    raw_contracts = plan.metadata.get("step_contracts")
+    if isinstance(raw_contracts, list) and raw_contracts:
+        return tuple(dict(contract) for contract in raw_contracts if isinstance(contract, dict))
+    return _step_contracts(plan.steps, capability_passport_loader)
+
+
+def _preview_budget(step_contracts: tuple[dict[str, Any], ...]) -> dict[str, Any]:
+    budget_contracts = tuple(
+        contract
+        for contract in step_contracts
+        if "budget_reserved" in _string_tuple(contract.get("requires"))
+    )
+    budget_step_ids = tuple(
+        str(contract.get("step_id", ""))
+        for contract in budget_contracts
+    )
+    all_step_ids = tuple(str(contract.get("step_id", "")) for contract in step_contracts)
+    not_required_step_ids = tuple(step_id for step_id in all_step_ids if step_id not in budget_step_ids)
+    budget_required = bool(budget_step_ids)
+    cost_estimates = tuple(
+        estimate
+        for estimate in (_contract_max_estimated_cost(contract) for contract in budget_contracts)
+        if estimate is not None
+    )
+    unknown_estimate_count = max(0, len(budget_contracts) - len(cost_estimates))
+    estimated_cost_units = sum(cost_estimates) if cost_estimates else None
+    estimate_state = "not_required"
+    estimate_source = "capability_passport"
+    if budget_required and estimated_cost_units is None:
+        estimate_state = "not_calculated"
+        estimate_source = "runtime_budget_gate_required"
+    elif budget_required and unknown_estimate_count:
+        estimate_state = "partial"
+        estimate_source = "capability_cost_model"
+    elif budget_required:
+        estimate_state = "estimated"
+        estimate_source = "capability_cost_model"
+    return {
+        "budget_required": budget_required,
+        "budget_gate": "budget_reserved" if budget_required else "not_required",
+        "estimate_state": estimate_state,
+        "estimate_source": estimate_source,
+        "estimated_cost_units": estimated_cost_units,
+        "used_cost_units": 0,
+        "used_cost_source": "preview_execution_not_started",
+        "limit_cost_units": None,
+        "remaining_cost_units": None,
+        "currency": "cost_units",
+        "required_by_steps": list(budget_step_ids),
+        "not_required_by_steps": list(not_required_step_ids),
+        "execution_spend_allowed": False,
+    }
+
+
+def _preview_tools(step_contracts: tuple[dict[str, Any], ...]) -> tuple[dict[str, Any], ...]:
+    tools: list[dict[str, Any]] = []
+    for contract in step_contracts:
+        requires = _string_tuple(contract.get("requires"))
+        external_system = str(contract.get("external_system", ""))
+        mutates_world = bool(contract.get("mutates_world", False))
+        budget_required = "budget_reserved" in requires
+        permission_state = "read_only" if "read_only" in requires and not mutates_world else "preview_only"
+        if budget_required or mutates_world:
+            permission_state = "approval_required"
+        estimated_cost_units = _contract_max_estimated_cost(contract)
+        tools.append({
+            "step_id": str(contract.get("step_id", "")),
+            "capability_id": str(contract.get("capability_id", "")),
+            "tool_name": external_system or str(contract.get("capability_id", "")),
+            "tool_type": "external_system" if external_system else "local_capability",
+            "permission_state": permission_state,
+            "budget_required": budget_required,
+            "estimated_cost_units": estimated_cost_units,
+            "external_system": external_system,
+            "mutates_world": mutates_world,
+            "authority_required": list(_string_tuple(contract.get("authority_required"))),
+            "requires": list(requires),
+            "execution_allowed": False,
+        })
+    return tuple(tools)
+
+
+def _cost_model_max_estimated_cost(cost_model: Mapping[str, Any]) -> float | None:
+    return _nonnegative_number(cost_model.get("max_estimated_cost"))
+
+
+def _contract_max_estimated_cost(contract: Mapping[str, Any]) -> float | None:
+    return _nonnegative_number(contract.get("max_estimated_cost_units"))
+
+
+def _nonnegative_number(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number < 0:
+        return None
+    return number
+
+
+def _string_tuple(value: object) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)):
+        return ()
+    return tuple(str(item) for item in value)
 
 
 def _stable_plan_id(

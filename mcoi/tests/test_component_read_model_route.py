@@ -30,12 +30,16 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
     assert read_model["route"] == "/api/v1/components/read-model"
     assert read_model["summary"]["component_count"] == 10
     assert read_model["summary"]["bound_route_count"] == 30
+    assert read_model["summary"]["route_family_classification_count"] == 77
+    assert read_model["summary"]["classified_declared_route_count"] == 437
     assert read_model["summary"]["lifecycle_receipt_count"] == 10
+    assert read_model["summary"]["authority_witness_count"] == 10
     assert components["governance_core"]["route_binding"]["route_count"] == 22
     assert "component_harness_read_model" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_request_simulator" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_autopsy" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert components["governance_core"]["lifecycle_receipt"]["proof_state"] == "Pass"
+    assert components["governance_core"]["authority_witness"]["proof_state"] == "Pass"
     assert components["nested_mind_bridge"]["proof_binding"]["state"] == "awaiting_binding"
 
 
@@ -64,6 +68,7 @@ def test_component_read_model_blocks_live_authority() -> None:
     assert payload["summary"]["proof_bound_count"] == 9
     assert payload["summary"]["awaiting_binding_count"] == 1
     assert payload["summary"]["blocked_component_count"] == 1
+    assert payload["summary"]["classified_declared_route_count"] == 437
     for component in payload["components"]:
         authority = component["authority"]
         assert authority["can_execute"] is False
@@ -72,4 +77,6 @@ def test_component_read_model_blocks_live_authority() -> None:
         assert authority["can_write_files"] is False
         assert authority["can_send_external_message"] is False
         assert authority["can_claim_terminal_closure"] is False
+        assert component["authority_witness"]["witness_is_not_execution_authority"] is True
+        assert component["authority_witness"]["can_claim_terminal_closure"] is False
         assert "terminal_closure" in component["blocked_actions"]

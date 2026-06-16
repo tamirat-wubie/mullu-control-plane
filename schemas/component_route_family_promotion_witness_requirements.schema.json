@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-promotion-witness-requirements:1",
+  "title": "Mullu Component Route-Family Promotion Witness Requirements",
+  "description": "Read-only Component Harness report that compiles promotion-specific witness requirements for one blocked route-family promotion without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "requirements_id",
+    "mode",
+    "governed",
+    "target_surface_id",
+    "target_component_id",
+    "decision",
+    "preflight_outcome",
+    "outcome",
+    "requirements_are_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "ready_for_promotion",
+    "source_refs",
+    "summary",
+    "promotion_witness_requirements",
+    "missing_evidence",
+    "blocked_actions",
+    "expected_receipts",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "requirements_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "target_surface_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "target_component_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "decision": {
+      "type": "string",
+      "const": "blocked"
+    },
+    "preflight_outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "requirements_are_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "ready_for_promotion": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "promotion_preflight",
+        "ownership_readiness",
+        "router_inventory",
+        "component_proof_binding",
+        "component_authority_envelope_witnesses",
+        "proof_matrix"
+      ],
+      "properties": {
+        "promotion_preflight": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "ownership_readiness": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_proof_binding": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_authority_envelope_witnesses": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_matrix": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "promotion_witness_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/promotion_witness_requirement"
+      }
+    },
+    "missing_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_requirement_count",
+        "satisfied_witness_count",
+        "missing_witness_count",
+        "hard_blocker_count"
+      ],
+      "properties": {
+        "witness_requirement_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "satisfied_witness_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_witness_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "hard_blocker_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "promotion_witness_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "gate_id",
+        "witness_kind",
+        "evidence_key",
+        "proof_state",
+        "requirement_state",
+        "blocks_promotion",
+        "required_before_promotion",
+        "required_artifacts",
+        "notes",
+        "witness_is_not_execution_authority"
+      ],
+      "properties": {
+        "requirement_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "gate_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "route_binding",
+            "proof_binding",
+            "lifecycle_transition",
+            "current_authority_envelope",
+            "authority_upgrade",
+            "product_specific_ownership",
+            "terminal_closure_denial",
+            "unknown"
+          ]
+        },
+        "evidence_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass",
+            "Fail"
+          ]
+        },
+        "requirement_state": {
+          "type": "string",
+          "enum": [
+            "satisfied",
+            "missing"
+          ]
+        },
+        "blocks_promotion": {
+          "type": "boolean"
+        },
+        "required_before_promotion": {
+          "type": "boolean",
+          "const": true
+        },
+        "required_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 360
+        },
+        "witness_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "identifier_or_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#{}@+ -]*$"
+    }
+  }
+}

@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-promotion-preflight:1",
+  "title": "Mullu Component Route-Family Promotion Preflight",
+  "description": "Read-only Component Harness preflight that blocks route-family ownership promotion when proof, lifecycle, route-binding, authority, or product-specific evidence is missing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "preflight_id",
+    "mode",
+    "governed",
+    "target_surface_id",
+    "target_component_id",
+    "decision",
+    "outcome",
+    "promotion_preflight_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "terminal_closure_required",
+    "source_refs",
+    "route_family_snapshot",
+    "gate_results",
+    "missing_evidence",
+    "blocked_actions",
+    "required_next_evidence",
+    "expected_receipts",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "preflight_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "target_surface_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "target_component_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "decision": {
+      "type": "string",
+      "const": "blocked"
+    },
+    "outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "promotion_preflight_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ownership_readiness",
+        "router_inventory",
+        "component_proof_binding",
+        "component_authority_envelope_witnesses",
+        "proof_matrix"
+      ],
+      "properties": {
+        "ownership_readiness": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_proof_binding": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_authority_envelope_witnesses": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_matrix": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "route_family_snapshot": {
+      "$ref": "#/$defs/route_family_snapshot"
+    },
+    "gate_results": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/gate_result"
+      }
+    },
+    "missing_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "required_next_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "route_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^/[A-Za-z0-9._~:/{}@+ -]*$"
+    },
+    "route_family_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface_id",
+        "binding_level",
+        "readiness_state",
+        "component_ids",
+        "selected_bound_component_ids",
+        "candidate_proof_bound_component_ids",
+        "declared_route_count",
+        "sample_routes",
+        "promotion_blockers"
+      ],
+      "properties": {
+        "surface_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "binding_level": {
+          "type": "string",
+          "enum": [
+            "platform_family_classified",
+            "selected_component_bound"
+          ]
+        },
+        "readiness_state": {
+          "type": "string",
+          "enum": [
+            "blocked_needs_route_binding_witness",
+            "blocked_needs_proof_binding"
+          ]
+        },
+        "component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "selected_bound_component_ids": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "candidate_proof_bound_component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "declared_route_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sample_routes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/route_path"
+          }
+        },
+        "promotion_blockers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        }
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "proof_state",
+        "evidence_key",
+        "notes",
+        "gate_is_not_execution_authority"
+      ],
+      "properties": {
+        "gate_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": [
+            "Pass",
+            "Fail"
+          ]
+        },
+        "evidence_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "gate_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

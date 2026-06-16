@@ -31,11 +31,11 @@ Receipts prove.
 | Component | Purpose | Inputs | Outputs | Status | Next Step |
 | --- | --- | --- | --- | --- | --- |
 | Policy Engine | allow, deny, constrain, or require approval | InterpretedRequest, plan, actor, tenant | PolicyReceipt | implemented / partial | Map user-friendly denial explanations. |
-| Budget Gate | decide whether search, LLM, worker, or execution cost is allowed | estimate, tenant budget, task class | BudgetReceipt | partial | Add visible budget estimate in Plan Review. |
+| Budget Gate | decide whether search, LLM, worker, or execution cost is allowed | estimate, tenant budget, task class | BudgetReceipt | implemented | Plan Review exposes redacted preview, witness, explicit `capability_cost_model` estimates, and optional tenant budget-report evidence with read-only drilldowns. |
 | Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Add channel approval-strength matrix. |
-| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Bind approvals to request ID and expiration. |
-| Command Ledger | hold command state and idempotency | approved command | ledger record | implemented / partial | Bind UI Current Task to ledger state. |
-| Plan Builder | create actionable plan preview | action intent and slots | CapabilityPlanPreview | implemented / partial | Add UI binding and budget/tool display before mutation. |
+| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Add cross-channel approval-strength policy. |
+| Command Ledger | hold command state and idempotency | approved command | ledger record | implemented / partial | Add richer Current Task filters after worker path selection. |
+| Plan Builder | create actionable plan preview | action intent and slots | CapabilityPlanPreview | implemented / partial | Budget/tool display is exposed in preview and Plan Review with explicit plan-cost estimate sources and optional tenant budget-report overlays. |
 | Plan Ledger | retain plan versions and changes | plan, correction, approval | plan trace | partial | Record re-plan on scope change. |
 | Causal Closure Kernel | validate final evidence | worker receipts, plan, policy | ClosureReceipt or blocker | implemented / partial | Block success without terminal certificate. |
 

@@ -63,6 +63,7 @@ _CERTIFIED_PREFIXES: tuple[str, ...] = (
     "/capability-fabric/",
     "/capability-plans/",
     "/deployment/",
+    "/operator/",
 )
 
 
@@ -89,6 +90,8 @@ def _channel_from_path(path: str) -> str:
         return "capability"
     if path.startswith("/deployment/"):
         return "deployment"
+    if path.startswith("/operator/"):
+        return "operator"
     return "other"
 
 

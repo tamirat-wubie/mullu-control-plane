@@ -112,15 +112,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         if args.json:
+            experience = SimplePlatform.action_experience(check).to_dict()
             print(
                 json.dumps(
-                    _envelope(check.ok_to_continue, check.outcome, check.to_dict()),
+                    _envelope(check.ok_to_continue, check.outcome, experience),
                     sort_keys=True,
                     separators=(",", ":"),
                 )
             )
         else:
-            print(_readable_check(check.to_dict()))
+            print(_readable_check(SimplePlatform.action_experience(check).to_dict()))
         return 0 if check.outcome == "ready" else 2
     if args.command == "task":
         check = SimplePlatform().check_task(
@@ -132,15 +133,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         if args.json:
+            experience = SimplePlatform.action_experience(check).to_dict()
             print(
                 json.dumps(
-                    _envelope(check.ok_to_continue, check.outcome, check.to_dict()),
+                    _envelope(check.ok_to_continue, check.outcome, experience),
                     sort_keys=True,
                     separators=(",", ":"),
                 )
             )
         else:
-            print(_readable_check(check.to_dict()))
+            print(_readable_check(SimplePlatform.action_experience(check).to_dict()))
         return 0 if check.outcome == "ready" else 2
     if args.command == "tasks":
         templates = _validated_task_templates([template.to_dict() for template in SimplePlatform.task_templates()])
@@ -172,16 +174,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 actor_id=args.actor_id,
             )
         )
+        experience = SimplePlatform.workflow_experience(plan).to_dict()
         if args.json:
             print(
                 json.dumps(
-                    _envelope(plan.ok_to_continue, plan.outcome, plan.to_dict()),
+                    _envelope(plan.ok_to_continue, plan.outcome, experience),
                     sort_keys=True,
                     separators=(",", ":"),
                 )
             )
         else:
-            print(_readable_workflow(plan.to_dict()))
+            print(_readable_workflow(experience))
         return 0 if plan.outcome == "ready" else 2
     if args.command == "workflows":
         templates = _validated_workflow_templates([template.to_dict() for template in SimplePlatform.workflow_templates()])
@@ -214,19 +217,19 @@ def guarded_main(argv: Sequence[str] | None = None) -> int:
 
 def _readable_check(value: dict[str, object]) -> str:
     lines = [
-        f"Outcome: {value['title']}",
+        f"Outcome: {value['status_label']}",
         f"Message: {value['message']}",
+        f"Risk: {value['risk']}",
+        f"Approval needed: {_readable_yes_no(bool(value['approval_needed']))}",
+        f"Evidence saved: {_readable_yes_no(bool(value['evidence_saved']))}",
         f"Next: {value['next_step']}",
-        f"Proof: {value['proof_stamp_ref']}",
+        "Actions:",
     ]
-    blocked = value.get("blocked_reasons")
-    review = value.get("review_reasons")
-    if isinstance(blocked, list) and blocked:
-        lines.append("Blocked reasons:")
-        lines.extend(f"- {item}" for item in blocked)
-    if isinstance(review, list) and review:
-        lines.append("Review reasons:")
-        lines.extend(f"- {item}" for item in review)
+    choices = value.get("choices")
+    if isinstance(choices, list):
+        lines.extend(f"- {item}" for item in choices if isinstance(item, str))
+    if value.get("audit_details_available") is True:
+        lines.append("Audit details: available")
     return "\n".join(lines)
 
 
@@ -340,7 +343,7 @@ def _readable_workflow(value: dict[str, object]) -> str:
         f"Next: {value['next_step']}",
         f"Steps: {value['ready_count']} ready, {value['review_count']} review, {value['blocked_count']} blocked",
     ]
-    checks = value.get("checks")
+    checks = value.get("steps", value.get("checks"))
     if isinstance(checks, list):
         for index, check in enumerate(checks, start=1):
             if isinstance(check, dict):

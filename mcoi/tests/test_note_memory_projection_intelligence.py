@@ -392,14 +392,27 @@ def test_dashboard_projects_simple_actions_without_execution_authority(tmp_path)
     payload = dashboard.to_dict()
 
     assert len(dashboard.simple_action_summaries) == 3
-    assert dashboard.simple_ready_action_refs == (ready_check.decision_ref,)
-    assert dashboard.simple_review_action_refs == (review_check.decision_ref,)
-    assert dashboard.simple_blocked_action_refs == (blocked_check.decision_ref,)
+    assert dashboard.simple_ready_action_refs == (dashboard.simple_action_summaries[0].action_ref,)
+    assert dashboard.simple_review_action_refs == (dashboard.simple_action_summaries[1].action_ref,)
+    assert dashboard.simple_blocked_action_refs == (dashboard.simple_action_summaries[2].action_ref,)
+    assert payload["simple_action_summaries"][0]["action_ref"].startswith("dashboard-simple-action-")
+    assert payload["simple_action_summaries"][0]["action_ref"] != ready_check.decision_ref
+    assert all(
+        not summary["action_ref"].startswith(("gate-decision-", "proof-", "witness-"))
+        for summary in payload["simple_action_summaries"]
+    )
     assert payload["simple_action_summaries"][0]["title"] == "Ready"
-    assert payload["simple_action_summaries"][1]["review_reasons"] == ["External changes require approval."]
-    assert payload["simple_action_summaries"][2]["blocked_reasons"] == [
-        "This item is outside the allowed area for this task."
-    ]
+    assert payload["simple_action_summaries"][1]["status_label"] == "Needs approval"
+    assert payload["simple_action_summaries"][1]["risk"] == "External message"
+    assert payload["simple_action_summaries"][1]["approval_needed"] is True
+    assert payload["simple_action_summaries"][1]["choices"] == ["Approve", "Edit", "Cancel", "View audit details"]
+    assert payload["simple_action_summaries"][2]["status_label"] == "Blocked"
+    assert payload["simple_action_summaries"][2]["risk"] == "Safety boundary"
+    assert payload["simple_action_summaries"][2]["proof_details_hidden"] is True
+    assert "proof_stamp_ref" not in payload["simple_action_summaries"][0]
+    assert "boundary_witness_ref" not in payload["simple_action_summaries"][0]
+    assert "review_reasons" not in payload["simple_action_summaries"][1]
+    assert "blocked_reasons" not in payload["simple_action_summaries"][2]
     assert all(summary["execution_allowed"] is False for summary in payload["simple_action_summaries"])
     assert payload["execution_allowed"] is False
 
@@ -446,6 +459,13 @@ def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_a
     assert payload["simple_workflow_summaries"][0]["ready_count"] == 3
     assert payload["simple_workflow_summaries"][1]["review_count"] == 1
     assert payload["simple_workflow_summaries"][2]["blocked_count"] == 2
+    assert payload["simple_workflow_summaries"][0]["action_refs"][0].startswith("dashboard-simple-action-")
+    assert payload["simple_workflow_summaries"][0]["action_refs"][0] != ready_plan.checks[0].decision_ref
+    assert all(
+        not action_ref.startswith(("gate-decision-", "proof-", "witness-"))
+        for summary in payload["simple_workflow_summaries"]
+        for action_ref in summary["action_refs"]
+    )
     assert payload["simple_start_guide"]["recommended_commands"][0] == "mullu menu"
     assert payload["simple_home_summary"]["title"] == "Blocked"
     assert payload["simple_home_summary"]["primary_command"] == "mullu menu"
@@ -542,14 +562,56 @@ def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
         DashboardSimpleActionSummary(
             action_ref="gate-decision-test",
             outcome="ready",
-            title="Ready",
+            status_label="Ready",
             message="Ready for display.",
+            risk="Inside allowed area",
+            approval_needed=False,
+            evidence_saved=True,
             next_step="Continue.",
-            proof_stamp_ref="proof-test",
-            boundary_witness_ref="witness-test",
-            blocked_reasons=(),
-            review_reasons=(),
+            choices=("Continue",),
+            audit_details_available=True,
+            audit_details_visible=False,
+            receipts_visible=False,
+            proof_details_hidden=True,
             execution_allowed=True,
+        )
+
+
+def test_dashboard_simple_action_summary_rejects_visible_audit_details() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="cannot expose audit details by default"):
+        DashboardSimpleActionSummary(
+            action_ref="gate-decision-test",
+            outcome="ready",
+            status_label="Ready",
+            message="Ready for display.",
+            risk="Inside allowed area",
+            approval_needed=False,
+            evidence_saved=True,
+            next_step="Continue.",
+            choices=("Continue",),
+            audit_details_available=True,
+            audit_details_visible=True,
+            receipts_visible=False,
+            proof_details_hidden=True,
+        )
+
+
+def test_dashboard_simple_action_summary_rejects_internal_action_ref() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="cannot expose internal governance refs"):
+        DashboardSimpleActionSummary(
+            action_ref="gate-decision-test",
+            outcome="ready",
+            status_label="Ready",
+            message="Ready for display.",
+            risk="Inside allowed area",
+            approval_needed=False,
+            evidence_saved=True,
+            next_step="Continue.",
+            choices=("Continue",),
+            audit_details_available=True,
+            audit_details_visible=False,
+            receipts_visible=False,
+            proof_details_hidden=True,
         )
 
 
@@ -635,6 +697,23 @@ def test_dashboard_simple_workflow_summary_rejects_inconsistent_counts() -> None
             review_count=0,
             blocked_count=0,
             action_refs=("gate-decision-test", "gate-decision-extra"),
+        )
+
+
+def test_dashboard_simple_workflow_summary_rejects_internal_action_ref() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="cannot expose internal governance refs"):
+        DashboardSimpleWorkflowSummary(
+            workflow_ref="dashboard-simple-workflow-test",
+            workflow="docs_update",
+            label="Update docs",
+            outcome="ready",
+            title="Ready",
+            message="Ready for display.",
+            next_step="Continue.",
+            ready_count=1,
+            review_count=0,
+            blocked_count=0,
+            action_refs=("gate-decision-test",),
         )
 
 

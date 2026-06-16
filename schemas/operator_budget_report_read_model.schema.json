@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-budget-report-read-model:1",
+  "title": "Operator Budget Report Read Model",
+  "description": "Operator-gated, read-only tenant budget evidence used by Plan Review.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "tenant_id",
+    "status",
+    "report",
+    "raw_message_exposed",
+    "execution_allowed",
+    "write_allowed",
+    "governed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:operator-budget-report-read-model:1"
+    },
+    "tenant_id": {"type": "string"},
+    "status": {"$ref": "#/$defs/budget_report_status"},
+    "report": {"$ref": "#/$defs/budget_report_row"},
+    "raw_message_exposed": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "write_allowed": {"type": "boolean", "const": false},
+    "governed": {"type": "boolean", "const": true}
+  },
+  "$defs": {
+    "budget_report_status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "not_configured",
+        "tenant_required",
+        "unavailable",
+        "report_error"
+      ]
+    },
+    "budget_report_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "status",
+        "budget_id",
+        "spent_cost_units",
+        "limit_cost_units",
+        "remaining_cost_units",
+        "calls_made",
+        "max_calls",
+        "exhausted",
+        "enabled",
+        "utilization_percent"
+      ],
+      "properties": {
+        "tenant_id": {"type": "string"},
+        "status": {"$ref": "#/$defs/budget_report_status"},
+        "budget_id": {"type": "string"},
+        "spent_cost_units": {"type": ["number", "null"], "minimum": 0},
+        "limit_cost_units": {"type": ["number", "null"], "minimum": 0},
+        "remaining_cost_units": {"type": ["number", "null"]},
+        "calls_made": {"type": ["integer", "null"], "minimum": 0},
+        "max_calls": {"type": ["integer", "null"], "minimum": 0},
+        "exhausted": {"type": "boolean"},
+        "enabled": {"type": "boolean"},
+        "utilization_percent": {"type": ["number", "null"], "minimum": 0}
+      }
+    }
+  }
+}

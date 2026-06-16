@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import json
 import copy
+import re
 import sys
 import time
 from dataclasses import replace
@@ -55,6 +56,10 @@ from mcoi_runtime.governance.guards.tenant_gating import (  # noqa: E402
     TenantGatingRegistry,
     TenantStatus,
 )
+from mcoi_runtime.governance.guards.budget import (  # noqa: E402
+    TenantBudgetManager,
+    TenantBudgetPolicy,
+)
 from mcoi_runtime.persistence.postgres_governance_stores import InMemoryTenantGatingStore  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -65,6 +70,18 @@ COMMAND_INTERPRETATION_READ_MODEL_SCHEMA = (
 )
 OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "operator_receipt_viewer_read_model.schema.json"
+)
+OPERATOR_APPROVAL_HISTORY_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_approval_history_read_model.schema.json"
+)
+OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_plan_review_read_model.schema.json"
+)
+OPERATOR_BUDGET_REPORT_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_budget_report_read_model.schema.json"
+)
+OPERATOR_PLAN_RECEIPT_EXPORT_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_plan_receipt_export_read_model.schema.json"
 )
 CURRENT_TASK_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "current_task_read_model.schema.json"
@@ -1313,6 +1330,15 @@ class TestWebChatWebhook:
         plan_id = msg_resp.json()["metadata"]["plan_id"]
         read_model_resp = client.get("/capability-plans/read-model")
         closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
+        plan_review_resp = client.get(
+            f"/operator/plan-review/read-model?tenant_id=t1&plan_id={plan_id}"
+        )
+        receipt_export_resp = client.get(
+            f"/operator/plan-review/{plan_id}/receipts/read-model"
+        )
+        receipt_export_html_resp = client.get(
+            f"/operator/plan-review/{plan_id}/receipts"
+        )
         missing_resp = client.get("/capability-plans/missing-plan/closure")
 
         assert msg_resp.status_code == 200
@@ -1354,6 +1380,32 @@ class TestWebChatWebhook:
             closure_resp.json()["plan_witnesses"][0]["detail"]["cause"]
             == "plan_terminal_certificate_issued"
         )
+        assert plan_review_resp.status_code == 200
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA),
+            plan_review_resp.json(),
+        ) == []
+        assert plan_review_resp.json()["plans"][0]["receipt_export_href"] == (
+            f"/operator/plan-review/{plan_id}/receipts"
+        )
+        assert receipt_export_resp.status_code == 200
+        receipt_export = receipt_export_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_RECEIPT_EXPORT_READ_MODEL_SCHEMA),
+            receipt_export,
+        ) == []
+        assert receipt_export["status"] == "certified"
+        assert receipt_export["evidence_bundle_available"] is True
+        assert receipt_export["plan_evidence_bundle"]["plan_id"] == plan_id
+        assert receipt_export["step_command_count"] == 2
+        assert receipt_export["receipt_group_count"] == 2
+        assert receipt_export["receipt_count"] >= 2
+        assert receipt_export["missing_step_command_ids"] == []
+        assert receipt_export["raw_message_exposed"] is False
+        assert receipt_export["execution_allowed"] is False
+        assert receipt_export["write_allowed"] is False
+        assert receipt_export_html_resp.status_code == 200
+        assert "Mullu Plan Receipt Export" in receipt_export_html_resp.text
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
 
@@ -1566,6 +1618,275 @@ class TestWebChatWebhook:
         assert (
             closure_resp.json()["plan_recovery_attempts"][1]["reason"]
             == "plan_already_certified"
+        )
+
+    def test_operator_plan_review_exposes_budget_history_and_links(self):
+        app = create_gateway_app(platform=StubPlatform(response="unused fallback"))
+        client = TestClient(app)
+
+        preview_resp = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs plan-review-secret-14 and schedule "
+                    "review plan-review-secret-14"
+                ),
+            },
+        )
+        preview_plan_id = re.search(r"\b(plan-[a-f0-9]{16})\b", preview_resp.text).group(1)
+        preview_model_resp = client.get(
+            "/operator/plan-review/read-model?tenant_id=t1"
+            "&status=preview_ready&budget_gate=budget_reserved"
+        )
+        preview_html_resp = client.get(
+            f"/operator/plan-review?tenant_id=t1&status=preview_ready"
+            f"&budget_gate=budget_reserved&search={preview_plan_id}"
+        )
+        preview_detail_resp = client.get(
+            f"/operator/plan-review/{preview_plan_id}?tenant_id=t1"
+        )
+
+        assert preview_resp.status_code == 200
+        assert preview_model_resp.status_code == 200
+        preview_data = preview_model_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA),
+            preview_data,
+        ) == []
+        preview_rows = {
+            row["plan_id"]: row for row in preview_data["plans"]
+        }
+        assert preview_plan_id in preview_rows
+        assert preview_rows[preview_plan_id]["status"] == "preview_ready"
+        assert preview_rows[preview_plan_id]["budget_required"] is True
+        assert preview_rows[preview_plan_id]["budget_gate"] == "budget_reserved"
+        assert preview_rows[preview_plan_id]["budget_evidence_state"] == "preview_budget"
+        assert "step-2" in preview_rows[preview_plan_id]["required_by_steps"]
+        assert preview_rows[preview_plan_id]["execution_spend_allowed"] is False
+        assert preview_html_resp.status_code == 200
+        assert "Mullu Plan Review" in preview_html_resp.text
+        assert "Plan Review Filters" in preview_html_resp.text
+        assert 'value="preview_ready" selected' in preview_html_resp.text
+        assert 'value="budget_reserved" selected' in preview_html_resp.text
+        assert f"/operator/plan-review/{preview_plan_id}?tenant_id=t1" in preview_html_resp.text
+        assert preview_detail_resp.status_code == 200
+        assert "Mullu Plan Review Detail" in preview_detail_resp.text
+
+        failed_plan = one_step_plan(
+            capability_id="enterprise.task_schedule",
+            params={"title": "Review plan review evidence"},
+            tenant_id="t1",
+            identity_id="u1",
+            goal="schedule plan-review-secret-15",
+        )
+        failed_execution = CapabilityPlanExecutor(
+            lambda step, completed: CapabilityPlanStepResult(
+                step_id=step.step_id,
+                capability_id=step.capability_id,
+                succeeded=False,
+                command_id="cmd-plan-review-failed",
+                error="approval_required:apr-plan-review",
+            )
+        ).execute(failed_plan)
+        witness = app.state.plan_ledger.record_failure(
+            plan=failed_plan,
+            execution=failed_execution,
+        )
+        attempt = app.state.plan_ledger.record_recovery_attempt(
+            plan_id=failed_plan.plan_id,
+            recovery_action="wait_for_approval",
+            status="succeeded",
+            reason="plan_recovered",
+            witness_id=witness.witness_id,
+            terminal_certificate_id="plan-cert-review-manual",
+        )
+
+        failed_model_resp = client.get(
+            f"/operator/plan-review/read-model?tenant_id=t1"
+            f"&plan_id={failed_plan.plan_id}&status=failed"
+        )
+        recovered_model_resp = client.get(
+            f"/operator/plan-review/read-model?tenant_id=t1"
+            f"&plan_id={failed_plan.plan_id}&status=recovered"
+        )
+        invalid_status_resp = client.get(
+            "/operator/plan-review/read-model?status=unknown_status"
+        )
+        invalid_budget_resp = client.get(
+            "/operator/plan-review/read-model?budget_gate=over_budget"
+        )
+        overlong_search_resp = client.get(
+            "/operator/plan-review/read-model?search=" + ("x" * 129)
+        )
+
+        assert failed_model_resp.status_code == 200
+        failed_data = failed_model_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA),
+            failed_data,
+        ) == []
+        assert failed_data["count"] == 1
+        assert failed_data["plans"][0]["review_type"] == "failed_witness"
+        assert failed_data["plans"][0]["budget_gate"] == "budget_reserved"
+        assert failed_data["plans"][0]["budget_evidence_state"] == (
+            "witness_plan_snapshot"
+        )
+        assert failed_data["plans"][0]["recovery_action"] == "wait_for_approval"
+        assert recovered_model_resp.status_code == 200
+        recovered_data = recovered_model_resp.json()
+        assert recovered_data["count"] == 1
+        assert recovered_data["plans"][0]["attempt_id"] == attempt.attempt_id
+        assert recovered_data["plans"][0]["status"] == "recovered"
+        assert recovered_data["plans"][0]["certificate_id"] == (
+            "plan-cert-review-manual"
+        )
+        assert invalid_status_resp.status_code == 400
+        assert "status must be one of" in invalid_status_resp.json()["detail"]
+        assert invalid_budget_resp.status_code == 400
+        assert "budget_gate must be one of" in invalid_budget_resp.json()["detail"]
+        assert overlong_search_resp.status_code == 400
+        assert overlong_search_resp.json()["detail"] == (
+            "search must be 128 characters or fewer"
+        )
+        assert "plan-review-secret-14" not in json.dumps(
+            {
+                "preview": preview_data,
+                "html": preview_html_resp.text,
+                "detail": preview_detail_resp.text,
+            },
+            sort_keys=True,
+        )
+        assert "plan-review-secret-15" not in json.dumps(
+            {
+                "failed": failed_data,
+                "recovered": recovered_data,
+            },
+            sort_keys=True,
+        )
+
+    def test_operator_plan_review_overlays_live_tenant_budget_report(self):
+        budget_manager = TenantBudgetManager(
+            clock=lambda: "2026-06-16T12:00:00+00:00",
+        )
+        budget_manager.set_policy(
+            TenantBudgetPolicy(tenant_id="t1", max_cost=4.0, max_calls=8)
+        )
+        budget_manager.ensure_budget("t1")
+        budget_manager.record_spend("t1", 1.25)
+        app = create_gateway_app(
+            platform=StubPlatform(response="unused fallback"),
+            tenant_budget_reporter=budget_manager,
+        )
+        client = TestClient(app)
+
+        preview_resp = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs budget-report-secret-21 and schedule "
+                    "review budget-report-secret-21"
+                ),
+            },
+        )
+        plan_id = re.search(r"\b(plan-[a-f0-9]{16})\b", preview_resp.text).group(1)
+        read_model_resp = client.get(
+            f"/operator/plan-review/read-model?tenant_id=t1&plan_id={plan_id}"
+        )
+
+        assert preview_resp.status_code == 200
+        assert read_model_resp.status_code == 200
+        read_model = read_model_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA),
+            read_model,
+        ) == []
+        assert read_model["count"] == 1
+        row = read_model["plans"][0]
+        assert row["budget_evidence_state"] == "tenant_budget_report"
+        assert row["used_cost_source"] == "tenant_budget_report"
+        assert row["used_cost_units"] == 1.25
+        assert row["limit_cost_units"] == 4.0
+        assert row["remaining_cost_units"] == 2.75
+        assert row["budget_report_href"] == "/operator/plan-review/budget/t1"
+        assert row["execution_spend_allowed"] is False
+        assert "step-2" in row["required_by_steps"]
+        assert "budget-report-secret-21" not in json.dumps(
+            read_model,
+            sort_keys=True,
+        )
+        budget_read_model_resp = client.get(f"{row['budget_report_href']}/read-model")
+        budget_html_resp = client.get(row["budget_report_href"])
+        budget_read_model = budget_read_model_resp.json()
+        assert budget_read_model_resp.status_code == 200
+        assert budget_html_resp.status_code == 200
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_BUDGET_REPORT_READ_MODEL_SCHEMA),
+            budget_read_model,
+        ) == []
+        assert budget_read_model["status"] == "available"
+        assert budget_read_model["report"]["spent_cost_units"] == 1.25
+        assert budget_read_model["report"]["limit_cost_units"] == 4.0
+        assert budget_read_model["report"]["remaining_cost_units"] == 2.75
+        assert budget_read_model["execution_allowed"] is False
+        assert budget_read_model["write_allowed"] is False
+        assert "budget-report-secret-21" not in json.dumps(
+            budget_read_model,
+            sort_keys=True,
+        )
+
+    def test_operator_plan_review_surfaces_budget_reporter_errors(self):
+        class FailingBudgetReporter:
+            def report(self, tenant_id):
+                raise RuntimeError(f"budget store unavailable for {tenant_id}")
+
+        app = create_gateway_app(
+            platform=StubPlatform(response="unused fallback"),
+            tenant_budget_reporter=FailingBudgetReporter(),
+        )
+        client = TestClient(app)
+
+        preview_resp = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs budget-error-secret-22 and schedule "
+                    "review budget-error-secret-22"
+                ),
+            },
+        )
+        plan_id = re.search(r"\b(plan-[a-f0-9]{16})\b", preview_resp.text).group(1)
+        read_model_resp = client.get(
+            f"/operator/plan-review/read-model?tenant_id=t1&plan_id={plan_id}"
+        )
+
+        assert preview_resp.status_code == 200
+        assert read_model_resp.status_code == 200
+        read_model = read_model_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_REVIEW_READ_MODEL_SCHEMA),
+            read_model,
+        ) == []
+        assert read_model["plans"][0]["budget_evidence_state"] == (
+            "tenant_budget_report_error"
+        )
+        assert read_model["plans"][0]["used_cost_source"] == (
+            "tenant_budget_report_error"
+        )
+        assert "budget-error-secret-22" not in json.dumps(
+            read_model,
+            sort_keys=True,
         )
 
 
@@ -3840,11 +4161,21 @@ class TestGatewayStatus:
             if item["command_id"] == command.command_id
         )
         receipt_types = {receipt["receipt_type"] for receipt in row["receipts"]}
+        assert set(row["receipt_types"]) == receipt_types
         assert row["task_status"] == "completed"
         assert row["receipt_count"] >= row["event_count"]
         assert "interpretation_receipt" in receipt_types
         assert "command_event" in receipt_types
+        assert "worker_receipt" in receipt_types
+        assert "delivery_receipt" in receipt_types
         assert "terminal_closure_certificate" in receipt_types
+        delivery_receipt = next(
+            receipt
+            for receipt in row["receipts"]
+            if receipt["receipt_type"] == "delivery_receipt"
+        )
+        assert delivery_receipt["status"] == "delivery_status_not_recorded"
+        assert delivery_receipt["details"]["delivery_status_observed"] is False
         terminal_receipt = next(
             receipt
             for receipt in row["receipts"]
@@ -3854,6 +4185,286 @@ class TestGatewayStatus:
         assert terminal_receipt["evidence_refs"]["evidence_refs"]
         assert "operator viewer raw body must stay hidden" not in json.dumps(
             data, sort_keys=True
+        )
+
+    def test_operator_receipt_viewer_filters_type_status_task_and_search(
+        self, gateway_app, client
+    ):
+        completed, _certificate = _create_completed_receipt_viewer_command(
+            gateway_app.state.command_ledger,
+            idempotency_key="receipt-filter-completed",
+        )
+        blocked = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-receipt-filter-blocked",
+            idempotency_key="receipt-filter-blocked",
+            intent="llm_completion",
+            payload={"body": "receipt filter blocked body"},
+        )
+        gateway_app.state.command_ledger.transition(
+            blocked.command_id,
+            CommandState.DENIED,
+            detail={"cause": "filter_denied"},
+        )
+
+        type_resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=delivery_receipt"
+        )
+        status_resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_status=denied"
+        )
+        task_resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1&task_status=blocked"
+        )
+        search_resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&search=terminal_closure_certificate"
+        )
+        html_resp = client.get(
+            "/operator/receipts?tenant_id=t1"
+            "&receipt_type=delivery_receipt&task_status=completed"
+            "&search=delivery_receipt"
+        )
+        invalid_type_resp = client.get(
+            "/operator/receipts/read-model?receipt_type=unknown_receipt"
+        )
+        invalid_task_resp = client.get(
+            "/operator/receipts/read-model?task_status=unknown"
+        )
+        overlong_search_resp = client.get(
+            "/operator/receipts/read-model?search=" + ("x" * 129)
+        )
+
+        assert type_resp.status_code == 200
+        type_data = type_resp.json()
+        assert type_data["receipt_type_filter"] == "delivery_receipt"
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            type_data,
+        ) == []
+        type_rows = {
+            row["command_id"]: row for row in type_data["receipt_groups"]
+        }
+        assert completed.command_id in type_rows
+        assert type_rows[completed.command_id]["receipt_types"] == [
+            "delivery_receipt"
+        ]
+        assert type_rows[completed.command_id]["receipt_count"] == 1
+        assert all(
+            receipt["receipt_type"] == "delivery_receipt"
+            for receipt in type_rows[completed.command_id]["receipts"]
+        )
+
+        assert status_resp.status_code == 200
+        status_data = status_resp.json()
+        status_rows = {
+            row["command_id"]: row for row in status_data["receipt_groups"]
+        }
+        assert blocked.command_id in status_rows
+        assert completed.command_id not in status_rows
+        assert all(
+            receipt["status"] == "denied"
+            for receipt in status_rows[blocked.command_id]["receipts"]
+        )
+
+        assert task_resp.status_code == 200
+        task_data = task_resp.json()
+        task_rows = {
+            row["command_id"]: row for row in task_data["receipt_groups"]
+        }
+        assert blocked.command_id in task_rows
+        assert completed.command_id not in task_rows
+        assert task_rows[blocked.command_id]["task_status"] == "blocked"
+
+        assert search_resp.status_code == 200
+        search_data = search_resp.json()
+        search_rows = {
+            row["command_id"]: row for row in search_data["receipt_groups"]
+        }
+        assert completed.command_id in search_rows
+        assert search_data["search_filter"] == "terminal_closure_certificate"
+
+        assert html_resp.status_code == 200
+        assert "Receipt Filters" in html_resp.text
+        assert 'name="receipt_type"' in html_resp.text
+        assert 'value="delivery_receipt" selected' in html_resp.text
+        assert 'name="task_status"' in html_resp.text
+        assert 'value="completed" selected' in html_resp.text
+        assert "receipt filter blocked body" not in json.dumps(
+            {
+                "type": type_data,
+                "status": status_data,
+                "task": task_data,
+                "search": search_data,
+                "html": html_resp.text,
+            },
+            sort_keys=True,
+        )
+        assert invalid_type_resp.status_code == 400
+        assert "receipt_type must be one of" in invalid_type_resp.json()["detail"]
+        assert invalid_task_resp.status_code == 400
+        assert "task_status must be one of" in invalid_task_resp.json()["detail"]
+        assert overlong_search_resp.status_code == 400
+        assert overlong_search_resp.json()["detail"] == (
+            "search must be 128 characters or fewer"
+        )
+
+    def test_operator_approval_history_links_receipts_and_current_task(
+        self, gateway_app, client
+    ):
+        pending_preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs approval-history-secret-12 and "
+                    "schedule review approval-history-secret-12"
+                ),
+            },
+        )
+        pending_preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            pending_preview.text,
+        ).group(1)
+        pending_approved = client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": pending_preview_id},
+        )
+        waiting_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=waiting_for_approval"
+        )
+        waiting_task = waiting_resp.json()["tasks"][0]
+        request_id = waiting_task["approval_request_id"]
+        command_id = waiting_task["command_id"]
+
+        history_resp = client.get(
+            "/operator/approvals/read-model?tenant_id=t1&status=pending"
+        )
+        history_data = history_resp.json()
+        html_resp = client.get(
+            f"/operator/approvals?tenant_id=t1&status=pending&search={request_id}"
+        )
+        detail_resp = client.get(
+            f"/operator/approvals/{request_id}?tenant_id=t1"
+        )
+        receipt_detail_resp = client.get(
+            f"/operator/receipts/{command_id}?tenant_id=t1"
+        )
+        invalid_status_resp = client.get(
+            "/operator/approvals/read-model?status=waiting"
+        )
+        overlong_search_resp = client.get(
+            "/operator/approvals/read-model?search=" + ("x" * 129)
+        )
+
+        assert pending_preview.status_code == 200
+        assert pending_approved.status_code == 200
+        assert history_resp.status_code == 200
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_APPROVAL_HISTORY_READ_MODEL_SCHEMA),
+            history_data,
+        ) == []
+        assert history_data["status_filter"] == "pending"
+        assert history_data["status_counts"]["pending"] == 1
+        assert history_data["approvals"][0]["approval_request_id"] == request_id
+        assert history_data["approvals"][0]["status"] == "pending"
+        assert history_data["approvals"][0]["receipt_href"] == (
+            f"/operator/receipts/{command_id}?tenant_id=t1"
+        )
+        assert history_data["approvals"][0]["current_task_href"] == (
+            "/operator/current-task?tenant_id=t1&status=waiting_for_approval"
+        )
+        assert html_resp.status_code == 200
+        assert "Mullu Approval History" in html_resp.text
+        assert "Approval Filters" in html_resp.text
+        assert f"/operator/approvals/{request_id}?tenant_id=t1" in html_resp.text
+        assert detail_resp.status_code == 200
+        assert "Mullu Approval Detail" in detail_resp.text
+        assert receipt_detail_resp.status_code == 200
+        assert f"/operator/approvals/{request_id}" in receipt_detail_resp.text
+        assert invalid_status_resp.status_code == 400
+        assert "status must be one of" in invalid_status_resp.json()["detail"]
+        assert overlong_search_resp.status_code == 400
+        assert overlong_search_resp.json()["detail"] == (
+            "search must be 128 characters or fewer"
+        )
+        assert "approval-history-secret-12" not in json.dumps(
+            {
+                "history": history_data,
+                "html": html_resp.text,
+                "detail": detail_resp.text,
+                "receipt": receipt_detail_resp.text,
+            },
+            sort_keys=True,
+        )
+
+        recovered = client.post(
+            "/operator/current-task/approval",
+            data={"request_id": request_id, "decision": "approve"},
+        )
+        approved_history_resp = client.get(
+            f"/operator/approvals/read-model?tenant_id=t1&request_id={request_id}"
+        )
+
+        assert recovered.status_code == 200
+        assert "approval_approved_plan_recovered" in recovered.text
+        approved_history = approved_history_resp.json()
+        assert approved_history["count"] == 1
+        assert approved_history["approvals"][0]["status"] == "approved"
+        assert approved_history["approvals"][0]["resolved_at"]
+        assert approved_history["approvals"][0]["current_task_href"] == (
+            "/operator/current-task?tenant_id=t1&status=completed"
+        )
+
+        deny_preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs approval-history-secret-13 and "
+                    "schedule review approval-history-secret-13"
+                ),
+            },
+        )
+        deny_preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            deny_preview.text,
+        ).group(1)
+        client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": deny_preview_id},
+        )
+        deny_waiting = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=waiting_for_approval"
+        )
+        deny_request_id = deny_waiting.json()["tasks"][0]["approval_request_id"]
+        denied = client.post(
+            "/operator/current-task/approval",
+            data={"request_id": deny_request_id, "decision": "deny"},
+        )
+        denied_history_resp = client.get(
+            f"/operator/approvals/read-model?tenant_id=t1&request_id={deny_request_id}"
+        )
+
+        assert denied.status_code == 200
+        assert "approval_denied" in denied.text
+        denied_history = denied_history_resp.json()
+        assert denied_history["count"] == 1
+        assert denied_history["approvals"][0]["status"] == "denied"
+        assert denied_history["approvals"][0]["resolved_at"]
+        assert "approval-history-secret-13" not in json.dumps(
+            denied_history,
+            sort_keys=True,
         )
 
     def test_operator_current_task_read_model_classifies_waiting_blocked_and_completed(
@@ -3915,6 +4526,12 @@ class TestGatewayStatus:
         assert tasks[waiting.command_id]["task_status"] == "waiting_for_approval"
         assert tasks[waiting.command_id]["waiting_for"] == "operator_approval"
         assert tasks[waiting.command_id]["next_action"] == "resolve_approval"
+        assert tasks[waiting.command_id]["goal_intake_preview_id"] == ""
+        assert tasks[waiting.command_id]["goal_hash"] == ""
+        assert tasks[waiting.command_id]["plan_id"] == ""
+        assert tasks[waiting.command_id]["plan_step_id"] == ""
+        assert tasks[waiting.command_id]["approval_request_id"] == ""
+        assert tasks[waiting.command_id]["approval_recovery_available"] is False
         assert tasks[blocked.command_id]["task_status"] == "blocked"
         assert tasks[blocked.command_id]["task_blocked"] is True
         assert (
@@ -3953,6 +4570,12 @@ class TestGatewayStatus:
         )
 
         receipts_resp = client.get("/operator/receipts?tenant_id=t1")
+        detail_resp = client.get(
+            f"/operator/receipts/{command.command_id}?tenant_id=t1"
+        )
+        missing_detail_resp = client.get(
+            "/operator/receipts/cmd-missing-receipt-detail?tenant_id=t1"
+        )
         current_resp = client.get("/operator/current-task?tenant_id=t1")
 
         assert receipts_resp.status_code == 200
@@ -3960,7 +4583,23 @@ class TestGatewayStatus:
         assert "Mullu Operator Receipt Viewer" in receipts_resp.text
         assert "/operator/receipts/read-model" in receipts_resp.text
         assert command.command_id in receipts_resp.text
+        assert (
+            f"/operator/receipts/{command.command_id}?tenant_id=t1"
+            in receipts_resp.text
+        )
         assert "html raw body must stay hidden" not in receipts_resp.text
+        assert detail_resp.status_code == 200
+        assert "text/html" in detail_resp.headers["content-type"]
+        assert "Mullu Receipt Detail" in detail_resp.text
+        assert command.command_id in detail_resp.text
+        assert "command_event" in detail_resp.text
+        assert "details" in detail_resp.text
+        assert "evidence_refs" in detail_resp.text
+        assert "html raw body must stay hidden" not in detail_resp.text
+        assert missing_detail_resp.status_code == 404
+        assert missing_detail_resp.json()["detail"] == (
+            "command receipt group not found"
+        )
         assert current_resp.status_code == 200
         assert "text/html" in current_resp.headers["content-type"]
         assert "Mullu Current Task State" in current_resp.text
@@ -3968,6 +4607,373 @@ class TestGatewayStatus:
         assert command.command_id in current_resp.text
         assert "waiting_for_approval" in current_resp.text
         assert "html raw body must stay hidden" not in current_resp.text
+
+    def test_operator_goal_intake_previews_plan_without_command_write(
+        self, gateway_app, client
+    ):
+        initial_commands = gateway_app.state.command_ledger.summary()["commands"]
+        initial_plan_witnesses = gateway_app.state.plan_ledger.read_model()[
+            "plan_witness_count"
+        ]
+
+        console_resp = client.get("/operator/goal-intake")
+        preview_resp = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs secret-token-123 and send notification "
+                    "to team secret-token-123"
+                ),
+            },
+        )
+        blocked_resp = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": "hello secret-token-456",
+            },
+        )
+
+        assert console_resp.status_code == 200
+        assert "text/html" in console_resp.headers["content-type"]
+        assert "Mullu Goal Intake" in console_resp.text
+        assert 'action="/operator/goal-intake/preview"' in console_resp.text
+        assert "/operator/current-task" in console_resp.text
+        assert preview_resp.status_code == 200
+        assert "text/html" in preview_resp.headers["content-type"]
+        assert "preview_ready" in preview_resp.text
+        assert "enterprise.knowledge_search" in preview_resp.text
+        assert "enterprise.notification_send" in preview_resp.text
+        assert "external_webhook" in preview_resp.text
+        assert "Budget Required" in preview_resp.text
+        assert "Execution Allowed" in preview_resp.text
+        assert "/operator/goal-intake/approve" in preview_resp.text
+        assert "/operator/goal-intake/deny" in preview_resp.text
+        assert "secret-token-123" not in preview_resp.text
+        assert blocked_resp.status_code == 200
+        assert "goal_not_compilable" in blocked_resp.text
+        assert "secret-token-456" not in blocked_resp.text
+        assert gateway_app.state.command_ledger.summary()["commands"] == initial_commands
+        assert (
+            gateway_app.state.plan_ledger.read_model()["plan_witness_count"]
+            == initial_plan_witnesses
+        )
+
+    def test_operator_goal_intake_approve_and_deny_are_explicit_handoffs(
+        self, gateway_app, client
+    ):
+        initial_commands = gateway_app.state.command_ledger.summary()["commands"]
+        initial_witnesses = gateway_app.state.plan_ledger.read_model()[
+            "plan_witness_count"
+        ]
+
+        deny_preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": "search knowledge docs and send notification to team deny-secret-1",
+            },
+        )
+        deny_preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            deny_preview.text,
+        ).group(1)
+        denied = client.post(
+            "/operator/goal-intake/deny",
+            data={"preview_id": deny_preview_id},
+        )
+
+        assert denied.status_code == 200
+        assert "denied" in denied.text
+        assert "operator_denied" in denied.text
+        assert "deny-secret-1" not in denied.text
+        assert gateway_app.state.command_ledger.summary()["commands"] == initial_commands
+        assert (
+            gateway_app.state.plan_ledger.read_model()["plan_witness_count"]
+            == initial_witnesses
+        )
+
+        approve_preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": (
+                    "search knowledge docs approve-secret-2 and send notification "
+                    "to team approve-secret-2"
+                ),
+            },
+        )
+        approve_preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            approve_preview.text,
+        ).group(1)
+        approved = client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": approve_preview_id},
+        )
+        repeated = client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": approve_preview_id},
+        )
+
+        assert approved.status_code == 200
+        assert "handoff_submitted" in approved.text
+        assert "approved" in approved.text
+        assert "operator_approved" in approved.text
+        assert "plan_id" in approved.text
+        assert "approve-secret-2" not in approved.text
+        assert gateway_app.state.command_ledger.summary()["commands"] > initial_commands
+        assert (
+            gateway_app.state.plan_ledger.read_model()["plan_witness_count"]
+            > initial_witnesses
+        )
+        assert repeated.status_code == 200
+        assert "preview_already_decided" in repeated.text
+        assert "approve-secret-2" not in repeated.text
+
+    def test_operator_goal_intake_current_task_binding_and_approval_recovery(
+        self, gateway_app, client
+    ):
+        goal = (
+            "search knowledge docs current-task-secret-3 and schedule review "
+            "current-task-secret-3"
+        )
+        preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": goal,
+            },
+        )
+        preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            preview.text,
+        ).group(1)
+        approved = client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": preview_id},
+        )
+
+        waiting_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=waiting_for_approval"
+        )
+        waiting_html = client.get(
+            "/operator/current-task?tenant_id=t1&status=waiting_for_approval"
+        )
+
+        assert preview.status_code == 200
+        assert approved.status_code == 200
+        assert "handoff_submitted" in approved.text
+        assert waiting_resp.status_code == 200
+        waiting_data = waiting_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(CURRENT_TASK_READ_MODEL_SCHEMA),
+            waiting_data,
+        ) == []
+        assert waiting_data["count"] == 1
+        waiting_task = waiting_data["tasks"][0]
+        assert waiting_task["source"] == "operator_goal_intake"
+        assert waiting_task["goal_intake_preview_id"] == preview_id
+        assert waiting_task["goal_hash"]
+        assert waiting_task["plan_id"].startswith("plan-")
+        assert waiting_task["plan_step_id"] == "step-2"
+        assert waiting_task["approval_request_id"].startswith("apr-")
+        assert waiting_task["approval_recovery_available"] is True
+        assert "current-task-secret-3" not in json.dumps(
+            waiting_data,
+            sort_keys=True,
+        )
+        assert waiting_html.status_code == 200
+        assert 'action="/operator/current-task/approval"' in waiting_html.text
+        assert 'value="approve"' in waiting_html.text
+        assert 'value="deny"' in waiting_html.text
+        assert waiting_task["approval_request_id"] in waiting_html.text
+        assert "current-task-secret-3" not in waiting_html.text
+
+        recovered = client.post(
+            "/operator/current-task/approval",
+            data={
+                "request_id": waiting_task["approval_request_id"],
+                "decision": "approve",
+            },
+        )
+        closure_resp = client.get(
+            f"/capability-plans/{waiting_task['plan_id']}/closure"
+        )
+        completed_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=completed"
+        )
+
+        assert recovered.status_code == 200
+        assert "approval_approved_plan_recovered" in recovered.text
+        assert "current-task-secret-3" not in recovered.text
+        assert closure_resp.status_code == 200
+        assert closure_resp.json()["plan_id"] == waiting_task["plan_id"]
+        assert closure_resp.json()["plan_terminal_certificate"][
+            "certificate_id"
+        ].startswith("plan-cert-")
+        completed_tasks = {
+            task["command_id"]: task for task in completed_resp.json()["tasks"]
+        }
+        assert waiting_task["command_id"] in completed_tasks
+        assert (
+            completed_tasks[waiting_task["command_id"]][
+                "approval_recovery_available"
+            ]
+            is False
+        )
+        assert "current-task-secret-3" not in json.dumps(
+            completed_resp.json(),
+            sort_keys=True,
+        )
+
+    def test_operator_receipt_viewer_derives_plan_approval_worker_and_denial_receipts(
+        self, gateway_app, client
+    ):
+        goal = (
+            "search knowledge docs receipt-secret-7 and schedule review "
+            "receipt-secret-7"
+        )
+        preview = client.post(
+            "/operator/goal-intake/preview",
+            data={
+                "tenant_id": "t1",
+                "identity_id": "u1",
+                "channel": "web",
+                "sender_id": "web-user",
+                "goal": goal,
+            },
+        )
+        preview_id = re.search(
+            r'name="preview_id" value="([^"]+)"',
+            preview.text,
+        ).group(1)
+        approved = client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": preview_id},
+        )
+        waiting_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&status=waiting_for_approval"
+        )
+        waiting_task = waiting_resp.json()["tasks"][0]
+        receipts_resp = client.get(
+            "/operator/receipts/read-model"
+            f"?tenant_id=t1&command_id={waiting_task['command_id']}"
+        )
+
+        assert preview.status_code == 200
+        assert approved.status_code == 200
+        assert receipts_resp.status_code == 200
+        receipt_data = receipts_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            receipt_data,
+        ) == []
+        assert receipt_data["count"] == 1
+        row = receipt_data["receipt_groups"][0]
+        receipt_types = {receipt["receipt_type"] for receipt in row["receipts"]}
+        assert set(row["receipt_types"]) == receipt_types
+        assert {
+            "plan_step_receipt",
+            "approval_receipt",
+            "worker_receipt",
+            "command_event",
+        }.issubset(receipt_types)
+        assert "denial_receipt" not in receipt_types
+
+        plan_receipt = next(
+            receipt
+            for receipt in row["receipts"]
+            if receipt["receipt_type"] == "plan_step_receipt"
+        )
+        approval_receipt = next(
+            receipt
+            for receipt in row["receipts"]
+            if receipt["receipt_type"] == "approval_receipt"
+        )
+        worker_receipt = next(
+            receipt
+            for receipt in row["receipts"]
+            if receipt["receipt_type"] == "worker_receipt"
+        )
+        assert plan_receipt["details"]["plan_id"] == waiting_task["plan_id"]
+        assert plan_receipt["details"]["plan_step_id"] == "step-2"
+        assert plan_receipt["details"]["goal_intake_preview_id"] == preview_id
+        assert plan_receipt["details"]["goal_hash_present"] is True
+        assert (
+            plan_receipt["evidence_refs"]["goal_intake_preview_id"]
+            == preview_id
+        )
+        assert approval_receipt["status"] == "pending"
+        assert (
+            approval_receipt["details"]["approval_request_id"]
+            == waiting_task["approval_request_id"]
+        )
+        assert approval_receipt["evidence_refs"]["approval_request_id"].startswith(
+            "apr-"
+        )
+        assert worker_receipt["details"]["capability_id"]
+        assert worker_receipt["details"]["param_names"]
+        assert worker_receipt["details"]["params_hash"]
+        assert "receipt-secret-7" not in json.dumps(receipt_data, sort_keys=True)
+
+        denied = client.post(
+            "/operator/current-task/approval",
+            data={
+                "request_id": waiting_task["approval_request_id"],
+                "decision": "deny",
+            },
+        )
+        denied_receipts_resp = client.get(
+            "/operator/receipts/read-model"
+            f"?tenant_id=t1&command_id={waiting_task['command_id']}"
+        )
+
+        assert denied.status_code == 200
+        assert "approval_denied" in denied.text
+        denied_data = denied_receipts_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            denied_data,
+        ) == []
+        denied_row = denied_data["receipt_groups"][0]
+        denied_receipt_types = {
+            receipt["receipt_type"] for receipt in denied_row["receipts"]
+        }
+        denied_approval = next(
+            receipt
+            for receipt in denied_row["receipts"]
+            if receipt["receipt_type"] == "approval_receipt"
+        )
+        denial_receipt = next(
+            receipt
+            for receipt in denied_row["receipts"]
+            if receipt["receipt_type"] == "denial_receipt"
+        )
+        assert "denial_receipt" in denied_receipt_types
+        assert denied_approval["status"] == "denied"
+        assert (
+            denial_receipt["evidence_refs"]["approval_request_id"]
+            == waiting_task["approval_request_id"]
+        )
+        assert denied_row["task_status"] == "blocked"
+        assert "receipt-secret-7" not in json.dumps(denied_data, sort_keys=True)
 
     def test_operator_receipt_viewer_requires_operator_authority_in_production(
         self, monkeypatch
@@ -3988,23 +4994,92 @@ class TestGatewayStatus:
         )
 
         denied_receipts = local_client.get("/operator/receipts/read-model")
+        denied_receipt_detail = local_client.get(
+            f"/operator/receipts/{command.command_id}"
+        )
+        denied_approvals = local_client.get("/operator/approvals/read-model")
+        denied_approval_detail = local_client.get(
+            "/operator/approvals/apr-prod-denied"
+        )
+        denied_plan_review = local_client.get("/operator/plan-review/read-model")
+        denied_plan_review_detail = local_client.get("/operator/plan-review/plan-prod")
         denied_current = local_client.get("/operator/current-task/read-model")
+        denied_current_approval = local_client.post(
+            "/operator/current-task/approval",
+            data={"request_id": "apr-prod-denied", "decision": "approve"},
+        )
+        denied_goal_intake = local_client.get("/operator/goal-intake")
+        denied_goal_approve = local_client.post(
+            "/operator/goal-intake/approve",
+            data={"preview_id": "preview-prod-denied"},
+        )
+        denied_goal_deny = local_client.post(
+            "/operator/goal-intake/deny",
+            data={"preview_id": "preview-prod-denied"},
+        )
         allowed_receipts = local_client.get(
             "/operator/receipts/read-model",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_receipt_detail = local_client.get(
+            f"/operator/receipts/{command.command_id}",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_approvals = local_client.get(
+            "/operator/approvals/read-model",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_approval_detail = local_client.get(
+            "/operator/approvals/apr-prod-denied",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_plan_review = local_client.get(
+            "/operator/plan-review/read-model",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        allowed_plan_review_detail = local_client.get(
+            "/operator/plan-review/plan-prod",
             headers={"X-Mullu-Authority-Secret": "authority-secret"},
         )
         allowed_current = local_client.get(
             "/operator/current-task/read-model",
             headers={"X-Mullu-Authority-Secret": "authority-secret"},
         )
+        allowed_goal_intake = local_client.get(
+            "/operator/goal-intake",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
 
         assert denied_receipts.status_code == 403
+        assert denied_receipt_detail.status_code == 403
+        assert denied_approvals.status_code == 403
+        assert denied_approval_detail.status_code == 403
+        assert denied_plan_review.status_code == 403
+        assert denied_plan_review_detail.status_code == 403
         assert denied_current.status_code == 403
+        assert denied_current_approval.status_code == 403
+        assert denied_goal_intake.status_code == 403
+        assert denied_goal_approve.status_code == 403
+        assert denied_goal_deny.status_code == 403
         assert denied_receipts.json()["detail"] == (
             "Authority operator access not authorized"
         )
         assert allowed_receipts.status_code == 200
+        assert allowed_receipt_detail.status_code == 200
+        assert "Mullu Receipt Detail" in allowed_receipt_detail.text
+        assert allowed_approvals.status_code == 200
+        assert allowed_approval_detail.status_code == 404
+        assert allowed_approval_detail.json()["detail"] == (
+            "approval history not found"
+        )
+        assert allowed_plan_review.status_code == 200
+        assert allowed_plan_review_detail.status_code == 404
+        assert allowed_plan_review_detail.json()["detail"] == (
+            "plan review history not found"
+        )
         assert allowed_current.status_code == 200
+        assert allowed_goal_intake.status_code == 200
+        assert "Mullu Goal Intake" in allowed_goal_intake.text
         assert allowed_receipts.json()["receipt_groups"][0]["command_id"] == (
             command.command_id
         )
@@ -4012,6 +5087,7 @@ class TestGatewayStatus:
         assert "production receipt body" not in json.dumps(
             allowed_receipts.json(), sort_keys=True
         )
+        assert "production receipt body" not in allowed_receipt_detail.text
         assert "production receipt body" not in json.dumps(
             allowed_current.json(), sort_keys=True
         )
