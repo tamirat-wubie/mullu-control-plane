@@ -122,29 +122,31 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("reconciliation_ref", schema["$defs"]["closure"]["required"])
         self.assertIn("memory_ref", schema["$defs"]["closure"]["required"])
         self.assertIn("constitution", schema["$defs"]["memory_update"]["required"])
+        whqr_replay_binding = schema["$defs"]["whqr_replay_binding"]
+        self.assertFalse(whqr_replay_binding["additionalProperties"])
+        self.assertEqual(
+            {"replay_ref", "canonical_hash", "semantics_hash", "version"},
+            set(whqr_replay_binding["required"]),
+        )
+        self.assertEqual(
+            {"replay_ref", "canonical_hash", "semantics_hash", "version"},
+            set(whqr_replay_binding["properties"]),
+        )
         self.assertEqual(
             "^whqr://replay/sha256:.+$",
-            schema["$defs"]["whqr_replay_binding"]["properties"]["replay_ref"][
-                "pattern"
-            ],
+            whqr_replay_binding["properties"]["replay_ref"]["pattern"],
         )
         self.assertEqual(
             "^sha256:.+$",
-            schema["$defs"]["whqr_replay_binding"]["properties"]["semantics_hash"][
-                "pattern"
-            ],
+            whqr_replay_binding["properties"]["semantics_hash"]["pattern"],
         )
         self.assertEqual(
             "^sha256:.+$",
-            schema["$defs"]["whqr_replay_binding"]["properties"]["canonical_hash"][
-                "pattern"
-            ],
+            whqr_replay_binding["properties"]["canonical_hash"]["pattern"],
         )
         self.assertEqual(
             "^\\d+\\.\\d+\\.\\d+$",
-            schema["$defs"]["whqr_replay_binding"]["properties"]["version"][
-                "pattern"
-            ],
+            whqr_replay_binding["properties"]["version"]["pattern"],
         )
 
     def test_recommended_v1_examples_are_non_executing_shapes(self) -> None:
