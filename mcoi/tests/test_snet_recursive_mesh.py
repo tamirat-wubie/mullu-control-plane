@@ -246,40 +246,69 @@ def test_budget_rejects_zero_question_and_zero_unknown_threshold() -> None:
     assert SNetInquiryBudget(max_questions_per_symbol=1, unknown_gravity_threshold=1).max_questions_per_symbol == 1
 
 
-def test_answer_map_rejects_duplicate_and_empty_wh_answers() -> None:
+def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
 
-    class DuplicateAnswerMap(Mapping):
+    class DictSubclass(dict):
+        pass
+
+    class CustomAnswerMap(Mapping):
         def __getitem__(self, key):
-            if key is SNetWHType.WHAT:
-                return "Seed object"
-            if key == "what":
-                return "Duplicate seed object"
+            if key is SNetWHType.DEPENDS_ON:
+                return "Water"
             raise KeyError(key)
 
         def __iter__(self):
-            return iter((SNetWHType.WHAT, "what"))
+            return iter((SNetWHType.DEPENDS_ON,))
 
         def __len__(self):
-            return 2
+            return 1
 
         def items(self):
-            return ((SNetWHType.WHAT, "Seed object"), ("what", "Duplicate seed object"))
+            return ((SNetWHType.DEPENDS_ON, "Water"),)
 
-    with pytest.raises(ValueError, match="duplicate SNet WH answer key"):
-        mesh.run_tick_with_answers(seed.symbol_id, DuplicateAnswerMap())
+    class RaisingItems(dict):
+        def items(self):
+            raise RuntimeError("items leak")
+
+    class TextSubclass(str):
+        pass
+
+    for invalid_answer_map in (
+        DictSubclass({SNetWHType.DEPENDS_ON: "Water"}),
+        CustomAnswerMap(),
+        RaisingItems({SNetWHType.DEPENDS_ON: "Water"}),
+        MappingProxyType(RaisingItems({SNetWHType.DEPENDS_ON: "Water"})),
+    ):
+        with pytest.raises(ValueError, match="answer_map must be a mapping"):
+            mesh.run_tick_with_answers(seed.symbol_id, invalid_answer_map)
 
     second_mesh = SNetRecursiveMesh()
     second_seed = second_mesh.add_symbol("Second seed", symbol_type="physical_biological_object")
     with pytest.raises(ValueError, match="must be a non-empty string"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "   "})
+    with pytest.raises(ValueError, match="WH answer key"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {TextSubclass("what"): "Seed"})
+    with pytest.raises(ValueError, match="must be a non-empty string"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: TextSubclass("Seed")})
+
+    valid_mesh = SNetRecursiveMesh()
+    valid_seed = valid_mesh.add_symbol("Valid seed", symbol_type="physical_biological_object")
+    valid_tick = valid_mesh.run_tick_with_answers(
+        valid_seed.symbol_id,
+        MappingProxyType({SNetWHType.DEPENDS_ON: "Water"}),
+    )
+
     assert mesh.answers == {}
     assert mesh.questions == {}
     assert mesh.metadata == {}
     assert second_mesh.answers == {}
     assert second_mesh.questions == {}
     assert second_mesh.metadata == {}
+    assert len(valid_tick.answer_ids) == 1
+    assert len(valid_mesh.answers) == 1
+    assert len(valid_mesh.metadata) == 1
 
 
 def test_run_tick_rejects_invalid_confidence_and_state_before_mutation() -> None:

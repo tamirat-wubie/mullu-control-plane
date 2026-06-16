@@ -16,6 +16,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import replace
 from hashlib import sha256
 from math import isfinite
+from types import MappingProxyType
 
 from mcoi_runtime.contracts.snet import (
     SNetAnswer,
@@ -575,17 +576,26 @@ def map_wh_to_facet(wh_type: SNetWHType) -> str:
 
 
 def _coerce_answer_map(answer_map: Mapping[str | SNetWHType, str]) -> dict[SNetWHType, str]:
-    if not isinstance(answer_map, Mapping):
+    if type(answer_map) not in (dict, MappingProxyType):
         raise ValueError("SNet answer_map must be a mapping")
     answer_lookup: dict[SNetWHType, str] = {}
-    for raw_key, answer_text in answer_map.items():
-        try:
-            wh_type = raw_key if isinstance(raw_key, SNetWHType) else SNetWHType(str(raw_key))
-        except ValueError as exc:
-            raise ValueError(f"unknown SNet WH answer key: {raw_key!r}") from exc
+    try:
+        answer_items = tuple(answer_map.items())
+    except Exception as exc:
+        raise ValueError("SNet answer_map must be a mapping") from exc
+    for raw_key, answer_text in answer_items:
+        if isinstance(raw_key, SNetWHType):
+            wh_type = raw_key
+        elif type(raw_key) is str:
+            try:
+                wh_type = SNetWHType(raw_key)
+            except ValueError as exc:
+                raise ValueError(f"unknown SNet WH answer key: {raw_key!r}") from exc
+        else:
+            raise ValueError("SNet WH answer key must be a string or SNetWHType")
         if wh_type in answer_lookup:
             raise ValueError(f"duplicate SNet WH answer key: {wh_type.value}")
-        if not isinstance(answer_text, str) or not answer_text.strip():
+        if type(answer_text) is not str or not answer_text.strip():
             raise ValueError(f"SNet answer for {wh_type.value} must be a non-empty string")
         answer_lookup[wh_type] = answer_text
     return answer_lookup
