@@ -102,13 +102,26 @@ def test_document_semantics_header_must_match_canonical_pair() -> None:
 def test_document_verify_semantics_replays_hash_and_header() -> None:
     document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
     canonical_hash = document.canonical_hash()
+    wrong_valid_hash = "sha256:" + ("0" * 64)
+    if wrong_valid_hash == canonical_hash:
+        wrong_valid_hash = "sha256:" + ("1" * 64)
 
     assert document.verify_semantics() == canonical_hash
     assert document.verify_semantics(expected_canonical_hash=canonical_hash) == canonical_hash
+    assert len(canonical_hash.removeprefix("sha256:")) == 64
+    assert all(char in "0123456789abcdef" for char in canonical_hash.removeprefix("sha256:"))
     with pytest.raises(ValueError, match="canonical hash mismatch"):
-        document.verify_semantics(expected_canonical_hash="sha256:different")
+        document.verify_semantics(expected_canonical_hash=wrong_valid_hash)
     with pytest.raises(ValueError, match="expected_canonical_hash"):
         document.verify_semantics(expected_canonical_hash="")
+    for malformed_hash in (
+        "sha256:different",
+        "sha256:" + ("A" * 64),
+        "sha256:" + ("g" * 64),
+        "notsha256:" + ("0" * 64),
+    ):
+        with pytest.raises(ValueError, match="expected_canonical_hash must be sha256"):
+            document.verify_semantics(expected_canonical_hash=malformed_hash)
 
 
 def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
