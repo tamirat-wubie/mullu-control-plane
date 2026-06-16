@@ -4383,6 +4383,40 @@ def test_trusted_capture_evidence_packet_blocks_capture_authority() -> None:
     assert closure_actions["publish_trusted_capture_evidence_packet_contract"]["status"] == "closed"
 
 
+def test_sccml_trace_adapter_witness_blocks_kernel_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    sccml_surface = surfaces["sccml_trace_adapter_witness"]
+    sccml_witness_surface = witness_surfaces["sccml_trace_adapter_witness"]
+    witnesses = set(sccml_surface["runtime_witnesses"])
+
+    assert sccml_surface["coverage_state"] == "witnessed"
+    assert sccml_surface["request_proof"] == "request_proof"
+    assert sccml_surface["action_proof"] == "action_proof"
+    assert sccml_surface["audit"] == "audit_chain"
+    assert "SccmlTraceAdapterWitness" in sccml_surface["representative_paths"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in sccml_surface["evidence_files"]
+    assert "examples/sccml_trace_adapter_witness.foundation.json" in sccml_surface["evidence_files"]
+    assert "scripts/validate_sccml_trace_adapter_witness.py" in sccml_surface["evidence_files"]
+    assert "tests/test_validate_sccml_trace_adapter_witness.py" in sccml_surface["evidence_files"]
+    assert "sccml_trace_adapter_witness_schema_valid" in witnesses
+    assert "sccml_trace_adapter_witness_blocks_kernel_authority" in witnesses
+    assert "sccml_trace_adapter_witness_requires_digest_refs" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_unsupported_op_silence" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_raw_trace_retention" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "sccml_trace_adapter_witness_sdlc_artifacts_valid" in witnesses
+    assert sccml_witness_surface["exact_test_anchor_count"] == 7
+    assert sccml_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_sccml_trace_adapter_witness_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

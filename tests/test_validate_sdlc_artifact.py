@@ -621,6 +621,27 @@ def test_trusted_capture_evidence_packet_sdlc_artifacts_validate() -> None:
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
+def test_sccml_trace_adapter_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_sccml_trace_adapter_witness_20260616.json")
+    design_path = Path("examples/sdlc/design_sccml_trace_adapter_witness_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "sccml trace adapter witness requirement")
+    design_record = validator.load_json_object(design_path, "sccml trace adapter witness design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "SccmlTraceAdapterWitness" in design_record["architecture_summary"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in design_record["schema_changes"]
+    assert "no live kernel execution" in requirement_record["non_goals"]
+    assert "scripts/validate_sccml_trace_adapter_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_sccml_trace_adapter_witness.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
 def test_worker_receipt_ledger_read_model_sdlc_artifacts_validate() -> None:
     requirement_path = Path("examples/sdlc/requirement_worker_receipt_ledger_read_model_20260616.json")
     design_path = Path("examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json")

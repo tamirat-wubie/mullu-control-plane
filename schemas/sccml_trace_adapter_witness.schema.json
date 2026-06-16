@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sccml-trace-adapter-witness:1",
+  "title": "SCCML Trace Adapter Witness",
+  "description": "Witness-only adapter boundary for SCCML instruction-trace refs before any kernel trace can become governance proof.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "trace_scope",
+    "trace_artifacts",
+    "authority_boundary",
+    "trace_integrity_guard",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "minLength": 1},
+    "witness_version": {"const": "sccml_trace_adapter_witness.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "trace_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kernel_family",
+        "adapter_mode",
+        "tenant_scope",
+        "instruction_trace_ref",
+        "pre_state_hash_ref",
+        "post_state_hash_ref",
+        "proof_ref",
+        "unsupported_op_gap_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref"
+      ],
+      "properties": {
+        "source_kernel_family": {"const": "symbolic-causal-chain-machine-language"},
+        "adapter_mode": {
+          "type": "string",
+          "enum": [
+            "witness_only_operator_supplied_refs",
+            "witness_only_digest_replay"
+          ]
+        },
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "instruction_trace_ref": {"type": "string", "minLength": 1},
+        "pre_state_hash_ref": {"type": "string", "minLength": 1},
+        "post_state_hash_ref": {"type": "string", "minLength": 1},
+        "proof_ref": {"type": "string", "minLength": 1},
+        "unsupported_op_gap_ref": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "trace_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instruction_trace_digest_ref",
+        "pre_state_digest_ref",
+        "post_state_digest_ref",
+        "proof_digest_ref",
+        "unsupported_ops_digest_ref",
+        "adapter_manifest_ref"
+      ],
+      "properties": {
+        "instruction_trace_digest_ref": {"type": "string", "minLength": 1},
+        "pre_state_digest_ref": {"type": "string", "minLength": 1},
+        "post_state_digest_ref": {"type": "string", "minLength": 1},
+        "proof_digest_ref": {"type": "string", "minLength": 1},
+        "unsupported_ops_digest_ref": {"type": "string", "minLength": 1},
+        "adapter_manifest_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_kernel_execution_performed",
+        "subprocess_execution_performed",
+        "external_repo_read_performed",
+        "instruction_replay_performed",
+        "state_mutation_performed",
+        "proof_committed",
+        "governance_proof_accepted",
+        "unsupported_op_ignored",
+        "connector_call_performed",
+        "external_write_performed",
+        "file_write_performed",
+        "raw_trace_stored",
+        "raw_state_stored",
+        "raw_secret_value_stored",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_kernel_execution_performed": {"type": "boolean"},
+        "subprocess_execution_performed": {"type": "boolean"},
+        "external_repo_read_performed": {"type": "boolean"},
+        "instruction_replay_performed": {"type": "boolean"},
+        "state_mutation_performed": {"type": "boolean"},
+        "proof_committed": {"type": "boolean"},
+        "governance_proof_accepted": {"type": "boolean"},
+        "unsupported_op_ignored": {"type": "boolean"},
+        "connector_call_performed": {"type": "boolean"},
+        "external_write_performed": {"type": "boolean"},
+        "file_write_performed": {"type": "boolean"},
+        "raw_trace_stored": {"type": "boolean"},
+        "raw_state_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "trace_integrity_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest_refs_required",
+        "state_hashes_required",
+        "unsupported_ops_declared",
+        "raw_trace_retained",
+        "raw_state_retained",
+        "private_payload_redacted",
+        "operator_review_required",
+        "adapter_gap_review_required",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "digest_refs_required": {"type": "boolean"},
+        "state_hashes_required": {"type": "boolean"},
+        "unsupported_ops_declared": {"type": "boolean"},
+        "raw_trace_retained": {"type": "boolean"},
+        "raw_state_retained": {"type": "boolean"},
+        "private_payload_redacted": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "adapter_gap_review_required": {"type": "boolean"},
+        "retention_policy_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sccml_trace_adapter_witness_schema",
+        "kernel_proof_schema",
+        "trace_entry_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "sccml_trace_adapter_witness_schema": {"type": "string", "minLength": 1},
+        "kernel_proof_schema": {"type": "string", "minLength": 1},
+        "trace_entry_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_only",
+        "kernel_authority_denied",
+        "unsupported_ops_gap_declared",
+        "authority_denial_count",
+        "integrity_guard_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "witness_only": {"type": "boolean"},
+        "kernel_authority_denied": {"type": "boolean"},
+        "unsupported_ops_gap_declared": {"type": "boolean"},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "integrity_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

@@ -811,6 +811,13 @@
       ]
     },
     {
+      "action_id": "publish_sccml_trace_adapter_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "sccml_trace_adapter_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1182,7 +1189,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 123,
+      "action_proof": 124,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
@@ -1190,7 +1197,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 149,
+      "audit_chain": 150,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1198,21 +1205,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 106
+      "witnessed": 107
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 122
+      "request_proof": 123
     },
-    "surface_count": 152
+    "surface_count": 153
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 152,
+      "strong": 153,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9584,6 +9591,64 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/sccml_trace_adapter_witness.schema.json",
+        "examples/sccml_trace_adapter_witness.foundation.json",
+        "scripts/validate_sccml_trace_adapter_witness.py",
+        "tests/test_validate_sccml_trace_adapter_witness.py",
+        "schemas/kernel_proof.schema.json",
+        "schemas/trace_entry.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/90_sccml_trace_adapter_witness_contract.md"
+      ],
+      "notes": "SCCML trace adapter witnesses bind instruction-trace digest refs, pre-state and post-state hash refs, proof digest refs, unsupported-operation gap refs, KernelProof refs, TraceEntry refs, UAO refs, LifeMeaningJudgment refs, integrity guards, and authority-denial flags before SCCML traces can become governance proof.",
+      "representative_paths": [
+        "SccmlTraceAdapterWitness",
+        "validate_sccml_trace_adapter_witness",
+        "sccml_trace_adapter_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "sccml_trace_adapter_witness_blocks_kernel_authority": [
+          "sccml_trace_adapter_witness_passes",
+          "sccml_trace_adapter_witness_rejects_authority_drift"
+        ],
+        "sccml_trace_adapter_witness_rejects_raw_trace_retention": [
+          "sccml_trace_adapter_witness_rejects_raw_trace_and_state_retention"
+        ],
+        "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift": [
+          "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift"
+        ],
+        "sccml_trace_adapter_witness_rejects_unsupported_op_silence": [
+          "sccml_trace_adapter_witness_rejects_unsupported_op_silence"
+        ],
+        "sccml_trace_adapter_witness_requires_digest_refs": [
+          "sccml_trace_adapter_witness_passes",
+          "sccml_trace_adapter_witness_rejects_digest_and_scope_drift"
+        ],
+        "sccml_trace_adapter_witness_schema_valid": [
+          "sccml_trace_adapter_witness_passes"
+        ],
+        "sccml_trace_adapter_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_sccml_trace_adapter_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "sccml_trace_adapter_witness_schema_valid",
+        "sccml_trace_adapter_witness_blocks_kernel_authority",
+        "sccml_trace_adapter_witness_requires_digest_refs",
+        "sccml_trace_adapter_witness_rejects_unsupported_op_silence",
+        "sccml_trace_adapter_witness_rejects_raw_trace_retention",
+        "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift",
+        "sccml_trace_adapter_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "sccml_trace_adapter_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -13032,8 +13097,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1664,
-    "runtime_witness_count": 1664,
+    "exact_test_anchor_count": 1671,
+    "runtime_witness_count": 1671,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20402,6 +20467,59 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "trusted_capture_evidence_packet",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_passes"
+            ],
+            "witness": "sccml_trace_adapter_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_passes",
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_rejects_authority_drift"
+            ],
+            "witness": "sccml_trace_adapter_witness_blocks_kernel_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_passes",
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_rejects_digest_and_scope_drift"
+            ],
+            "witness": "sccml_trace_adapter_witness_requires_digest_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_rejects_unsupported_op_silence"
+            ],
+            "witness": "sccml_trace_adapter_witness_rejects_unsupported_op_silence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_rejects_raw_trace_and_state_retention"
+            ],
+            "witness": "sccml_trace_adapter_witness_rejects_raw_trace_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_sccml_trace_adapter_witness.py::test_sdlc_requirement_and_design_validate_for_sccml_trace_adapter_witness"
+            ],
+            "witness": "sccml_trace_adapter_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "sccml_trace_adapter_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
