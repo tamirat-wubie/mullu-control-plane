@@ -804,6 +804,13 @@
       ]
     },
     {
+      "action_id": "publish_trusted_capture_evidence_packet_contract",
+      "status": "closed",
+      "surfaces": [
+        "trusted_capture_evidence_packet"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1175,7 +1182,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 122,
+      "action_proof": 123,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
@@ -1183,7 +1190,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 148,
+      "audit_chain": 149,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1191,21 +1198,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 105
+      "witnessed": 106
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 121
+      "request_proof": 122
     },
-    "surface_count": 151
+    "surface_count": 152
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 151,
+      "strong": 152,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9522,6 +9529,61 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/trusted_capture_evidence_packet.schema.json",
+        "examples/trusted_capture_evidence_packet.foundation.json",
+        "scripts/validate_trusted_capture_evidence_packet.py",
+        "tests/test_validate_trusted_capture_evidence_packet.py",
+        "schemas/capture_policy_decision_ledger.schema.json",
+        "schemas/evidence_classification_manifest.schema.json",
+        "schemas/browser_observation_receipt.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/89_trusted_capture_evidence_packet_contract.md"
+      ],
+      "notes": "Trusted capture evidence packets bind source-surface hash evidence, capture policy refs, evidence classification refs, browser observation refs, UAO refs, LifeMeaningJudgment refs, digest-only capture artifact refs, privacy guards, and authority-denial flags before capture evidence can become operator evidence.",
+      "representative_paths": [
+        "TrustedCaptureEvidencePacket",
+        "validate_trusted_capture_evidence_packet",
+        "trusted_capture_evidence_packet.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "trusted_capture_evidence_packet_blocks_capture_authority": [
+          "trusted_capture_evidence_packet_passes",
+          "trusted_capture_evidence_packet_rejects_authority_drift"
+        ],
+        "trusted_capture_evidence_packet_rejects_raw_media_retention": [
+          "trusted_capture_evidence_packet_rejects_raw_media_retention"
+        ],
+        "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift": [
+          "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+        ],
+        "trusted_capture_evidence_packet_requires_digest_refs": [
+          "trusted_capture_evidence_packet_passes",
+          "trusted_capture_evidence_packet_rejects_digest_and_scope_drift"
+        ],
+        "trusted_capture_evidence_packet_schema_valid": [
+          "trusted_capture_evidence_packet_passes"
+        ],
+        "trusted_capture_evidence_packet_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_trusted_capture_evidence_packet"
+        ]
+      },
+      "runtime_witnesses": [
+        "trusted_capture_evidence_packet_schema_valid",
+        "trusted_capture_evidence_packet_blocks_capture_authority",
+        "trusted_capture_evidence_packet_requires_digest_refs",
+        "trusted_capture_evidence_packet_rejects_raw_media_retention",
+        "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift",
+        "trusted_capture_evidence_packet_sdlc_artifacts_valid"
+      ],
+      "surface_id": "trusted_capture_evidence_packet"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -12970,8 +13032,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1658,
-    "runtime_witness_count": 1658,
+    "exact_test_anchor_count": 1664,
+    "runtime_witness_count": 1664,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20293,6 +20355,53 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "browser_observation_receipt",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_passes"
+            ],
+            "witness": "trusted_capture_evidence_packet_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_passes",
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_authority_drift"
+            ],
+            "witness": "trusted_capture_evidence_packet_blocks_capture_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_passes",
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_digest_and_scope_drift"
+            ],
+            "witness": "trusted_capture_evidence_packet_requires_digest_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_raw_media_retention"
+            ],
+            "witness": "trusted_capture_evidence_packet_rejects_raw_media_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_trusted_capture_evidence_packet.py::test_sdlc_requirement_and_design_validate_for_trusted_capture_evidence_packet"
+            ],
+            "witness": "trusted_capture_evidence_packet_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "trusted_capture_evidence_packet",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trusted-capture-evidence-packet:1",
+  "title": "Trusted Capture Evidence Packet",
+  "description": "Digest-only, non-capturing evidence packet for browser, screen, video, audio, sensor, or manual capture surfaces before any live capture authority is considered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "packet_version",
+    "generated_at",
+    "capture_scope",
+    "capture_artifacts",
+    "authority_boundary",
+    "privacy_guard",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "minLength": 1},
+    "packet_version": {"const": "trusted_capture_evidence_packet.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "capture_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_surface_hash",
+        "surface_redaction_policy",
+        "capture_mode",
+        "capture_surface",
+        "consent_scope",
+        "consent_ref",
+        "tenant_scope",
+        "capture_policy_ref",
+        "evidence_classification_ref",
+        "uao_ref"
+      ],
+      "properties": {
+        "source_surface_hash": {"type": "string", "minLength": 1},
+        "surface_redaction_policy": {
+          "type": "string",
+          "enum": [
+            "digest_only_no_raw_surface",
+            "operator_redacted_surface_ref"
+          ]
+        },
+        "capture_mode": {
+          "type": "string",
+          "enum": [
+            "dry_run_operator_supplied_digest",
+            "dry_run_digest_replay",
+            "manual_capture_digest"
+          ]
+        },
+        "capture_surface": {
+          "type": "string",
+          "enum": [
+            "browser",
+            "screen",
+            "video",
+            "audio",
+            "sensor",
+            "manual_capture"
+          ]
+        },
+        "consent_scope": {
+          "type": "string",
+          "enum": [
+            "operator_local_explicit",
+            "sandbox_only_observation"
+          ]
+        },
+        "consent_ref": {"type": "string", "minLength": 1},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "capture_policy_ref": {"type": "string", "minLength": 1},
+        "evidence_classification_ref": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "capture_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface_digest_ref",
+        "frame_digest_ref",
+        "media_digest_ref",
+        "transcript_digest_ref",
+        "sensor_digest_ref",
+        "artifact_manifest_ref",
+        "browser_observation_ref"
+      ],
+      "properties": {
+        "surface_digest_ref": {"type": "string", "minLength": 1},
+        "frame_digest_ref": {"type": "string", "minLength": 1},
+        "media_digest_ref": {"type": "string", "minLength": 1},
+        "transcript_digest_ref": {"type": "string", "minLength": 1},
+        "sensor_digest_ref": {"type": "string", "minLength": 1},
+        "artifact_manifest_ref": {"type": "string", "minLength": 1},
+        "browser_observation_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_capture_performed",
+        "media_recording_performed",
+        "screen_recording_performed",
+        "microphone_capture_performed",
+        "camera_capture_performed",
+        "sensor_read_performed",
+        "file_write_performed",
+        "connector_call_performed",
+        "external_write_performed",
+        "raw_media_stored",
+        "raw_source_body_stored",
+        "raw_secret_value_stored",
+        "publication_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_capture_performed": {"type": "boolean"},
+        "media_recording_performed": {"type": "boolean"},
+        "screen_recording_performed": {"type": "boolean"},
+        "microphone_capture_performed": {"type": "boolean"},
+        "camera_capture_performed": {"type": "boolean"},
+        "sensor_read_performed": {"type": "boolean"},
+        "file_write_performed": {"type": "boolean"},
+        "connector_call_performed": {"type": "boolean"},
+        "external_write_performed": {"type": "boolean"},
+        "raw_media_stored": {"type": "boolean"},
+        "raw_source_body_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "publication_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "privacy_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_surface_stored",
+        "raw_media_stored",
+        "raw_audio_stored",
+        "raw_sensor_payload_stored",
+        "raw_secret_value_stored",
+        "private_payload_redacted",
+        "operator_review_required",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "raw_surface_stored": {"type": "boolean"},
+        "raw_media_stored": {"type": "boolean"},
+        "raw_audio_stored": {"type": "boolean"},
+        "raw_sensor_payload_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "private_payload_redacted": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "retention_policy_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trusted_capture_evidence_packet_schema",
+        "capture_policy_decision_ledger_schema",
+        "evidence_classification_manifest_schema",
+        "browser_observation_receipt_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "trusted_capture_evidence_packet_schema": {"type": "string", "minLength": 1},
+        "capture_policy_decision_ledger_schema": {"type": "string", "minLength": 1},
+        "evidence_classification_manifest_schema": {"type": "string", "minLength": 1},
+        "browser_observation_receipt_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest_only",
+        "capture_authority_denied",
+        "authority_denial_count",
+        "privacy_guard_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "digest_only": {"type": "boolean"},
+        "capture_authority_denied": {"type": "boolean"},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "privacy_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

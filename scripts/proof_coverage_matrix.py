@@ -5942,6 +5942,61 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "trusted_capture_evidence_packet",
+            [
+                "TrustedCaptureEvidencePacket",
+                "validate_trusted_capture_evidence_packet",
+                "trusted_capture_evidence_packet.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/trusted_capture_evidence_packet.schema.json",
+                "examples/trusted_capture_evidence_packet.foundation.json",
+                "scripts/validate_trusted_capture_evidence_packet.py",
+                "tests/test_validate_trusted_capture_evidence_packet.py",
+                "schemas/capture_policy_decision_ledger.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/browser_observation_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/89_trusted_capture_evidence_packet_contract.md",
+            ],
+            "Trusted capture evidence packets bind source-surface hash evidence, capture policy refs, evidence classification refs, browser observation refs, UAO refs, LifeMeaningJudgment refs, digest-only capture artifact refs, privacy guards, and authority-denial flags before capture evidence can become operator evidence.",
+            [
+                "trusted_capture_evidence_packet_schema_valid",
+                "trusted_capture_evidence_packet_blocks_capture_authority",
+                "trusted_capture_evidence_packet_requires_digest_refs",
+                "trusted_capture_evidence_packet_rejects_raw_media_retention",
+                "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift",
+                "trusted_capture_evidence_packet_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "trusted_capture_evidence_packet_schema_valid": [
+                    "trusted_capture_evidence_packet_passes"
+                ],
+                "trusted_capture_evidence_packet_blocks_capture_authority": [
+                    "trusted_capture_evidence_packet_passes",
+                    "trusted_capture_evidence_packet_rejects_authority_drift",
+                ],
+                "trusted_capture_evidence_packet_requires_digest_refs": [
+                    "trusted_capture_evidence_packet_passes",
+                    "trusted_capture_evidence_packet_rejects_digest_and_scope_drift",
+                ],
+                "trusted_capture_evidence_packet_rejects_raw_media_retention": [
+                    "trusted_capture_evidence_packet_rejects_raw_media_retention"
+                ],
+                "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift": [
+                    "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+                ],
+                "trusted_capture_evidence_packet_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_trusted_capture_evidence_packet"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -10012,6 +10067,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_browser_observation_receipt_contract",
             "surfaces": ["browser_observation_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_trusted_capture_evidence_packet_contract",
+            "surfaces": ["trusted_capture_evidence_packet"],
             "status": "closed",
         },
         {
