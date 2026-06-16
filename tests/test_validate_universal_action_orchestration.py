@@ -145,7 +145,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             whqr_replay_binding["properties"]["canonical_hash"]["pattern"],
         )
         self.assertEqual(
-            "^\\d+\\.\\d+\\.\\d+$",
+            "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
             whqr_replay_binding["properties"]["version"]["pattern"],
         )
 
@@ -566,6 +566,54 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         )
         self.assertEqual(
             "draft",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
+        )
+
+    def test_whqr_replay_binding_rejects_leading_zero_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
+            "canonical_hash": "sha256:expected-canonical-hash",
+            "semantics_hash": "sha256:expected-semantics",
+            "version": "01.002.0003",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "01.002.0003",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
+        )
+
+    def test_whqr_replay_binding_rejects_non_ascii_decimal_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:expected-canonical-hash",
+            "canonical_hash": "sha256:expected-canonical-hash",
+            "semantics_hash": "sha256:expected-semantics",
+            "version": "\u0661.2.3",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertEqual(
+            "\u0661.2.3",
             invalid_record["closure"]["whqr_replay_binding"]["version"],
         )
 

@@ -521,7 +521,13 @@ def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
 
 def _valid_whqr_semver(version: str) -> bool:
     parts = version.split(".")
-    return len(parts) == 3 and all(part.isdigit() for part in parts)
+    return len(parts) == 3 and all(_valid_semver_core_identifier(part) for part in parts)
+
+
+def _valid_semver_core_identifier(value: str) -> bool:
+    if not value.isascii() or not value.isdecimal():
+        return False
+    return value == "0" or not value.startswith("0")
 
 
 def _valid_sha256_digest_ref(value: str) -> bool:
