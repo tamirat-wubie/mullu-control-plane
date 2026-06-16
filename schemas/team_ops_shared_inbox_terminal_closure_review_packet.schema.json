@@ -12,6 +12,9 @@
     "source_sent_message_observation_receipt_id",
     "sent_message_observation_receipt_valid",
     "sent_message_observation_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
     "status",
     "solver_outcome",
     "proof_state",
@@ -71,6 +74,12 @@
     "source_sent_message_observation_receipt_id": { "type": "string" },
     "sent_message_observation_receipt_valid": { "type": "boolean" },
     "sent_message_observation_receipt_ready": { "type": "boolean" },
+    "provider_observation_receipt_ref": { "type": "string" },
+    "provider_observation_receipt_id": {
+      "type": "string",
+      "pattern": "^$|^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "provider_observation_receipt_valid": { "type": "boolean" },
     "status": { "type": "string", "enum": ["blocked", "failed", "passed"] },
     "solver_outcome": {
       "type": "string",
@@ -148,6 +157,11 @@
         "properties": {
           "sent_message_observation_receipt_valid": { "const": true },
           "sent_message_observation_receipt_ready": { "const": true },
+          "provider_observation_receipt_ref": { "minLength": 1 },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": { "const": true },
           "solver_outcome": { "const": "SolvedVerified" },
           "proof_state": { "const": "Pass" },
           "closure_review_state": { "const": "assembled" },
@@ -167,13 +181,13 @@
           "replay_ref": { "minLength": 1 },
           "replay_hash": { "pattern": "^[0-9a-f]{64}$" },
           "deterministic_replay_observed": { "const": true },
-          "required_terminal_evidence_refs": { "minItems": 8 },
+          "required_terminal_evidence_refs": { "minItems": 9 },
           "approval_chain_reviewed": { "const": true },
           "send_execution_reviewed": { "const": true },
           "sent_message_observation_reviewed": { "const": true },
           "duplicate_absence_reviewed": { "const": true },
           "deterministic_replay_reviewed": { "const": true },
-          "evidence_refs": { "minItems": 8 },
+          "evidence_refs": { "minItems": 9 },
           "blocked_until": { "maxItems": 0 }
         }
       }

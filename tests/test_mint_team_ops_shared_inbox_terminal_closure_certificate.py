@@ -178,6 +178,7 @@ def _blocked_review_packet() -> dict[str, object]:
 def _ready_review_packet() -> dict[str, object]:
     evidence_refs = [
         ".change_assurance/team_ops_shared_inbox_send_execution_receipt.json",
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
         "send-execution:aaaaaaaaaaaaaaaa",
         "dispatch-receipt:aaaaaaaaaaaaaaaa",
         "provider-message:aaaaaaaaaaaaaaaa",
@@ -189,6 +190,9 @@ def _ready_review_packet() -> dict[str, object]:
     return _base_review_packet() | {
         "sent_message_observation_receipt_valid": True,
         "sent_message_observation_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -232,6 +236,9 @@ def _base_review_packet() -> dict[str, object]:
         "source_sent_message_observation_receipt_id": (
             "teamops-shared-inbox-sent-message-observation-receipt-aaaaaaaaaaaaaaaa"
         ),
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "reviewed_at": "2026-06-14T00:00:00+00:00",
         "terminal_closure_certificate_required": True,
         "review_performed_by_producer": False,

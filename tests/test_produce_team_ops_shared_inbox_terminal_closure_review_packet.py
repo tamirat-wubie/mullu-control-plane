@@ -7,6 +7,7 @@ duplicate-action protection, and no-effect/no-production-claim constraints.
 Dependencies: scripts.produce_team_ops_shared_inbox_terminal_closure_review_packet.
 Invariants:
   - Blocked sent-message observation keeps terminal review blocked.
+  - Ready terminal review retains provider-observation receipt identity.
   - Ready terminal review requires complete redacted evidence refs and hashes.
   - The producer never performs provider effects or mints a closure certificate.
 """
@@ -44,6 +45,9 @@ def test_team_ops_terminal_closure_review_blocks_without_observation_ready(tmp_p
     assert packet.proof_state == "Unknown"
     assert packet.sent_message_observation_receipt_valid is True
     assert packet.sent_message_observation_receipt_ready is False
+    assert packet.provider_observation_receipt_ref == ""
+    assert packet.provider_observation_receipt_id == ""
+    assert packet.provider_observation_receipt_valid is False
     assert packet.closure_review_ready is False
     assert packet.terminal_closure_candidate_ready is False
     assert packet.terminal_closure_certificate_required is True
@@ -70,7 +74,13 @@ def test_team_ops_terminal_closure_review_accepts_ready_observation(tmp_path: Pa
     assert packet.terminal_closure_candidate_ready is True
     assert packet.review_packet_ref.startswith("teamops-terminal-closure-review:")
     assert len(packet.review_packet_hash) == 64
-    assert len(packet.required_terminal_evidence_refs) >= 8
+    assert packet.provider_observation_receipt_ref == ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    assert packet.provider_observation_receipt_id == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    assert packet.provider_observation_receipt_valid is True
+    assert len(packet.required_terminal_evidence_refs) >= 9
+    assert ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json" in (
+        packet.required_terminal_evidence_refs
+    )
     assert packet.approval_chain_reviewed is True
     assert packet.sent_message_observation_reviewed is True
     assert packet.report_is_not_terminal_closure is True
@@ -130,6 +140,7 @@ def test_team_ops_terminal_closure_review_cli_writes_packet(tmp_path: Path, caps
     assert exit_code == 0
     assert payload["status"] == "passed"
     assert payload["terminal_closure_candidate_ready"] is True
+    assert payload["provider_observation_receipt_valid"] is True
     assert payload["terminal_closure_certificate_minted_by_producer"] is False
     assert stdout_payload["receipt_id"] == payload["receipt_id"]
     assert captured.err == ""

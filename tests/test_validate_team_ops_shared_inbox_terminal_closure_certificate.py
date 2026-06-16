@@ -225,6 +225,7 @@ def _ready_certificate() -> dict[str, object]:
         "teamops-terminal-closure-review:aaaaaaaaaaaaaaaa",
         ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt.json",
         ".change_assurance/team_ops_shared_inbox_send_execution_receipt.json",
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
         "send-execution:aaaaaaaaaaaaaaaa",
         "dispatch-receipt:aaaaaaaaaaaaaaaa",
         "provider-message:aaaaaaaaaaaaaaaa",
@@ -271,6 +272,11 @@ def _ready_certificate() -> dict[str, object]:
             "source_sent_message_observation_receipt_ref": (
                 ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt.json"
             ),
+            "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+            "provider_observation_receipt_ref": (
+                ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+            ),
+            "provider_observation_receipt_valid": True,
             "approval_chain_reviewed": True,
             "send_execution_reviewed": True,
             "sent_message_observation_reviewed": True,
@@ -295,6 +301,7 @@ def _ready_certificate() -> dict[str, object]:
 def _ready_review_packet() -> dict[str, object]:
     evidence_refs = [
         ".change_assurance/team_ops_shared_inbox_send_execution_receipt.json",
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
         "send-execution:aaaaaaaaaaaaaaaa",
         "dispatch-receipt:aaaaaaaaaaaaaaaa",
         "provider-message:aaaaaaaaaaaaaaaa",
@@ -315,6 +322,9 @@ def _ready_review_packet() -> dict[str, object]:
         ),
         "sent_message_observation_receipt_valid": True,
         "sent_message_observation_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",

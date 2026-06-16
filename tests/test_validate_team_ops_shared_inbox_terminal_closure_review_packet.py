@@ -8,6 +8,7 @@ duplicate-action protection, redaction, and no-terminal-closure-overclaim.
 Dependencies: scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet.
 Invariants:
   - Ready review packets require complete sent-message observation evidence.
+  - Ready review packets retain provider-observation receipt identity.
   - Review readiness is not terminal certificate minting.
   - Raw message/provider fields and producer effect claims are rejected.
 """
@@ -44,6 +45,7 @@ def test_team_ops_terminal_closure_review_validator_accepts_blocked_packet(tmp_p
     assert validation.status == "blocked"
     assert validation.solver_outcome == "AwaitingEvidence"
     assert validation.proof_state == "Unknown"
+    assert validation.provider_observation_receipt_valid is False
     assert validation.terminal_closure_certificate_required is True
     assert validation.blocked_until == ("sent_message_observation_receipt_not_ready",)
     assert validation.errors == ()
@@ -81,7 +83,8 @@ def test_team_ops_terminal_closure_review_validator_accepts_ready_packet(tmp_pat
     assert validation.status == "passed"
     assert validation.solver_outcome == "SolvedVerified"
     assert validation.proof_state == "Pass"
-    assert validation.required_terminal_evidence_count == 8
+    assert validation.provider_observation_receipt_valid is True
+    assert validation.required_terminal_evidence_count == 9
     assert validation.closure_review_ready is True
     assert validation.terminal_closure_candidate_ready is True
     assert validation.next_action == "mint TeamOps terminal closure certificate from reviewed packet"
@@ -101,6 +104,35 @@ def test_team_ops_terminal_closure_review_validator_rejects_certificate_mint_cla
     assert validation.ready is False
     assert "terminal_closure_certificate_minted_by_producer must be false" in validation.errors
     assert len(validation.errors) >= 1
+
+
+def test_team_ops_terminal_closure_review_validator_rejects_missing_provider_witness(tmp_path: Path) -> None:
+    packet_path = tmp_path / "team_ops_shared_inbox_terminal_closure_review_packet.json"
+    packet = _ready_packet() | {
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
+    }
+    packet["required_terminal_evidence_refs"] = [
+        ref
+        for ref in packet["required_terminal_evidence_refs"]
+        if ref != ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    ]
+    packet["evidence_refs"] = [
+        ref for ref in packet["evidence_refs"] if ref != ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    ]
+    packet_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_terminal_closure_review_packet(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "passed packet requires provider_observation_receipt_ref" in validation.errors
+    assert "passed packet requires provider_observation_receipt_id" in validation.errors
+    assert "passed packet requires provider_observation_receipt_valid=true" in validation.errors
 
 
 def test_team_ops_terminal_closure_review_validator_rejects_raw_provider_field(tmp_path: Path) -> None:
@@ -240,6 +272,7 @@ def _blocked_packet() -> dict[str, object]:
 def _ready_packet() -> dict[str, object]:
     evidence_refs = [
         ".change_assurance/team_ops_shared_inbox_send_execution_receipt.json",
+        ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
         "send-execution:aaaaaaaaaaaaaaaa",
         "dispatch-receipt:aaaaaaaaaaaaaaaa",
         "provider-message:aaaaaaaaaaaaaaaa",
@@ -251,6 +284,9 @@ def _ready_packet() -> dict[str, object]:
     return _base_packet() | {
         "sent_message_observation_receipt_valid": True,
         "sent_message_observation_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -294,6 +330,9 @@ def _base_packet() -> dict[str, object]:
         "source_sent_message_observation_receipt_id": (
             "teamops-shared-inbox-sent-message-observation-receipt-aaaaaaaaaaaaaaaa"
         ),
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "reviewed_at": "2026-06-14T00:00:00+00:00",
         "terminal_closure_certificate_required": True,
         "review_performed_by_producer": False,
