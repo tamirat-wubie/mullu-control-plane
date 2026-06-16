@@ -7,7 +7,8 @@ Governance scope: TeamOps approval decision recording, separation of duty,
 redacted evidence, and external-effect rejection.
 Dependencies: schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json.
 Invariants:
-  - Ready decision receipts require a ready approval queue receipt.
+  - Ready decision receipts require a ready approval queue receipt and retained
+    provider-observation witness identity.
   - Approved decisions authorize only a later separate send receipt.
   - Draft creation, external sends, mailbox writes, provider mutations, raw
     message content, raw decision text, and secret markers fail closed.
@@ -45,6 +46,9 @@ DEFAULT_VALIDATION_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_approval_decision_receipt_validation.json"
 )
 RECEIPT_ID_PATTERN = re.compile(r"^teamops-shared-inbox-approval-decision-receipt-[0-9a-f]{16}$")
+PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN = re.compile(
+    r"^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+)
 RAW_FIELD_NAMES = {
     "raw_subject",
     "subject",
@@ -82,6 +86,7 @@ class TeamOpsSharedInboxApprovalDecisionReceiptValidation:
     solver_outcome: str
     proof_state: str
     approval_queue_receipt_ready: bool
+    provider_observation_receipt_valid: bool
     decision: str
     approval_state: str
     external_send_authorized_by_decision: bool
@@ -129,6 +134,7 @@ def validate_team_ops_shared_inbox_approval_decision_receipt(
         solver_outcome=str(receipt.get("solver_outcome", "")),
         proof_state=str(receipt.get("proof_state", "")),
         approval_queue_receipt_ready=receipt.get("approval_queue_receipt_ready") is True,
+        provider_observation_receipt_valid=receipt.get("provider_observation_receipt_valid") is True,
         decision=str(receipt.get("decision", "")),
         approval_state=str(receipt.get("approval_state", "")),
         external_send_authorized_by_decision=receipt.get("external_send_authorized_by_decision") is True,
@@ -183,6 +189,12 @@ def _validate_ready_receipt(receipt: dict[str, Any], errors: list[str]) -> None:
         errors.append("passed receipt requires valid approval queue receipt")
     if receipt.get("approval_queue_receipt_ready") is not True:
         errors.append("passed receipt requires ready approval queue receipt")
+    if not str(receipt.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("passed receipt requires provider_observation_receipt_ref")
+    if not _valid_provider_observation_receipt_id(receipt):
+        errors.append("passed receipt requires provider_observation_receipt_id")
+    if receipt.get("provider_observation_receipt_valid") is not True:
+        errors.append("passed receipt requires provider_observation_receipt_valid=true")
     if receipt.get("solver_outcome") != "SolvedVerified":
         errors.append("passed receipt requires solver_outcome=SolvedVerified")
     if receipt.get("proof_state") != "Pass":
@@ -242,6 +254,9 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and receipt.get("proof_state") == "Pass"
         and receipt.get("approval_queue_receipt_valid") is True
         and receipt.get("approval_queue_receipt_ready") is True
+        and bool(str(receipt.get("provider_observation_receipt_ref", "")).strip())
+        and _valid_provider_observation_receipt_id(receipt)
+        and receipt.get("provider_observation_receipt_valid") is True
         and receipt.get("approval_queue_id") == APPROVAL_QUEUE_ID
         and bool(str(receipt.get("approval_request_ref", "")).strip())
         and receipt.get("required_approver_role") in APPROVER_ROLES
@@ -258,6 +273,15 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and isinstance(receipt.get("evidence_refs"), list)
         and bool(receipt.get("evidence_refs"))
         and receipt.get("blocked_until") == []
+    )
+
+
+def _valid_provider_observation_receipt_id(receipt: dict[str, Any]) -> bool:
+    return (
+        PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+            str(receipt.get("provider_observation_receipt_id", ""))
+        )
+        is not None
     )
 
 

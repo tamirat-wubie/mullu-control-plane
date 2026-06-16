@@ -12,6 +12,9 @@
     "source_approval_queue_receipt_id",
     "approval_queue_receipt_valid",
     "approval_queue_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
     "status",
     "solver_outcome",
     "proof_state",
@@ -65,6 +68,15 @@
       "type": "boolean"
     },
     "approval_queue_receipt_ready": {
+      "type": "boolean"
+    },
+    "provider_observation_receipt_ref": {
+      "type": "string"
+    },
+    "provider_observation_receipt_id": {
+      "type": "string"
+    },
+    "provider_observation_receipt_valid": {
       "type": "boolean"
     },
     "status": {
@@ -203,6 +215,15 @@
             "const": true
           },
           "approval_queue_receipt_ready": {
+            "const": true
+          },
+          "provider_observation_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": {
             "const": true
           },
           "solver_outcome": {

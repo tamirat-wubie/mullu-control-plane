@@ -44,6 +44,7 @@ def test_team_ops_shared_inbox_approval_decision_validation_accepts_blocked_rece
     assert validation.solver_outcome == "AwaitingEvidence"
     assert validation.proof_state == "Unknown"
     assert validation.approval_queue_receipt_ready is False
+    assert validation.provider_observation_receipt_valid is False
     assert validation.external_send_authorized_by_decision is False
     assert validation.blocked_until == ("approval_queue_receipt_not_ready",)
 
@@ -81,6 +82,7 @@ def test_team_ops_shared_inbox_approval_decision_validation_accepts_approved_rec
     assert validation.ready is True
     assert validation.status == "passed"
     assert validation.decision == "approved"
+    assert validation.provider_observation_receipt_valid is True
     assert validation.approval_state == "approved"
     assert validation.external_send_authorized_by_decision is True
     assert validation.next_action == "prepare separate TeamOps send-preparation receipt before any external send"
@@ -166,6 +168,29 @@ def test_team_ops_shared_inbox_approval_decision_validation_rejects_missing_evid
     assert validation.valid is False
     assert validation.ready is False
     assert "passed receipt requires decision_evidence_ref" in validation.errors
+
+
+def test_team_ops_shared_inbox_approval_decision_validation_rejects_missing_provider_observation(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "team_ops_shared_inbox_approval_decision_receipt.json"
+    payload = _approved_receipt() | {
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_approval_decision_receipt(
+        receipt_path=receipt_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "passed receipt requires provider_observation_receipt_ref" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_id" in validation.errors
+    assert "passed receipt requires provider_observation_receipt_valid=true" in validation.errors
 
 
 def test_team_ops_shared_inbox_approval_decision_validation_rejects_role_mismatch(
@@ -300,6 +325,9 @@ def _approved_receipt() -> dict[str, object]:
     return _base_receipt() | {
         "approval_queue_receipt_valid": True,
         "approval_queue_receipt_ready": True,
+        "provider_observation_receipt_ref": ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json",
+        "provider_observation_receipt_id": "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_valid": True,
         "status": "passed",
         "solver_outcome": "SolvedVerified",
         "proof_state": "Pass",
@@ -327,6 +355,9 @@ def _base_receipt() -> dict[str, object]:
         "workflow_id": "team_ops.shared_inbox_triage",
         "source_approval_queue_receipt_ref": ".change_assurance/team_ops_shared_inbox_approval_queue_receipt.json",
         "source_approval_queue_receipt_id": "teamops-shared-inbox-approval-queue-receipt-aaaaaaaaaaaaaaaa",
+        "provider_observation_receipt_ref": "",
+        "provider_observation_receipt_id": "",
+        "provider_observation_receipt_valid": False,
         "decided_at": "2026-06-14T00:00:00+00:00",
         "approval_decision_performed_by_producer": False,
         "requires_separate_send_receipt": True,
