@@ -1,0 +1,889 @@
+{
+  "receipt_id": "personal-assistant-authority-coverage-8f3f740417ae2757",
+  "schema_version": "personal_assistant.authority_coverage_receipt.v1",
+  "generated_at": "2026-06-16T16:37:37Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "source_refs": [
+    {
+      "source_id": "personal_assistant_skill_registry",
+      "source_ref": "examples/personal_assistant_skill_registry.json",
+      "source_kind": "skill_registry",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_approval_matrix",
+      "source_ref": "governance/personal_assistant_approval_matrix.yaml",
+      "source_kind": "approval_matrix",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_skill_policy",
+      "source_ref": "governance/personal_assistant_skill_policy.yaml",
+      "source_kind": "skill_policy",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_capability_pack",
+      "source_ref": "capabilities/personal_assistant/capability_pack.json",
+      "source_kind": "capability_pack",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_coherence_ledger",
+      "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
+      "source_kind": "coherence_ledger",
+      "bound": true
+    }
+  ],
+  "authority_summary": {
+    "authority_coverage_closed": true,
+    "coherence_ledger_closed": true,
+    "skill_count": 15,
+    "capability_count": 12,
+    "risk_level_count": 6,
+    "approval_matrix_levels_bound": true,
+    "skill_policy_levels_bound": true,
+    "all_skills_have_policy_ref": true,
+    "all_skills_have_known_risk_level": true,
+    "all_effect_bearing_skills_require_approval": true,
+    "p4_p5_actions_require_explicit_approval": true,
+    "foundation_execution_disabled": true,
+    "all_capabilities_fixture_only": true,
+    "all_capabilities_candidate_only": true,
+    "all_capabilities_secretless": true,
+    "no_effect_boundary_verified": true,
+    "production_ready": false,
+    "customer_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "risk_level_records": [
+    {
+      "level": "P0",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": [
+        "dry_run",
+        "preview"
+      ],
+      "skill_count": 2,
+      "matrix_bound": true,
+      "policy_bound": true
+    },
+    {
+      "level": "P1",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": [
+        "dry_run",
+        "preview",
+        "read_and_draft_only"
+      ],
+      "skill_count": 4,
+      "matrix_bound": true,
+      "policy_bound": true
+    },
+    {
+      "level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "effect_bearing": false,
+      "explicit_approval_required": false,
+      "allowed_modes": [
+        "dry_run",
+        "preview",
+        "draft",
+        "read_and_draft_only"
+      ],
+      "skill_count": 7,
+      "matrix_bound": true,
+      "policy_bound": true
+    },
+    {
+      "level": "P3",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": [
+        "execute_with_approval",
+        "blocked"
+      ],
+      "skill_count": 0,
+      "matrix_bound": true,
+      "policy_bound": true
+    },
+    {
+      "level": "P4",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P4",
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": [
+        "execute_with_approval",
+        "blocked"
+      ],
+      "skill_count": 1,
+      "matrix_bound": true,
+      "policy_bound": true
+    },
+    {
+      "level": "P5",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P5",
+      "effect_bearing": true,
+      "explicit_approval_required": true,
+      "allowed_modes": [
+        "blocked"
+      ],
+      "skill_count": 1,
+      "matrix_bound": true,
+      "policy_bound": true
+    }
+  ],
+  "skill_authority_records": [
+    {
+      "skill_id": "email.inbox.summarize",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "classify",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "send",
+        "delete",
+        "archive",
+        "forward",
+        "label_batch",
+        "connector_mutation"
+      ],
+      "effect_boundary": {
+        "read_only": true,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "email.response.draft",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "draft",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "send",
+        "forward",
+        "archive",
+        "delete",
+        "connector_mutation"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": true,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "email.send.with_approval",
+      "mode": "approval_required",
+      "risk_level": "P4",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P4",
+      "requires_approval": true,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "send",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "send_without_approval",
+        "recipient_unapproved",
+        "connector_mutation_without_receipt"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": true,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": true,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "calendar.day.brief",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "create_event",
+        "move_event",
+        "cancel_event",
+        "invite_people",
+        "connector_mutation"
+      ],
+      "effect_boundary": {
+        "read_only": true,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "calendar.event.draft",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "draft",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "create_event",
+        "move_event",
+        "cancel_event",
+        "invite_people",
+        "connector_mutation"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": true,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "task.create_draft",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "plan",
+        "draft",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "system_of_record_write",
+        "connector_mutation",
+        "memory_write",
+        "external_submission"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": true,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "document.summarize",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "extract",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "publish",
+        "delete",
+        "external_submission",
+        "system_of_record_write"
+      ],
+      "effect_boundary": {
+        "read_only": true,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "teamops.shared_inbox.plan",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "plan",
+        "prepare_packet",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "send",
+        "archive",
+        "delete",
+        "label_batch",
+        "connector_mutation"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "research.web_search",
+      "mode": "read_only",
+      "risk_level": "P0",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "compare",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "external_submission",
+        "public_post",
+        "paid_subscription_action"
+      ],
+      "effect_boundary": {
+        "read_only": true,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "math.reasoning.plan",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "plan",
+        "compare",
+        "optimize",
+        "ask_clarification",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "pay_invoice",
+        "paid_subscription_action",
+        "system_of_record_write",
+        "connector_mutation",
+        "external_submission",
+        "public_post",
+        "publish",
+        "deploy_service"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "planning.optimize_schedule",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "plan",
+        "optimize",
+        "recommend",
+        "ask_clarification",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "create_event",
+        "move_event",
+        "cancel_event",
+        "invite_people",
+        "message_person",
+        "system_of_record_write",
+        "connector_mutation",
+        "external_submission",
+        "public_post",
+        "pay_invoice",
+        "paid_subscription_action",
+        "deploy_service",
+        "memory_write"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "github.pr.summarize",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "read",
+        "summarize",
+        "recommend",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "open_pull_request",
+        "merge_pull_request",
+        "push_branch",
+        "deploy_service"
+      ],
+      "effect_boundary": {
+        "read_only": true,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "memory.observe",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "memory_observe",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "memory_write",
+        "raw_chat_log_stored",
+        "live_nested_mind_activation"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "personal_assistant.clarification.request",
+      "mode": "planning_only",
+      "risk_level": "P0",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "requires_approval": false,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "ask_clarification",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "send",
+        "delete",
+        "archive",
+        "forward",
+        "connector_mutation",
+        "system_of_record_write"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "deployment.publish.review",
+      "mode": "blocked",
+      "risk_level": "P5",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P5",
+      "requires_approval": true,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "plan",
+        "review_receipt",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "deploy_service",
+        "publish",
+        "public_post",
+        "system_of_record_write"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": false,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": true
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    }
+  ],
+  "capability_authority_records": [
+    {
+      "capability_id": "personal_assistant.intent.interpret",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.skill_plan.build",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.approval.classify",
+      "risk_tier": "medium",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.receipt.project",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.prepare",
+      "risk_tier": "medium",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.review",
+      "risk_tier": "medium",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 6,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.teamops_shared_inbox.plan",
+      "risk_tier": "medium",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 9,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.github_codex.review",
+      "risk_tier": "medium",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 12,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.research.source_compare",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 10,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.math.reasoning_plan",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 11,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.planning.schedule_preview",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 18,
+      "authority_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.clarification.request",
+      "risk_tier": "low",
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "requires_approval": false,
+      "receipt_required": true,
+      "forbidden_effect_count": 4,
+      "authority_covered": true
+    }
+  ],
+  "effect_boundary": {
+    "execution_authority_granted": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "system_of_record_write_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "money_legal_public_allowed": false,
+    "production_ready_claim_allowed": false,
+    "customer_ready_claim_allowed": false,
+    "live_nested_mind_activation_allowed": false
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-authority-coverage-2026-06-16",
+        "reason": "Authority coverage closed for no-effect Foundation Mode hardening without granting execution authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}
