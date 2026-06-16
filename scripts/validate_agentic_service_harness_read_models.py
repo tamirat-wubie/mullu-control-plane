@@ -49,6 +49,16 @@ EXPECTED_COLLECTIONS = (
     "evidence",
     "result_summaries",
 )
+EXPECTED_DURABLE_ENTITY_KINDS = (
+    "User",
+    "Organization",
+    "Project",
+    "RepositoryConnection",
+    "AgentRun",
+    "ApprovalRequest",
+    "Receipt",
+    "LoopStatus",
+)
 DENIAL_FLAGS = (
     "ui_created",
     "mutation_endpoints_admitted",
@@ -57,7 +67,9 @@ DENIAL_FLAGS = (
     "secret_values_serialized",
 )
 READ_ONLY_FALSE_FLAGS = (
+    "append_enabled",
     "mutation_route",
+    "mutation_routes_admitted",
     "executes_transition",
     "emits_receipt",
     "terminal_closure",
@@ -183,6 +195,7 @@ def _validate_read_model_semantics(
     _validate_collection_presence(example, errors, label)
     _validate_projection_scope(example, errors, label)
     _validate_reference_integrity(example, errors, label)
+    _validate_durable_entity_bindings(example, errors, label)
     _validate_complete_high_risk_actions(example, errors, label)
     _validate_read_only_flags(example, errors, label)
     _validate_secret_surface(example, errors, label)
@@ -274,6 +287,57 @@ def _validate_reference_integrity(
         for item in _objects(example.get(collection_name)):
             if item.get(ref_key) not in run_ids:
                 errors.append(f"{label}: {collection_name} {item.get(ref_key)} run ref missing")
+
+
+def _validate_durable_entity_bindings(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    bindings = example.get("durable_entity_bindings")
+    if not isinstance(bindings, dict):
+        errors.append(f"{label}: durable_entity_bindings must be an object")
+        return
+    if bindings.get("read_only") is not True:
+        errors.append(f"{label}: durable_entity_bindings.read_only must be true")
+    for flag_name in ("append_enabled", "mutation_routes_admitted", "secret_values_serialized"):
+        if bindings.get(flag_name) is not False:
+            errors.append(f"{label}: durable_entity_bindings.{flag_name} must remain false")
+    entity_bindings = bindings.get("entity_bindings")
+    if not isinstance(entity_bindings, list):
+        errors.append(f"{label}: durable_entity_bindings.entity_bindings must be a list")
+        return
+    observed_kinds = [
+        str(item.get("entity_kind"))
+        for item in entity_bindings
+        if isinstance(item, dict)
+    ]
+    missing = sorted(set(EXPECTED_DURABLE_ENTITY_KINDS) - set(observed_kinds))
+    extra = sorted(set(observed_kinds) - set(EXPECTED_DURABLE_ENTITY_KINDS))
+    if missing:
+        errors.append(f"{label}: durable entity bindings missing {missing}")
+    if extra:
+        errors.append(f"{label}: durable entity bindings unknown {extra}")
+    if len(observed_kinds) != len(set(observed_kinds)):
+        errors.append(f"{label}: durable entity bindings must not duplicate entity_kind")
+
+    for item in _objects(entity_bindings):
+        entity_kind = item.get("entity_kind")
+        item_label = f"{label}: durable entity binding {entity_kind}"
+        if item.get("write_authority_enabled") is not False:
+            errors.append(f"{item_label} write_authority_enabled must remain false")
+        if item.get("append_enabled") is not False:
+            errors.append(f"{item_label} append_enabled must remain false")
+        if item.get("mutation_route") is not False:
+            errors.append(f"{item_label} mutation_route must remain false")
+        if item.get("secret_values_serialized") is not False:
+            errors.append(f"{item_label} secret_values_serialized must remain false")
+        owner_ref_fields = item.get("owner_ref_fields")
+        if not isinstance(owner_ref_fields, list) or not owner_ref_fields:
+            errors.append(f"{item_label} owner_ref_fields must be a non-empty list")
+        evidence_refs = item.get("evidence_refs")
+        if not isinstance(evidence_refs, list) or not evidence_refs:
+            errors.append(f"{item_label} evidence_refs must be a non-empty list")
 
 
 def _validate_complete_high_risk_actions(

@@ -135,6 +135,7 @@ def project_contract_to_read_model(
             _project_summary(summary)
             for summary in _objects(contract.get("result_summaries"))
         ],
+        "durable_entity_bindings": _project_durable_entity_bindings(contract_ref),
         "permission_snapshot": _project_permission_snapshot(
             _required_mapping(contract.get("permission_model"), "permission_model")
         ),
@@ -266,6 +267,143 @@ def _project_summary(summary: Mapping[str, Any]) -> dict[str, Any]:
         "next_action": summary["next_action"],
         "read_only": True,
         "terminal_closure": False,
+    }
+
+
+def _project_durable_entity_bindings(contract_ref: str) -> dict[str, Any]:
+    return {
+        "store_contract_ref": "scripts/validate_agentic_service_harness_read_model_persistence.py",
+        "store_mode": "append_only_jsonl_rehearsal",
+        "read_only": True,
+        "append_enabled": False,
+        "mutation_routes_admitted": False,
+        "secret_values_serialized": False,
+        "entity_bindings": [
+            _durable_entity_binding(
+                entity_kind="User",
+                record_kind="account",
+                collection_ref="read-model://accounts",
+                primary_key="user_id",
+                tenant_key="tenant_id",
+                owner_ref_fields=("organization_memberships",),
+                identity_source_ref="schemas/agentic_service_harness.schema.json#/$defs/user",
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="Organization",
+                record_kind="organization",
+                collection_ref="contract://organizations",
+                primary_key="organization_id",
+                tenant_key="tenant_id",
+                owner_ref_fields=("owner_user_ids", "admin_user_ids", "project_ids"),
+                identity_source_ref="schemas/agentic_service_harness.schema.json#/$defs/organization",
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="Project",
+                record_kind="project",
+                collection_ref="read-model://projects",
+                primary_key="project_id",
+                tenant_key="tenant_id",
+                owner_ref_fields=(
+                    "organization_id",
+                    "repository_connection_ids",
+                    "agent_run_ids",
+                    "receipt_refs",
+                    "loop_status_ref",
+                ),
+                identity_source_ref="schemas/agentic_service_harness.schema.json#/$defs/project",
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="RepositoryConnection",
+                record_kind="repository",
+                collection_ref="read-model://repositories",
+                primary_key="connection_id",
+                tenant_key="project_id",
+                owner_ref_fields=("project_id", "credential_binding_ref"),
+                identity_source_ref=(
+                    "schemas/agentic_service_harness.schema.json#/$defs/repository_connection"
+                ),
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="AgentRun",
+                record_kind="run",
+                collection_ref="read-model://runs",
+                primary_key="run_id",
+                tenant_key="project_id",
+                owner_ref_fields=(
+                    "project_id",
+                    "approval_gate_ids",
+                    "receipt_id",
+                    "evidence_bundle_id",
+                    "result_summary_id",
+                ),
+                identity_source_ref="schemas/agentic_service_harness.schema.json#/$defs/agent_run",
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="ApprovalRequest",
+                record_kind="approval",
+                collection_ref="read-model://approvals",
+                primary_key="gate_id",
+                tenant_key="run_id",
+                owner_ref_fields=("run_id", "evidence_refs"),
+                identity_source_ref="schemas/agentic_service_harness.schema.json#/$defs/approval_gate",
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="Receipt",
+                record_kind="receipt",
+                collection_ref="read-model://receipts",
+                primary_key="receipt_id",
+                tenant_key="run_id",
+                owner_ref_fields=("run_id", "task_request_ref", "evidence_refs"),
+                identity_source_ref=(
+                    "schemas/agentic_service_harness.schema.json#/$defs/agent_run_receipt"
+                ),
+                contract_ref=contract_ref,
+            ),
+            _durable_entity_binding(
+                entity_kind="LoopStatus",
+                record_kind="loop_status",
+                collection_ref="read-model://projects/loop_status_ref",
+                primary_key="loop_status_ref",
+                tenant_key="project_id",
+                owner_ref_fields=("project_id", "loop_status_ref"),
+                identity_source_ref="MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md#public-api-foundation",
+                contract_ref=contract_ref,
+            ),
+        ],
+    }
+
+
+def _durable_entity_binding(
+    *,
+    entity_kind: str,
+    record_kind: str,
+    collection_ref: str,
+    primary_key: str,
+    tenant_key: str,
+    owner_ref_fields: tuple[str, ...],
+    identity_source_ref: str,
+    contract_ref: str,
+) -> dict[str, Any]:
+    return {
+        "entity_kind": entity_kind,
+        "record_kind": record_kind,
+        "collection_ref": collection_ref,
+        "primary_key": primary_key,
+        "tenant_key": tenant_key,
+        "owner_ref_fields": list(owner_ref_fields),
+        "identity_source_ref": identity_source_ref,
+        "read_model_source": "runtime_projection",
+        "write_authority_enabled": False,
+        "append_enabled": False,
+        "mutation_route": False,
+        "secret_values_serialized": False,
+        "evidence_refs": [contract_ref],
     }
 
 

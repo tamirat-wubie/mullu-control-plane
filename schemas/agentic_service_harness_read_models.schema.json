@@ -19,6 +19,7 @@
     "receipts",
     "evidence",
     "result_summaries",
+    "durable_entity_bindings",
     "permission_snapshot",
     "validators",
     "next_action",
@@ -99,6 +100,9 @@
         "$ref": "#/$defs/harness_result_summary_read_model"
       }
     },
+    "durable_entity_bindings": {
+      "$ref": "#/$defs/durable_entity_bindings"
+    },
     "permission_snapshot": {
       "$ref": "#/$defs/permission_snapshot"
     },
@@ -133,7 +137,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
     },
     "text_list": {
       "type": "array",
@@ -194,6 +198,133 @@
         "high",
         "critical"
       ]
+    },
+    "durable_entity_kind": {
+      "type": "string",
+      "enum": [
+        "User",
+        "Organization",
+        "Project",
+        "RepositoryConnection",
+        "AgentRun",
+        "ApprovalRequest",
+        "Receipt",
+        "LoopStatus"
+      ]
+    },
+    "durable_entity_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_contract_ref",
+        "store_mode",
+        "read_only",
+        "append_enabled",
+        "mutation_routes_admitted",
+        "secret_values_serialized",
+        "entity_bindings"
+      ],
+      "properties": {
+        "store_contract_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "store_mode": {
+          "type": "string",
+          "const": "append_only_jsonl_rehearsal"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_routes_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "entity_bindings": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/durable_entity_binding"
+          }
+        }
+      }
+    },
+    "durable_entity_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_kind",
+        "record_kind",
+        "collection_ref",
+        "primary_key",
+        "tenant_key",
+        "owner_ref_fields",
+        "identity_source_ref",
+        "read_model_source",
+        "write_authority_enabled",
+        "append_enabled",
+        "mutation_route",
+        "secret_values_serialized",
+        "evidence_refs"
+      ],
+      "properties": {
+        "entity_kind": {
+          "$ref": "#/$defs/durable_entity_kind"
+        },
+        "record_kind": {
+          "$ref": "#/$defs/identifier"
+        },
+        "collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "primary_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "tenant_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "owner_ref_fields": {
+          "$ref": "#/$defs/text_list"
+        },
+        "identity_source_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "read_model_source": {
+          "type": "string",
+          "enum": [
+            "fixture_projection",
+            "runtime_projection"
+          ]
+        },
+        "write_authority_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_route": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        }
+      }
     },
     "read_only_guard": {
       "type": "object",
