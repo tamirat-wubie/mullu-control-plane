@@ -587,6 +587,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "mfidel-substrate-conformance-receipt",
+      "path": "schemas/mfidel_substrate_conformance_receipt.schema.json",
+      "urn": "urn:mullusi:schema:mfidel-substrate-conformance-receipt:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",

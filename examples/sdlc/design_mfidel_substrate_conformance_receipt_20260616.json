@@ -1,0 +1,76 @@
+{
+  "design_id": "sdlc_design_mfidel_substrate_conformance_receipt_20260616",
+  "requirement_id": "sdlc_req_mfidel_substrate_conformance_receipt_20260616",
+  "architecture_summary": "Introduce a read-only MfidelSubstrateConformanceReceipt that records substrate digest, 34 by 8 grid bounds, exact fidel sequence fixtures, no-normalization guards, cross-runtime fixture refs, and Foundation Mode denial of runtime parity and terminal closure.",
+  "affected_modules": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/security_review_mfidel_substrate_conformance_receipt_20260616.json"
+  ],
+  "data_model_changes": [
+    "add a Mfidel substrate conformance receipt with source family refs, substrate digest, grid bounds, atomic sequence fixtures, normalization guards, cross-runtime fixture refs, receipt refs, contract summary, and evidence refs",
+    "add validator semantics that reject exact-sequence drift, out-of-bounds grid refs, normalization or decomposition guard drift, runtime parity overclaim, live source reads, terminal closure, missing refs, and summary-count drift"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the Mfidel substrate conformance receipt schema, example, validator, tests, docs, manifest entry, proof coverage surface, SDLC artifacts, and CI registration, then rerun focused validator tests, schema validation, protocol manifest validation, proof coverage matrix check, SDLC validators, and workspace governance preflight before claiming rollback closure.",
+  "migration_plan": "No runtime migration is required because the change adds only a read-only receipt contract and validation surface; it does not mutate runtime state, persistent state, tenant data, connector state, SDK state, kernel state, or deployment state.",
+  "test_plan": [
+    "python scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "python -m pytest tests/test_validate_mfidel_substrate_conformance_receipt.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_schemas.py --schema schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python -m pytest tests/test_proof_coverage_matrix.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_mfidel_substrate_conformance_receipt_20260616.json --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-mfidel-substrate-conformance-receipt-20260616.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-mfidel-substrate-conformance-receipt-20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/design/mfidel-substrate-conformance-receipt/20260616",
+  "causal_decision_trace_ref": "trace://sdlc/design/mfidel-substrate-conformance-receipt/20260616",
+  "receipt_ref": "receipt://sdlc/design/mfidel-substrate-conformance-receipt/20260616"
+}

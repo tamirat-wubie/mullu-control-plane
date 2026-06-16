@@ -1,0 +1,108 @@
+{
+  "receipt_id": "mfidel-substrate-conformance-receipt-foundation-20260616",
+  "receipt_version": "mfidel_substrate_conformance_receipt.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "source_family_refs": {
+    "msic_sdk_ref": "repo-family://msic-sdk",
+    "tatoken_kernel_ref": "repo-family://tatoken-kernel",
+    "tarc_core_ref": "repo-family://tarc-core",
+    "live_source_reads_performed": false
+  },
+  "substrate_digest": {
+    "digest_algorithm": "sha256",
+    "digest_value": "sha256:mfidel-substrate-grid-34x8-foundation-v1",
+    "digest_input_refs": [
+      "docs/27_mfidel_semantic_layer.md",
+      "docs/82_cross_repo_opportunity_map.md",
+      "schemas/mfidel_substrate_conformance_receipt.schema.json"
+    ]
+  },
+  "grid_bounds": {
+    "row_min": 1,
+    "row_max": 34,
+    "col_min": 1,
+    "col_max": 8,
+    "vibratory_overlay_row": 17,
+    "column_8_derivation": "f[r][8] = f[r][2] + f[17][4]",
+    "overlay_metadata_only": true
+  },
+  "atomic_sequence_fixtures": [
+    {
+      "fixture_id": "row_1_exact_sequence",
+      "fidel_sequence": "ሀሁሂሃሄህሆሇ",
+      "preserved_sequence": "ሀሁሂሃሄህሆሇ",
+      "grid_refs": ["f[1][1]", "f[1][2]", "f[1][3]", "f[1][4]", "f[1][5]", "f[1][6]", "f[1][7]", "f[1][8]"],
+      "exact_sequence_preserved": true,
+      "metadata_binding": "atomic_fidel",
+      "overlay_semantics": "sound_overlay_metadata_only"
+    },
+    {
+      "fixture_id": "row_17_exact_sequence",
+      "fidel_sequence": "ኧኡኢኣኤእኦአ",
+      "preserved_sequence": "ኧኡኢኣኤእኦአ",
+      "grid_refs": ["f[17][1]", "f[17][2]", "f[17][3]", "f[17][4]", "f[17][5]", "f[17][6]", "f[17][7]", "f[17][8]"],
+      "exact_sequence_preserved": true,
+      "metadata_binding": "grid_ref",
+      "overlay_semantics": "sound_overlay_metadata_only"
+    },
+    {
+      "fixture_id": "row_34_exact_sequence",
+      "fidel_sequence": "ፐፑፒፓፔፕፖፗ",
+      "preserved_sequence": "ፐፑፒፓፔፕፖፗ",
+      "grid_refs": ["f[34][1]", "f[34][2]", "f[34][3]", "f[34][4]", "f[34][5]", "f[34][6]", "f[34][7]", "f[34][8]"],
+      "exact_sequence_preserved": true,
+      "metadata_binding": "atomic_fidel",
+      "overlay_semantics": "sound_overlay_metadata_only"
+    }
+  ],
+  "normalization_guards": {
+    "unicode_normalization_applied": false,
+    "unicode_decomposition_performed": false,
+    "unicode_recomposition_performed": false,
+    "shape_decomposition_performed": false,
+    "sound_decomposition_performed": false,
+    "internal_letter_model_used": false,
+    "sound_overlay_split_performed": false,
+    "lossy_transliteration_canonical_store": false,
+    "tokenizer_splits_fidel": false,
+    "exact_sequence_storage_required": true,
+    "sound_overlay_metadata_only": true,
+    "rejected_paths_logged": true
+  },
+  "cross_runtime_fixture_refs": {
+    "python_fixture_ref": "fixture://mfidel/python/exact-sequence-preservation",
+    "typescript_fixture_ref": "fixture://mfidel/typescript/exact-sequence-preservation",
+    "rust_fixture_ref": "fixture://mfidel/rust/exact-sequence-preservation",
+    "parity_status": "AWAITING_RUNTIME_EVIDENCE",
+    "parity_blocked_reason_refs": [
+      "blocked://mfidel/python-runtime-fixture-not-bound",
+      "blocked://mfidel/typescript-runtime-fixture-not-bound",
+      "blocked://mfidel/rust-runtime-fixture-not-bound"
+    ]
+  },
+  "receipt_refs": {
+    "mfidel_substrate_conformance_schema": "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "mfidel_semantic_layer_doc": "docs/27_mfidel_semantic_layer.md",
+    "cross_repo_opportunity_map": "docs/82_cross_repo_opportunity_map.md",
+    "validator": "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests": "tests/test_validate_mfidel_substrate_conformance_receipt.py"
+  },
+  "contract_summary": {
+    "fixture_count": 3,
+    "receipt_ref_count": 5,
+    "evidence_ref_count": 8,
+    "live_source_reads_performed": false,
+    "runtime_parity_verified": false,
+    "terminal_closure_allowed": false
+  },
+  "evidence_refs": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "docs/27_mfidel_semantic_layer.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "examples/sdlc/requirement_mfidel_substrate_conformance_receipt_20260616.json",
+    "examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json"
+  ]
+}

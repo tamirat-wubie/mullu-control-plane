@@ -790,6 +790,13 @@
       ]
     },
     {
+      "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "mfidel_substrate_conformance_receipt"
+      ]
+    },
+    {
       "action_id": "publish_collaboration_case_contract",
       "status": "closed",
       "surfaces": [
@@ -1140,7 +1147,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 119,
+      "action_proof": 120,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 26,
@@ -1148,7 +1155,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 144,
+      "audit_chain": 145,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1156,21 +1163,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 101
+      "witnessed": 102
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 118
+      "request_proof": 119
     },
-    "surface_count": 147
+    "surface_count": 148
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 147,
+      "strong": 148,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9404,6 +9411,59 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/mfidel_substrate_conformance_receipt.schema.json",
+        "examples/mfidel_substrate_conformance_receipt.foundation.json",
+        "scripts/validate_mfidel_substrate_conformance_receipt.py",
+        "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+        "docs/27_mfidel_semantic_layer.md",
+        "docs/82_cross_repo_opportunity_map.md",
+        "docs/85_mfidel_substrate_conformance_receipt_contract.md"
+      ],
+      "notes": "Mfidel substrate conformance receipts bind substrate digest, 34 by 8 grid bounds, exact fidel sequence fixtures, no-normalization guards, cross-runtime fixture refs, and parity blockers before SDK or kernel parity can be claimed.",
+      "representative_paths": [
+        "MfidelSubstrateConformanceReceipt",
+        "validate_mfidel_substrate_conformance_receipt",
+        "mfidel_substrate_conformance_receipt.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "mfidel_substrate_conformance_receipt_blocks_normalization": [
+          "mfidel_substrate_conformance_receipt_rejects_normalization_and_decomposition_drift",
+          "validator_does_not_call_unicode_normalization"
+        ],
+        "mfidel_substrate_conformance_receipt_keeps_runtime_parity_awaiting_evidence": [
+          "mfidel_substrate_conformance_receipt_passes",
+          "mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_preserves_exact_sequences": [
+          "mfidel_substrate_conformance_receipt_passes",
+          "mfidel_substrate_conformance_receipt_rejects_sequence_preservation_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_grid_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_grid_bound_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_rejects_ref_drift": [
+          "mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+        ],
+        "mfidel_substrate_conformance_receipt_schema_valid": [
+          "mfidel_substrate_conformance_receipt_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "mfidel_substrate_conformance_receipt_schema_valid",
+        "mfidel_substrate_conformance_receipt_preserves_exact_sequences",
+        "mfidel_substrate_conformance_receipt_blocks_normalization",
+        "mfidel_substrate_conformance_receipt_rejects_grid_drift",
+        "mfidel_substrate_conformance_receipt_rejects_ref_drift",
+        "mfidel_substrate_conformance_receipt_keeps_runtime_parity_awaiting_evidence"
+      ],
+      "surface_id": "mfidel_substrate_conformance_receipt"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/collaboration_cases.py",
         "schemas/collaboration_case.schema.json",
         "tests/test_gateway/test_collaboration_cases.py"
@@ -12686,8 +12746,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1628,
-    "runtime_witness_count": 1628,
+    "exact_test_anchor_count": 1634,
+    "runtime_witness_count": 1634,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19927,6 +19987,54 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "worker_receipt_ledger_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_passes"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_passes",
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_sequence_preservation_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_preserves_exact_sequences"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_normalization_and_decomposition_drift",
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_validator_does_not_call_unicode_normalization"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_blocks_normalization"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_grid_bound_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_grid_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_rejects_ref_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_passes",
+              "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+            ],
+            "witness": "mfidel_substrate_conformance_receipt_keeps_runtime_parity_awaiting_evidence"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "mfidel_substrate_conformance_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

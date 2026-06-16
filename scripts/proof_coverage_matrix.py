@@ -5859,6 +5859,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "mfidel_substrate_conformance_receipt",
+            [
+                "MfidelSubstrateConformanceReceipt",
+                "validate_mfidel_substrate_conformance_receipt",
+                "mfidel_substrate_conformance_receipt.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/mfidel_substrate_conformance_receipt.schema.json",
+                "examples/mfidel_substrate_conformance_receipt.foundation.json",
+                "scripts/validate_mfidel_substrate_conformance_receipt.py",
+                "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+                "docs/27_mfidel_semantic_layer.md",
+                "docs/82_cross_repo_opportunity_map.md",
+                "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+            ],
+            "Mfidel substrate conformance receipts bind substrate digest, 34 by 8 grid bounds, exact fidel sequence fixtures, no-normalization guards, cross-runtime fixture refs, and parity blockers before SDK or kernel parity can be claimed.",
+            [
+                "mfidel_substrate_conformance_receipt_schema_valid",
+                "mfidel_substrate_conformance_receipt_preserves_exact_sequences",
+                "mfidel_substrate_conformance_receipt_blocks_normalization",
+                "mfidel_substrate_conformance_receipt_rejects_grid_drift",
+                "mfidel_substrate_conformance_receipt_rejects_ref_drift",
+                "mfidel_substrate_conformance_receipt_keeps_runtime_parity_awaiting_evidence",
+            ],
+            runtime_witness_anchor_aliases={
+                "mfidel_substrate_conformance_receipt_schema_valid": [
+                    "mfidel_substrate_conformance_receipt_passes"
+                ],
+                "mfidel_substrate_conformance_receipt_preserves_exact_sequences": [
+                    "mfidel_substrate_conformance_receipt_passes",
+                    "mfidel_substrate_conformance_receipt_rejects_sequence_preservation_drift",
+                ],
+                "mfidel_substrate_conformance_receipt_blocks_normalization": [
+                    "mfidel_substrate_conformance_receipt_rejects_normalization_and_decomposition_drift",
+                    "validator_does_not_call_unicode_normalization",
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_grid_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_grid_bound_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_ref_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_keeps_runtime_parity_awaiting_evidence": [
+                    "mfidel_substrate_conformance_receipt_passes",
+                    "mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift",
+                ],
+            },
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -9753,6 +9806,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_worker_receipt_ledger_read_model_contract",
             "surfaces": ["worker_receipt_ledger_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
+            "surfaces": ["mfidel_substrate_conformance_receipt"],
             "status": "closed",
         },
         {

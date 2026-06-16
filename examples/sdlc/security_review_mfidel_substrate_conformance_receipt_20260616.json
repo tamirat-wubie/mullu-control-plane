@@ -1,0 +1,77 @@
+{
+  "security_review_id": "SEC-mfidel-substrate-conformance-receipt-20260616",
+  "change_id": "mfidel-substrate-conformance-receipt-20260616",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Mfidel substrate conformance can become unsafe if exact fidel sequences are normalized, decomposed, reinterpreted as smaller written units, treated through forbidden internal-letter modeling, or converted into lossy transliteration as canonical storage. The main risks are substrate drift across SDK and kernel implementations, validator overclaim of cross-runtime parity, hidden terminal closure claims, and accidental admission of tokenizer or runtime authority. The mitigation is a non-runtime receipt that preserves exact sequences, binds grid refs, denies normalization and decomposition paths, keeps cross-runtime parity AwaitingEvidence, and records receipt refs for audit.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "runtime parity and terminal closure authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms no secrets, raw credentials, or private payloads are serialized",
+      "status": "passed",
+      "evidence_ref": "examples/mfidel_substrate_conformance_receipt.foundation.json"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Unicode normalization, decomposition, forbidden internal-letter modeling, and fidel-splitting tokenization remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_normalization_and_decomposition_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs, evidence refs, fixture counts, and parity blockers cannot drift silently",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_mfidel_substrate_conformance_receipt.py::test_mfidel_substrate_conformance_receipt_rejects_missing_refs_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes the Mfidel substrate conformance receipt surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_mfidel_substrate_conformance_receipt_preserves_atomicity"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "mfidel-substrate-normalization-drift",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Schema and validator force normalization, decomposition, forbidden internal-letter modeling, lossy canonical transliteration, and fidel-splitting flags to false.",
+      "evidence_refs": [
+        "schemas/mfidel_substrate_conformance_receipt.schema.json",
+        "scripts/validate_mfidel_substrate_conformance_receipt.py",
+        "tests/test_validate_mfidel_substrate_conformance_receipt.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "preserve exact fidel sequences in every fixture",
+    "bind each fixture to f[row][col] refs within row 1 through 34 and column 1 through 8",
+    "deny Unicode normalization, decomposition, recomposition, forbidden internal-letter modeling, lossy canonical transliteration, and fidel-splitting tokenization",
+    "keep Python, TypeScript, and Rust parity as AwaitingEvidence until runtime fixtures are bound",
+    "deny live source reads and terminal closure in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/mfidel_substrate_conformance_receipt.schema.json",
+    "examples/mfidel_substrate_conformance_receipt.foundation.json",
+    "scripts/validate_mfidel_substrate_conformance_receipt.py",
+    "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+    "receipt://sdlc/mfidel-substrate-conformance-receipt/security"
+  ],
+  "uao_ref": "uao://sdlc/mfidel-substrate-conformance-receipt/security",
+  "causal_decision_trace_ref": "trace://sdlc/mfidel-substrate-conformance-receipt/security",
+  "receipt_ref": "receipt://sdlc/mfidel-substrate-conformance-receipt/security"
+}

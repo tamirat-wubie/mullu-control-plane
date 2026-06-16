@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:mfidel-substrate-conformance-receipt:1",
+  "title": "Mfidel Substrate Conformance Receipt",
+  "description": "Foundation Mode receipt proving Mfidel substrate bounds, exact fidel preservation, no Unicode normalization, no decomposition, no forbidden internal-letter modeling, and cross-runtime fixture evidence state before SDK or kernel parity claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "generated_at",
+    "source_family_refs",
+    "substrate_digest",
+    "grid_bounds",
+    "atomic_sequence_fixtures",
+    "normalization_guards",
+    "cross_runtime_fixture_refs",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "minLength": 1},
+    "receipt_version": {"type": "string", "const": "mfidel_substrate_conformance_receipt.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "source_family_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "msic_sdk_ref",
+        "tatoken_kernel_ref",
+        "tarc_core_ref",
+        "live_source_reads_performed"
+      ],
+      "properties": {
+        "msic_sdk_ref": {"type": "string", "minLength": 1},
+        "tatoken_kernel_ref": {"type": "string", "minLength": 1},
+        "tarc_core_ref": {"type": "string", "minLength": 1},
+        "live_source_reads_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "substrate_digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest_algorithm", "digest_value", "digest_input_refs"],
+      "properties": {
+        "digest_algorithm": {"type": "string", "const": "sha256"},
+        "digest_value": {"type": "string", "pattern": "^sha256:[a-z0-9][a-z0-9._-]*$"},
+        "digest_input_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "grid_bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "row_min",
+        "row_max",
+        "col_min",
+        "col_max",
+        "vibratory_overlay_row",
+        "column_8_derivation",
+        "overlay_metadata_only"
+      ],
+      "properties": {
+        "row_min": {"type": "integer", "const": 1},
+        "row_max": {"type": "integer", "const": 34},
+        "col_min": {"type": "integer", "const": 1},
+        "col_max": {"type": "integer", "const": 8},
+        "vibratory_overlay_row": {"type": "integer", "const": 17},
+        "column_8_derivation": {"type": "string", "const": "f[r][8] = f[r][2] + f[17][4]"},
+        "overlay_metadata_only": {"type": "boolean", "const": true}
+      }
+    },
+    "atomic_sequence_fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/atomic_sequence_fixture"}
+    },
+    "normalization_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unicode_normalization_applied",
+        "unicode_decomposition_performed",
+        "unicode_recomposition_performed",
+        "shape_decomposition_performed",
+        "sound_decomposition_performed",
+        "internal_letter_model_used",
+        "sound_overlay_split_performed",
+        "lossy_transliteration_canonical_store",
+        "tokenizer_splits_fidel",
+        "exact_sequence_storage_required",
+        "sound_overlay_metadata_only",
+        "rejected_paths_logged"
+      ],
+      "properties": {
+        "unicode_normalization_applied": {"type": "boolean", "const": false},
+        "unicode_decomposition_performed": {"type": "boolean", "const": false},
+        "unicode_recomposition_performed": {"type": "boolean", "const": false},
+        "shape_decomposition_performed": {"type": "boolean", "const": false},
+        "sound_decomposition_performed": {"type": "boolean", "const": false},
+        "internal_letter_model_used": {"type": "boolean", "const": false},
+        "sound_overlay_split_performed": {"type": "boolean", "const": false},
+        "lossy_transliteration_canonical_store": {"type": "boolean", "const": false},
+        "tokenizer_splits_fidel": {"type": "boolean", "const": false},
+        "exact_sequence_storage_required": {"type": "boolean", "const": true},
+        "sound_overlay_metadata_only": {"type": "boolean", "const": true},
+        "rejected_paths_logged": {"type": "boolean", "const": true}
+      }
+    },
+    "cross_runtime_fixture_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_fixture_ref",
+        "typescript_fixture_ref",
+        "rust_fixture_ref",
+        "parity_status",
+        "parity_blocked_reason_refs"
+      ],
+      "properties": {
+        "python_fixture_ref": {"type": "string", "minLength": 1},
+        "typescript_fixture_ref": {"type": "string", "minLength": 1},
+        "rust_fixture_ref": {"type": "string", "minLength": 1},
+        "parity_status": {
+          "type": "string",
+          "enum": ["FOUNDATION_FIXTURES_DECLARED", "AWAITING_RUNTIME_EVIDENCE", "PARITY_VERIFIED", "PARITY_REJECTED"]
+        },
+        "parity_blocked_reason_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mfidel_substrate_conformance_schema",
+        "mfidel_semantic_layer_doc",
+        "cross_repo_opportunity_map",
+        "validator",
+        "tests"
+      ],
+      "properties": {
+        "mfidel_substrate_conformance_schema": {"type": "string", "minLength": 1},
+        "mfidel_semantic_layer_doc": {"type": "string", "minLength": 1},
+        "cross_repo_opportunity_map": {"type": "string", "minLength": 1},
+        "validator": {"type": "string", "minLength": 1},
+        "tests": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_count",
+        "receipt_ref_count",
+        "evidence_ref_count",
+        "live_source_reads_performed",
+        "runtime_parity_verified",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "fixture_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0},
+        "live_source_reads_performed": {"type": "boolean", "const": false},
+        "runtime_parity_verified": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"}
+  },
+  "$defs": {
+    "atomic_sequence_fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "fidel_sequence",
+        "preserved_sequence",
+        "grid_refs",
+        "exact_sequence_preserved",
+        "metadata_binding",
+        "overlay_semantics"
+      ],
+      "properties": {
+        "fixture_id": {"type": "string", "minLength": 1},
+        "fidel_sequence": {"type": "string", "minLength": 1},
+        "preserved_sequence": {"type": "string", "minLength": 1},
+        "grid_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^f\\[[1-9][0-9]?\\]\\[[1-8]\\]$"}
+        },
+        "exact_sequence_preserved": {"type": "boolean", "const": true},
+        "metadata_binding": {"type": "string", "enum": ["atomic_fidel", "grid_ref"]},
+        "overlay_semantics": {"type": "string", "const": "sound_overlay_metadata_only"}
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
