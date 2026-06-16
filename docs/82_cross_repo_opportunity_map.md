@@ -36,6 +36,7 @@ The control plane already absorbed several high-fit ideas:
 | Mfidel substrate conformance witness | `MfidelSubstrateConformanceReceipt` | Implemented |
 | Readiness gate and waiver review | `ReadinessWaiverReviewPacket` | Implemented |
 | Browser inspection boundary | `BrowserObservationReceipt` | Implemented |
+| Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -70,9 +71,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `ResearchSourceConflictMap`
-   - Preserves disagreements across sources before future research synthesis or retrieval expansion.
-   - Should remain read-only and citation-bound.
+2. `TrustedCaptureEvidencePacket`
+   - Extends the capture policy lineage toward future browser, screen, video, and sensor receipts.
+   - Should remain dry-run and media-capture-denied until capture witnesses exist.
 
 ## 6. Project Discipline Mesh Findings
 

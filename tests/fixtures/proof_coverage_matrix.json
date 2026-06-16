@@ -804,6 +804,13 @@
       ]
     },
     {
+      "action_id": "publish_research_source_conflict_map_contract",
+      "status": "closed",
+      "surfaces": [
+        "research_source_conflict_map"
+      ]
+    },
+    {
       "action_id": "publish_worker_receipt_ledger_read_model_contract",
       "status": "closed",
       "surfaces": [
@@ -1168,7 +1175,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 121,
+      "action_proof": 122,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 26,
@@ -1176,7 +1183,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 147,
+      "audit_chain": 148,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1184,21 +1191,21 @@
     "by_coverage_state": {
       "proven": 46,
       "unproven": 0,
-      "witnessed": 104
+      "witnessed": 105
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 28,
-      "request_proof": 120
+      "request_proof": 121
     },
-    "surface_count": 150
+    "surface_count": 151
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 150,
+      "strong": 151,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -9511,6 +9518,61 @@
       "surface_id": "browser_observation_receipt"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/research_source_conflict_map.schema.json",
+        "examples/research_source_conflict_map.foundation.json",
+        "scripts/validate_research_source_conflict_map.py",
+        "tests/test_validate_research_source_conflict_map.py",
+        "schemas/search_decision.schema.json",
+        "schemas/search_receipt.schema.json",
+        "schemas/evidence_classification_manifest.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/88_research_source_conflict_map_contract.md"
+      ],
+      "notes": "Research source conflict maps preserve citation-backed source disagreements, contradiction class, freshness impact, follow-up sensing needs, retention guards, and authority-denial flags before research synthesis or retrieval expansion can be considered.",
+      "representative_paths": [
+        "ResearchSourceConflictMap",
+        "validate_research_source_conflict_map",
+        "research_source_conflict_map.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "research_source_conflict_map_blocks_live_research_authority": [
+          "research_source_conflict_map_passes",
+          "research_source_conflict_map_rejects_authority_drift"
+        ],
+        "research_source_conflict_map_rejects_raw_body_retention": [
+          "research_source_conflict_map_rejects_raw_body_and_digest_drift"
+        ],
+        "research_source_conflict_map_rejects_receipt_ref_and_count_drift": [
+          "research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+        ],
+        "research_source_conflict_map_rejects_sensing_authority_drift": [
+          "research_source_conflict_map_rejects_follow_up_sensing_drift"
+        ],
+        "research_source_conflict_map_requires_citation_bound_conflicts": [
+          "research_source_conflict_map_passes",
+          "research_source_conflict_map_rejects_conflict_citation_drift"
+        ],
+        "research_source_conflict_map_schema_valid": [
+          "research_source_conflict_map_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "research_source_conflict_map_schema_valid",
+        "research_source_conflict_map_blocks_live_research_authority",
+        "research_source_conflict_map_requires_citation_bound_conflicts",
+        "research_source_conflict_map_rejects_raw_body_retention",
+        "research_source_conflict_map_rejects_sensing_authority_drift",
+        "research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+      ],
+      "surface_id": "research_source_conflict_map"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -12908,8 +12970,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1652,
-    "runtime_witness_count": 1652,
+    "exact_test_anchor_count": 1658,
+    "runtime_witness_count": 1658,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20231,6 +20293,53 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "browser_observation_receipt",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_passes"
+            ],
+            "witness": "research_source_conflict_map_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_passes",
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_authority_drift"
+            ],
+            "witness": "research_source_conflict_map_blocks_live_research_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_passes",
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_conflict_citation_drift"
+            ],
+            "witness": "research_source_conflict_map_requires_citation_bound_conflicts"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_raw_body_and_digest_drift"
+            ],
+            "witness": "research_source_conflict_map_rejects_raw_body_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_follow_up_sensing_drift"
+            ],
+            "witness": "research_source_conflict_map_rejects_sensing_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "research_source_conflict_map",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

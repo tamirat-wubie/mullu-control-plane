@@ -479,6 +479,12 @@
       "surface": "capture"
     },
     {
+      "schema_id": "research-source-conflict-map",
+      "path": "schemas/research_source_conflict_map.schema.json",
+      "urn": "urn:mullusi:schema:research-source-conflict-map:1",
+      "surface": "search"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
