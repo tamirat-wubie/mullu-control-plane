@@ -9,8 +9,8 @@ Invariants:
   - Raw private payloads and raw secrets are never admitted.
   - Connector calls, external writes, filesystem writes, runtime dispatch,
     state mutation, terminal closure, and success claims remain denied.
-  - The foundation example must carry evidence refs for schema, example, docs,
-    validator, and tests.
+  - The foundation example must satisfy the canonical JSON Schema and carry
+    evidence refs for schema, example, docs, validator, and tests.
 """
 
 from __future__ import annotations
@@ -19,6 +19,11 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any, Mapping
+
+try:
+    import jsonschema
+except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
+    jsonschema = None
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol.schema.json"
@@ -77,6 +82,7 @@ def validate_universal_symbol_kernel(
     errors: list[str] = []
 
     _validate_schema_boundary(schema, errors)
+    _validate_json_schema(symbol, schema, errors)
     _validate_required_sections(symbol, errors)
     _validate_identity(symbol, errors)
     _validate_foundation_governance(symbol, errors)
@@ -84,6 +90,7 @@ def validate_universal_symbol_kernel(
     _validate_authority_denials(symbol, errors)
     _validate_contract_summary(symbol, errors)
     _validate_evidence_refs(symbol, errors)
+    _validate_evidence_ref_files(symbol, errors)
 
     result = {
         "symbol_path": _repo_relative(symbol_path),
@@ -108,6 +115,17 @@ def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> N
     required = schema.get("required")
     if not isinstance(required, list) or "symbol_authority_boundary" not in required:
         errors.append("schema must require symbol_authority_boundary")
+
+
+def _validate_json_schema(symbol: Mapping[str, Any], schema: Mapping[str, Any], errors: list[str]) -> None:
+    if jsonschema is None:
+        errors.append("jsonschema dependency missing")
+        return
+    validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+    schema_errors = sorted(validator.iter_errors(symbol), key=lambda error: tuple(error.path))
+    for error in schema_errors:
+        path = ".".join(str(part) for part in error.absolute_path) or "$"
+        errors.append(f"schema validation failed at {path}: {error.message}")
 
 
 def _validate_required_sections(symbol: Mapping[str, Any], errors: list[str]) -> None:
@@ -197,6 +215,17 @@ def _validate_evidence_refs(symbol: Mapping[str, Any], errors: list[str]) -> Non
     missing = tuple(ref for ref in REQUIRED_EVIDENCE_REFS if ref not in refs)
     if missing:
         errors.append("missing required evidence refs: " + ", ".join(missing))
+
+
+def _validate_evidence_ref_files(symbol: Mapping[str, Any], errors: list[str]) -> None:
+    refs = symbol.get("evidence_refs")
+    if not isinstance(refs, list):
+        return
+    for ref in refs:
+        if not isinstance(ref, str) or "://" in ref:
+            continue
+        if not (REPO_ROOT / ref).exists():
+            errors.append(f"evidence ref file missing: {ref}")
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
