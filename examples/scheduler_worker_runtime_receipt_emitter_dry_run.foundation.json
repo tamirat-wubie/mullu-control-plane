@@ -1,0 +1,180 @@
+{
+  "receipt_id": "scheduler-worker-runtime-receipt-emitter-dry-run-foundation-20260615",
+  "receipt_version": "scheduler_worker_runtime_receipt_emitter_dry_run.v1",
+  "handoff_ref": "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+  "scheduler_receipt_ref": "receipt://temporal-scheduler/foundation-leased-command",
+  "distributed_lease_execution_receipt_ref": "receipt://distributed-lease-execution/foundation-scheduler-worker",
+  "worker_mesh_ref": "schemas/worker_mesh.schema.json",
+  "worker_failure_receipt_ref": "schemas/worker_failure_receipt.schema.json",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-15T18:40:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "foundation_dry_run_only": true,
+    "scheduler_worker_receipt_emitter_dry_run": true,
+    "scheduler_dispatch_allowed": false,
+    "runtime_runner_registration_allowed": false,
+    "dispatch_endpoint_registration_allowed": false,
+    "runtime_receipt_emitter_registration_allowed": false,
+    "runtime_receipt_schema_binding_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "worker_invocation_allowed": false,
+    "scheduler_mutation_allowed": false,
+    "lease_backend_call_allowed": false,
+    "adapter_backend_call_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "dry_run_contract": {
+    "operation_family": "scheduler_worker_runtime_receipt_emitter_dry_run",
+    "dry_run_mode": "EMITTER_DRY_RUN_ONLY",
+    "source_handoff_ref": "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+    "required_source_receipt_refs": [
+      "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+      "schemas/temporal_scheduler_receipt.schema.json",
+      "schemas/distributed_lease_execution_receipt.schema.json",
+      "schemas/worker_mesh.schema.json",
+      "schemas/worker_failure_receipt.schema.json",
+      "schemas/universal_action_orchestration.schema.json"
+    ],
+    "required_runtime_gate_refs": [
+      "gate://temporal-scheduler-leased",
+      "gate://distributed-lease-execution-receipt-ready",
+      "gate://uao-effect-admission",
+      "gate://phi-gov-dispatch-authorization",
+      "gate://worker-runtime-receipt-emitter",
+      "gate://runtime-receipt-emitter-registration",
+      "gate://runtime-receipt-schema-binding",
+      "gate://worker-mesh-dispatch-receipt",
+      "gate://worker-failure-receipt-on-error",
+      "gate://effect-reconciliation-before-terminal-closure"
+    ],
+    "required_runtime_witness_refs": [
+      "witness://scheduler-dispatch/not-registered",
+      "witness://runtime-runner/not-registered",
+      "witness://dispatch-endpoint/not-registered",
+      "witness://worker-invocation/not-registered",
+      "witness://runtime-receipt-emitter/not-registered",
+      "witness://runtime-receipt-schema/not-bound"
+    ],
+    "emission_obligations_checked": [
+      "future emitter must bind SchedulerWorkerRuntimeReceiptHandoff before dispatch admission",
+      "future emitter must bind TemporalSchedulerReceipt and DistributedLeaseExecutionReceipt before worker invocation",
+      "future emitter must emit a bounded runtime receipt envelope before accepting worker output",
+      "future emitter must emit WorkerFailureReceipt for failed or partial worker dispatch",
+      "future emitter must publish output digest only and reject raw output retention",
+      "future emitter must keep terminal closure blocked until effect reconciliation passes",
+      "future emitter must reject scheduler mutation and backend calls from validation paths"
+    ],
+    "validation_refs": [
+      "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+      "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+      "scripts/validate_schemas.py",
+      "scripts/validate_protocol_manifest.py",
+      "scripts/proof_coverage_matrix.py"
+    ]
+  },
+  "simulated_emission_result": {
+    "result_state": "DRY_RUN_RECORDED",
+    "simulated_receipt_kind": "future_scheduler_worker_runtime_receipt",
+    "dry_run_receipt_recorded": true,
+    "scheduler_dispatch_performed": false,
+    "runtime_receipt_emitted": false,
+    "worker_mesh_dispatch_receipt_emitted": false,
+    "worker_invocation_performed": false,
+    "failure_receipt_path_bound": true,
+    "effect_reconciliation_required": true,
+    "output_digest": "sha256:3fe57b0d5f2da3ebf45e7432b9dbb29c31b2f8a6d2819a17a3f7a3f8e144f4c1",
+    "raw_output_included": false,
+    "raw_secret_material_included": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "admission_decision": {
+    "decision": "DISPATCH_BLOCKED_AWAITING_RUNTIME_EVIDENCE",
+    "runtime_dispatch_admitted": false,
+    "worker_invocation_admitted": false,
+    "remaining_denied_until_refs": [
+      "evidence://runtime-runner-registration",
+      "evidence://runtime-receipt-emitter-registration",
+      "evidence://runtime-receipt-schema-binding",
+      "evidence://worker-mesh-dispatch-receipt",
+      "evidence://worker-runtime-receipt",
+      "evidence://uao-effect-admission",
+      "evidence://phi-gov-dispatch-authorization",
+      "evidence://effect-reconciliation-receipt"
+    ],
+    "blocked_reason_refs": [
+      "blocked://scheduler-dispatch/not-registered",
+      "blocked://runtime-runner/not-registered",
+      "blocked://dispatch-endpoint/not-registered",
+      "blocked://worker-invocation/not-registered",
+      "blocked://runtime-receipt-emitter/not-registered",
+      "blocked://runtime-receipt-schema/not-bound",
+      "blocked://phi-gov/dispatch-not-authorized"
+    ],
+    "terminal_closure_allowed": false
+  },
+  "receipt_refs": {
+    "scheduler_worker_runtime_receipt_emitter_dry_run_schema": "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "scheduler_worker_runtime_receipt_handoff_schema": "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+    "temporal_scheduler_receipt_schema": "schemas/temporal_scheduler_receipt.schema.json",
+    "distributed_lease_execution_receipt_schema": "schemas/distributed_lease_execution_receipt.schema.json",
+    "distributed_lease_adapter_registry_receipt_schema": "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+    "distributed_lease_claim_receipt_schema": "schemas/distributed_lease_claim_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json"
+  },
+  "contract_summary": {
+    "source_receipt_ref_count": 6,
+    "runtime_gate_ref_count": 10,
+    "runtime_witness_ref_count": 6,
+    "emission_obligation_count": 7,
+    "validation_ref_count": 5,
+    "remaining_denied_until_ref_count": 8,
+    "blocked_reason_ref_count": 7,
+    "receipt_ref_count": 9,
+    "evidence_ref_count": 14
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "policy://distributed-lease/no-live-backend-call",
+    "policy://temporal-scheduler/no-terminal-closure",
+    "policy://uao/no-effect-without-receipt"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://scheduler-worker-runtime-receipt-emitter-dry-run/foundation/20260615",
+    "causal_decision_trace_ref": "trace://scheduler-worker-runtime-receipt-emitter-dry-run/foundation/20260615",
+    "receipt_ref": "receipt://scheduler-worker-runtime-receipt-emitter-dry-run/foundation/20260615"
+  },
+  "evidence_refs": [
+    "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "examples/scheduler_worker_runtime_receipt_emitter_dry_run.foundation.json",
+    "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+    "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+    "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+    "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+    "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+    "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py",
+    "schemas/temporal_scheduler_receipt.schema.json",
+    "schemas/distributed_lease_execution_receipt.schema.json",
+    "schemas/worker_mesh.schema.json",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "scripts/proof_coverage_matrix.py"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This dry-run proves the future scheduler-worker runtime receipt emitter envelope and blocking guards. It does not dispatch a scheduler command, invoke a worker, call a lease backend, call an adapter backend, write files, call connectors, emit a runtime receipt, emit a worker mesh dispatch receipt, claim success, or claim terminal closure."
+  }
+}

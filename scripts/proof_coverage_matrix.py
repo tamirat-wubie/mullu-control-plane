@@ -7463,6 +7463,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "scheduler_worker_runtime_receipt_emitter_dry_run",
+            [
+                "SchedulerWorkerRuntimeReceiptEmitterDryRun",
+                "validate_scheduler_worker_runtime_receipt_emitter_dry_run",
+                "scheduler_worker_runtime_receipt_emitter_dry_run.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+                "examples/scheduler_worker_runtime_receipt_emitter_dry_run.foundation.json",
+                "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+                "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+            ],
+            "Scheduler worker runtime receipt emitter dry-runs bind SchedulerWorkerRuntimeReceiptHandoff evidence into a simulated future runtime receipt emitter envelope while denying scheduler dispatch, runtime registration, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, runtime receipt emission, worker mesh dispatch receipt emission, terminal closure, and success claims.",
+            [
+                "scheduler_worker_runtime_emitter_dry_run_schema_valid",
+                "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch",
+                "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "scheduler_worker_runtime_emitter_dry_run_schema_valid": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+                    "emitter_dry_run_rejects_result_and_admission_drift",
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+                    "emitter_dry_run_rejects_top_level_and_contract_drift",
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift": [
+                    "emitter_dry_run_rejects_authority_drift"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs": [
+                    "emitter_dry_run_rejects_missing_required_refs"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift": [
+                    "emitter_dry_run_rejects_result_and_admission_drift"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift": [
+                    "emitter_dry_run_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "temporal_rate_limit_window",
             [
                 "TemporalRateLimitWindow.evaluate",
@@ -9693,6 +9746,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_scheduler_worker_runtime_receipt_handoff_contract",
             "surfaces": ["scheduler_worker_runtime_receipt_handoff"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_scheduler_worker_runtime_receipt_emitter_dry_run_contract",
+            "surfaces": ["scheduler_worker_runtime_receipt_emitter_dry_run"],
             "status": "closed",
         },
         {
