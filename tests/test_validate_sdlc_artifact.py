@@ -600,6 +600,27 @@ def test_research_source_conflict_map_sdlc_artifacts_validate() -> None:
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
+def test_maf_receipt_parity_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_receipt_parity_witness_20260616.json")
+    design_path = Path("examples/sdlc/design_maf_receipt_parity_witness_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "MAF receipt parity witness requirement")
+    design_record = validator.load_json_object(design_path, "MAF receipt parity witness design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "MafReceiptParityWitness" in design_record["architecture_summary"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+    assert "No PyO3, subprocess, MAF CLI, or runtime Rust binding authority" in requirement_record["non_goals"]
+
+
 def test_worker_receipt_ledger_read_model_sdlc_artifacts_validate() -> None:
     requirement_path = Path("examples/sdlc/requirement_worker_receipt_ledger_read_model_20260616.json")
     design_path = Path("examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json")

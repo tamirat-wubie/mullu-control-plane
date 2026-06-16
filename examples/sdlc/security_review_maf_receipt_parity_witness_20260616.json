@@ -1,0 +1,95 @@
+{
+  "security_review_id": "SEC-maf-receipt-parity-witness-20260616",
+  "change_id": "maf-receipt-parity-witness-20260616",
+  "impact_categories": [
+    "auth",
+    "filesystem",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF parity evidence can be overread as runtime Rust certification or can drift into PyO3, subprocess, MAF CLI, filesystem, or production binding authority if the boundary is not explicit. The mitigation is a read-only witness schema and validator that reject all runtime authority claims and preserve F8 as AwaitingEvidence.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "PyO3, Rust import, subprocess, MAF CLI, runtime certification, production binding, success, and terminal authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_authority_drift"
+    },
+    {
+      "category": "filesystem",
+      "check": "path traversal check confirms crate and schema refs resolve inside the workspace and missing paths are rejected",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_workspace_member_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms MAF Rust workspace membership is read from Cargo.toml without importing or executing Rust",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_maf_receipt_parity_witness.py::parse_workspace_members"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms hash parity constants, receipt refs, evidence refs, summary counts, and gap refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_summary_and_ref_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms schema and protocol manifest validation retain MAF receipt parity witness evidence",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "proof coverage matrix includes the MAF receipt parity witness surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_maf_receipt_parity_witness_blocks_runtime_binding"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-parity-runtime-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks PyO3, Python Rust imports, subprocess invocation, MAF CLI invocation, runtime certification claims, Rust-certifies-Python claims, production binding, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "scripts/validate_maf_receipt_parity_witness.py",
+        "tests/test_validate_maf_receipt_parity_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-parity-f8-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness keeps F8 runtime binding as AwaitingEvidence and records all cross-runtime gaps before any future ABI or tooling decision.",
+      "evidence_refs": [
+        "docs/AUDIT_F8_SCOPING_PLAN.md",
+        "docs/MAF_RECEIPT_COVERAGE.md",
+        "examples/maf_receipt_parity_witness.foundation.json"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafReceiptParityWitness validation non-live and deterministic",
+    "read MAF Rust workspace manifests without importing or executing Rust",
+    "deny PyO3, subprocess, MAF CLI, network, filesystem mutation, and receipt-emission mutation authority",
+    "deny runtime certification, Rust-certifies-Python, production binding, terminal closure, and success claims",
+    "retain F8 gap refs until operator tooling and ABI decisions exist"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "receipt://sdlc/maf-receipt-parity-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-receipt-parity-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-receipt-parity-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-receipt-parity-witness/security"
+}

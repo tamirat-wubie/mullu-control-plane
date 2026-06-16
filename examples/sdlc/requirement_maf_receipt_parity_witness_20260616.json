@@ -1,0 +1,61 @@
+{
+  "requirement_id": "REQ-maf-receipt-parity-witness-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-maf-receipt-parity-witness",
+  "problem_statement": "Python control-plane receipt claims reference the local MAF Rust substrate, but the current runtime does not call Rust. A typed witness is needed to record hash parity evidence, crate-surface mappings, and F8 gaps without granting runtime binding authority.",
+  "success_criteria": [
+    "MafReceiptParityWitness validates against a public JSON schema and Foundation Mode example",
+    "MafReceiptParityWitness records Python/Rust receipt-hash and state-hash parity constants from local tests",
+    "MafReceiptParityWitness maps all local MAF Rust workspace crates to Python or schema surfaces with explicit gap refs",
+    "MafReceiptParityWitness blocks PyO3, Python Rust imports, Rust subprocess invocation, MAF CLI invocation, network calls, filesystem mutation, receipt-emission mutation, runtime certification claims, Rust-certifies-Python claims, production binding, terminal closure, and success claims",
+    "MafReceiptParityWitness is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "No PyO3, subprocess, MAF CLI, or runtime Rust binding authority",
+    "no Python import from a Rust runtime module",
+    "no Rust subprocess or CLI execution",
+    "no receipt emission mutation",
+    "no production binding",
+    "no Rust-certifies-Python runtime claim",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "MAF Rust workspace inspection remains read-only",
+    "hash parity remains test-time evidence only",
+    "F8 runtime binding remains AwaitingEvidence",
+    "all runtime authority flags remain false",
+    "all gap refs remain explicit until operator tooling and ABI decisions exist",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "docs/89_maf_receipt_parity_witness_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_receipt_parity_witness.py",
+    "python -m pytest tests/test_validate_maf_receipt_parity_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_receipt_parity_witness_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "docs/89_maf_receipt_parity_witness_contract.md",
+    "examples/sdlc/design_maf_receipt_parity_witness_20260616.json",
+    "examples/sdlc/security_review_maf_receipt_parity_witness_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-receipt-parity-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-receipt-parity-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-receipt-parity-witness/requirement"
+}

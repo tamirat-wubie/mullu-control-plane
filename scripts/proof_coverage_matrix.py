@@ -5997,6 +5997,64 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_receipt_parity_witness",
+            [
+                "MafReceiptParityWitness",
+                "validate_maf_receipt_parity_witness",
+                "maf_receipt_parity_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_receipt_parity_witness.schema.json",
+                "examples/maf_receipt_parity_witness.foundation.json",
+                "scripts/validate_maf_receipt_parity_witness.py",
+                "tests/test_validate_maf_receipt_parity_witness.py",
+                "tests/test_validate_sdlc_artifact.py",
+                "tests/test_sdlc_security_review.py",
+                "maf/MAF_BOUNDARY.md",
+                "docs/MAF_RECEIPT_COVERAGE.md",
+                "docs/AUDIT_F8_SCOPING_PLAN.md",
+                "maf/rust/Cargo.toml",
+                "maf/rust/crates/maf-kernel/src/lib.rs",
+                "mcoi/tests/test_proof_hash_contract.py",
+                "docs/89_maf_receipt_parity_witness_contract.md",
+            ],
+            "MAF receipt parity witnesses bind local Rust workspace members, Python and Rust hash parity constants, crate-to-schema mappings, F8 runtime-binding gaps, receipt refs, evidence refs, and authority-denial flags before any Python-to-Rust parity claim can be considered.",
+            [
+                "maf_receipt_parity_witness_schema_valid",
+                "maf_receipt_parity_witness_blocks_runtime_binding",
+                "maf_receipt_parity_witness_rejects_hash_drift",
+                "maf_receipt_parity_witness_rejects_workspace_member_drift",
+                "maf_receipt_parity_witness_rejects_summary_and_ref_drift",
+                "maf_receipt_parity_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_receipt_parity_witness_schema_valid": [
+                    "maf_receipt_parity_witness_passes"
+                ],
+                "maf_receipt_parity_witness_blocks_runtime_binding": [
+                    "maf_receipt_parity_witness_passes",
+                    "maf_receipt_parity_witness_rejects_authority_drift",
+                ],
+                "maf_receipt_parity_witness_rejects_hash_drift": [
+                    "maf_receipt_parity_witness_rejects_hash_drift"
+                ],
+                "maf_receipt_parity_witness_rejects_workspace_member_drift": [
+                    "maf_receipt_parity_witness_rejects_workspace_member_drift"
+                ],
+                "maf_receipt_parity_witness_rejects_summary_and_ref_drift": [
+                    "maf_receipt_parity_witness_rejects_summary_and_ref_drift"
+                ],
+                "maf_receipt_parity_witness_sdlc_artifacts_valid": [
+                    "maf_receipt_parity_witness_sdlc_artifacts_validate",
+                    "maf_receipt_parity_witness_security_review_passes_strict",
+                ],
+            },
+        ),
+        _surface(
             "worker_receipt_ledger_read_model",
             [
                 "WorkerReceiptLedgerReadModel",
@@ -10017,6 +10075,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_research_source_conflict_map_contract",
             "surfaces": ["research_source_conflict_map"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_receipt_parity_witness_contract",
+            "surfaces": ["maf_receipt_parity_witness"],
             "status": "closed",
         },
         {

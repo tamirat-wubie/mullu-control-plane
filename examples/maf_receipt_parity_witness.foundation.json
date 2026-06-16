@@ -1,0 +1,196 @@
+{
+  "witness_id": "maf-receipt-parity-witness-foundation-20260616",
+  "witness_version": "maf_receipt_parity_witness.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "workspace_scope": {
+    "projection_mode": "foundation_maf_receipt_parity",
+    "foundation_mode": true,
+    "maf_workspace_ref": "maf/rust/Cargo.toml",
+    "maf_boundary_ref": "maf/MAF_BOUNDARY.md",
+    "receipt_coverage_ref": "docs/MAF_RECEIPT_COVERAGE.md",
+    "audit_f8_ref": "docs/AUDIT_F8_SCOPING_PLAN.md",
+    "rust_workspace_member_count": 11,
+    "python_runtime_binding_claimed": false,
+    "rust_runtime_certification_claimed": false
+  },
+  "hash_parity_witnesses": [
+    {
+      "witness_kind": "receipt_hash",
+      "canonical_content_ref": "mcoi/tests/test_proof_hash_contract.py::CANONICAL_CONTENT",
+      "expected_sha256": "27bf13eff30cd9fd5fc334eff381e9b2349037bd0ef9dc88c2ca15d114a77fe5",
+      "python_test_ref": "mcoi/tests/test_proof_hash_contract.py",
+      "rust_test_ref": "maf/rust/crates/maf-kernel/src/lib.rs",
+      "parity_status": "test_time_hash_parity_verified"
+    },
+    {
+      "witness_kind": "state_hash",
+      "canonical_content_ref": "mcoi/tests/test_proof_hash_contract.py::CANONICAL_STATE_CONTENT",
+      "expected_sha256": "965b4f39a0784ee6858ff1e38a591b741edb48787395f2391e2089dbfadc534d",
+      "python_test_ref": "mcoi/tests/test_proof_hash_contract.py",
+      "rust_test_ref": "maf/rust/crates/maf-kernel/src/lib.rs",
+      "parity_status": "test_time_hash_parity_verified"
+    }
+  ],
+  "crate_surface_mappings": [
+    {
+      "mapping_id": "transition-receipt",
+      "rust_crate": "maf-kernel",
+      "rust_surface_ref": "maf/rust/crates/maf-kernel/src/lib.rs::TransitionReceipt",
+      "python_surface_ref": "mcoi/mcoi_runtime/contracts/proof.py::TransitionReceipt",
+      "schema_refs": ["schemas/kernel_proof.schema.json", "schemas/proof_verification_endpoint.schema.json"],
+      "parity_status": "test_time_hash_parity_verified",
+      "gap_refs": []
+    },
+    {
+      "mapping_id": "capability-descriptor",
+      "rust_crate": "maf-capability",
+      "rust_surface_ref": "maf/rust/crates/maf-capability/src/lib.rs",
+      "python_surface_ref": "schemas/capability_descriptor.schema.json",
+      "schema_refs": ["schemas/capability_descriptor.schema.json", "schemas/capability_registry_entry.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "agent-abstraction",
+      "rust_crate": "maf-agent",
+      "rust_surface_ref": "maf/rust/crates/maf-agent/src/lib.rs",
+      "python_surface_ref": "schemas/agent_identity.schema.json",
+      "schema_refs": ["schemas/agent_identity.schema.json", "schemas/agent_runtime_snapshot.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "cli-boundary",
+      "rust_crate": "maf-cli",
+      "rust_surface_ref": "maf/rust/crates/maf-cli/src/main.rs",
+      "python_surface_ref": "docs/AUDIT_F8_SCOPING_PLAN.md",
+      "schema_refs": ["schemas/maf_receipt_parity_witness.schema.json"],
+      "parity_status": "awaiting_runtime_binding",
+      "gap_refs": ["gap://maf-cli/not-invoked", "gap://maf-ffi/operator-decision-required"]
+    },
+    {
+      "mapping_id": "event-spine",
+      "rust_crate": "maf-event",
+      "rust_surface_ref": "maf/rust/crates/maf-event/src/lib.rs",
+      "python_surface_ref": "schemas/orgos_case_event.schema.json",
+      "schema_refs": ["schemas/orgos_case_event.schema.json", "schemas/trace_entry.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "governance-policy",
+      "rust_crate": "maf-governance",
+      "rust_surface_ref": "maf/rust/crates/maf-governance/src/lib.rs",
+      "python_surface_ref": "schemas/policy_bundle.schema.json",
+      "schema_refs": ["schemas/policy_rule.schema.json", "schemas/policy_bundle.schema.json", "schemas/policy_evaluation_trace.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "learning-admission",
+      "rust_crate": "maf-learning",
+      "rust_surface_ref": "maf/rust/crates/maf-learning/src/lib.rs",
+      "python_surface_ref": "schemas/learning_admission.schema.json",
+      "schema_refs": ["schemas/learning_admission.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "ops-simulation",
+      "rust_crate": "maf-ops",
+      "rust_surface_ref": "maf/rust/crates/maf-ops/src/lib.rs",
+      "python_surface_ref": "schemas/simulation_receipt.schema.json",
+      "schema_refs": ["schemas/simulation_receipt.schema.json", "schemas/symbolic_simulation_engine.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "orchestration-workflow",
+      "rust_crate": "maf-orchestration",
+      "rust_surface_ref": "maf/rust/crates/maf-orchestration/src/lib.rs",
+      "python_surface_ref": "schemas/workflow.schema.json",
+      "schema_refs": ["schemas/workflow.schema.json", "schemas/workflow_run.schema.json", "schemas/goal.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "supervisor-lifecycle",
+      "rust_crate": "maf-supervisor",
+      "rust_surface_ref": "maf/rust/crates/maf-supervisor/src/lib.rs",
+      "python_surface_ref": "schemas/supervisor_tick.schema.json",
+      "schema_refs": ["schemas/supervisor_tick.schema.json", "schemas/supervisor_checkpoint.schema.json", "schemas/livelock_record.schema.json"],
+      "parity_status": "schema_surface_mapped",
+      "gap_refs": ["gap://maf-runtime-binding/not-executed"]
+    },
+    {
+      "mapping_id": "truth-kernel",
+      "rust_crate": "maf-truth-kernel",
+      "rust_surface_ref": "maf/rust/crates/maf-truth-kernel/src/lib.rs",
+      "python_surface_ref": "schemas/truth_candidate.schema.json",
+      "schema_refs": ["schemas/truth_candidate.schema.json", "schemas/truth_commit_candidate.schema.json", "schemas/kernel_proof.schema.json"],
+      "parity_status": "awaiting_rust_fixture",
+      "gap_refs": ["gap://truth-kernel/hash-fixture-not-pinned"]
+    }
+  ],
+  "authority_boundary": {
+    "pyo3_binding_present": false,
+    "python_imports_rust_runtime": false,
+    "rust_subprocess_invoked": false,
+    "maf_cli_invoked": false,
+    "network_call_performed": false,
+    "filesystem_mutation_performed": false,
+    "receipt_emission_mutated": false,
+    "runtime_certification_claimed": false,
+    "rust_certifies_python_claimed": false,
+    "production_binding_claimed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_receipt_parity_witness_schema": "schemas/maf_receipt_parity_witness.schema.json",
+    "maf_boundary_doc": "maf/MAF_BOUNDARY.md",
+    "maf_receipt_coverage_doc": "docs/MAF_RECEIPT_COVERAGE.md",
+    "audit_f8_scoping_doc": "docs/AUDIT_F8_SCOPING_PLAN.md",
+    "rust_workspace_manifest": "maf/rust/Cargo.toml",
+    "python_hash_contract_test": "mcoi/tests/test_proof_hash_contract.py",
+    "rust_hash_contract_test": "maf/rust/crates/maf-kernel/src/lib.rs"
+  },
+  "contract_summary": {
+    "hash_parity_witness_count": 2,
+    "crate_surface_mapping_count": 11,
+    "awaiting_runtime_binding_count": 10,
+    "authority_denial_count": 12,
+    "evidence_ref_count": 13,
+    "gap_ref_count": 12
+  },
+  "evidence_refs": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "maf/MAF_BOUNDARY.md",
+    "docs/MAF_RECEIPT_COVERAGE.md",
+    "docs/AUDIT_F8_SCOPING_PLAN.md",
+    "maf/rust/Cargo.toml",
+    "maf/rust/crates/maf-kernel/src/lib.rs",
+    "mcoi/tests/test_proof_hash_contract.py",
+    "docs/82_cross_repo_opportunity_map.md",
+    "docs/89_maf_receipt_parity_witness_contract.md",
+    "examples/sdlc/requirement_maf_receipt_parity_witness_20260616.json"
+  ],
+  "gap_refs": [
+    "gap://maf-ffi/operator-decision-required",
+    "gap://maf-runtime-binding/not-executed",
+    "gap://maf-cli/not-invoked",
+    "gap://pyo3/not-present",
+    "gap://subprocess/not-allowed",
+    "gap://python-runtime-certification/not-claimed",
+    "gap://rust-certifies-python/not-claimed",
+    "gap://production-binding/not-claimed",
+    "gap://terminal-closure/not-allowed",
+    "gap://success-claim/not-allowed",
+    "gap://truth-kernel/hash-fixture-not-pinned",
+    "gap://cross-runtime-fixture-expansion/pending"
+  ]
+}

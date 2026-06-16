@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:maf-receipt-parity-witness:1",
+  "title": "Maf Receipt Parity Witness",
+  "description": "Foundation Mode witness for Python control-plane receipt parity against local MAF Rust crate surfaces without runtime binding authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "solver_outcome",
+    "workspace_scope",
+    "hash_parity_witnesses",
+    "crate_surface_mappings",
+    "authority_boundary",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs",
+    "gap_refs"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^maf-receipt-parity-witness-[a-z0-9-]+$"
+    },
+    "witness_version": {
+      "type": "string",
+      "const": "maf_receipt_parity_witness.v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedUnverified"]
+    },
+    "workspace_scope": {
+      "$ref": "#/$defs/workspace_scope"
+    },
+    "hash_parity_witnesses": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/hash_parity_witness"
+      }
+    },
+    "crate_surface_mappings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/crate_surface_mapping"
+      }
+    },
+    "authority_boundary": {
+      "$ref": "#/$defs/authority_boundary"
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/receipt_refs"
+    },
+    "contract_summary": {
+      "$ref": "#/$defs/contract_summary"
+    },
+    "evidence_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "gap_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "workspace_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_mode",
+        "foundation_mode",
+        "maf_workspace_ref",
+        "maf_boundary_ref",
+        "receipt_coverage_ref",
+        "audit_f8_ref",
+        "rust_workspace_member_count",
+        "python_runtime_binding_claimed",
+        "rust_runtime_certification_claimed"
+      ],
+      "properties": {
+        "projection_mode": {
+          "type": "string",
+          "const": "foundation_maf_receipt_parity"
+        },
+        "foundation_mode": {
+          "type": "boolean",
+          "const": true
+        },
+        "maf_workspace_ref": {
+          "type": "string",
+          "const": "maf/rust/Cargo.toml"
+        },
+        "maf_boundary_ref": {
+          "type": "string",
+          "const": "maf/MAF_BOUNDARY.md"
+        },
+        "receipt_coverage_ref": {
+          "type": "string",
+          "const": "docs/MAF_RECEIPT_COVERAGE.md"
+        },
+        "audit_f8_ref": {
+          "type": "string",
+          "const": "docs/AUDIT_F8_SCOPING_PLAN.md"
+        },
+        "rust_workspace_member_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "python_runtime_binding_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "rust_runtime_certification_claimed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "hash_parity_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_kind",
+        "canonical_content_ref",
+        "expected_sha256",
+        "python_test_ref",
+        "rust_test_ref",
+        "parity_status"
+      ],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": ["receipt_hash", "state_hash"]
+        },
+        "canonical_content_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "python_test_ref": {
+          "type": "string",
+          "const": "mcoi/tests/test_proof_hash_contract.py"
+        },
+        "rust_test_ref": {
+          "type": "string",
+          "const": "maf/rust/crates/maf-kernel/src/lib.rs"
+        },
+        "parity_status": {
+          "type": "string",
+          "const": "test_time_hash_parity_verified"
+        }
+      }
+    },
+    "crate_surface_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mapping_id",
+        "rust_crate",
+        "rust_surface_ref",
+        "python_surface_ref",
+        "schema_refs",
+        "parity_status",
+        "gap_refs"
+      ],
+      "properties": {
+        "mapping_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rust_crate": {
+          "type": "string",
+          "pattern": "^maf-[a-z0-9-]+$"
+        },
+        "rust_surface_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "python_surface_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "parity_status": {
+          "type": "string",
+          "enum": [
+            "test_time_hash_parity_verified",
+            "schema_surface_mapped",
+            "awaiting_rust_fixture",
+            "awaiting_runtime_binding"
+          ]
+        },
+        "gap_refs": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pyo3_binding_present",
+        "python_imports_rust_runtime",
+        "rust_subprocess_invoked",
+        "maf_cli_invoked",
+        "network_call_performed",
+        "filesystem_mutation_performed",
+        "receipt_emission_mutated",
+        "runtime_certification_claimed",
+        "rust_certifies_python_claimed",
+        "production_binding_claimed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "pyo3_binding_present": {"type": "boolean", "const": false},
+        "python_imports_rust_runtime": {"type": "boolean", "const": false},
+        "rust_subprocess_invoked": {"type": "boolean", "const": false},
+        "maf_cli_invoked": {"type": "boolean", "const": false},
+        "network_call_performed": {"type": "boolean", "const": false},
+        "filesystem_mutation_performed": {"type": "boolean", "const": false},
+        "receipt_emission_mutated": {"type": "boolean", "const": false},
+        "runtime_certification_claimed": {"type": "boolean", "const": false},
+        "rust_certifies_python_claimed": {"type": "boolean", "const": false},
+        "production_binding_claimed": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false},
+        "success_claim_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maf_receipt_parity_witness_schema",
+        "maf_boundary_doc",
+        "maf_receipt_coverage_doc",
+        "audit_f8_scoping_doc",
+        "rust_workspace_manifest",
+        "python_hash_contract_test",
+        "rust_hash_contract_test"
+      ],
+      "properties": {
+        "maf_receipt_parity_witness_schema": {
+          "type": "string",
+          "const": "schemas/maf_receipt_parity_witness.schema.json"
+        },
+        "maf_boundary_doc": {
+          "type": "string",
+          "const": "maf/MAF_BOUNDARY.md"
+        },
+        "maf_receipt_coverage_doc": {
+          "type": "string",
+          "const": "docs/MAF_RECEIPT_COVERAGE.md"
+        },
+        "audit_f8_scoping_doc": {
+          "type": "string",
+          "const": "docs/AUDIT_F8_SCOPING_PLAN.md"
+        },
+        "rust_workspace_manifest": {
+          "type": "string",
+          "const": "maf/rust/Cargo.toml"
+        },
+        "python_hash_contract_test": {
+          "type": "string",
+          "const": "mcoi/tests/test_proof_hash_contract.py"
+        },
+        "rust_hash_contract_test": {
+          "type": "string",
+          "const": "maf/rust/crates/maf-kernel/src/lib.rs"
+        }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hash_parity_witness_count",
+        "crate_surface_mapping_count",
+        "awaiting_runtime_binding_count",
+        "authority_denial_count",
+        "evidence_ref_count",
+        "gap_ref_count"
+      ],
+      "properties": {
+        "hash_parity_witness_count": {"type": "integer", "minimum": 0},
+        "crate_surface_mapping_count": {"type": "integer", "minimum": 0},
+        "awaiting_runtime_binding_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0},
+        "gap_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

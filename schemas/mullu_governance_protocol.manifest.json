@@ -485,6 +485,12 @@
       "surface": "search"
     },
     {
+      "schema_id": "maf-receipt-parity-witness",
+      "path": "schemas/maf_receipt_parity_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-receipt-parity-witness:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",

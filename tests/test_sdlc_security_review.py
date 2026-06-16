@@ -356,6 +356,23 @@ def test_research_source_conflict_map_security_review_passes_strict() -> None:
     assert review["receipt_ref"] in review["security_receipts"]
 
 
+def test_maf_receipt_parity_witness_security_review_passes_strict() -> None:
+    review_path = Path("examples/sdlc/security_review_maf_receipt_parity_witness_20260616.json")
+    review = validate_sdlc_artifact.load_json_object(review_path, "MAF receipt parity security review")
+
+    errors = validator.validate_contract(review_path, strict=True)
+
+    assert errors == []
+    assert "auth" in review["impact_categories"]
+    assert "filesystem" in review["impact_categories"]
+    assert "policy" in review["impact_categories"]
+    assert "receipts" in review["impact_categories"]
+    assert "audit" in review["impact_categories"]
+    assert review["release_blocked"] is False
+    assert review["residual_risk"] == "low"
+    assert review["receipt_ref"] in review["security_receipts"]
+
+
 def test_worker_receipt_ledger_read_model_security_review_passes_strict() -> None:
     review_path = Path("examples/sdlc/security_review_worker_receipt_ledger_read_model_20260616.json")
     review = validate_sdlc_artifact.load_json_object(review_path, "worker receipt ledger security review")
