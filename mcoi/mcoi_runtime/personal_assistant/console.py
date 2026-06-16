@@ -90,6 +90,177 @@ _EFFECT_BOUNDARY = {
     "deployment_mutation_allowed": False,
     "public_readiness_claim_allowed": False,
 }
+_FOUNDATION_LANES = (
+    {
+        "lane_id": "request_intake_whqr",
+        "display_name": "Request Intake and WHQR",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/requests/preview"],
+        "schema_refs": [
+            "schemas/personal_assistant_request.schema.json",
+            "schemas/personal_assistant_plan.schema.json",
+            "schemas/personal_assistant_receipt.schema.json",
+        ],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_receipt.py",
+            "tests/test_personal_assistant_intake.py",
+        ],
+    },
+    {
+        "lane_id": "skill_registry",
+        "display_name": "Skill Registry",
+        "stage": "runtime_read_model",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/skills"],
+        "schema_refs": ["schemas/personal_assistant_skill.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_skill_registry.py",
+            "tests/test_personal_assistant_skill_registry.py",
+            "tests/test_personal_assistant_runtime_skill_registry.py",
+        ],
+    },
+    {
+        "lane_id": "approval_queue",
+        "display_name": "Approval Queue",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+            "/api/v1/personal-assistant/approval-queue",
+            "/api/v1/personal-assistant/approval-queue/preview",
+        ],
+        "schema_refs": [
+            "schemas/personal_assistant_approval.schema.json",
+            "schemas/personal_assistant_approval_queue.schema.json",
+            "schemas/personal_assistant_approval_decision.schema.json",
+        ],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_approval_queue.py",
+            "scripts/validate_personal_assistant_approval_decision.py",
+            "tests/test_personal_assistant_approval_queue.py",
+        ],
+    },
+    {
+        "lane_id": "memory_observation",
+        "display_name": "Memory Observation",
+        "stage": "candidate_only",
+        "state": "SolvedVerified",
+        "route_refs": [
+            "/api/v1/personal-assistant/memory-observations",
+            "/api/v1/personal-assistant/memory-observations/preview",
+            "/api/v1/personal-assistant/memory-observations/review/preview",
+        ],
+        "schema_refs": [
+            "schemas/personal_assistant_memory_observation.schema.json",
+            "schemas/personal_assistant_memory_review.schema.json",
+        ],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_memory_observation.py",
+            "scripts/validate_personal_assistant_memory_review.py",
+            "tests/test_personal_assistant_memory_runtime.py",
+        ],
+    },
+    {
+        "lane_id": "read_only_projection",
+        "display_name": "Read-Only Inbox and Calendar",
+        "stage": "projection_only",
+        "state": "SolvedVerified",
+        "route_refs": [],
+        "schema_refs": ["schemas/personal_assistant_read_only_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_read_only_projection.py",
+            "tests/test_validate_personal_assistant_read_only_projection.py",
+        ],
+    },
+    {
+        "lane_id": "draft_projection",
+        "display_name": "Draft-Only Assistant",
+        "stage": "projection_only",
+        "state": "SolvedVerified",
+        "route_refs": [],
+        "schema_refs": ["schemas/personal_assistant_draft_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_draft_projection.py",
+            "tests/test_validate_personal_assistant_draft_projection.py",
+        ],
+    },
+    {
+        "lane_id": "teamops_shared_inbox",
+        "display_name": "TeamOps Shared Inbox",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"],
+        "schema_refs": ["schemas/personal_assistant_teamops_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_teamops_projection.py",
+            "tests/test_validate_personal_assistant_teamops_projection.py",
+        ],
+    },
+    {
+        "lane_id": "github_codex_review",
+        "display_name": "GitHub and Codex Review",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/github-codex/review/preview"],
+        "schema_refs": ["schemas/personal_assistant_github_codex_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_github_codex_projection.py",
+            "tests/test_validate_personal_assistant_github_codex_projection.py",
+        ],
+    },
+    {
+        "lane_id": "research_source_compare",
+        "display_name": "Research Source Compare",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/research/source-compare/preview"],
+        "schema_refs": ["schemas/personal_assistant_research_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_research_projection.py",
+            "tests/test_validate_personal_assistant_research_projection.py",
+        ],
+    },
+    {
+        "lane_id": "math_reasoning",
+        "display_name": "Math Reasoning",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/math/reasoning/preview"],
+        "schema_refs": ["schemas/personal_assistant_math_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_math_projection.py",
+            "tests/test_validate_personal_assistant_math_projection.py",
+        ],
+    },
+    {
+        "lane_id": "schedule_planning",
+        "display_name": "Schedule Planning",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": ["/api/v1/personal-assistant/planning/schedule/preview"],
+        "schema_refs": ["schemas/personal_assistant_planning_projection.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_planning_projection.py",
+            "tests/test_validate_personal_assistant_planning_projection.py",
+        ],
+    },
+    {
+        "lane_id": "operator_console",
+        "display_name": "Operator Console",
+        "stage": "read_model",
+        "state": "SolvedVerified",
+        "route_refs": [
+            "/api/v1/console/personal-assistant",
+            "/api/v1/console/personal-assistant/view",
+        ],
+        "schema_refs": ["schemas/personal_assistant_console_read_model.schema.json"],
+        "validator_refs": [
+            "scripts/validate_personal_assistant_console_read_model.py",
+            "tests/test_validate_personal_assistant_console_read_model.py",
+            "tests/test_personal_assistant_console.py",
+        ],
+    },
+)
 _APPROVAL_FALSE_CONTROLS = (
     "execution_allowed",
     "live_connector_execution_allowed",
@@ -151,10 +322,12 @@ def build_personal_assistant_console_read_model(
     task_rows = _panel_items(task_items, "task_items")
     receipt_rows = _panel_items(receipts, "receipts")
     teamops_rows = _panel_items(teamops_plans, "teamops_plans")
+    lane_status = _build_lane_status()
     assurance = _build_foundation_assurance(
         approval_blockers=approval_blockers,
         memory_blockers=memory_blockers,
         teamops_rows=teamops_rows,
+        lane_status=lane_status,
     )
     return {
         "console_id": "personal_assistant_console_foundation",
@@ -176,6 +349,10 @@ def build_personal_assistant_console_read_model(
                 "live_memory_write_allowed": False,
             },
             "teamops": {"item_count": len(teamops_rows), "live_probe_allowed": False},
+            "lane_status": {
+                "item_count": lane_status["lane_count"],
+                "execution_allowed": False,
+            },
         },
         "chat": {
             "recent_requests": request_rows,
@@ -204,6 +381,7 @@ def build_personal_assistant_console_read_model(
             "mailbox_mutation_allowed": False,
             "provider_call_allowed": False,
         },
+        "lane_status": lane_status,
         "assurance": assurance,
         "blocked_actions": list(_BLOCKED_ACTIONS),
         "effect_boundary": dict(_EFFECT_BOUNDARY),
@@ -231,6 +409,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
     memory = _mapping_value(payload, "memory")
     receipts = _mapping_value(payload, "receipts")
     teamops = _mapping_value(payload, "teamops")
+    lane_status = _mapping_value(payload, "lane_status")
     metrics = (
         ("Status", payload.get("status", "")),
         ("Skills", sections.get("skills", {}).get("item_count", 0) if isinstance(sections.get("skills"), Mapping) else 0),
@@ -242,6 +421,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
         ),
         ("Receipts", receipts.get("receipt_count", 0)),
         ("Memory Candidates", memory.get("candidate_count", 0)),
+        ("Foundation Lanes", lane_status.get("lane_count", 0)),
         ("Execution Allowed", boundary.get("execution_allowed", False)),
     )
     metric_items = "\n".join(
@@ -289,6 +469,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
   {_panel_table("Skill Status", skills.get("skills", ()), ("skill_id", "mode", "risk_level"))}
   {_panel_table("Memory Candidates", memory.get("candidates", ()), ("memory_observation_id", "memory_type", "confidence"))}
   {_panel_table("TeamOps Plans", teamops.get("plans", ()), ("request_id", "skill_id", "status"))}
+  {_panel_table("Foundation Lanes", lane_status.get("lanes", ()), ("lane_id", "stage", "state"))}
   {_sequence_table("Blocked Actions", payload.get("blocked_actions", ()))}
 </body>
 </html>"""
@@ -372,12 +553,28 @@ def _build_foundation_assurance(
     approval_blockers: Sequence[str],
     memory_blockers: Sequence[str],
     teamops_rows: Sequence[Mapping[str, Any]],
+    lane_status: Mapping[str, Any],
 ) -> dict[str, Any]:
     blockers = list(approval_blockers) + list(memory_blockers)
     for index, plan in enumerate(teamops_rows):
         for control in ("live_probe_allowed", "mailbox_mutation_allowed", "provider_call_allowed"):
             if plan.get(control) is not False and control in plan:
                 blockers.append(f"teamops_plans[{index}].{control}")
+    for index, lane in enumerate(_sequence_of_mappings(lane_status.get("lanes", ()))):
+        for control in (
+            "execution_allowed",
+            "live_connector_execution_allowed",
+            "connector_mutation_allowed",
+            "external_effect_allowed",
+            "customer_readiness_claim_allowed",
+            "nested_mind_live_activation_allowed",
+        ):
+            if lane.get(control) is not False:
+                blockers.append(f"lane_status.lanes[{index}].{control}")
+        if not lane.get("schema_refs"):
+            blockers.append(f"lane_status.lanes[{index}].schema_refs")
+        if not lane.get("validator_refs"):
+            blockers.append(f"lane_status.lanes[{index}].validator_refs")
     unique_blockers = sorted(set(blockers))
     return {
         "assurance_id": "personal_assistant_foundation_no_effect_assurance",
@@ -396,6 +593,7 @@ def _build_foundation_assurance(
             "no_raw_private_payload_serialization",
             "no_secret_value_serialization",
             "receipt_viewer_read_only_projection",
+            "foundation_lane_status_no_effect",
         ],
         "next_action": (
             "repair authority-drift controls before any further assistant promotion"
@@ -403,6 +601,47 @@ def _build_foundation_assurance(
             else "continue foundation-stage assistant hardening without enabling live execution"
         ),
     }
+
+
+def _build_lane_status() -> dict[str, Any]:
+    lanes = []
+    for lane in _FOUNDATION_LANES:
+        lanes.append(
+            {
+                **_json_ready(lane),
+                "foundation_only": True,
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "connector_mutation_allowed": False,
+                "external_effect_allowed": False,
+                "customer_readiness_claim_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "receipt_required": True,
+            }
+        )
+    runtime_preview_count = sum(1 for lane in lanes if lane["stage"] == "runtime_preview")
+    return {
+        "status_id": "personal_assistant_foundation_lane_status",
+        "foundation_only": True,
+        "lane_count": len(lanes),
+        "runtime_preview_lane_count": runtime_preview_count,
+        "read_model_lane_count": sum(1 for lane in lanes if lane["stage"] in {"runtime_read_model", "read_model"}),
+        "projection_only_lane_count": sum(1 for lane in lanes if lane["stage"] in {"projection_only", "candidate_only"}),
+        "governed": True,
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "connector_mutation_allowed": False,
+        "external_effect_allowed": False,
+        "customer_readiness_claim_allowed": False,
+        "nested_mind_live_activation_allowed": False,
+        "lanes": lanes,
+    }
+
+
+def _sequence_of_mappings(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
 
 
 def _panel_items(items: Sequence[Mapping[str, Any]], field_name: str) -> list[dict[str, Any]]:

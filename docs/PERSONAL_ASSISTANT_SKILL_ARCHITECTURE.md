@@ -370,6 +370,43 @@ connectors, write systems of record, submit externally, post publicly, move
 money, deploy services, write memory, serialize raw private payloads or
 secrets, activate Nested Mind, or claim customer readiness.
 
+## Operator Console Lane-Status Contract
+
+The operator console is a read-only foundation status surface. It may aggregate
+assistant lane evidence into one read model for operator review, but it does
+not execute skills, call connectors, write memory, grant approval, or promote
+customer readiness. The console exposes:
+
+```text
+lane_id
+stage
+state
+route_refs
+schema_refs
+validator_refs
+execution_allowed = false
+live_connector_execution_allowed = false
+connector_mutation_allowed = false
+external_effect_allowed = false
+customer_readiness_claim_allowed = false
+nested_mind_live_activation_allowed = false
+receipt_required = true
+```
+
+The public console routes are:
+
+```text
+/api/v1/console/personal-assistant
+/api/v1/console/personal-assistant/view
+```
+
+They render the lane inventory, approval queue, receipt viewer, memory
+candidates, TeamOps plans, and skill status as escaped read-model data only.
+The console validator rejects lane-count drift, missing schema or validator
+evidence, runtime lane routes without route refs, raw private payload fields,
+secret-like values, and any lane status that claims execution, connector,
+external-effect, customer-readiness, or live Nested Mind authority.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
