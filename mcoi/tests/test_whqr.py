@@ -90,13 +90,22 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
 
 def test_document_semantics_header_must_match_canonical_pair() -> None:
     root = WHQRNode(role=WHRole.WHAT, target="payment_request")
+    valid_wrong_semantics_hash = "sha256:" + ("0" * 64)
+    if valid_wrong_semantics_hash == SEMANTICS_HASH:
+        valid_wrong_semantics_hash = "sha256:" + ("1" * 64)
 
     with pytest.raises(ValueError, match="canonical WHQR semantics"):
         WHQRDocument(root=root, whqr_version="0.2.0")
     with pytest.raises(ValueError, match="canonical WHQR semantics"):
-        WHQRDocument(root=root, semantics_hash="sha256:custom-whqr-semantics")
-    with pytest.raises(ValueError, match="semantics_hash must start"):
-        WHQRDocument(root=root, semantics_hash="custom-whqr-semantics")
+        WHQRDocument(root=root, semantics_hash=valid_wrong_semantics_hash)
+    for malformed_semantics_hash in (
+        "sha256:custom-whqr-semantics",
+        "sha256:" + ("A" * 64),
+        "sha256:" + ("g" * 64),
+        "custom-whqr-semantics",
+    ):
+        with pytest.raises(ValueError, match="semantics_hash must be sha256"):
+            WHQRDocument(root=root, semantics_hash=malformed_semantics_hash)
 
 
 def test_document_verify_semantics_replays_hash_and_header() -> None:
