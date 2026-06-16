@@ -17,7 +17,7 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 
 | Area | Status | Judgment |
 | --- | --- | --- |
-| 1. Public API foundation | PARTIAL | Live public API/evidence endpoints respond, but the live deployment witness reports commit `023dcf23...` while current `origin/main` is `5f324ec6...` after the latest protocol-count merge. |
+| 1. Public API foundation | READY | Live public API/evidence endpoints respond, and the live deployment witness now reports current `origin/main` commit `abf22a2d...`. |
 | 2. User/project/tenant model | PARTIAL | Schema and read-model examples exist; durable harness-owned persistence and exact ApprovalRequest/LoopStatus bindings are incomplete. |
 | 3. Agent service harness contract | PARTIAL | Contract schema, examples, read-only route, and blocked live-producer gates exist; live producer and adapter execution remain intentionally absent. |
 | 4. First MVP adapter path | PARTIAL | GitHub/Codex-style concepts exist as no-effect planning projections and lower-level code-worker/sandbox pieces; no approved branch/PR execution path exists. |
@@ -31,10 +31,10 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 
 | Evidence | Observation |
 | --- | --- |
-| Current main | `origin/main = 5f324ec6bc5f3d5fa0d95d141b07e29a13ba71cc` |
-| Latest mainline receipt merges | `#1806` added readiness waiver review packet evidence; `#1807` added Personal Assistant foundation evidence receipt; `#1810` aligned the governance protocol manifest count after the evidence merge. These are read-only governance/evidence surfaces and grant no harness execution authority. |
+| Current main | `origin/main = abf22a2d3cb0a39e8ed3e55759998c3621410110` |
+| Latest mainline receipt merges | `#1806` added readiness waiver review packet evidence; `#1807` added Personal Assistant foundation evidence receipt; `#1810` aligned the Personal Assistant foundation evidence surface after that merge; `#1811` refreshed this harness readiness map. These are read-only governance/evidence surfaces and grant no harness execution authority. |
 | Live health probe | `GET https://api.mullusi.com/health -> 200`, sample status `healthy` |
-| Live deployment witness | `GET https://api.mullusi.com/deployment/witness -> 200`, deployed commit sample `023dcf23b561145de0ebf4c9e413520d22817372` |
+| Live deployment witness | `GET https://api.mullusi.com/deployment/witness -> 200`, deployed commit sample `abf22a2d3cb0a39e8ed3e55759998c3621410110` |
 | Live capability evidence | `GET https://api.mullusi.com/capabilities/evidence -> 200`, sample capability count `81` |
 | Live audit verify | `GET https://api.mullusi.com/audit/verify -> 200`, sample `valid=true` |
 | Live proof verify | `GET https://api.mullusi.com/proof/verify -> 200`, sample `valid=true` |
@@ -44,13 +44,13 @@ This is a readiness audit, not an implementation plan. It maps the current contr
 
 ## 1. Public API Foundation
 
-Area status: PARTIAL
+Area status: READY
 
 | Item | Status | Evidence | Smallest next PR when not READY |
 | --- | --- | --- | --- |
 | api.mullusi.com health | READY | Live unauthenticated `GET /health` returned `200` with `healthy` status on 2026-06-16. | - |
-| deployment witness | PARTIAL | Live `GET /deployment/witness` returned `200`, but witness commit `023dcf23...` is behind current `origin/main` `5f324ec6...`. | Add a deployment-witness refresh receipt for current main, without changing deployment logic. |
-| runtime conformance | PARTIAL | Live deployment witness includes passed `runtime_conformance` check and certificate `conf-12ad7b004a9afb6f` for `023dcf23...`; no fresh current-main conformance receipt was produced for `5f324ec6...` in this pass. | Add current-main runtime conformance collection receipt and validator output. |
+| deployment witness | READY | Live `GET /deployment/witness` returned `200`, and witness commit matches current `origin/main` `abf22a2d...`. | - |
+| runtime conformance | READY | Live deployment witness includes passed `runtime_conformance` check and certificate `conf-290f78a0872d2bf5` for `abf22a2d...`. | - |
 | proof verify | READY | Live `GET /proof/verify` returned `200` with `valid=true`. | - |
 | audit verify | READY | Live `GET /audit/verify` returned `200` with `valid=true`. | - |
 | loop read model | READY | `scripts/report_holistic_loop_read_model.py` and `scripts/validate_holistic_loop_read_model.py` exist, and harness read model examples reference `loop://holistic-loop-read-model`. | - |
@@ -232,5 +232,5 @@ Required ordering:
 STATUS:
   Completeness: 100%
   Invariants verified: no dashboard, no mutation endpoint, no live coding adapter, no branch/PR/deploy/DNS/secret/destructive authority, no secret serialization claim
-  Open issues: durable harness model, branch workspace contract, GitHub read-only task service, PR admission preflight, dashboard read models, current-main deployment witness refresh
+  Open issues: durable harness model, branch workspace contract, GitHub read-only task service, PR admission preflight, dashboard read models
   Next action: implement the smallest durable user/project/run/approval/sandbox/receipt model PR
