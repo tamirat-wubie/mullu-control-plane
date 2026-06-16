@@ -1,0 +1,472 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:mfidel-substrate-conformance-receipt:1",
+  "title": "Mfidel Substrate Conformance Receipt",
+  "description": "Foundation Mode receipt for Mfidel substrate conformance across local runtime surfaces and future SDK/kernel bindings without Unicode normalization, fidel decomposition, or live runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "checked_at",
+    "solver_outcome",
+    "substrate_scope",
+    "runtime_bindings",
+    "grid_contract",
+    "atomicity_guards",
+    "exact_preservation_witnesses",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^mfidel-substrate-conformance-receipt-[a-z0-9-]+$"
+    },
+    "receipt_version": {
+      "type": "string",
+      "const": "mfidel_substrate_conformance_receipt.v1"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedUnverified"]
+    },
+    "substrate_scope": {
+      "$ref": "#/$defs/substrate_scope"
+    },
+    "runtime_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/runtime_binding"
+      }
+    },
+    "grid_contract": {
+      "$ref": "#/$defs/grid_contract"
+    },
+    "atomicity_guards": {
+      "$ref": "#/$defs/atomicity_guards"
+    },
+    "exact_preservation_witnesses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/exact_preservation_witness"
+      }
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/receipt_refs"
+    },
+    "contract_summary": {
+      "$ref": "#/$defs/contract_summary"
+    },
+    "evidence_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "substrate_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_mode",
+        "foundation_mode",
+        "grid_rows",
+        "grid_cols",
+        "vector_dimension",
+        "non_empty_fidel_count",
+        "empty_slot_count",
+        "vowel_overlay_row",
+        "cross_runtime_closure_claimed"
+      ],
+      "properties": {
+        "projection_mode": {
+          "type": "string",
+          "const": "foundation_cross_runtime_conformance"
+        },
+        "foundation_mode": {
+          "type": "boolean",
+          "const": true
+        },
+        "grid_rows": {
+          "type": "integer",
+          "const": 34
+        },
+        "grid_cols": {
+          "type": "integer",
+          "const": 8
+        },
+        "vector_dimension": {
+          "type": "integer",
+          "const": 272
+        },
+        "non_empty_fidel_count": {
+          "type": "integer",
+          "const": 269
+        },
+        "empty_slot_count": {
+          "type": "integer",
+          "const": 3
+        },
+        "vowel_overlay_row": {
+          "type": "integer",
+          "const": 17
+        },
+        "cross_runtime_closure_claimed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "runtime_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "runtime_language",
+        "implementation_ref",
+        "conformance_status",
+        "digest_sha256",
+        "fixture_refs",
+        "no_normalization_proof_refs",
+        "exact_preservation_proof_refs",
+        "gap_refs"
+      ],
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_language": {
+          "type": "string",
+          "enum": ["python", "typescript", "rust"]
+        },
+        "implementation_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "conformance_status": {
+          "type": "string",
+          "enum": ["validated", "awaiting_evidence"]
+        },
+        "digest_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "fixture_refs": {
+          "$ref": "#/$defs/string_array"
+        },
+        "no_normalization_proof_refs": {
+          "$ref": "#/$defs/string_array"
+        },
+        "exact_preservation_proof_refs": {
+          "$ref": "#/$defs/string_array"
+        },
+        "gap_refs": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "grid_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coordinate_reference",
+        "row_min",
+        "row_max",
+        "col_min",
+        "col_max",
+        "vowel_overlay_row",
+        "empty_slots",
+        "overlay_exceptions",
+        "column_8_derivation",
+        "overlay_is_sound_metadata_only"
+      ],
+      "properties": {
+        "coordinate_reference": {
+          "type": "string",
+          "const": "f[row][col]"
+        },
+        "row_min": {
+          "type": "integer",
+          "const": 1
+        },
+        "row_max": {
+          "type": "integer",
+          "const": 34
+        },
+        "col_min": {
+          "type": "integer",
+          "const": 1
+        },
+        "col_max": {
+          "type": "integer",
+          "const": 8
+        },
+        "vowel_overlay_row": {
+          "type": "integer",
+          "const": 17
+        },
+        "empty_slots": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/coord"
+          }
+        },
+        "overlay_exceptions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/overlay_exception"
+          }
+        },
+        "column_8_derivation": {
+          "type": "string",
+          "const": "f[r][8] = f[r][2] + f[17][4]"
+        },
+        "overlay_is_sound_metadata_only": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "coord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row", "col"],
+      "properties": {
+        "row": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 34
+        },
+        "col": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      }
+    },
+    "overlay_exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "overlay"],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/coord"
+        },
+        "overlay": {
+          "$ref": "#/$defs/coord"
+        }
+      }
+    },
+    "atomicity_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unicode_normalization_allowed",
+        "unicode_decomposition_allowed",
+        "unicode_recomposition_allowed",
+        "root_letter_model_allowed",
+        "consonant_vowel_split_allowed",
+        "lossy_transliteration_canonical_allowed",
+        "phoneme_identity_substitution_allowed",
+        "overlay_structural_decomposition_allowed",
+        "raw_secret_material_included",
+        "live_runtime_import_authority_allowed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "unicode_normalization_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "unicode_decomposition_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "unicode_recomposition_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "root_letter_model_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "consonant_vowel_split_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "lossy_transliteration_canonical_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "phoneme_identity_substitution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "overlay_structural_decomposition_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "raw_secret_material_included": {
+          "type": "boolean",
+          "const": false
+        },
+        "live_runtime_import_authority_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "exact_preservation_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_id",
+        "input_sequence",
+        "codepoints",
+        "expected_positions",
+        "preservation_status",
+        "normalization_applied"
+      ],
+      "properties": {
+        "sample_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_sequence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codepoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^U\\+[0-9A-F]{4,6}$"
+          }
+        },
+        "expected_positions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/coord"
+          }
+        },
+        "preservation_status": {
+          "type": "string",
+          "const": "exact"
+        },
+        "normalization_applied": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mfidel_substrate_conformance_schema",
+        "mfidel_grid_runtime",
+        "mfidel_matrix_runtime",
+        "mfidel_contract_runtime",
+        "mfidel_atomicity_tests",
+        "mfidel_matrix_tests"
+      ],
+      "properties": {
+        "mfidel_substrate_conformance_schema": {
+          "type": "string",
+          "const": "schemas/mfidel_substrate_conformance_receipt.schema.json"
+        },
+        "mfidel_grid_runtime": {
+          "type": "string",
+          "const": "mcoi/mcoi_runtime/substrate/mfidel/grid.py"
+        },
+        "mfidel_matrix_runtime": {
+          "type": "string",
+          "const": "mcoi/mcoi_runtime/core/mfidel_matrix.py"
+        },
+        "mfidel_contract_runtime": {
+          "type": "string",
+          "const": "mcoi/mcoi_runtime/contracts/mfidel.py"
+        },
+        "mfidel_atomicity_tests": {
+          "type": "string",
+          "const": "mcoi/tests/test_mfidel_atomicity.py"
+        },
+        "mfidel_matrix_tests": {
+          "type": "string",
+          "const": "mcoi/tests/test_mfidel_matrix.py"
+        }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_binding_count",
+        "validated_binding_count",
+        "awaiting_evidence_binding_count",
+        "exact_preservation_witness_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "runtime_binding_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "validated_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "awaiting_evidence_binding_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exact_preservation_witness_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "evidence_ref_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
