@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1",
+  "title": "Personal Assistant Public Console Probe Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "raw_secret_values_included",
+    "probe_surface",
+    "thresholds",
+    "route_observations",
+    "summary",
+    "effect_boundary",
+    "remediation",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "personal_assistant.public_console_probe_receipt.v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^personal-assistant-public-console-probe-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Pass", "Fail"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence"]
+    },
+    "raw_secret_values_included": {
+      "const": false
+    },
+    "probe_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface_id",
+        "base_url",
+        "json_route",
+        "html_route",
+        "time_window"
+      ],
+      "properties": {
+        "surface_id": {
+          "const": "personal_assistant_public_console"
+        },
+        "base_url": {
+          "type": "string",
+          "pattern": "^https://[^/]+$"
+        },
+        "json_route": {
+          "const": "/api/v1/console/personal-assistant"
+        },
+        "html_route": {
+          "const": "/api/v1/console/personal-assistant/view"
+        },
+        "time_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observed_at"],
+          "properties": {
+            "observed_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "json_status_code",
+        "html_status_code",
+        "expected_lane_count",
+        "missing_signal_policy"
+      ],
+      "properties": {
+        "json_status_code": {
+          "const": 200
+        },
+        "html_status_code": {
+          "const": 200
+        },
+        "expected_lane_count": {
+          "const": 12
+        },
+        "missing_signal_policy": {
+          "const": "explicit_not_observed"
+        }
+      }
+    },
+    "route_observations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "route_id",
+          "method",
+          "url",
+          "expected_status_code",
+          "observed_status_code",
+          "request_reached_endpoint",
+          "passed",
+          "response_digest",
+          "observed_public_fields",
+          "error"
+        ],
+        "properties": {
+          "route_id": {
+            "type": "string",
+            "enum": ["console_json", "console_html"]
+          },
+          "method": {
+            "const": "GET"
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https://[^/]+/api/v1/console/personal-assistant.*$"
+          },
+          "expected_status_code": {
+            "const": 200
+          },
+          "observed_status_code": {
+            "anyOf": [
+              { "type": "integer" },
+              { "type": "null" }
+            ]
+          },
+          "request_reached_endpoint": {
+            "type": "boolean"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "response_digest": {
+            "type": "string",
+            "pattern": "^(sha256:[0-9a-f]{64})?$"
+          },
+          "observed_public_fields": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "console_id": { "type": "string" },
+              "status": { "type": "string" },
+              "solver_outcome": { "type": "string" },
+              "lane_count": { "type": "integer" },
+              "title_present": { "type": "boolean" },
+              "foundation_lanes_present": { "type": "boolean" },
+              "read_only_status_present": { "type": "boolean" },
+              "json_link_present": { "type": "boolean" },
+              "execution_allowed_false_present": { "type": "boolean" }
+            }
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "console_read_model_verified",
+        "html_view_verified",
+        "no_effect_boundary_verified",
+        "expected_lane_count",
+        "observed_lane_count",
+        "probe_closed"
+      ],
+      "properties": {
+        "console_read_model_verified": { "type": "boolean" },
+        "html_view_verified": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" },
+        "expected_lane_count": { "const": 12 },
+        "observed_lane_count": { "type": "integer", "minimum": 0 },
+        "probe_closed": { "type": "boolean" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "customer_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+        "secret_values_serialized",
+        "raw_response_bodies_serialized"
+      ],
+      "properties": {
+        "execution_allowed": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "external_effect_allowed": { "const": false },
+        "customer_readiness_claim_allowed": { "const": false },
+        "nested_mind_live_activation_allowed": { "const": false },
+        "secret_values_serialized": { "const": false },
+        "raw_response_bodies_serialized": { "const": false }
+      }
+    },
+    "remediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "next_action"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["observe", "repair_console_route"]
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "const": true }
+            }
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  }
+}

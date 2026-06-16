@@ -479,6 +479,17 @@ def test_protocol_manifest_indexes_govern_cloud_public_route_monitor_receipt() -
     assert monitor_entry["surface"] == "observability"
 
 
+def test_protocol_manifest_indexes_personal_assistant_public_console_probe_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    probe_entry = entries["personal-assistant-public-console-probe-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert probe_entry["path"] == "schemas/personal_assistant_public_console_probe_receipt.schema.json"
+    assert probe_entry["urn"] == "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1"
+    assert probe_entry["surface"] == "observability"
+
+
 def test_protocol_manifest_indexes_governed_swarm_production_readiness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

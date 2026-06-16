@@ -1481,6 +1481,12 @@
       "surface": "observability"
     },
     {
+      "schema_id": "personal-assistant-public-console-probe-receipt",
+      "path": "schemas/personal_assistant_public_console_probe_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1",
+      "surface": "observability"
+    },
+    {
       "schema_id": "public-naming-readiness",
       "path": "schemas/public_naming_readiness.schema.json",
       "urn": "urn:mullusi:schema:public-naming-readiness:1",

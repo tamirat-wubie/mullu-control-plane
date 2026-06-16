@@ -1,0 +1,92 @@
+{
+  "schema_version": "personal_assistant.public_console_probe_receipt.v1",
+  "receipt_id": "personal-assistant-public-console-probe-b277ff78d8b9b99a",
+  "generated_at": "2026-06-16T07:07:13Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "raw_secret_values_included": false,
+  "probe_surface": {
+    "surface_id": "personal_assistant_public_console",
+    "base_url": "https://api.mullusi.com",
+    "json_route": "/api/v1/console/personal-assistant",
+    "html_route": "/api/v1/console/personal-assistant/view",
+    "time_window": {
+      "observed_at": "2026-06-16T07:07:13Z"
+    }
+  },
+  "thresholds": {
+    "json_status_code": 200,
+    "html_status_code": 200,
+    "expected_lane_count": 12,
+    "missing_signal_policy": "explicit_not_observed"
+  },
+  "route_observations": [
+    {
+      "route_id": "console_json",
+      "method": "GET",
+      "url": "https://api.mullusi.com/api/v1/console/personal-assistant",
+      "expected_status_code": 200,
+      "observed_status_code": 200,
+      "request_reached_endpoint": true,
+      "passed": true,
+      "response_digest": "sha256:a3bcd75925842f77fc8252f532b738894e5b38ca215b86e56c94de638410c321",
+      "observed_public_fields": {
+        "console_id": "personal_assistant_console_foundation",
+        "status": "foundation_read_only",
+        "solver_outcome": "SolvedVerified",
+        "lane_count": 12
+      },
+      "error": ""
+    },
+    {
+      "route_id": "console_html",
+      "method": "GET",
+      "url": "https://api.mullusi.com/api/v1/console/personal-assistant/view",
+      "expected_status_code": 200,
+      "observed_status_code": 200,
+      "request_reached_endpoint": true,
+      "passed": true,
+      "response_digest": "sha256:f20354fadec82068b5ca3dcb92171f275a9d76e3cd1ba10b6328160c841459e7",
+      "observed_public_fields": {
+        "title_present": true,
+        "foundation_lanes_present": true,
+        "read_only_status_present": true,
+        "json_link_present": true,
+        "execution_allowed_false_present": true
+      },
+      "error": ""
+    }
+  ],
+  "summary": {
+    "console_read_model_verified": true,
+    "html_view_verified": true,
+    "no_effect_boundary_verified": true,
+    "expected_lane_count": 12,
+    "observed_lane_count": 12,
+    "probe_closed": true
+  },
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "secret_values_serialized": false,
+    "raw_response_bodies_serialized": false
+  },
+  "remediation": {
+    "decision": "observe",
+    "next_action": "continue observing the public read-only console route; do not infer live execution authority"
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-public-console-probe-2026-06-16",
+        "reason": "Recorded a non-mutating personal-assistant public console probe with JSON and HTML read routes verified.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}
