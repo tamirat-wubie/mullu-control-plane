@@ -535,6 +535,40 @@ def test_direct_snet_contracts_reject_nested_metadata_key_shape_drift() -> None:
     assert tuple(valid_symbol.metadata) == ("items", "outer")
 
 
+def test_direct_snet_contracts_reject_non_json_metadata_value_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.tags"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"tags": {"b", "a"}})
+    with pytest.raises(ValueError, match="metadata.tags"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"tags": frozenset(("b", "a"))})
+    with pytest.raises(ValueError, match="metadata.wh"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"wh": SNetWHType.WHAT},
+        )
+    with pytest.raises(ValueError, match="metadata.opaque"):
+        SNetSymbol(symbol_id="symbol:3", label="Seed", metadata={"opaque": object()})
+    with pytest.raises(ValueError, match="metadata.score"):
+        SNetSymbol(symbol_id="symbol:4", label="Seed", metadata={"score": float("nan")})
+    with pytest.raises(ValueError, match=r"metadata.items\[0\]"):
+        SNetSymbol(symbol_id="symbol:5", label="Seed", metadata={"items": [b"bytes"]})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:6",
+        label="Seed",
+        metadata={"flags": [True, None, 3, 0.5, "ok"], "nested": {"score": 1}},
+    )
+    valid_metadata = valid_symbol.to_json_dict()["metadata"]
+
+    assert valid_symbol.metadata["flags"] == (True, None, 3, 0.5, "ok")
+    assert valid_metadata["flags"] == [True, None, 3, 0.5, "ok"]
+    assert valid_metadata["nested"]["score"] == 1
+    assert "\"metadata\":{\"flags\":[true,null,3,0.5,\"ok\"],\"nested\":{\"score\":1}}" in valid_symbol.to_json()
+
+
 def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     with pytest.raises(ValueError, match="label"):
         SNetSymbol(symbol_id="symbol:1", label=SNetWHType.WHAT)
