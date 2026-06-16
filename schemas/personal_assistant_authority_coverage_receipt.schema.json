@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-authority-coverage-receipt:1",
+  "title": "Mullu Personal Assistant Authority Coverage Receipt",
+  "description": "No-effect receipt proving Personal Assistant skill, approval, policy, and capability authority coverage without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "receipt_is_not_execution_authority",
+    "receipt_is_not_terminal_closure",
+    "source_refs",
+    "authority_summary",
+    "risk_level_records",
+    "skill_authority_records",
+    "capability_authority_records",
+    "effect_boundary",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "personal_assistant.authority_coverage_receipt.v1" },
+    "receipt_id": { "type": "string", "pattern": "^personal-assistant-authority-coverage-[0-9a-f]{16}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+    "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+    "governed": { "type": "boolean", "const": true },
+    "receipt_is_not_execution_authority": { "type": "boolean", "const": true },
+    "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "source_refs": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_ref" }
+    },
+    "authority_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_coverage_closed",
+        "coherence_ledger_closed",
+        "skill_count",
+        "capability_count",
+        "risk_level_count",
+        "approval_matrix_levels_bound",
+        "skill_policy_levels_bound",
+        "all_skills_have_policy_ref",
+        "all_skills_have_known_risk_level",
+        "all_effect_bearing_skills_require_approval",
+        "p4_p5_actions_require_explicit_approval",
+        "foundation_execution_disabled",
+        "all_capabilities_fixture_only",
+        "all_capabilities_candidate_only",
+        "all_capabilities_secretless",
+        "no_effect_boundary_verified",
+        "production_ready",
+        "customer_ready",
+        "next_allowed_action"
+      ],
+      "properties": {
+        "authority_coverage_closed": { "type": "boolean" },
+        "coherence_ledger_closed": { "type": "boolean" },
+        "skill_count": { "type": "integer", "minimum": 1 },
+        "capability_count": { "type": "integer", "minimum": 1 },
+        "risk_level_count": { "type": "integer", "const": 6 },
+        "approval_matrix_levels_bound": { "type": "boolean" },
+        "skill_policy_levels_bound": { "type": "boolean" },
+        "all_skills_have_policy_ref": { "type": "boolean" },
+        "all_skills_have_known_risk_level": { "type": "boolean" },
+        "all_effect_bearing_skills_require_approval": { "type": "boolean" },
+        "p4_p5_actions_require_explicit_approval": { "type": "boolean" },
+        "foundation_execution_disabled": { "type": "boolean" },
+        "all_capabilities_fixture_only": { "type": "boolean" },
+        "all_capabilities_candidate_only": { "type": "boolean" },
+        "all_capabilities_secretless": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "customer_ready": { "type": "boolean", "const": false },
+        "next_allowed_action": { "type": "string", "const": "continue_foundation_hardening_only" }
+      }
+    },
+    "risk_level_records": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/risk_level_record" }
+    },
+    "skill_authority_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/skill_authority_record" }
+    },
+    "capability_authority_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability_authority_record" }
+    },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_ref", "source_kind", "bound"],
+      "properties": {
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "type": "string",
+          "enum": ["skill_registry", "approval_matrix", "skill_policy", "capability_pack", "coherence_ledger"]
+        },
+        "bound": { "type": "boolean" }
+      }
+    },
+    "risk_level_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "approval_policy_ref",
+        "effect_bearing",
+        "explicit_approval_required",
+        "allowed_modes",
+        "skill_count",
+        "matrix_bound",
+        "policy_bound"
+      ],
+      "properties": {
+        "level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+        "approval_policy_ref": { "type": "string", "pattern": "^governance/personal_assistant_approval_matrix\\.yaml#P[0-5]$" },
+        "effect_bearing": { "type": "boolean" },
+        "explicit_approval_required": { "type": "boolean" },
+        "allowed_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "skill_count": { "type": "integer", "minimum": 0 },
+        "matrix_bound": { "type": "boolean" },
+        "policy_bound": { "type": "boolean" }
+      }
+    },
+    "skill_authority_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_id",
+        "mode",
+        "risk_level",
+        "approval_policy_ref",
+        "requires_approval",
+        "private_connector_required",
+        "uao_required",
+        "receipt_required",
+        "memory_write_allowed",
+        "allowed_actions",
+        "blocked_actions",
+        "effect_boundary",
+        "foundation_only",
+        "execution_enabled",
+        "authority_covered",
+        "no_effect_boundary_verified"
+      ],
+      "properties": {
+        "skill_id": { "type": "string", "minLength": 1 },
+        "mode": { "type": "string", "enum": ["read_only", "draft_only", "planning_only", "approval_required", "blocked"] },
+        "risk_level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+        "approval_policy_ref": { "type": "string", "pattern": "^governance/personal_assistant_approval_matrix\\.yaml#P[0-5]$" },
+        "requires_approval": { "type": "boolean" },
+        "private_connector_required": { "type": "boolean" },
+        "uao_required": { "type": "boolean" },
+        "receipt_required": { "type": "boolean" },
+        "memory_write_allowed": { "type": "boolean" },
+        "allowed_actions": { "type": "array", "items": { "type": "string" } },
+        "blocked_actions": { "type": "array", "items": { "type": "string" } },
+        "effect_boundary": { "$ref": "#/$defs/skill_effect_boundary" },
+        "foundation_only": { "type": "boolean" },
+        "execution_enabled": { "type": "boolean" },
+        "authority_covered": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" }
+      }
+    },
+    "skill_effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "draft_only",
+        "internal_write_allowed",
+        "external_write_allowed",
+        "system_of_record_write_allowed",
+        "connector_mutation_allowed",
+        "money_legal_public_allowed"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean" },
+        "draft_only": { "type": "boolean" },
+        "internal_write_allowed": { "type": "boolean" },
+        "external_write_allowed": { "type": "boolean" },
+        "system_of_record_write_allowed": { "type": "boolean" },
+        "connector_mutation_allowed": { "type": "boolean" },
+        "money_legal_public_allowed": { "type": "boolean" }
+      }
+    },
+    "capability_authority_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "risk_tier",
+        "certification_status",
+        "fixture_only",
+        "production_ready",
+        "secret_scope",
+        "network_allowlist_empty",
+        "world_mutating",
+        "requires_approval",
+        "receipt_required",
+        "forbidden_effect_count",
+        "authority_covered"
+      ],
+      "properties": {
+        "capability_id": { "type": "string", "minLength": 1 },
+        "risk_tier": { "type": "string", "enum": ["low", "medium", "high"] },
+        "certification_status": { "type": "string", "enum": ["candidate", "staging", "certified"] },
+        "fixture_only": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "secret_scope": { "type": "string", "const": "none" },
+        "network_allowlist_empty": { "type": "boolean" },
+        "world_mutating": { "type": "boolean" },
+        "requires_approval": { "type": "boolean" },
+        "receipt_required": { "type": "boolean" },
+        "forbidden_effect_count": { "type": "integer", "minimum": 1 },
+        "authority_covered": { "type": "boolean" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "money_legal_public_allowed",
+        "production_ready_claim_allowed",
+        "customer_ready_claim_allowed",
+        "live_nested_mind_activation_allowed"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "external_effect_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "money_legal_public_allowed": { "type": "boolean", "const": false },
+        "production_ready_claim_allowed": { "type": "boolean", "const": false },
+        "customer_ready_claim_allowed": { "type": "boolean", "const": false },
+        "live_nested_mind_activation_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "type": "boolean", "const": true }
+            }
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "type": "boolean", "const": true }
+            }
+          }
+        }
+      }
+    }
+  }
+}
