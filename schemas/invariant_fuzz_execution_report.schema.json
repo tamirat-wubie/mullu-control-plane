@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+  "title": "Invariant Fuzz Execution Report",
+  "description": "Dry-run report for deterministic invariant fuzz cases before runtime fuzzing or resilience claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "report_version",
+    "generated_at",
+    "fuzz_scope",
+    "fuzz_result",
+    "cases",
+    "rollback_recovery",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "report_version": {"const": "invariant_fuzz_execution_report.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "fuzz_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_surface",
+        "invariant_family",
+        "generator_ref",
+        "seed_policy",
+        "execution_mode",
+        "uao_ref",
+        "phi_gov_ref"
+      ],
+      "properties": {
+        "target_surface": {"type": "string", "enum": ["worker", "scheduler", "connector", "gateway", "governance"]},
+        "invariant_family": {"type": "string", "enum": ["authority_denial", "receipt_integrity", "rollback_replay", "state_transition", "mfidel_atomicity"]},
+        "generator_ref": {"type": "string", "minLength": 1},
+        "seed_policy": {"const": "deterministic_fixture_only"},
+        "execution_mode": {"const": "dry_run"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "fuzz_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "cases_executed",
+        "random_generation_performed",
+        "runtime_execution_performed",
+        "external_effects_performed",
+        "filesystem_mutation_performed",
+        "production_readiness_claim_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "required_evidence_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {"type": "string", "enum": ["INVARIANT_FUZZ_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE", "INVARIANT_FUZZ_READY_FOR_OPERATOR_REVIEW", "INVARIANT_FUZZ_EXECUTED"]},
+        "cases_executed": {"type": "integer", "minimum": 0},
+        "random_generation_performed": {"type": "boolean"},
+        "runtime_execution_performed": {"type": "boolean"},
+        "external_effects_performed": {"type": "boolean"},
+        "filesystem_mutation_performed": {"type": "boolean"},
+        "production_readiness_claim_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"},
+        "required_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "blocked_reason_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "fixture_ref",
+          "invariant_ref",
+          "expected_result",
+          "observed_result",
+          "rollback_obligation_ref",
+          "incident_handoff_ref"
+        ],
+        "properties": {
+          "case_id": {"type": "string", "minLength": 1},
+          "fixture_ref": {"type": "string", "minLength": 1},
+          "invariant_ref": {"type": "string", "minLength": 1},
+          "expected_result": {"type": "string", "minLength": 1},
+          "observed_result": {"const": "not_executed_dry_run"},
+          "rollback_obligation_ref": {"type": "string", "minLength": 1},
+          "incident_handoff_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rollback_recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_required_before_live_execution",
+        "rollback_plan_ref",
+        "replay_bundle_ref",
+        "incident_handoff_required",
+        "terminal_closure_ref"
+      ],
+      "properties": {
+        "rollback_required_before_live_execution": {"type": "boolean"},
+        "rollback_plan_ref": {"type": "string", "minLength": 1},
+        "replay_bundle_ref": {"type": "string", "minLength": 1},
+        "incident_handoff_required": {"type": "boolean"},
+        "terminal_closure_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_fuzz_execution_report_schema",
+        "universal_action_orchestration_schema",
+        "sdlc_recovery_handoff_receipt_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "invariant_fuzz_execution_report_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count",
+        "cases_executed",
+        "required_evidence_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "case_count": {"type": "integer", "minimum": 1},
+        "cases_executed": {"type": "integer", "minimum": 0},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 1},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 1},
+        "receipt_ref_count": {"type": "integer", "minimum": 1},
+        "evidence_ref_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  }
+}

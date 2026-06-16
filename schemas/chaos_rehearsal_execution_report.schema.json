@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
+  "title": "Chaos Rehearsal Execution Report",
+  "description": "Dry-run report for chaos rehearsal scenarios before runtime resilience or production-readiness claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "report_version",
+    "generated_at",
+    "rehearsal_scope",
+    "rehearsal_result",
+    "scenarios",
+    "rollback_recovery",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "report_version": {"const": "chaos_rehearsal_execution_report.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "rehearsal_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_surface",
+        "scenario_set_ref",
+        "owner",
+        "execution_mode",
+        "uao_ref",
+        "phi_gov_ref"
+      ],
+      "properties": {
+        "target_surface": {"type": "string", "enum": ["worker", "scheduler", "connector", "gateway", "governance"]},
+        "scenario_set_ref": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "execution_mode": {"const": "dry_run"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "rehearsal_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "runtime_execution_performed",
+        "external_effects_performed",
+        "filesystem_mutation_performed",
+        "deployment_mutation_allowed",
+        "production_readiness_claim_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "required_evidence_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {"type": "string", "enum": ["CHAOS_REHEARSAL_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE", "CHAOS_REHEARSAL_READY_FOR_OPERATOR_REVIEW", "CHAOS_REHEARSAL_EXECUTED"]},
+        "runtime_execution_performed": {"type": "boolean"},
+        "external_effects_performed": {"type": "boolean"},
+        "filesystem_mutation_performed": {"type": "boolean"},
+        "deployment_mutation_allowed": {"type": "boolean"},
+        "production_readiness_claim_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"},
+        "required_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "blocked_reason_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scenario_id",
+          "scenario_class",
+          "input_fixture_ref",
+          "expected_invariant_ref",
+          "expected_result",
+          "observed_result",
+          "rollback_obligation_ref",
+          "incident_handoff_ref"
+        ],
+        "properties": {
+          "scenario_id": {"type": "string", "minLength": 1},
+          "scenario_class": {"type": "string", "enum": ["worker_timeout", "lease_contention", "connector_denial", "gateway_health_drop", "receipt_store_unavailable"]},
+          "input_fixture_ref": {"type": "string", "minLength": 1},
+          "expected_invariant_ref": {"type": "string", "minLength": 1},
+          "expected_result": {"type": "string", "minLength": 1},
+          "observed_result": {"const": "not_executed_dry_run"},
+          "rollback_obligation_ref": {"type": "string", "minLength": 1},
+          "incident_handoff_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rollback_recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_required_before_live_execution",
+        "rollback_plan_ref",
+        "replay_bundle_ref",
+        "incident_handoff_required",
+        "terminal_closure_ref"
+      ],
+      "properties": {
+        "rollback_required_before_live_execution": {"type": "boolean"},
+        "rollback_plan_ref": {"type": "string", "minLength": 1},
+        "replay_bundle_ref": {"type": "string", "minLength": 1},
+        "incident_handoff_required": {"type": "boolean"},
+        "terminal_closure_ref": {"type": ["string", "null"], "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chaos_rehearsal_execution_report_schema",
+        "universal_action_orchestration_schema",
+        "worker_failure_receipt_schema",
+        "sdlc_recovery_handoff_receipt_schema"
+      ],
+      "properties": {
+        "chaos_rehearsal_execution_report_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "worker_failure_receipt_schema": {"type": "string", "minLength": 1},
+        "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_count",
+        "required_evidence_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "scenario_count": {"type": "integer", "minimum": 1},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 1},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 1},
+        "receipt_ref_count": {"type": "integer", "minimum": 1},
+        "evidence_ref_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  }
+}

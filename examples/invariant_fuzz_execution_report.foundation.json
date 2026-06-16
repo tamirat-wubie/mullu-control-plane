@@ -1,0 +1,88 @@
+{
+  "report_id": "invariant-fuzz-foundation-20260616",
+  "report_version": "invariant_fuzz_execution_report.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "fuzz_scope": {
+    "target_surface": "governance",
+    "invariant_family": "receipt_integrity",
+    "generator_ref": "generator://foundation/deterministic-receipt-integrity-cases",
+    "seed_policy": "deterministic_fixture_only",
+    "execution_mode": "dry_run",
+    "uao_ref": "uao://foundation/invariant-fuzz-execution-report",
+    "phi_gov_ref": null
+  },
+  "fuzz_result": {
+    "decision": "INVARIANT_FUZZ_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE",
+    "cases_executed": 0,
+    "random_generation_performed": false,
+    "runtime_execution_performed": false,
+    "external_effects_performed": false,
+    "filesystem_mutation_performed": false,
+    "production_readiness_claim_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "required_evidence_refs": [
+      "evidence://invariant-fuzz/operator-approval",
+      "evidence://invariant-fuzz/runtime-sandbox",
+      "evidence://invariant-fuzz/deterministic-seed-manifest",
+      "evidence://invariant-fuzz/rollback-rehearsal",
+      "evidence://invariant-fuzz/incident-handoff"
+    ],
+    "blocked_reason_refs": [
+      "blocked://invariant-fuzz/runtime-sandbox-missing",
+      "blocked://invariant-fuzz/operator-approval-missing",
+      "blocked://invariant-fuzz/seed-manifest-missing",
+      "blocked://terminal-closure/denied"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "receipt-ref-count-drift",
+      "fixture_ref": "fixtures://governance/receipt-ref-count-drift",
+      "invariant_ref": "invariant://receipt/summary-counts-match-arrays",
+      "expected_result": "receipt summary count drift is rejected before execution",
+      "observed_result": "not_executed_dry_run",
+      "rollback_obligation_ref": "rollback://invariant-fuzz/receipt-count-drift",
+      "incident_handoff_ref": "incident://invariant-fuzz/receipt-count-drift"
+    },
+    {
+      "case_id": "authority-flag-drift",
+      "fixture_ref": "fixtures://governance/authority-flag-drift",
+      "invariant_ref": "invariant://authority/no-success-without-approval",
+      "expected_result": "authority flags cannot flip to success without approval refs",
+      "observed_result": "not_executed_dry_run",
+      "rollback_obligation_ref": "rollback://invariant-fuzz/authority-flag-drift",
+      "incident_handoff_ref": "incident://invariant-fuzz/authority-flag-drift"
+    }
+  ],
+  "rollback_recovery": {
+    "rollback_required_before_live_execution": true,
+    "rollback_plan_ref": "rollback://invariant-fuzz/foundation-plan",
+    "replay_bundle_ref": "replay://invariant-fuzz/foundation-dry-run",
+    "incident_handoff_required": true,
+    "terminal_closure_ref": null
+  },
+  "receipt_refs": {
+    "invariant_fuzz_execution_report_schema": "schemas/invariant_fuzz_execution_report.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "case_count": 2,
+    "cases_executed": 0,
+    "required_evidence_ref_count": 5,
+    "blocked_reason_ref_count": 4,
+    "receipt_ref_count": 4,
+    "evidence_ref_count": 7
+  },
+  "evidence_refs": [
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "docs/91_resilience_rehearsal_reports_contract.md",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json"
+  ]
+}

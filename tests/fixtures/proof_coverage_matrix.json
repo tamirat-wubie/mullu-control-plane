@@ -1000,6 +1000,20 @@
       ]
     },
     {
+      "action_id": "publish_chaos_rehearsal_execution_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "chaos_rehearsal_execution_report"
+      ]
+    },
+    {
+      "action_id": "publish_invariant_fuzz_execution_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "invariant_fuzz_execution_report"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1371,7 +1385,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 124,
+      "action_proof": 126,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1379,7 +1393,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 176,
+      "audit_chain": 178,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1387,21 +1401,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 107
+      "witnessed": 109
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 123
+      "request_proof": 125
     },
-    "surface_count": 179
+    "surface_count": 181
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 179,
+      "strong": 181,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -10992,6 +11006,110 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/chaos_rehearsal_execution_report.schema.json",
+        "examples/chaos_rehearsal_execution_report.foundation.json",
+        "scripts/validate_resilience_rehearsal_reports.py",
+        "tests/test_validate_resilience_rehearsal_reports.py",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/91_resilience_rehearsal_reports_contract.md"
+      ],
+      "notes": "Chaos rehearsal execution reports bind dry-run scenario refs, expected invariant refs, observed non-execution results, rollback obligations, incident handoff refs, evidence refs, and blocked reason refs before any live resilience rehearsal.",
+      "representative_paths": [
+        "ChaosRehearsalExecutionReport",
+        "validate_resilience_rehearsal_reports",
+        "chaos_rehearsal_execution_report.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "chaos_rehearsal_execution_report_blocks_runtime_execution": [
+          "resilience_rehearsal_reports_pass",
+          "chaos_rehearsal_rejects_authority_drift"
+        ],
+        "chaos_rehearsal_execution_report_rejects_obligation_drift": [
+          "resilience_rehearsal_reports_reject_obligation_and_count_drift"
+        ],
+        "chaos_rehearsal_execution_report_rejects_rollback_drift": [
+          "resilience_rehearsal_reports_reject_rollback_and_receipt_drift"
+        ],
+        "chaos_rehearsal_execution_report_requires_evidence_refs": [
+          "resilience_rehearsal_reports_reject_missing_refs"
+        ],
+        "chaos_rehearsal_execution_report_schema_valid": [
+          "resilience_rehearsal_reports_pass"
+        ],
+        "chaos_rehearsal_execution_report_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_resilience_rehearsal_reports"
+        ]
+      },
+      "runtime_witnesses": [
+        "chaos_rehearsal_execution_report_schema_valid",
+        "chaos_rehearsal_execution_report_blocks_runtime_execution",
+        "chaos_rehearsal_execution_report_requires_evidence_refs",
+        "chaos_rehearsal_execution_report_rejects_obligation_drift",
+        "chaos_rehearsal_execution_report_rejects_rollback_drift",
+        "chaos_rehearsal_execution_report_sdlc_artifacts_valid"
+      ],
+      "surface_id": "chaos_rehearsal_execution_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/invariant_fuzz_execution_report.schema.json",
+        "examples/invariant_fuzz_execution_report.foundation.json",
+        "scripts/validate_resilience_rehearsal_reports.py",
+        "tests/test_validate_resilience_rehearsal_reports.py",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/91_resilience_rehearsal_reports_contract.md"
+      ],
+      "notes": "Invariant fuzz execution reports bind deterministic fixture case refs, invariant refs, observed non-execution results, rollback obligations, incident handoff refs, evidence refs, and blocked reason refs before any live fuzzing.",
+      "representative_paths": [
+        "InvariantFuzzExecutionReport",
+        "validate_resilience_rehearsal_reports",
+        "invariant_fuzz_execution_report.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "invariant_fuzz_execution_report_blocks_live_fuzzing": [
+          "resilience_rehearsal_reports_pass",
+          "invariant_fuzz_rejects_execution_and_random_generation"
+        ],
+        "invariant_fuzz_execution_report_rejects_case_drift": [
+          "resilience_rehearsal_reports_reject_obligation_and_count_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_rollback_drift": [
+          "resilience_rehearsal_reports_reject_rollback_and_receipt_drift"
+        ],
+        "invariant_fuzz_execution_report_requires_evidence_refs": [
+          "resilience_rehearsal_reports_reject_missing_refs"
+        ],
+        "invariant_fuzz_execution_report_schema_valid": [
+          "resilience_rehearsal_reports_pass"
+        ],
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_resilience_rehearsal_reports"
+        ]
+      },
+      "runtime_witnesses": [
+        "invariant_fuzz_execution_report_schema_valid",
+        "invariant_fuzz_execution_report_blocks_live_fuzzing",
+        "invariant_fuzz_execution_report_requires_evidence_refs",
+        "invariant_fuzz_execution_report_rejects_case_drift",
+        "invariant_fuzz_execution_report_rejects_rollback_drift",
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+      ],
+      "surface_id": "invariant_fuzz_execution_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14444,8 +14562,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1822,
-    "runtime_witness_count": 1822,
+    "exact_test_anchor_count": 1834,
+    "runtime_witness_count": 1834,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -22984,6 +23102,98 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "sccml_trace_adapter_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_pass"
+            ],
+            "witness": "chaos_rehearsal_execution_report_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_pass",
+              "tests/test_validate_resilience_rehearsal_reports.py::test_chaos_rehearsal_rejects_authority_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_blocks_runtime_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_missing_refs"
+            ],
+            "witness": "chaos_rehearsal_execution_report_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_obligation_and_count_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_rejects_obligation_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_rollback_and_receipt_drift"
+            ],
+            "witness": "chaos_rehearsal_execution_report_rejects_rollback_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_sdlc_requirement_and_design_validate_for_resilience_rehearsal_reports"
+            ],
+            "witness": "chaos_rehearsal_execution_report_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "chaos_rehearsal_execution_report",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_pass"
+            ],
+            "witness": "invariant_fuzz_execution_report_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_pass",
+              "tests/test_validate_resilience_rehearsal_reports.py::test_invariant_fuzz_rejects_execution_and_random_generation"
+            ],
+            "witness": "invariant_fuzz_execution_report_blocks_live_fuzzing"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_missing_refs"
+            ],
+            "witness": "invariant_fuzz_execution_report_requires_evidence_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_obligation_and_count_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_case_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_rollback_and_receipt_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_rollback_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_resilience_rehearsal_reports.py::test_sdlc_requirement_and_design_validate_for_resilience_rehearsal_reports"
+            ],
+            "witness": "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "invariant_fuzz_execution_report",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

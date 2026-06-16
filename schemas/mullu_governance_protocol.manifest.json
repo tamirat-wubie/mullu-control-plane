@@ -659,6 +659,18 @@
       "surface": "readiness"
     },
     {
+      "schema_id": "chaos-rehearsal-execution-report",
+      "path": "schemas/chaos_rehearsal_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
+      "surface": "resilience"
+    },
+    {
+      "schema_id": "invariant-fuzz-execution-report",
+      "path": "schemas/invariant_fuzz_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+      "surface": "resilience"
+    },
+    {
       "schema_id": "browser-observation-receipt",
       "path": "schemas/browser_observation_receipt.schema.json",
       "urn": "urn:mullusi:schema:browser-observation-receipt:1",

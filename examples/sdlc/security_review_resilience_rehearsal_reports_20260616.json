@@ -1,0 +1,112 @@
+{
+  "security_review_id": "SEC-resilience-rehearsal-reports-20260616",
+  "change_id": "resilience-rehearsal-reports-20260616",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "deployment",
+    "filesystem",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Chaos rehearsal and invariant fuzz evidence can accidentally become live runtime authority if dry-run records are conflated with execution receipts. The main risks are unapproved runtime dispatch, random live fuzzing, external effects, filesystem mutation, deployment mutation, production-readiness claims, missing rollback evidence, and terminal closure without incident handoff. The mitigation is a pair of non-executing schemas and a deterministic validator that deny execution, require evidence refs, retain blocked reasons, and bind rollback plus incident handoff obligations.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority and approval check confirms Phi_gov authorization remains absent and success claims remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_chaos_rehearsal_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms dry-run mode cannot become deployment or production-readiness authority",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_resilience_rehearsal_reports.py"
+    },
+    {
+      "category": "deployment",
+      "check": "deployment witness check confirms chaos and fuzz reports do not dispatch runtime work or mutate deployment state",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_invariant_fuzz_rejects_execution_and_random_generation"
+    },
+    {
+      "category": "filesystem",
+      "check": "filesystem mutation check confirms invariant fuzzing stays deterministic fixture only and performs no file writes",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_invariant_fuzz_rejects_execution_and_random_generation"
+    },
+    {
+      "category": "filesystem",
+      "check": "path traversal check confirms report validation only reads fixed workspace-local schema and example paths",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_resilience_rehearsal_reports.py"
+    },
+    {
+      "category": "receipts",
+      "check": "required evidence and blocked reason refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_missing_refs"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_obligation_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "rollback and incident handoff obligations remain present before live rehearsal",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_resilience_rehearsal_reports.py::test_resilience_rehearsal_reports_reject_rollback_and_receipt_drift"
+    },
+    {
+      "category": "audit",
+      "check": "schema and protocol manifest validate",
+      "status": "passed",
+      "evidence_ref": "schemas/mullu_governance_protocol.manifest.json"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms proof coverage matrix includes both resilience report surfaces",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_resilience_rehearsal_reports_block_live_execution"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "resilience-rehearsal-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode reports block runtime execution, random generation, external effects, filesystem mutation, deployment mutation, production-readiness claims, terminal closure, and success claims until named live evidence exists.",
+      "evidence_refs": [
+        "schemas/chaos_rehearsal_execution_report.schema.json",
+        "schemas/invariant_fuzz_execution_report.schema.json",
+        "scripts/validate_resilience_rehearsal_reports.py",
+        "tests/test_validate_resilience_rehearsal_reports.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep resilience rehearsal report validation non-live and deterministic",
+    "require UAO and Phi_gov refs before runtime rehearsal authority can be reconsidered",
+    "require operator approval before live chaos or fuzz execution",
+    "require deterministic seed manifest before invariant fuzzing",
+    "require rollback and incident handoff evidence before terminal closure",
+    "reject deployment mutation, production-readiness claims, and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/chaos_rehearsal_execution_report.foundation.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "receipt://sdlc/resilience-rehearsal-reports/security"
+  ],
+  "uao_ref": "uao://sdlc/resilience-rehearsal-reports/security",
+  "causal_decision_trace_ref": "trace://sdlc/resilience-rehearsal-reports/security",
+  "receipt_ref": "receipt://sdlc/resilience-rehearsal-reports/security"
+}
