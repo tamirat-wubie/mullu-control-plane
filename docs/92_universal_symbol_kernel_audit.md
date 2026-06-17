@@ -22,6 +22,7 @@ The initial symbol-kernel branch added the right boundary, but it had audit gaps
 | Enum drift | Added a negative test for invalid `symbol_kind`. |
 | Evidence custody | Validator checks required evidence refs and local file presence. |
 | Authority boundary | Validator still rejects connector, dispatch, closure, and success drift. |
+| Protocol registration | Universal symbol schema is now indexed in the Mullu Governance Protocol manifest. |
 
 ## Edge Cases Covered
 
@@ -54,16 +55,14 @@ No product-readiness or customer-readiness claim added.
 
 ## Remaining Gaps
 
-1. Protocol manifest registration.
-2. Governance protocol count update.
-3. Proof coverage matrix binding.
-4. CI root-lane inclusion if required.
-5. Symbol Skill Adapter implementation.
-6. TeamOps receipt to `UniversalSymbol` conversion.
-7. Software development receipt to `UniversalSymbol` conversion.
-8. SCCML trace witness to `UniversalSymbol` conversion.
-9. Worker receipt to `UniversalSymbol` conversion.
-10. Component registry entry to `UniversalSymbol` conversion.
+1. Proof coverage matrix binding.
+2. CI root-lane inclusion if required.
+3. Symbol Skill Adapter implementation.
+4. TeamOps receipt to `UniversalSymbol` conversion.
+5. Software development receipt to `UniversalSymbol` conversion.
+6. SCCML trace witness to `UniversalSymbol` conversion.
+7. Worker receipt to `UniversalSymbol` conversion.
+8. Component registry entry to `UniversalSymbol` conversion.
 
 ## Refined Judgment
 
@@ -85,5 +84,5 @@ STATUS:
   Audit: complete
   Inspection: complete
   Weakness fixes: validation and edge-test coverage improved
-  Gap fixes: remaining gaps recorded
+  Gap fixes: protocol registration completed; remaining gaps recorded
   Runtime authority: denied
