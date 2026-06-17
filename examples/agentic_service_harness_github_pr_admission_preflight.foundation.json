@@ -1,0 +1,142 @@
+{
+  "report_id": "agentic_service_harness_github_pr_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-17T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_receipt_emitter_ref": "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "foundation_phase": "foundation_pr_admission_preflight_only",
+    "read_only": true,
+    "preflight_only": true,
+    "operator_approval_present": false,
+    "branch_write_authority_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "external_adapter_integrated": false,
+    "secret_values_serialized": false
+  },
+  "preflight_contract": {
+    "preflight_id": "github-pr-admission-preflight-foundation",
+    "preflight_mode": "PR_ADMISSION_PREFLIGHT_ONLY",
+    "source_task_ref": "task://agentic-service-harness/github-repo-read-only",
+    "allowed_action_classes": [
+      "dry_run",
+      "approval_preflight"
+    ],
+    "forbidden_action_classes": [
+      "execute_adapter",
+      "write_to_branch",
+      "open_pr",
+      "append_receipt_store",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "required_source_refs": [
+      "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json",
+      "examples/agentic_service_harness_github_repo_task_service.foundation.json",
+      "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json"
+    ],
+    "required_gate_refs": [
+      "gate://harness/no-live-adapter-execution",
+      "gate://harness/no-branch-write",
+      "gate://harness/no-pr-creation",
+      "gate://harness/no-repository-write",
+      "gate://harness/no-mutation-route",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "admission_obligations_checked": [
+      "obligation://record-pr-admission-preflight",
+      "obligation://require-operator-approval-before-pr",
+      "obligation://require-branch-write-authority-before-pr",
+      "obligation://deny-pr-creation-without-approval",
+      "obligation://deny-repository-effects",
+      "obligation://deny-secret-material",
+      "obligation://bind-terminal-closure-blocker"
+    ],
+    "validation_refs": [
+      "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py",
+      "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py",
+      "scripts/validate_agentic_service_harness_github_repo_task_service.py"
+    ],
+    "read_only": true
+  },
+  "approval_admission_gate": {
+    "decision": "PR_ADMISSION_BLOCKED_AWAITING_OPERATOR_APPROVAL_AND_BRANCH_BINDING",
+    "pr_admitted": false,
+    "approval_target_ref": "github-pr://agentic-service-harness/task-run",
+    "required_before_pr_refs": [
+      "evidence://operator-approval-for-pr-admission",
+      "evidence://branch-write-authority-binding",
+      "evidence://repository-effect-rollback-plan",
+      "evidence://uao-pr-admission",
+      "evidence://ci-gate-before-ready-for-review",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/not-present",
+      "blocked://branch-write-authority/not-bound",
+      "blocked://pr-creation/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "terminal_closure_allowed": false
+  },
+  "simulated_pr_admission": {
+    "result_state": "PR_ADMISSION_PREFLIGHT_RECORDED",
+    "simulated_action_kind": "future_github_pull_request_admission",
+    "preflight_recorded": true,
+    "operator_approval_observed": false,
+    "branch_created": false,
+    "pull_request_opened": false,
+    "repository_written": false,
+    "adapter_executed": false,
+    "connector_calls_observed": false,
+    "mutation_route_called": false,
+    "receipt_store_appended": false,
+    "external_effects_observed": false,
+    "raw_secret_material_included": false,
+    "output_digest": "sha256:52d7ff8a3479fc781705d4c3ff5815b3c7d3f33419dedbd777f3ec67562c93ac",
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "authority_denials": {
+    "live_adapter_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "github_task_receipt_emitter_dry_run_schema": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
+    "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json",
+    "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
+    "agentic_service_harness_read_models_schema": "schemas/agentic_service_harness_read_models.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-admission-preflight",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add operator approval request and branch-write authority witness before admitting any GitHub PR creation path.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
