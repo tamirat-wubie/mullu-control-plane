@@ -31,8 +31,8 @@ Tenant identity must not be inferred from free-form message text.
 | Identity Resolver | bind sender to actor | session, webhook identity, API key | actor identity | implemented / partial | Add channel trust strength labels. |
 | Tenant Resolver | bind actor to tenant | actor identity, workspace mapping | tenant identity | implemented / partial | Deny missing or ambiguous tenant mapping. |
 | Conversation Context Store | bind thread and follow-up context | conversation ID, request ID | context snapshot | partial / unknown | Map expiration and scope rules. |
-| Response Composer | format safe channel response | final receipt or blocker | channel-specific response | partial | Separate execution status from delivery status. |
-| Communication Receipt Writer | record outbound delivery | response payload hash, delivery result | FinalUserReceipt or delivery error | partial | Track delivery failure separately from task failure. |
+| Response Composer | format safe channel response | final receipt or blocker | channel-specific response | implemented / partial | Keep external channel formatting bounded by approval and receipt state. |
+| Communication Receipt Writer | record outbound delivery | response payload hash, delivery result | FinalUserReceipt or delivery error | implemented / partial | Extend delivery observation events to each hardened external adapter. |
 
 ## 3. Channel trust requirements
 

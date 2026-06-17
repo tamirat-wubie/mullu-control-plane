@@ -152,9 +152,9 @@ No external channel approval without request binding and identity check.
 | Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py`, `/operator/approvals/read-model`, `/operator/approvals`, `/operator/approvals/{request_id}` | Add cross-channel approval-strength policy. |
 | Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/{plan_id}/receipts`, `/operator/plan-review/{plan_id}/receipts/read-model`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays, and search capability cost-model projection | Keep budget policy wired to concrete capability passports. |
 | Causal closure kernel | implemented / partial | `gateway/causal_closure_kernel.py` | Ensure every success response is certificate-backed. |
-| Search layer | implemented / partial | `enterprise.knowledge_search`, `gateway/search_governance.py`, `schemas/search_decision_receipt.schema.json`, `tests/test_gateway/test_search_governance.py` | Thread search decision receipts into live search execution and receipt viewer drilldowns. |
+| Search layer | implemented / partial | `enterprise.knowledge_search`, `gateway/search_governance.py`, `gateway/causal_closure_kernel.py`, `schemas/search_decision_receipt.schema.json`, `tests/test_gateway/test_search_governance.py`, `tests/test_gateway/test_router.py` | Add dedicated search decision receipt drilldowns to the receipt viewer. |
 | Worker layer | implemented / partial | `gateway/capability_worker.py`, `gateway/worker_mesh.py`, `gateway/read_only_repository_worker.py`, `gateway/worker_failure_receipt.py`, `schemas/worker_mesh.schema.json`, `schemas/worker_failure_receipt.schema.json`, `schemas/read_only_first_worker_path.schema.json`, `examples/read_only_first_worker_path.foundation.json`, `scripts/validate_read_only_first_worker_path.py`, `tests/test_gateway/test_read_only_repository_worker.py`, `tests/test_gateway/test_worker_failure_receipt.py` | Surface worker failure receipts in response state, then repeat the read-only contract pattern for search or document inspection. |
-| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, Plan Review budget/history links including explicit cost-estimate source, plan receipt exports, optional tenant budget-report drilldowns, and `/operator/current-task` response-state columns that block success claims without terminal certificates. | Add search receipts and delivery receipt separation. |
+| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, Plan Review budget/history links including explicit cost-estimate source, plan receipt exports, optional tenant budget-report drilldowns, delivery receipts with separate execution and delivery status fields, and `/operator/current-task` response-state columns that block success claims without terminal certificates. | Add search receipts and worker-failure UI drilldowns. |
 | Admin console | missing / unknown | no dedicated map evidence | Map tenant, policy, budget, worker, and receipt admin screens. |
 
 ## 5. Component contract template
@@ -283,7 +283,9 @@ Search-backed chat must be governed before retrieval.
 Foundation Mode status: `gateway/search_governance.py` now emits a
 schema-backed decision receipt for classification, freshness, budget, and
 retrieval authority. The search capability passport requires budget,
-freshness, and evidence-only retrieval checks before execution.
+freshness, and evidence-only retrieval checks, and
+`gateway/causal_closure_kernel.py` attaches the receipt before live search
+proof validation.
 
 ```text
 User message
@@ -324,7 +326,7 @@ search_failed_with_explanation
 | LLM misclassification | validate against deterministic policy, capability registry, and confidence threshold. |
 | Search result conflict | report uncertainty and cite evidence before action. |
 | Worker partial completion | record partial receipt and block success claim. |
-| Response delivery failure | separate execution status from delivery status. |
+| Response delivery failure | preserve terminal execution evidence and record delivery status as a separate receipt field. |
 | Tenant mismatch | deny and record identity/tenant failure receipt. |
 | Prompt injection in retrieved content | treat retrieved content as evidence only, never as instruction authority. |
 
@@ -342,8 +344,8 @@ Fracture delta:
 
 ```text
 The current product map still needs deeper clarification handling, runtime
-search receipt integration, production channel hardening, delivery receipt
-separation, and explicit component status tracking.
+search receipt drilldowns, production channel hardening, worker-failure UI
+drilldowns, and explicit component status tracking.
 ```
 
 Refinement:

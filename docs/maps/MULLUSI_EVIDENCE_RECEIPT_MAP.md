@@ -37,7 +37,7 @@ No stage may silently succeed or silently fail.
 | WorkerReceipt | Worker | execution or inspection result | unverifiable worker result |
 | ClosureReceipt | Causal Closure Kernel | evidence was validated or blocked | false success |
 | TerminalCertificate | Evidence Layer | final closure is complete | incomplete completion claim |
-| FinalUserReceipt | Response Composer | user response was delivered or delivery failed | response ambiguity |
+| FinalUserReceipt | Response Composer | execution status and delivery status are separately visible | response ambiguity |
 | ErrorReceipt | Any layer | explicit failure with context | silent failure |
 | DenialReceipt | Governance / Gateway | structured refusal or block | unexplained denial |
 | AuditTrailEntry | Audit Store | trace was retained | missing lineage |
@@ -81,5 +81,5 @@ Separate internal evidence refs from user-safe explanation text.
 | missing policy or budget evidence | blocker |
 | missing approval for risky action | blocker |
 | worker result lacks evidence | blocker |
-| execution succeeded but delivery failed | execution closed, delivery failed |
+| execution succeeded but delivery failed | execution closed, delivery failed, both fields visible in delivery receipt |
 | user canceled before execution | canceled with receipt |

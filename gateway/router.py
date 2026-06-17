@@ -8,6 +8,7 @@ Invariants:
   - Tenant is resolved from channel user identity, never from message content.
   - Failed governance checks return structured denial to the user.
   - Every message produces an audit trail entry.
+  - Response delivery is recorded separately from execution closure.
 """
 
 from __future__ import annotations
@@ -225,18 +226,20 @@ class GatewayRouter:
         """Send a response through its registered channel adapter when present."""
         adapter = self._channels.get(response.channel)
         if adapter is None:
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
                     "delivery_status": "skipped_no_adapter",
                 },
             )
+            self._record_delivery_observation(delivered)
+            return delivered
         try:
             sent = bool(adapter.send(response.recipient_id, response.body))
         except Exception:
             self._record_error("adapter_exception")
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
@@ -244,9 +247,11 @@ class GatewayRouter:
                     "delivery_error_type": "adapter_exception",
                 },
             )
+            self._record_delivery_observation(delivered)
+            return delivered
         if not sent:
             self._record_error("adapter_rejected")
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
@@ -254,11 +259,48 @@ class GatewayRouter:
                     "delivery_error_type": "adapter_rejected",
                 },
             )
-        return replace(
+            self._record_delivery_observation(delivered)
+            return delivered
+        delivered = replace(
             response,
             metadata={
                 **response.metadata,
                 "delivery_status": "sent",
+            },
+        )
+        self._record_delivery_observation(delivered)
+        return delivered
+
+    def _record_delivery_observation(self, response: GatewayResponse) -> None:
+        """Record delivery outcome without changing execution success semantics."""
+        command_id = str(response.metadata.get("command_id") or "").strip()
+        if not command_id and response.message_id.startswith("resp-"):
+            command_id = response.message_id.removeprefix("resp-")
+        if not command_id:
+            return
+        command = self._commands.get(command_id)
+        if command is None or command.state is not CommandState.RESPONDED:
+            return
+        delivery_status = str(response.metadata.get("delivery_status") or "delivery_status_not_recorded")
+        delivery_error_type = str(response.metadata.get("delivery_error_type") or "")
+        terminal_certificate_id = str(response.metadata.get("terminal_certificate_id") or "")
+        recipient_id_hash = hashlib.sha256(response.recipient_id.encode("utf-8")).hexdigest()
+        self._commands.transition(
+            command_id,
+            CommandState.RESPONSE_EVIDENCE_CLOSED,
+            detail={
+                "delivery_status": delivery_status,
+                "delivery_error_type": delivery_error_type,
+                "delivery_succeeded": delivery_status == "sent",
+                "delivery_attempted": delivery_status not in {"", "skipped_no_adapter"},
+                "execution_status": "terminal_certified"
+                if terminal_certificate_id
+                else "responded_without_terminal_certificate",
+                "execution_delivery_separated": True,
+                "response_message_id": response.message_id,
+                "response_channel": response.channel,
+                "recipient_id_hash": recipient_id_hash,
+                "terminal_certificate_id": terminal_certificate_id,
             },
         )
 
@@ -595,6 +637,7 @@ class GatewayRouter:
             metadata={
                 **closure.metadata,
                 **self._interpretation_metadata(command),
+                "command_id": command.command_id,
                 "closure_response_kind": closure.response_kind.value,
                 "closure_disposition": closure.disposition.value if closure.disposition else None,
                 "response_allowed": closure.response_allowed,
