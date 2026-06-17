@@ -54,6 +54,11 @@ def test_team_ops_terminal_closure_evidence_bundle_validator_accepts_ready_bundl
     assert validation.ready is True
     assert validation.command_id == "team_ops.shared_inbox_triage"
     assert validation.terminal_certificate_id.startswith("teamops-shared-inbox-terminal-closure-certificate-")
+    assert (
+        validation.provider_observation_receipt_id
+        == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert validation.provider_observation_receipt_valid is True
     assert validation.evidence_ref_count >= 9
     assert validation.signature_key_id == "teamops-local-trust-ledger-key"
     assert validation.next_action == "prepare TeamOps terminal closure evidence bundle for external anchor preflight"
@@ -129,6 +134,35 @@ def test_team_ops_terminal_closure_evidence_bundle_validator_rejects_production_
     assert validation.valid is False
     assert validation.ready is False
     assert "metadata.production_ready_claimed must be false" in validation.errors
+    assert "trust ledger verification failed: bundle_hash_mismatch" in validation.errors
+
+
+def test_team_ops_terminal_closure_evidence_bundle_validator_rejects_missing_provider_witness(
+    tmp_path: Path,
+) -> None:
+    review_path, certificate_path, bundle_path = _write_ready_bundle(tmp_path)
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    bundle["metadata"]["provider_observation_receipt_id"] = ""
+    bundle["metadata"]["provider_observation_receipt_ref"] = ""
+    bundle["metadata"]["provider_observation_receipt_valid"] = False
+    bundle["evidence_refs"] = [
+        ref for ref in bundle["evidence_refs"] if "proof://teamops/provider-observation/" not in str(ref)
+    ]
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_terminal_closure_evidence_bundle(
+        bundle_path=bundle_path,
+        certificate_path=certificate_path,
+        source_review_packet_path=review_path,
+        signing_secret=SIGNING_SECRET,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "metadata.provider_observation_receipt_id must bind provider observation receipt" in validation.errors
+    assert "metadata.provider_observation_receipt_ref must be non-empty" in validation.errors
+    assert "metadata.provider_observation_receipt_valid must be true" in validation.errors
+    assert any(error.startswith("evidence_refs must include proof://teamops/provider-observation/") for error in validation.errors)
     assert "trust ledger verification failed: bundle_hash_mismatch" in validation.errors
 
 

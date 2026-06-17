@@ -10,6 +10,7 @@ scripts.validate_team_ops_shared_inbox_terminal_closure_certificate.
 Invariants:
   - A bundle must pass trust-ledger schema, hash, and signature verification.
   - A bundle must bind the ready TeamOps terminal closure certificate.
+  - Provider-observation receipt identity must match the source certificate.
   - Raw content, secret markers, provider effects, and production claims are rejected.
 """
 
@@ -40,6 +41,9 @@ from scripts.produce_team_ops_shared_inbox_terminal_closure_evidence_bundle impo
 )
 from scripts.validate_team_ops_shared_inbox_terminal_closure_certificate import (  # noqa: E402
     validate_team_ops_shared_inbox_terminal_closure_certificate,
+)
+from scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet import (  # noqa: E402
+    PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN,
 )
 from scripts.verify_evidence_bundle import BUNDLE_SCHEMA_PATH, verify_bundle_file  # noqa: E402
 
@@ -88,6 +92,8 @@ class TeamOpsSharedInboxTerminalClosureEvidenceBundleValidation:
     bundle_id: str
     command_id: str
     terminal_certificate_id: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     evidence_ref_count: int
     signature_key_id: str
     errors: tuple[str, ...]
@@ -138,6 +144,7 @@ def validate_team_ops_shared_inbox_terminal_closure_evidence_bundle(
         errors.append("TeamOps terminal closure evidence bundle ready must be true")
         ready = False
     evidence_refs = bundle.get("evidence_refs", [])
+    metadata = bundle.get("metadata", {}) if isinstance(bundle.get("metadata"), dict) else {}
     return TeamOpsSharedInboxTerminalClosureEvidenceBundleValidation(
         valid=not errors,
         ready=ready,
@@ -147,6 +154,8 @@ def validate_team_ops_shared_inbox_terminal_closure_evidence_bundle(
         bundle_id=str(bundle.get("bundle_id", "")),
         command_id=str(bundle.get("command_id", "")),
         terminal_certificate_id=str(bundle.get("terminal_certificate_id", "")),
+        provider_observation_receipt_id=str(metadata.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=metadata.get("provider_observation_receipt_valid") is True,
         evidence_ref_count=len(evidence_refs) if isinstance(evidence_refs, list) else 0,
         signature_key_id=str(bundle.get("signature_key_id", "")),
         errors=tuple(dict.fromkeys(errors)),
@@ -193,6 +202,13 @@ def _validate_bundle_semantics(bundle: dict[str, Any], errors: list[str]) -> Non
         errors.append("metadata.bundle_schema_id must bind trust-ledger bundle schema")
     if metadata.get("no_secret_values_serialized") is not True:
         errors.append("metadata.no_secret_values_serialized must be true")
+    provider_receipt_id = str(metadata.get("provider_observation_receipt_id", ""))
+    if PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(provider_receipt_id) is None:
+        errors.append("metadata.provider_observation_receipt_id must bind provider observation receipt")
+    if not str(metadata.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("metadata.provider_observation_receipt_ref must be non-empty")
+    if metadata.get("provider_observation_receipt_valid") is not True:
+        errors.append("metadata.provider_observation_receipt_valid must be true")
     for field_name in FALSE_METADATA_FIELDS:
         if metadata.get(field_name) is not False:
             errors.append(f"metadata.{field_name} must be false")
@@ -213,12 +229,19 @@ def _validate_certificate_binding(
         errors.append("metadata.source_review_packet_id must match certificate metadata")
     if metadata.get("source_review_packet_hash") != certificate_metadata.get("source_review_packet_hash"):
         errors.append("metadata.source_review_packet_hash must match certificate metadata")
+    if metadata.get("provider_observation_receipt_ref") != certificate_metadata.get("provider_observation_receipt_ref"):
+        errors.append("metadata.provider_observation_receipt_ref must match certificate metadata")
+    if metadata.get("provider_observation_receipt_id") != certificate_metadata.get("provider_observation_receipt_id"):
+        errors.append("metadata.provider_observation_receipt_id must match certificate metadata")
+    if metadata.get("provider_observation_receipt_valid") is not True:
+        errors.append("metadata.provider_observation_receipt_valid must be true")
     evidence_refs = bundle.get("evidence_refs", [])
     if isinstance(evidence_refs, list):
         required_refs = (
             f"proof://teamops/command/{WORKFLOW_ID}",
             f"proof://teamops/terminal-certificate/{certificate.get('certificate_id', '')}",
             f"proof://teamops/terminal-review/{certificate_metadata.get('source_review_packet_id', '')}",
+            f"proof://teamops/provider-observation/{certificate_metadata.get('provider_observation_receipt_id', '')}",
         )
         for ref in required_refs:
             if ref not in evidence_refs:
@@ -241,6 +264,14 @@ def _bundle_ready(bundle: Mapping[str, Any]) -> bool:
         and metadata.get("team_ops_terminal_closure_bundle") is True
         and metadata.get("bundle_schema_id") == SCHEMA_ID
         and metadata.get("no_secret_values_serialized") is True
+        and (
+            PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+                str(metadata.get("provider_observation_receipt_id", ""))
+            )
+            is not None
+        )
+        and bool(str(metadata.get("provider_observation_receipt_ref", "")).strip())
+        and metadata.get("provider_observation_receipt_valid") is True
         and all(metadata.get(field_name) is False for field_name in FALSE_METADATA_FIELDS)
     )
 
