@@ -126,4 +126,4 @@ The next real implementation step is a Symbol Skill Adapter that converts existi
 STATUS:
   Completeness: foundation boundary added and audit-refined
   Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, everything-symbolizable flag, evidence-file presence, authority denial, no raw private payload, no raw secret, no terminal closure
-  Open issues: runtime symbol adapter, protocol manifest registration, proof coverage matrix binding, and skill-by-skill symbolization remain AwaitingEvidence
+  Open issues: runtime symbol adapter, proof coverage matrix binding, and skill-by-skill symbolization remain AwaitingEvidence
