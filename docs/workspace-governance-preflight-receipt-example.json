@@ -1,5 +1,5 @@
 {
-  "check_count": 202,
+  "check_count": 203,
   "checks": [
     {
       "args": [
@@ -1864,6 +1864,17 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_code_change_physics_packet.py"
+      ],
+      "name": "code_change_physics_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] code_change_physics_doc\n[PASS] code_change_physics_cross_doc_anchors\n[PASS] code_change_physics_schema\n[PASS] code_change_physics_packet_semantics\n[PASS] code_change_physics_capability_binding\nSTATUS: passed\n"
     },
     {
       "args": [

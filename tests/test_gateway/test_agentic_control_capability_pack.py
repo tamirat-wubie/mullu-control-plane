@@ -63,6 +63,22 @@ def test_agentic_control_pack_projects_governed_authority_records() -> None:
     assert evidence_record["rollback_or_compensation_required"] is True
 
 
+def test_agentic_control_code_change_plan_requires_physics_packet_evidence() -> None:
+    payload = _load_json(AGENTIC_CONTROL_CAPABILITY_PACK_PATH)
+    code_change_entry = next(
+        entry for entry in payload["capabilities"] if entry["capability_id"] == "agentic_control.code_change.plan"
+    )
+    required_evidence = code_change_entry["evidence_model"]["required_evidence"]
+
+    assert required_evidence == ["change_boundary", "code_change_physics_packet", "test_contract", "rollback_plan"]
+    assert code_change_entry["effect_model"]["forbidden_effects"] == [
+        "workspace_file_written",
+        "git_state_mutated",
+        "test_result_fabricated",
+    ]
+    assert code_change_entry["extensions"]["governed_record"]["read_only"] is True
+
+
 def test_agentic_control_schemas_accept_representative_contracts() -> None:
     input_schema = _load_schema(AGENTIC_CONTROL_INPUT_SCHEMA_PATH)
     output_schema = _load_schema(AGENTIC_CONTROL_OUTPUT_SCHEMA_PATH)

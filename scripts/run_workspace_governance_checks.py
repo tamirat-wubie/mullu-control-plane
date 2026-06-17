@@ -903,6 +903,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "code_change_physics_packet",
+            (python_executable, "scripts/validate_code_change_physics_packet.py"),
+        ),
+        CheckCommand(
             "intelligence_coordination_episode_receipt",
             (
                 python_executable,

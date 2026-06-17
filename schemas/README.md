@@ -35,6 +35,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_improvement_portfolio.schema.json` | Canonical activation-blocked portfolio of ranked capability improvement proposals |
 | `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
 | `claim_verification_report.schema.json` | Canonical claim graph verification report for support, contradiction, freshness, and execution admission |
+| `code_change_physics_packet.schema.json` | Canonical non-executing code-change physics packet for governance, creative path discovery, and repair planning |
 | `commercial_metering_snapshot.schema.json` | Canonical commercial metering snapshot with plans, usage, provider costs, decisions, and tenant billing summaries |
 | `economic_intelligence_snapshot.schema.json` | Canonical governed economic routing snapshot with utility decisions, blocked candidates, and policy override closure |
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
