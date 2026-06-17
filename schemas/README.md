@@ -143,7 +143,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
 | `trust_ledger_anchor_submission_receipt.schema.json` | Canonical signed operator submission receipt for externally anchored trust-ledger exports |
 | `trust_ledger_anchor_verification_report.schema.json` | Canonical offline verifier report for trust ledger anchor and package replay |
-| `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |
+| `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring; TeamOps use binds provider-observation receipt identity through bundle metadata and proof refs |
 | `trust_ledger_bundle_verification_report.schema.json` | Canonical offline verifier report for trust ledger bundle replay |
 | `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification |
 | `trust_ledger_export_package.schema.json` | Canonical manifest binding trust ledger bundle, anchor receipt, and artifact export files |
