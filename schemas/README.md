@@ -163,6 +163,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |
+| `read_only_document_worker_path.schema.json` | Canonical Foundation Mode read-only document worker path selection |
 | `read_only_first_worker_path.schema.json` | Canonical Foundation Mode first worker path selection |
 | `world_state.schema.json` | Canonical world-state graph projection |
 | `worker_failure_receipt.schema.json` | Canonical non-terminal worker failure and recovery receipt |

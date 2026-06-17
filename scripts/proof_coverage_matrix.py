@@ -1897,6 +1897,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "read_only_document_worker_path",
+            [
+                "document.inspect_read_only",
+                "build_read_only_document_inspection_lease",
+                "create_read_only_document_inspection_handler",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/read_only_document_worker.py",
+                "schemas/read_only_document_worker_path.schema.json",
+                "examples/read_only_document_worker_path.foundation.json",
+                "scripts/validate_read_only_document_worker_path.py",
+                "tests/test_validate_read_only_document_worker_path.py",
+                "tests/test_gateway/test_read_only_document_worker.py",
+            ],
+            "Foundation Mode document worker path selects local text-like read-only document inspection, rejects mutation, network, secrets, rich binary parsing, unsupported formats, and out-of-root path inputs, and emits worker-mesh receipts with redacted evidence.",
+            [
+                "read_only_document_worker_path_example_passes",
+                "read_only_document_worker_path_rejects_rich_document_parsing",
+                "read_only_document_worker_path_rejects_missing_format_allowlist",
+                "read_only_document_worker_dispatches_schema_valid_receipt",
+                "read_only_document_worker_redacts_secret_like_matches",
+                "read_only_document_worker_rejects_path_boundary_violation",
+                "read_only_document_worker_rejects_unsupported_format",
+                "read_only_document_worker_reports_text_decode_failure",
+                "read_only_document_worker_rejects_mutation_and_network_inputs",
+                "read_only_document_worker_rejects_secret_like_input_values",
+            ],
+        ),
+        _surface(
             "restricted_adapter_worker_boundaries",
             [
                 "/browser/execute",
@@ -11399,6 +11432,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_read_only_first_worker_path_contract",
             "surfaces": ["read_only_first_worker_path"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_read_only_document_worker_path_contract",
+            "surfaces": ["read_only_document_worker_path"],
             "status": "closed",
         },
         {

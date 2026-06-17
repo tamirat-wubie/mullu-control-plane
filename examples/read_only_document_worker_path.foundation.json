@@ -1,0 +1,63 @@
+{
+  "schema_ref": "urn:mullusi:schema:read-only-document-worker-path:1",
+  "selection_id": "read-only-document-worker-path-20260617",
+  "selected_capability_id": "document.inspect_read_only",
+  "status": "selected_for_foundation_mode",
+  "mode": "read_only",
+  "decision_rationale": "The second read-only worker path is local document inspection over text-like documents only. It proves document-root containment, format allowlisting, bounded reads, redaction, and worker receipts without external connectors, rich binary parsing, secrets, spend, network access, or mutation authority.",
+  "mutation_allowed": false,
+  "external_network_allowed": false,
+  "secrets_required": false,
+  "spend_required": false,
+  "parser_scope": {
+    "text_like_documents_only": true,
+    "rich_document_parsing_allowed": false,
+    "supported_extensions": [".csv", ".json", ".markdown", ".md", ".rst", ".tsv", ".txt", ".yaml", ".yml"]
+  },
+  "allowed_inputs": {
+    "document_relative_paths": true,
+    "query_text": true,
+    "max_documents": 25,
+    "max_bytes_per_document": 262144
+  },
+  "blocked_inputs": {
+    "absolute_paths_outside_document_root": true,
+    "raw_secret_values": true,
+    "write_requests": true,
+    "network_targets": true,
+    "tenant_external_resources": true,
+    "rich_document_binary_parsing": true
+  },
+  "allowed_outputs": [
+    "document_inventory_summary",
+    "bounded_text_match_summary",
+    "content_hashes",
+    "line_counts",
+    "redacted_excerpt_refs"
+  ],
+  "required_receipts": [
+    "worker_lease_receipt",
+    "input_hash_receipt",
+    "document_boundary_witness",
+    "format_allowlist_witness",
+    "read_only_result_receipt",
+    "redaction_witness",
+    "terminal_closure_or_blocker_receipt"
+  ],
+  "proof_obligations": [
+    "no_write_operation",
+    "no_external_network",
+    "document_path_boundary",
+    "format_allowlist",
+    "scan_bounds",
+    "secret_redaction",
+    "deterministic_traversal"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_document_worker_path.py",
+    "python -m pytest tests/test_validate_read_only_document_worker_path.py -q",
+    "python -m pytest tests/test_gateway/test_read_only_document_worker.py -q"
+  ],
+  "rollback_plan": "No runtime or external state is changed by this selection artifact. Rollback is removal of the worker module, schema, example, manifest entry, validator, tests, and map references.",
+  "next_action": "Keep rich DOCX/PDF parsing blocked until a parser-specific evidence contract and renderer verification path are admitted."
+}
