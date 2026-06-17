@@ -514,6 +514,18 @@ class TestMessageRouting:
         assert receipt["extracted_slots"]["param_names"] == ["query"]
         assert response.metadata["search_decision_receipt"]["decision"] == "allow_search"
         assert response.metadata["search_decision_receipt"]["retrieval_authority"] == "evidence_only"
+        command_events = router._commands.events_for(response.metadata["command_id"])
+        observed_event = next(
+            event
+            for event in command_events
+            if event.detail.get("search_decision_receipt")
+        )
+        assert observed_event.detail["search_decision_receipt"]["receipt_id"] == (
+            response.metadata["search_decision_receipt"]["receipt_id"]
+        )
+        assert observed_event.detail["search_decision_receipt_id"] == (
+            response.metadata["search_decision_receipt"]["receipt_id"]
+        )
         assert "search knowledge docs" not in str(receipt)
         assert captured_contexts[0].command_id == response.metadata["command_id"]
         assert captured_contexts[0].conversation_id == "conversation-1"
