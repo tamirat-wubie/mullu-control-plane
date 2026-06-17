@@ -26,7 +26,8 @@ No stage may silently succeed or silently fail.
 | NormalizationReceipt | Gateway Router | channel message became canonical | channel confusion |
 | InterpretationReceipt | Interpretation Layer | what the system believed the user meant | misunderstood intent |
 | ClarificationReceipt | Clarification Engine | missing details were requested | vague execution |
-| SearchReceipt | Search Layer | search decision, freshness, cost, evidence | stale or unbounded retrieval |
+| SearchDecisionReceipt | Search Layer | search classification, freshness, budget, and evidence-only retrieval authority | search reflex, stale retrieval, or unbounded retrieval |
+| SearchReceipt | Search Layer | retrieved evidence, source freshness, citations, and conflicts | stale or unsupported answer |
 | KnowledgeReceipt | Knowledge Layer | local answer evidence | unsupported answer |
 | PlanReceipt | Plan Builder | proposed action plan | hidden execution plan |
 | PolicyReceipt | Policy Engine | allow, deny, constrain, or approval decision | policy bypass |
@@ -61,7 +62,7 @@ MessageReceipt
 -> AuditTrailEntry
 ```
 
-Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence.
+Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence. Search-backed paths expose `SearchDecisionReceipt` rows in the operator receipt viewer without raw-query disclosure.
 
 ## 4. Redaction rules
 

@@ -46,7 +46,7 @@ search_failed_with_explanation
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Add dedicated receipt viewer drilldowns for search decision receipts. |
+| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Repeat the read-only worker contract pattern for search worker execution. |
 | Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | Connect tenant-specific budget policy to search decision request construction. |
 
 ## 4. SearchDecisionReceipt fields
@@ -73,6 +73,19 @@ SearchDecisionReceipt {
   generated_at
   receipt_hash
 }
+```
+
+Receipt viewer projection:
+
+```text
+/operator/receipts/read-model?receipt_type=search_decision_receipt
+-> query_hash
+-> search_classification
+-> freshness_state
+-> budget_state
+-> retrieval_authority
+-> retrieval_instruction_authority_allowed=false
+-> source_event_hash when emitted by live search execution
 ```
 
 ## 5. Future SearchReceipt fields
