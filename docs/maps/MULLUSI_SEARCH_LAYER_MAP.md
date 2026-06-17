@@ -38,15 +38,15 @@ search_failed_with_explanation
 
 | Component | Purpose | Inputs | Outputs | Status | Next Step |
 | --- | --- | --- | --- | --- | --- |
-| Search Need Classifier | decide whether retrieval is needed | interpreted intent, local knowledge | search classification | implemented / partial | Thread classifier output into live search execution. |
-| Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness state | implemented / partial | Bind freshness evidence to future search result receipts. |
+| Search Need Classifier | decide whether retrieval is needed | interpreted intent, local knowledge | search classification | implemented / partial | Connect classifier decisions to source-selection policy and viewer detail. |
+| Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness state | implemented / partial | Bind source-level freshness evidence to future search result receipts. |
 | Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | missing / partial | Prefer local evidence for Foundation Mode. |
 | Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / partial | Add tenant-scoped cache storage rules before use. |
 | Retriever | collect evidence from selected sources | source plan | evidence set | partial / unknown | Treat retrieved content as evidence only. |
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Connect receipt ids to live search execution and viewer drilldowns. |
+| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Add dedicated receipt viewer drilldowns for search decision receipts. |
 | Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | Connect tenant-specific budget policy to search decision request construction. |
 
 ## 4. SearchDecisionReceipt fields

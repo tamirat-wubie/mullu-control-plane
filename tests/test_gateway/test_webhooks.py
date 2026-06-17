@@ -4070,6 +4070,63 @@ class TestGatewayStatus:
             "search must be 128 characters or fewer"
         )
 
+    def test_operator_receipt_viewer_separates_execution_and_delivery_status(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-delivery-separated",
+            idempotency_key="delivery-separated",
+            intent="llm_completion",
+            payload={"body": "delivery separated raw body"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.RESPONDED,
+            detail={"success_claim": False},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.RESPONSE_EVIDENCE_CLOSED,
+            detail={
+                "delivery_status": "failed",
+                "delivery_error_type": "adapter_exception",
+                "delivery_succeeded": False,
+                "delivery_attempted": True,
+                "execution_status": "terminal_certified",
+                "execution_delivery_separated": True,
+                "terminal_certificate_id": "terminal-delivery-separated",
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=delivery_receipt&receipt_status=failed"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        delivery_receipt = row["receipts"][0]
+        assert delivery_receipt["status"] == "failed"
+        assert delivery_receipt["details"]["execution_status"] == "terminal_certified"
+        assert delivery_receipt["details"]["delivery_status"] == "failed"
+        assert delivery_receipt["details"]["delivery_error_type"] == "adapter_exception"
+        assert delivery_receipt["details"]["delivery_succeeded"] is False
+        assert delivery_receipt["details"]["delivery_attempted"] is True
+        assert delivery_receipt["details"]["execution_delivery_separated"] is True
+        assert delivery_receipt["evidence_refs"]["delivery_event_hash"]
+
     def test_operator_approval_history_links_receipts_and_current_task(
         self, gateway_app, client
     ):
