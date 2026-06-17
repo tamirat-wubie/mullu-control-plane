@@ -53,6 +53,18 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-admission-preflight",
+      "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-admission-preflight:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-github-pr-operator-approval-request",
+      "path": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",

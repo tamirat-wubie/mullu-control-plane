@@ -141,7 +141,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 112. TeamOps shared inbox sent-message observation receipts are public contracts when they bind ready send-execution evidence and provider-observation receipt identity to two redacted provider observations, matching provider-message hash evidence, duplicate-absence evidence, deterministic replay evidence, and no local observation/provider-call/send/raw-content flags before terminal closure review.
 113. TeamOps shared inbox terminal closure review packets are public contracts when they bind ready sent-message observation evidence and provider-observation receipt identity to approval-chain review, send-execution review, duplicate-absence review, deterministic replay review, required terminal evidence refs, and no certificate-minting/no-production-claim flags before any terminal closure certificate can be minted.
 114. TeamOps shared inbox terminal closure certificates are public contracts when they bind a ready terminal closure review packet and provider-observation receipt identity to the canonical terminal closure certificate schema, committed disposition, source-review hash, required evidence refs, replay refs, duplicate-absence proof, and no provider-call/no-mailbox-write/no-draft/no-send/no-production-claim minting metadata.
-115. TeamOps shared inbox terminal closure evidence bundles are public contracts when they bind a ready TeamOps terminal closure certificate into a signed trust-ledger bundle with proof-scheme evidence refs, HMAC verification, source-certificate hash, no external-anchor request, and no provider-call/no-mailbox-write/no-send/no-production-claim metadata.
+115. TeamOps shared inbox terminal closure evidence bundles are public contracts when they bind a ready TeamOps terminal closure certificate and provider-observation receipt identity into a signed trust-ledger bundle with proof-scheme evidence refs, HMAC verification, source-certificate hash, no external-anchor request, and no provider-call/no-mailbox-write/no-send/no-production-claim metadata.
 116. TeamOps shared inbox terminal closure anchor preflight receipts are public contracts when they bind a ready signed TeamOps terminal closure evidence bundle to projected trust-ledger anchor artifacts, operator authority evidence, anchor-secret presence, target selection, and no anchor receipt/no remote submit/no ledger append/no provider-call/no-production-claim metadata before any external anchor can be created.
 117. TeamOps shared inbox terminal closure anchor receipt wrappers are public contracts when they bind a ready TeamOps anchor preflight, signed source bundle, projected trust-ledger anchor artifacts, pending local trust-ledger anchor receipt, anchor signature verification, and no remote submit/no ledger append/no provider-call/no-production-claim metadata before remote submission preflight can begin.
 117. Personal-assistant requests and skills are public contracts when they bind planning-only intent, skill permissions, connector proof gaps, approval boundaries, and blocked actions without granting connector execution.
@@ -204,7 +204,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 345 schemas
+protocol manifest ok: 347 schemas
 ```
 
 STATUS:
