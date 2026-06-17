@@ -178,6 +178,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_github_pr_operator_approval_request",
+            (python_executable, "scripts/validate_agentic_service_harness_github_pr_operator_approval_request.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_read_only_status_route_design",
             (
                 python_executable,
