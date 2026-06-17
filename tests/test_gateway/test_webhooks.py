@@ -43,6 +43,7 @@ from gateway.server import (  # noqa: E402
     create_gateway_app,
 )
 from gateway.router import TenantMapping  # noqa: E402
+from gateway.search_governance import SearchDecisionRequest, build_search_decision_receipt  # noqa: E402
 from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
@@ -4186,6 +4187,113 @@ class TestGatewayStatus:
         assert "operator viewer raw body must stay hidden" not in json.dumps(
             data, sort_keys=True
         )
+
+    def test_operator_receipt_viewer_projects_search_decision_receipts(
+        self, gateway_app, client
+    ):
+        raw_query = "latest governance docs"
+        receipt = build_search_decision_receipt(
+            SearchDecisionRequest(
+                tenant_id="t1",
+                actor_id="u1",
+                query=raw_query,
+                generated_at="2026-06-17T12:00:00+00:00",
+                budget_limit_units=2.0,
+                max_result_count=3,
+            )
+        ).to_dict()
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-search-decision-receipt",
+            idempotency_key="search-decision-receipt",
+            intent="enterprise.knowledge_search",
+            payload={
+                "body": raw_query,
+                "search_decision_receipt": receipt,
+                "search_decision_receipt_id": receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=search_decision_receipt"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        search_receipt = row["receipts"][0]
+        assert row["receipt_types"] == ["search_decision_receipt"]
+        assert search_receipt["receipt_id"] == receipt["receipt_id"]
+        assert search_receipt["receipt_hash"] == receipt["receipt_hash"]
+        assert search_receipt["status"] == "allow_search"
+        assert search_receipt["details"]["query_hash"] == receipt["query_hash"]
+        assert search_receipt["details"]["freshness_state"] == "source_required"
+        assert search_receipt["details"]["retrieval_authority"] == "evidence_only"
+        assert search_receipt["details"]["retrieval_instruction_authority_allowed"] is False
+        assert search_receipt["evidence_refs"]["query_hash"] == receipt["query_hash"]
+        assert raw_query not in json.dumps(data, sort_keys=True)
+
+    def test_operator_receipt_viewer_projects_search_decision_from_event_output(
+        self, gateway_app, client
+    ):
+        receipt = build_search_decision_receipt(
+            SearchDecisionRequest(
+                tenant_id="t1",
+                actor_id="u1",
+                query="search docs",
+                generated_at="2026-06-17T12:05:00+00:00",
+                budget_limit_units=1.0,
+                max_result_count=5,
+            )
+        ).to_dict()
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-search-decision-event",
+            idempotency_key="search-decision-event",
+            intent="enterprise.knowledge_search",
+            payload={"body": "search docs"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.OBSERVED,
+            output={"response": "bounded search result", "total_chunks_searched": 1},
+            detail={
+                "search_decision_receipt": receipt,
+                "search_decision_receipt_id": receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=search_decision_receipt&receipt_status=allow_search"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        search_receipt = row["receipts"][0]
+        assert search_receipt["receipt_type"] == "search_decision_receipt"
+        assert search_receipt["receipt_id"] == receipt["receipt_id"]
+        assert search_receipt["evidence_refs"]["source_event_hash"]
+        assert search_receipt["details"]["budget_state"] == "allowed"
+        assert "search docs" not in json.dumps(data, sort_keys=True)
 
     def test_operator_receipt_viewer_filters_type_status_task_and_search(
         self, gateway_app, client
