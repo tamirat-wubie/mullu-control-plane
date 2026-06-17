@@ -44,7 +44,7 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority before execution | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Add dedicated receipt viewer drilldowns for search decision receipts. |
+| Search Decision Receipt Writer | record classification, freshness, budget, retrieval authority, and viewer projection before execution | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Receipt viewer exposes search decision drilldowns without raw-query exposure; repeat the read-only worker contract pattern for search worker execution. |
 | Search Receipt Writer | record retrieval outcome and evidence metadata after decision | search state, budget, citations | SearchReceipt | implemented / partial | `SearchReceipt` records blocked retrieval, freshness, conflicts, citations, retrieval errors, and evidence metadata without retaining retrieved content bodies. |
 | Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` and `SearchDecisionReceipt.budget_state` block deep retrieval on BudgetUnknown or missing approval; tenant-specific policy binding remains next. |
 
@@ -71,6 +71,19 @@ SearchDecision {
 ```
 
 `SearchDecision` is pre-retrieval. It can block, route, or require approval, but it does not prove retrieved evidence exists.
+
+Receipt viewer projection:
+
+```text
+/operator/receipts/read-model?receipt_type=search_decision_receipt
+-> query_hash
+-> search_classification
+-> freshness_state
+-> budget_state
+-> retrieval_authority
+-> retrieval_instruction_authority_allowed=false
+-> source_event_hash when emitted by live search execution
+```
 
 ## 5. SearchReceipt fields
 
