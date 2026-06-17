@@ -1607,6 +1607,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "read-only-search-worker-path",
+      "path": "schemas/read_only_search_worker_path.schema.json",
+      "urn": "urn:mullusi:schema:read-only-search-worker-path:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",

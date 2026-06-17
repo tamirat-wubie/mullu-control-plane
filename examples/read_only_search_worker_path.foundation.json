@@ -1,0 +1,70 @@
+{
+  "schema_ref": "urn:mullusi:schema:read-only-search-worker-path:1",
+  "selection_id": "read-only-search-worker-path-20260617",
+  "selected_capability_id": "enterprise.knowledge_search",
+  "status": "selected_for_foundation_mode",
+  "mode": "read_only",
+  "decision_rationale": "The read-only search worker path executes only local text-like knowledge search after a SearchDecisionReceipt admits the query. It proves source-root containment, evidence-only retrieval, bounded reads, redaction, and worker receipts without web search, external connectors, secrets, spend, network access, or mutation authority.",
+  "mutation_allowed": false,
+  "external_network_allowed": false,
+  "secrets_required": false,
+  "spend_required": false,
+  "retrieval_authority": "evidence_only",
+  "search_decision_receipt_required": true,
+  "source_scope": {
+    "local_text_like_sources_only": true,
+    "web_search_allowed": false,
+    "supported_extensions": [".csv", ".json", ".markdown", ".md", ".rst", ".tsv", ".txt", ".yaml", ".yml"]
+  },
+  "allowed_inputs": {
+    "source_relative_paths": true,
+    "query_text": true,
+    "search_decision_receipt": true,
+    "max_sources": 25,
+    "max_bytes_per_source": 262144,
+    "max_result_count": 5
+  },
+  "blocked_inputs": {
+    "absolute_paths_outside_knowledge_root": true,
+    "raw_secret_values": true,
+    "write_requests": true,
+    "network_targets": true,
+    "tenant_external_resources": true,
+    "web_search_requests": true,
+    "retrieved_instruction_authority": true
+  },
+  "allowed_outputs": [
+    "bounded_search_result_summary",
+    "source_content_hashes",
+    "source_freshness_labels",
+    "redacted_excerpt_refs",
+    "evidence_only_result_refs"
+  ],
+  "required_receipts": [
+    "search_decision_receipt",
+    "worker_lease_receipt",
+    "input_hash_receipt",
+    "source_boundary_witness",
+    "evidence_only_retrieval_witness",
+    "read_only_result_receipt",
+    "redaction_witness",
+    "terminal_closure_or_blocker_receipt"
+  ],
+  "proof_obligations": [
+    "no_write_operation",
+    "no_external_network",
+    "source_path_boundary",
+    "search_decision_receipt_required",
+    "evidence_only_retrieval",
+    "scan_bounds",
+    "secret_redaction",
+    "deterministic_traversal"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_search_worker_path.py",
+    "python -m pytest tests/test_validate_read_only_search_worker_path.py -q",
+    "python -m pytest tests/test_gateway/test_read_only_search_worker.py -q"
+  ],
+  "rollback_plan": "No runtime or external state is changed by this selection artifact. Rollback is removal of the worker module, schema, example, manifest entry, validator, tests, and map references.",
+  "next_action": "Keep web search execution blocked until a separate live-source freshness, budget, retrieval-safety, and citation receipt contract is admitted."
+}

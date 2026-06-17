@@ -797,6 +797,13 @@
       ]
     },
     {
+      "action_id": "publish_read_only_search_worker_path_contract",
+      "status": "closed",
+      "surfaces": [
+        "read_only_search_worker_path"
+      ]
+    },
+    {
       "action_id": "publish_software_dev_capability_pack_contract",
       "status": "closed",
       "surfaces": [
@@ -1168,7 +1175,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 109,
+      "action_proof": 110,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 51,
@@ -1176,13 +1183,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 159,
+      "audit_chain": 160,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 74,
+      "proven": 75,
       "unproven": 0,
       "witnessed": 88
     },
@@ -1191,14 +1198,14 @@
       "audit_chain": 0,
       "gap": 0,
       "read_model": 53,
-      "request_proof": 108
+      "request_proof": 109
     },
-    "surface_count": 162
+    "surface_count": 163
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 162,
+      "strong": 163,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5138,6 +5145,42 @@
         "read_only_document_worker_rejects_secret_like_input_values"
       ],
       "surface_id": "read_only_document_worker_path"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/read_only_search_worker.py",
+        "gateway/search_governance.py",
+        "schemas/read_only_search_worker_path.schema.json",
+        "schemas/search_decision_receipt.schema.json",
+        "examples/read_only_search_worker_path.foundation.json",
+        "scripts/validate_read_only_search_worker_path.py",
+        "tests/test_validate_read_only_search_worker_path.py",
+        "tests/test_gateway/test_read_only_search_worker.py"
+      ],
+      "notes": "Foundation Mode search worker path selects local text-like knowledge search, requires matching SearchDecisionReceipt admission, rejects mutation, network, secrets, web retrieval, unsupported sources, and out-of-root path inputs, and emits worker-mesh receipts with evidence-only redacted excerpts.",
+      "representative_paths": [
+        "enterprise.knowledge_search",
+        "build_read_only_search_worker_lease",
+        "create_read_only_search_handler"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "read_only_search_worker_path_example_passes",
+        "read_only_search_worker_path_rejects_web_retrieval",
+        "read_only_search_worker_path_rejects_missing_decision_receipt_obligation",
+        "read_only_search_worker_dispatches_schema_valid_receipt",
+        "read_only_search_worker_redacts_secret_like_matches",
+        "read_only_search_worker_rejects_missing_decision_receipt",
+        "read_only_search_worker_rejects_decision_query_mismatch",
+        "read_only_search_worker_rejects_path_boundary_violation",
+        "read_only_search_worker_rejects_unsupported_format",
+        "read_only_search_worker_rejects_mutation_and_network_inputs",
+        "read_only_search_worker_rejects_secret_like_input_values"
+      ],
+      "surface_id": "read_only_search_worker_path"
     },
     {
       "action_proof": "action_proof",
@@ -12468,8 +12511,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1599,
-    "runtime_witness_count": 1599,
+    "exact_test_anchor_count": 1610,
+    "runtime_witness_count": 1610,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14294,6 +14337,81 @@
         "exact_test_anchor_count": 10,
         "runtime_witness_count": 10,
         "surface_id": "read_only_document_worker_path",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_read_only_search_worker_path.py::test_read_only_search_worker_path_example_passes"
+            ],
+            "witness": "read_only_search_worker_path_example_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_search_worker_path.py::test_read_only_search_worker_path_rejects_web_retrieval"
+            ],
+            "witness": "read_only_search_worker_path_rejects_web_retrieval"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_search_worker_path.py::test_read_only_search_worker_path_rejects_missing_decision_receipt_obligation"
+            ],
+            "witness": "read_only_search_worker_path_rejects_missing_decision_receipt_obligation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_dispatches_schema_valid_receipt"
+            ],
+            "witness": "read_only_search_worker_dispatches_schema_valid_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_redacts_secret_like_matches"
+            ],
+            "witness": "read_only_search_worker_redacts_secret_like_matches"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_missing_decision_receipt"
+            ],
+            "witness": "read_only_search_worker_rejects_missing_decision_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_decision_query_mismatch"
+            ],
+            "witness": "read_only_search_worker_rejects_decision_query_mismatch"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_path_boundary_violation"
+            ],
+            "witness": "read_only_search_worker_rejects_path_boundary_violation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_unsupported_format"
+            ],
+            "witness": "read_only_search_worker_rejects_unsupported_format"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_mutation_and_network_inputs"
+            ],
+            "witness": "read_only_search_worker_rejects_mutation_and_network_inputs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_search_worker.py::test_read_only_search_worker_rejects_secret_like_input_values"
+            ],
+            "witness": "read_only_search_worker_rejects_secret_like_input_values"
+          }
+        ],
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
+        "surface_id": "read_only_search_worker_path",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

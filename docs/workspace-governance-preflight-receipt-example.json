@@ -1,5 +1,5 @@
 {
-  "check_count": 207,
+  "check_count": 208,
   "checks": [
     {
       "args": [
@@ -596,6 +596,17 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "read-only document worker path ok: read-only-document-worker-path-20260617 -> document.inspect_read_only\n"
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_read_only_search_worker_path.py"
+      ],
+      "name": "read_only_search_worker_path",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "read-only search worker path ok: read-only-search-worker-path-20260617 -> enterprise.knowledge_search\n"
     },
     {
       "args": [

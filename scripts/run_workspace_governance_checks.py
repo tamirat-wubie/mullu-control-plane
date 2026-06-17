@@ -375,6 +375,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_read_only_document_worker_path.py"),
         ),
         CheckCommand(
+            "read_only_search_worker_path",
+            (python_executable, "scripts/validate_read_only_search_worker_path.py"),
+        ),
+        CheckCommand(
             "worker_failure_receipt",
             (python_executable, "scripts/validate_worker_failure_receipt.py"),
         ),
