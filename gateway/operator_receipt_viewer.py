@@ -57,6 +57,7 @@ _CAPABILITY_INTENT_KEYS = ("capability_intent", "skill_intent")
 
 _RECEIPT_TYPES = (
     "interpretation_receipt",
+    "search_decision_receipt",
     "plan_step_receipt",
     "approval_receipt",
     "denial_receipt",
@@ -1846,6 +1847,9 @@ def _receipts_for_command(
     interpretation = _interpretation_receipt(command)
     if interpretation is not None:
         receipts.append(interpretation)
+    search_decision = _search_decision_receipt(command, events)
+    if search_decision is not None:
+        receipts.append(search_decision)
     plan_step = _plan_step_receipt(command)
     if plan_step is not None:
         receipts.append(plan_step)
@@ -2283,6 +2287,86 @@ def _interpretation_receipt(command: CommandEnvelope) -> dict[str, Any] | None:
         "details": details,
         "evidence_refs": evidence_refs,
     }
+
+
+def _search_decision_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> dict[str, Any] | None:
+    raw_receipt, source_event = _raw_search_decision_receipt(command, events)
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in (
+            "schema_ref",
+            "receipt_id",
+            "tenant_id",
+            "actor_id",
+            "capability_id",
+            "query_hash",
+            "search_classification",
+            "freshness_state",
+            "budget_state",
+            "retrieval_authority",
+            "retrieval_instruction_authority_allowed",
+            "decision",
+            "blocked_reasons",
+            "estimated_cost_units",
+            "budget_limit_units",
+            "max_result_count",
+            "generated_at",
+            "metadata",
+        )
+        if key in raw_receipt
+    }
+    receipt_id = str(
+        details.get("receipt_id")
+        or command.redacted_payload.get("search_decision_receipt_id")
+        or f"search-decision:{command.command_id}"
+    )
+    evidence_refs = {
+        "command_id": command.command_id,
+        "receipt_hash": str(raw_receipt.get("receipt_hash", "")),
+        "query_hash": str(details.get("query_hash", "")),
+        "capability_id": str(details.get("capability_id", "")),
+        "source_event_hash": source_event.event_hash if source_event is not None else "",
+        "payload_hash": command.payload_hash,
+        "trace_id": command.trace_id,
+    }
+    receipt_hash = str(raw_receipt.get("receipt_hash", "")) or _stable_hash(
+        {"details": details, "evidence_refs": evidence_refs}
+    )
+    return {
+        "receipt_type": "search_decision_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": receipt_hash,
+        "status": str(details.get("decision") or "recorded"),
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _raw_search_decision_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> tuple[Mapping[str, Any] | None, CommandEvent | None]:
+    raw_payload_receipt = command.redacted_payload.get("search_decision_receipt")
+    if isinstance(raw_payload_receipt, Mapping):
+        return raw_payload_receipt, None
+    for event in reversed(events):
+        raw_detail = event.detail if isinstance(event.detail, Mapping) else {}
+        raw_detail_receipt = raw_detail.get("search_decision_receipt")
+        if isinstance(raw_detail_receipt, Mapping):
+            return raw_detail_receipt, event
+        raw_execution = raw_detail.get("execution_result")
+        if isinstance(raw_execution, Mapping):
+            raw_execution_output = raw_execution.get("output")
+            if isinstance(raw_execution_output, Mapping):
+                raw_execution_receipt = raw_execution_output.get("search_decision_receipt")
+                if isinstance(raw_execution_receipt, Mapping):
+                    return raw_execution_receipt, event
+    return None, None
 
 
 def _event_receipt(event: CommandEvent) -> dict[str, Any]:
