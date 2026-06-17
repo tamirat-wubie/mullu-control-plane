@@ -1,0 +1,118 @@
+{
+  "witness_id": "world-substrate-replay-witness-foundation-20260617",
+  "witness_version": "world_substrate_replay_witness.v1",
+  "generated_at": "2026-06-17T00:00:00Z",
+  "replay_scope": {
+    "source_family": "external/swews-core",
+    "borrowed_concept": "world-substrate-replay-witness",
+    "foundation_mode": true,
+    "tenant_scope": "foundation-local-only",
+    "world_substrate_mode": "witness_only_operator_supplied_refs",
+    "uao_ref": "uao://world-substrate-replay-witness/foundation/witness-only",
+    "life_meaning_judgment_ref": "schemas/life_meaning_judgment.schema.json"
+  },
+  "replay_artifacts": {
+    "world_snapshot_digest_ref": "hash://sha256/swews-world-snapshot-redacted",
+    "replay_trace_digest_ref": "hash://sha256/swews-replay-trace-redacted",
+    "sparse_cache_digest_ref": "hash://sha256/swews-sparse-cache-redacted",
+    "invariant_registry_digest_ref": "hash://sha256/swews-invariant-registry-redacted",
+    "legal_geometry_digest_ref": "hash://sha256/swews-legal-geometry-redacted",
+    "branch_quarantine_digest_ref": "hash://sha256/swews-branch-quarantine-redacted"
+  },
+  "invariant_controls": {
+    "invariant_refs": [
+      "invariant://swews/sparse-cache-truth",
+      "invariant://swews/legal-geometry"
+    ],
+    "sparse_cache_truth_refs": [
+      "proof://swews/sparse-cache-truth/digest-only"
+    ],
+    "legal_geometry_refs": [
+      "proof://swews/legal-geometry/digest-only"
+    ],
+    "field_derivation_refs": [
+      "proof://swews/field-derivation/digest-only"
+    ],
+    "branch_quarantine_refs": [
+      "proof://swews/branch-quarantine/digest-only"
+    ],
+    "replay_probe_refs": [
+      "proof://swews/runtime-replay-probe/digest-only"
+    ]
+  },
+  "planner_executor_parity": {
+    "planner_trace_ref": "hash://sha256/swews-planner-trace-redacted",
+    "executor_trace_ref": "hash://sha256/swews-executor-trace-redacted",
+    "parity_result_ref": "hash://sha256/swews-planner-executor-parity-redacted",
+    "parity_verified": true,
+    "divergence_count": 0,
+    "planner_executor_mismatch_count": 0
+  },
+  "authority_boundary": {
+    "live_world_service_call_performed": false,
+    "sqlite_read_performed": false,
+    "sqlite_write_performed": false,
+    "world_mutation_performed": false,
+    "replay_execution_performed": false,
+    "planner_execution_performed": false,
+    "executor_execution_performed": false,
+    "branch_unquarantined": false,
+    "external_endpoint_called": false,
+    "secret_access_performed": false,
+    "filesystem_write_performed": false,
+    "raw_world_snapshot_stored": false,
+    "raw_replay_trace_stored": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "safety_guards": {
+    "digest_refs_required": true,
+    "sparse_cache_truth_required": true,
+    "legal_geometry_required": true,
+    "invariant_registry_required": true,
+    "planner_executor_parity_required": true,
+    "branch_quarantine_required": true,
+    "raw_world_snapshot_retained": false,
+    "raw_replay_trace_retained": false,
+    "operator_review_required": true,
+    "incident_handoff_required_if_live": true
+  },
+  "receipt_refs": {
+    "world_substrate_replay_witness_schema": "schemas/world_substrate_replay_witness.schema.json",
+    "world_state_schema": "schemas/world_state.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "simulation_receipt_schema": "schemas/simulation_receipt.schema.json",
+    "effect_assurance_schema": "schemas/effect_assurance.schema.json",
+    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json"
+  },
+  "contract_summary": {
+    "witness_only": true,
+    "world_mutation_denied": true,
+    "replay_execution_denied": true,
+    "invariant_ref_count": 2,
+    "sparse_cache_truth_ref_count": 1,
+    "legal_geometry_ref_count": 1,
+    "field_derivation_ref_count": 1,
+    "branch_quarantine_ref_count": 1,
+    "replay_probe_ref_count": 1,
+    "authority_denial_count": 15,
+    "safety_guard_count": 10,
+    "receipt_ref_count": 7,
+    "evidence_ref_count": 12
+  },
+  "evidence_refs": [
+    "schemas/world_substrate_replay_witness.schema.json",
+    "examples/world_substrate_replay_witness.foundation.json",
+    "scripts/validate_world_substrate_replay_witness.py",
+    "tests/test_validate_world_substrate_replay_witness.py",
+    "docs/92_world_substrate_replay_witness_contract.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/world_state.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "schemas/simulation_receipt.schema.json",
+    "schemas/effect_assurance.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json"
+  ]
+}

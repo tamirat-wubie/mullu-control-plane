@@ -1,0 +1,101 @@
+{
+  "security_review_id": "SEC-world-substrate-replay-witness-20260617",
+  "change_id": "world-substrate-replay-witness-20260617",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "World substrate replay evidence can accidentally become live world-service authority if snapshot refs, SQLite access, replay execution, world mutation, planner/executor execution, external endpoint calls, raw world payloads, and terminal closure are conflated. The mitigation is a witness-only schema and validator that reject live authority, raw retention, missing invariant controls, missing branch quarantine, planner/executor parity drift, receipt drift, and count drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "live world service calls, SQLite reads, SQLite writes, world mutation, replay execution, planner execution, executor execution, branch unquarantine, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external endpoint calls remain denied and replay scope stays foundation-local-only",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_digest_and_scope_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw world snapshots, raw replay traces, and secret access remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_raw_payload_retention"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Foundation Mode, witness-only mode, invariant controls, and branch quarantine remain enforced",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_invariant_control_gaps"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms WorldState, UAO, LifeMeaningJudgment, SimulationReceipt, EffectAssurance, and SDLC recovery refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms planner/executor parity and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_parity_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms the proof coverage matrix includes the world substrate replay witness surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_world_substrate_replay_witness_blocks_live_world_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "world-substrate-replay-live-world-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks live world service calls, SQLite reads, SQLite writes, world mutation, replay execution, planner/executor execution, branch unquarantine, external endpoint calls, writes, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/world_substrate_replay_witness.schema.json",
+        "scripts/validate_world_substrate_replay_witness.py",
+        "tests/test_validate_world_substrate_replay_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "world-substrate-replay-raw-payload-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness requires digest refs and denies raw world snapshot, raw replay trace, and secret retention.",
+      "evidence_refs": [
+        "examples/world_substrate_replay_witness.foundation.json",
+        "tests/test_validate_world_substrate_replay_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep WorldSubstrateReplayWitness validation non-live and deterministic",
+    "require world snapshot, replay trace, sparse-cache, invariant registry, legal geometry, branch quarantine, planner trace, executor trace, and parity evidence as digest refs",
+    "require sparse-cache truth, legal geometry, invariant registry, planner/executor parity, and branch quarantine refs",
+    "deny live world service calls, SQLite access, world mutation, replay execution, planner/executor execution, external endpoints, writes, terminal closure, and success claims",
+    "deny raw world snapshot and raw replay trace retention in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/world_substrate_replay_witness.schema.json",
+    "examples/world_substrate_replay_witness.foundation.json",
+    "scripts/validate_world_substrate_replay_witness.py",
+    "tests/test_validate_world_substrate_replay_witness.py",
+    "receipt://sdlc/world-substrate-replay-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/world-substrate-replay-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/world-substrate-replay-witness/security",
+  "receipt_ref": "receipt://sdlc/world-substrate-replay-witness/security"
+}
