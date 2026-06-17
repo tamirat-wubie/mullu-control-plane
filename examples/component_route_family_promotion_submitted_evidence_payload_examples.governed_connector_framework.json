@@ -1,0 +1,997 @@
+{
+  "acceptance_decision": "defined_not_applied",
+  "acceptance_rules_are_not_execution_authority": true,
+  "accepted_evidence_refs": [],
+  "approval_evidence_required": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "operator_approval_if_connector_action_requested",
+    "operator_approval_if_external_effect",
+    "product_specific_ownership_decision",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "blocked_actions": [
+    "autonomous_execution",
+    "connector_call",
+    "external_send",
+    "filesystem_write",
+    "live_dispatch",
+    "route_execution",
+    "runtime_mutation",
+    "terminal_closure"
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "decision": "blocked",
+  "expected_receipts": [
+    "component_route_family_promotion_submitted_evidence_payload_examples_receipt",
+    "component_route_family_promotion_operator_submitted_evidence_records_receipt",
+    "component_route_family_promotion_gate_satisfaction_evaluator_receipt",
+    "component_route_family_promotion_submitted_evidence_records_receipt",
+    "component_route_family_promotion_submitted_evidence_verifier_receipt",
+    "component_route_family_promotion_approval_intake_receipt",
+    "component_route_family_promotion_approval_candidates_receipt",
+    "component_route_family_promotion_witness_evidence_receipt",
+    "component_route_family_promotion_witness_requirements_receipt",
+    "component_route_family_promotion_preflight_receipt",
+    "component_route_binding_receipt",
+    "component_lifecycle_transition_receipt",
+    "authority_upgrade_witness",
+    "product_specific_ownership_decision",
+    "operator_approval_required_receipt",
+    "terminal_closure_denial_receipt"
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "mutates_router_inventory": false,
+  "next_action": "Create actual operator-submitted evidence records only after acceptance rules are applied to real artifact refs and remain blocked from granting authority by themselves.",
+  "operator_submission_channels": [
+    "authority_upgrade_witness",
+    "component_lifecycle_transition_receipt",
+    "component_route_binding_receipt",
+    "gmail_account_binding_evidence_receipt",
+    "operator_approval_if_connector_action_requested",
+    "operator_approval_if_external_effect",
+    "product_specific_ownership_decision",
+    "selected_component_bound_router_inventory_delta"
+  ],
+  "outcome": "AwaitingEvidence",
+  "payload_decision": "example_only",
+  "payload_examples": [
+    {
+      "acceptance_rules": [
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "component_route_binding_receipt_schema_valid_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "component_route_binding_receipt_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "selected_component_bound_router_inventory_delta_ref",
+            "component_route_binding_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "route_binding_validator_passes_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "route_binding_validator_passes",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "selected_component_bound_router_inventory_delta_ref",
+            "component_route_binding_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "router_inventory_delta_names_selected_component_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "router_inventory_delta_names_selected_component",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "selected_component_bound_router_inventory_delta_ref",
+            "component_route_binding_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_carries_operator_approval_when_required_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_carries_operator_approval_when_required",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_does_not_grant_authority_by_itself_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_does_not_grant_authority_by_itself",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_claims",
+            "terminal_closure_claim"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_links_to_source_intake_request_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_links_to_source_intake_request",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "source_intake_request_id",
+            "source_verifier_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_record_schema_valid_not_proven",
+          "gate_id": "route_binding_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_record_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "submitted_evidence_id",
+            "source_verifier_request_id",
+            "source_intake_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1"
+        }
+      ],
+      "acceptance_state": "not_evaluated",
+      "accepted_evidence_refs": [],
+      "blocks_promotion": true,
+      "evidence_key": "missing_selected_component_route_binding",
+      "example_payload": {
+        "artifact_refs": [
+          "example://artifact/component_route_binding_receipt",
+          "example://artifact/selected_component_bound_router_inventory_delta"
+        ],
+        "authority_claims": {
+          "can_call_connector": false,
+          "can_claim_terminal_closure": false,
+          "can_execute": false,
+          "can_mutate": false
+        },
+        "component_route_binding_receipt_ref": "example://receipt/component_route_binding/governed_connector_framework",
+        "gate_id": "route_binding_gate",
+        "no_router_mutation_claim": true,
+        "operator_approval_refs": [],
+        "selected_component_bound_router_inventory_delta_ref": "example://router-inventory-delta/governed_connector_framework/gmail_account_binding_gate",
+        "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.route_binding_gate.v1",
+        "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.route_binding_gate.v1",
+        "submitted_at_epoch": 0,
+        "submitted_by": "operator://local_control_studio/example",
+        "submitted_evidence_id": "example.submitted_evidence.governed_connector_framework.route_binding_gate.v1",
+        "terminal_closure_claim": false,
+        "witness_refs": [
+          "example://witness/component_route_binding_receipt",
+          "example://witness/selected_component_bound_router_inventory_delta"
+        ]
+      },
+      "gate_id": "route_binding_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "missing_submission_reason": "route_binding_gate payload is an example and has not been submitted",
+      "mutates_router_inventory": false,
+      "payload_example_id": "promotion_submitted_evidence_payload_example.governed_connector_framework.route_binding_gate.v1",
+      "payload_example_is_not_submitted_evidence": true,
+      "payload_state": "example_only",
+      "payload_values_are_examples_only": true,
+      "payload_values_present": true,
+      "proof_state": "Unknown",
+      "record_kind": "route_binding",
+      "rejected_evidence_refs": [],
+      "rejection_conditions": [
+        "operator_approval_receipt_missing",
+        "route_binding_delta_missing",
+        "submitted_evidence_claims_live_execution",
+        "submitted_evidence_claims_terminal_closure",
+        "submitted_evidence_grants_terminal_closure",
+        "submitted_evidence_mutates_router_inventory",
+        "submitted_evidence_record_missing",
+        "submitted_evidence_record_schema_invalid",
+        "submitted_evidence_unlinked_to_intake_request"
+      ],
+      "required_artifacts": [
+        "component_route_binding_receipt",
+        "selected_component_bound_router_inventory_delta"
+      ],
+      "required_payload_fields": [
+        "submitted_evidence_id",
+        "source_verifier_request_id",
+        "source_intake_request_id",
+        "gate_id",
+        "submitted_by",
+        "submitted_at_epoch",
+        "artifact_refs",
+        "operator_approval_refs",
+        "witness_refs",
+        "authority_claims",
+        "terminal_closure_claim",
+        "no_router_mutation_claim",
+        "selected_component_bound_router_inventory_delta_ref",
+        "component_route_binding_receipt_ref"
+      ],
+      "satisfies_requirement": false,
+      "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.route_binding_gate.v1",
+      "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.route_binding_gate.v1",
+      "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.route_binding_gate.v1",
+      "submission_state": "not_submitted",
+      "submitted_evidence_refs": [],
+      "verification_state": "not_verified"
+    },
+    {
+      "acceptance_rules": [
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "lifecycle_transition_receipt_schema_valid_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "lifecycle_transition_receipt_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "component_lifecycle_transition_receipt_ref",
+            "external_effect_operator_approval_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "operator_approval_if_external_effect_present_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "operator_approval_if_external_effect_present",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_carries_operator_approval_when_required_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_carries_operator_approval_when_required",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_does_not_grant_authority_by_itself_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_does_not_grant_authority_by_itself",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_claims",
+            "terminal_closure_claim"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_links_to_source_intake_request_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_links_to_source_intake_request",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "source_intake_request_id",
+            "source_verifier_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_record_schema_valid_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_record_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "submitted_evidence_id",
+            "source_verifier_request_id",
+            "source_intake_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "transition_cause_links_to_denial_witness_not_proven",
+          "gate_id": "lifecycle_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "transition_cause_links_to_denial_witness",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "component_lifecycle_transition_receipt_ref",
+            "external_effect_operator_approval_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1"
+        }
+      ],
+      "acceptance_state": "not_evaluated",
+      "accepted_evidence_refs": [],
+      "blocks_promotion": true,
+      "evidence_key": "missing_lifecycle_transition_receipt",
+      "example_payload": {
+        "artifact_refs": [
+          "example://artifact/component_lifecycle_transition_receipt",
+          "example://artifact/operator_approval_if_external_effect"
+        ],
+        "authority_claims": {
+          "can_call_connector": false,
+          "can_claim_terminal_closure": false,
+          "can_execute": false,
+          "can_mutate": false
+        },
+        "component_lifecycle_transition_receipt_ref": "example://receipt/component_lifecycle_transition/gmail_account_binding_gate",
+        "external_effect_operator_approval_ref": "example://operator-approval/external-effect/lifecycle_gate",
+        "gate_id": "lifecycle_gate",
+        "no_router_mutation_claim": true,
+        "operator_approval_refs": [
+          "example://operator-approval/lifecycle_gate/operator_approval_if_external_effect"
+        ],
+        "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.lifecycle_gate.v1",
+        "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.lifecycle_gate.v1",
+        "submitted_at_epoch": 0,
+        "submitted_by": "operator://local_control_studio/example",
+        "submitted_evidence_id": "example.submitted_evidence.governed_connector_framework.lifecycle_gate.v1",
+        "terminal_closure_claim": false,
+        "witness_refs": [
+          "example://witness/component_lifecycle_transition_receipt",
+          "example://witness/operator_approval_if_external_effect"
+        ]
+      },
+      "gate_id": "lifecycle_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "missing_submission_reason": "lifecycle_gate payload is an example and has not been submitted",
+      "mutates_router_inventory": false,
+      "payload_example_id": "promotion_submitted_evidence_payload_example.governed_connector_framework.lifecycle_gate.v1",
+      "payload_example_is_not_submitted_evidence": true,
+      "payload_state": "example_only",
+      "payload_values_are_examples_only": true,
+      "payload_values_present": true,
+      "proof_state": "Unknown",
+      "record_kind": "lifecycle_transition",
+      "rejected_evidence_refs": [],
+      "rejection_conditions": [
+        "lifecycle_transition_receipt_missing",
+        "operator_approval_receipt_missing",
+        "submitted_evidence_claims_live_execution",
+        "submitted_evidence_claims_terminal_closure",
+        "submitted_evidence_grants_terminal_closure",
+        "submitted_evidence_mutates_router_inventory",
+        "submitted_evidence_record_missing",
+        "submitted_evidence_record_schema_invalid",
+        "submitted_evidence_unlinked_to_intake_request"
+      ],
+      "required_artifacts": [
+        "component_lifecycle_transition_receipt",
+        "operator_approval_if_external_effect"
+      ],
+      "required_payload_fields": [
+        "submitted_evidence_id",
+        "source_verifier_request_id",
+        "source_intake_request_id",
+        "gate_id",
+        "submitted_by",
+        "submitted_at_epoch",
+        "artifact_refs",
+        "operator_approval_refs",
+        "witness_refs",
+        "authority_claims",
+        "terminal_closure_claim",
+        "no_router_mutation_claim",
+        "component_lifecycle_transition_receipt_ref",
+        "external_effect_operator_approval_ref"
+      ],
+      "satisfies_requirement": false,
+      "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.lifecycle_gate.v1",
+      "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.lifecycle_gate.v1",
+      "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.lifecycle_gate.v1",
+      "submission_state": "not_submitted",
+      "submitted_evidence_refs": [],
+      "verification_state": "not_verified"
+    },
+    {
+      "acceptance_rules": [
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "authority_envelope_validator_passes_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "authority_envelope_validator_passes",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_upgrade_witness_ref",
+            "connector_action_operator_approval_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "authority_upgrade_witness_schema_valid_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "authority_upgrade_witness_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_upgrade_witness_ref",
+            "connector_action_operator_approval_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "connector_action_operator_approval_present_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "connector_action_operator_approval_present",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_carries_operator_approval_when_required_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_carries_operator_approval_when_required",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_does_not_grant_authority_by_itself_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_does_not_grant_authority_by_itself",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_claims",
+            "terminal_closure_claim"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_links_to_source_intake_request_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_links_to_source_intake_request",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "source_intake_request_id",
+            "source_verifier_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_record_schema_valid_not_proven",
+          "gate_id": "authority_upgrade_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_record_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "submitted_evidence_id",
+            "source_verifier_request_id",
+            "source_intake_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1"
+        }
+      ],
+      "acceptance_state": "not_evaluated",
+      "accepted_evidence_refs": [],
+      "blocks_promotion": true,
+      "evidence_key": "missing_authority_upgrade_witness",
+      "example_payload": {
+        "artifact_refs": [
+          "example://artifact/authority_upgrade_witness",
+          "example://artifact/operator_approval_if_connector_action_requested"
+        ],
+        "authority_claims": {
+          "can_call_connector": false,
+          "can_claim_terminal_closure": false,
+          "can_execute": false,
+          "can_mutate": false
+        },
+        "authority_upgrade_witness_ref": "example://witness/authority_upgrade/gmail_account_binding_gate",
+        "connector_action_operator_approval_ref": "example://operator-approval/connector-action/authority_upgrade_gate",
+        "gate_id": "authority_upgrade_gate",
+        "no_router_mutation_claim": true,
+        "operator_approval_refs": [
+          "example://operator-approval/authority_upgrade_gate/operator_approval_if_connector_action_requested"
+        ],
+        "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.authority_upgrade_gate.v1",
+        "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.authority_upgrade_gate.v1",
+        "submitted_at_epoch": 0,
+        "submitted_by": "operator://local_control_studio/example",
+        "submitted_evidence_id": "example.submitted_evidence.governed_connector_framework.authority_upgrade_gate.v1",
+        "terminal_closure_claim": false,
+        "witness_refs": [
+          "example://witness/authority_upgrade_witness",
+          "example://witness/operator_approval_if_connector_action_requested"
+        ]
+      },
+      "gate_id": "authority_upgrade_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "missing_submission_reason": "authority_upgrade_gate payload is an example and has not been submitted",
+      "mutates_router_inventory": false,
+      "payload_example_id": "promotion_submitted_evidence_payload_example.governed_connector_framework.authority_upgrade_gate.v1",
+      "payload_example_is_not_submitted_evidence": true,
+      "payload_state": "example_only",
+      "payload_values_are_examples_only": true,
+      "payload_values_present": true,
+      "proof_state": "Unknown",
+      "record_kind": "authority_upgrade",
+      "rejected_evidence_refs": [],
+      "rejection_conditions": [
+        "authority_upgrade_witness_missing",
+        "operator_approval_receipt_missing",
+        "submitted_evidence_claims_live_execution",
+        "submitted_evidence_claims_terminal_closure",
+        "submitted_evidence_grants_terminal_closure",
+        "submitted_evidence_mutates_router_inventory",
+        "submitted_evidence_record_missing",
+        "submitted_evidence_record_schema_invalid",
+        "submitted_evidence_unlinked_to_intake_request"
+      ],
+      "required_artifacts": [
+        "authority_upgrade_witness",
+        "operator_approval_if_connector_action_requested"
+      ],
+      "required_payload_fields": [
+        "submitted_evidence_id",
+        "source_verifier_request_id",
+        "source_intake_request_id",
+        "gate_id",
+        "submitted_by",
+        "submitted_at_epoch",
+        "artifact_refs",
+        "operator_approval_refs",
+        "witness_refs",
+        "authority_claims",
+        "terminal_closure_claim",
+        "no_router_mutation_claim",
+        "authority_upgrade_witness_ref",
+        "connector_action_operator_approval_ref"
+      ],
+      "satisfies_requirement": false,
+      "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.authority_upgrade_gate.v1",
+      "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.authority_upgrade_gate.v1",
+      "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.authority_upgrade_gate.v1",
+      "submission_state": "not_submitted",
+      "submitted_evidence_refs": [],
+      "verification_state": "not_verified"
+    },
+    {
+      "acceptance_rules": [
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "gmail_account_binding_evidence_receipt_present_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "gmail_account_binding_evidence_receipt_present",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "product_specific_ownership_decision_ref",
+            "gmail_account_binding_evidence_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "ownership_decision_links_to_registered_component_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "ownership_decision_links_to_registered_component",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "product_specific_ownership_decision_ref",
+            "gmail_account_binding_evidence_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "product_specific_ownership_decision_schema_valid_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "product_specific_ownership_decision_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "product_specific_ownership_decision_ref",
+            "gmail_account_binding_evidence_receipt_ref"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_carries_operator_approval_when_required_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_carries_operator_approval_when_required",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "operator_approval_refs"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_does_not_grant_authority_by_itself_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_does_not_grant_authority_by_itself",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "authority_claims",
+            "terminal_closure_claim"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_links_to_source_intake_request_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_links_to_source_intake_request",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "source_intake_request_id",
+            "source_verifier_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        },
+        {
+          "blocks_submission_until_pass": true,
+          "failure_condition": "submitted_evidence_record_schema_valid_not_proven",
+          "gate_id": "product_specific_boundary_gate",
+          "grants_connector_authority": false,
+          "grants_execution_authority": false,
+          "grants_terminal_closure": false,
+          "mutates_router_inventory": false,
+          "proof_state": "Unknown",
+          "required_for_submission": true,
+          "rule_id": "submitted_evidence_record_schema_valid",
+          "rule_is_not_execution_authority": true,
+          "rule_state": "defined_not_applied",
+          "source_payload_fields": [
+            "submitted_evidence_id",
+            "source_verifier_request_id",
+            "source_intake_request_id",
+            "gate_id"
+          ],
+          "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1"
+        }
+      ],
+      "acceptance_state": "not_evaluated",
+      "accepted_evidence_refs": [],
+      "blocks_promotion": true,
+      "evidence_key": "generic_connector_surface_not_product_specific_authority",
+      "example_payload": {
+        "artifact_refs": [
+          "example://artifact/gmail_account_binding_evidence_receipt",
+          "example://artifact/product_specific_ownership_decision"
+        ],
+        "authority_claims": {
+          "can_call_connector": false,
+          "can_claim_terminal_closure": false,
+          "can_execute": false,
+          "can_mutate": false
+        },
+        "gate_id": "product_specific_boundary_gate",
+        "gmail_account_binding_evidence_receipt_ref": "example://receipt/gmail_account_binding_evidence/gmail_account_binding_gate",
+        "no_router_mutation_claim": true,
+        "operator_approval_refs": [],
+        "product_specific_ownership_decision_ref": "example://decision/product_specific_ownership/gmail_account_binding_gate",
+        "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.product_specific_boundary_gate.v1",
+        "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.product_specific_boundary_gate.v1",
+        "submitted_at_epoch": 0,
+        "submitted_by": "operator://local_control_studio/example",
+        "submitted_evidence_id": "example.submitted_evidence.governed_connector_framework.product_specific_boundary_gate.v1",
+        "terminal_closure_claim": false,
+        "witness_refs": [
+          "example://witness/gmail_account_binding_evidence_receipt",
+          "example://witness/product_specific_ownership_decision"
+        ]
+      },
+      "gate_id": "product_specific_boundary_gate",
+      "grants_connector_authority": false,
+      "grants_execution_authority": false,
+      "grants_terminal_closure": false,
+      "missing_submission_reason": "product_specific_boundary_gate payload is an example and has not been submitted",
+      "mutates_router_inventory": false,
+      "payload_example_id": "promotion_submitted_evidence_payload_example.governed_connector_framework.product_specific_boundary_gate.v1",
+      "payload_example_is_not_submitted_evidence": true,
+      "payload_state": "example_only",
+      "payload_values_are_examples_only": true,
+      "payload_values_present": true,
+      "proof_state": "Unknown",
+      "record_kind": "product_specific_ownership",
+      "rejected_evidence_refs": [],
+      "rejection_conditions": [
+        "operator_approval_receipt_missing",
+        "product_specific_ownership_decision_missing",
+        "submitted_evidence_claims_live_execution",
+        "submitted_evidence_claims_terminal_closure",
+        "submitted_evidence_grants_terminal_closure",
+        "submitted_evidence_mutates_router_inventory",
+        "submitted_evidence_record_missing",
+        "submitted_evidence_record_schema_invalid",
+        "submitted_evidence_unlinked_to_intake_request"
+      ],
+      "required_artifacts": [
+        "gmail_account_binding_evidence_receipt",
+        "product_specific_ownership_decision"
+      ],
+      "required_payload_fields": [
+        "submitted_evidence_id",
+        "source_verifier_request_id",
+        "source_intake_request_id",
+        "gate_id",
+        "submitted_by",
+        "submitted_at_epoch",
+        "artifact_refs",
+        "operator_approval_refs",
+        "witness_refs",
+        "authority_claims",
+        "terminal_closure_claim",
+        "no_router_mutation_claim",
+        "product_specific_ownership_decision_ref",
+        "gmail_account_binding_evidence_receipt_ref"
+      ],
+      "satisfies_requirement": false,
+      "source_intake_request_id": "promotion_approval_intake.governed_connector_framework.product_specific_boundary_gate.v1",
+      "source_record_envelope_id": "promotion_submitted_evidence_record_envelope.governed_connector_framework.product_specific_boundary_gate.v1",
+      "source_verifier_request_id": "promotion_submitted_evidence_verifier.governed_connector_framework.product_specific_boundary_gate.v1",
+      "submission_state": "not_submitted",
+      "submitted_evidence_refs": [],
+      "verification_state": "not_verified"
+    }
+  ],
+  "payload_examples_are_not_submitted_evidence": true,
+  "payload_examples_id": "component_route_family_promotion_submitted_evidence_payload_examples.governed_connector_framework.v1",
+  "preflight_outcome": "GovernanceBlocked",
+  "ready_for_promotion": false,
+  "rejected_evidence_refs": [],
+  "schema_version": 1,
+  "source_refs": {
+    "promotion_approval_intake": "examples/component_route_family_promotion_approval_intake.governed_connector_framework.json",
+    "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
+    "proof_matrix": "docs/40_proof_coverage_matrix.md",
+    "submitted_evidence_records": "examples/component_route_family_promotion_submitted_evidence_records.governed_connector_framework.json",
+    "submitted_evidence_verifier": "examples/component_route_family_promotion_submitted_evidence_verifier.governed_connector_framework.json"
+  },
+  "submitted_evidence_refs": [],
+  "summary": {
+    "acceptance_rule_count": 28,
+    "accepted_evidence_count": 0,
+    "applied_acceptance_rule_count": 0,
+    "approval_artifact_requirement_count": 8,
+    "authority_grant_count": 0,
+    "blocking_payload_count": 4,
+    "example_only_payload_count": 4,
+    "failing_acceptance_rule_count": 0,
+    "not_evaluated_payload_count": 4,
+    "not_submitted_payload_count": 4,
+    "passing_acceptance_rule_count": 0,
+    "payload_example_count": 4,
+    "rejected_evidence_count": 0,
+    "satisfied_requirement_count": 0,
+    "submitted_payload_count": 0
+  },
+  "target_component_id": "gmail_account_binding_gate",
+  "target_surface_id": "governed_connector_framework",
+  "terminal_closure_required": true,
+  "validators": [
+    "component_route_family_promotion_submitted_evidence_payload_examples_validator",
+    "component_route_family_promotion_submitted_evidence_payload_examples_tests",
+    "component_route_family_promotion_submitted_evidence_records_validator"
+  ]
+}

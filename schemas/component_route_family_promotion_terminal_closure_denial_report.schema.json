@@ -1,0 +1,933 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "accepted_evidence_refs",
+    "approval_evidence_required",
+    "authority_envelope_mutated",
+    "authority_envelope_mutation_refs",
+    "authority_grant_refs",
+    "authority_granted",
+    "authority_level_changed",
+    "authority_upgrade_authorized",
+    "authority_upgrade_witness_refs",
+    "authority_witness_emitted",
+    "blocked_actions",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "can_execute",
+    "can_mutate",
+    "decision",
+    "expected_receipts",
+    "foundation_fixture_decision_is_not_live_operator_evidence",
+    "governed",
+    "lifecycle_transition_authorized",
+    "lifecycle_transition_receipt_refs",
+    "live_connector_send_enabled",
+    "live_execution_enabled",
+    "missing_terminal_closure_witnesses",
+    "mode",
+    "mutates_router_inventory",
+    "next_action",
+    "operator_submission_channels",
+    "outcome",
+    "preflight_outcome",
+    "product_bundle_binding_authorized",
+    "product_bundle_binding_refs",
+    "product_ownership_authorized",
+    "product_ownership_decision_state",
+    "product_ownership_witness_emitted",
+    "product_ownership_witness_refs",
+    "product_route_ownership_bound",
+    "promotion_approval_refs",
+    "promotion_approved",
+    "promotion_decision",
+    "ready_for_promotion",
+    "rejected_evidence_refs",
+    "required_followup_decisions",
+    "route_binding_authorized",
+    "route_binding_receipt_refs",
+    "route_family_ownership_authorized",
+    "router_inventory_delta_authorized",
+    "router_inventory_delta_refs",
+    "schema_version",
+    "selected_component_binding_authorized",
+    "selected_component_binding_refs",
+    "separate_authority_upgrade_witness_required",
+    "separate_lifecycle_transition_receipt_required",
+    "separate_product_ownership_witness_required",
+    "separate_route_binding_receipt_required",
+    "separate_router_inventory_delta_required",
+    "separate_terminal_closure_certificate_required",
+    "source_authority_upgrade_decision_refs",
+    "source_product_ownership_decision_refs",
+    "source_refs",
+    "summary",
+    "target_component_id",
+    "target_product_bundle_id",
+    "target_surface_id",
+    "terminal_certificate_minted",
+    "terminal_closure_authorized",
+    "terminal_closure_certificate_refs",
+    "terminal_closure_claimed",
+    "terminal_closure_decision_refs",
+    "terminal_closure_decision_state",
+    "terminal_closure_decisions",
+    "terminal_closure_denial_is_not_authority_grant",
+    "terminal_closure_denial_is_not_promotion_approval",
+    "terminal_closure_denial_is_not_terminal_certificate",
+    "terminal_closure_denial_is_not_terminal_closure",
+    "terminal_closure_denial_issued",
+    "terminal_closure_denial_report_id",
+    "terminal_closure_refs",
+    "terminal_closure_required",
+    "terminal_closure_witness_emitted",
+    "terminal_closure_witness_refs",
+    "validators"
+  ],
+  "properties": {
+    "accepted_evidence_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "approval_evidence_required": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "authority_envelope_mutated": {
+      "type": "boolean",
+      "const": false
+    },
+    "authority_envelope_mutation_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "authority_grant_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "authority_level_changed": {
+      "type": "boolean",
+      "const": false
+    },
+    "authority_upgrade_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "authority_upgrade_witness_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "authority_witness_emitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "decision": {
+      "type": "string",
+      "const": "blocked"
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "foundation_fixture_decision_is_not_live_operator_evidence": {
+      "type": "boolean",
+      "const": true
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "lifecycle_transition_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "lifecycle_transition_receipt_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "missing_terminal_closure_witnesses": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "mutates_router_inventory": {
+      "type": "boolean",
+      "const": false
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 520
+    },
+    "operator_submission_channels": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "preflight_outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "product_bundle_binding_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "product_bundle_binding_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "product_ownership_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "product_ownership_decision_state": {
+      "type": "string",
+      "const": "denied_pending_product_specific_ownership_witness"
+    },
+    "product_ownership_witness_emitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "product_ownership_witness_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "product_route_ownership_bound": {
+      "type": "boolean",
+      "const": false
+    },
+    "promotion_approval_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "promotion_approved": {
+      "type": "boolean",
+      "const": false
+    },
+    "promotion_decision": {
+      "type": "string",
+      "const": "blocked_terminal_closure_not_authorized"
+    },
+    "ready_for_promotion": {
+      "type": "boolean",
+      "const": false
+    },
+    "rejected_evidence_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "required_followup_decisions": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "route_binding_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "route_binding_receipt_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "route_family_ownership_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "router_inventory_delta_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "router_inventory_delta_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "selected_component_binding_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "selected_component_binding_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "separate_authority_upgrade_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "separate_lifecycle_transition_receipt_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "separate_product_ownership_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "separate_route_binding_receipt_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "separate_router_inventory_delta_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "separate_terminal_closure_certificate_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_authority_upgrade_decision_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "source_product_ownership_decision_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_upgrade_witness_decision_report",
+        "product_ownership_decision_report",
+        "proof_matrix"
+      ],
+      "properties": {
+        "authority_upgrade_witness_decision_report": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "product_ownership_decision_report": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "proof_matrix": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_evidence_count",
+        "approval_artifact_requirement_count",
+        "authority_grant_count",
+        "authority_upgrade_authorization_count",
+        "lifecycle_transition_authorization_count",
+        "product_ownership_authorization_count",
+        "promotion_approval_count",
+        "rejected_evidence_count",
+        "required_followup_decision_count",
+        "route_binding_authorization_count",
+        "router_inventory_mutation_count",
+        "selected_component_binding_count",
+        "terminal_certificate_mint_count",
+        "terminal_closure_authorization_count",
+        "terminal_closure_claim_count",
+        "terminal_closure_decision_count",
+        "terminal_closure_denial_count",
+        "terminal_closure_witness_count"
+      ],
+      "properties": {
+        "accepted_evidence_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "approval_artifact_requirement_count": {
+          "type": "integer",
+          "const": 8
+        },
+        "authority_grant_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "authority_upgrade_authorization_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "lifecycle_transition_authorization_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "product_ownership_authorization_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "promotion_approval_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "rejected_evidence_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "required_followup_decision_count": {
+          "type": "integer",
+          "const": 6
+        },
+        "route_binding_authorization_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "router_inventory_mutation_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "selected_component_binding_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_certificate_mint_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_closure_authorization_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_closure_claim_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_closure_decision_count": {
+          "type": "integer",
+          "const": 1
+        },
+        "terminal_closure_denial_count": {
+          "type": "integer",
+          "const": 1
+        },
+        "terminal_closure_witness_count": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "target_component_id": {
+      "type": "string",
+      "const": "gmail_account_binding_gate"
+    },
+    "target_product_bundle_id": {
+      "type": "string",
+      "const": "personal_assistant_v0"
+    },
+    "target_surface_id": {
+      "type": "string",
+      "const": "governed_connector_framework"
+    },
+    "terminal_certificate_minted": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_authorized": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_certificate_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "terminal_closure_claimed": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_decision_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "terminal_closure_decision_state": {
+      "type": "string",
+      "const": "denied_pending_terminal_closure_certificate"
+    },
+    "terminal_closure_decisions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/terminal_closure_decision"
+      }
+    },
+    "terminal_closure_denial_is_not_authority_grant": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_denial_is_not_promotion_approval": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_denial_is_not_terminal_certificate": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_denial_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_denial_issued": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_denial_report_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 520
+    },
+    "terminal_closure_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_witness_emitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_witness_refs": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-promotion-terminal-closure-denial-report:1",
+  "title": "Mullu Component Route-Family Promotion Terminal Closure Denial Report",
+  "description": "Read-only Component Harness report that records a denial-only terminal-closure decision without minting a terminal certificate or claiming closure.",
+  "$defs": {
+    "identifier_or_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 360,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#{}@+ -]*$"
+    },
+    "terminal_closure_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_evidence_refs",
+        "authority_granted",
+        "authority_upgrade_authorized",
+        "can_call_connector",
+        "can_claim_terminal_closure",
+        "can_execute",
+        "can_mutate",
+        "decision_basis",
+        "decision_is_not_authority_grant",
+        "decision_is_not_promotion_approval",
+        "decision_is_not_terminal_certificate",
+        "decision_is_not_terminal_closure",
+        "decision_reason",
+        "decision_state",
+        "foundation_fixture_decision_is_not_live_operator_evidence",
+        "gate_id",
+        "lifecycle_transition_authorized",
+        "missing_terminal_closure_witnesses",
+        "mutates_router_inventory",
+        "product_bundle_id",
+        "product_ownership_authorized",
+        "promotion_approval_refs",
+        "promotion_approved",
+        "proof_state",
+        "record_kind",
+        "rejected_evidence_refs",
+        "requires_authority_upgrade_witness",
+        "requires_component_route_binding_receipt",
+        "requires_lifecycle_transition_receipt",
+        "requires_product_ownership_witness",
+        "requires_router_inventory_delta",
+        "requires_terminal_closure_certificate",
+        "route_binding_authorized",
+        "router_inventory_delta_authorized",
+        "selected_component_binding_authorized",
+        "source_authority_upgrade_decision_id",
+        "source_authority_upgrade_decision_refs",
+        "source_product_ownership_decision_denied",
+        "source_product_ownership_decision_id",
+        "source_product_ownership_decision_refs",
+        "terminal_certificate_minted",
+        "terminal_closure_authorized",
+        "terminal_closure_certificate_refs",
+        "terminal_closure_claimed",
+        "terminal_closure_decision_id",
+        "terminal_closure_refs",
+        "terminal_closure_witness_emitted",
+        "terminal_closure_witness_refs"
+      ],
+      "properties": {
+        "accepted_evidence_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "authority_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "authority_upgrade_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_call_connector": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_claim_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_execute": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate": {
+          "type": "boolean",
+          "const": false
+        },
+        "decision_basis": {
+          "type": "string",
+          "const": "product_ownership_decision_denial"
+        },
+        "decision_is_not_authority_grant": {
+          "type": "boolean",
+          "const": true
+        },
+        "decision_is_not_promotion_approval": {
+          "type": "boolean",
+          "const": true
+        },
+        "decision_is_not_terminal_certificate": {
+          "type": "boolean",
+          "const": true
+        },
+        "decision_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        },
+        "decision_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "decision_state": {
+          "type": "string",
+          "const": "denied"
+        },
+        "foundation_fixture_decision_is_not_live_operator_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "gate_id": {
+          "type": "string",
+          "const": "terminal_closure_gate"
+        },
+        "lifecycle_transition_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "missing_terminal_closure_witnesses": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "mutates_router_inventory": {
+          "type": "boolean",
+          "const": false
+        },
+        "product_bundle_id": {
+          "type": "string",
+          "const": "personal_assistant_v0"
+        },
+        "product_ownership_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "promotion_approval_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "promotion_approved": {
+          "type": "boolean",
+          "const": false
+        },
+        "proof_state": {
+          "type": "string",
+          "const": "Pass"
+        },
+        "record_kind": {
+          "type": "string",
+          "const": "terminal_closure"
+        },
+        "rejected_evidence_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "requires_authority_upgrade_witness": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_component_route_binding_receipt": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_lifecycle_transition_receipt": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_product_ownership_witness": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_router_inventory_delta": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_terminal_closure_certificate": {
+          "type": "boolean",
+          "const": true
+        },
+        "route_binding_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "router_inventory_delta_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "selected_component_binding_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_authority_upgrade_decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "source_authority_upgrade_decision_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "source_product_ownership_decision_denied": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_product_ownership_decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "source_product_ownership_decision_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "terminal_certificate_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_authorized": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_certificate_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "terminal_closure_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 520
+        },
+        "terminal_closure_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "terminal_closure_witness_emitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_witness_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        }
+      }
+    }
+  }
+}

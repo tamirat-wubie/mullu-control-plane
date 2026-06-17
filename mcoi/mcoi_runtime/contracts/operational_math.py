@@ -4,6 +4,7 @@ Governance scope: typed records for turning math principles into executable
 Dependencies: shared contract base helpers and Python standard dataclasses.
 Invariants:
   - Every principle maps to at least one executable role and control.
+  - Verified loop completion requires every final control to have a verified binding.
   - Loop targets carry a positive iteration ceiling.
   - Iteration records preserve tension movement and applied deltas.
   - Loop results are immutable and expose unresolved gaps explicitly.
@@ -75,6 +76,37 @@ class OperationalMathLoopStatus(Enum):
     SATURATED = "saturated"
     MAX_ITERATIONS_REACHED = "max_iterations_reached"
     BLOCKED = "blocked"
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalMathControlBinding(ContractRecord):
+    """Executable verifier binding for one operational math control."""
+
+    control: OperationalMathControl = OperationalMathControl.PROOF_RECEIPT
+    verifier_id: str = ""
+    verified: bool = False
+    evidence_refs: tuple[str, ...] = ()
+    failure_reason: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.control, OperationalMathControl):
+            raise ValueError("control must be an OperationalMathControl")
+        object.__setattr__(self, "verifier_id", require_non_empty_text(self.verifier_id, "verifier_id"))
+        if not isinstance(self.verified, bool):
+            raise ValueError("verified must be a bool")
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=not self.verified),
+        )
+        if self.verified:
+            object.__setattr__(self, "failure_reason", str(self.failure_reason or ""))
+        else:
+            object.__setattr__(
+                self,
+                "failure_reason",
+                require_non_empty_text(self.failure_reason, "failure_reason"),
+            )
 
 
 def _freeze_enum_tuple(
@@ -256,6 +288,8 @@ class OperationalMathLoopResult(ContractRecord):
     unresolved_principle_ids: tuple[str, ...] = ()
     final_roles: tuple[OperationalMathRole, ...] = ()
     final_controls: tuple[OperationalMathControl, ...] = ()
+    control_bindings: tuple[OperationalMathControlBinding, ...] = ()
+    unverified_control_ids: tuple[str, ...] = ()
     proof_refs: tuple[str, ...] = ()
     solver_outcome: str = ""
     started_at: str = ""
@@ -291,6 +325,17 @@ class OperationalMathLoopResult(ContractRecord):
             self,
             "final_controls",
             _freeze_enum_tuple(self.final_controls, "final_controls", OperationalMathControl, allow_empty=True),
+        )
+        if isinstance(self.control_bindings, (str, bytes)) or not isinstance(self.control_bindings, (tuple, list)):
+            raise ValueError("control_bindings must be an array")
+        for binding in self.control_bindings:
+            if not isinstance(binding, OperationalMathControlBinding):
+                raise ValueError("control_bindings must contain only OperationalMathControlBinding values")
+        object.__setattr__(self, "control_bindings", freeze_value(list(self.control_bindings)))
+        object.__setattr__(
+            self,
+            "unverified_control_ids",
+            _freeze_text_tuple(self.unverified_control_ids, "unverified_control_ids", allow_empty=True),
         )
         object.__setattr__(self, "proof_refs", _freeze_text_tuple(self.proof_refs, "proof_refs", allow_empty=True))
         object.__setattr__(self, "solver_outcome", require_non_empty_text(self.solver_outcome, "solver_outcome"))

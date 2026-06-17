@@ -665,6 +665,9 @@ class TestMathSolverReceiptEvidence:
         assert receipt["disposition"] == SolverDisposition.SOLVED.value
         assert receipt["reason"] == "bounded_optimum"
         assert receipt["decision_summary"]["decision_value"] == 4.0
+        assert receipt["decision_summary"]["numeric_tolerance"] == 1e-09
+        assert receipt["decision_summary"]["max_constraint_violation"] == 0.0
+        assert receipt["decision_summary"]["stability_verdict"] == "passed"
         assert receipt["evidence_refs"][0] == "math-request:req-receipt-1"
         assert receipt["evidence_refs"][1] == "math-result:res-receipt-1"
         assert receipt["evidence_refs"][2].startswith("math-trace:trace-math-solver-")
@@ -694,6 +697,9 @@ class TestMathSolverReceiptEvidence:
         assert receipt["decision_summary"]["decision_values"] == {"x": 0.0, "y": 5.0}
         assert receipt["decision_summary"]["variable_bounds"]["x"]["lower"] == 0.0
         assert receipt["decision_summary"]["weighted_objective_value"] == 5.0
+        assert receipt["decision_summary"]["numeric_tolerance"] == 1e-09
+        assert receipt["decision_summary"]["max_constraint_violation"] == 0.0
+        assert receipt["decision_summary"]["stability_verdict"] == "passed"
         assert receipt["evidence_refs"][1] == "math-result:res-receipt-2"
 
     def test_integer_linear_solver_receipt_captures_assignment_evidence(self, engine):
@@ -720,5 +726,7 @@ class TestMathSolverReceiptEvidence:
         assert receipt["decision_summary"]["integer_assignment_count"] == 3
         assert receipt["decision_summary"]["integer_assignment_limit"] == 256
         assert receipt["decision_summary"]["decision_values"] == {"x": 2.0}
+        assert receipt["decision_summary"]["max_constraint_violation"] == 0.0
+        assert receipt["decision_summary"]["stability_verdict"] == "passed"
         assert receipt["iterations"] == result.iterations
         assert receipt["objective_value"] == result.objective_value

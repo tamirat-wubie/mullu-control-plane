@@ -36,6 +36,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PROTOCOL_MANIFEST_PATH = REPO_ROOT / "schemas" / "mullu_governance_protocol.manifest.json"
 REPOSITORY_API_URL = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane"
 LATEST_RELEASE_API_URL = f"{REPOSITORY_API_URL}/releases/latest"
+GITHUB_CLI_TIMEOUT_SECONDS = 30
 
 
 def expected_protocol_manifest_result() -> str:
@@ -448,7 +449,7 @@ def read_json_url_with_gh(url: str, *, prior_failure: str) -> dict[str, Any]:
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
-            timeout=15,
+            timeout=GITHUB_CLI_TIMEOUT_SECONDS,
             check=False,
         )
     except FileNotFoundError as exc:

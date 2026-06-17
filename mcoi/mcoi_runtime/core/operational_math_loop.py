@@ -4,6 +4,7 @@ Governance scope: converting the Mullu core-math audit into deterministic
 Dependencies: operational_math contracts, event_spine, and invariant helpers.
 Invariants:
   - Every audit principle compiles into at least one role and one control.
+  - SolvedVerified requires a verified binding for every final control.
   - The loop is bounded by target.max_iterations and never recurses.
   - Missing principles remain explicit in the final result.
   - Every applied delta can emit a correlated proof event.
@@ -18,6 +19,7 @@ from typing import Any, Callable, Sequence
 from ..contracts.event import EventRecord, EventSource, EventType
 from ..contracts.operational_math import (
     OperationalMathControl,
+    OperationalMathControlBinding,
     OperationalMathLoopIteration,
     OperationalMathLoopResult,
     OperationalMathLoopStatus,
@@ -244,6 +246,45 @@ def default_operational_math_principles() -> tuple[OperationalMathPrinciple, ...
     return tuple(sorted(principles, key=lambda item: (_priority_rank(item.priority), _principle_number(item.principle_id))))
 
 
+def default_operational_math_control_bindings() -> tuple[OperationalMathControlBinding, ...]:
+    """Return canonical verifier bindings for operational math controls."""
+
+    return tuple(
+        OperationalMathControlBinding(
+            control=control,
+            verifier_id=f"operational_math_control_verifier:{control.value}",
+            verified=True,
+            evidence_refs=(f"operational-math-control:{control.value}",),
+        )
+        for control in OperationalMathControl
+    )
+
+
+def _binding_map(
+    bindings: Sequence[OperationalMathControlBinding],
+) -> dict[OperationalMathControl, OperationalMathControlBinding]:
+    bound: dict[OperationalMathControl, OperationalMathControlBinding] = {}
+    for binding in bindings:
+        if not isinstance(binding, OperationalMathControlBinding):
+            raise RuntimeCoreInvariantError("control_bindings must contain OperationalMathControlBinding values")
+        if binding.control in bound:
+            raise RuntimeCoreInvariantError("control_bindings must contain unique controls")
+        bound[binding.control] = binding
+    return bound
+
+
+def _unverified_controls(
+    controls: Sequence[OperationalMathControl],
+    bindings: dict[OperationalMathControl, OperationalMathControlBinding],
+) -> tuple[OperationalMathControl, ...]:
+    unverified: list[OperationalMathControl] = []
+    for control in controls:
+        binding = bindings.get(control)
+        if binding is None or not binding.verified:
+            unverified.append(control)
+    return tuple(unverified)
+
+
 def _missing_roles(
     principle: OperationalMathPrinciple,
     roles: Sequence[OperationalMathRole],
@@ -322,6 +363,7 @@ class OperationalMathLoopEngine:
         *,
         event_spine: EventSpineEngine | None = None,
         principles: Sequence[OperationalMathPrinciple] | None = None,
+        control_bindings: Sequence[OperationalMathControlBinding] | None = None,
         clock: Callable[[], str] | None = None,
     ) -> None:
         if event_spine is not None and not isinstance(event_spine, EventSpineEngine):
@@ -334,6 +376,12 @@ class OperationalMathLoopEngine:
         for principle in self._principles:
             if not isinstance(principle, OperationalMathPrinciple):
                 raise RuntimeCoreInvariantError("principles must contain OperationalMathPrinciple values")
+        self._control_bindings = (
+            default_operational_math_control_bindings()
+            if control_bindings is None
+            else tuple(control_bindings)
+        )
+        self._control_binding_map = _binding_map(self._control_bindings)
 
     @property
     def principles(self) -> tuple[OperationalMathPrinciple, ...]:
@@ -402,9 +450,17 @@ class OperationalMathLoopEngine:
             )
 
         unresolved_final = _unresolved_principles(self._principles, roles, controls)
+        unverified_controls = _unverified_controls(controls, self._control_binding_map)
+        final_bindings = tuple(
+            self._control_binding_map[control]
+            for control in controls
+            if control in self._control_binding_map
+        )
         status = (
             OperationalMathLoopStatus.SATURATED
-            if not unresolved_final
+            if not unresolved_final and not unverified_controls
+            else OperationalMathLoopStatus.BLOCKED
+            if not unresolved_final and unverified_controls
             else OperationalMathLoopStatus.MAX_ITERATIONS_REACHED
         )
         solver_outcome = "SolvedVerified" if status is OperationalMathLoopStatus.SATURATED else "AwaitingEvidence"
@@ -417,6 +473,7 @@ class OperationalMathLoopEngine:
                 "iterations": len(iterations),
                 "applied": tuple(applied_ids),
                 "unresolved": tuple(item.principle_id for item in unresolved_final),
+                "unverified_controls": tuple(control.value for control in unverified_controls),
             },
         )
 
@@ -429,6 +486,8 @@ class OperationalMathLoopEngine:
             unresolved_principle_ids=tuple(item.principle_id for item in unresolved_final),
             final_roles=roles,
             final_controls=controls,
+            control_bindings=final_bindings,
+            unverified_control_ids=tuple(control.value for control in unverified_controls),
             proof_refs=_ordered_unique_text(proof_refs),
             solver_outcome=solver_outcome,
             started_at=started_at,
@@ -445,6 +504,7 @@ class OperationalMathLoopEngine:
                 "solver_outcome": result.solver_outcome,
                 "applied_principle_ids": result.applied_principle_ids,
                 "unresolved_principle_ids": result.unresolved_principle_ids,
+                "unverified_control_ids": result.unverified_control_ids,
             },
             self._clock,
         )

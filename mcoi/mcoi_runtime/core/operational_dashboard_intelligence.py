@@ -25,7 +25,12 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_ident
 from mcoi_runtime.core.memory_action_compiler import CompiledMemoryAction
 from mcoi_runtime.core.memory_repair_queue import MemoryRepairItem
 from mcoi_runtime.core.note_memory_projection import CandidateActionStatus, NoteMemoryProjection
-from mcoi_runtime.core.simple_platform import SimpleActionCheck, SimpleOnboardingGuide, SimpleWorkflowPlan
+from mcoi_runtime.core.simple_platform import (
+    SimpleActionCheck,
+    SimpleOnboardingGuide,
+    SimplePlatform,
+    SimpleWorkflowPlan,
+)
 
 
 class WorkflowHealth(StrEnum):
@@ -43,18 +48,48 @@ class DashboardSimpleActionSummary:
 
     action_ref: str
     outcome: str
-    title: str
+    status_label: str
     message: str
+    risk: str
+    approval_needed: bool
+    evidence_saved: bool
     next_step: str
-    proof_stamp_ref: str
-    boundary_witness_ref: str
-    blocked_reasons: tuple[str, ...]
-    review_reasons: tuple[str, ...]
+    choices: tuple[str, ...]
+    audit_details_available: bool
+    audit_details_visible: bool
+    receipts_visible: bool
+    proof_details_hidden: bool
     execution_allowed: bool = False
 
     def __post_init__(self) -> None:
         if self.execution_allowed:
             raise RuntimeCoreInvariantError("dashboard simple action cannot allow execution")
+        if self.outcome not in {"ready", "needs_review", "blocked"}:
+            raise RuntimeCoreInvariantError("dashboard simple action outcome is unsupported")
+        if self.status_label not in {"Ready", "Needs approval", "Blocked"}:
+            raise RuntimeCoreInvariantError("dashboard simple action status label is unsupported")
+        if not self.audit_details_available:
+            raise RuntimeCoreInvariantError("dashboard simple action must expose audit availability")
+        if self.audit_details_visible or self.receipts_visible or not self.proof_details_hidden:
+            raise RuntimeCoreInvariantError("dashboard simple action cannot expose audit details by default")
+        _reject_internal_dashboard_ref(self.action_ref, "dashboard simple action action_ref")
+        for field_name, field_value in {
+            "action_ref": self.action_ref,
+            "message": self.message,
+            "risk": self.risk,
+            "next_step": self.next_step,
+        }.items():
+            if not field_value.strip():
+                raise RuntimeCoreInvariantError(f"dashboard simple action {field_name} is required")
+            if field_value.strip() != field_value:
+                raise RuntimeCoreInvariantError(f"dashboard simple action {field_name} must be trimmed")
+        if not self.choices:
+            raise RuntimeCoreInvariantError("dashboard simple action choices are required")
+        for choice in self.choices:
+            if not choice.strip():
+                raise RuntimeCoreInvariantError("dashboard simple action choice is required")
+            if choice.strip() != choice:
+                raise RuntimeCoreInvariantError("dashboard simple action choices must be trimmed")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible simple action summary."""
@@ -62,13 +97,18 @@ class DashboardSimpleActionSummary:
         return {
             "action_ref": self.action_ref,
             "outcome": self.outcome,
-            "title": self.title,
+            "title": self.status_label,
+            "status_label": self.status_label,
             "message": self.message,
+            "risk": self.risk,
+            "approval_needed": self.approval_needed,
+            "evidence_saved": self.evidence_saved,
             "next_step": self.next_step,
-            "proof_stamp_ref": self.proof_stamp_ref,
-            "boundary_witness_ref": self.boundary_witness_ref,
-            "blocked_reasons": list(self.blocked_reasons),
-            "review_reasons": list(self.review_reasons),
+            "choices": list(self.choices),
+            "audit_details_available": self.audit_details_available,
+            "audit_details_visible": self.audit_details_visible,
+            "receipts_visible": self.receipts_visible,
+            "proof_details_hidden": self.proof_details_hidden,
             "execution_allowed": self.execution_allowed,
         }
 
@@ -105,6 +145,8 @@ class DashboardSimpleWorkflowSummary:
             raise RuntimeCoreInvariantError("dashboard simple workflow review outcome must carry review counts only")
         if self.outcome == "blocked" and self.blocked_count < 1:
             raise RuntimeCoreInvariantError("dashboard simple workflow blocked outcome must carry blocked counts")
+        for action_ref in self.action_refs:
+            _reject_internal_dashboard_ref(action_ref, "dashboard simple workflow action_ref")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible simple workflow summary."""
@@ -522,23 +564,28 @@ def build_operational_dashboard_state(
 def _simple_action_summary(check: SimpleActionCheck) -> DashboardSimpleActionSummary:
     """Project one simple action check into dashboard display state."""
 
+    experience = SimplePlatform.action_experience(check)
     return DashboardSimpleActionSummary(
-        action_ref=check.decision_ref,
-        outcome=check.outcome,
-        title=check.title,
-        message=check.message,
-        next_step=check.next_step,
-        proof_stamp_ref=check.proof_stamp_ref,
-        boundary_witness_ref=check.boundary_witness_ref,
-        blocked_reasons=check.blocked_reasons,
-        review_reasons=check.review_reasons,
+        action_ref=_dashboard_simple_action_ref(check),
+        outcome=experience.outcome,
+        status_label=experience.status_label,
+        message=experience.message,
+        risk=experience.risk,
+        approval_needed=experience.approval_needed,
+        evidence_saved=experience.evidence_saved,
+        next_step=experience.next_step,
+        choices=experience.choices,
+        audit_details_available=experience.audit_details_available,
+        audit_details_visible=experience.audit_details_visible,
+        receipts_visible=experience.receipts_visible,
+        proof_details_hidden=experience.proof_details_hidden,
     )
 
 
 def _simple_workflow_summary(plan: SimpleWorkflowPlan) -> DashboardSimpleWorkflowSummary:
     """Project one simple workflow plan into dashboard display state."""
 
-    action_refs = tuple(check.decision_ref for check in plan.checks)
+    action_refs = tuple(_dashboard_simple_action_ref(check) for check in plan.checks)
     workflow_ref = stable_identifier(
         "dashboard-simple-workflow",
         {
@@ -560,6 +607,25 @@ def _simple_workflow_summary(plan: SimpleWorkflowPlan) -> DashboardSimpleWorkflo
         blocked_count=plan.blocked_count,
         action_refs=action_refs,
     )
+
+
+def _dashboard_simple_action_ref(check: SimpleActionCheck) -> str:
+    """Return a dashboard-local action ref without exposing governance ids."""
+
+    return stable_identifier(
+        "dashboard-simple-action",
+        {
+            "decision_ref": check.decision_ref,
+            "outcome": check.outcome,
+        },
+    )
+
+
+def _reject_internal_dashboard_ref(value: str, field_name: str) -> None:
+    """Reject proof-bearing refs from normal dashboard projections."""
+
+    if value.startswith(("gate-decision-", "proof-", "witness-")):
+        raise RuntimeCoreInvariantError(f"{field_name} cannot expose internal governance refs")
 
 
 def _simple_start_guide_summary(guide: SimpleOnboardingGuide) -> DashboardSimpleStartGuideSummary:

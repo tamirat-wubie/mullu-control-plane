@@ -18,7 +18,7 @@ import json
 from typing import Any, Mapping
 import urllib.error
 import urllib.request
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -111,6 +111,7 @@ from gateway.agentic_service_harness_status import (
 from gateway.agentic_service_harness_read_model_producer import (
     AgenticServiceHarnessRuntimeReadModelProducer,
 )
+from gateway.approval import ApprovalStatus
 from gateway.capability_capsule_installer import install_certified_capsule_with_handoff_evidence
 from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
@@ -140,11 +141,34 @@ from gateway.operator_capability_console import (
     build_operator_capability_read_model,
     render_operator_capability_console,
 )
+from gateway.operator_goal_intake import (
+    DEFAULT_GOAL_INTAKE_CHANNEL,
+    DEFAULT_GOAL_INTAKE_SENDER_ID,
+    GoalIntakePreviewRecord,
+    GoalIntakePreviewStore,
+    build_goal_intake_read_model,
+    render_goal_intake_html,
+)
 from gateway.operator_receipt_viewer import (
     build_current_task_read_model,
+    build_operator_budget_report_read_model,
+    build_operator_approval_history_read_model,
+    build_operator_plan_receipt_export_read_model,
+    build_operator_plan_review_read_model,
     build_operator_receipt_viewer_read_model,
     render_current_task_html,
+    render_operator_budget_report_html,
+    render_operator_approval_detail_html,
+    render_operator_plan_receipt_export_html,
+    render_operator_approval_history_html,
+    render_operator_plan_review_detail_html,
+    render_operator_plan_review_html,
+    render_operator_receipt_detail_html,
     render_operator_receipt_viewer_html,
+    valid_approval_statuses,
+    valid_plan_budget_gates,
+    valid_plan_review_statuses,
+    valid_receipt_types,
     valid_task_statuses,
 )
 from gateway.orgos_kernel import (
@@ -161,8 +185,9 @@ from gateway.orgos_kernel import (
     replay_orgos_kernel_from_events,
 )
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
+from gateway.plan import CapabilityPlanBuilder, preview_for_plan
 from gateway.proxy_policy import assert_proxy_environment_allowed
-from gateway.router import GatewayRouter
+from gateway.router import GatewayMessage, GatewayRouter
 from gateway.session import SessionManager
 from gateway.capability_dispatch import build_capability_dispatcher_from_platform
 from scripts.emit_physical_capability_promotion_receipt import (
@@ -587,6 +612,7 @@ def create_gateway_app(
     *,
     capability_admission_gate_override: Any | None = None,
     command_ledger_override: Any | None = None,
+    tenant_budget_reporter: Any | None = None,
     mcp_capability_entries: tuple[Any, ...] = (),
     mcp_executor: Any | None = None,
     mcp_authority_records: MCPAuthorityRecords | None = None,
@@ -1439,6 +1465,7 @@ def create_gateway_app(
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     observability_recorder = GatewayObservabilityRecorder()
     federated_control_plane = FederatedControlPlane()
+    goal_intake_preview_store = GoalIntakePreviewStore()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
@@ -4333,19 +4360,237 @@ def create_gateway_app(
         )
         return HTMLResponse(_universal_actions_console_html(read_model))
 
+    @app.get("/operator/plan-review/read-model")
+    def operator_plan_review_read_model(
+        request: Request,
+        tenant_id: str = "",
+        plan_id: str = "",
+        status: str = "",
+        budget_gate: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_plan_review_filters(
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+        )
+        return build_operator_plan_review_read_model(
+            plan_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            plan_id=plan_id,
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/plan-review", response_class=HTMLResponse)
+    def operator_plan_review_console(
+        request: Request,
+        tenant_id: str = "",
+        plan_id: str = "",
+        status: str = "",
+        budget_gate: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_plan_review_filters(
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+        )
+        read_model = build_operator_plan_review_read_model(
+            plan_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            plan_id=plan_id,
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_operator_plan_review_html(read_model))
+
+    @app.get("/operator/plan-review/budget/{tenant_id}/read-model")
+    def operator_plan_review_budget_read_model(
+        request: Request,
+        tenant_id: str,
+    ):
+        _require_authority_operator(request)
+        return build_operator_budget_report_read_model(
+            tenant_budget_reporter,
+            tenant_id=tenant_id,
+        )
+
+    @app.get("/operator/plan-review/budget/{tenant_id}", response_class=HTMLResponse)
+    def operator_plan_review_budget_console(
+        request: Request,
+        tenant_id: str,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_budget_report_read_model(
+            tenant_budget_reporter,
+            tenant_id=tenant_id,
+        )
+        return HTMLResponse(render_operator_budget_report_html(read_model))
+
+    @app.get("/operator/plan-review/{plan_id}/receipts/read-model")
+    def operator_plan_receipt_export_read_model(
+        request: Request,
+        plan_id: str,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_plan_receipt_export_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            plan_id=plan_id,
+        )
+        if read_model["status"] == "not_found":
+            raise HTTPException(404, detail="plan review history not found")
+        return read_model
+
+    @app.get("/operator/plan-review/{plan_id}/receipts", response_class=HTMLResponse)
+    def operator_plan_receipt_export_console(
+        request: Request,
+        plan_id: str,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_plan_receipt_export_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            plan_id=plan_id,
+        )
+        if read_model["status"] == "not_found":
+            raise HTTPException(404, detail="plan review history not found")
+        return HTMLResponse(render_operator_plan_receipt_export_html(read_model))
+
+    @app.get("/operator/plan-review/{plan_id}", response_class=HTMLResponse)
+    def operator_plan_review_detail(
+        request: Request,
+        plan_id: str,
+        tenant_id: str = "",
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_plan_review_read_model(
+            plan_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            plan_id=plan_id,
+            limit=100,
+            offset=0,
+        )
+        if read_model["count"] < 1:
+            raise HTTPException(404, detail="plan review history not found")
+        return HTMLResponse(render_operator_plan_review_detail_html(read_model))
+
+    @app.get("/operator/approvals/read-model")
+    def operator_approvals_read_model(
+        request: Request,
+        tenant_id: str = "",
+        request_id: str = "",
+        command_id: str = "",
+        status: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_approval_filters(status=status, search=search)
+        return build_operator_approval_history_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            request_id=request_id,
+            command_id=command_id,
+            status=status,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/approvals", response_class=HTMLResponse)
+    def operator_approvals_console(
+        request: Request,
+        tenant_id: str = "",
+        request_id: str = "",
+        command_id: str = "",
+        status: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_approval_filters(status=status, search=search)
+        read_model = build_operator_approval_history_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            request_id=request_id,
+            command_id=command_id,
+            status=status,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_operator_approval_history_html(read_model))
+
+    @app.get("/operator/approvals/{request_id}", response_class=HTMLResponse)
+    def operator_approval_detail(
+        request: Request,
+        request_id: str,
+        tenant_id: str = "",
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_approval_history_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            request_id=request_id,
+            limit=1,
+            offset=0,
+        )
+        if read_model["count"] < 1:
+            raise HTTPException(404, detail="approval history not found")
+        return HTMLResponse(render_operator_approval_detail_html(read_model))
+
     @app.get("/operator/receipts/read-model")
     def operator_receipts_read_model(
         request: Request,
         tenant_id: str = "",
         command_id: str = "",
+        receipt_type: str = "",
+        receipt_status: str = "",
+        task_status: str = "",
+        search: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
         _require_authority_operator(request)
+        _validate_operator_receipt_filters(
+            receipt_type=receipt_type,
+            task_status=task_status,
+            search=search,
+        )
         return build_operator_receipt_viewer_read_model(
             command_ledger,
             tenant_id=tenant_id,
             command_id=command_id,
+            receipt_type=receipt_type,
+            receipt_status=receipt_status,
+            task_status=task_status,
+            search=search,
             limit=limit,
             offset=offset,
         )
@@ -4355,18 +4600,123 @@ def create_gateway_app(
         request: Request,
         tenant_id: str = "",
         command_id: str = "",
+        receipt_type: str = "",
+        receipt_status: str = "",
+        task_status: str = "",
+        search: str = "",
         limit: int = 100,
         offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_receipt_filters(
+            receipt_type=receipt_type,
+            task_status=task_status,
+            search=search,
+        )
+        read_model = build_operator_receipt_viewer_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            command_id=command_id,
+            receipt_type=receipt_type,
+            receipt_status=receipt_status,
+            task_status=task_status,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_operator_receipt_viewer_html(read_model))
+
+    @app.get("/operator/receipts/{command_id}", response_class=HTMLResponse)
+    def operator_receipt_detail(
+        request: Request,
+        command_id: str,
+        tenant_id: str = "",
     ):
         _require_authority_operator(request)
         read_model = build_operator_receipt_viewer_read_model(
             command_ledger,
             tenant_id=tenant_id,
             command_id=command_id,
-            limit=limit,
-            offset=offset,
+            limit=1,
+            offset=0,
         )
-        return HTMLResponse(render_operator_receipt_viewer_html(read_model))
+        if read_model["count"] == 0:
+            raise HTTPException(404, detail="command receipt group not found")
+        return HTMLResponse(render_operator_receipt_detail_html(read_model))
+
+    def _validate_operator_receipt_filters(
+        *,
+        receipt_type: str,
+        task_status: str,
+        search: str,
+    ) -> None:
+        normalized_receipt_type = receipt_type.strip()
+        normalized_task_status = task_status.strip()
+        normalized_search = search.strip()
+        if normalized_receipt_type and normalized_receipt_type not in valid_receipt_types():
+            raise HTTPException(
+                400,
+                detail="receipt_type must be one of: "
+                + ", ".join(valid_receipt_types()),
+            )
+        if normalized_task_status and normalized_task_status not in valid_task_statuses():
+            raise HTTPException(
+                400,
+                detail="task_status must be one of: "
+                + ", ".join(valid_task_statuses()),
+            )
+        if len(normalized_search) > 128:
+            raise HTTPException(
+                400,
+                detail="search must be 128 characters or fewer",
+            )
+
+    def _validate_operator_approval_filters(
+        *,
+        status: str,
+        search: str,
+    ) -> None:
+        normalized_status = status.strip()
+        if normalized_status and normalized_status not in valid_approval_statuses():
+            raise HTTPException(
+                400,
+                detail="status must be one of: "
+                + ", ".join(valid_approval_statuses()),
+            )
+        if len(search.strip()) > 128:
+            raise HTTPException(
+                400,
+                detail="search must be 128 characters or fewer",
+            )
+
+    def _validate_operator_plan_review_filters(
+        *,
+        status: str,
+        budget_gate: str,
+        search: str,
+    ) -> None:
+        normalized_status = status.strip()
+        normalized_budget_gate = budget_gate.strip()
+        if normalized_status and normalized_status not in valid_plan_review_statuses():
+            raise HTTPException(
+                400,
+                detail="status must be one of: "
+                + ", ".join(valid_plan_review_statuses()),
+            )
+        if (
+            normalized_budget_gate
+            and normalized_budget_gate not in valid_plan_budget_gates()
+        ):
+            raise HTTPException(
+                400,
+                detail="budget_gate must be one of: "
+                + ", ".join(valid_plan_budget_gates()),
+            )
+        if len(search.strip()) > 128:
+            raise HTTPException(
+                400,
+                detail="search must be 128 characters or fewer",
+            )
 
     @app.get("/operator/current-task/read-model")
     def operator_current_task_read_model(
@@ -4416,6 +4766,417 @@ def create_gateway_app(
             offset=offset,
         )
         return HTMLResponse(render_current_task_html(read_model))
+
+    async def _urlencoded_form_values(request: Request) -> dict[str, list[str]]:
+        raw_form = (await request.body()).decode("utf-8", errors="replace")
+        return parse_qs(raw_form, keep_blank_values=True)
+
+    def _form_value(
+        form: Mapping[str, list[str]],
+        name: str,
+        default: str = "",
+    ) -> str:
+        values = form.get(name)
+        if not values:
+            return default
+        return str(values[0])
+
+    @app.post("/operator/current-task/approval", response_class=HTMLResponse)
+    async def operator_current_task_approval(request: Request):
+        _require_authority_operator(request)
+        form = await _urlencoded_form_values(request)
+        request_id = _form_value(form, "request_id").strip()
+        decision = _form_value(form, "decision").strip().lower()
+        if not request_id:
+            raise HTTPException(400, detail="request_id is required")
+        if decision not in {"approve", "deny"}:
+            raise HTTPException(400, detail="decision must be approve or deny")
+
+        approval_request = router.lookup_approval_request(request_id)
+        if approval_request is None:
+            raise HTTPException(404, detail="approval request not found")
+        if approval_request.status != ApprovalStatus.PENDING:
+            raise HTTPException(
+                409,
+                detail=f"approval request is {approval_request.status.value}",
+            )
+
+        command = (
+            command_ledger.get(approval_request.command_id)
+            if approval_request.command_id
+            else None
+        )
+        command_metadata: Mapping[str, Any] = {}
+        if command is not None:
+            raw_metadata = command.redacted_payload.get("metadata")
+            if isinstance(raw_metadata, Mapping):
+                command_metadata = raw_metadata
+        plan_id = str(command_metadata.get("plan_id") or "").strip()
+
+        resolver_sender_id = (
+            "operator-current-task:"
+            + sha256(request_id.encode("utf-8")).hexdigest()[:16]
+        )
+        router.register_tenant_mapping(
+            TenantMapping(
+                channel=approval_request.channel,
+                sender_id=resolver_sender_id,
+                tenant_id=approval_request.tenant_id,
+                identity_id=f"operator-current-task-approval:{request_id}",
+                roles=("tenant_member", "operator", "operator_current_task"),
+                approval_authority=True,
+                metadata={
+                    "approval_request_id": request_id,
+                    "operator_surface": "current_task",
+                },
+            )
+        )
+
+        approved = decision == "approve"
+        approval_response = router.handle_external_approval_callback(
+            request_id,
+            approved=approved,
+            resolver_channel=approval_request.channel,
+            resolver_sender_id=resolver_sender_id,
+        )
+        if approval_response is None:
+            raise HTTPException(404, detail="approval request not found")
+        if approval_response.metadata.get("error") == "approval_context_denied":
+            raise HTTPException(
+                403,
+                detail={
+                    "error": "approval_context_denied",
+                    "authority_reason": approval_response.metadata.get(
+                        "authority_reason",
+                        "",
+                    ),
+                    "required_roles": list(
+                        approval_response.metadata.get("required_roles", ())
+                    ),
+                    "resolver_roles": list(
+                        approval_response.metadata.get("resolver_roles", ())
+                    ),
+                },
+            )
+
+        action_status = "approval_approved" if approved else "approval_denied"
+        if approved and plan_id:
+            try:
+                recovery_response = router.recover_waiting_plan(plan_id)
+            except (KeyError, ValueError) as exc:
+                action_status = (
+                    "approval_approved_plan_recovery_blocked:"
+                    f"{type(exc).__name__}"
+                )
+            else:
+                if recovery_response.metadata.get("plan_terminal_certificate_id"):
+                    action_status = "approval_approved_plan_recovered"
+                else:
+                    action_status = "approval_approved_plan_recovery_pending"
+
+        read_model = build_current_task_read_model(
+            command_ledger,
+            tenant_id=approval_request.tenant_id,
+        )
+        read_model["operator_action_status"] = action_status
+        return HTMLResponse(render_current_task_html(read_model))
+
+    def _goal_intake_read_model_for_record(
+        record: GoalIntakePreviewRecord,
+        *,
+        status: str | None = None,
+        error_code: str = "",
+        error_message: str = "",
+    ) -> dict[str, Any]:
+        return build_goal_intake_read_model(
+            preview_id=record.preview_id,
+            tenant_id=record.tenant_id,
+            identity_id=record.identity_id,
+            channel=record.channel,
+            sender_id_present=bool(record.sender_id),
+            sender_id_hash=record.sender_id_hash,
+            status=status or record.status,
+            goal_hash=record.goal_hash,
+            preview=record.preview,
+            decision=record.decision,
+            decision_reason=record.decision_reason,
+            handoff_message_id=record.handoff_message_id,
+            handoff_response_body=record.handoff_response_body,
+            handoff_response_metadata=record.handoff_response_metadata,
+            error_code=error_code,
+            error_message=error_message,
+        )
+
+    def _render_goal_intake_record(
+        record: GoalIntakePreviewRecord,
+        *,
+        status: str | None = None,
+        error_code: str = "",
+        error_message: str = "",
+    ) -> HTMLResponse:
+        return HTMLResponse(
+            render_goal_intake_html(
+                _goal_intake_read_model_for_record(
+                    record,
+                    status=status,
+                    error_code=error_code,
+                    error_message=error_message,
+                )
+            )
+        )
+
+    def _render_goal_intake_missing_preview(preview_id: str) -> HTMLResponse:
+        return HTMLResponse(
+            render_goal_intake_html(
+                build_goal_intake_read_model(
+                    preview_id=preview_id,
+                    status="blocked",
+                    error_code="preview_not_found",
+                    error_message="preview_id is not available for handoff",
+                )
+            )
+        )
+
+    def _json_safe_scalar(value: Any) -> Any:
+        if value is None or isinstance(value, (bool, int, float, str)):
+            return value
+        if isinstance(value, (list, tuple)):
+            return [
+                item
+                if item is None or isinstance(item, (bool, int, float, str))
+                else str(item)
+                for item in value
+            ]
+        return str(value)
+
+    def _goal_intake_public_response_metadata(
+        metadata: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        allowed_keys = {
+            "error",
+            "plan_id",
+            "plan_error",
+            "plan_failure_witness_id",
+            "approval_required",
+            "request_id",
+            "command_id",
+            "risk_tier",
+            "delivery_status",
+            "plan_terminal_certificate_id",
+            "terminal_certificate_id",
+            "response_allowed",
+            "safe_default",
+        }
+        return {
+            key: _json_safe_scalar(value)
+            for key, value in metadata.items()
+            if key in allowed_keys
+        }
+
+    def _goal_intake_public_response_body(metadata: Mapping[str, Any]) -> str:
+        if metadata.get("error") == "plan_execution_failed":
+            return "Governed plan handoff stopped before terminal closure."
+        if metadata.get("approval_required") is True:
+            request_id = str(metadata.get("request_id", ""))
+            if request_id:
+                return f"Governed command handoff requires approval: {request_id}"
+            return "Governed command handoff requires approval."
+        if metadata.get("plan_terminal_certificate_id"):
+            return "Governed plan handoff reached terminal closure."
+        if metadata.get("terminal_certificate_id"):
+            return "Governed command handoff reached terminal closure."
+        if metadata.get("command_id"):
+            return "Governed command handoff was admitted."
+        return "Governed handoff submitted."
+
+    @app.get("/operator/goal-intake", response_class=HTMLResponse)
+    def operator_goal_intake_console(request: Request):
+        _require_authority_operator(request)
+        return HTMLResponse(render_goal_intake_html(build_goal_intake_read_model()))
+
+    @app.post("/operator/goal-intake/preview", response_class=HTMLResponse)
+    async def operator_goal_intake_preview(request: Request):
+        _require_authority_operator(request)
+        form = await _urlencoded_form_values(request)
+        goal = _form_value(form, "goal").strip()
+        tenant_id = _form_value(form, "tenant_id").strip()
+        identity_id = _form_value(form, "identity_id").strip()
+        channel = _form_value(form, "channel", DEFAULT_GOAL_INTAKE_CHANNEL).strip()
+        sender_id = _form_value(form, "sender_id", DEFAULT_GOAL_INTAKE_SENDER_ID).strip()
+        if not channel:
+            channel = DEFAULT_GOAL_INTAKE_CHANNEL
+        if not sender_id:
+            sender_id = DEFAULT_GOAL_INTAKE_SENDER_ID
+        goal_hash = canonical_hash({"goal": goal}) if goal else ""
+        sender_id_hash = canonical_hash({"channel": channel, "sender_id": sender_id})
+
+        def _render_intake(
+            *,
+            status: str,
+            preview: Mapping[str, Any] | None = None,
+            error_code: str = "",
+            error_message: str = "",
+        ) -> HTMLResponse:
+            return HTMLResponse(
+                render_goal_intake_html(
+                    build_goal_intake_read_model(
+                        tenant_id=tenant_id,
+                        identity_id=identity_id,
+                        channel=channel,
+                        sender_id_present=bool(sender_id),
+                        sender_id_hash=sender_id_hash,
+                        status=status,
+                        goal_hash=goal_hash,
+                        preview=preview,
+                        error_code=error_code,
+                        error_message=error_message,
+                    )
+                )
+            )
+
+        if not tenant_id or not identity_id:
+            return _render_intake(
+                status="blocked",
+                error_code="missing_identity",
+                error_message="tenant_id and identity_id are required",
+            )
+        if not goal:
+            return _render_intake(
+                status="blocked",
+                error_code="missing_goal",
+                error_message="goal is required",
+            )
+
+        message = GatewayMessage(
+            message_id=f"goal-intake-{goal_hash[:16]}",
+            channel=channel,
+            sender_id=sender_id,
+            body=goal,
+            conversation_id=f"goal-intake:{tenant_id}:{identity_id}",
+        )
+        builder = CapabilityPlanBuilder(
+            capability_passport_loader=command_ledger.capability_passport_for_intent
+        )
+        try:
+            plan = builder.build(
+                message=message.body,
+                tenant_id=tenant_id,
+                identity_id=identity_id,
+            )
+        except ValueError as exc:
+            return _render_intake(
+                status="blocked",
+                error_code="plan_compile_rejected",
+                error_message=f"capability plan compile rejected: {type(exc).__name__}",
+            )
+        if plan is None:
+            return _render_intake(
+                status="blocked",
+                error_code="goal_not_compilable",
+                error_message="goal did not match a governed capability pattern",
+            )
+        created_at = _clock()
+        preview = preview_for_plan(plan=plan, created_at=created_at).to_dict()
+        record = GoalIntakePreviewRecord(
+            preview_id=str(preview["preview_id"]),
+            plan_id=str(preview["plan_id"]),
+            tenant_id=tenant_id,
+            identity_id=identity_id,
+            channel=channel,
+            sender_id=sender_id,
+            sender_id_hash=sender_id_hash,
+            goal=goal,
+            goal_hash=goal_hash,
+            preview=preview,
+            status="preview_ready",
+            created_at=created_at,
+        )
+        goal_intake_preview_store.save(record)
+        return _render_goal_intake_record(record)
+
+    @app.post("/operator/goal-intake/deny", response_class=HTMLResponse)
+    async def operator_goal_intake_deny(request: Request):
+        _require_authority_operator(request)
+        form = await _urlencoded_form_values(request)
+        preview_id = _form_value(form, "preview_id").strip()
+        record = goal_intake_preview_store.get(preview_id)
+        if record is None:
+            return _render_goal_intake_missing_preview(preview_id)
+        if record.status != "preview_ready":
+            return _render_goal_intake_record(
+                record,
+                status="blocked",
+                error_code="preview_already_decided",
+                error_message="preview already has a terminal intake decision",
+            )
+        decided = goal_intake_preview_store.decide(
+            preview_id,
+            status="denied",
+            decision="denied",
+            decided_at=_clock(),
+            decision_reason="operator_denied",
+        )
+        return _render_goal_intake_record(decided)
+
+    @app.post("/operator/goal-intake/approve", response_class=HTMLResponse)
+    async def operator_goal_intake_approve(request: Request):
+        _require_authority_operator(request)
+        form = await _urlencoded_form_values(request)
+        preview_id = _form_value(form, "preview_id").strip()
+        record = goal_intake_preview_store.get(preview_id)
+        if record is None:
+            return _render_goal_intake_missing_preview(preview_id)
+        if record.status != "preview_ready":
+            return _render_goal_intake_record(
+                record,
+                status="blocked",
+                error_code="preview_already_decided",
+                error_message="preview already has a terminal intake decision",
+            )
+
+        internal_sender_id = f"goal-intake:{record.preview_id}"
+        router.register_tenant_mapping(
+            TenantMapping(
+                channel=DEFAULT_GOAL_INTAKE_CHANNEL,
+                sender_id=internal_sender_id,
+                tenant_id=record.tenant_id,
+                identity_id=record.identity_id,
+                roles=("operator_goal_intake",),
+                approval_authority=False,
+                metadata={
+                    "source_channel": record.channel,
+                    "source_sender_id_hash": record.sender_id_hash,
+                    "goal_hash": record.goal_hash,
+                    "preview_id": record.preview_id,
+                },
+            )
+        )
+        response = router.handle_message(
+            GatewayMessage(
+                message_id=f"goal-intake-approve-{record.preview_id}",
+                channel=DEFAULT_GOAL_INTAKE_CHANNEL,
+                sender_id=internal_sender_id,
+                body=record.goal,
+                conversation_id=f"goal-intake:{record.tenant_id}:{record.identity_id}",
+                metadata={
+                    "goal_intake_preview_id": record.preview_id,
+                    "goal_hash": record.goal_hash,
+                    "source_channel": record.channel,
+                    "source_sender_id_hash": record.sender_id_hash,
+                },
+            )
+        )
+        decided = goal_intake_preview_store.decide(
+            preview_id,
+            status="handoff_submitted",
+            decision="approved",
+            decided_at=_clock(),
+            decision_reason="operator_approved",
+            handoff_message_id=response.message_id,
+            handoff_response_body=_goal_intake_public_response_body(response.metadata),
+            handoff_response_metadata=_goal_intake_public_response_metadata(response.metadata),
+        )
+        return _render_goal_intake_record(decided)
 
     @app.get("/capability-fabric/admission-audits")
     def capability_fabric_admission_audits(
@@ -4878,6 +5639,8 @@ def create_gateway_app(
     app.state.mcp_authority_records = mcp_authority_records
     app.state.mcp_gateway_import = mcp_gateway_import
     app.state.plan_ledger = plan_ledger
+    app.state.goal_intake_preview_store = goal_intake_preview_store
+    app.state.tenant_budget_reporter = tenant_budget_reporter
     app.state.observability_recorder = observability_recorder
     app.state.federated_control_plane = federated_control_plane
     app.state.verifier = verifier

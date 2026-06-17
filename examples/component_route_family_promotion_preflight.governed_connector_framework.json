@@ -1,0 +1,152 @@
+{
+  "blocked_actions": [
+    "autonomous_execution",
+    "connector_call",
+    "external_send",
+    "filesystem_write",
+    "live_dispatch",
+    "route_execution",
+    "runtime_mutation",
+    "terminal_closure"
+  ],
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "decision": "blocked",
+  "expected_receipts": [
+    "component_route_family_promotion_preflight_receipt",
+    "component_route_family_promotion_witness_requirements_receipt",
+    "component_route_family_promotion_witness_evidence_receipt",
+    "component_route_family_promotion_approval_candidates_receipt",
+    "component_route_family_promotion_approval_intake_receipt",
+    "component_route_family_promotion_submitted_evidence_verifier_receipt",
+    "component_route_family_promotion_submitted_evidence_records_receipt",
+    "component_route_family_promotion_operator_submitted_evidence_records_receipt",
+    "component_route_family_promotion_gate_satisfaction_evaluator_receipt",
+    "component_route_family_promotion_submitted_evidence_payload_examples_receipt",
+    "component_route_family_ownership_receipt",
+    "component_route_binding_receipt",
+    "component_lifecycle_transition_receipt",
+    "component_authority_envelope_witness",
+    "authority_upgrade_witness",
+    "authority_denial_receipt"
+  ],
+  "gate_results": [
+    {
+      "evidence_key": "missing_selected_component_route_binding",
+      "gate_id": "route_binding_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "route family is classified but not selected-bound in router inventory",
+      "proof_state": "Fail"
+    },
+    {
+      "evidence_key": "component_proof_surface_binding_present",
+      "gate_id": "proof_binding_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "candidate component proof binding references the surface",
+      "proof_state": "Pass"
+    },
+    {
+      "evidence_key": "missing_lifecycle_transition_receipt",
+      "gate_id": "lifecycle_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "no lifecycle transition receipt upgrades this route family to selected ownership",
+      "proof_state": "Fail"
+    },
+    {
+      "evidence_key": "component_authority_envelope_witness_present",
+      "gate_id": "current_authority_envelope_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "current component authority envelope witness exists and denies live effects",
+      "proof_state": "Pass"
+    },
+    {
+      "evidence_key": "missing_authority_upgrade_witness",
+      "gate_id": "authority_upgrade_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "no separate authority upgrade witness allows route execution or connector action",
+      "proof_state": "Fail"
+    },
+    {
+      "evidence_key": "generic_connector_surface_not_product_specific_authority",
+      "gate_id": "product_specific_boundary_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "generic connector routes are not product-specific Gmail mailbox authority",
+      "proof_state": "Fail"
+    },
+    {
+      "evidence_key": "terminal_closure_blocked",
+      "gate_id": "terminal_closure_gate",
+      "gate_is_not_execution_authority": true,
+      "notes": "terminal closure remains denied for the promotion preflight",
+      "proof_state": "Pass"
+    }
+  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "missing_evidence": [
+    "generic_connector_surface_not_product_specific_authority",
+    "missing_authority_upgrade_witness",
+    "missing_lifecycle_transition_receipt",
+    "missing_selected_component_route_binding"
+  ],
+  "mode": "foundation",
+  "next_action": "Keep governed connector framework unpromoted until product-specific route ownership, lifecycle, and authority witnesses exist.",
+  "outcome": "GovernanceBlocked",
+  "preflight_id": "component_route_family_promotion_preflight.governed_connector_framework.v1",
+  "promotion_preflight_is_not_execution_authority": true,
+  "required_next_evidence": [
+    "component_route_binding_receipt",
+    "component_proof_surface_binding",
+    "component_lifecycle_transition_receipt",
+    "authority_upgrade_witness",
+    "operator_approval_if_external_effect"
+  ],
+  "route_family_snapshot": {
+    "binding_level": "platform_family_classified",
+    "candidate_proof_bound_component_ids": [
+      "gmail_account_binding_gate"
+    ],
+    "component_ids": [
+      "gmail_account_binding_gate"
+    ],
+    "declared_route_count": 7,
+    "promotion_blockers": [
+      "missing_selected_component_route_binding",
+      "missing_lifecycle_transition_receipt",
+      "missing_authority_upgrade_witness",
+      "requires_product_specific_route_ownership_decision",
+      "generic_connector_surface_not_product_specific_authority"
+    ],
+    "readiness_state": "blocked_needs_route_binding_witness",
+    "sample_routes": [
+      "/api/v1/connectors",
+      "/api/v1/connectors/history",
+      "/api/v1/connectors/invoke",
+      "/api/v1/connectors/register",
+      "/api/v1/connectors/summary"
+    ],
+    "selected_bound_component_ids": [],
+    "surface_id": "governed_connector_framework"
+  },
+  "schema_version": 1,
+  "source_refs": {
+    "component_authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json",
+    "component_proof_binding": "examples/component_proof_binding.foundation.json",
+    "ownership_readiness": "examples/component_route_family_ownership.foundation.json",
+    "proof_matrix": "docs/40_proof_coverage_matrix.md",
+    "router_inventory": "examples/component_router_inventory.foundation.json"
+  },
+  "target_component_id": "gmail_account_binding_gate",
+  "target_surface_id": "governed_connector_framework",
+  "terminal_closure_required": true,
+  "validators": [
+    "component_route_family_promotion_preflight_validator",
+    "component_route_family_promotion_preflight_tests",
+    "component_route_family_ownership_validator",
+    "component_router_inventory_validator",
+    "component_proof_binding_validator"
+  ]
+}

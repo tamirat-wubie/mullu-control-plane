@@ -1,0 +1,364 @@
+{
+  "receipt_id": "personal-assistant-capsule-alignment-e187e1d6ec5bf133",
+  "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
+  "generated_at": "2026-06-16T20:30:54Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "source_refs": [
+    {
+      "source_id": "personal_assistant_capsule",
+      "source_ref": "capsules/personal_assistant.json",
+      "source_kind": "capsule",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_capability_pack",
+      "source_ref": "capabilities/personal_assistant/capability_pack.json",
+      "source_kind": "capability_pack",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_protocol_manifest",
+      "source_ref": "schemas/mullu_governance_protocol.manifest.json",
+      "source_kind": "protocol_manifest",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_authority_coverage_receipt",
+      "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
+      "source_kind": "authority_coverage_receipt",
+      "bound": true
+    }
+  ],
+  "alignment_summary": {
+    "capsule_alignment_closed": true,
+    "authority_coverage_closed": true,
+    "capsule_capability_count": 12,
+    "pack_capability_count": 12,
+    "schema_ref_count": 11,
+    "capsule_refs_match_pack": true,
+    "all_capability_refs_bound": true,
+    "all_schema_refs_bound": true,
+    "all_policy_refs_bound": true,
+    "all_test_fixture_refs_bound": true,
+    "all_capabilities_candidate_only": true,
+    "all_capabilities_fixture_only": true,
+    "all_capabilities_secretless": true,
+    "all_capabilities_networkless": true,
+    "all_capabilities_non_world_mutating": true,
+    "all_capabilities_receipted": true,
+    "capsule_foundation_mode_required": true,
+    "capsule_live_connector_execution_blocked": true,
+    "capsule_live_nested_mind_activation_blocked": true,
+    "no_effect_boundary_verified": true,
+    "production_ready": false,
+    "customer_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "capability_binding_records": [
+    {
+      "capability_id": "personal_assistant.intent.interpret",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.skill_plan.build",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.approval.classify",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_approval.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.receipt.project",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.prepare",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_memory_observation.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.review",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_memory_observation.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_memory_review.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.teamops_shared_inbox.plan",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_teamops_projection.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.github_codex.review",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_github_codex_projection.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.research.source_compare",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_research_projection.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.math.reasoning_plan",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_math_projection.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.planning.schedule_preview",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_planning_projection.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    },
+    {
+      "capability_id": "personal_assistant.clarification.request",
+      "in_capsule": true,
+      "in_capability_pack": true,
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "input_schema_bound": true,
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "output_schema_bound": true,
+      "certification_status": "candidate",
+      "fixture_only": true,
+      "production_ready": false,
+      "secret_scope": "none",
+      "network_allowlist_empty": true,
+      "world_mutating": false,
+      "receipt_required": true,
+      "alignment_covered": true
+    }
+  ],
+  "schema_binding_records": [
+    {
+      "schema_ref": "schemas/personal_assistant_approval.schema.json",
+      "schema_id": "personal-assistant-approval",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_github_codex_projection.schema.json",
+      "schema_id": "personal-assistant-github-codex-projection",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_math_projection.schema.json",
+      "schema_id": "personal-assistant-math-projection",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_memory_observation.schema.json",
+      "schema_id": "personal-assistant-memory-observation",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_memory_review.schema.json",
+      "schema_id": "personal-assistant-memory-review",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "schema_id": "personal-assistant-plan",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_planning_projection.schema.json",
+      "schema_id": "personal-assistant-planning-projection",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "schema_id": "personal-assistant-receipt",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_request.schema.json",
+      "schema_id": "personal-assistant-request",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_research_projection.schema.json",
+      "schema_id": "personal-assistant-research-projection",
+      "manifest_bound": true,
+      "file_bound": true
+    },
+    {
+      "schema_ref": "schemas/personal_assistant_teamops_projection.schema.json",
+      "schema_id": "personal-assistant-teamops-projection",
+      "manifest_bound": true,
+      "file_bound": true
+    }
+  ],
+  "capsule_boundary": {
+    "foundation_mode_required": true,
+    "production_ready": false,
+    "live_connector_execution_allowed": false,
+    "live_nested_mind_activation_allowed": false
+  },
+  "effect_boundary": {
+    "execution_authority_granted": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "system_of_record_write_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "money_legal_public_allowed": false,
+    "production_ready_claim_allowed": false,
+    "customer_ready_claim_allowed": false,
+    "live_nested_mind_activation_allowed": false
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-capsule-alignment-2026-06-16",
+        "reason": "Capsule alignment closed for no-effect Foundation Mode hardening without granting execution authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

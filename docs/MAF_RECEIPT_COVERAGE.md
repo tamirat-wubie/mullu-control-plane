@@ -127,9 +127,11 @@ consumers that need per-action proof.
 
 ### Gateway entry-point coverage (G10.1 — closed)
 
-Gateway webhook, authority, capability-fabric, capability-plan recovery, and deployment-authority endpoints are now certified by
+Gateway webhook, authority, capability-fabric, capability-plan recovery,
+deployment-authority, and operator-control endpoints are now certified by
 `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py`. Every
-POST to a `/webhook/*`, `/authority/*`, `/capability-fabric/*`, `/capability-plans/*`, or `/deployment/*` path produces a receipt
+POST to a `/webhook/*`, `/authority/*`, `/capability-fabric/*`,
+`/capability-plans/*`, `/deployment/*`, or `/operator/*` path produces a receipt
 regardless of which handler runs:
 
 | Endpoint | Receipt status |
@@ -146,6 +148,10 @@ regardless of which handler runs:
 | `POST /capability-fabric/capsule-admissions` | Certified (capsule admission extension). |
 | `POST /capability-plans/{plan_id}/recover` | Certified (plan recovery extension). |
 | `POST /deployment/tenant-mappings` | Certified (deployment authority extension). |
+| `POST /operator/goal-intake/preview` | Certified (operator-control extension). |
+| `POST /operator/goal-intake/approve` | Certified (operator-control extension). |
+| `POST /operator/goal-intake/deny` | Certified (operator-control extension). |
+| `POST /operator/current-task/approval` | Certified (operator-control extension). |
 
 The middleware certifies the **boundary decision** (was this request
 admitted, denied, or did the handler error?), not the business

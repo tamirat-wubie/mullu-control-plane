@@ -13,18 +13,16 @@ Invariants:
 
 from __future__ import annotations
 
-import json
 import subprocess
-from pathlib import Path
 
 import pytest
 
-import scripts.validate_public_repository_surface as public_surface_module
 from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
     EXPECTED_PROTOCOL_MANIFEST_RESULT,
+    GITHUB_CLI_TIMEOUT_SECONDS,
     CI_WORKFLOW_PATH,
     CI_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
@@ -392,6 +390,9 @@ def test_github_cli_fallback_error_is_bounded(monkeypatch: pytest.MonkeyPatch) -
     secret_url = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane?token=secret-token"
 
     def _fake_run(*_args, **_kwargs):
+        assert _kwargs["timeout"] == GITHUB_CLI_TIMEOUT_SECONDS
+        assert _kwargs["capture_output"] is True
+        assert _kwargs["text"] is True
         return subprocess.CompletedProcess(
             ["gh", "api", "repos/tamirat-wubie/mullu-control-plane"],
             7,

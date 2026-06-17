@@ -10,6 +10,7 @@ Dependencies: schemas/terminal_closure_certificate.schema.json and
 scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet.
 Invariants:
   - Only ready TeamOps terminal closure review packets can mint certificates.
+  - Provider-observation receipt identity is preserved from the review packet.
   - The minting producer performs no provider call, mailbox write, draft, or send.
   - The emitted certificate is schema-valid and redacted before it is written.
 """
@@ -98,6 +99,7 @@ def _certificate_from_review_packet(
     certificate_id = _certificate_id(
         review_packet_id=review_packet_id,
         review_packet_hash=review_packet_hash,
+        provider_observation_receipt_id=str(review_packet.get("provider_observation_receipt_id", "")),
         evidence_refs=evidence_refs,
     )
     return {
@@ -119,6 +121,7 @@ def _certificate_from_review_packet(
             f"review_packet:{review_packet_id}",
             f"send_execution:{review_packet.get('send_execution_ref', '')}",
             f"dispatch_receipt:{review_packet.get('dispatch_receipt_ref', '')}",
+            f"provider_observation:{review_packet.get('provider_observation_receipt_id', '')}",
             f"provider_message:{review_packet.get('provider_message_ref', '')}",
             f"first_observation:{review_packet.get('first_observation_ref', '')}",
             f"second_observation:{review_packet.get('second_observation_ref', '')}",
@@ -138,6 +141,9 @@ def _certificate_from_review_packet(
             "source_sent_message_observation_receipt_ref": str(
                 review_packet.get("source_sent_message_observation_receipt_ref", "")
             ),
+            "provider_observation_receipt_ref": str(review_packet.get("provider_observation_receipt_ref", "")),
+            "provider_observation_receipt_id": str(review_packet.get("provider_observation_receipt_id", "")),
+            "provider_observation_receipt_valid": review_packet.get("provider_observation_receipt_valid") is True,
             "approval_chain_reviewed": review_packet.get("approval_chain_reviewed") is True,
             "send_execution_reviewed": review_packet.get("send_execution_reviewed") is True,
             "sent_message_observation_reviewed": review_packet.get("sent_message_observation_reviewed") is True,
@@ -170,10 +176,17 @@ def _certificate_evidence_refs(review_packet: Mapping[str, Any], review_packet_p
     return [ref for ref in dict.fromkeys(refs) if ref.strip()]
 
 
-def _certificate_id(*, review_packet_id: str, review_packet_hash: str, evidence_refs: Sequence[str]) -> str:
+def _certificate_id(
+    *,
+    review_packet_id: str,
+    review_packet_hash: str,
+    provider_observation_receipt_id: str,
+    evidence_refs: Sequence[str],
+) -> str:
     material = {
         "review_packet_id": review_packet_id,
         "review_packet_hash": review_packet_hash,
+        "provider_observation_receipt_id": provider_observation_receipt_id,
         "evidence_refs": list(evidence_refs),
     }
     digest = _stable_hash(material)

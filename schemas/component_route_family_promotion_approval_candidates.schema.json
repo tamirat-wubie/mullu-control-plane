@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-route-family-promotion-approval-candidates:1",
+  "title": "Mullu Component Route-Family Promotion Approval Candidates",
+  "description": "Read-only Component Harness report that describes draft approval candidates for blocked route-family promotion gates without approving promotion or granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_candidates_id",
+    "mode",
+    "governed",
+    "target_surface_id",
+    "target_component_id",
+    "decision",
+    "preflight_outcome",
+    "outcome",
+    "candidate_decision",
+    "approval_candidates_are_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "mutates_router_inventory",
+    "ready_for_promotion",
+    "terminal_closure_required",
+    "source_refs",
+    "summary",
+    "approval_candidates",
+    "approval_evidence_required",
+    "blocked_actions",
+    "expected_receipts",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "approval_candidates_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "foundation",
+        "read_only"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    },
+    "target_surface_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "target_component_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "decision": {
+      "type": "string",
+      "const": "blocked"
+    },
+    "preflight_outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "candidate_decision": {
+      "type": "string",
+      "const": "not_approved"
+    },
+    "approval_candidates_are_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_execute": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_mutate": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_call_connector": {
+      "type": "boolean",
+      "const": false
+    },
+    "can_claim_terminal_closure": {
+      "type": "boolean",
+      "const": false
+    },
+    "mutates_router_inventory": {
+      "type": "boolean",
+      "const": false
+    },
+    "ready_for_promotion": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "promotion_witness_evidence",
+        "promotion_witness_requirements",
+        "promotion_preflight",
+        "router_inventory",
+        "component_lifecycle_transition_receipts",
+        "component_authority_envelope_witnesses",
+        "proof_matrix"
+      ],
+      "properties": {
+        "promotion_witness_evidence": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "promotion_witness_requirements": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "promotion_preflight": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "router_inventory": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_lifecycle_transition_receipts": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_authority_envelope_witnesses": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "proof_matrix": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "approval_candidates": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/approval_candidate"
+      }
+    },
+    "approval_evidence_required": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier_or_ref"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "expected_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 360
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "identifier_or_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#{}@+ -]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_candidate_count",
+        "not_approved_candidate_count",
+        "draft_only_candidate_count",
+        "satisfied_requirement_count",
+        "blocking_candidate_count",
+        "approval_evidence_required_count"
+      ],
+      "properties": {
+        "approval_candidate_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "not_approved_candidate_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "draft_only_candidate_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "satisfied_requirement_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "blocking_candidate_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "approval_evidence_required_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "approval_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "source_witness_id",
+        "gate_id",
+        "candidate_kind",
+        "evidence_key",
+        "approval_state",
+        "candidate_state",
+        "proof_state",
+        "satisfies_requirement",
+        "blocks_promotion",
+        "requires_operator_approval",
+        "required_before_promotion",
+        "candidate_is_not_execution_authority",
+        "mutates_router_inventory",
+        "grants_execution_authority",
+        "grants_connector_authority",
+        "grants_terminal_closure",
+        "approval_would_replace_denial",
+        "approval_required_artifacts",
+        "candidate_scope",
+        "approval_preconditions"
+      ],
+      "properties": {
+        "candidate_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "source_witness_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "gate_id": {
+          "type": "string",
+          "enum": [
+            "route_binding_gate",
+            "lifecycle_gate",
+            "authority_upgrade_gate",
+            "product_specific_boundary_gate"
+          ]
+        },
+        "candidate_kind": {
+          "type": "string",
+          "enum": [
+            "route_binding",
+            "lifecycle_transition",
+            "authority_upgrade",
+            "product_specific_ownership"
+          ]
+        },
+        "evidence_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "approval_state": {
+          "type": "string",
+          "const": "not_approved"
+        },
+        "candidate_state": {
+          "type": "string",
+          "const": "draft_only"
+        },
+        "proof_state": {
+          "type": "string",
+          "const": "Unknown"
+        },
+        "satisfies_requirement": {
+          "type": "boolean",
+          "const": false
+        },
+        "blocks_promotion": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_operator_approval": {
+          "type": "boolean",
+          "const": true
+        },
+        "required_before_promotion": {
+          "type": "boolean",
+          "const": true
+        },
+        "candidate_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "mutates_router_inventory": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_execution_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_connector_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "grants_terminal_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "approval_would_replace_denial": {
+          "type": "boolean",
+          "const": true
+        },
+        "approval_required_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        },
+        "candidate_scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "approval_preconditions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier_or_ref"
+          }
+        }
+      }
+    }
+  }
+}

@@ -69,8 +69,12 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "GET /api/v1/simple/home" in text
     assert "GET /api/v1/simple/start" in text
     assert "POST /api/v1/simple/actions/check" in text
+    assert "POST /api/v1/simple/actions/experience" in text
+    assert "POST /api/v1/simple/actions/check/audit" in text
     assert "POST /api/v1/simple/tasks/check" in text
+    assert "POST /api/v1/simple/tasks/check/audit" in text
     assert "POST /api/v1/simple/workflows/check" in text
+    assert "POST /api/v1/simple/workflows/check/audit" in text
     assert "mullu workflow docs-update" in text
     assert "simple_action_summaries" in text
     assert "simple_workflow_summaries" in text

@@ -96,6 +96,72 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     registry_entry = entries["component-registry"]
     router_entry = entries["component-router-inventory"]
+    ownership_entry = entries["component-route-family-ownership"]
+    promotion_preflight_entry = entries["component-route-family-promotion-preflight"]
+    promotion_witness_entry = entries["component-route-family-promotion-witness-requirements"]
+    promotion_witness_evidence_entry = entries["component-route-family-promotion-witness-evidence"]
+    promotion_approval_candidates_entry = entries["component-route-family-promotion-approval-candidates"]
+    promotion_approval_intake_entry = entries["component-route-family-promotion-approval-intake"]
+    promotion_submitted_evidence_verifier_entry = entries[
+        "component-route-family-promotion-submitted-evidence-verifier"
+    ]
+    promotion_submitted_evidence_records_entry = entries[
+        "component-route-family-promotion-submitted-evidence-records"
+    ]
+    promotion_submitted_evidence_payload_examples_entry = entries[
+        "component-route-family-promotion-submitted-evidence-payload-examples"
+    ]
+    promotion_operator_submitted_evidence_records_entry = entries[
+        "component-route-family-promotion-operator-submitted-evidence-records"
+    ]
+    promotion_gate_satisfaction_evaluator_entry = entries[
+        "component-route-family-promotion-gate-satisfaction-evaluator"
+    ]
+    promotion_authority_decision_report_entry = entries[
+        "component-route-family-promotion-authority-decision-report"
+    ]
+    promotion_authority_upgrade_witness_decision_report_entry = entries[
+        "component-route-family-promotion-authority-upgrade-witness-decision-report"
+    ]
+    promotion_product_ownership_decision_report_entry = entries[
+        "component-route-family-promotion-product-ownership-decision-report"
+    ]
+    promotion_terminal_closure_denial_report_entry = entries[
+        "component-route-family-promotion-terminal-closure-denial-report"
+    ]
+    promotion_missing_evidence_ledger_entry = entries[
+        "component-route-family-promotion-missing-evidence-ledger"
+    ]
+    promotion_router_inventory_delta_candidate_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-candidate"
+    ]
+    promotion_router_inventory_delta_witness_requirements_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-requirements"
+    ]
+    promotion_router_inventory_delta_witness_minting_preflight_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-minting-preflight"
+    ]
+    promotion_router_inventory_delta_witness_minting_denial_report_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-minting-denial-report"
+    ]
+    promotion_router_inventory_delta_witness_remediation_plan_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-remediation-plan"
+    ]
+    promotion_router_inventory_delta_witness_remediation_evidence_request_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request"
+    ]
+    promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_entry = entries[
+        "component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request-status-ledger"
+    ]
+    promotion_route_binding_decision_report_entry = entries[
+        "component-route-family-promotion-route-binding-decision-report"
+    ]
+    promotion_lifecycle_transition_decision_report_entry = entries[
+        "component-route-family-promotion-lifecycle-transition-decision-report"
+    ]
+    promotion_authority_upgrade_decision_report_entry = entries[
+        "component-route-family-promotion-authority-upgrade-witness-decision-report"
+    ]
     proof_entry = entries["component-proof-binding"]
     read_model_entry = entries["component-read-model"]
     graph_entry = entries["component-graph"]
@@ -103,6 +169,7 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     simulation_entry = entries["component-request-simulation"]
     bundle_compilation_entry = entries["component-bundle-compilation"]
     lifecycle_entry = entries["component-lifecycle-transition-receipts"]
+    authority_witness_entry = entries["component-authority-envelope-witnesses"]
     dead_component_entry = entries["component-dead-component-detection"]
 
     assert validate_protocol_manifest(manifest) == []
@@ -112,6 +179,187 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     assert router_entry["path"] == "schemas/component_router_inventory.schema.json"
     assert router_entry["urn"] == "urn:mullusi:schema:component-router-inventory:1"
     assert router_entry["surface"] == "governance"
+    assert ownership_entry["path"] == "schemas/component_route_family_ownership.schema.json"
+    assert ownership_entry["urn"] == "urn:mullusi:schema:component-route-family-ownership:1"
+    assert ownership_entry["surface"] == "governance"
+    assert promotion_preflight_entry["path"] == (
+        "schemas/component_route_family_promotion_preflight.schema.json"
+    )
+    assert promotion_preflight_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-preflight:1"
+    )
+    assert promotion_preflight_entry["surface"] == "governance"
+    assert promotion_witness_entry["path"] == (
+        "schemas/component_route_family_promotion_witness_requirements.schema.json"
+    )
+    assert promotion_witness_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-witness-requirements:1"
+    )
+    assert promotion_witness_entry["surface"] == "governance"
+    assert promotion_witness_evidence_entry["path"] == (
+        "schemas/component_route_family_promotion_witness_evidence.schema.json"
+    )
+    assert promotion_witness_evidence_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-witness-evidence:1"
+    )
+    assert promotion_witness_evidence_entry["surface"] == "governance"
+    assert promotion_approval_candidates_entry["path"] == (
+        "schemas/component_route_family_promotion_approval_candidates.schema.json"
+    )
+    assert promotion_approval_candidates_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-approval-candidates:1"
+    )
+    assert promotion_approval_candidates_entry["surface"] == "governance"
+    assert promotion_approval_intake_entry["path"] == (
+        "schemas/component_route_family_promotion_approval_intake.schema.json"
+    )
+    assert promotion_approval_intake_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-approval-intake:1"
+    )
+    assert promotion_approval_intake_entry["surface"] == "governance"
+    assert promotion_submitted_evidence_verifier_entry["path"] == (
+        "schemas/component_route_family_promotion_submitted_evidence_verifier.schema.json"
+    )
+    assert promotion_submitted_evidence_verifier_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-verifier:1"
+    )
+    assert promotion_submitted_evidence_verifier_entry["surface"] == "governance"
+    assert promotion_submitted_evidence_records_entry["path"] == (
+        "schemas/component_route_family_promotion_submitted_evidence_records.schema.json"
+    )
+    assert promotion_submitted_evidence_records_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-records:1"
+    )
+    assert promotion_submitted_evidence_records_entry["surface"] == "governance"
+    assert promotion_submitted_evidence_payload_examples_entry["path"] == (
+        "schemas/component_route_family_promotion_submitted_evidence_payload_examples.schema.json"
+    )
+    assert promotion_submitted_evidence_payload_examples_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-submitted-evidence-payload-examples:1"
+    )
+    assert promotion_submitted_evidence_payload_examples_entry["surface"] == "governance"
+    assert promotion_operator_submitted_evidence_records_entry["path"] == (
+        "schemas/component_route_family_promotion_operator_submitted_evidence_records.schema.json"
+    )
+    assert promotion_operator_submitted_evidence_records_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-operator-submitted-evidence-records:1"
+    )
+    assert promotion_operator_submitted_evidence_records_entry["surface"] == "governance"
+    assert promotion_gate_satisfaction_evaluator_entry["path"] == (
+        "schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json"
+    )
+    assert promotion_gate_satisfaction_evaluator_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-gate-satisfaction-evaluator:1"
+    )
+    assert promotion_gate_satisfaction_evaluator_entry["surface"] == "governance"
+    assert promotion_authority_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_authority_decision_report.schema.json"
+    )
+    assert promotion_authority_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-authority-decision-report:1"
+    )
+    assert promotion_authority_decision_report_entry["surface"] == "governance"
+    assert promotion_authority_upgrade_witness_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json"
+    )
+    assert promotion_authority_upgrade_witness_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-authority-upgrade-witness-decision-report:1"
+    )
+    assert promotion_authority_upgrade_witness_decision_report_entry["surface"] == "governance"
+    assert promotion_product_ownership_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json"
+    )
+    assert promotion_product_ownership_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-product-ownership-decision-report:1"
+    )
+    assert promotion_product_ownership_decision_report_entry["surface"] == "governance"
+    assert promotion_terminal_closure_denial_report_entry["path"] == (
+        "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json"
+    )
+    assert promotion_terminal_closure_denial_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-terminal-closure-denial-report:1"
+    )
+    assert promotion_terminal_closure_denial_report_entry["surface"] == "governance"
+    assert promotion_missing_evidence_ledger_entry["path"] == (
+        "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json"
+    )
+    assert promotion_missing_evidence_ledger_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-missing-evidence-ledger:1"
+    )
+    assert promotion_missing_evidence_ledger_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_candidate_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_candidate.schema.json"
+    )
+    assert promotion_router_inventory_delta_candidate_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-candidate:1"
+    )
+    assert promotion_router_inventory_delta_candidate_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_requirements_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_requirements.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_requirements_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-requirements:1"
+    )
+    assert promotion_router_inventory_delta_witness_requirements_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_minting_preflight_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_preflight.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_minting_preflight_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-minting-preflight:1"
+    )
+    assert promotion_router_inventory_delta_witness_minting_preflight_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_minting_denial_report_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_minting_denial_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-minting-denial-report:1"
+    )
+    assert promotion_router_inventory_delta_witness_minting_denial_report_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_remediation_plan_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_remediation_plan_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-plan:1"
+    )
+    assert promotion_router_inventory_delta_witness_remediation_plan_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_remediation_evidence_request_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_remediation_evidence_request_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request:1"
+    )
+    assert promotion_router_inventory_delta_witness_remediation_evidence_request_entry["surface"] == "governance"
+    assert promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_entry["path"] == (
+        "schemas/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.schema.json"
+    )
+    assert promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-router-inventory-delta-witness-remediation-evidence-request-status-ledger:1"
+    )
+    assert (
+        promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger_entry["surface"]
+        == "governance"
+    )
+    assert promotion_route_binding_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_route_binding_decision_report.schema.json"
+    )
+    assert promotion_route_binding_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-route-binding-decision-report:1"
+    )
+    assert promotion_route_binding_decision_report_entry["surface"] == "governance"
+    assert promotion_lifecycle_transition_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json"
+    )
+    assert promotion_lifecycle_transition_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-lifecycle-transition-decision-report:1"
+    )
+    assert promotion_lifecycle_transition_decision_report_entry["surface"] == "governance"
+    assert promotion_authority_upgrade_decision_report_entry["path"] == (
+        "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json"
+    )
+    assert promotion_authority_upgrade_decision_report_entry["urn"] == (
+        "urn:mullusi:schema:component-route-family-promotion-authority-upgrade-witness-decision-report:1"
+    )
+    assert promotion_authority_upgrade_decision_report_entry["surface"] == "governance"
     assert proof_entry["path"] == "schemas/component_proof_binding.schema.json"
     assert proof_entry["urn"] == "urn:mullusi:schema:component-proof-binding:1"
     assert proof_entry["surface"] == "governance"
@@ -133,6 +381,9 @@ def test_protocol_manifest_indexes_component_registry() -> None:
     assert lifecycle_entry["path"] == "schemas/component_lifecycle_transition_receipts.schema.json"
     assert lifecycle_entry["urn"] == "urn:mullusi:schema:component-lifecycle-transition-receipts:1"
     assert lifecycle_entry["surface"] == "governance"
+    assert authority_witness_entry["path"] == "schemas/component_authority_envelope_witnesses.schema.json"
+    assert authority_witness_entry["urn"] == "urn:mullusi:schema:component-authority-envelope-witnesses:1"
+    assert authority_witness_entry["surface"] == "governance"
     assert dead_component_entry["path"] == (
         "schemas/component_dead_component_detection.schema.json"
     )
@@ -146,6 +397,10 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     receipt_entry = entries["operator-receipt-viewer-read-model"]
+    approval_history_entry = entries["operator-approval-history-read-model"]
+    plan_review_entry = entries["operator-plan-review-read-model"]
+    budget_report_entry = entries["operator-budget-report-read-model"]
+    plan_receipt_export_entry = entries["operator-plan-receipt-export-read-model"]
     task_entry = entries["current-task-read-model"]
 
     assert validate_protocol_manifest(manifest) == []
@@ -156,6 +411,34 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
         "urn:mullusi:schema:operator-receipt-viewer-read-model:1"
     )
     assert receipt_entry["surface"] == "operator"
+    assert approval_history_entry["path"] == (
+        "schemas/operator_approval_history_read_model.schema.json"
+    )
+    assert approval_history_entry["urn"] == (
+        "urn:mullusi:schema:operator-approval-history-read-model:1"
+    )
+    assert approval_history_entry["surface"] == "operator"
+    assert plan_review_entry["path"] == (
+        "schemas/operator_plan_review_read_model.schema.json"
+    )
+    assert plan_review_entry["urn"] == (
+        "urn:mullusi:schema:operator-plan-review-read-model:1"
+    )
+    assert plan_review_entry["surface"] == "operator"
+    assert budget_report_entry["path"] == (
+        "schemas/operator_budget_report_read_model.schema.json"
+    )
+    assert budget_report_entry["urn"] == (
+        "urn:mullusi:schema:operator-budget-report-read-model:1"
+    )
+    assert budget_report_entry["surface"] == "operator"
+    assert plan_receipt_export_entry["path"] == (
+        "schemas/operator_plan_receipt_export_read_model.schema.json"
+    )
+    assert plan_receipt_export_entry["urn"] == (
+        "urn:mullusi:schema:operator-plan-receipt-export-read-model:1"
+    )
+    assert plan_receipt_export_entry["surface"] == "operator"
     assert task_entry["path"] == "schemas/current_task_read_model.schema.json"
     assert task_entry["urn"] == "urn:mullusi:schema:current-task-read-model:1"
     assert task_entry["surface"] == "operator"
@@ -221,7 +504,7 @@ def test_protocol_manifest_indexes_connector_self_healing_receipt() -> None:
     assert healing_entry["surface"] == "connector"
 
 
-def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> None:
+def test_protocol_manifest_indexes_team_ops_shared_inbox_operator_handoff_bundle() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     handoff_entry = entries["durable-gmail-oauth-operator-handoff"]

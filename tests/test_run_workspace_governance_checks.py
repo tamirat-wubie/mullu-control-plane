@@ -55,13 +55,41 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_model_projections",
         "agentic_service_harness_read_model_integrity",
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_github_repo_task_service",
+        "agentic_service_harness_github_task_receipt_emitter_dry_run",
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
         "component_registry",
         "component_lifecycle_transition_receipts",
+        "component_authority_envelope_witnesses",
         "component_router_inventory",
         "component_proof_binding",
+        "component_route_family_ownership",
+        "component_route_family_promotion_preflight",
+        "component_route_family_promotion_witness_requirements",
+        "component_route_family_promotion_witness_evidence",
+        "component_route_family_promotion_approval_candidates",
+        "component_route_family_promotion_approval_intake",
+        "component_route_family_promotion_submitted_evidence_verifier",
+        "component_route_family_promotion_submitted_evidence_records",
+        "component_route_family_promotion_submitted_evidence_payload_examples",
+        "component_route_family_promotion_operator_submitted_evidence_records",
+        "component_route_family_promotion_gate_satisfaction_evaluator",
+        "component_route_family_promotion_authority_decision_report",
+        "component_route_family_promotion_route_binding_decision_report",
+        "component_route_family_promotion_lifecycle_transition_decision_report",
+        "component_route_family_promotion_authority_upgrade_witness_decision_report",
+        "component_route_family_promotion_product_ownership_decision_report",
+        "component_route_family_promotion_terminal_closure_denial_report",
+        "component_route_family_promotion_missing_evidence_ledger",
+        "component_route_family_promotion_router_inventory_delta_candidate",
+        "component_route_family_promotion_router_inventory_delta_witness_requirements",
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
         "component_read_model",
         "component_autopsy",
         "component_request_simulation",
@@ -177,6 +205,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("agentic_service_harness_read_model_integrity", "agentic_service_harness_read_model_persistence")
     assert_ordered(
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_github_repo_task_service",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_repo_task_service",
         "agentic_service_harness_read_only_status_route_design",
     )
     assert_ordered(
@@ -197,6 +229,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_lifecycle_transition_receipts",
+        "component_authority_envelope_witnesses",
+    )
+    assert_ordered(
+        "component_authority_envelope_witnesses",
         "component_router_inventory",
     )
     assert_ordered(
@@ -205,6 +241,106 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_proof_binding",
+        "component_route_family_ownership",
+    )
+    assert_ordered(
+        "component_route_family_ownership",
+        "component_route_family_promotion_preflight",
+    )
+    assert_ordered(
+        "component_route_family_promotion_preflight",
+        "component_route_family_promotion_witness_requirements",
+    )
+    assert_ordered(
+        "component_route_family_promotion_witness_requirements",
+        "component_route_family_promotion_witness_evidence",
+    )
+    assert_ordered(
+        "component_route_family_promotion_witness_evidence",
+        "component_route_family_promotion_approval_candidates",
+    )
+    assert_ordered(
+        "component_route_family_promotion_approval_candidates",
+        "component_route_family_promotion_approval_intake",
+    )
+    assert_ordered(
+        "component_route_family_promotion_approval_intake",
+        "component_route_family_promotion_submitted_evidence_verifier",
+    )
+    assert_ordered(
+        "component_route_family_promotion_submitted_evidence_verifier",
+        "component_route_family_promotion_submitted_evidence_records",
+    )
+    assert_ordered(
+        "component_route_family_promotion_submitted_evidence_records",
+        "component_route_family_promotion_submitted_evidence_payload_examples",
+    )
+    assert_ordered(
+        "component_route_family_promotion_submitted_evidence_payload_examples",
+        "component_route_family_promotion_operator_submitted_evidence_records",
+    )
+    assert_ordered(
+        "component_route_family_promotion_operator_submitted_evidence_records",
+        "component_route_family_promotion_gate_satisfaction_evaluator",
+    )
+    assert_ordered(
+        "component_route_family_promotion_gate_satisfaction_evaluator",
+        "component_route_family_promotion_authority_decision_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_authority_decision_report",
+        "component_route_family_promotion_route_binding_decision_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_route_binding_decision_report",
+        "component_route_family_promotion_lifecycle_transition_decision_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_lifecycle_transition_decision_report",
+        "component_route_family_promotion_authority_upgrade_witness_decision_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_authority_upgrade_witness_decision_report",
+        "component_route_family_promotion_product_ownership_decision_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_product_ownership_decision_report",
+        "component_route_family_promotion_terminal_closure_denial_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_terminal_closure_denial_report",
+        "component_route_family_promotion_missing_evidence_ledger",
+    )
+    assert_ordered(
+        "component_route_family_promotion_missing_evidence_ledger",
+        "component_route_family_promotion_router_inventory_delta_candidate",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_candidate",
+        "component_route_family_promotion_router_inventory_delta_witness_requirements",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_requirements",
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
+    )
+    assert_ordered(
+        "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
         "component_read_model",
     )
     assert_ordered(

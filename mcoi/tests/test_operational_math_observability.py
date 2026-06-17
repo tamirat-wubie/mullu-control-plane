@@ -50,6 +50,8 @@ def test_summary_marks_saturated_receipt_as_closed() -> None:
     assert summary["event_count"] == 11
     assert summary["applied_principle_count"] == 3
     assert summary["unresolved_principle_count"] == 0
+    assert summary["unverified_control_count"] == 0
+    assert summary["unverified_control_ids"] == []
     assert summary["requires_operator_review"] is False
     assert summary["review_signals"] == []
 
@@ -71,6 +73,29 @@ def test_summary_marks_incomplete_receipt_for_review() -> None:
     assert summary["unresolved_principle_ids"] == ["F3", "F5"]
     assert "operational_math_status_not_passed" in summary["review_signals"]
     assert "operational_math_unresolved_principles" in summary["review_signals"]
+    assert "operational_math_solver_not_verified" in summary["review_signals"]
+
+
+def test_summary_marks_unverified_controls_for_review() -> None:
+    summary = summarize_operational_math_receipt(
+        _receipt(
+            solver_outcome="AwaitingEvidence",
+            result={
+                "unverified_control_ids": [
+                    "numerical_stability_bound",
+                    "proof_receipt",
+                ]
+            },
+        )
+    )
+
+    assert summary["requires_operator_review"] is True
+    assert summary["unverified_control_count"] == 2
+    assert summary["unverified_control_ids"] == [
+        "numerical_stability_bound",
+        "proof_receipt",
+    ]
+    assert "operational_math_unverified_controls" in summary["review_signals"]
     assert "operational_math_solver_not_verified" in summary["review_signals"]
 
 
