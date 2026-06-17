@@ -443,6 +443,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["read_only_first_worker_path"]["exact_test_anchor_count"] == 11
     assert surfaces["read_only_document_worker_path"]["unanchored_witness_count"] == 0
     assert surfaces["read_only_document_worker_path"]["exact_test_anchor_count"] == 10
+    assert surfaces["read_only_search_worker_path"]["unanchored_witness_count"] == 0
+    assert surfaces["read_only_search_worker_path"]["exact_test_anchor_count"] == 11
     assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["task_queue_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
@@ -3649,6 +3651,31 @@ def test_read_only_document_worker_path_surface_is_foundation_bound() -> None:
     assert "read_only_document_worker_rejects_mutation_and_network_inputs" in witnesses
     assert "read_only_document_worker_rejects_secret_like_input_values" in witnesses
     assert closure_actions["publish_read_only_document_worker_path_contract"]["status"] == "closed"
+
+
+def test_read_only_search_worker_path_surface_is_foundation_bound() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    search_surface = surfaces["read_only_search_worker_path"]
+    witnesses = set(search_surface["runtime_witnesses"])
+
+    assert search_surface["coverage_state"] == "proven"
+    assert search_surface["request_proof"] == "request_proof"
+    assert search_surface["action_proof"] == "action_proof"
+    assert "enterprise.knowledge_search" in search_surface["representative_paths"]
+    assert "build_read_only_search_worker_lease" in search_surface["representative_paths"]
+    assert "gateway/read_only_search_worker.py" in search_surface["evidence_files"]
+    assert "schemas/read_only_search_worker_path.schema.json" in search_surface["evidence_files"]
+    assert "scripts/validate_read_only_search_worker_path.py" in search_surface["evidence_files"]
+    assert "read_only_search_worker_path_example_passes" in witnesses
+    assert "read_only_search_worker_path_rejects_web_retrieval" in witnesses
+    assert "read_only_search_worker_rejects_missing_decision_receipt" in witnesses
+    assert "read_only_search_worker_rejects_decision_query_mismatch" in witnesses
+    assert "read_only_search_worker_rejects_unsupported_format" in witnesses
+    assert "read_only_search_worker_rejects_mutation_and_network_inputs" in witnesses
+    assert "read_only_search_worker_rejects_secret_like_input_values" in witnesses
+    assert closure_actions["publish_read_only_search_worker_path_contract"]["status"] == "closed"
 
 
 def test_software_dev_capability_pack_surface_requires_explicit_admission() -> None:

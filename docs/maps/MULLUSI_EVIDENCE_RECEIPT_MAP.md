@@ -52,6 +52,7 @@ MessageReceipt
 -> TenantBindingReceipt
 -> NormalizationReceipt
 -> InterpretationReceipt
+-> SearchDecisionReceipt
 -> SearchReceipt or PlanReceipt or ClarificationReceipt or DenialReceipt
 -> PolicyReceipt
 -> BudgetReceipt
@@ -64,7 +65,7 @@ MessageReceipt
 -> AuditTrailEntry
 ```
 
-Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence. Search-backed paths expose `SearchDecisionReceipt` rows in the operator receipt viewer without raw-query disclosure.
+Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence. Search-backed paths expose `SearchDecisionReceipt` rows in the operator receipt viewer without raw-query disclosure, and local read-only search execution emits worker receipts with evidence-only redacted excerpts while the full source-level `SearchReceipt` remains the next evidence surface.
 
 ## 4. Redaction rules
 

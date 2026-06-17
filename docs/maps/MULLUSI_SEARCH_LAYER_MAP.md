@@ -44,9 +44,9 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Decision Receipt Writer | record classification, freshness, budget, retrieval authority, and viewer projection before execution | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Receipt viewer exposes search decision drilldowns without raw-query exposure; repeat the read-only worker contract pattern for search worker execution. |
-| Search Receipt Writer | record retrieval outcome and evidence metadata after decision | search state, budget, citations | SearchReceipt | implemented / partial | `SearchReceipt` records blocked retrieval, freshness, conflicts, citations, retrieval errors, and evidence metadata without retaining retrieved content bodies. |
-| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` and `SearchDecisionReceipt.budget_state` block deep retrieval on BudgetUnknown or missing approval; tenant-specific policy binding remains next. |
+| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Bind source-level freshness evidence to future SearchReceipt rows. |
+| Read-Only Search Worker | execute local evidence-only text search after receipt admission | query hash, matching SearchDecisionReceipt, local source refs | WorkerReceipt with bounded result refs | implemented / partial | Keep web retrieval blocked until provider, freshness, and citation contracts are admitted. |
+| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | Connect tenant-specific budget policy to search decision request construction. |
 
 ## 4. SearchDecision fields
 
@@ -110,7 +110,15 @@ SearchReceipt {
 }
 ```
 
-`SearchReceipt` is post-decision. It can prove that retrieval was blocked, failed, stale, conflicted, or produced metadata-backed evidence. It stores evidence metadata and citation refs, not retrieved content bodies.
+Read-only local worker contract:
+
+```text
+gateway/read_only_search_worker.py
+-> requires matching SearchDecisionReceipt
+-> accepts only local text-like source paths
+-> blocks web URLs, network targets, mutation, secrets, and spend
+-> emits worker-mesh receipts with evidence-only redacted excerpts
+```
 
 ## 6. Retrieval safety rules
 
