@@ -1860,6 +1860,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "read_only_first_worker_path",
+            [
+                "repository.inspect_read_only",
+                "build_read_only_repository_inspection_lease",
+                "build_worker_failure_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/read_only_repository_worker.py",
+                "gateway/worker_failure_receipt.py",
+                "schemas/read_only_first_worker_path.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "examples/read_only_first_worker_path.foundation.json",
+                "scripts/validate_read_only_first_worker_path.py",
+                "tests/test_validate_read_only_first_worker_path.py",
+                "tests/test_gateway/test_read_only_repository_worker.py",
+                "tests/test_gateway/test_worker_failure_receipt.py",
+            ],
+            "Foundation Mode first worker path selects local read-only repository inspection, rejects mutation, network, secret, and out-of-bound path inputs, emits worker-mesh receipts with redacted evidence, and maps failed or partial worker dispatches to non-terminal recovery receipts.",
+            [
+                "read_only_first_worker_path_example_passes",
+                "read_only_first_worker_path_rejects_mutation_authority",
+                "read_only_first_worker_path_rejects_missing_path_boundary",
+                "read_only_repository_worker_dispatches_schema_valid_receipt",
+                "read_only_repository_worker_redacts_secret_like_matches",
+                "read_only_repository_worker_rejects_path_boundary_violation",
+                "read_only_repository_worker_rejects_mutation_and_network_inputs",
+                "worker_failure_receipt_validates_partial_completion",
+                "worker_failure_receipt_classifies_rejected_before_handler",
+                "worker_failure_receipt_rejects_success_source",
+                "worker_failure_receipt_rejects_impossible_unit_counts",
+            ],
+        ),
+        _surface(
             "restricted_adapter_worker_boundaries",
             [
                 "/browser/execute",
@@ -11357,6 +11394,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_networked_worker_mesh_contract",
             "surfaces": ["networked_worker_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_read_only_first_worker_path_contract",
+            "surfaces": ["read_only_first_worker_path"],
             "status": "closed",
         },
         {

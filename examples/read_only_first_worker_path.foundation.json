@@ -1,0 +1,65 @@
+{
+  "schema_ref": "urn:mullusi:schema:read-only-first-worker-path:1",
+  "selection_id": "read-only-first-worker-path-20260616",
+  "selected_capability_id": "repository.inspect_read_only",
+  "status": "selected_for_foundation_mode",
+  "mode": "read_only",
+  "decision_rationale": "The first worker path is local repository inspection because it requires no external connector, no tenant external resource, no secret, no spend, no network access, and no mutation authority. It can prove leasing, path containment, redaction, deterministic traversal, and terminal receipts before any broader worker is admitted.",
+  "mutation_allowed": false,
+  "external_network_allowed": false,
+  "secrets_required": false,
+  "spend_required": false,
+  "selected_over": [
+    {
+      "capability_id": "enterprise.knowledge_search",
+      "reason_not_selected": "Search requires freshness, retrieval safety, and budget gates that are still open in the gap register."
+    },
+    {
+      "capability_id": "document.inspect_read_only",
+      "reason_not_selected": "Document inspection is useful but introduces file-format parsing risk before the worker lease and receipt spine is proven."
+    }
+  ],
+  "allowed_inputs": {
+    "repository_relative_paths": true,
+    "glob_patterns": true,
+    "query_text": true,
+    "max_files": 200,
+    "max_bytes_per_file": 262144
+  },
+  "blocked_inputs": {
+    "absolute_paths_outside_repository": true,
+    "raw_secret_values": true,
+    "write_requests": true,
+    "network_targets": true,
+    "tenant_external_resources": true
+  },
+  "allowed_outputs": [
+    "file_inventory_summary",
+    "bounded_text_match_summary",
+    "content_hashes",
+    "finding_receipts",
+    "redacted_excerpt_refs"
+  ],
+  "required_receipts": [
+    "worker_lease_receipt",
+    "input_hash_receipt",
+    "repository_boundary_witness",
+    "read_only_result_receipt",
+    "redaction_witness",
+    "terminal_closure_or_blocker_receipt"
+  ],
+  "proof_obligations": [
+    "no_write_operation",
+    "no_external_network",
+    "path_boundary",
+    "scan_bounds",
+    "secret_redaction",
+    "deterministic_traversal"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_first_worker_path.py",
+    "python -m pytest tests/test_validate_read_only_first_worker_path.py -q"
+  ],
+  "rollback_plan": "No runtime or external state is changed by this selection artifact. Rollback is removal of the schema, example, manifest entry, validator, tests, and map references.",
+  "next_action": "Implement the repository.inspect_read_only worker contract against the existing worker mesh lease and receipt schema."
+}
