@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:worker-failure-receipt:1",
+  "title": "Worker Failure Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "receipt_id",
+    "worker_receipt_id",
+    "request_id",
+    "command_id",
+    "capability",
+    "operation",
+    "tenant_id",
+    "lease_id",
+    "failure_state",
+    "reason",
+    "partial_completion",
+    "attempted_units",
+    "completed_units",
+    "recovery_action",
+    "recovery_ref",
+    "evidence_refs",
+    "terminal_closure_required",
+    "receipt_is_not_terminal_closure",
+    "generated_at",
+    "source_receipt_hash",
+    "failure_hash"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "urn:mullusi:schema:worker-failure-receipt:1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "worker_receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lease_id": {
+      "type": "string"
+    },
+    "failure_state": {
+      "type": "string",
+      "enum": [
+        "rejected_before_handler",
+        "failed_during_handler",
+        "failed_after_handler",
+        "partial_completion",
+        "unknown_failure"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "partial_completion": {
+      "type": "boolean"
+    },
+    "attempted_units": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "completed_units": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "recovery_action": {
+      "type": "string",
+      "enum": [
+        "retry_same_lease",
+        "retry_new_lease",
+        "operator_review",
+        "safe_halt",
+        "no_retry"
+      ]
+    },
+    "recovery_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "terminal_closure_required": {
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "const": true
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_receipt_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failure_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

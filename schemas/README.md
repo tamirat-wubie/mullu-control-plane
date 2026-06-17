@@ -106,6 +106,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `sdlc_deployment_candidate.schema.json` | Canonical governed software-delivery deployment readiness artifact |
 | `sdlc_recovery_handoff_receipt.schema.json` | Canonical governed software-delivery rollback and incident handoff receipt |
 | `sdlc_closure_receipt.schema.json` | Canonical governed software-delivery terminal closure receipt |
+| `search_decision_receipt.schema.json` | Canonical search classification, freshness, budget, and retrieval-authority receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |
 | `software_dev/*.output.schema.json` | Governed output and receipt contracts for repository maps, context bundles, gate plans, software-change receipts, app task graphs, and PR candidates |
@@ -153,7 +154,9 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |
+| `read_only_first_worker_path.schema.json` | Canonical Foundation Mode first worker path selection |
 | `world_state.schema.json` | Canonical world-state graph projection |
+| `worker_failure_receipt.schema.json` | Canonical non-terminal worker failure and recovery receipt |
 | `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |

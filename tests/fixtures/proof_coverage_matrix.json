@@ -783,6 +783,13 @@
       ]
     },
     {
+      "action_id": "publish_read_only_first_worker_path_contract",
+      "status": "closed",
+      "surfaces": [
+        "read_only_first_worker_path"
+      ]
+    },
+    {
       "action_id": "publish_software_dev_capability_pack_contract",
       "status": "closed",
       "surfaces": [
@@ -1154,7 +1161,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 107,
+      "action_proof": 108,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 51,
@@ -1162,13 +1169,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 157,
+      "audit_chain": 158,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 72,
+      "proven": 73,
       "unproven": 0,
       "witnessed": 88
     },
@@ -1177,14 +1184,14 @@
       "audit_chain": 0,
       "gap": 0,
       "read_model": 53,
-      "request_proof": 106
+      "request_proof": 107
     },
-    "surface_count": 160
+    "surface_count": 161
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 160,
+      "strong": 161,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5054,6 +5061,43 @@
         "local_smoke_stub_bound_to_local_environment"
       ],
       "surface_id": "capability_worker_execution"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/read_only_repository_worker.py",
+        "gateway/worker_failure_receipt.py",
+        "schemas/read_only_first_worker_path.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "examples/read_only_first_worker_path.foundation.json",
+        "scripts/validate_read_only_first_worker_path.py",
+        "tests/test_validate_read_only_first_worker_path.py",
+        "tests/test_gateway/test_read_only_repository_worker.py",
+        "tests/test_gateway/test_worker_failure_receipt.py"
+      ],
+      "notes": "Foundation Mode first worker path selects local read-only repository inspection, rejects mutation, network, secret, and out-of-bound path inputs, emits worker-mesh receipts with redacted evidence, and maps failed or partial worker dispatches to non-terminal recovery receipts.",
+      "representative_paths": [
+        "repository.inspect_read_only",
+        "build_read_only_repository_inspection_lease",
+        "build_worker_failure_receipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "read_only_first_worker_path_example_passes",
+        "read_only_first_worker_path_rejects_mutation_authority",
+        "read_only_first_worker_path_rejects_missing_path_boundary",
+        "read_only_repository_worker_dispatches_schema_valid_receipt",
+        "read_only_repository_worker_redacts_secret_like_matches",
+        "read_only_repository_worker_rejects_path_boundary_violation",
+        "read_only_repository_worker_rejects_mutation_and_network_inputs",
+        "worker_failure_receipt_validates_partial_completion",
+        "worker_failure_receipt_classifies_rejected_before_handler",
+        "worker_failure_receipt_rejects_success_source",
+        "worker_failure_receipt_rejects_impossible_unit_counts"
+      ],
+      "surface_id": "read_only_first_worker_path"
     },
     {
       "action_proof": "action_proof",
@@ -12384,8 +12428,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1578,
-    "runtime_witness_count": 1578,
+    "exact_test_anchor_count": 1589,
+    "runtime_witness_count": 1589,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14066,6 +14110,81 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "capability_worker_execution",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_read_only_first_worker_path.py::test_read_only_first_worker_path_example_passes"
+            ],
+            "witness": "read_only_first_worker_path_example_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_first_worker_path.py::test_read_only_first_worker_path_rejects_mutation_authority"
+            ],
+            "witness": "read_only_first_worker_path_rejects_mutation_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_first_worker_path.py::test_read_only_first_worker_path_rejects_missing_path_boundary"
+            ],
+            "witness": "read_only_first_worker_path_rejects_missing_path_boundary"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_repository_worker.py::test_read_only_repository_worker_dispatches_schema_valid_receipt"
+            ],
+            "witness": "read_only_repository_worker_dispatches_schema_valid_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_repository_worker.py::test_read_only_repository_worker_redacts_secret_like_matches"
+            ],
+            "witness": "read_only_repository_worker_redacts_secret_like_matches"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_repository_worker.py::test_read_only_repository_worker_rejects_path_boundary_violation"
+            ],
+            "witness": "read_only_repository_worker_rejects_path_boundary_violation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_repository_worker.py::test_read_only_repository_worker_rejects_mutation_and_network_inputs"
+            ],
+            "witness": "read_only_repository_worker_rejects_mutation_and_network_inputs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_worker_failure_receipt.py::test_worker_failure_receipt_validates_partial_completion"
+            ],
+            "witness": "worker_failure_receipt_validates_partial_completion"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_worker_failure_receipt.py::test_worker_failure_receipt_classifies_rejected_before_handler"
+            ],
+            "witness": "worker_failure_receipt_classifies_rejected_before_handler"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_worker_failure_receipt.py::test_worker_failure_receipt_rejects_success_source"
+            ],
+            "witness": "worker_failure_receipt_rejects_success_source"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_worker_failure_receipt.py::test_worker_failure_receipt_rejects_impossible_unit_counts"
+            ],
+            "witness": "worker_failure_receipt_rejects_impossible_unit_counts"
+          }
+        ],
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
+        "surface_id": "read_only_first_worker_path",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

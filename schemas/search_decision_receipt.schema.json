@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:search-decision-receipt:1",
+  "title": "Search Decision Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "receipt_id",
+    "tenant_id",
+    "actor_id",
+    "capability_id",
+    "query_hash",
+    "search_classification",
+    "freshness_state",
+    "budget_state",
+    "retrieval_authority",
+    "retrieval_instruction_authority_allowed",
+    "decision",
+    "blocked_reasons",
+    "estimated_cost_units",
+    "budget_limit_units",
+    "max_result_count",
+    "generated_at",
+    "receipt_hash"
+  ],
+  "properties": {
+    "schema_ref": {"const": "urn:mullusi:schema:search-decision-receipt:1"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "capability_id": {"const": "enterprise.knowledge_search"},
+    "query_hash": {"type": "string", "minLength": 1},
+    "search_classification": {
+      "type": "string",
+      "enum": ["no_search", "cache", "local_search", "light_web_search", "deep_search"]
+    },
+    "freshness_state": {
+      "type": "string",
+      "enum": ["not_required", "cache_fresh", "source_required", "refresh_required", "unknown"]
+    },
+    "budget_state": {
+      "type": "string",
+      "enum": ["not_required", "allowed", "blocked", "unknown"]
+    },
+    "retrieval_authority": {"const": "evidence_only"},
+    "retrieval_instruction_authority_allowed": {"const": false},
+    "decision": {
+      "type": "string",
+      "enum": ["no_search", "use_cache", "allow_search", "block_search"]
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "estimated_cost_units": {"type": "number", "minimum": 0},
+    "budget_limit_units": {"type": "number", "minimum": 0},
+    "max_result_count": {"type": "integer", "minimum": 0},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

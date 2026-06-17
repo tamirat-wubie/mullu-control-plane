@@ -32,7 +32,33 @@
       "type": "string",
       "enum": ["certified", "awaiting_certificate", "not_found"]
     },
-    "plan_review": {"$ref": "urn:mullusi:schema:operator-plan-review-read-model:1"},
+    "plan_review": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "schema_ref",
+        "plan_id_filter",
+        "count",
+        "plans",
+        "raw_message_exposed",
+        "execution_allowed",
+        "write_allowed",
+        "governed"
+      ],
+      "properties": {
+        "schema_ref": {
+          "type": "string",
+          "const": "urn:mullusi:schema:operator-plan-review-read-model:1"
+        },
+        "plan_id_filter": {"type": "string"},
+        "count": {"type": "integer", "minimum": 0},
+        "plans": {"type": "array"},
+        "raw_message_exposed": {"type": "boolean", "const": false},
+        "execution_allowed": {"type": "boolean", "const": false},
+        "write_allowed": {"type": "boolean", "const": false},
+        "governed": {"type": "boolean", "const": true}
+      }
+    },
     "plan_evidence_bundle": {
       "anyOf": [
         {"type": "null"},

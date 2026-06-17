@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-first-worker-path:1",
+  "title": "Read-Only First Worker Path",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "selection_id",
+    "selected_capability_id",
+    "status",
+    "mode",
+    "decision_rationale",
+    "mutation_allowed",
+    "external_network_allowed",
+    "secrets_required",
+    "spend_required",
+    "selected_over",
+    "allowed_inputs",
+    "blocked_inputs",
+    "allowed_outputs",
+    "required_receipts",
+    "proof_obligations",
+    "acceptance_tests",
+    "rollback_plan",
+    "next_action"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "urn:mullusi:schema:read-only-first-worker-path:1"
+    },
+    "selection_id": {
+      "type": "string",
+      "pattern": "^read-only-first-worker-path-[0-9]{8}$"
+    },
+    "selected_capability_id": {
+      "const": "repository.inspect_read_only"
+    },
+    "status": {
+      "const": "selected_for_foundation_mode"
+    },
+    "mode": {
+      "const": "read_only"
+    },
+    "decision_rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mutation_allowed": {
+      "const": false
+    },
+    "external_network_allowed": {
+      "const": false
+    },
+    "secrets_required": {
+      "const": false
+    },
+    "spend_required": {
+      "const": false
+    },
+    "selected_over": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/rejected_worker_path"
+      }
+    },
+    "allowed_inputs": {
+      "$ref": "#/$defs/allowed_inputs"
+    },
+    "blocked_inputs": {
+      "$ref": "#/$defs/blocked_inputs"
+    },
+    "allowed_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required_receipts": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "worker_lease_receipt",
+          "input_hash_receipt",
+          "repository_boundary_witness",
+          "read_only_result_receipt",
+          "redaction_witness",
+          "terminal_closure_or_blocker_receipt"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "proof_obligations": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "string",
+        "enum": [
+          "no_write_operation",
+          "no_external_network",
+          "path_boundary",
+          "scan_bounds",
+          "secret_redaction",
+          "deterministic_traversal"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "rollback_plan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "rejected_worker_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_id", "reason_not_selected"],
+      "properties": {
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason_not_selected": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "allowed_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_relative_paths",
+        "glob_patterns",
+        "query_text",
+        "max_files",
+        "max_bytes_per_file"
+      ],
+      "properties": {
+        "repository_relative_paths": {
+          "const": true
+        },
+        "glob_patterns": {
+          "const": true
+        },
+        "query_text": {
+          "const": true
+        },
+        "max_files": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_bytes_per_file": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "blocked_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "absolute_paths_outside_repository",
+        "raw_secret_values",
+        "write_requests",
+        "network_targets",
+        "tenant_external_resources"
+      ],
+      "properties": {
+        "absolute_paths_outside_repository": {
+          "const": true
+        },
+        "raw_secret_values": {
+          "const": true
+        },
+        "write_requests": {
+          "const": true
+        },
+        "network_targets": {
+          "const": true
+        },
+        "tenant_external_resources": {
+          "const": true
+        }
+      }
+    }
+  }
+}

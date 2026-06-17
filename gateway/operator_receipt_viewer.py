@@ -127,6 +127,15 @@ _TASK_STATUSES = (
     "blocked",
     "completed",
 )
+_RESPONSE_STATES = (
+    "received",
+    "in_progress",
+    "waiting_for_approval",
+    "requires_review",
+    "blocked",
+    "awaiting_terminal_evidence",
+    "completed_verified",
+)
 _APPROVAL_STATUSES = ("pending", "approved", "denied", "expired", "unknown")
 _PLAN_REVIEW_STATUSES = (
     "preview_ready",
@@ -372,7 +381,7 @@ def build_current_task_read_model(
         (
             task["command_id"]
             for task in tasks
-            if task["task_status"] != "completed"
+            if task["response_state"] != "completed_verified"
         ),
         "",
     )
@@ -913,6 +922,10 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
         "plan_step_id",
         "command_state",
         "task_status",
+        "response_state",
+        "response_claim_allowed",
+        "response_terminal_certificate_id",
+        "response_blocker",
         "waiting_for",
         "approval_request_id",
         "approval_recovery_available",
@@ -2190,19 +2203,42 @@ def _delivery_receipt(
         return None
 
     terminal_certificate_id = _terminal_certificate_id(terminal_certificate)
+    delivery_detail = delivery_event.detail if delivery_event is not None else {}
+    execution_status = str(delivery_detail.get("execution_status") or "").strip()
+    if not execution_status:
+        execution_status = (
+            "terminal_certified"
+            if terminal_certificate_id
+            else (
+                "response_recorded"
+                if response_event is not None or command.state in _COMPLETED_STATES
+                else "not_closed"
+            )
+        )
+    delivery_error_type = str(delivery_detail.get("delivery_error_type") or "").strip()
+    delivery_succeeded = bool(delivery_detail.get("delivery_succeeded")) if delivery_event is not None else False
+    delivery_attempted = bool(delivery_detail.get("delivery_attempted")) if delivery_event is not None else False
     status = delivery_status or "delivery_status_not_recorded"
     latest_event = delivery_event or response_event or (events[-1] if events else None)
     details = {
         "command_id": command.command_id,
+        "execution_status": execution_status,
+        "delivery_status": delivery_status,
+        "delivery_error_type": delivery_error_type,
+        "delivery_succeeded": delivery_succeeded,
+        "delivery_attempted": delivery_attempted,
+        "execution_delivery_separated": bool(
+            delivery_detail.get("execution_delivery_separated")
+        ),
         "response_recorded": response_event is not None,
         "delivery_status_observed": bool(delivery_status),
-        "delivery_status": delivery_status,
         "terminal_certificate_present": terminal_certificate is not None,
         "terminal_certificate_id": terminal_certificate_id,
     }
     evidence_refs = {
         "command_id": command.command_id,
         "latest_event_hash": latest_event.event_hash if latest_event else "",
+        "delivery_event_hash": delivery_event.event_hash if delivery_event else "",
         "response_event_hash": response_event.event_hash if response_event else "",
         "terminal_certificate_id": terminal_certificate_id,
     }
@@ -2338,6 +2374,15 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         command.state,
         terminal_certificate_present=terminal_certificate is not None,
     )
+    terminal_certificate_id = _terminal_certificate_id(terminal_certificate)
+    response_state = _response_state_for_task(
+        task_status=task_status,
+        terminal_certificate_id=terminal_certificate_id,
+    )
+    response_blocker = _response_blocker(
+        task_status=task_status,
+        terminal_certificate_id=terminal_certificate_id,
+    )
     metadata = _command_metadata(command)
     approval_request_id = _latest_approval_request_id(events)
     return {
@@ -2360,7 +2405,11 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         ),
         "command_state": command.state.value,
         "task_status": task_status,
-        "task_terminal": task_status == "completed",
+        "response_state": response_state,
+        "response_claim_allowed": response_state == "completed_verified",
+        "response_terminal_certificate_id": terminal_certificate_id,
+        "response_blocker": response_blocker,
+        "task_terminal": bool(terminal_certificate_id),
         "task_blocked": task_status == "blocked",
         "waiting_for": _waiting_for(command.state),
         "next_action": _next_action(task_status),
@@ -2479,6 +2528,44 @@ def _command_task_status(command_ledger: Any, command: CommandEnvelope) -> str:
         terminal_certificate_present=command_ledger.terminal_certificate_for(command.command_id)
         is not None,
     )
+
+
+def _response_state_for_task(
+    *,
+    task_status: str,
+    terminal_certificate_id: str,
+) -> str:
+    if terminal_certificate_id:
+        return "completed_verified"
+    if task_status == "completed":
+        return "awaiting_terminal_evidence"
+    if task_status == "blocked":
+        return "blocked"
+    if task_status == "waiting_for_approval":
+        return "waiting_for_approval"
+    if task_status == "requires_review":
+        return "requires_review"
+    if task_status == "active":
+        return "in_progress"
+    return "received"
+
+
+def _response_blocker(
+    *,
+    task_status: str,
+    terminal_certificate_id: str,
+) -> str:
+    if terminal_certificate_id:
+        return ""
+    if task_status == "completed":
+        return "terminal_certificate_missing"
+    if task_status == "blocked":
+        return "explicit_blocker_receipt_required"
+    if task_status == "waiting_for_approval":
+        return "approval_required"
+    if task_status == "requires_review":
+        return "operator_review_required"
+    return ""
 
 
 def _task_status_counts(

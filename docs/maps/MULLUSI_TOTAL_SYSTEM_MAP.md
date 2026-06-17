@@ -150,11 +150,11 @@ No external channel approval without request binding and identity check.
 | Clarification engine | missing / partial | no dedicated map evidence | Add missing-slot detection and focused clarification questions. |
 | Command ledger | implemented / partial | `gateway/command_spine.py` | Bind all user-visible task states to ledger states. |
 | Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py`, `/operator/approvals/read-model`, `/operator/approvals`, `/operator/approvals/{request_id}` | Add cross-channel approval-strength policy. |
-| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays | Add deeper Plan Review receipt exports. |
+| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/{plan_id}/receipts`, `/operator/plan-review/{plan_id}/receipts/read-model`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays, and search capability cost-model projection | Keep budget policy wired to concrete capability passports. |
 | Causal closure kernel | implemented / partial | `gateway/causal_closure_kernel.py` | Ensure every success response is certificate-backed. |
-| Search layer | partial / unknown | `enterprise.knowledge_search` intent pattern | Add freshness, cache, source, budget, and receipt gates. |
-| Worker layer | partial | `gateway/capability_worker.py`, worker-related docs | Define one contract per worker type. |
-| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, and Plan Review budget/history links including explicit cost-estimate source and optional tenant budget-report drilldowns. | Add deeper plan receipt exports. |
+| Search layer | implemented / partial | `enterprise.knowledge_search`, `gateway/search_governance.py`, `schemas/search_decision_receipt.schema.json`, `tests/test_gateway/test_search_governance.py` | Thread search decision receipts into live search execution and receipt viewer drilldowns. |
+| Worker layer | implemented / partial | `gateway/capability_worker.py`, `gateway/worker_mesh.py`, `gateway/read_only_repository_worker.py`, `gateway/worker_failure_receipt.py`, `schemas/worker_mesh.schema.json`, `schemas/worker_failure_receipt.schema.json`, `schemas/read_only_first_worker_path.schema.json`, `examples/read_only_first_worker_path.foundation.json`, `scripts/validate_read_only_first_worker_path.py`, `tests/test_gateway/test_read_only_repository_worker.py`, `tests/test_gateway/test_worker_failure_receipt.py` | Surface worker failure receipts in response state, then repeat the read-only contract pattern for search or document inspection. |
+| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, Plan Review budget/history links including explicit cost-estimate source, plan receipt exports, optional tenant budget-report drilldowns, and `/operator/current-task` response-state columns that block success claims without terminal certificates. | Add search receipts and delivery receipt separation. |
 | Admin console | missing / unknown | no dedicated map evidence | Map tenant, policy, budget, worker, and receipt admin screens. |
 
 ## 5. Component contract template
@@ -280,6 +280,11 @@ Receipts prove.
 
 Search-backed chat must be governed before retrieval.
 
+Foundation Mode status: `gateway/search_governance.py` now emits a
+schema-backed decision receipt for classification, freshness, budget, and
+retrieval authority. The search capability passport requires budget,
+freshness, and evidence-only retrieval checks before execution.
+
 ```text
 User message
 -> intent classification
@@ -296,13 +301,14 @@ User message
 Search states:
 
 ```text
-NO_SEARCH_NEEDED
-CACHE_HIT
-LOCAL_SEARCH
-WEB_SEARCH_LIGHT
-WEB_SEARCH_DEEP_APPROVAL_REQUIRED
-SEARCH_BLOCKED_BY_BUDGET
-SEARCH_FAILED_WITH_EXPLANATION
+no_search
+use_cache
+allow_search: local_search
+allow_search: light_web_search
+allow_search: deep_search
+block_search: search_budget_limit_exceeded
+block_search: deep_search_budget_required
+search_failed_with_explanation
 ```
 
 ## 9. Edge-case controls
@@ -335,9 +341,9 @@ causal closure, and capability-intent pattern matching surfaces.
 Fracture delta:
 
 ```text
-The current product map still needs deeper plan receipt exports, clarification
-handling, search cost and freshness gates, production channel hardening, and
-explicit component status tracking.
+The current product map still needs deeper clarification handling, runtime
+search receipt integration, production channel hardening, delivery receipt
+separation, and explicit component status tracking.
 ```
 
 Refinement:

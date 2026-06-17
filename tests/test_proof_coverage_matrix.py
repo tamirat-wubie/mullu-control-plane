@@ -439,6 +439,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 16
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
+    assert surfaces["read_only_first_worker_path"]["unanchored_witness_count"] == 0
+    assert surfaces["read_only_first_worker_path"]["exact_test_anchor_count"] == 11
     assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["task_queue_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["software_dev_capability_pack"]["unanchored_witness_count"] == 0
@@ -3548,6 +3550,30 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "worker_receipt_not_terminal_closure" in witnesses
     assert "worker_mesh_schema_valid" in witnesses
     assert closure_actions["publish_networked_worker_mesh_contract"]["status"] == "closed"
+
+
+def test_read_only_first_worker_path_surface_is_foundation_bound() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    worker_surface = surfaces["read_only_first_worker_path"]
+    witnesses = set(worker_surface["runtime_witnesses"])
+
+    assert worker_surface["coverage_state"] == "proven"
+    assert worker_surface["request_proof"] == "request_proof"
+    assert worker_surface["action_proof"] == "action_proof"
+    assert "repository.inspect_read_only" in worker_surface["representative_paths"]
+    assert "build_worker_failure_receipt" in worker_surface["representative_paths"]
+    assert "gateway/read_only_repository_worker.py" in worker_surface["evidence_files"]
+    assert "gateway/worker_failure_receipt.py" in worker_surface["evidence_files"]
+    assert "schemas/read_only_first_worker_path.schema.json" in worker_surface["evidence_files"]
+    assert "schemas/worker_failure_receipt.schema.json" in worker_surface["evidence_files"]
+    assert "scripts/validate_read_only_first_worker_path.py" in worker_surface["evidence_files"]
+    assert "read_only_first_worker_path_example_passes" in witnesses
+    assert "read_only_repository_worker_rejects_mutation_and_network_inputs" in witnesses
+    assert "worker_failure_receipt_validates_partial_completion" in witnesses
+    assert "worker_failure_receipt_rejects_success_source" in witnesses
+    assert closure_actions["publish_read_only_first_worker_path_contract"]["status"] == "closed"
 
 
 def test_software_dev_capability_pack_surface_requires_explicit_admission() -> None:

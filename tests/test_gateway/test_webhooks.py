@@ -4245,9 +4245,18 @@ class TestGatewayStatus:
             intent="llm_completion",
             payload={"body": "blocked raw body"},
         )
-        completed, _certificate = _create_completed_receipt_viewer_command(
+        completed, certificate = _create_completed_receipt_viewer_command(
             gateway_app.state.command_ledger,
             idempotency_key="current-task-completed",
+        )
+        awaiting_evidence = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-current-task-awaiting-evidence",
+            idempotency_key="current-task-awaiting-evidence",
+            intent="llm_completion",
+            payload={"body": "awaiting evidence raw body"},
         )
         gateway_app.state.command_ledger.transition(
             waiting.command_id,
@@ -4258,6 +4267,11 @@ class TestGatewayStatus:
             blocked.command_id,
             CommandState.DENIED,
             detail={"cause": "policy_denied"},
+        )
+        gateway_app.state.command_ledger.transition(
+            awaiting_evidence.command_id,
+            CommandState.RESPONDED,
+            detail={"cause": "response_emitted_without_terminal_certificate"},
         )
 
         resp = client.get("/operator/current-task/read-model?tenant_id=t1")
@@ -4281,6 +4295,9 @@ class TestGatewayStatus:
         ) == []
         tasks = {task["command_id"]: task for task in data["tasks"]}
         assert tasks[waiting.command_id]["task_status"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["response_state"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["response_claim_allowed"] is False
+        assert tasks[waiting.command_id]["response_blocker"] == "approval_required"
         assert tasks[waiting.command_id]["waiting_for"] == "operator_approval"
         assert tasks[waiting.command_id]["next_action"] == "resolve_approval"
         assert tasks[waiting.command_id]["goal_intake_preview_id"] == ""
@@ -4290,18 +4307,43 @@ class TestGatewayStatus:
         assert tasks[waiting.command_id]["approval_request_id"] == ""
         assert tasks[waiting.command_id]["approval_recovery_available"] is False
         assert tasks[blocked.command_id]["task_status"] == "blocked"
+        assert tasks[blocked.command_id]["response_state"] == "blocked"
+        assert tasks[blocked.command_id]["response_claim_allowed"] is False
+        assert (
+            tasks[blocked.command_id]["response_blocker"]
+            == "explicit_blocker_receipt_required"
+        )
         assert tasks[blocked.command_id]["task_blocked"] is True
         assert (
             tasks[blocked.command_id]["next_action"]
             == "inspect_denial_or_block_receipts"
         )
         assert tasks[completed.command_id]["task_status"] == "completed"
+        assert tasks[completed.command_id]["response_state"] == "completed_verified"
+        assert tasks[completed.command_id]["response_claim_allowed"] is True
+        assert (
+            tasks[completed.command_id]["response_terminal_certificate_id"]
+            == certificate.certificate_id
+        )
+        assert tasks[completed.command_id]["response_blocker"] == ""
         assert tasks[completed.command_id]["task_terminal"] is True
+        assert tasks[awaiting_evidence.command_id]["task_status"] == "completed"
+        assert (
+            tasks[awaiting_evidence.command_id]["response_state"]
+            == "awaiting_terminal_evidence"
+        )
+        assert tasks[awaiting_evidence.command_id]["response_claim_allowed"] is False
+        assert (
+            tasks[awaiting_evidence.command_id]["response_blocker"]
+            == "terminal_certificate_missing"
+        )
+        assert tasks[awaiting_evidence.command_id]["task_terminal"] is False
         assert data["status_counts"]["waiting_for_approval"] >= 1
         assert data["status_counts"]["blocked"] >= 1
-        assert data["status_counts"]["completed"] >= 1
+        assert data["status_counts"]["completed"] >= 2
         assert "waiting raw body" not in json.dumps(data, sort_keys=True)
         assert "blocked raw body" not in json.dumps(data, sort_keys=True)
+        assert "awaiting evidence raw body" not in json.dumps(data, sort_keys=True)
         assert blocked_resp.status_code == 200
         assert blocked_resp.json()["count"] == 1
         assert blocked_resp.json()["tasks"][0]["command_id"] == blocked.command_id
