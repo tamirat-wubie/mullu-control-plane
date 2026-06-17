@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-policy-matrix-receipt:1",
+  "title": "Mullu Personal Assistant Policy Matrix Receipt",
+  "description": "No-effect receipt proving the Personal Assistant skill policy, approval matrix, capsule policy refs, authority coverage, and capsule alignment remain consistent without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "receipt_is_not_execution_authority",
+    "receipt_is_not_terminal_closure",
+    "source_refs",
+    "policy_matrix_summary",
+    "risk_level_records",
+    "blocked_action_records",
+    "hard_invariant_records",
+    "connector_payload_policy",
+    "effect_boundary",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "personal_assistant.policy_matrix_receipt.v1" },
+    "receipt_id": { "type": "string", "pattern": "^personal-assistant-policy-matrix-[0-9a-f]{16}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+    "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+    "governed": { "type": "boolean", "const": true },
+    "receipt_is_not_execution_authority": { "type": "boolean", "const": true },
+    "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "source_refs": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_ref" }
+    },
+    "policy_matrix_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_matrix_closed",
+        "authority_coverage_closed",
+        "capsule_alignment_closed",
+        "risk_level_count",
+        "action_classification_count",
+        "blocked_action_count",
+        "capsule_policy_refs_bound",
+        "foundation_mode_required",
+        "p4_p5_require_explicit_approval",
+        "p5_execute_blocked",
+        "blocked_actions_match_policy",
+        "overclaim_blocks_closed",
+        "hard_invariants_closed",
+        "connector_payload_policy_closed",
+        "no_effect_boundary_verified",
+        "production_ready",
+        "customer_ready",
+        "next_allowed_action"
+      ],
+      "properties": {
+        "policy_matrix_closed": { "type": "boolean" },
+        "authority_coverage_closed": { "type": "boolean" },
+        "capsule_alignment_closed": { "type": "boolean" },
+        "risk_level_count": { "type": "integer", "minimum": 6 },
+        "action_classification_count": { "type": "integer", "minimum": 1 },
+        "blocked_action_count": { "type": "integer", "minimum": 1 },
+        "capsule_policy_refs_bound": { "type": "boolean" },
+        "foundation_mode_required": { "type": "boolean" },
+        "p4_p5_require_explicit_approval": { "type": "boolean" },
+        "p5_execute_blocked": { "type": "boolean" },
+        "blocked_actions_match_policy": { "type": "boolean" },
+        "overclaim_blocks_closed": { "type": "boolean" },
+        "hard_invariants_closed": { "type": "boolean" },
+        "connector_payload_policy_closed": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" },
+        "production_ready": { "type": "boolean", "const": false },
+        "customer_ready": { "type": "boolean", "const": false },
+        "next_allowed_action": { "type": "string", "const": "continue_foundation_hardening_only" }
+      }
+    },
+    "risk_level_records": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/risk_level_record" }
+    },
+    "blocked_action_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/blocked_action_record" }
+    },
+    "hard_invariant_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/hard_invariant_record" }
+    },
+    "connector_payload_policy": { "$ref": "#/$defs/connector_payload_policy" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_ref", "source_kind", "bound"],
+      "properties": {
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "type": "string",
+          "enum": ["skill_policy", "approval_matrix", "capsule", "authority_coverage_receipt", "capsule_alignment_receipt"]
+        },
+        "bound": { "type": "boolean" }
+      }
+    },
+    "risk_level_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "description",
+        "private_connector_allowed",
+        "effect_bearing",
+        "explicit_approval_required",
+        "allowed_modes",
+        "approval_rule_consistent",
+        "execute_without_approval_blocked",
+        "p5_blocked"
+      ],
+      "properties": {
+        "level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+        "description": { "type": "string", "minLength": 1 },
+        "private_connector_allowed": { "type": "boolean" },
+        "effect_bearing": { "type": "boolean" },
+        "explicit_approval_required": { "type": "boolean" },
+        "allowed_modes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "approval_rule_consistent": { "type": "boolean" },
+        "execute_without_approval_blocked": { "type": "boolean" },
+        "p5_blocked": { "type": "boolean" }
+      }
+    },
+    "blocked_action_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "in_approval_matrix", "in_skill_policy", "blocked_without_approval"],
+      "properties": {
+        "action": { "type": "string", "minLength": 1 },
+        "in_approval_matrix": { "type": "boolean" },
+        "in_skill_policy": { "type": "boolean" },
+        "blocked_without_approval": { "type": "boolean" }
+      }
+    },
+    "hard_invariant_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant_id", "expected", "actual", "closed"],
+      "properties": {
+        "invariant_id": { "type": "string", "minLength": 1 },
+        "expected": { "type": "boolean" },
+        "actual": { "type": "boolean" },
+        "closed": { "type": "boolean" }
+      }
+    },
+    "connector_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_fields",
+        "blocked_fields",
+        "allowed_fields_are_redacted_evidence_only",
+        "secret_values_blocked",
+        "raw_private_payloads_blocked",
+        "policy_closed"
+      ],
+      "properties": {
+        "allowed_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "blocked_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allowed_fields_are_redacted_evidence_only": { "type": "boolean" },
+        "secret_values_blocked": { "type": "boolean" },
+        "raw_private_payloads_blocked": { "type": "boolean" },
+        "policy_closed": { "type": "boolean" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "money_legal_public_allowed",
+        "production_ready_claim_allowed",
+        "customer_ready_claim_allowed",
+        "live_nested_mind_activation_allowed"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "external_effect_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "money_legal_public_allowed": { "type": "boolean", "const": false },
+        "production_ready_claim_allowed": { "type": "boolean", "const": false },
+        "customer_ready_claim_allowed": { "type": "boolean", "const": false },
+        "live_nested_mind_activation_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        }
+      }
+    },
+    "lineage_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_id", "reason", "logged_in_lineage"],
+      "properties": {
+        "delta_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "logged_in_lineage": { "type": "boolean" }
+      }
+    }
+  }
+}
