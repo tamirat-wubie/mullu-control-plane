@@ -1007,6 +1007,13 @@
       ]
     },
     {
+      "action_id": "publish_invariant_fuzz_execution_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "invariant_fuzz_execution_report"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1378,7 +1385,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 125,
+      "action_proof": 126,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1386,7 +1393,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 177,
+      "audit_chain": 178,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1394,21 +1401,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 108
+      "witnessed": 109
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 124
+      "request_proof": 125
     },
-    "surface_count": 180
+    "surface_count": 181
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 180,
+      "strong": 181,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11059,6 +11066,66 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/invariant_fuzz_execution_report.schema.json",
+        "examples/invariant_fuzz_execution_report.foundation.json",
+        "scripts/validate_invariant_fuzz_execution_report.py",
+        "tests/test_validate_invariant_fuzz_execution_report.py",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/effect_assurance.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/92_invariant_fuzz_execution_report_contract.md"
+      ],
+      "notes": "Invariant fuzz execution reports bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime-hardening or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+      "representative_paths": [
+        "InvariantFuzzExecutionReport",
+        "validate_invariant_fuzz_execution_report",
+        "invariant_fuzz_execution_report.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "invariant_fuzz_execution_report_blocks_canonical_mutation": [
+          "invariant_fuzz_execution_report_passes",
+          "invariant_fuzz_execution_report_rejects_authority_drift",
+          "invariant_fuzz_execution_report_rejects_live_scope_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_projection_and_raw_retention": [
+          "invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift": [
+          "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_result_count_drift": [
+          "invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+        ],
+        "invariant_fuzz_execution_report_requires_case_bank_and_oracles": [
+          "invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+        ],
+        "invariant_fuzz_execution_report_schema_valid": [
+          "invariant_fuzz_execution_report_passes"
+        ],
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+        ]
+      },
+      "runtime_witnesses": [
+        "invariant_fuzz_execution_report_schema_valid",
+        "invariant_fuzz_execution_report_blocks_canonical_mutation",
+        "invariant_fuzz_execution_report_requires_case_bank_and_oracles",
+        "invariant_fuzz_execution_report_rejects_projection_and_raw_retention",
+        "invariant_fuzz_execution_report_rejects_result_count_drift",
+        "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift",
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+      ],
+      "surface_id": "invariant_fuzz_execution_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14511,8 +14578,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1829,
-    "runtime_witness_count": 1829,
+    "exact_test_anchor_count": 1836,
+    "runtime_witness_count": 1836,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23104,6 +23171,59 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "chaos_rehearsal_execution_report",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_passes"
+            ],
+            "witness": "invariant_fuzz_execution_report_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_passes",
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_authority_drift",
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_live_scope_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_blocks_canonical_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_requires_case_bank_and_oracles"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_projection_and_raw_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_result_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+            ],
+            "witness": "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "invariant_fuzz_execution_report",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

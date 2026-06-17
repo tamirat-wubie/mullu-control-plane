@@ -701,6 +701,12 @@
       "surface": "resilience"
     },
     {
+      "schema_id": "invariant-fuzz-execution-report",
+      "path": "schemas/invariant_fuzz_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+      "surface": "resilience"
+    },
+    {
       "schema_id": "research-source-conflict-map",
       "path": "schemas/research_source_conflict_map.schema.json",
       "urn": "urn:mullusi:schema:research-source-conflict-map:1",
