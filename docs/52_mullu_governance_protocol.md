@@ -191,6 +191,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 161. Trusted capture evidence packets are public contracts when they bind source-surface hash evidence, capture policy refs, evidence classification refs, browser observation refs, UAO refs, LifeMeaningJudgment refs, digest-only capture artifact refs, privacy guards, retention guards, and authority-denial flags before browser, screen, video, audio, sensor, or reality-capture evidence can become operator evidence while denying live capture, media recording, screen recording, microphone capture, camera capture, sensor reads, file writes, connector calls, external writes, raw media retention, raw source-body retention, raw secret retention, publication, terminal closure, and success claims.
 162. SCCML trace adapter witnesses are public contracts when they bind instruction-trace digest refs, pre-state and post-state hash refs, proof digest refs, unsupported-operation gap refs, KernelProof refs, TraceEntry refs, UAO refs, LifeMeaningJudgment refs, integrity guards, and authority-denial flags before any SCCML execution-chain trace can become governance proof while denying live kernel execution, subprocess execution, external repository reads, instruction replay, state mutation, proof commitment, governance proof acceptance, unsupported-operation silence, connector calls, external writes, filesystem writes, raw trace retention, raw state retention, raw secret retention, terminal closure, and success claims.
 163. Chaos rehearsal execution reports are public contracts when they bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime resilience or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live chaos execution, staging targets, production targets, runtime disruption, network fault injection, service restarts, data corruption, event-chain mutation, connector calls, secret access, filesystem writes, rollback execution, raw runtime log retention, raw secret retention, terminal closure, and success claims.
+164. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
+
 ## Verification
 
 Run:
@@ -202,7 +204,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 344 schemas
+protocol manifest ok: 345 schemas
 ```
 
 STATUS:
