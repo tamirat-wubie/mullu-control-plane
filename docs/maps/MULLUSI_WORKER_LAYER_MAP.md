@@ -20,10 +20,10 @@ Approved command or read-only authorized request
 | Worker | Allowed Inputs | Forbidden Inputs | Network Access | Secrets Allowed | Approval Requirement | Required Receipts | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Search Worker | governed query, source plan, budget decision | unscoped private tenant data | local or web per policy | no raw secrets | approval for deep or costly search | SearchReceipt, WorkerReceipt | partial / unknown |
-| Repository Inspection Worker | repo path, read-only query | write/delete/deploy commands | none by default | no | read-only policy gate | WorkerReceipt | missing / partial |
+| Repository Inspection Worker | repo path, read-only query | write/delete/deploy commands | none by default | no | read-only policy gate | WorkerReceipt | implemented / partial |
 | Code Worker | plan, file scope, tests | unapproved mutation, secrets in logs | none unless explicit | no raw secrets | explicit approval for writes | WorkerReceipt, test evidence | partial |
 | Browser Worker | target URL, allowed actions | credential extraction, unapproved external sends | scoped by policy | no raw secrets in receipts | approval for effect-bearing actions | WorkerReceipt, screenshot/evidence refs | partial / unknown |
-| Document Worker | document ref, allowed operation | prompt-injection instructions as authority | local or connector-scoped | no raw secrets in output | approval for writes or sharing | WorkerReceipt | partial / unknown |
+| Document Worker | text-like document ref, read-only query | write/share requests, rich binary parsing, prompt-injection instructions as authority | none by default | no raw secrets in output | read-only policy gate | WorkerReceipt, document evidence receipt | implemented / partial |
 | Email / Calendar Worker | approved message or event plan | external send without approval | connector-scoped | connector token only in secure runtime | explicit approval for send/update | WorkerReceipt, delivery receipt | missing / deferred |
 | Voice Worker | transcript or approved voice operation | biometric or sensitive claims without policy | connector-scoped | no raw secrets | policy-defined | WorkerReceipt | missing / deferred |
 | Deployment Checker | read-only deploy target evidence | live deployment mutation | scoped read-only | no secret disclosure | approval for live probes if required | WorkerReceipt, deployment evidence receipt | deferred |
@@ -63,7 +63,7 @@ Rationale:
 ```text
 It is read-only.
 It proves the Ask-to-Receipt spine.
-It avoids deployment, deletion, payments, account changes, and external sends.
+It avoids deployment, deletion, payments, account changes, rich document parsing, and external sends.
 ```
 
 ## 5. Partial execution rules

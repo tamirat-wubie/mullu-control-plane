@@ -94,6 +94,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "component_graph",
         "component_dead_detector",
         "read_only_first_worker_path",
+        "read_only_document_worker_path",
         "worker_failure_receipt",
         "agentic_service_harness_live_task_run_producer_evidence",
         "agentic_service_harness_live_task_run_producer_rehearsal",
@@ -366,6 +367,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "read_only_first_worker_path",
+        "read_only_document_worker_path",
+    )
+    assert_ordered(
+        "read_only_document_worker_path",
         "worker_failure_receipt",
     )
     assert_ordered(

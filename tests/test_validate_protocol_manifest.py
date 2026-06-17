@@ -1432,6 +1432,7 @@ def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
     worker_entry = entries["worker-mesh"]
     failure_entry = entries["worker-failure-receipt"]
     first_worker_entry = entries["read-only-first-worker-path"]
+    document_worker_entry = entries["read-only-document-worker-path"]
 
     assert validate_protocol_manifest(manifest) == []
     assert worker_entry["path"] == "schemas/worker_mesh.schema.json"
@@ -1443,6 +1444,9 @@ def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
     assert first_worker_entry["path"] == "schemas/read_only_first_worker_path.schema.json"
     assert first_worker_entry["urn"] == "urn:mullusi:schema:read-only-first-worker-path:1"
     assert first_worker_entry["surface"] == "worker"
+    assert document_worker_entry["path"] == "schemas/read_only_document_worker_path.schema.json"
+    assert document_worker_entry["urn"] == "urn:mullusi:schema:read-only-document-worker-path:1"
+    assert document_worker_entry["surface"] == "worker"
 
 
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:

@@ -1,5 +1,5 @@
 {
-  "check_count": 206,
+  "check_count": 207,
   "checks": [
     {
       "args": [
@@ -585,6 +585,17 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "read-only first worker path ok: read-only-first-worker-path-20260616 -> repository.inspect_read_only\n"
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_read_only_document_worker_path.py"
+      ],
+      "name": "read_only_document_worker_path",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "read-only document worker path ok: read-only-document-worker-path-20260617 -> document.inspect_read_only\n"
     },
     {
       "args": [

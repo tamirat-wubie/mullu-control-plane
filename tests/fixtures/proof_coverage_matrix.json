@@ -790,6 +790,13 @@
       ]
     },
     {
+      "action_id": "publish_read_only_document_worker_path_contract",
+      "status": "closed",
+      "surfaces": [
+        "read_only_document_worker_path"
+      ]
+    },
+    {
       "action_id": "publish_software_dev_capability_pack_contract",
       "status": "closed",
       "surfaces": [
@@ -1161,7 +1168,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 108,
+      "action_proof": 109,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 51,
@@ -1169,13 +1176,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 158,
+      "audit_chain": 159,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 73,
+      "proven": 74,
       "unproven": 0,
       "witnessed": 88
     },
@@ -1184,14 +1191,14 @@
       "audit_chain": 0,
       "gap": 0,
       "read_model": 53,
-      "request_proof": 107
+      "request_proof": 108
     },
-    "surface_count": 161
+    "surface_count": 162
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 161,
+      "strong": 162,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5098,6 +5105,39 @@
         "worker_failure_receipt_rejects_impossible_unit_counts"
       ],
       "surface_id": "read_only_first_worker_path"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/read_only_document_worker.py",
+        "schemas/read_only_document_worker_path.schema.json",
+        "examples/read_only_document_worker_path.foundation.json",
+        "scripts/validate_read_only_document_worker_path.py",
+        "tests/test_validate_read_only_document_worker_path.py",
+        "tests/test_gateway/test_read_only_document_worker.py"
+      ],
+      "notes": "Foundation Mode document worker path selects local text-like read-only document inspection, rejects mutation, network, secrets, rich binary parsing, unsupported formats, and out-of-root path inputs, and emits worker-mesh receipts with redacted evidence.",
+      "representative_paths": [
+        "document.inspect_read_only",
+        "build_read_only_document_inspection_lease",
+        "create_read_only_document_inspection_handler"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "read_only_document_worker_path_example_passes",
+        "read_only_document_worker_path_rejects_rich_document_parsing",
+        "read_only_document_worker_path_rejects_missing_format_allowlist",
+        "read_only_document_worker_dispatches_schema_valid_receipt",
+        "read_only_document_worker_redacts_secret_like_matches",
+        "read_only_document_worker_rejects_path_boundary_violation",
+        "read_only_document_worker_rejects_unsupported_format",
+        "read_only_document_worker_reports_text_decode_failure",
+        "read_only_document_worker_rejects_mutation_and_network_inputs",
+        "read_only_document_worker_rejects_secret_like_input_values"
+      ],
+      "surface_id": "read_only_document_worker_path"
     },
     {
       "action_proof": "action_proof",
@@ -12428,8 +12468,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1589,
-    "runtime_witness_count": 1589,
+    "exact_test_anchor_count": 1599,
+    "runtime_witness_count": 1599,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14185,6 +14225,75 @@
         "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "read_only_first_worker_path",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_read_only_document_worker_path.py::test_read_only_document_worker_path_example_passes"
+            ],
+            "witness": "read_only_document_worker_path_example_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_document_worker_path.py::test_read_only_document_worker_path_rejects_rich_document_parsing"
+            ],
+            "witness": "read_only_document_worker_path_rejects_rich_document_parsing"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_read_only_document_worker_path.py::test_read_only_document_worker_path_rejects_missing_format_allowlist"
+            ],
+            "witness": "read_only_document_worker_path_rejects_missing_format_allowlist"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_dispatches_schema_valid_receipt"
+            ],
+            "witness": "read_only_document_worker_dispatches_schema_valid_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_redacts_secret_like_matches"
+            ],
+            "witness": "read_only_document_worker_redacts_secret_like_matches"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_rejects_path_boundary_violation"
+            ],
+            "witness": "read_only_document_worker_rejects_path_boundary_violation"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_rejects_unsupported_format"
+            ],
+            "witness": "read_only_document_worker_rejects_unsupported_format"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_reports_text_decode_failure"
+            ],
+            "witness": "read_only_document_worker_reports_text_decode_failure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_rejects_mutation_and_network_inputs"
+            ],
+            "witness": "read_only_document_worker_rejects_mutation_and_network_inputs"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_read_only_document_worker.py::test_read_only_document_worker_rejects_secret_like_input_values"
+            ],
+            "witness": "read_only_document_worker_rejects_secret_like_input_values"
+          }
+        ],
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
+        "surface_id": "read_only_document_worker_path",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
