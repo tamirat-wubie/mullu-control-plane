@@ -787,7 +787,7 @@
         "reconciliation_required": true
       },
       "evidence_model": {
-        "required_evidence": ["change_boundary", "test_contract", "rollback_plan"],
+        "required_evidence": ["change_boundary", "code_change_physics_packet", "test_contract", "rollback_plan"],
         "terminal_certificate_required": true
       },
       "authority_policy": {

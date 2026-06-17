@@ -1,0 +1,288 @@
+{
+  "affected_surfaces": [
+    {
+      "evidence_ref": "docs/CODE_CHANGE_PHYSICS.md",
+      "path": "docs/CODE_CHANGE_PHYSICS.md",
+      "state": "planned",
+      "surface_id": "code_change_physics_doctrine",
+      "surface_type": "doc"
+    },
+    {
+      "evidence_ref": "schemas/code_change_physics_packet.schema.json",
+      "path": "schemas/code_change_physics_packet.schema.json",
+      "state": "planned",
+      "surface_id": "code_change_physics_schema",
+      "surface_type": "schema"
+    },
+    {
+      "evidence_ref": "capabilities/agentic_control/capability_pack.json",
+      "path": "capabilities/agentic_control/capability_pack.json",
+      "state": "observed",
+      "surface_id": "agentic_control_code_change_plan",
+      "surface_type": "capability"
+    }
+  ],
+  "blocked_actions": [
+    "direct_effect_without_approval",
+    "live_send_without_connector_evidence",
+    "workspace_write_from_planning_packet"
+  ],
+  "candidate_paths": [
+    {
+      "blocked_by": [
+        "approval_missing",
+        "live_connector_evidence_missing"
+      ],
+      "description": "Execute the requested live effect directly.",
+      "estimated_energy": "high",
+      "expected_deltas": [
+        "would_cross_external_effect_boundary"
+      ],
+      "path_id": "path:direct-live-effect",
+      "path_kind": "direct",
+      "pressure_release": "high",
+      "required_evidence": [
+        "operator_approval_ref",
+        "live_connector_receipt",
+        "send_receipt_schema"
+      ],
+      "requires_approval": true,
+      "requires_live_effect": true,
+      "risk_level": "critical"
+    },
+    {
+      "blocked_by": [],
+      "description": "Produce a draft, route it to an approval queue, and defer live send until evidence exists.",
+      "estimated_energy": "low",
+      "expected_deltas": [
+        "useful_workflow_now",
+        "live_effect_deferred",
+        "receipt_gap_named"
+      ],
+      "path_id": "path:draft-approval-queue",
+      "path_kind": "approval_queue",
+      "pressure_release": "high",
+      "required_evidence": [
+        "approval_queue_ref",
+        "draft_receipt_ref",
+        "future_live_probe_ref"
+      ],
+      "requires_approval": false,
+      "requires_live_effect": false,
+      "risk_level": "low"
+    },
+    {
+      "blocked_by": [
+        "strict_sandbox_evidence_missing"
+      ],
+      "description": "Run a sandbox probe before any effect-bearing implementation path.",
+      "estimated_energy": "medium",
+      "expected_deltas": [
+        "strict_execution_evidence_collected",
+        "effect_path_remains_blocked_until_pass"
+      ],
+      "path_id": "path:sandbox-probe-first",
+      "path_kind": "sandbox_probe",
+      "pressure_release": "medium",
+      "required_evidence": [
+        "sandbox_probe_receipt",
+        "workspace_governance_preflight_receipt"
+      ],
+      "requires_approval": false,
+      "requires_live_effect": false,
+      "risk_level": "medium"
+    }
+  ],
+  "change_ref": "change/code-change-physics/foundation-v1",
+  "conservation_checks": [
+    {
+      "check_id": "check:no-unapproved-authority",
+      "evidence_ref": "schemas/code_change_physics_packet.schema.json",
+      "invariant": "no_unapproved_authority",
+      "repair_action": "Keep selected path advisory and route execution through SDLC and UAO gates.",
+      "status": "passed"
+    },
+    {
+      "check_id": "check:smallest-safe-change",
+      "evidence_ref": "docs/CODE_CHANGE_PHYSICS.md",
+      "invariant": "smallest_safe_change",
+      "repair_action": "Prefer draft, approval queue, or smallest-safe PR before live effect.",
+      "status": "passed"
+    },
+    {
+      "check_id": "check:proof-need-declared",
+      "evidence_ref": "scripts/validate_code_change_physics_packet.py",
+      "invariant": "proof_need_declared",
+      "repair_action": "Reject packets whose selected path has no required evidence.",
+      "status": "passed"
+    },
+    {
+      "check_id": "check:repair-path-named",
+      "evidence_ref": "docs/CODE_CHANGE_PHYSICS.md",
+      "invariant": "repair_path_named",
+      "repair_action": "Use repair-first path when drift or instability blocks stable work.",
+      "status": "passed"
+    },
+    {
+      "check_id": "check:mfidel-atomicity",
+      "evidence_ref": "docs/27_mfidel_semantic_layer.md",
+      "invariant": "mfidel_atomicity_unchanged",
+      "repair_action": "Reject any physics analogy that decomposes fidel atoms.",
+      "status": "passed"
+    }
+  ],
+  "evidence_refs": [
+    "docs/CODE_CHANGE_PHYSICS.md",
+    "schemas/code_change_physics_packet.schema.json",
+    "examples/code_change_physics_packet.foundation.json",
+    "scripts/validate_code_change_physics_packet.py"
+  ],
+  "force_terms": [
+    {
+      "effect": "Live execution stays blocked until approval and evidence exist.",
+      "evidence_refs": [
+        "docs/CODE_CHANGE_PHYSICS.md"
+      ],
+      "lane_id": "governance_physics",
+      "observed_pressure": "critical",
+      "proof_needed": "operator approval, live connector receipt, and UAO receipt",
+      "release_strategy": "route to draft-only or approval queue path",
+      "signal": "barrier",
+      "source_surface_id": "agentic_control_code_change_plan",
+      "term_id": "force:governance-barrier"
+    },
+    {
+      "effect": "Useful workflow can proceed without live effect.",
+      "evidence_refs": [
+        "docs/CODE_CHANGE_PHYSICS.md"
+      ],
+      "lane_id": "creative_physics",
+      "observed_pressure": "high",
+      "proof_needed": "draft receipt and approval-queue evidence",
+      "release_strategy": "choose draft approval queue as lower-energy path",
+      "signal": "pressure_valve",
+      "source_surface_id": "code_change_physics_doctrine",
+      "term_id": "force:creative-pressure-valve"
+    },
+    {
+      "effect": "Stale or missing evidence is repaired before execution planning.",
+      "evidence_refs": [
+        "docs/GOVERNED_CODE_CHANGE_LOOP_SANDBOX_READINESS.md"
+      ],
+      "lane_id": "repair_physics",
+      "observed_pressure": "medium",
+      "proof_needed": "sandbox probe receipt and workspace governance receipt",
+      "release_strategy": "repair evidence gap before live path",
+      "signal": "entropy_repair",
+      "source_surface_id": "code_change_physics_schema",
+      "term_id": "force:repair-evidence-gap"
+    }
+  ],
+  "lanes": {
+    "creative_physics": {
+      "halt_conditions": [
+        "creative_path_requires_unapproved_live_effect",
+        "lower_risk_path_available_but_not_considered"
+      ],
+      "lane_id": "creative_physics",
+      "patterns": [
+        "bottleneck_release",
+        "pressure_valve",
+        "energy_minimization",
+        "resonance_matching"
+      ],
+      "purpose": "Discover lower-risk paths that still preserve user value.",
+      "questions": [
+        "Where is pressure accumulating?",
+        "What indirect path gives value without crossing the barrier?",
+        "What small change releases the largest pressure?"
+      ],
+      "signals": [
+        {
+          "description": "Direct live effect is blocked, but draft and approval queue still provide value.",
+          "evidence_ref": "docs/CODE_CHANGE_PHYSICS.md",
+          "pressure_level": "high",
+          "signal_id": "creative:indirect-value-path"
+        }
+      ]
+    },
+    "governance_physics": {
+      "halt_conditions": [
+        "hard_unknown_reclassified_as_permission",
+        "forbidden_effect_selected"
+      ],
+      "lane_id": "governance_physics",
+      "patterns": [
+        "barrier",
+        "approval_friction",
+        "proof_energy",
+        "circuit_breaker"
+      ],
+      "purpose": "Prevent unsafe or unauthorized movement.",
+      "questions": [
+        "Is this action allowed?",
+        "Which proof is required?",
+        "Which barrier blocks the direct path?"
+      ],
+      "signals": [
+        {
+          "description": "Live effect requires approval and connector evidence.",
+          "evidence_ref": "capabilities/agentic_control/capability_pack.json",
+          "pressure_level": "critical",
+          "signal_id": "governance:live-effect-barrier"
+        }
+      ]
+    },
+    "repair_physics": {
+      "halt_conditions": [
+        "repair_finding_without_action",
+        "drift_ignored_before_effect_path"
+      ],
+      "lane_id": "repair_physics",
+      "patterns": [
+        "entropy_repair",
+        "drift_reduction",
+        "stability_basin",
+        "contradiction_repair"
+      ],
+      "purpose": "Repair drift, stale evidence, or instability before effect-bearing work.",
+      "questions": [
+        "What state is stale or unstable?",
+        "What repair path restores a known-safe state?",
+        "What rollback or halt path protects the system?"
+      ],
+      "signals": [
+        {
+          "description": "Strict sandbox evidence remains separate from planning evidence.",
+          "evidence_ref": "docs/GOVERNED_CODE_CHANGE_LOOP_SANDBOX_READINESS.md",
+          "pressure_level": "medium",
+          "signal_id": "repair:sandbox-evidence-gap"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "foundation_mode": true,
+    "packet_kind": "code_change_physics",
+    "receipt_is_not_terminal_closure": true
+  },
+  "next_action": "Use the selected draft approval queue path, then collect approval and live-probe evidence before any live effect.",
+  "objective": "Apply physics as governance, creative reasoning, and repair to code-change planning without expanding execution authority.",
+  "packet_id": "code-change-physics-foundation-v1",
+  "schema_version": 1,
+  "selected_path": {
+    "execution_authority_granted": false,
+    "path_id": "path:draft-approval-queue",
+    "rationale": "This releases user-facing pressure now while preserving the live-effect barrier.",
+    "rejected_direct_path": true,
+    "required_follow_up": [
+      "record draft receipt",
+      "bind approval queue",
+      "collect live probe before send",
+      "run workspace governance preflight"
+    ],
+    "value_now": "The operator gets a useful prepared workflow without unapproved live execution."
+  },
+  "solver_outcome": "SolvedVerified",
+  "status": "validated"
+}

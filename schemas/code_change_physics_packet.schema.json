@@ -1,0 +1,520 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:code-change-physics-packet:1",
+  "title": "Code Change Physics Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "schema_version",
+    "status",
+    "solver_outcome",
+    "change_ref",
+    "objective",
+    "affected_surfaces",
+    "lanes",
+    "force_terms",
+    "candidate_paths",
+    "selected_path",
+    "conservation_checks",
+    "blocked_actions",
+    "evidence_refs",
+    "next_action",
+    "metadata"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^code-change-physics-[A-Za-z0-9._:-]+$"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "validated", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "SolvedUnverified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    },
+    "change_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "affected_surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/affected_surface"
+      }
+    },
+    "lanes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["governance_physics", "creative_physics", "repair_physics"],
+      "properties": {
+        "governance_physics": {
+          "$ref": "#/$defs/physics_lane"
+        },
+        "creative_physics": {
+          "$ref": "#/$defs/physics_lane"
+        },
+        "repair_physics": {
+          "$ref": "#/$defs/physics_lane"
+        }
+      }
+    },
+    "force_terms": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/force_term"
+      }
+    },
+    "candidate_paths": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/candidate_path"
+      }
+    },
+    "selected_path": {
+      "$ref": "#/$defs/selected_path"
+    },
+    "conservation_checks": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 24,
+      "items": {
+        "$ref": "#/$defs/conservation_check"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "metadata": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "affected_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface_id", "path", "surface_type", "state", "evidence_ref"],
+      "properties": {
+        "surface_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "surface_type": {
+          "type": "string",
+          "enum": ["doc", "schema", "example", "validator", "test", "capability", "runtime", "workflow"]
+        },
+        "state": {
+          "type": "string",
+          "enum": ["observed", "changed", "planned", "blocked", "AwaitingEvidence"]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "physics_lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lane_id", "purpose", "questions", "signals", "patterns", "halt_conditions"],
+      "properties": {
+        "lane_id": {
+          "type": "string",
+          "enum": ["governance_physics", "creative_physics", "repair_physics"]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "questions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "signals": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/physics_signal"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "barrier",
+              "approval_friction",
+              "proof_energy",
+              "bottleneck_release",
+              "pressure_valve",
+              "resonance_matching",
+              "energy_minimization",
+              "circuit_breaker",
+              "stability_basin",
+              "entropy_repair",
+              "drift_reduction",
+              "contradiction_repair"
+            ]
+          }
+        },
+        "halt_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    },
+    "physics_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal_id", "description", "pressure_level", "evidence_ref"],
+      "properties": {
+        "signal_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "pressure_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "force_term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "term_id",
+        "lane_id",
+        "source_surface_id",
+        "signal",
+        "observed_pressure",
+        "effect",
+        "release_strategy",
+        "proof_needed",
+        "evidence_refs"
+      ],
+      "properties": {
+        "term_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "lane_id": {
+          "type": "string",
+          "enum": ["governance_physics", "creative_physics", "repair_physics"]
+        },
+        "source_surface_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "signal": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "observed_pressure": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "effect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "release_strategy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "proof_needed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    },
+    "candidate_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id",
+        "description",
+        "path_kind",
+        "risk_level",
+        "estimated_energy",
+        "pressure_release",
+        "requires_approval",
+        "requires_live_effect",
+        "required_evidence",
+        "blocked_by",
+        "expected_deltas"
+      ],
+      "properties": {
+        "path_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "path_kind": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "indirect",
+            "draft_only",
+            "approval_queue",
+            "simulation",
+            "sandbox_probe",
+            "smallest_safe_pr",
+            "repair_first",
+            "defer"
+          ]
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "estimated_energy": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "pressure_release": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "requires_approval": {
+          "type": "boolean"
+        },
+        "requires_live_effect": {
+          "type": "boolean"
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "blocked_by": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "expected_deltas": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    },
+    "selected_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id",
+        "rationale",
+        "value_now",
+        "rejected_direct_path",
+        "required_follow_up",
+        "execution_authority_granted"
+      ],
+      "properties": {
+        "path_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "value_now": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "rejected_direct_path": {
+          "type": "boolean"
+        },
+        "required_follow_up": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "execution_authority_granted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "conservation_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "invariant", "status", "evidence_ref", "repair_action"],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "invariant": {
+          "type": "string",
+          "enum": [
+            "no_unapproved_authority",
+            "smallest_safe_change",
+            "proof_need_declared",
+            "repair_path_named",
+            "mfidel_atomicity_unchanged",
+            "foundation_mode_preserved"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["passed", "blocked", "awaiting_evidence"]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "repair_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    }
+  }
+}

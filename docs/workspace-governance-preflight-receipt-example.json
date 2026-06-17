@@ -2219,6 +2219,19 @@
     {
       "args": [
         "C:\\Python313\\python.exe",
+        "scripts/validate_code_change_physics_packet.py"
+      ],
+      "name": "code_change_physics_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] code_change_physics_doc\n[PASS] code_change_physics_cross_doc_anchors\n[PASS] code_change_physics_schema\n[PASS] code_change_physics_packet_semantics\n[PASS] code_change_physics_capability_binding\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
         "scripts/validate_intelligence_coordination_episode_receipt.py"
       ],
       "name": "intelligence_coordination_episode_receipt",
