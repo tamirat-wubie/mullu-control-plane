@@ -103,8 +103,10 @@
         "command_state",
         "task_status",
         "response_state",
+        "response_evidence_state",
         "response_claim_allowed",
         "response_terminal_certificate_id",
+        "response_evidence_refs",
         "response_blocker",
         "task_terminal",
         "task_blocked",
@@ -155,8 +157,14 @@
         "command_state": {"type": "string", "minLength": 1},
         "task_status": {"$ref": "#/$defs/task_status"},
         "response_state": {"$ref": "#/$defs/response_state"},
+        "response_evidence_state": {"$ref": "#/$defs/response_evidence_state"},
         "response_claim_allowed": {"type": "boolean"},
         "response_terminal_certificate_id": {"type": "string"},
+        "response_evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
         "response_blocker": {
           "type": "string",
           "enum": [
@@ -210,6 +218,19 @@
         "blocked",
         "awaiting_terminal_evidence",
         "completed_verified"
+      ]
+    },
+    "response_evidence_state": {
+      "type": "string",
+      "enum": [
+        "received",
+        "execution_in_progress",
+        "approval_pending",
+        "operator_review_required",
+        "blocked_with_receipt",
+        "blocked_receipt_required",
+        "terminal_certificate_missing",
+        "terminal_verified"
       ]
     }
   }

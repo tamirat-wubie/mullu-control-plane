@@ -139,6 +139,16 @@ _RESPONSE_STATES = (
     "awaiting_terminal_evidence",
     "completed_verified",
 )
+_RESPONSE_EVIDENCE_STATES = (
+    "received",
+    "execution_in_progress",
+    "approval_pending",
+    "operator_review_required",
+    "blocked_with_receipt",
+    "blocked_receipt_required",
+    "terminal_certificate_missing",
+    "terminal_verified",
+)
 _APPROVAL_STATUSES = ("pending", "approved", "denied", "expired", "unknown")
 _PLAN_REVIEW_STATUSES = (
     "preview_ready",
@@ -931,8 +941,10 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
         "command_state",
         "task_status",
         "response_state",
+        "response_evidence_state",
         "response_claim_allowed",
         "response_terminal_certificate_id",
+        "response_evidence_refs",
         "response_blocker",
         "waiting_for",
         "approval_request_id",
@@ -2779,9 +2791,15 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         terminal_certificate_present=terminal_certificate is not None,
     )
     terminal_certificate_id = _terminal_certificate_id(terminal_certificate)
+    blocker_receipt_refs = _blocker_receipt_refs(receipts)
     response_state = _response_state_for_task(
         task_status=task_status,
         terminal_certificate_id=terminal_certificate_id,
+    )
+    response_evidence_state = _response_evidence_state_for_task(
+        task_status=task_status,
+        terminal_certificate_id=terminal_certificate_id,
+        blocker_receipt_refs=blocker_receipt_refs,
     )
     response_blocker = _response_blocker(
         task_status=task_status,
@@ -2814,8 +2832,13 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         "command_state": command.state.value,
         "task_status": task_status,
         "response_state": response_state,
+        "response_evidence_state": response_evidence_state,
         "response_claim_allowed": response_state == "completed_verified",
         "response_terminal_certificate_id": terminal_certificate_id,
+        "response_evidence_refs": _response_evidence_refs(
+            terminal_certificate_id=terminal_certificate_id,
+            blocker_receipt_refs=blocker_receipt_refs,
+        ),
         "response_blocker": response_blocker,
         "task_terminal": bool(terminal_certificate_id),
         "task_blocked": task_status == "blocked",
@@ -2990,6 +3013,60 @@ def _response_blocker(
     if task_status == "requires_review":
         return "operator_review_required"
     return ""
+
+
+def _response_evidence_state_for_task(
+    *,
+    task_status: str,
+    terminal_certificate_id: str,
+    blocker_receipt_refs: tuple[str, ...],
+) -> str:
+    if terminal_certificate_id:
+        return "terminal_verified"
+    if task_status == "completed":
+        return "terminal_certificate_missing"
+    if task_status == "blocked":
+        if blocker_receipt_refs:
+            return "blocked_with_receipt"
+        return "blocked_receipt_required"
+    if task_status == "waiting_for_approval":
+        return "approval_pending"
+    if task_status == "requires_review":
+        return "operator_review_required"
+    if task_status == "active":
+        return "execution_in_progress"
+    return "received"
+
+
+def _response_evidence_refs(
+    *,
+    terminal_certificate_id: str,
+    blocker_receipt_refs: tuple[str, ...],
+) -> list[str]:
+    refs = []
+    if terminal_certificate_id:
+        refs.append(f"terminal-certificate://{terminal_certificate_id}")
+    refs.extend(blocker_receipt_refs)
+    return refs
+
+
+def _blocker_receipt_refs(receipts: list[dict[str, Any]]) -> tuple[str, ...]:
+    refs: list[str] = []
+    for receipt in receipts:
+        receipt_type = str(receipt.get("receipt_type", "")).strip()
+        if receipt_type not in {
+            "denial_receipt",
+            "worker_failure_receipt",
+            "delivery_receipt",
+        }:
+            continue
+        status = str(receipt.get("status", "")).strip()
+        if receipt_type == "delivery_receipt" and status not in {"failed", "rejected"}:
+            continue
+        receipt_id = str(receipt.get("receipt_id", "")).strip()
+        if receipt_id:
+            refs.append(f"receipt://{receipt_type}/{receipt_id}")
+    return tuple(refs)
 
 
 def _task_status_counts(
