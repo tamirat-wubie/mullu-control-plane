@@ -5289,6 +5289,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closed_case_reports_closure_packet_drift_after_gate_refresh",
                 "closure_packet_drift_accepts_remediation_routing",
                 "closure_packet_drift_remediation_rejects_mismatched_refs",
+                "closure_packet_drift_remediation_rejects_unrecorded_authority_ref",
                 "closure_packet_drift_operator_actions_report_policy_requirements",
                 "closure_packet_drift_operator_action_binds_review_remediation",
                 "closure_packet_drift_operator_action_binds_compensation_runbook_remediation",
