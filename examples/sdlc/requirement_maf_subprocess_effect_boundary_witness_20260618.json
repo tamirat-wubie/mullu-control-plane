@@ -1,0 +1,73 @@
+{
+  "requirement_id": "REQ-maf-subprocess-effect-boundary-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-subprocess-effect-boundary-witness",
+  "problem_statement": "MAF runtime binding readiness needs a static subprocess effect-boundary witness after the ABI/CLI contract before any Python-to-Rust subprocess path can be reconsidered.",
+  "success_criteria": [
+    "MafSubprocessEffectBoundaryWitness validates against a public JSON schema and Foundation Mode example",
+    "MafSubprocessEffectBoundaryWitness binds MAF ABI/CLI contract refs, MAF receipt parity refs, MAF Rust workspace and CLI scaffold digests, UAO refs, LifeMeaningJudgment refs, and WorkerFailureReceipt refs",
+    "MafSubprocessEffectBoundaryWitness records the subprocess effect boundary as closed while keeping solver outcome AwaitingEvidence",
+    "MafSubprocessEffectBoundaryWitness blocks CLI execution, subprocess execution, shell invocation, child process spawn, PyO3 binding, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, raw stdout or stderr retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafSubprocessEffectBoundaryWitness rejects authority drift, boundary scope drift, closed-gap drift, digest drift, effect-control drift, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no CLI execution",
+    "no subprocess execution",
+    "no shell invocation",
+    "no child process spawn",
+    "no PyO3 binding",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no command implementation claim",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no raw stdout retention",
+    "no raw stderr retention",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "boundary mode remains denied_by_default_subprocess_effect_boundary",
+    "solver outcome remains AwaitingEvidence",
+    "subprocess_effect_boundary_closed remains true",
+    "runtime_binding_claimed and subprocess_execution_claimed remain false",
+    "each source artifact digest must match repository-local source files",
+    "all effect controls must retain denied_until_witnessed, execution_allowed false, raw_retention_allowed false, and fixture or failure gap refs",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "docs/95_maf_subprocess_effect_boundary_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "python -m pytest tests/test_validate_maf_subprocess_effect_boundary_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_subprocess_effect_boundary_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "docs/95_maf_subprocess_effect_boundary_witness.md",
+    "examples/sdlc/design_maf_subprocess_effect_boundary_witness_20260618.json",
+    "examples/sdlc/security_review_maf_subprocess_effect_boundary_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-subprocess-effect-boundary-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-subprocess-effect-boundary-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-subprocess-effect-boundary-witness/requirement"
+}

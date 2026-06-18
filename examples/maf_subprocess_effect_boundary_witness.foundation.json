@@ -1,0 +1,256 @@
+{
+  "witness_id": "maf-subprocess-effect-boundary-witness-foundation-20260618",
+  "witness_version": "maf_subprocess_effect_boundary_witness.v1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "boundary_scope": {
+    "source_family": "maf/rust",
+    "foundation_mode": true,
+    "boundary_mode": "denied_by_default_subprocess_effect_boundary",
+    "subprocess_effect_boundary_closed": true,
+    "runtime_binding_claimed": false,
+    "subprocess_execution_claimed": false,
+    "abi_cli_contract_ref": "witness://maf/abi-cli-contract",
+    "parity_witness_ref": "witness://maf/receipt-parity",
+    "uao_ref": "uao://maf/subprocess-effect-boundary-witness/foundation",
+    "life_meaning_judgment_ref": "life-meaning://maf/subprocess-effect-boundary-witness/foundation",
+    "required_future_witnesses": [
+      "witness://maf/deterministic-fixture-parity",
+      "witness://maf/failure-receipt-path"
+    ]
+  },
+  "source_artifacts": [
+    {
+      "artifact_id": "maf-abi-cli-contract-witness-schema",
+      "artifact_ref": "schemas/maf_abi_cli_contract_witness.schema.json",
+      "artifact_digest_sha256": "f55ef73e016aa2df11adf1c88d4a09cff3d0f40385b5984dc944913d9c9f720a",
+      "artifact_role": "abi_cli_contract",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-abi-cli-contract-witness-example",
+      "artifact_ref": "examples/maf_abi_cli_contract_witness.foundation.json",
+      "artifact_digest_sha256": "f522f38b95695f982709b6f85d192c51afbab74c62e3225999ce358a07397a4d",
+      "artifact_role": "abi_cli_example",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-abi-cli-contract-witness-validator",
+      "artifact_ref": "scripts/validate_maf_abi_cli_contract_witness.py",
+      "artifact_digest_sha256": "1c5da63c19c0d6279fa76d62fa1ae53e07e6d4986a24372397dbdf135ba1bf47",
+      "artifact_role": "abi_cli_validator",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-abi-cli-contract-witness-tests",
+      "artifact_ref": "tests/test_validate_maf_abi_cli_contract_witness.py",
+      "artifact_digest_sha256": "da5045d8a7b331547760dbb787ed95184d4c042d9d6162441b18a988f9fa399c",
+      "artifact_role": "abi_cli_tests",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-rust-workspace-manifest",
+      "artifact_ref": "maf/rust/Cargo.toml",
+      "artifact_digest_sha256": "115cfabf239e081f825db80de704c10d65920b6b5d394fff567ca0f7a20066f6",
+      "artifact_role": "workspace_manifest",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-cli-crate-manifest",
+      "artifact_ref": "maf/rust/crates/maf-cli/Cargo.toml",
+      "artifact_digest_sha256": "56b2a166109b9b6d68c9d311d4930be684aa876e38399e0038f7cad79fb7264b",
+      "artifact_role": "cli_manifest",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf-cli-entry-scaffold",
+      "artifact_ref": "maf/rust/crates/maf-cli/src/main.rs",
+      "artifact_digest_sha256": "c2b6c37eb6fddce6eacf47cc100b2b17d09eecf239cee29c832f89f659826a07",
+      "artifact_role": "cli_entry",
+      "execution_authority_denied": true
+    }
+  ],
+  "effect_controls": [
+    {
+      "control_id": "maf-subprocess:command-resolution",
+      "control_family": "command_resolution",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/command-resolution/static-path-only",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:argv",
+      "control_family": "argv",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/argv/allowlisted-fixture-vector",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:cwd",
+      "control_family": "cwd",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/cwd/workspace-relative-only",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:environment",
+      "control_family": "environment",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/environment/empty-secret-free",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:stdin",
+      "control_family": "stdin",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/stdin/fixture-ref-only",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:stdout",
+      "control_family": "stdout",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/stdout/digest-only",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:stderr",
+      "control_family": "stderr",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/stderr/digest-only",
+      "gap_refs": ["gap://maf/failure-receipt-path-open"]
+    },
+    {
+      "control_id": "maf-subprocess:timeout",
+      "control_family": "timeout",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/timeout/bounded-fixed-ceiling",
+      "gap_refs": ["gap://maf/failure-receipt-path-open"]
+    },
+    {
+      "control_id": "maf-subprocess:exit-code",
+      "control_family": "exit_code",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/exit-code/receipt-mapped",
+      "gap_refs": ["gap://maf/failure-receipt-path-open"]
+    },
+    {
+      "control_id": "maf-subprocess:filesystem",
+      "control_family": "filesystem",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/filesystem/no-write",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:process-network",
+      "control_family": "process_network",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/process-network/no-shell-no-network",
+      "gap_refs": ["gap://maf/deterministic-fixture-parity-open"]
+    },
+    {
+      "control_id": "maf-subprocess:receipt-failure",
+      "control_family": "receipt_failure",
+      "boundary_status": "denied_until_witnessed",
+      "execution_allowed": false,
+      "raw_retention_allowed": false,
+      "policy_ref": "policy://maf/subprocess/failure/worker-failure-receipt-required",
+      "gap_refs": ["gap://maf/failure-receipt-path-open"]
+    }
+  ],
+  "authority_boundary": {
+    "static_boundary_read_allowed": true,
+    "cli_execution_allowed": false,
+    "subprocess_execution_allowed": false,
+    "runtime_binding_allowed": false,
+    "pyo3_binding_allowed": false,
+    "rust_crate_execution_allowed": false,
+    "python_imports_rust_allowed": false,
+    "shell_invocation_allowed": false,
+    "child_process_spawn_allowed": false,
+    "network_call_allowed": false,
+    "secret_access_allowed": false,
+    "environment_secret_allowed": false,
+    "stdin_secret_allowed": false,
+    "raw_stdout_retention_allowed": false,
+    "raw_stderr_retention_allowed": false,
+    "filesystem_write_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "canonical_state_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_subprocess_effect_boundary_witness_schema": "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "maf_subprocess_effect_boundary_witness_example": "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "maf_subprocess_effect_boundary_witness_validator": "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "maf_subprocess_effect_boundary_witness_tests": "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "maf_subprocess_effect_boundary_witness_doc": "docs/95_maf_subprocess_effect_boundary_witness.md",
+    "maf_abi_cli_contract_witness_schema": "schemas/maf_abi_cli_contract_witness.schema.json",
+    "maf_abi_cli_contract_witness_example": "examples/maf_abi_cli_contract_witness.foundation.json",
+    "maf_abi_cli_contract_witness_validator": "scripts/validate_maf_abi_cli_contract_witness.py",
+    "maf_abi_cli_contract_witness_tests": "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "maf_receipt_parity_witness_schema": "schemas/maf_receipt_parity_witness.schema.json",
+    "maf_receipt_parity_witness_example": "examples/maf_receipt_parity_witness.foundation.json",
+    "maf_boundary_doc": "maf/MAF_BOUNDARY.md",
+    "rust_workspace_manifest": "maf/rust/Cargo.toml",
+    "rust_cli_manifest": "maf/rust/crates/maf-cli/Cargo.toml",
+    "rust_cli_entry": "maf/rust/crates/maf-cli/src/main.rs",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json"
+  },
+  "contract_summary": {
+    "source_artifact_count": 7,
+    "effect_control_count": 12,
+    "authority_denial_count": 19,
+    "open_gap_count": 2,
+    "evidence_ref_count": 22
+  },
+  "evidence_refs": [
+    "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "docs/95_maf_subprocess_effect_boundary_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "docs/94_maf_abi_cli_contract_witness.md",
+    "docs/93_maf_receipt_parity_witness_contract.md",
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "docs/MAF_RECEIPT_COVERAGE.md",
+    "maf/MAF_BOUNDARY.md",
+    "maf/rust/Cargo.toml",
+    "maf/rust/crates/maf-cli/Cargo.toml",
+    "maf/rust/crates/maf-cli/src/main.rs",
+    "examples/sdlc/requirement_maf_subprocess_effect_boundary_witness_20260618.json",
+    "examples/sdlc/design_maf_subprocess_effect_boundary_witness_20260618.json",
+    "examples/sdlc/security_review_maf_subprocess_effect_boundary_witness_20260618.json"
+  ]
+}

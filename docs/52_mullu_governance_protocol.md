@@ -197,6 +197,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 167. Personal-assistant foundation closure packets are public contracts when they bind the checked-in foundation evidence, readiness index, coherence ledger, authority coverage, capsule alignment, policy matrix, and runtime boundary receipts into digest-only replay evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, customer-readiness claims, live Nested Mind activation, and terminal-closure authority.
 168. Invariant fuzz execution reports are public contracts when they bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, mutation-free rejection counts, projection probe counts, public projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime-hardening or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live runtime execution, staging targets, production targets, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, secret access, filesystem writes, rollback execution, raw case payload retention, raw secret retention, terminal closure, and success claims.
 169. MAF receipt parity witnesses are public contracts when they bind Python receipt schema refs, Rust MAF crate manifest refs, Rust crate entry refs, canonical source digests, parity mappings, open gap refs, UAO refs, LifeMeaningJudgment refs, receipt refs, and authority-denial flags before any Python-to-Rust runtime binding claim can be reconsidered while denying PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
+170. MAF subprocess effect boundary witnesses are public contracts when they bind MAF ABI/CLI witness refs, MAF receipt parity refs, Rust CLI scaffold digests, command-resolution controls, argv controls, cwd controls, environment controls, stdin controls, stdout and stderr digest-only controls, timeout controls, exit-code controls, filesystem controls, process and network controls, failure-receipt controls, UAO refs, LifeMeaningJudgment refs, WorkerFailureReceipt refs, receipt refs, and authority-denial flags before any Python-to-Rust subprocess path can be reconsidered while denying CLI execution, subprocess execution, runtime binding, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, connector calls, network calls, secret access, stdin or environment secrets, raw stdout or stderr retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
 ## Verification
 
 Run:
@@ -208,7 +209,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 361 schemas
+protocol manifest ok: 362 schemas
 ```
 
 STATUS:

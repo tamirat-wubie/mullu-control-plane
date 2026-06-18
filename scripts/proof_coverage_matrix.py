@@ -7672,6 +7672,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_subprocess_effect_boundary_witness",
+            [
+                "MafSubprocessEffectBoundaryWitness",
+                "validate_maf_subprocess_effect_boundary_witness",
+                "maf_subprocess_effect_boundary_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+                "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+                "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+                "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+                "schemas/maf_abi_cli_contract_witness.schema.json",
+                "examples/maf_abi_cli_contract_witness.foundation.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/95_maf_subprocess_effect_boundary_witness.md",
+                "docs/94_maf_abi_cli_contract_witness.md",
+                "maf/rust/crates/maf-cli/src/main.rs",
+            ],
+            "MAF subprocess effect boundary witnesses bind static process-spawn, filesystem-write, network-call, secret-read, dispatch, and state-mutation controls while keeping subprocess execution, CLI execution, Rust execution, PyO3, connector calls, writes, runtime dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_subprocess_effect_boundary_witness_schema_valid",
+                "maf_subprocess_effect_boundary_witness_denies_subprocess_execution",
+                "maf_subprocess_effect_boundary_witness_requires_effect_controls",
+                "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift",
+                "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift",
+                "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_subprocess_effect_boundary_witness_schema_valid": [
+                    "maf_subprocess_effect_boundary_witness_passes"
+                ],
+                "maf_subprocess_effect_boundary_witness_denies_subprocess_execution": [
+                    "maf_subprocess_effect_boundary_witness_passes",
+                    "maf_subprocess_effect_boundary_rejects_authority_drift",
+                ],
+                "maf_subprocess_effect_boundary_witness_requires_effect_controls": [
+                    "maf_subprocess_effect_boundary_witness_passes",
+                    "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift",
+                ],
+                "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift": [
+                    "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+                ],
+                "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift": [
+                    "maf_subprocess_effect_boundary_rejects_digest_and_summary_drift"
+                ],
+                "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_subprocess_effect_boundary"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -11992,6 +12049,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_abi_cli_contract_witness_contract",
             "surfaces": ["maf_abi_cli_contract_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_subprocess_effect_boundary_witness_contract",
+            "surfaces": ["maf_subprocess_effect_boundary_witness"],
             "status": "closed",
         },
         {

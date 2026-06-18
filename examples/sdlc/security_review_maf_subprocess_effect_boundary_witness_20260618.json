@@ -1,0 +1,102 @@
+{
+  "security_review_id": "SEC-maf-subprocess-effect-boundary-witness-20260618",
+  "change_id": "maf-subprocess-effect-boundary-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "network",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF subprocess effect-boundary evidence can accidentally become runtime execution authority if a closed boundary envelope is conflated with subprocess execution, shell invocation, child process spawn, raw output retention, secret-bearing environment, filesystem writes, or terminal closure. The mitigation is a read-only witness and validator that reject authority drift, effect-control drift, digest drift, closed-gap drift, raw secret markers, receipt ref drift, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "CLI execution, subprocess execution, runtime binding, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_authority_drift"
+    },
+    {
+      "category": "network",
+      "check": "SSRF check confirms network calls and process/network effect controls remain denied until independently witnessed",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms secret marker validation rejects client_secret, tokens, API keys, private-key markers, stdin secret use, and environment secret use in witness payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms boundary mode remains denied_by_default_subprocess_effect_boundary and closed subprocess boundary does not imply runtime execution",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the witness schema, example, validator, tests, MAF ABI/CLI witness, MAF parity witness, MAF boundary doc, UAO schema, LifeMeaningJudgment schema, and WorkerFailureReceipt schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms source artifact digests, effect control counts, authority denial counts, and open gap counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_digest_and_summary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-subprocess-execution-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks subprocess execution, CLI execution, shell invocation, child process spawn, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+        "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+        "tests/test_validate_maf_subprocess_effect_boundary_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-subprocess-output-secret-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness denies raw stdout and stderr retention, stdin secrets, environment secrets, raw secret markers, filesystem writes, and network effects.",
+      "evidence_refs": [
+        "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+        "tests/test_validate_maf_subprocess_effect_boundary_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafSubprocessEffectBoundaryWitness validation read-only and deterministic",
+    "require canonical source digests for ABI/CLI and MAF CLI artifacts",
+    "require denied_until_witnessed effect controls for command resolution, argv, cwd, environment, stdin, stdout, stderr, timeout, exit code, filesystem, process/network, and failure receipts",
+    "deny subprocess execution, shell invocation, child process spawn, network, secrets, raw output retention, writes, dispatch, terminal closure, and success claims",
+    "reject secret markers, closed-gap drift, and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "receipt://sdlc/maf-subprocess-effect-boundary-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-subprocess-effect-boundary-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-subprocess-effect-boundary-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-subprocess-effect-boundary-witness/security"
+}
