@@ -64,6 +64,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_github_pr_branch_write_authority_binding",
         "agentic_service_harness_github_pr_uao_admission_witness",
         "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+        "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
