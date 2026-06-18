@@ -7898,6 +7898,65 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_runtime_binding_admission_witness",
+            [
+                "MafRuntimeBindingAdmissionWitness",
+                "validate_maf_runtime_binding_admission_witness",
+                "maf_runtime_binding_admission_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_runtime_binding_admission_witness.schema.json",
+                "examples/maf_runtime_binding_admission_witness.foundation.json",
+                "scripts/validate_maf_runtime_binding_admission_witness.py",
+                "tests/test_validate_maf_runtime_binding_admission_witness.py",
+                "schemas/maf_failure_receipt_path_witness.schema.json",
+                "examples/maf_failure_receipt_path_witness.foundation.json",
+                "scripts/validate_maf_failure_receipt_path_witness.py",
+                "tests/test_validate_maf_failure_receipt_path_witness.py",
+                "docs/98_maf_runtime_binding_admission_witness.md",
+                "docs/97_maf_failure_receipt_path_witness.md",
+                "docs/AUDIT_F8_SCOPING_PLAN.md",
+                "maf/MAF_BOUNDARY.md",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+            ],
+            "MAF runtime binding admission witnesses bind closed static MAF prerequisites to required UAO, implementation design, rollback, runtime execution receipt, CI Rust backend, and terminal closure evidence while keeping implementation start, runtime binding, PyO3, subprocess execution, backend default flips, writes, runtime dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_runtime_binding_admission_witness_schema_valid",
+                "maf_runtime_binding_admission_witness_denies_execution",
+                "maf_runtime_binding_admission_witness_requires_implementation_evidence",
+                "maf_runtime_binding_admission_witness_rejects_requirement_drift",
+                "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift",
+                "maf_runtime_binding_admission_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_runtime_binding_admission_witness_schema_valid": [
+                    "maf_runtime_binding_admission_witness_passes"
+                ],
+                "maf_runtime_binding_admission_witness_denies_execution": [
+                    "maf_runtime_binding_admission_witness_passes",
+                    "maf_runtime_binding_admission_rejects_authority_drift",
+                ],
+                "maf_runtime_binding_admission_witness_requires_implementation_evidence": [
+                    "maf_runtime_binding_admission_witness_passes",
+                    "maf_runtime_binding_admission_rejects_scope_and_evidence_drift",
+                ],
+                "maf_runtime_binding_admission_witness_rejects_requirement_drift": [
+                    "maf_runtime_binding_admission_rejects_requirement_drift"
+                ],
+                "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift": [
+                    "maf_runtime_binding_admission_rejects_digest_and_summary_drift"
+                ],
+                "maf_runtime_binding_admission_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_runtime_binding_admission"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -12233,6 +12292,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_failure_receipt_path_witness_contract",
             "surfaces": ["maf_failure_receipt_path_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_runtime_binding_admission_witness_contract",
+            "surfaces": ["maf_runtime_binding_admission_witness"],
             "status": "closed",
         },
         {

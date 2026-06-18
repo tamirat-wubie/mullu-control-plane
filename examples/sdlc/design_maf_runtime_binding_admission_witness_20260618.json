@@ -1,0 +1,75 @@
+{
+  "design_id": "DES-maf-runtime-binding-admission-witness-20260618",
+  "requirement_id": "REQ-maf-runtime-binding-admission-witness-20260618",
+  "architecture_summary": "Add a schema-backed, read-only MafRuntimeBindingAdmissionWitness that records the governed admission gate for future MAF runtime binding, binds closed static prerequisite refs, names required implementation evidence, and keeps implementation start, executable binding, backend default flips, terminal closure, and success authority unavailable.",
+  "affected_modules": [
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "docs",
+    "ci",
+    "proof_coverage_matrix",
+    "maf"
+  ],
+  "data_model_changes": [
+    "Introduce MafRuntimeBindingAdmissionWitness with admission_scope, source_artifacts, admission_requirements, authority_boundary, receipt_refs, contract_summary, and evidence_refs",
+    "Represent runtime-binding readiness through explicit admission requirements instead of executable binding code",
+    "Keep runtime binding implementation as a later evidence-bearing thread even after static prerequisites are closed"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/maf_runtime_binding_admission_witness.schema.json",
+    "schemas/maf_failure_receipt_path_witness.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_maf_runtime_binding_admission_witness.py",
+    "tests/test_validate_maf_runtime_binding_admission_witness.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_sdlc_security_review.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Revert the added schema, example, validator, tests, docs, manifest entry, proof matrix entry, generated fixture updates, and CI hook; rerun protocol, proof coverage, SDLC, and workspace governance checks.",
+  "migration_plan": "No runtime migration. This is an additive public contract and Foundation Mode example.",
+  "test_plan": [
+    "python scripts/validate_maf_runtime_binding_admission_witness.py",
+    "python -m pytest tests/test_validate_maf_runtime_binding_admission_witness.py -q",
+    "python -m py_compile scripts/validate_maf_runtime_binding_admission_witness.py scripts/proof_coverage_matrix.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_runtime_binding_admission_witness_20260618.json --strict"
+  ],
+  "uao_ref": "uao://sdlc/maf-runtime-binding-admission-witness/design",
+  "causal_decision_trace_ref": "trace://sdlc/maf-runtime-binding-admission-witness/design",
+  "receipt_ref": "receipt://sdlc/maf-runtime-binding-admission-witness/design"
+}

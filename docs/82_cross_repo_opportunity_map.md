@@ -46,6 +46,7 @@ The control plane already absorbed several high-fit ideas:
 | MAF subprocess effect boundary | `MafSubprocessEffectBoundaryWitness` | Implemented |
 | MAF deterministic fixture parity boundary | `MafDeterministicFixtureParityWitness` | Implemented |
 | MAF failure receipt path boundary | `MafFailureReceiptPathWitness` | Implemented |
+| MAF runtime binding admission boundary | `MafRuntimeBindingAdmissionWitness` | Implemented |
 | SWEWS world substrate replay evidence | `WorldSubstrateReplayWitness` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
@@ -58,7 +59,7 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
 | 2 | `external/nested-mind-platform` v17-v20 | Readiness gate, waiver proposal, waiver certificate, waiver application | Release, deployment, and runtime promotion already use readiness claims; waiver handling needs a typed review queue instead of scattered accepted-risk notes. | Add a `ReadinessWaiverReviewPacket` contract with operator approvals, expiry, compensating controls, and no deployment authority. |
 | 3 | `external/nested-mind-platform` v18-v19 | Chaos rehearsal and invariant fuzz execution reports | Control-plane validators prove static contracts well, but runtime resilience claims need rehearsal evidence before production exposure. | Implemented as dry-run `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport`; future live use remains blocked pending staging boundary, rollback, incident, and operator approval witnesses. |
 | 4 | `external/nested-mind-platform` v14-v16 | SQLite-backed job receipt and distributed lease execution ledger | Scheduler-worker proof threads now exist, but there is no operator read model summarizing lease, worker, failure, and runtime receipt chain status. | Add `WorkerReceiptLedgerReadModel` that projects existing receipts without executing jobs or reading a live database. |
-| 5 | `maf/rust` | MAF receipt parity boundary | The Rust workspace is organized into kernel, capability, event, governance, orchestration, ops, learning, and truth-kernel crates, but Python control-plane claims need explicit staged witnesses before runtime binding. | Implemented as `MafReceiptParityWitness`, `MafAbiCliContractWitness`, `MafSubprocessEffectBoundaryWitness`, `MafDeterministicFixtureParityWitness`, and `MafFailureReceiptPathWitness`; executable runtime binding remains a separate implementation thread. |
+| 5 | `maf/rust` | MAF receipt parity boundary | The Rust workspace is organized into kernel, capability, event, governance, orchestration, ops, learning, and truth-kernel crates, but Python control-plane claims need explicit staged witnesses before runtime binding. | Implemented as `MafReceiptParityWitness`, `MafAbiCliContractWitness`, `MafSubprocessEffectBoundaryWitness`, `MafDeterministicFixtureParityWitness`, `MafFailureReceiptPathWitness`, and `MafRuntimeBindingAdmissionWitness`; executable runtime binding remains a separate implementation thread. |
 | 6 | `external/swews-core` | Future world substrate runtime adapter | `WorldSubstrateReplayWitness` covers digest-only replay admission, but live world runtime binding remains unavailable. | Defer adapter code until replay witnesses, SQLite boundaries, service-call receipts, rollback plans, and branch quarantine evidence are all verified. |
 | 7 | `msic-sdk`, `tatoken-kernel`, `tarc-core` | Mfidel substrate conformance witness | Mfidel atomicity is a hard invariant, but SDK/kernel drift can still occur across TypeScript, Python, and Rust implementations. | Add `MfidelSubstrateConformanceReceipt` with substrate digest, row/column bounds, no-normalization proof refs, and cross-runtime fixture refs. |
 | 8 | `Virecai` | Capture policy and trusted reality evidence packet | Control-plane capture policy exists, but future browser, screen, video, and sensor receipts need a standard evidence envelope before any live capture. | Extend capture-policy work with a `TrustedCaptureEvidencePacket` dry-run contract. Keep media capture, file writes, and connector calls denied. |
@@ -72,7 +73,7 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
 | Live connector workers from `external/nested-mind-platform` v23-v25 | They cross secret, external endpoint, token, and notification boundaries. | Secret access receipt, connector worker execution receipt, UAO admission, `Phi_gov` authorization, and rollback evidence. |
 | Direct production Kubernetes chaos execution | It is world-changing and can damage runtime state. | Staging-only dry-run proof, cluster boundary witness, rollback plan, and operator approval chain. |
 | Direct browser/app control from `mullu-inspect` or `mullu-browser` | Inspection can become mutation through click, form submit, cookie, or session effects. | Browser observation receipt, consent boundary, no-secret policy, and click/submit approval gate. |
-| Direct Rust runtime binding from `maf/rust` | The current repository states receipt-shape parity, ABI/CLI contract evidence, subprocess boundary evidence, static deterministic fixture parity, and static failure receipt path evidence, but not executable Python runtime binding. | UAO admission, implementation design, rollback evidence, runtime execution receipts, and terminal closure evidence. |
+| Direct Rust runtime binding from `maf/rust` | The current repository states receipt-shape parity, ABI/CLI contract evidence, subprocess boundary evidence, static deterministic fixture parity, static failure receipt path evidence, and static runtime-binding admission evidence, but not executable Python runtime binding. | Implementation design, rollback evidence, runtime execution receipts, CI Rust backend evidence, explicit operator authority, and terminal closure evidence. |
 | Direct search ingestion from `mullu-search` | Search may collect stale, private, copyrighted, or instruction-bearing content. | Search decision, source-scope policy, citation receipt, conflict map, and raw-body retention denial. |
 
 ## 5. Recommended Implementation Sequence
@@ -81,9 +82,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. MAF runtime binding implementation witness
-   - Follows `MafFailureReceiptPathWitness` and proves executable binding behavior only after UAO admission, rollback evidence, runtime execution receipts, and explicit operator authority.
-   - Must remain `AwaitingEvidence` until implementation evidence exists without overclaiming static witnesses as execution authority.
+2. MAF runtime binding implementation evidence
+   - Follows `MafRuntimeBindingAdmissionWitness` and proves executable binding behavior only after UAO admission, implementation design, rollback evidence, runtime execution receipts, CI Rust backend evidence, terminal closure review, and explicit operator authority.
+   - Must remain `AwaitingEvidence` until implementation evidence exists without overclaiming admission witnesses as execution authority.
 
 ## 6. Project Discipline Mesh Findings
 

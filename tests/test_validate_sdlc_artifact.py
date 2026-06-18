@@ -1005,3 +1005,22 @@ def test_maf_failure_receipt_path_witness_sdlc_artifacts_validate() -> None:
     assert "scripts/validate_maf_failure_receipt_path_witness.py" in design_record["validator_changes"]
     assert "tests/test_validate_maf_failure_receipt_path_witness.py" in design_record["validator_changes"]
     assert "no raw failure payload retention" in requirement_record["non_goals"]
+
+
+def test_maf_runtime_binding_admission_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_runtime_binding_admission_witness_20260618.json")
+    design_path = Path("examples/sdlc/design_maf_runtime_binding_admission_witness_20260618.json")
+    requirement_record = validator.load_json_object(requirement_path, "maf runtime binding admission requirement")
+    design_record = validator.load_json_object(design_path, "maf runtime binding admission design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "schemas/maf_runtime_binding_admission_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_runtime_binding_admission_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_runtime_binding_admission_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_runtime_binding_admission_witness.py" in design_record["validator_changes"]
+    assert "no runtime binding implementation" in requirement_record["non_goals"]
