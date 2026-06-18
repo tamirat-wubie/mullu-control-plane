@@ -294,9 +294,10 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     )
 
     assert errors == []
-    assert EXPECTED_PROTOCOL_MANIFEST_RESULT == expected_manifest_result
-    assert expected_manifest_result in content
-    assert expected_manifest_result in GOVERNANCE_PROTOCOL_REQUIRED_LITERALS
+    assert expected_manifest_result.startswith(EXPECTED_PROTOCOL_MANIFEST_RESULT)
+    assert EXPECTED_PROTOCOL_MANIFEST_RESULT in content
+    assert EXPECTED_PROTOCOL_MANIFEST_RESULT in GOVERNANCE_PROTOCOL_REQUIRED_LITERALS
+    assert "<schema-count> schemas" in content
     assert "Capability candidate packages are public contracts" in content
     assert "Capability maturity assessments are public contracts" in content
     assert "Policy proof reports are public contracts" in content

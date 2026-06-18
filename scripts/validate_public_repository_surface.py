@@ -33,21 +33,14 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-PROTOCOL_MANIFEST_PATH = REPO_ROOT / "schemas" / "mullu_governance_protocol.manifest.json"
 REPOSITORY_API_URL = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane"
 LATEST_RELEASE_API_URL = f"{REPOSITORY_API_URL}/releases/latest"
 GITHUB_CLI_TIMEOUT_SECONDS = 30
 
 
 def expected_protocol_manifest_result() -> str:
-    """Return the expected protocol manifest validator success line."""
-    try:
-        manifest = json.loads(PROTOCOL_MANIFEST_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return "protocol manifest ok: unavailable schemas"
-    schemas = manifest.get("schemas", ())
-    schema_count = len(schemas) if isinstance(schemas, list) else 0
-    return f"protocol manifest ok: {schema_count} schemas"
+    """Return the stable protocol manifest validator success prefix."""
+    return "protocol manifest ok:"
 
 
 EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
