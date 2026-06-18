@@ -1,0 +1,250 @@
+{
+  "packet_id": "personal-assistant-foundation-closure-8a4c02631d8e8eea",
+  "schema_version": "personal_assistant.foundation_closure_packet.v1",
+  "generated_at": "2026-06-18T02:29:54Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "packet_is_not_execution_authority": true,
+  "packet_is_not_terminal_closure": true,
+  "packet_is_not_customer_readiness": true,
+  "source_receipts": [
+    {
+      "source_kind": "foundation_evidence",
+      "source_ref": "examples/personal_assistant_foundation_evidence_receipt.json",
+      "source_sha256": "dbc387bc3fc8cefafa37bf8b047b66f0bf1a602660b6c649cb21b3c45bd5fbf9",
+      "receipt_id": "personal-assistant-foundation-evidence-7892c43aefaa8bb4",
+      "schema_version": "personal_assistant.foundation_evidence_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "foundation_evidence_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 2026
+    },
+    {
+      "source_kind": "readiness_index",
+      "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
+      "source_sha256": "69759e96b4d0502145b41d582cdf4fd426e1dc4ad7724e211f2d3319edca67be",
+      "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+      "schema_version": "personal_assistant.readiness_index_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "readiness_index_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 5058
+    },
+    {
+      "source_kind": "coherence_ledger",
+      "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
+      "source_sha256": "b243afb7c258fbfb245ecd32cfe31474d6d9fc7db0188d5199bf515b61baee2b",
+      "receipt_id": "personal-assistant-coherence-ledger-b9c82f54f879d24d",
+      "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "coherence_ledger_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 15847
+    },
+    {
+      "source_kind": "authority_coverage",
+      "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
+      "source_sha256": "304bb02db884ceef1a8752110b5ef400998c408515ac6323a95807ddfba40ecb",
+      "receipt_id": "personal-assistant-authority-coverage-8f3f740417ae2757",
+      "schema_version": "personal_assistant.authority_coverage_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "authority_coverage_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 21418
+    },
+    {
+      "source_kind": "capsule_alignment",
+      "source_ref": "examples/personal_assistant_capsule_alignment_receipt.json",
+      "source_sha256": "0bf3b341024024135edf6a3ae2cf4c73b8ede1384bd6617adb124ff17d30ebe0",
+      "receipt_id": "personal-assistant-capsule-alignment-e187e1d6ec5bf133",
+      "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "capsule_alignment_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 11122
+    },
+    {
+      "source_kind": "policy_matrix",
+      "source_ref": "examples/personal_assistant_policy_matrix_receipt.json",
+      "source_sha256": "e6985a85b80cd59fb774ae7252504d7971a77bba69d142bcfe5091b2d7b6e1f8",
+      "receipt_id": "personal-assistant-policy-matrix-c24d862b17dc5444",
+      "schema_version": "personal_assistant.policy_matrix_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "policy_matrix_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 8851
+    },
+    {
+      "source_kind": "runtime_boundary",
+      "source_ref": "examples/personal_assistant_runtime_boundary_receipt.json",
+      "source_sha256": "aea329146c4bd43f383f29674c58054842c0973facfa3d9d56aa5827ecf3d984",
+      "receipt_id": "personal-assistant-runtime-boundary-45d03b76e23dfdd3",
+      "schema_version": "personal_assistant.runtime_boundary_receipt.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "runtime_boundary_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 18414
+    }
+  ],
+  "authority_denials": [
+    {
+      "authority": "live_connector_execution",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "connector_mutation",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "external_write",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "system_of_record_write",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "memory_write",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "deployment_mutation",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "money_legal_public_action",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "customer_readiness_claim",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "production_readiness_claim",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "live_nested_mind_activation",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    },
+    {
+      "authority": "terminal_closure",
+      "denied": true,
+      "denial_reason": "Foundation Mode closure packet grants no live or effect-bearing authority."
+    }
+  ],
+  "no_effect_boundary": {
+    "execution_authority_granted": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "system_of_record_write_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "money_legal_public_allowed": false,
+    "production_ready_claim_allowed": false,
+    "customer_ready_claim_allowed": false,
+    "live_nested_mind_activation_allowed": false,
+    "terminal_closure_claim_allowed": false
+  },
+  "closure_summary": {
+    "foundation_closure_packet_closed": true,
+    "source_receipt_count": 7,
+    "bound_source_receipt_count": 7,
+    "solved_verified_source_receipt_count": 7,
+    "closed_source_receipt_count": 7,
+    "effect_violation_count": 0,
+    "secret_value_marker_count": 0,
+    "all_sources_bound": true,
+    "all_sources_schema_versioned": true,
+    "all_sources_solved_verified": true,
+    "all_source_closure_flags_pass": true,
+    "all_no_effect_boundaries_clear": true,
+    "all_source_receipts_non_authoritative": true,
+    "no_secret_values_serialized": true,
+    "live_connector_execution_ready": false,
+    "memory_write_ready": false,
+    "deployment_mutation_ready": false,
+    "customer_ready": false,
+    "live_nested_mind_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "secret_value_markers": [],
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-18",
+        "reason": "Bound Personal Assistant Foundation Mode receipt chain without granting live authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "check_count": 213,
+  "check_count": 214,
   "checks": [
     {
       "args": [
@@ -1001,6 +1001,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE RECORD PATH VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record.py"
+      ],
+      "name": "agentic_service_harness_live_producer_operator_decision_value_record",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER OPERATOR DECISION VALUE RECORD VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

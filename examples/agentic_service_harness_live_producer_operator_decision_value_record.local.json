@@ -1,0 +1,95 @@
+{
+  "record_id": "agentic-service-harness-live-producer-operator-decision-value-record",
+  "schema_version": 1,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_record_path_ref": "record-path://agentic-service-harness-live-producer-operator-decision-value-record-path",
+  "source_record_path_status": "ready_blocked_awaiting_explicit_operator_value",
+  "operator_input_ref": "codex-thread://operator-message/2026-06-18/approve",
+  "decision_kind": "explicit_operator_approval",
+  "normalized_decision_value": "approve",
+  "raw_input_serialized": false,
+  "operator_value_record_created": true,
+  "actual_operator_decision_value_present": true,
+  "operator_approval_witness_satisfied": true,
+  "operator_rejection_recorded": false,
+  "approval_status": "Satisfied",
+  "remaining_live_witnesses_status": "AwaitingEvidence",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "effect_receipt",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "external_adapter_evidence",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "secret_handoff",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "rollback_proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "record_controls": {
+    "accepts_generic_continuation": false,
+    "accepts_template_packet": false,
+    "stores_raw_operator_input": false,
+    "stores_secret_values": false,
+    "admits_mutation_route": false,
+    "grants_live_authority": false,
+    "requires_remaining_witnesses": true
+  },
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-decision-value-record",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect effect receipt, external adapter evidence, secret handoff, and rollback proof before any live producer implementation."
+}
