@@ -495,6 +495,13 @@ class WHQRDocument:
 
     def canonical_json(self) -> str:
         try:
+            if self.whqr_version != WHQR_VERSION:
+                raise ValueError("WHQR replay semantic version mismatch")
+            if self.semantics_hash != SEMANTICS_HASH:
+                raise ValueError("WHQR replay semantics hash mismatch")
+            _require_whqr_expr_tree(self.root, "root")
+            _require_optional_text(self.source_ref, "source_ref")
+            _require_metadata_tree(self.metadata, "document")
             return json.dumps(
                 _canonical(self),
                 sort_keys=True,
