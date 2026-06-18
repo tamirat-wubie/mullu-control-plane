@@ -178,9 +178,13 @@ _FOUNDATION_LANES = (
     {
         "lane_id": "draft_projection",
         "display_name": "Draft-Only Assistant",
-        "stage": "projection_only",
+        "stage": "runtime_preview",
         "state": "SolvedVerified",
-        "route_refs": [],
+        "route_refs": [
+            "/api/v1/personal-assistant/drafts/email/preview",
+            "/api/v1/personal-assistant/drafts/calendar-event/preview",
+            "/api/v1/personal-assistant/drafts/task/preview",
+        ],
         "schema_refs": ["schemas/personal_assistant_draft_projection.schema.json"],
         "validator_refs": [
             "scripts/validate_personal_assistant_draft_projection.py",
