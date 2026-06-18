@@ -167,6 +167,23 @@ def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
         source_ref_type_tampered.verify_semantics()
 
 
+def test_document_canonical_serialization_rejects_header_and_root_tampering() -> None:
+    version_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    hash_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    root_role_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+
+    object.__setattr__(version_tampered, "whqr_version", "0.2.0")
+    object.__setattr__(hash_tampered, "semantics_hash", "sha256:other")
+    object.__setattr__(root_role_tampered.root, "role", "what")
+
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        version_tampered.canonical_json()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        hash_tampered.canonical_hash()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        root_role_tampered.canonical_json()
+
+
 def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
     node_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
     logical_tampered = WHQRDocument(
