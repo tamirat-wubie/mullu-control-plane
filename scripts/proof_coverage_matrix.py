@@ -5295,6 +5295,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_proof_timeline_reports_open_case_without_closure",
                 "case_proof_timeline_reports_closure_certificate_and_learning",
                 "learning_binding_requires_admission_evidence_refs",
+                "learning_binding_rejects_non_decision_evidence_refs",
                 "learning_binding_requires_closed_case_and_admission_decision",
                 "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
                 "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -5311,6 +5312,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             runtime_witness_anchor_aliases={
                 "terminal_closure_rejects_unadmitted_certificate_evidence_ref": [
                     "case_close_rejects_unadmitted_terminal_certificate_evidence",
+                ],
+                "learning_binding_rejects_non_decision_evidence_refs": [
+                    "learning_admission_binding_rejects_non_decision_evidence",
                 ],
             },
         ),

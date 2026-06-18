@@ -492,10 +492,7 @@ class OrganizationKernel:
             raise RuntimeCoreInvariantError("terminal closure unavailable")
         if closure.case_id != binding.case_id:
             raise RuntimeCoreInvariantError("learning binding case mismatch")
-        for evidence_ref in binding.evidence_refs:
-            evidence = self._case_evidence.get(evidence_ref)
-            if evidence is None or evidence.case_id != binding.case_id:
-                raise RuntimeCoreInvariantError("learning admission evidence unavailable")
+        self._validate_learning_admission_evidence(binding.case_id, binding.evidence_refs)
         self._learning_bindings[binding.binding_id] = binding
         self._emit(binding.case_id, "learning_admission_bound", {"binding_id": binding.binding_id})
         return binding
@@ -1024,6 +1021,7 @@ class OrganizationKernel:
             closure = self._closures.get(binding.closure_id)
             if closure is None or closure.case_id != binding.case_id:
                 raise RuntimeCoreInvariantError("restored learning binding closure mismatch")
+            self._validate_learning_admission_evidence(binding.case_id, binding.evidence_refs)
         for lease_receipt in self._worker_lease_receipts.values():
             organization_case = self._cases.get(lease_receipt.case_id)
             plan_id = self._plan_by_case.get(lease_receipt.case_id)
@@ -1418,6 +1416,14 @@ class OrganizationKernel:
             raise RuntimeCoreInvariantError("terminal closure certificate evidence unavailable")
         if terminal_certificate_id not in set(closure_evidence_refs):
             raise RuntimeCoreInvariantError("closure requires terminal certificate evidence ref")
+
+    def _validate_learning_admission_evidence(self, case_id: str, evidence_refs: tuple[str, ...]) -> None:
+        for evidence_ref in evidence_refs:
+            evidence = self._case_evidence.get(evidence_ref)
+            if evidence is None or evidence.case_id != case_id:
+                raise RuntimeCoreInvariantError("learning admission evidence unavailable")
+            if evidence.requirement_id != LEARNING_ADMISSION_DECISION_REQUIREMENT:
+                raise RuntimeCoreInvariantError("learning admission decision evidence unavailable")
 
     def _all_plan_steps_allowed(self, case_id: str) -> bool:
         plan = self._require_case_plan(case_id)

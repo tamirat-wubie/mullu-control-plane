@@ -2215,6 +2215,52 @@ def test_learning_binding_rejects_unadmitted_admission_evidence_refs(tmp_path: P
     assert fetched.json()["learning_bindings"] == []
 
 
+def test_learning_binding_rejects_non_decision_evidence_refs(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _terminal_closure_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+            "evidence_refs": ["evidence:executive_objective"],
+        },
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 400
+    assert learning.json()["detail"]["error_code"] == "learning_admission_rejected"
+    assert fetched.json()["learning_bindings"] == []
+
+
 def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)

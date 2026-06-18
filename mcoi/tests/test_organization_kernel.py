@@ -387,6 +387,33 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
     assert kernel.list_case_events(plan.case_id)[-1].event_type == "learning_admission_bound"
 
 
+def test_learning_admission_binding_rejects_non_decision_evidence() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, _terminal_closure_evidence_refs(kernel, plan.case_id)),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id=TERMINAL_CERTIFICATE_EVIDENCE_REF,
+    )
+    binding = LearningAdmissionBinding(
+        binding_id="learning.binding.gateway-pilot",
+        case_id=plan.case_id,
+        closure_id=closure.closure_id,
+        decision_id="learning.decision.gateway-pilot",
+        admitted=True,
+        evidence_refs=("evidence:executive_objective",),
+        created_at="2026-05-27T17:04:00+00:00",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="learning admission decision evidence unavailable"):
+        kernel.bind_learning_admission(binding)
+
+    assert kernel.snapshot_state().learning_bindings == ()
+    assert kernel.list_case_events(plan.case_id)[-1].event_type == "case_terminal_closure_recorded"
+
+
 def test_organization_plan_rejects_cycles() -> None:
     first = PlanStep(
         step_id="first",
