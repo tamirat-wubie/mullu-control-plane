@@ -7637,6 +7637,70 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "world_substrate_replay_witness",
+            [
+                "WorldSubstrateReplayWitness",
+                "validate_world_substrate_replay_witness",
+                "world_substrate_replay_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/world_substrate_replay_witness.schema.json",
+                "examples/world_substrate_replay_witness.foundation.json",
+                "scripts/validate_world_substrate_replay_witness.py",
+                "tests/test_validate_world_substrate_replay_witness.py",
+                "schemas/world_state.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/92_world_substrate_replay_witness_contract.md",
+            ],
+            "World substrate replay witnesses bind world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, SDLC recovery refs, safety guards, and authority-denial flags before world replay evidence can become governance proof.",
+            [
+                "world_substrate_replay_witness_schema_valid",
+                "world_substrate_replay_witness_blocks_live_world_authority",
+                "world_substrate_replay_witness_requires_digest_refs",
+                "world_substrate_replay_witness_requires_invariant_controls",
+                "world_substrate_replay_witness_rejects_raw_payload_retention",
+                "world_substrate_replay_witness_rejects_parity_drift",
+                "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift",
+                "world_substrate_replay_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "world_substrate_replay_witness_schema_valid": [
+                    "world_substrate_replay_witness_passes"
+                ],
+                "world_substrate_replay_witness_blocks_live_world_authority": [
+                    "world_substrate_replay_witness_passes",
+                    "world_substrate_replay_witness_rejects_authority_drift",
+                ],
+                "world_substrate_replay_witness_requires_digest_refs": [
+                    "world_substrate_replay_witness_passes",
+                    "world_substrate_replay_witness_rejects_digest_and_scope_drift",
+                ],
+                "world_substrate_replay_witness_requires_invariant_controls": [
+                    "world_substrate_replay_witness_rejects_invariant_control_gaps"
+                ],
+                "world_substrate_replay_witness_rejects_raw_payload_retention": [
+                    "world_substrate_replay_witness_rejects_raw_payload_retention"
+                ],
+                "world_substrate_replay_witness_rejects_parity_drift": [
+                    "world_substrate_replay_witness_rejects_parity_drift"
+                ],
+                "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift": [
+                    "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+                ],
+                "world_substrate_replay_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
+                ],
+            },
+        ),
+        _surface(
             "mfidel_substrate_conformance_receipt",
             [
                 "MfidelSubstrateConformanceReceipt",
@@ -11765,6 +11829,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_abi_cli_contract_witness_contract",
             "surfaces": ["maf_abi_cli_contract_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_world_substrate_replay_witness_contract",
+            "surfaces": ["world_substrate_replay_witness"],
             "status": "closed",
         },
         {

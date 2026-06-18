@@ -1028,6 +1028,13 @@
       ]
     },
     {
+      "action_id": "publish_world_substrate_replay_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "world_substrate_replay_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1399,7 +1406,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 128,
+      "action_proof": 129,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1407,7 +1414,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 180,
+      "audit_chain": 181,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1415,21 +1422,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 111
+      "witnessed": 112
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 127
+      "request_proof": 128
     },
-    "surface_count": 183
+    "surface_count": 184
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 183,
+      "strong": 184,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11367,6 +11374,70 @@
       "surface_id": "worker_receipt_ledger_read_model"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/world_substrate_replay_witness.schema.json",
+        "examples/world_substrate_replay_witness.foundation.json",
+        "scripts/validate_world_substrate_replay_witness.py",
+        "tests/test_validate_world_substrate_replay_witness.py",
+        "schemas/world_state.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "schemas/effect_assurance.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/92_world_substrate_replay_witness_contract.md"
+      ],
+      "notes": "World substrate replay witnesses bind world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, SDLC recovery refs, safety guards, and authority-denial flags before world replay evidence can become governance proof.",
+      "representative_paths": [
+        "WorldSubstrateReplayWitness",
+        "validate_world_substrate_replay_witness",
+        "world_substrate_replay_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "world_substrate_replay_witness_blocks_live_world_authority": [
+          "world_substrate_replay_witness_passes",
+          "world_substrate_replay_witness_rejects_authority_drift"
+        ],
+        "world_substrate_replay_witness_rejects_parity_drift": [
+          "world_substrate_replay_witness_rejects_parity_drift"
+        ],
+        "world_substrate_replay_witness_rejects_raw_payload_retention": [
+          "world_substrate_replay_witness_rejects_raw_payload_retention"
+        ],
+        "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift": [
+          "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+        ],
+        "world_substrate_replay_witness_requires_digest_refs": [
+          "world_substrate_replay_witness_passes",
+          "world_substrate_replay_witness_rejects_digest_and_scope_drift"
+        ],
+        "world_substrate_replay_witness_requires_invariant_controls": [
+          "world_substrate_replay_witness_rejects_invariant_control_gaps"
+        ],
+        "world_substrate_replay_witness_schema_valid": [
+          "world_substrate_replay_witness_passes"
+        ],
+        "world_substrate_replay_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "world_substrate_replay_witness_schema_valid",
+        "world_substrate_replay_witness_blocks_live_world_authority",
+        "world_substrate_replay_witness_requires_digest_refs",
+        "world_substrate_replay_witness_requires_invariant_controls",
+        "world_substrate_replay_witness_rejects_raw_payload_retention",
+        "world_substrate_replay_witness_rejects_parity_drift",
+        "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift",
+        "world_substrate_replay_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "world_substrate_replay_witness"
+    },
+    {
       "action_proof": "audit_chain",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -14715,8 +14786,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1849,
-    "runtime_witness_count": 1849,
+    "exact_test_anchor_count": 1857,
+    "runtime_witness_count": 1857,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23553,6 +23624,65 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "worker_receipt_ledger_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes"
+            ],
+            "witness": "world_substrate_replay_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes",
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_authority_drift"
+            ],
+            "witness": "world_substrate_replay_witness_blocks_live_world_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes",
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_digest_and_scope_drift"
+            ],
+            "witness": "world_substrate_replay_witness_requires_digest_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_invariant_control_gaps"
+            ],
+            "witness": "world_substrate_replay_witness_requires_invariant_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_raw_payload_retention"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_raw_payload_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_parity_drift"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_parity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
+            ],
+            "witness": "world_substrate_replay_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "world_substrate_replay_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

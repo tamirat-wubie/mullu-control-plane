@@ -684,6 +684,27 @@ def test_invariant_fuzz_execution_report_sdlc_artifacts_validate() -> None:
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
+def test_world_substrate_replay_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_world_substrate_replay_witness_20260617.json")
+    design_path = Path("examples/sdlc/design_world_substrate_replay_witness_20260617.json")
+    requirement_record = validator.load_json_object(requirement_path, "world substrate replay witness requirement")
+    design_record = validator.load_json_object(design_path, "world substrate replay witness design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "WorldSubstrateReplayWitness" in design_record["architecture_summary"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in design_record["schema_changes"]
+    assert "no live world service call" in requirement_record["non_goals"]
+    assert "scripts/validate_world_substrate_replay_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_world_substrate_replay_witness.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
 def test_worker_receipt_ledger_read_model_sdlc_artifacts_validate() -> None:
     requirement_path = Path("examples/sdlc/requirement_worker_receipt_ledger_read_model_20260616.json")
     design_path = Path("examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json")
