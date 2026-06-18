@@ -30,7 +30,7 @@
     "uao_ref": "policy://universal-action-orchestration/no-bypass",
     "phi_gov_ref": "policy://phi-gov/state-write-only",
     "life_meaning_judgment_ref": "policy://life-meaning-judgment/effect-bearing-required",
-    "runtime_authority_witness_ref": "witness://universal-symbol/runtime-authority",
+    "runtime_authority_witness_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
     "receipt_persistence_policy_ref": "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
     "rollback_recovery_ref": "recovery://universal-symbol/runtime-admission",
     "operator_approval_ref": "approval://universal-symbol/runtime-admission",
@@ -53,7 +53,7 @@
       "required_before": "runtime_registration",
       "proof_state": "Unknown",
       "decision": "block",
-      "evidence_ref": "witness://universal-symbol/runtime-authority"
+      "evidence_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json"
     },
     {
       "condition_id": "condition://receipt-persistence-policy",
@@ -165,7 +165,7 @@
   ],
   "next_actions": [
     "define_receipt_store_authority_witness",
-    "bind_runtime_authority_witness_requirements",
+    "collect_live_runtime_authority_evidence",
     "add_skill_by_skill_runtime_witnesses_before_admission"
   ],
   "evidence_refs": [
@@ -181,6 +181,8 @@
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "examples/universal_symbol_runtime_admission_policy.foundation.json",
     "schemas/universal_symbol.schema.json",
@@ -193,6 +195,7 @@
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
     "scripts/validate_universal_symbol_runtime_admission_policy.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
@@ -203,6 +206,6 @@
     "admission_condition_count": 6,
     "skill_admission_count": 4,
     "authority_denial_count": 9,
-    "evidence_ref_count": 28
+    "evidence_ref_count": 31
   }
 }

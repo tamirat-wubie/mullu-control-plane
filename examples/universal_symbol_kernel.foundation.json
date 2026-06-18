@@ -185,7 +185,7 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 87
+    "evidence_ref_count": 93
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
@@ -200,6 +200,7 @@
     "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
     "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
     "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
     "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
@@ -211,6 +212,7 @@
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "examples/universal_symbol_kernel.foundation.json",
     "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
@@ -224,6 +226,7 @@
     "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
     "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
     "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.foundation.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
     "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
@@ -235,6 +238,7 @@
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
     "examples/universal_symbol_runtime_admission_policy.foundation.json",
     "docs/40_proof_coverage_matrix.md",
     "docs/91_universal_symbol_kernel.md",
@@ -262,6 +266,7 @@
     "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
     "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
@@ -273,6 +278,7 @@
     "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
     "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
     "scripts/validate_universal_symbol_runtime_admission_policy.py",
     "tests/test_validate_universal_symbol_kernel.py"
   ]

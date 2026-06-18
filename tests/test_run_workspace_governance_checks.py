@@ -130,6 +130,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "protocol_manifest",
         "simple_assistant_ui_boundary",
         "universal_symbol_runtime_admission_policy",
+        "universal_symbol_runtime_authority_witness",
         "universal_symbol_adapter_receipt_persistence_policy",
         "universal_symbol_append_audit_witness",
         "universal_symbol_receipt_store_operator_approval_witness",
@@ -138,6 +139,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
         "universal_symbol_receipt_store_operator_revocation_witness",
         "universal_symbol_receipt_store_replacement_decision_receipt",
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
         "universal_symbol_receipt_store_reapproval_revocation_witness",
         "universal_symbol_receipt_store_lifecycle_evidence_receipt",
         "universal_symbol_receipt_store_lifecycle_audit_receipt",
@@ -552,7 +554,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
     assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
     assert_ordered("simple_assistant_ui_boundary", "universal_symbol_runtime_admission_policy")
-    assert_ordered("universal_symbol_runtime_admission_policy", "universal_symbol_adapter_receipt_persistence_policy")
+    assert_ordered("universal_symbol_runtime_admission_policy", "universal_symbol_runtime_authority_witness")
+    assert_ordered("universal_symbol_runtime_authority_witness", "universal_symbol_adapter_receipt_persistence_policy")
     assert_ordered(
         "universal_symbol_adapter_receipt_persistence_policy",
         "universal_symbol_append_audit_witness",
@@ -583,6 +586,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_receipt_store_replacement_decision_receipt",
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
         "universal_symbol_receipt_store_reapproval_revocation_witness",
     )
     assert_ordered(

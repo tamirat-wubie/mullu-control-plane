@@ -1769,6 +1769,12 @@
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-receipt:1"
     },
     {
+      "path": "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
+      "schema_id": "universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness:1"
+    },
+    {
       "path": "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
       "schema_id": "universal-symbol-receipt-store-tenant-scope-witness",
       "surface": "symbol",
@@ -1833,6 +1839,12 @@
       "schema_id": "universal-symbol-runtime-admission-policy",
       "surface": "symbol",
       "urn": "urn:mullusi:schema:universal-symbol-runtime-admission-policy:1"
+    },
+    {
+      "path": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+      "schema_id": "universal-symbol-runtime-authority-witness",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1"
     },
     {
       "path": "schemas/life_meaning_judgment.schema.json",

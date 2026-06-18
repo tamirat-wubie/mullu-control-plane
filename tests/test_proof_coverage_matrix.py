@@ -6879,6 +6879,31 @@ def test_universal_symbol_runtime_admission_policy_surface_blocks_runtime_author
     assert closure_actions["publish_universal_symbol_runtime_admission_policy"]["status"] == "closed"
 
 
+def test_universal_symbol_runtime_authority_witness_surface_blocks_runtime_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_runtime_authority_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_runtime_authority_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_runtime_authority_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_runtime_authority_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_runtime_authority_witness_validates" in witnesses
+    assert "runtime_authority_witness_rejects_runtime_authority_drift" in witnesses
+    assert "runtime_authority_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_runtime_authority_witness"]["exact_test_anchor_count"] == 6
+    assert witness_surfaces["universal_symbol_runtime_authority_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_runtime_authority_witness"]["status"] == "closed"
+
+
 def test_universal_symbol_adapter_receipt_persistence_policy_surface_blocks_append_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -6949,7 +6974,8 @@ def test_universal_symbol_receipt_store_authority_witness_surface_blocks_authori
     assert "foundation_universal_symbol_receipt_store_authority_witness_validates" in witnesses
     assert "receipt_store_authority_witness_rejects_authority_grant_drift" in witnesses
     assert "receipt_store_authority_witness_rejects_append_precondition_drift" in witnesses
-    assert witness_surfaces["universal_symbol_receipt_store_authority_witness"]["exact_test_anchor_count"] == 5
+    assert "receipt_store_authority_witness_rejects_missing_lifecycle_requirement" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_authority_witness"]["exact_test_anchor_count"] == 6
     assert witness_surfaces["universal_symbol_receipt_store_authority_witness"]["unanchored_witness_count"] == 0
     assert closure_actions["publish_universal_symbol_receipt_store_authority_witness"]["status"] == "closed"
 
@@ -7175,15 +7201,22 @@ def test_universal_symbol_receipt_store_lifecycle_evidence_receipt_surface_block
     assert "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json" in surface[
         "representative_paths"
     ]
+    assert "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json" in surface[
+        "evidence_files"
+    ]
+    assert "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json" in surface[
+        "evidence_files"
+    ]
     assert "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py" in surface[
         "evidence_files"
     ]
     assert "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates" in witnesses
     assert "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift" in witnesses
     assert "lifecycle_evidence_receipt_rejects_missing_delta_reject" in witnesses
+    assert "lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref" in witnesses
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "exact_test_anchor_count"
-    ] == 6
+    ] == 7
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "unanchored_witness_count"
     ] == 0
@@ -7261,6 +7294,52 @@ def test_universal_symbol_receipt_store_replacement_decision_receipt_surface_blo
         "unanchored_witness_count"
     ] == 0
     assert closure_actions["publish_universal_symbol_receipt_store_replacement_decision_receipt"]["status"] == "closed"
+
+
+def test_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness_surface_blocks_replay_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert (
+        "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json"
+        in surface["representative_paths"]
+    )
+    assert (
+        "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.foundation.json"
+        in surface["representative_paths"]
+    )
+    assert (
+        "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py"
+        in surface["evidence_files"]
+    )
+    assert (
+        "foundation_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness_validates"
+        in witnesses
+    )
+    assert "replacement_replay_idempotency_witness_rejects_replay_authority_drift" in witnesses
+    assert "replacement_replay_idempotency_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness"][
+        "exact_test_anchor_count"
+    ] == 6
+    assert witness_surfaces["universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness"][
+        "unanchored_witness_count"
+    ] == 0
+    assert (
+        closure_actions["publish_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness"][
+            "status"
+        ]
+        == "closed"
+    )
 
 
 def test_universal_symbol_receipt_store_tenant_scope_witness_surface_blocks_tenant_authority() -> None:

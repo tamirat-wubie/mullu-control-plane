@@ -1,7 +1,8 @@
 """Validate the Universal Symbol receipt-store authority witness.
 
 Purpose: prove UniversalSymbol receipt-store authority remains blocked until
-append audit, writer registration, write-path registration, approval,
+append audit, writer registration, write-path registration, operator identity,
+approval decision, lifecycle evidence, lifecycle audit, replacement decision,
 idempotency, durability replay, and recovery evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: authority witness schema/example, UniversalSymbol schema,
@@ -13,6 +14,8 @@ Invariants:
   - Raw payloads, raw secrets, runtime dispatch, connector calls, mutation, and
     terminal closure remain denied.
   - Unknown hard preconditions block append and log Delta_reject references.
+  - Operator approval, temporal lifecycle, revocation, lifecycle audit, and
+    replacement-decision contracts are bound before append authority can exist.
 """
 
 from __future__ import annotations
@@ -59,6 +62,13 @@ REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
     "requirement://receipt-store-writer-registration",
     "requirement://receipt-store-write-path",
     "requirement://operator-approval",
+    "requirement://operator-identity",
+    "requirement://operator-approval-decision",
+    "requirement://operator-reapproval-expiry",
+    "requirement://operator-revocation",
+    "requirement://lifecycle-evidence-receipt",
+    "requirement://lifecycle-audit-receipt",
+    "requirement://replacement-decision-receipt",
     "requirement://rollback-recovery",
     "requirement://idempotency",
     "requirement://durability-replay",
@@ -69,6 +79,13 @@ REQUIRED_PRECONDITION_IDS: tuple[str, ...] = (
     "precondition://append-audit",
     "precondition://writer-registration",
     "precondition://write-path-registration",
+    "precondition://operator-identity",
+    "precondition://operator-approval-decision",
+    "precondition://operator-reapproval-expiry",
+    "precondition://operator-revocation",
+    "precondition://lifecycle-evidence-receipt",
+    "precondition://lifecycle-audit-receipt",
+    "precondition://replacement-decision-receipt",
     "precondition://idempotency-key",
     "precondition://rollback-recovery",
     "precondition://raw-payload-secret-denial",
@@ -79,6 +96,13 @@ REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
     "receipt_store_writer_registration_missing",
     "receipt_store_write_path_missing",
     "operator_approval_missing",
+    "operator_identity_missing",
+    "operator_approval_decision_missing",
+    "operator_reapproval_expiry_missing",
+    "operator_revocation_missing",
+    "lifecycle_evidence_receipt_missing",
+    "lifecycle_audit_receipt_missing",
+    "replacement_decision_receipt_missing",
     "rollback_recovery_witness_missing",
     "idempotency_witness_missing",
     "durability_replay_witness_missing",
@@ -100,6 +124,33 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
+    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
     "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
     "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",

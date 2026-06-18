@@ -49,6 +49,9 @@
         "symbol_ref",
         "approval_decision_witness_ref",
         "reapproval_revocation_witness_ref",
+        "operator_reapproval_expiry_witness_ref",
+        "operator_revocation_witness_ref",
+        "replacement_decision_receipt_ref",
         "tenant_scope_ref",
         "authority_scope"
       ],
@@ -56,6 +59,9 @@
         "symbol_ref": { "$ref": "#/$defs/ref" },
         "approval_decision_witness_ref": { "$ref": "#/$defs/ref" },
         "reapproval_revocation_witness_ref": { "$ref": "#/$defs/ref" },
+        "operator_reapproval_expiry_witness_ref": { "$ref": "#/$defs/ref" },
+        "operator_revocation_witness_ref": { "$ref": "#/$defs/ref" },
+        "replacement_decision_receipt_ref": { "$ref": "#/$defs/ref" },
         "tenant_scope_ref": { "$ref": "#/$defs/ref" },
         "authority_scope": { "type": "string", "const": "receipt-store-lifecycle-evidence-only" }
       }

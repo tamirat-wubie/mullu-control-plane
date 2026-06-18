@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:universal-symbol-receipt-store-authority-witness:1",
   "title": "Universal Symbol Receipt Store Authority Witness",
-  "description": "Foundation Mode witness for UniversalSymbol receipt-store authority. This witness defines the future append authority requirements while denying writer registration, append, raw payload storage, raw secret storage, runtime dispatch, connector calls, filesystem writes, state mutation, terminal closure, and production readiness.",
+  "description": "Foundation Mode witness for UniversalSymbol receipt-store authority. This witness defines the future append authority requirements, including operator identity, approval decision, lifecycle evidence, lifecycle audit, and replacement-decision contracts, while denying writer registration, append, raw payload storage, raw secret storage, runtime dispatch, connector calls, filesystem writes, state mutation, terminal closure, and production readiness.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -34,14 +34,14 @@
     "authority_is_granted": { "type": "boolean", "const": false },
     "authority_requirements": {
       "type": "array",
-      "minItems": 7,
+      "minItems": 14,
       "items": { "$ref": "#/$defs/authority_requirement" },
       "uniqueItems": true
     },
     "authority_denials": { "$ref": "#/$defs/authority_denials" },
     "append_preconditions": {
       "type": "array",
-      "minItems": 7,
+      "minItems": 14,
       "items": { "$ref": "#/$defs/append_precondition" },
       "uniqueItems": true
     },
@@ -75,6 +75,13 @@
           "receipt_store_writer_registration_missing",
           "receipt_store_write_path_missing",
           "operator_approval_missing",
+          "operator_identity_missing",
+          "operator_approval_decision_missing",
+          "operator_reapproval_expiry_missing",
+          "operator_revocation_missing",
+          "lifecycle_evidence_receipt_missing",
+          "lifecycle_audit_receipt_missing",
+          "replacement_decision_receipt_missing",
           "rollback_recovery_witness_missing",
           "idempotency_witness_missing",
           "durability_replay_witness_missing",
@@ -109,9 +116,9 @@
         "evidence_ref_count"
       ],
       "properties": {
-        "authority_requirement_count": { "type": "integer", "minimum": 7 },
+        "authority_requirement_count": { "type": "integer", "minimum": 14 },
         "authority_denial_count": { "type": "integer", "const": 10 },
-        "append_precondition_count": { "type": "integer", "minimum": 7 },
+        "append_precondition_count": { "type": "integer", "minimum": 14 },
         "rejection_check_count": { "type": "integer", "const": 6 },
         "blocked_reason_count": { "type": "integer", "minimum": 6 },
         "evidence_ref_count": { "type": "integer", "minimum": 1 }

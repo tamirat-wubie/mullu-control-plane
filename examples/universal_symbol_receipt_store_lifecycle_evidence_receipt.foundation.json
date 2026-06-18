@@ -11,6 +11,9 @@
     "symbol_ref": "symbol://universal-symbol/receipt-store/operator-approval",
     "approval_decision_witness_ref": "witness://universal-symbol/receipt-store/operator-approval-decision",
     "reapproval_revocation_witness_ref": "witness://universal-symbol/receipt-store/reapproval-revocation",
+    "operator_reapproval_expiry_witness_ref": "witness://universal-symbol/receipt-store/operator-reapproval-expiry",
+    "operator_revocation_witness_ref": "witness://universal-symbol/receipt-store/operator-revocation",
+    "replacement_decision_receipt_ref": "receipt://universal-symbol/receipt-store/replacement-decision",
     "tenant_scope_ref": "witness://universal-symbol/receipt-store/tenant-scope",
     "authority_scope": "receipt-store-lifecycle-evidence-only"
   },
@@ -129,6 +132,12 @@
     "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
     "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
     "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
     "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
     "schemas/temporal_reapproval_receipt.schema.json",
@@ -136,6 +145,9 @@
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
     "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py"
@@ -146,6 +158,6 @@
     "authority_denial_count": 12,
     "rejection_check_count": 8,
     "blocked_reason_count": 9,
-    "evidence_ref_count": 14
+    "evidence_ref_count": 23
   }
 }

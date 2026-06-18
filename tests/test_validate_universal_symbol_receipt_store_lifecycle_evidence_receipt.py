@@ -31,7 +31,7 @@ def test_foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_va
     )
     assert report["authority_denial_count"] == 12
     assert report["live_evidence_requirement_count"] == 7
-    assert report["evidence_ref_count"] == 14
+    assert report["evidence_ref_count"] == 23
 
 
 def test_lifecycle_evidence_receipt_rejects_lifecycle_authority_drift(tmp_path: Path) -> None:
@@ -78,6 +78,21 @@ def test_lifecycle_evidence_receipt_rejects_missing_delta_reject(tmp_path: Path)
     with pytest.raises(
         UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError,
         match="delta_reject_ref",
+    ):
+        validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
+            _write_case(tmp_path, changed),
+            DEFAULT_SCHEMA_PATH,
+        )
+
+
+def test_lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lifecycle_subject"]["operator_revocation_witness_ref"] = ""
+
+    with pytest.raises(
+        UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError,
+        match="operator_revocation_witness_ref",
     ):
         validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
             _write_case(tmp_path, changed),
