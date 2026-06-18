@@ -127,11 +127,28 @@ Pass condition:
   "valid": true,
   "reason": "anchor_verified",
   "schema_valid": true,
+  "artifact_count": 8,
+  "artifact_root_hash": "<sha256-hex>",
+  "required_artifact_types": [
+    "command",
+    "approval",
+    "execution_receipt",
+    "provider_observation",
+    "verification_result",
+    "effect_reconciliation",
+    "terminal_certificate",
+    "learning_decision"
+  ],
   "package_present": true,
   "package_valid": true,
   "package_id": "trust-export-..."
 }
 ```
+
+When the anchor receipt is readable, verifier reports preserve the receipt's
+`artifact_root_hash`, `artifact_count`, and `required_artifact_types` even when
+later schema, package, or signature verification fails. Missing or unreadable
+receipts emit empty defaults so the fail-closed report still validates.
 
 Fail-closed reasons include:
 
@@ -175,7 +192,7 @@ Packaging fail-closed reasons include:
 2. Verify `bundle.json` first with `scripts/verify_evidence_bundle.py`.
 3. Verify the anchor with `scripts/verify_anchor_receipt.py`.
 4. Confirm `package.json` file hashes match the exported file contents before moving the package across trust boundaries.
-5. Compare `command_id`, `terminal_certificate_id`, `bundle_id`, and `anchor_receipt_id` in the JSON reports.
+5. Compare `command_id`, `terminal_certificate_id`, `bundle_id`, `anchor_receipt_id`, `artifact_root_hash`, `artifact_count`, and `required_artifact_types` in the JSON reports.
 6. Treat any invalid report as `GovernanceBlocked` until the source export is regenerated or the tamper source is identified.
 
 ## Remote Submission Preflight

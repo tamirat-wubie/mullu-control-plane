@@ -17,6 +17,8 @@
     "command_id",
     "terminal_certificate_id",
     "artifact_count",
+    "artifact_root_hash",
+    "required_artifact_types",
     "package_present",
     "package_valid",
     "package_id",
@@ -65,6 +67,13 @@
       "type": "integer",
       "minimum": 0
     },
+    "artifact_root_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "required_artifact_types": {
+      "$ref": "#/$defs/required_artifact_types"
+    },
     "package_present": {
       "type": "boolean"
     },
@@ -97,6 +106,81 @@
           },
           "reason": {
             "const": "anchor_verified"
+          },
+          "artifact_count": {
+            "minimum": 1
+          },
+          "artifact_root_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "required_artifact_types": {
+            "minItems": 4,
+            "contains": {
+              "const": "command"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "then": {
+        "properties": {
+          "required_artifact_types": {
+            "contains": {
+              "const": "execution_receipt"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "then": {
+        "properties": {
+          "required_artifact_types": {
+            "contains": {
+              "const": "verification_result"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "valid": {
+            "const": true
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "then": {
+        "properties": {
+          "required_artifact_types": {
+            "contains": {
+              "const": "terminal_certificate"
+            }
           }
         }
       }
@@ -126,5 +210,25 @@
         }
       }
     }
-  ]
+  ],
+  "$defs": {
+    "required_artifact_types": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "string",
+        "enum": [
+          "command",
+          "approval",
+          "execution_receipt",
+          "provider_observation",
+          "verification_result",
+          "effect_reconciliation",
+          "terminal_certificate",
+          "learning_decision",
+          "deployment_witness"
+        ]
+      }
+    }
+  }
 }
