@@ -5375,6 +5375,39 @@ def test_maf_receipt_parity_witness_denies_runtime_binding() -> None:
     assert closure_actions["publish_maf_receipt_parity_witness_contract"]["status"] == "closed"
 
 
+def test_maf_abi_cli_contract_witness_denies_cli_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    cli_surface = surfaces["maf_abi_cli_contract_witness"]
+    cli_witness_surface = witness_surfaces["maf_abi_cli_contract_witness"]
+    witnesses = set(cli_surface["runtime_witnesses"])
+
+    assert cli_surface["coverage_state"] == "witnessed"
+    assert cli_surface["request_proof"] == "request_proof"
+    assert cli_surface["action_proof"] == "action_proof"
+    assert cli_surface["audit"] == "audit_chain"
+    assert "MafAbiCliContractWitness" in cli_surface["representative_paths"]
+    assert "schemas/maf_abi_cli_contract_witness.schema.json" in cli_surface["evidence_files"]
+    assert "examples/maf_abi_cli_contract_witness.foundation.json" in cli_surface["evidence_files"]
+    assert "scripts/validate_maf_abi_cli_contract_witness.py" in cli_surface["evidence_files"]
+    assert "tests/test_validate_maf_abi_cli_contract_witness.py" in cli_surface["evidence_files"]
+    assert "maf/rust/crates/maf-cli/src/main.rs" in cli_surface["evidence_files"]
+    assert "maf_abi_cli_contract_witness_schema_valid" in witnesses
+    assert "maf_abi_cli_contract_witness_denies_cli_execution" in witnesses
+    assert "maf_abi_cli_contract_witness_requires_cli_artifact_refs" in witnesses
+    assert "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift" in witnesses
+    assert "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift" in witnesses
+    assert "maf_abi_cli_contract_witness_sdlc_artifacts_valid" in witnesses
+    assert cli_witness_surface["exact_test_anchor_count"] == 6
+    assert cli_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_abi_cli_contract_witness_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

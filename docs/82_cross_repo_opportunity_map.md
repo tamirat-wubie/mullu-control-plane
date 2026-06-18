@@ -42,6 +42,7 @@ The control plane already absorbed several high-fit ideas:
 | Chaos rehearsal dry-run evidence | `ChaosRehearsalExecutionReport` | Implemented |
 | Invariant fuzz execution evidence | `InvariantFuzzExecutionReport` | Implemented |
 | MAF receipt parity boundary | `MafReceiptParityWitness` | Implemented |
+| MAF ABI/CLI contract boundary | `MafAbiCliContractWitness` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -76,9 +77,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. MAF runtime binding readiness packet
-   - Follows `MafReceiptParityWitness` only after ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path evidence exist.
-   - Must remain `AwaitingEvidence` until those four witnesses are present and independently validated.
+2. MAF subprocess effect boundary witness
+   - Follows `MafAbiCliContractWitness` and proves that any future Python-to-Rust CLI path has a denied-by-default subprocess effect envelope before execution can be reconsidered.
+   - Must remain `AwaitingEvidence` until subprocess input, output, timeout, filesystem, environment, and failure receipt boundaries are independently validated.
 
 ## 6. Project Discipline Mesh Findings
 

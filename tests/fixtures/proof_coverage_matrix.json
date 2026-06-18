@@ -1021,6 +1021,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_abi_cli_contract_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_abi_cli_contract_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1392,7 +1399,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 127,
+      "action_proof": 128,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1400,7 +1407,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 179,
+      "audit_chain": 180,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1408,21 +1415,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 110
+      "witnessed": 111
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 126
+      "request_proof": 127
     },
-    "surface_count": 182
+    "surface_count": 183
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 182,
+      "strong": 183,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11195,6 +11202,67 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_abi_cli_contract_witness.schema.json",
+        "examples/maf_abi_cli_contract_witness.foundation.json",
+        "scripts/validate_maf_abi_cli_contract_witness.py",
+        "tests/test_validate_maf_abi_cli_contract_witness.py",
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "examples/maf_receipt_parity_witness.foundation.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "docs/94_maf_abi_cli_contract_witness.md",
+        "docs/93_maf_receipt_parity_witness_contract.md",
+        "docs/82_cross_repo_opportunity_map.md",
+        "docs/MAF_RECEIPT_COVERAGE.md",
+        "maf/MAF_BOUNDARY.md",
+        "maf/rust/Cargo.toml",
+        "maf/rust/crates/maf-cli/Cargo.toml",
+        "maf/rust/crates/maf-cli/src/main.rs"
+      ],
+      "notes": "MAF ABI CLI contract witnesses bind the MAF CLI scaffold, workspace manifest, parity witness refs, command contract gaps, and authority denials while keeping command behavior, CLI execution, subprocess execution, PyO3, Rust execution, dispatch, terminal closure, and success claims denied.",
+      "representative_paths": [
+        "MafAbiCliContractWitness",
+        "validate_maf_abi_cli_contract_witness",
+        "maf_abi_cli_contract_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_abi_cli_contract_witness_denies_cli_execution": [
+          "maf_abi_cli_contract_witness_passes",
+          "maf_abi_cli_contract_witness_rejects_authority_drift"
+        ],
+        "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift": [
+          "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift"
+        ],
+        "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift": [
+          "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift"
+        ],
+        "maf_abi_cli_contract_witness_requires_cli_artifact_refs": [
+          "maf_abi_cli_contract_witness_passes"
+        ],
+        "maf_abi_cli_contract_witness_schema_valid": [
+          "maf_abi_cli_contract_witness_passes"
+        ],
+        "maf_abi_cli_contract_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_abi_cli_contract_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_abi_cli_contract_witness_schema_valid",
+        "maf_abi_cli_contract_witness_denies_cli_execution",
+        "maf_abi_cli_contract_witness_requires_cli_artifact_refs",
+        "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift",
+        "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift",
+        "maf_abi_cli_contract_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_abi_cli_contract_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14647,8 +14715,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1843,
-    "runtime_witness_count": 1843,
+    "exact_test_anchor_count": 1849,
+    "runtime_witness_count": 1849,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23346,6 +23414,52 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "maf_receipt_parity_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes"
+            ],
+            "witness": "maf_abi_cli_contract_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes",
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_denies_cli_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes"
+            ],
+            "witness": "maf_abi_cli_contract_witness_requires_cli_artifact_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_digest_and_summary_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_sdlc_requirement_and_design_validate_for_maf_abi_cli_contract_witness"
+            ],
+            "witness": "maf_abi_cli_contract_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_abi_cli_contract_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

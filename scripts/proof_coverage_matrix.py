@@ -7468,6 +7468,67 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_abi_cli_contract_witness",
+            [
+                "MafAbiCliContractWitness",
+                "validate_maf_abi_cli_contract_witness",
+                "maf_abi_cli_contract_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_abi_cli_contract_witness.schema.json",
+                "examples/maf_abi_cli_contract_witness.foundation.json",
+                "scripts/validate_maf_abi_cli_contract_witness.py",
+                "tests/test_validate_maf_abi_cli_contract_witness.py",
+                "schemas/maf_receipt_parity_witness.schema.json",
+                "examples/maf_receipt_parity_witness.foundation.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "docs/94_maf_abi_cli_contract_witness.md",
+                "docs/93_maf_receipt_parity_witness_contract.md",
+                "docs/82_cross_repo_opportunity_map.md",
+                "docs/MAF_RECEIPT_COVERAGE.md",
+                "maf/MAF_BOUNDARY.md",
+                "maf/rust/Cargo.toml",
+                "maf/rust/crates/maf-cli/Cargo.toml",
+                "maf/rust/crates/maf-cli/src/main.rs",
+            ],
+            "MAF ABI CLI contract witnesses bind the MAF CLI scaffold, workspace manifest, parity witness refs, command contract gaps, and authority denials while keeping command behavior, CLI execution, subprocess execution, PyO3, Rust execution, dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_abi_cli_contract_witness_schema_valid",
+                "maf_abi_cli_contract_witness_denies_cli_execution",
+                "maf_abi_cli_contract_witness_requires_cli_artifact_refs",
+                "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift",
+                "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift",
+                "maf_abi_cli_contract_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_abi_cli_contract_witness_schema_valid": [
+                    "maf_abi_cli_contract_witness_passes"
+                ],
+                "maf_abi_cli_contract_witness_denies_cli_execution": [
+                    "maf_abi_cli_contract_witness_passes",
+                    "maf_abi_cli_contract_witness_rejects_authority_drift",
+                ],
+                "maf_abi_cli_contract_witness_requires_cli_artifact_refs": [
+                    "maf_abi_cli_contract_witness_passes"
+                ],
+                "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift": [
+                    "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift"
+                ],
+                "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift": [
+                    "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift"
+                ],
+                "maf_abi_cli_contract_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_abi_cli_contract_witness"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -11699,6 +11760,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_receipt_parity_witness_contract",
             "surfaces": ["maf_receipt_parity_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_abi_cli_contract_witness_contract",
+            "surfaces": ["maf_abi_cli_contract_witness"],
             "status": "closed",
         },
         {
