@@ -257,6 +257,7 @@ jobs:
           python scripts/validate_browser_observation_receipt.py
           python scripts/validate_trusted_capture_evidence_packet.py
           python scripts/validate_sccml_trace_adapter_witness.py
+          python scripts/validate_resilience_rehearsal_reports.py
           python scripts/validate_chaos_rehearsal_execution_report.py
           python scripts/validate_invariant_fuzz_execution_report.py
           python scripts/validate_maf_receipt_parity_witness.py
@@ -504,6 +505,9 @@ jobs:
 
       - name: Run worker receipt emitter registration witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emitter_registration_witness.py -q
+
+      - name: Run resilience rehearsal umbrella tests
+        run: python -m pytest tests/test_validate_resilience_rehearsal_reports.py -q
 
       - name: Run worker receipt schema binding activation witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_schema_binding_activation_witness.py -q

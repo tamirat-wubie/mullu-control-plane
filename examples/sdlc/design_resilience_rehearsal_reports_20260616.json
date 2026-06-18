@@ -1,0 +1,74 @@
+{
+  "design_id": "DES-resilience-rehearsal-reports-20260616",
+  "requirement_id": "REQ-resilience-rehearsal-reports-20260616",
+  "architecture_summary": "Add schema-backed, non-executing ChaosRehearsalExecutionReport and InvariantFuzzExecutionReport contracts that bind scenario or case refs, expected invariant refs, dry-run observed results, rollback obligations, incident handoff refs, evidence refs, and blocked reasons before any live resilience rehearsal or invariant fuzzing authority can be considered.",
+  "affected_modules": [
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "docs",
+    "ci",
+    "proof_coverage_matrix"
+  ],
+  "data_model_changes": [
+    "Introduce ChaosRehearsalExecutionReport with rehearsal_scope, rehearsal_result, scenarios, rollback_recovery, receipt_refs, contract_summary, and evidence_refs",
+    "Introduce InvariantFuzzExecutionReport with fuzz_scope, fuzz_result, cases, rollback_recovery, receipt_refs, contract_summary, and evidence_refs",
+    "Record required evidence refs and blocked reason refs so dry-run resilience evidence cannot silently become runtime or production authority"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_sdlc_security_review.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_public_repository_surface.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Revert the added schemas, examples, validator, tests, docs, manifest entries, proof matrix entries, generated fixture updates, and CI hook; rerun protocol, proof coverage, SDLC, schema, and workspace governance checks.",
+  "migration_plan": "No runtime migration. This is an additive Foundation Mode evidence contract pair and does not register runtime chaos or fuzz executors.",
+  "test_plan": [
+    "python scripts/validate_resilience_rehearsal_reports.py",
+    "python -m pytest tests/test_validate_resilience_rehearsal_reports.py -q",
+    "python -m py_compile scripts/validate_resilience_rehearsal_reports.py scripts/proof_coverage_matrix.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_resilience_rehearsal_reports_20260616.json --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/resilience-rehearsal-reports-preflight-receipt.json"
+  ],
+  "uao_ref": "uao://sdlc/resilience-rehearsal-reports/design",
+  "causal_decision_trace_ref": "trace://sdlc/resilience-rehearsal-reports/design",
+  "receipt_ref": "receipt://sdlc/resilience-rehearsal-reports/design"
+}

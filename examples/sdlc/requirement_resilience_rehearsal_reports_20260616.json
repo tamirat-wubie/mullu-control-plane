@@ -1,0 +1,68 @@
+{
+  "requirement_id": "REQ-resilience-rehearsal-reports-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-resilience-rehearsal-reports",
+  "problem_statement": "The control plane validates static governance contracts, but runtime resilience claims need typed dry-run rehearsal evidence before any live chaos execution, invariant fuzzing, deployment, or production-readiness claim.",
+  "success_criteria": [
+    "ChaosRehearsalExecutionReport validates against a public JSON schema and Foundation Mode example",
+    "InvariantFuzzExecutionReport validates against a public JSON schema and Foundation Mode example",
+    "Reports bind scenario or case refs, expected invariant refs, observed dry-run result, rollback obligations, incident handoff refs, required evidence refs, and blocked reason refs",
+    "Reports block runtime execution, random live generation, external effects, filesystem mutation, deployment mutation, terminal closure, success claims, and production-readiness claims",
+    "Reports are covered by a focused validator, root test, protocol manifest entries, proof coverage matrix entries, and CI hook"
+  ],
+  "non_goals": [
+    "no runtime execution",
+    "no random live fuzzing",
+    "no connector call",
+    "no filesystem mutation",
+    "no deployment mutation",
+    "no production readiness claim",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "execution_mode remains dry_run",
+    "runtime_execution_performed remains false",
+    "external_effects_performed remains false",
+    "filesystem_mutation_performed remains false",
+    "production_readiness_claim_allowed remains false",
+    "terminal_closure_allowed remains false",
+    "Phi_gov authorization remains absent until future evidence exists",
+    "rollback and incident handoff obligations remain explicit",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/chaos_rehearsal_execution_report.foundation.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "docs/91_resilience_rehearsal_reports_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_resilience_rehearsal_reports.py",
+    "python -m pytest tests/test_validate_resilience_rehearsal_reports.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_resilience_rehearsal_reports_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/chaos_rehearsal_execution_report.schema.json",
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/chaos_rehearsal_execution_report.foundation.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_resilience_rehearsal_reports.py",
+    "tests/test_validate_resilience_rehearsal_reports.py",
+    "docs/91_resilience_rehearsal_reports_contract.md",
+    "examples/sdlc/design_resilience_rehearsal_reports_20260616.json",
+    "examples/sdlc/security_review_resilience_rehearsal_reports_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/resilience-rehearsal-reports/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/resilience-rehearsal-reports/requirement",
+  "receipt_ref": "receipt://sdlc/resilience-rehearsal-reports/requirement"
+}
