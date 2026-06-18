@@ -1,0 +1,55 @@
+{
+  "requirement_id": "sdlc_req_active_runtime_lease_admission_witness_20260618",
+  "request_id": "platform_active_runtime_lease_admission_witness_20260618",
+  "problem_statement": "ReadOnlyWorkerRuntimeDispatchAdmissionWitness defines the future dispatch admission boundary, but active TemporalLeaseWindowReceipt evidence still needs a schema-backed admission witness before any runtime worker dispatch can be enabled.",
+  "success_criteria": [
+    "ReadOnlyWorkerActiveRuntimeLeaseAdmissionWitness validates against a JSON schema and Foundation Mode example",
+    "the witness binds the upstream runtime dispatch admission witness and lease preflight artifact",
+    "the witness requires live TemporalLeaseWindowReceipt evidence with lease_active status, active lease_state, non-empty fencing token, positive sequence, trusted runtime clock, UAO admission, Phi_gov authorization, WorkerFailureReceipt obligation, and effect reconciliation",
+    "the witness keeps active runtime lease observation, active lease admission, runtime dispatch admission, runtime dispatch, worker invocation, receipt emission, receipt append, filesystem writes, connector calls, success claims, and terminal closure denied",
+    "focused tests reject authority drift, contract drift, missing live input refs, admission drift, malformed payloads, and summary drift"
+  ],
+  "non_goals": [
+    "do not observe a live TemporalLeaseWindowReceipt",
+    "do not admit runtime dispatch",
+    "do not invoke a worker",
+    "do not emit or append runtime receipts",
+    "do not grant filesystem, connector, network, terminal closure, or success-claim authority"
+  ],
+  "constraints": [
+    "Foundation Mode remains local-first and witness-only",
+    "Mfidel atomicity must remain preserved",
+    "runtime dispatch remains blocked until active lease evidence, UAO, Phi_gov, WorkerFailureReceipt, and effect reconciliation evidence exist",
+    "all new artifacts must remain deterministic and read-only"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    ".github/workflows/ci.yml",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
+    "examples/sdlc/design_active_runtime_lease_admission_witness_20260618.json",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_active_runtime_lease_admission_witness.schema.json",
+    "scripts/validate_read_only_worker_active_runtime_lease_admission_witness.py",
+    "tests/test_validate_read_only_worker_active_runtime_lease_admission_witness.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_active_runtime_lease_admission_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_active_runtime_lease_admission_witness.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "schema-backed witness fixture",
+    "upstream runtime dispatch admission witness validation",
+    "upstream lease preflight validation",
+    "protocol manifest registration",
+    "focused pytest coverage"
+  ],
+  "uao_ref": "uao://read-only-worker-active-runtime-lease-admission-witness/requirement/20260618",
+  "causal_decision_trace_ref": "trace://read-only-worker-active-runtime-lease-admission-witness/requirement/20260618",
+  "receipt_ref": "receipt://read-only-worker-active-runtime-lease-admission-witness/requirement/20260618"
+}
