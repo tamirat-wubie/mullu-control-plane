@@ -227,6 +227,7 @@ class LearningAdmissionRequest(BaseModel):
     closure_id: str
     decision_id: str
     admitted: bool
+    evidence_refs: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -618,7 +619,11 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             occurred_at=item.created_at,
             ref=item.binding_id,
             status="admitted" if item.admitted else "rejected",
-            payload={"closure_id": item.closure_id, "decision_id": item.decision_id},
+            payload={
+                "closure_id": item.closure_id,
+                "decision_id": item.decision_id,
+                "evidence_refs": list(item.evidence_refs),
+            },
         )
         for item in learning_bindings
     )
@@ -2419,6 +2424,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
             "binding_id": item.get("binding_id", ""),
             "decision_id": item.get("decision_id", ""),
             "admitted": item.get("admitted", False),
+            "evidence_refs": _text_list(item.get("evidence_refs", [])),
             "created_at": item.get("created_at", ""),
         }
         for item in payload.get("learning_admissions", [])
@@ -2488,7 +2494,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Gate Freshness", ("step_id", "decision_id", "decided_at", "newer_evidence_refs", "latest_evidence_at"), gate_freshness_rows)}
     {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
-    {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
+    {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "evidence_refs", "created_at"), learning_rows)}
     {_proof_explorer_table("Closure Drift Remediations", ("remediation_id", "terminal_disposition", "drift_evidence_refs", "evidence_refs", "created_at"), remediation_rows)}
     {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "binding_terminal_stage_id", "binding_valid", "binding_evidence", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
   </main>
@@ -5483,6 +5489,7 @@ def bind_case_learning_admission(case_id: str, req: LearningAdmissionRequest, re
                 closure_id=req.closure_id,
                 decision_id=req.decision_id,
                 admitted=req.admitted,
+                evidence_refs=tuple(req.evidence_refs),
                 created_at=_clock_now(),
                 metadata=req.metadata,
             )

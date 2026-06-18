@@ -315,6 +315,7 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
         closure_id="missing-closure",
         decision_id="learning.decision.gateway-pilot",
         admitted=True,
+        evidence_refs=("evidence:learning-admission-decision",),
         created_at="2026-05-27T17:04:00+00:00",
     )
 
@@ -335,12 +336,14 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
             closure_id=closure.closure_id,
             decision_id="learning.decision.gateway-pilot",
             admitted=True,
+            evidence_refs=("evidence:learning-admission-decision",),
             created_at="2026-05-27T17:04:00+00:00",
         )
     )
 
     assert admitted.admitted is True
     assert admitted.closure_id == closure.closure_id
+    assert admitted.evidence_refs == ("evidence:learning-admission-decision",)
     assert kernel.list_case_events(plan.case_id)[-1].event_type == "learning_admission_bound"
 
 
