@@ -1,0 +1,68 @@
+{
+  "requirement_id": "REQ-invariant-fuzz-execution-report-20260617",
+  "request_id": "continue-cross-repo-opportunity-map-invariant-fuzz-execution-report",
+  "problem_statement": "Runtime-hardening and invariant-fuzz claims need typed deterministic case-bank execution evidence before any staging, production, or canonical runtime state claim can be considered by the control plane.",
+  "success_criteria": [
+    "InvariantFuzzExecutionReport validates against a public JSON schema and Foundation Mode example",
+    "InvariantFuzzExecutionReport binds deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, result-bank digest refs, UAO refs, and LifeMeaningJudgment refs",
+    "InvariantFuzzExecutionReport blocks live runtime execution, production targeting, staging targeting, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, secret access, filesystem writes, rollback execution, terminal closure, and success claims",
+    "InvariantFuzzExecutionReport rejects authority drift, live scope drift, missing mutation classes, missing oracle refs, projection leak drift, raw case payload retention, raw secret retention, result count drift, receipt ref drift, and summary count drift",
+    "InvariantFuzzExecutionReport is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live runtime execution",
+    "no production target",
+    "no staging target",
+    "no canonical runtime mutation",
+    "no event-chain mutation",
+    "no runtime lawbook migration",
+    "no connector call authority",
+    "no secret access",
+    "no filesystem write",
+    "no rollback execution",
+    "no raw case payload retention",
+    "no raw secret retention",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "harness mode remains plan_only or deterministic_dry_run",
+    "production_target_allowed and staging_target_allowed remain false in the Foundation example",
+    "case bank and result bank evidence remain digest refs",
+    "expected accept and reject counts must sum to the declared case count",
+    "projection leak checks must be declared and must not detect a public projection leak",
+    "live execution, canonical mutation, event-chain mutation, connector calls, writes, and terminal closure remain false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_invariant_fuzz_execution_report.py",
+    "tests/test_validate_invariant_fuzz_execution_report.py",
+    "docs/92_invariant_fuzz_execution_report_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_invariant_fuzz_execution_report.py",
+    "python -m pytest tests/test_validate_invariant_fuzz_execution_report.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_invariant_fuzz_execution_report_20260617.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_invariant_fuzz_execution_report.py",
+    "tests/test_validate_invariant_fuzz_execution_report.py",
+    "docs/92_invariant_fuzz_execution_report_contract.md",
+    "examples/sdlc/design_invariant_fuzz_execution_report_20260617.json",
+    "examples/sdlc/security_review_invariant_fuzz_execution_report_20260617.json"
+  ],
+  "uao_ref": "uao://sdlc/invariant-fuzz-execution-report/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/invariant-fuzz-execution-report/requirement",
+  "receipt_ref": "receipt://sdlc/invariant-fuzz-execution-report/requirement"
+}

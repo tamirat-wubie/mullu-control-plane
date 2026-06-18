@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+  "title": "Invariant Fuzz Execution Report",
+  "description": "Foundation Mode report contract for deterministic invariant-fuzz case-bank execution evidence without staging or production targeting, canonical runtime mutation, external effects, raw case payload retention, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "report_version",
+    "generated_at",
+    "fuzz_scope",
+    "harness_mode",
+    "case_bank",
+    "execution_results",
+    "authority_boundary",
+    "safety_guards",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "report_version": {"const": "invariant_fuzz_execution_report.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "fuzz_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "borrowed_concept",
+        "foundation_mode",
+        "tenant_scope",
+        "uao_ref",
+        "life_meaning_judgment_ref"
+      ],
+      "properties": {
+        "source_family": {"const": "external/nested-mind-platform"},
+        "borrowed_concept": {"const": "invariant-fuzz-execution"},
+        "foundation_mode": {"type": "boolean"},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "harness_mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "dry_run_only",
+        "strict_baseline_required",
+        "apply_successful_cases",
+        "projection_redaction_required",
+        "production_target_allowed",
+        "staging_target_allowed",
+        "runtime_target_ref"
+      ],
+      "properties": {
+        "mode": {"type": "string", "enum": ["plan_only", "deterministic_dry_run"]},
+        "dry_run_only": {"type": "boolean"},
+        "strict_baseline_required": {"type": "boolean"},
+        "apply_successful_cases": {"type": "boolean"},
+        "projection_redaction_required": {"type": "boolean"},
+        "production_target_allowed": {"type": "boolean"},
+        "staging_target_allowed": {"type": "boolean"},
+        "runtime_target_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "case_bank": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id_ref",
+        "target_symbol_ref",
+        "seed",
+        "case_bank_hash_ref",
+        "mutation_class_refs",
+        "declared_case_count",
+        "expected_accept_count",
+        "expected_reject_count",
+        "mutation_free_rejection_count",
+        "projection_probe_count",
+        "oracle_refs"
+      ],
+      "properties": {
+        "run_id_ref": {"type": "string", "minLength": 1},
+        "target_symbol_ref": {"type": "string", "minLength": 1},
+        "seed": {"type": "integer", "minimum": 0},
+        "case_bank_hash_ref": {"type": "string", "minLength": 1},
+        "mutation_class_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "declared_case_count": {"type": "integer", "minimum": 1},
+        "expected_accept_count": {"type": "integer", "minimum": 0},
+        "expected_reject_count": {"type": "integer", "minimum": 0},
+        "mutation_free_rejection_count": {"type": "integer", "minimum": 0},
+        "projection_probe_count": {"type": "integer", "minimum": 0},
+        "oracle_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "execution_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_state",
+        "cases_executed_count",
+        "cases_passed_count",
+        "cases_failed_count",
+        "unexpected_accept_count",
+        "unexpected_reject_count",
+        "projection_leak_detected",
+        "public_projection_checked",
+        "result_bank_hash_ref"
+      ],
+      "properties": {
+        "result_state": {
+          "type": "string",
+          "enum": ["FUZZ_EXECUTION_RECORDED", "FUZZ_EXECUTION_BLOCKED", "FUZZ_EXECUTION_INVALIDATED"]
+        },
+        "cases_executed_count": {"type": "integer", "minimum": 0},
+        "cases_passed_count": {"type": "integer", "minimum": 0},
+        "cases_failed_count": {"type": "integer", "minimum": 0},
+        "unexpected_accept_count": {"type": "integer", "minimum": 0},
+        "unexpected_reject_count": {"type": "integer", "minimum": 0},
+        "projection_leak_detected": {"type": "boolean"},
+        "public_projection_checked": {"type": "boolean"},
+        "result_bank_hash_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_execution_performed",
+        "production_target_touched",
+        "staging_cluster_touched",
+        "canonical_state_mutation_performed",
+        "event_chain_mutation_performed",
+        "lawbook_runtime_migration_performed",
+        "external_connector_called",
+        "secret_access_performed",
+        "filesystem_write_performed",
+        "rollback_executed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_runtime_execution_performed": {"type": "boolean"},
+        "production_target_touched": {"type": "boolean"},
+        "staging_cluster_touched": {"type": "boolean"},
+        "canonical_state_mutation_performed": {"type": "boolean"},
+        "event_chain_mutation_performed": {"type": "boolean"},
+        "lawbook_runtime_migration_performed": {"type": "boolean"},
+        "external_connector_called": {"type": "boolean"},
+        "secret_access_performed": {"type": "boolean"},
+        "filesystem_write_performed": {"type": "boolean"},
+        "rollback_executed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "safety_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_bank_hash_required",
+        "deterministic_seed_required",
+        "oracle_refs_required",
+        "projection_leak_check_required",
+        "expected_accept_reject_declared",
+        "raw_case_payload_retained",
+        "raw_secret_material_retained",
+        "operator_review_required",
+        "incident_handoff_required_if_live"
+      ],
+      "properties": {
+        "case_bank_hash_required": {"type": "boolean"},
+        "deterministic_seed_required": {"type": "boolean"},
+        "oracle_refs_required": {"type": "boolean"},
+        "projection_leak_check_required": {"type": "boolean"},
+        "expected_accept_reject_declared": {"type": "boolean"},
+        "raw_case_payload_retained": {"type": "boolean"},
+        "raw_secret_material_retained": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "incident_handoff_required_if_live": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invariant_fuzz_execution_report_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema",
+        "effect_assurance_schema",
+        "simulation_receipt_schema",
+        "worker_failure_receipt_schema",
+        "sdlc_recovery_handoff_receipt_schema"
+      ],
+      "properties": {
+        "invariant_fuzz_execution_report_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1},
+        "effect_assurance_schema": {"type": "string", "minLength": 1},
+        "simulation_receipt_schema": {"type": "string", "minLength": 1},
+        "worker_failure_receipt_schema": {"type": "string", "minLength": 1},
+        "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_only",
+        "canonical_mutation_denied",
+        "mutation_class_count",
+        "oracle_ref_count",
+        "declared_case_count",
+        "expected_accept_count",
+        "expected_reject_count",
+        "projection_probe_count",
+        "authority_denial_count",
+        "safety_guard_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "dry_run_only": {"type": "boolean"},
+        "canonical_mutation_denied": {"type": "boolean"},
+        "mutation_class_count": {"type": "integer", "minimum": 0},
+        "oracle_ref_count": {"type": "integer", "minimum": 0},
+        "declared_case_count": {"type": "integer", "minimum": 0},
+        "expected_accept_count": {"type": "integer", "minimum": 0},
+        "expected_reject_count": {"type": "integer", "minimum": 0},
+        "projection_probe_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "safety_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
