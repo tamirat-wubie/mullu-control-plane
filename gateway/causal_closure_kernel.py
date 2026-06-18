@@ -37,6 +37,7 @@ from gateway.command_spine import (
 )
 from gateway.proof_carrying_adapter import ProofCarryingCapabilityAdapter
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
+from gateway.search_governance import SearchDecisionRequest, build_search_decision_receipt
 
 
 class ClosureResponseKind(StrEnum):
@@ -239,13 +240,17 @@ class CausalClosureKernel:
                 command=command,
                 governed_action=action,
                 capability_passport=passport,
-                executor=lambda: self._capabilities.dispatch(
-                    capability_intent,
-                    command.tenant_id,
-                    command.actor_id,
-                    command_id=command.command_id,
-                    conversation_id=command.conversation_id,
-                    metadata=dispatch_metadata,
+                executor=lambda: self._attach_search_decision_receipt(
+                    command=command,
+                    capability_intent=capability_intent,
+                    result=self._capabilities.dispatch(
+                        capability_intent,
+                        command.tenant_id,
+                        command.actor_id,
+                        command_id=command.command_id,
+                        conversation_id=command.conversation_id,
+                        metadata=dispatch_metadata,
+                    ),
                 ),
             )
             return receipt_execution.result
@@ -309,10 +314,53 @@ class CausalClosureKernel:
         if not isinstance(result, dict):
             return result
         return {
-            **result,
+            **self._attach_search_decision_receipt(
+                command=command,
+                capability_intent=capability_intent,
+                result=result,
+            ),
             "worker_receipt": asdict(receipt),
             "capability_execution_boundary": asdict(boundary),
             "capability_execution_receipt": asdict(receipt),
+        }
+
+    def _attach_search_decision_receipt(
+        self,
+        *,
+        command: CommandEnvelope,
+        capability_intent: CapabilityIntent,
+        result: Any,
+    ) -> Any:
+        """Attach search admission evidence required by the search passport."""
+        if capability_intent.capability_id != "enterprise.knowledge_search":
+            return result
+        if not isinstance(result, dict):
+            return result
+        if "search_decision_receipt" in result:
+            return result
+        query = str(
+            capability_intent.params.get("query")
+            or capability_intent.params.get("text")
+            or command.redacted_payload.get("body")
+            or ""
+        )
+        passport = self._commands.capability_passport_for_intent(command.intent)
+        budget_limit_units = float(passport.cost_model.get("max_estimated_cost") or 0.0)
+        max_result_count = int(capability_intent.params.get("top_k") or 5)
+        receipt = build_search_decision_receipt(
+            SearchDecisionRequest(
+                tenant_id=command.tenant_id,
+                actor_id=command.actor_id,
+                query=query,
+                budget_limit_units=budget_limit_units,
+                max_result_count=max_result_count,
+                generated_at=self._commands._clock(),
+            )
+        )
+        return {
+            **result,
+            "search_decision_receipt": receipt.to_dict(),
+            "search_decision_receipt_id": receipt.receipt_id,
         }
 
     def _validate_isolated_receipt(
@@ -439,11 +487,13 @@ class CausalClosureKernel:
 
     def _close_capability_result(self, command: CommandEnvelope, capability_result: dict[str, Any]) -> CausalClosureResult:
         response_body = capability_result.get("response", "Capability executed.")
+        observed_detail = self._capability_observation_detail(capability_result)
         self._commands.transition(
             command.command_id,
             CommandState.OBSERVED,
             tool_name=command.intent,
             output=capability_result,
+            detail=observed_detail,
         )
         reconciliation = self._commands.observe_and_reconcile_effect(command.command_id, output=capability_result)
         if not reconciliation.reconciled:
@@ -461,6 +511,19 @@ class CausalClosureKernel:
         self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "capability_dispatch"})
         self._commands.transition(command.command_id, CommandState.COMMITTED)
         return self._certify_committed(command, response_body=response_body, base_metadata=dict(capability_result))
+
+    def _capability_observation_detail(self, capability_result: dict[str, Any]) -> dict[str, Any]:
+        """Return durable, bounded receipt pointers from a capability result."""
+        detail: dict[str, Any] = {}
+        search_decision_receipt = capability_result.get("search_decision_receipt")
+        if isinstance(search_decision_receipt, dict):
+            detail["search_decision_receipt"] = dict(search_decision_receipt)
+            detail["search_decision_receipt_id"] = str(
+                capability_result.get("search_decision_receipt_id")
+                or search_decision_receipt.get("receipt_id")
+                or ""
+            )
+        return detail
 
     def _close_llm_result(
         self,

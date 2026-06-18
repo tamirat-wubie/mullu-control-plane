@@ -57,10 +57,12 @@ _CAPABILITY_INTENT_KEYS = ("capability_intent", "skill_intent")
 
 _RECEIPT_TYPES = (
     "interpretation_receipt",
+    "search_decision_receipt",
     "plan_step_receipt",
     "approval_receipt",
     "denial_receipt",
     "worker_receipt",
+    "worker_failure_receipt",
     "delivery_receipt",
     "command_event",
     "universal_action_proof",
@@ -127,6 +129,15 @@ _TASK_STATUSES = (
     "blocked",
     "completed",
 )
+_RESPONSE_STATES = (
+    "received",
+    "in_progress",
+    "waiting_for_approval",
+    "requires_review",
+    "blocked",
+    "awaiting_terminal_evidence",
+    "completed_verified",
+)
 _APPROVAL_STATUSES = ("pending", "approved", "denied", "expired", "unknown")
 _PLAN_REVIEW_STATUSES = (
     "preview_ready",
@@ -146,6 +157,10 @@ _APPROVAL_HISTORY_COLUMNS = (
     "tenant_id",
     "command_id",
     "risk_tier",
+    "approval_strength_policy",
+    "approval_strength_decision",
+    "approval_strength",
+    "required_approval_strength",
     "actor_id",
     "source",
     "intent",
@@ -156,6 +171,7 @@ _APPROVAL_HISTORY_COLUMNS = (
     "task_status",
     "event_count",
     "latest_event_hash",
+    "approval_strength_required_controls",
     "receipt_href",
     "current_task_href",
 )
@@ -372,7 +388,7 @@ def build_current_task_read_model(
         (
             task["command_id"]
             for task in tasks
-            if task["task_status"] != "completed"
+            if task["response_state"] != "completed_verified"
         ),
         "",
     )
@@ -913,9 +929,16 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
         "plan_step_id",
         "command_state",
         "task_status",
+        "response_state",
+        "response_claim_allowed",
+        "response_terminal_certificate_id",
+        "response_blocker",
         "waiting_for",
         "approval_request_id",
         "approval_recovery_available",
+        "worker_failure_receipt_id",
+        "worker_failure_state",
+        "worker_failure_recovery_action",
         "next_action",
         "created_at",
         "latest_event_hash",
@@ -1704,6 +1727,7 @@ def _approval_history_record(
     )
     resolved_at = latest.timestamp if status in {"approved", "denied", "expired"} else ""
     resolved_by = _approval_history_resolved_by(status, latest)
+    strength_detail = _approval_strength_detail(approval_events)
     receipt_href = _receipt_detail_href(command.command_id, command.tenant_id)
     current_task_href = _current_task_href(command.tenant_id, task_status)
     return {
@@ -1720,6 +1744,7 @@ def _approval_history_record(
         "requested_at": approval_events[0].timestamp,
         "resolved_at": resolved_at,
         "resolved_by": resolved_by,
+        **strength_detail,
         "event_count": len(approval_events),
         "latest_event_hash": latest.event_hash,
         "trace_id": command.trace_id,
@@ -1727,6 +1752,52 @@ def _approval_history_record(
         "receipt_href": receipt_href,
         "current_task_href": current_task_href,
     }
+
+
+def _approval_strength_detail(approval_events: list[CommandEvent]) -> dict[str, Any]:
+    """Return the latest approval-strength witness carried by approval events."""
+    defaults: dict[str, Any] = {
+        "approval_strength_policy": "",
+        "approval_strength_decision": "",
+        "approval_strength": "",
+        "required_approval_strength": "",
+        "request_channel_trust": "",
+        "response_channel_trust": "",
+        "cross_channel_approval": False,
+        "approval_strength_reasons": (),
+        "approval_strength_required_controls": (),
+    }
+    strength_keys = frozenset(defaults)
+    for event in reversed(approval_events):
+        detail = event.detail if isinstance(event.detail, Mapping) else {}
+        if not any(key in detail for key in strength_keys):
+            continue
+        return {
+            "approval_strength_policy": str(
+                detail.get("approval_strength_policy", "")
+            ).strip(),
+            "approval_strength_decision": str(
+                detail.get("approval_strength_decision", "")
+            ).strip(),
+            "approval_strength": str(detail.get("approval_strength", "")).strip(),
+            "required_approval_strength": str(
+                detail.get("required_approval_strength", "")
+            ).strip(),
+            "request_channel_trust": str(
+                detail.get("request_channel_trust", "")
+            ).strip(),
+            "response_channel_trust": str(
+                detail.get("response_channel_trust", "")
+            ).strip(),
+            "cross_channel_approval": bool(detail.get("cross_channel_approval", False)),
+            "approval_strength_reasons": _text_tuple(
+                detail.get("approval_strength_reasons", ()),
+            ),
+            "approval_strength_required_controls": _text_tuple(
+                detail.get("approval_strength_required_controls", ()),
+            ),
+        }
+    return defaults
 
 
 def _approval_history_status(
@@ -1833,6 +1904,9 @@ def _receipts_for_command(
     interpretation = _interpretation_receipt(command)
     if interpretation is not None:
         receipts.append(interpretation)
+    search_decision = _search_decision_receipt(command, events)
+    if search_decision is not None:
+        receipts.append(search_decision)
     plan_step = _plan_step_receipt(command)
     if plan_step is not None:
         receipts.append(plan_step)
@@ -1846,6 +1920,9 @@ def _receipts_for_command(
     )
     if worker is not None:
         receipts.append(worker)
+    worker_failure = _worker_failure_receipt(command, events)
+    if worker_failure is not None:
+        receipts.append(worker_failure)
     delivery = _delivery_receipt(
         command,
         events=events,
@@ -2167,6 +2244,124 @@ def _worker_receipt(
     }
 
 
+def _worker_failure_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> dict[str, Any] | None:
+    raw_receipt, source_event = _raw_worker_failure_receipt(command, events)
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in (
+            "schema_ref",
+            "receipt_id",
+            "worker_receipt_id",
+            "request_id",
+            "command_id",
+            "capability",
+            "operation",
+            "tenant_id",
+            "lease_id",
+            "failure_state",
+            "reason",
+            "partial_completion",
+            "attempted_units",
+            "completed_units",
+            "recovery_action",
+            "recovery_ref",
+            "terminal_closure_required",
+            "receipt_is_not_terminal_closure",
+            "generated_at",
+            "metadata",
+            "receipt_state",
+            "worker_dispatch_ref",
+            "failure_class",
+            "effect_status",
+            "recovery_action_refs",
+        )
+        if key in raw_receipt
+    }
+    metadata = raw_receipt.get("metadata") if isinstance(raw_receipt.get("metadata"), Mapping) else {}
+    status = _worker_failure_status(raw_receipt)
+    receipt_id = str(
+        details.get("receipt_id")
+        or command.redacted_payload.get("worker_failure_receipt_id")
+        or f"worker-failure:{command.command_id}"
+    )
+    evidence_refs = {
+        "command_id": command.command_id,
+        "worker_failure_receipt_id": receipt_id,
+        "worker_receipt_id": str(details.get("worker_receipt_id", "")),
+        "worker_dispatch_ref": str(details.get("worker_dispatch_ref", "")),
+        "source_receipt_hash": str(raw_receipt.get("source_receipt_hash") or metadata.get("source_receipt_hash") or ""),
+        "failure_hash": str(raw_receipt.get("failure_hash") or metadata.get("failure_hash") or ""),
+        "source_event_hash": source_event.event_hash if source_event is not None else "",
+        "payload_hash": command.payload_hash,
+        "trace_id": command.trace_id,
+        "evidence_refs": list(raw_receipt.get("evidence_refs", ()))
+        if isinstance(raw_receipt.get("evidence_refs"), list)
+        else [],
+    }
+    receipt_hash = str(evidence_refs["failure_hash"]) or _stable_hash(
+        {"details": details, "evidence_refs": evidence_refs}
+    )
+    return {
+        "receipt_type": "worker_failure_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": receipt_hash,
+        "status": status,
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _raw_worker_failure_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> tuple[Mapping[str, Any] | None, CommandEvent | None]:
+    raw_payload_receipt = command.redacted_payload.get("worker_failure_receipt")
+    if isinstance(raw_payload_receipt, Mapping):
+        return raw_payload_receipt, None
+    for event in reversed(events):
+        raw_detail = event.detail if isinstance(event.detail, Mapping) else {}
+        raw_detail_receipt = raw_detail.get("worker_failure_receipt")
+        if isinstance(raw_detail_receipt, Mapping):
+            return raw_detail_receipt, event
+        raw_execution = raw_detail.get("execution_result")
+        if isinstance(raw_execution, Mapping):
+            raw_execution_output = raw_execution.get("output")
+            if isinstance(raw_execution_output, Mapping):
+                raw_execution_receipt = raw_execution_output.get("worker_failure_receipt")
+                if isinstance(raw_execution_receipt, Mapping):
+                    return raw_execution_receipt, event
+    return None, None
+
+
+def _worker_failure_status(raw_receipt: Mapping[str, Any]) -> str:
+    if not raw_receipt:
+        return ""
+    failure_state = str(raw_receipt.get("failure_state") or "").strip()
+    if failure_state:
+        return failure_state
+    receipt_state = str(raw_receipt.get("receipt_state") or "").strip().lower()
+    if receipt_state == "partial_execution_recorded":
+        return "partial_completion"
+    if receipt_state:
+        return receipt_state
+    return "recorded"
+
+
+def _worker_failure_recovery_action(raw_receipt: Mapping[str, Any]) -> str:
+    recovery_action = str(raw_receipt.get("recovery_action") or "").strip()
+    if recovery_action:
+        return recovery_action
+    recovery_refs = raw_receipt.get("recovery_action_refs")
+    if isinstance(recovery_refs, list) and recovery_refs:
+        return "safe_halt"
+    return ""
+
+
 def _delivery_receipt(
     command: CommandEnvelope,
     *,
@@ -2190,19 +2385,42 @@ def _delivery_receipt(
         return None
 
     terminal_certificate_id = _terminal_certificate_id(terminal_certificate)
+    delivery_detail = delivery_event.detail if delivery_event is not None else {}
+    execution_status = str(delivery_detail.get("execution_status") or "").strip()
+    if not execution_status:
+        execution_status = (
+            "terminal_certified"
+            if terminal_certificate_id
+            else (
+                "response_recorded"
+                if response_event is not None or command.state in _COMPLETED_STATES
+                else "not_closed"
+            )
+        )
+    delivery_error_type = str(delivery_detail.get("delivery_error_type") or "").strip()
+    delivery_succeeded = bool(delivery_detail.get("delivery_succeeded")) if delivery_event is not None else False
+    delivery_attempted = bool(delivery_detail.get("delivery_attempted")) if delivery_event is not None else False
     status = delivery_status or "delivery_status_not_recorded"
     latest_event = delivery_event or response_event or (events[-1] if events else None)
     details = {
         "command_id": command.command_id,
+        "execution_status": execution_status,
+        "delivery_status": delivery_status,
+        "delivery_error_type": delivery_error_type,
+        "delivery_succeeded": delivery_succeeded,
+        "delivery_attempted": delivery_attempted,
+        "execution_delivery_separated": bool(
+            delivery_detail.get("execution_delivery_separated")
+        ),
         "response_recorded": response_event is not None,
         "delivery_status_observed": bool(delivery_status),
-        "delivery_status": delivery_status,
         "terminal_certificate_present": terminal_certificate is not None,
         "terminal_certificate_id": terminal_certificate_id,
     }
     evidence_refs = {
         "command_id": command.command_id,
         "latest_event_hash": latest_event.event_hash if latest_event else "",
+        "delivery_event_hash": delivery_event.event_hash if delivery_event else "",
         "response_event_hash": response_event.event_hash if response_event else "",
         "terminal_certificate_id": terminal_certificate_id,
     }
@@ -2247,6 +2465,86 @@ def _interpretation_receipt(command: CommandEnvelope) -> dict[str, Any] | None:
         "details": details,
         "evidence_refs": evidence_refs,
     }
+
+
+def _search_decision_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> dict[str, Any] | None:
+    raw_receipt, source_event = _raw_search_decision_receipt(command, events)
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in (
+            "schema_ref",
+            "receipt_id",
+            "tenant_id",
+            "actor_id",
+            "capability_id",
+            "query_hash",
+            "search_classification",
+            "freshness_state",
+            "budget_state",
+            "retrieval_authority",
+            "retrieval_instruction_authority_allowed",
+            "decision",
+            "blocked_reasons",
+            "estimated_cost_units",
+            "budget_limit_units",
+            "max_result_count",
+            "generated_at",
+            "metadata",
+        )
+        if key in raw_receipt
+    }
+    receipt_id = str(
+        details.get("receipt_id")
+        or command.redacted_payload.get("search_decision_receipt_id")
+        or f"search-decision:{command.command_id}"
+    )
+    evidence_refs = {
+        "command_id": command.command_id,
+        "receipt_hash": str(raw_receipt.get("receipt_hash", "")),
+        "query_hash": str(details.get("query_hash", "")),
+        "capability_id": str(details.get("capability_id", "")),
+        "source_event_hash": source_event.event_hash if source_event is not None else "",
+        "payload_hash": command.payload_hash,
+        "trace_id": command.trace_id,
+    }
+    receipt_hash = str(raw_receipt.get("receipt_hash", "")) or _stable_hash(
+        {"details": details, "evidence_refs": evidence_refs}
+    )
+    return {
+        "receipt_type": "search_decision_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": receipt_hash,
+        "status": str(details.get("decision") or "recorded"),
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _raw_search_decision_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> tuple[Mapping[str, Any] | None, CommandEvent | None]:
+    raw_payload_receipt = command.redacted_payload.get("search_decision_receipt")
+    if isinstance(raw_payload_receipt, Mapping):
+        return raw_payload_receipt, None
+    for event in reversed(events):
+        raw_detail = event.detail if isinstance(event.detail, Mapping) else {}
+        raw_detail_receipt = raw_detail.get("search_decision_receipt")
+        if isinstance(raw_detail_receipt, Mapping):
+            return raw_detail_receipt, event
+        raw_execution = raw_detail.get("execution_result")
+        if isinstance(raw_execution, Mapping):
+            raw_execution_output = raw_execution.get("output")
+            if isinstance(raw_execution_output, Mapping):
+                raw_execution_receipt = raw_execution_output.get("search_decision_receipt")
+                if isinstance(raw_execution_receipt, Mapping):
+                    return raw_execution_receipt, event
+    return None, None
 
 
 def _event_receipt(event: CommandEvent) -> dict[str, Any]:
@@ -2338,7 +2636,17 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         command.state,
         terminal_certificate_present=terminal_certificate is not None,
     )
+    terminal_certificate_id = _terminal_certificate_id(terminal_certificate)
+    response_state = _response_state_for_task(
+        task_status=task_status,
+        terminal_certificate_id=terminal_certificate_id,
+    )
+    response_blocker = _response_blocker(
+        task_status=task_status,
+        terminal_certificate_id=terminal_certificate_id,
+    )
     metadata = _command_metadata(command)
+    worker_failure = _current_task_worker_failure(events)
     approval_request_id = _latest_approval_request_id(events)
     return {
         "command_id": command.command_id,
@@ -2358,9 +2666,16 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         "approval_recovery_available": (
             task_status == "waiting_for_approval" and bool(approval_request_id)
         ),
+        "worker_failure_receipt_id": str(worker_failure.get("receipt_id", "")),
+        "worker_failure_state": _worker_failure_status(worker_failure),
+        "worker_failure_recovery_action": _worker_failure_recovery_action(worker_failure),
         "command_state": command.state.value,
         "task_status": task_status,
-        "task_terminal": task_status == "completed",
+        "response_state": response_state,
+        "response_claim_allowed": response_state == "completed_verified",
+        "response_terminal_certificate_id": terminal_certificate_id,
+        "response_blocker": response_blocker,
+        "task_terminal": bool(terminal_certificate_id),
         "task_blocked": task_status == "blocked",
         "waiting_for": _waiting_for(command.state),
         "next_action": _next_action(task_status),
@@ -2473,12 +2788,66 @@ def _latest_approval_request_id(events: list[CommandEvent]) -> str:
     return ""
 
 
+def _current_task_worker_failure(events: list[CommandEvent]) -> Mapping[str, Any]:
+    for event in reversed(events):
+        detail = event.detail if isinstance(event.detail, Mapping) else {}
+        receipt = detail.get("worker_failure_receipt")
+        if isinstance(receipt, Mapping):
+            return receipt
+        execution = detail.get("execution_result")
+        if isinstance(execution, Mapping):
+            output = execution.get("output")
+            if isinstance(output, Mapping):
+                nested_receipt = output.get("worker_failure_receipt")
+                if isinstance(nested_receipt, Mapping):
+                    return nested_receipt
+    return {}
+
+
 def _command_task_status(command_ledger: Any, command: CommandEnvelope) -> str:
     return task_status_for_state(
         command.state,
         terminal_certificate_present=command_ledger.terminal_certificate_for(command.command_id)
         is not None,
     )
+
+
+def _response_state_for_task(
+    *,
+    task_status: str,
+    terminal_certificate_id: str,
+) -> str:
+    if terminal_certificate_id:
+        return "completed_verified"
+    if task_status == "completed":
+        return "awaiting_terminal_evidence"
+    if task_status == "blocked":
+        return "blocked"
+    if task_status == "waiting_for_approval":
+        return "waiting_for_approval"
+    if task_status == "requires_review":
+        return "requires_review"
+    if task_status == "active":
+        return "in_progress"
+    return "received"
+
+
+def _response_blocker(
+    *,
+    task_status: str,
+    terminal_certificate_id: str,
+) -> str:
+    if terminal_certificate_id:
+        return ""
+    if task_status == "completed":
+        return "terminal_certificate_missing"
+    if task_status == "blocked":
+        return "explicit_blocker_receipt_required"
+    if task_status == "waiting_for_approval":
+        return "approval_required"
+    if task_status == "requires_review":
+        return "operator_review_required"
+    return ""
 
 
 def _task_status_counts(

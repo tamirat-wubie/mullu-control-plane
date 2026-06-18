@@ -26,18 +26,20 @@ No stage may silently succeed or silently fail.
 | NormalizationReceipt | Gateway Router | channel message became canonical | channel confusion |
 | InterpretationReceipt | Interpretation Layer | what the system believed the user meant | misunderstood intent |
 | ClarificationReceipt | Clarification Engine | missing details were requested | vague execution |
-| SearchReceipt | Search Layer | search decision, freshness, cost, evidence | stale or unbounded retrieval |
+| SearchDecisionReceipt | Search Layer | search classification, freshness, budget, and evidence-only retrieval authority | search reflex, stale retrieval, or unbounded retrieval |
+| SearchReceipt | Search Layer | retrieved evidence, source freshness, citations, and conflicts | stale or unsupported answer |
 | KnowledgeReceipt | Knowledge Layer | local answer evidence | unsupported answer |
 | PlanReceipt | Plan Builder | proposed action plan | hidden execution plan |
 | PolicyReceipt | Policy Engine | allow, deny, constrain, or approval decision | policy bypass |
 | BudgetReceipt | Budget Gate | budget estimate and decision | cost overrun |
 | ApprovalRequestReceipt | Approval Router | approval was requested | unbound approval |
-| ApprovalReceipt | Approval Router | approval, denial, expiration, or revocation | casual approval misuse |
+| ApprovalReceipt | Approval Router | approval, denial, expiration, revocation, and approval-strength witness when present | casual approval misuse |
 | QueueReceipt | Command Ledger | command entered queue | duplicate or lost task |
 | WorkerReceipt | Worker | execution or inspection result | unverifiable worker result |
+| WorkerFailureReceipt | Worker / Evidence | failed, rejected, or partial worker execution recovery state | unclear recovery path |
 | ClosureReceipt | Causal Closure Kernel | evidence was validated or blocked | false success |
 | TerminalCertificate | Evidence Layer | final closure is complete | incomplete completion claim |
-| FinalUserReceipt | Response Composer | user response was delivered or delivery failed | response ambiguity |
+| FinalUserReceipt | Response Composer | execution status and delivery status are separately visible | response ambiguity |
 | ErrorReceipt | Any layer | explicit failure with context | silent failure |
 | DenialReceipt | Governance / Gateway | structured refusal or block | unexplained denial |
 | AuditTrailEntry | Audit Store | trace was retained | missing lineage |
@@ -50,18 +52,20 @@ MessageReceipt
 -> TenantBindingReceipt
 -> NormalizationReceipt
 -> InterpretationReceipt
+-> SearchDecisionReceipt
 -> SearchReceipt or PlanReceipt or ClarificationReceipt or DenialReceipt
 -> PolicyReceipt
 -> BudgetReceipt
 -> ApprovalReceipt when needed
 -> WorkerReceipt when executed
+-> WorkerFailureReceipt when worker execution fails or partially completes
 -> ClosureReceipt
 -> TerminalCertificate
 -> FinalUserReceipt
 -> AuditTrailEntry
 ```
 
-Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence.
+Question-only paths may skip execution receipts, but they still need answer evidence and final response evidence. Search-backed paths expose `SearchDecisionReceipt` rows in the operator receipt viewer without raw-query disclosure, and local read-only search execution emits worker receipts with evidence-only redacted excerpts while the full source-level `SearchReceipt` remains the next evidence surface.
 
 ## 4. Redaction rules
 
@@ -81,5 +85,5 @@ Separate internal evidence refs from user-safe explanation text.
 | missing policy or budget evidence | blocker |
 | missing approval for risky action | blocker |
 | worker result lacks evidence | blocker |
-| execution succeeded but delivery failed | execution closed, delivery failed |
+| execution succeeded but delivery failed | execution closed, delivery failed, both fields visible in delivery receipt |
 | user canceled before execution | canceled with receipt |

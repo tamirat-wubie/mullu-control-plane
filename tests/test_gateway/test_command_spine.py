@@ -760,7 +760,10 @@ def test_command_ledger_keeps_native_passport_for_builtin_fabric_capability():
     assert action.risk_tier == "low"
     assert prediction is not None
     assert prediction.expected_mutations == ()
-    assert prediction.expected_receipts == ("total_chunks_searched",)
+    assert prediction.expected_receipts == (
+        "total_chunks_searched",
+        "search_decision_receipt",
+    )
     assert reconciliation.reconciled is True
     assert bound_event.detail["capability_admission_status"] == "accepted"
     assert bound_event.detail["capability_passport_source"] == "native"

@@ -219,6 +219,18 @@ def test_agentic_control_governed_records_bind_planning_and_ledger_boundaries() 
     assert evidence_record["rollback_or_compensation_required"] is True
 
 
+def test_agentic_control_code_change_plan_requires_physics_packet_evidence() -> None:
+    payload = _load_json(AGENTIC_CONTROL_CAPABILITY_PACK_PATH)
+    code_change_entry = next(
+        entry for entry in payload["capabilities"] if entry["capability_id"] == "agentic_control.code_change.plan"
+    )
+    required_evidence = code_change_entry["evidence_model"]["required_evidence"]
+
+    assert required_evidence == ["change_boundary", "code_change_physics_packet", "test_contract", "rollback_plan"]
+    assert code_change_entry["effect_model"]["expected_effects"] == ["code_change_plan_emitted"]
+    assert code_change_entry["extensions"]["governed_record"]["world_mutating"] is False
+
+
 def test_agentic_control_pack_blocks_production_ready_overclaim() -> None:
     gate = _agentic_control_gate(require_production_ready=True)
     mission_decision = gate.admit(command_id="cmd-mission-prod", intent_name="agentic_control.mission.define")

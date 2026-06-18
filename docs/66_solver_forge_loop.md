@@ -390,6 +390,19 @@ winners with that signature's own primary metric.
 | `mcoi/mcoi_runtime/core/adversarial_operations.py` | Source of red-team operations (prompt injection, budget evasion, audit tampering, policy bypass). |
 | `gateway/plan_ledger.py` | Pattern source. The candidate ledger mirrors its append-only store contract and JSON-file durability. |
 
+## Relationship to code-change physics
+
+`CodeChangePhysicsPacket` is the planning-side bridge between code-change
+intent and Solver Forge exploration. It detects pressure, barriers, bottlenecks,
+repair needs, and lower-risk paths before candidate methods are compared.
+
+The creative physics lane can route a problem into Solver Forge when there are several
+method families worth comparing. Solver Forge still owns measured candidate
+comparison, adversarial review, negative-result memory, and candidate-only
+handoff. The physics packet cannot promote, install, deploy, or certify a
+winner; it can only explain why a lower-risk route or comparison lane should be
+used.
+
 ## Failure modes the loop refuses
 
 - **Method soup.** A passing candidate without a recorded baseline cannot be a winner. Without `baseline_delta` on the primary metric, the winner-selection logic excludes the run.

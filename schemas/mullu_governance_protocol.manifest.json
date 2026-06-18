@@ -509,6 +509,12 @@
       "surface": "claim"
     },
     {
+      "schema_id": "code-change-physics-packet",
+      "path": "schemas/code_change_physics_packet.schema.json",
+      "urn": "urn:mullusi:schema:code-change-physics-packet:1",
+      "surface": "sdlc"
+    },
+    {
       "schema_id": "collaboration-case",
       "path": "schemas/collaboration_case.schema.json",
       "urn": "urn:mullusi:schema:collaboration-case:1",
@@ -1193,6 +1199,12 @@
       "surface": "policy"
     },
     {
+      "schema_id": "channel-approval-strength-policy",
+      "path": "schemas/channel_approval_strength_policy.schema.json",
+      "urn": "urn:mullusi:schema:channel-approval-strength-policy:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "policy-rule",
       "path": "schemas/policy_rule.schema.json",
       "urn": "urn:mullusi:schema:policy-rule:1",
@@ -1437,6 +1449,12 @@
       "path": "schemas/temporal_evidence_freshness_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-evidence-freshness-receipt:1",
       "surface": "temporal"
+    },
+    {
+      "schema_id": "search-decision-receipt",
+      "path": "schemas/search_decision_receipt.schema.json",
+      "urn": "urn:mullusi:schema:search-decision-receipt:1",
+      "surface": "search"
     },
     {
       "schema_id": "temporal-reapproval-receipt",
@@ -1736,6 +1754,30 @@
       "schema_id": "worker-mesh",
       "path": "schemas/worker_mesh.schema.json",
       "urn": "urn:mullusi:schema:worker-mesh:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "worker-failure-receipt",
+      "path": "schemas/worker_failure_receipt.schema.json",
+      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-first-worker-path",
+      "path": "schemas/read_only_first_worker_path.schema.json",
+      "urn": "urn:mullusi:schema:read-only-first-worker-path:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-document-worker-path",
+      "path": "schemas/read_only_document_worker_path.schema.json",
+      "urn": "urn:mullusi:schema:read-only-document-worker-path:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-search-worker-path",
+      "path": "schemas/read_only_search_worker_path.schema.json",
+      "urn": "urn:mullusi:schema:read-only-search-worker-path:1",
       "surface": "worker"
     },
     {
@@ -2049,12 +2091,6 @@
       "path": "schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-receipt:1",
       "surface": "team_ops"
-    },
-    {
-      "schema_id": "worker-failure-receipt",
-      "path": "schemas/worker_failure_receipt.schema.json",
-      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
-      "surface": "worker"
     },
     {
       "schema_id": "worker-receipt-ledger-read-model",

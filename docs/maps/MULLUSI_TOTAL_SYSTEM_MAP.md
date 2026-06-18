@@ -143,18 +143,18 @@ No external channel approval without request binding and identity check.
 | Gateway Router | implemented / partial | `gateway/router.py` | Map product UI and channel hardening onto the existing gateway spine. |
 | GatewayMessage | implemented | `gateway/router.py` | Add product-facing message receipt fields if missing. |
 | Channel Adapter protocol | implemented / partial | `gateway/router.py` | Harden one real production channel at a time. |
-| Tenant identity resolver | implemented / partial | `gateway/router.py`, `gateway/tenant_identity.py` | Add channel trust and approval-strength rules. |
+| Tenant identity resolver | implemented / partial | `gateway/router.py`, `gateway/tenant_identity.py`, `gateway/channel_approval_strength.py` | Extend approval-strength enforcement to channel-native adapter callbacks and cross-channel binding receipts. |
 | Message deduplication | implemented / partial | `gateway/router.py`, `gateway/dedup.py` | Include cross-channel replay and webhook duplicate cases in map tests. |
 | Capability intent resolver | implemented / partial | `gateway/intent_resolver.py`, `gateway/interpretation.py` | Add schema and UI readback for `InterpretedRequest` and interpretation receipts. |
-| Ask / Goal Box UI | implemented / partial | `/operator/goal-intake`, `/operator/goal-intake/preview`, `/operator/goal-intake/approve`, `/operator/goal-intake/deny`, `/operator/current-task/approval`, `/operator/plan-review` | Add cross-channel approval-strength policy after web flow is stable. |
+| Ask / Goal Box UI | implemented / partial | `/operator/goal-intake`, `/operator/goal-intake/preview`, `/operator/goal-intake/approve`, `/operator/goal-intake/deny`, `/operator/current-task/approval`, `/operator/plan-review`, `channel_approval_strength_policy.foundation`, `/webhook/approve/{request_id}` approval-strength callback witness, `/operator/approvals/read-model` approval-strength fields | Extend approval-strength enforcement to channel-native adapter approval flows. |
 | Clarification engine | missing / partial | no dedicated map evidence | Add missing-slot detection and focused clarification questions. |
 | Command ledger | implemented / partial | `gateway/command_spine.py` | Bind all user-visible task states to ledger states. |
-| Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py`, `/operator/approvals/read-model`, `/operator/approvals`, `/operator/approvals/{request_id}` | Add cross-channel approval-strength policy. |
-| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays | Add deeper Plan Review receipt exports. |
+| Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py`, `gateway/channel_approval_strength.py`, `/operator/approvals/read-model`, `/operator/approvals`, `/operator/approvals/{request_id}`, HTTP approval callback strength metadata and command-event detail, approval history strength projection | Extend channel approval-strength results into channel-native approvals and admin policy screens. |
+| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py`, `/operator/goal-intake/preview`, `/operator/plan-review/read-model`, `/operator/plan-review`, `/operator/plan-review/{plan_id}`, `/operator/plan-review/{plan_id}/receipts`, `/operator/plan-review/{plan_id}/receipts/read-model`, `/operator/plan-review/budget/{tenant_id}`, `/operator/plan-review/budget/{tenant_id}/read-model`, `cost_model.max_estimated_cost` estimate sources, optional `tenant_budget_reporter` overlays, and search capability cost-model projection | Keep budget policy wired to concrete capability passports. |
 | Causal closure kernel | implemented / partial | `gateway/causal_closure_kernel.py` | Ensure every success response is certificate-backed. |
-| Search layer | partial / unknown | `enterprise.knowledge_search` intent pattern | Add freshness, cache, source, budget, and receipt gates. |
-| Worker layer | partial | `gateway/capability_worker.py`, worker-related docs | Define one contract per worker type. |
-| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, approval receipt links into `/operator/approvals/{request_id}`, and Plan Review budget/history links including explicit cost-estimate source and optional tenant budget-report drilldowns. | Add deeper plan receipt exports. |
+| Search layer | implemented / partial | `enterprise.knowledge_search`, `gateway/search_governance.py`, `gateway/read_only_search_worker.py`, `gateway/causal_closure_kernel.py`, `gateway/operator_receipt_viewer.py`, `schemas/search_decision_receipt.schema.json`, `schemas/read_only_search_worker_path.schema.json`, `schemas/operator_receipt_viewer_read_model.schema.json`, `tests/test_gateway/test_search_governance.py`, `tests/test_gateway/test_read_only_search_worker.py`, `tests/test_gateway/test_router.py`, `tests/test_gateway/test_webhooks.py` | Bind source-level freshness evidence and future web-search execution to separate live-source receipts. |
+| Worker layer | implemented / partial | `gateway/capability_worker.py`, `gateway/worker_mesh.py`, `gateway/read_only_repository_worker.py`, `gateway/read_only_document_worker.py`, `gateway/read_only_search_worker.py`, `gateway/worker_failure_receipt.py`, `schemas/worker_mesh.schema.json`, `schemas/worker_failure_receipt.schema.json`, `schemas/read_only_first_worker_path.schema.json`, `schemas/read_only_document_worker_path.schema.json`, `schemas/read_only_search_worker_path.schema.json`, `examples/read_only_first_worker_path.foundation.json`, `examples/read_only_document_worker_path.foundation.json`, `examples/read_only_search_worker_path.foundation.json`, `scripts/validate_read_only_first_worker_path.py`, `scripts/validate_read_only_document_worker_path.py`, `scripts/validate_read_only_search_worker_path.py`, `tests/test_gateway/test_read_only_repository_worker.py`, `tests/test_gateway/test_read_only_document_worker.py`, `tests/test_gateway/test_read_only_search_worker.py`, `tests/test_gateway/test_worker_failure_receipt.py` | Bind worker failure recovery controls to future worker admin screens. |
+| Receipt viewer | implemented / partial | `/operator/receipts/read-model`, `/operator/receipts`, `/operator/receipts/{command_id}` with receipt type/status, task status, bounded search filters, dedicated `search_decision_receipt` and `worker_failure_receipt` drilldowns, approval receipt links into `/operator/approvals/{request_id}`, approval-strength fields in approval history/detail, Plan Review budget/history links including explicit cost-estimate source, plan receipt exports, optional tenant budget-report drilldowns, delivery receipts with separate execution and delivery status fields, and `/operator/current-task` response-state plus worker-failure columns that block success claims without terminal certificates. | Add admin screens for approval-strength policy and channel bindings. |
 | Admin console | missing / unknown | no dedicated map evidence | Map tenant, policy, budget, worker, and receipt admin screens. |
 
 ## 5. Component contract template
@@ -280,6 +280,13 @@ Receipts prove.
 
 Search-backed chat must be governed before retrieval.
 
+Foundation Mode status: `gateway/search_governance.py` now emits a
+schema-backed decision receipt for classification, freshness, budget, and
+retrieval authority. The search capability passport requires budget,
+freshness, and evidence-only retrieval checks, and
+`gateway/causal_closure_kernel.py` attaches the receipt before live search
+proof validation.
+
 ```text
 User message
 -> intent classification
@@ -296,13 +303,14 @@ User message
 Search states:
 
 ```text
-NO_SEARCH_NEEDED
-CACHE_HIT
-LOCAL_SEARCH
-WEB_SEARCH_LIGHT
-WEB_SEARCH_DEEP_APPROVAL_REQUIRED
-SEARCH_BLOCKED_BY_BUDGET
-SEARCH_FAILED_WITH_EXPLANATION
+no_search
+use_cache
+allow_search: local_search
+allow_search: light_web_search
+allow_search: deep_search
+block_search: search_budget_limit_exceeded
+block_search: deep_search_budget_required
+search_failed_with_explanation
 ```
 
 ## 9. Edge-case controls
@@ -318,7 +326,7 @@ SEARCH_FAILED_WITH_EXPLANATION
 | LLM misclassification | validate against deterministic policy, capability registry, and confidence threshold. |
 | Search result conflict | report uncertainty and cite evidence before action. |
 | Worker partial completion | record partial receipt and block success claim. |
-| Response delivery failure | separate execution status from delivery status. |
+| Response delivery failure | preserve terminal execution evidence and record delivery status as a separate receipt field. |
 | Tenant mismatch | deny and record identity/tenant failure receipt. |
 | Prompt injection in retrieved content | treat retrieved content as evidence only, never as instruction authority. |
 
@@ -335,9 +343,9 @@ causal closure, and capability-intent pattern matching surfaces.
 Fracture delta:
 
 ```text
-The current product map still needs deeper plan receipt exports, clarification
-handling, search cost and freshness gates, production channel hardening, and
-explicit component status tracking.
+The current product map still needs deeper clarification handling, production
+channel hardening, worker-failure UI drilldowns, source-level SearchReceipt
+evidence, and explicit component status tracking.
 ```
 
 Refinement:

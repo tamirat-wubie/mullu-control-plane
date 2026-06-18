@@ -1,0 +1,25 @@
+{
+  "actor_id": "operator",
+  "blocked_reasons": [],
+  "budget_limit_units": 2.0,
+  "budget_state": "allowed",
+  "capability_id": "enterprise.knowledge_search",
+  "decision": "allow_search",
+  "estimated_cost_units": 1.0,
+  "freshness_state": "source_required",
+  "generated_at": "2026-06-16T14:00:00+00:00",
+  "max_result_count": 5,
+  "metadata": {
+    "raw_query_exposed": false,
+    "search_budget_checked": true,
+    "search_freshness_checked": true
+  },
+  "query_hash": "460985734f3699c5a4057225d3fedc28d7da3659ceae7c1358e298761a927a99",
+  "receipt_hash": "c53e971bb4ba2be268e7b6c1264695ae2ec7fc96ee3da86447003864f11bb7f9",
+  "receipt_id": "search-decision-receipt-c53e971bb4ba2be2",
+  "retrieval_authority": "evidence_only",
+  "retrieval_instruction_authority_allowed": false,
+  "schema_ref": "urn:mullusi:schema:search-decision-receipt:1",
+  "search_classification": "light_web_search",
+  "tenant_id": "foundation-tenant"
+}

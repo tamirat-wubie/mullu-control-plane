@@ -109,6 +109,30 @@ forall hard invariant affected:
 
 ---
 
+### 3.1 Code-Change Physics Bridge
+
+Phi traversal admits code-change physics only as a planning witness. The bridge
+is typed by `CodeChangePhysicsPacket` and split into three lanes:
+
+| Lane | Required repository action | Reject condition |
+| --- | --- | --- |
+| Code Governance Physics | Name risk mass, barriers, proof energy, and approval friction. | A hard unknown or forbidden action is treated as permission. |
+| Code Creative Physics | Name pressure, bottlenecks, lower-risk indirect paths, and smallest useful deltas. | A creative path hides a live effect or bypasses approval. |
+| Code Repair Physics | Name entropy, drift, instability, contradiction, rollback, and repair-first paths. | Repair pressure is observed but no repair action is recorded. |
+
+The bridge improves code-change selection without changing execution authority.
+A physics packet may recommend draft-only, approval-queue, simulation,
+sandbox-probe, smallest-safe-PR, or repair-first paths. Execution still belongs
+to the existing SDLC, UAO, sandbox, and verification gates.
+
+Validation:
+
+```powershell
+python scripts/validate_code_change_physics_packet.py
+```
+
+---
+
 ## 4. Core Predicates
 
 Use these predicates as the working logic vocabulary for implementation and
@@ -126,6 +150,7 @@ review.
 | `fail_closed(gate)` | Missing, invalid, or ambiguous input denies execution. | Guard test or boot-time validation. |
 | `append_only(record)` | Audit or lineage record cannot be overwritten. | Hash-chain, ledger, or storage invariant. |
 | `pool_safe(write)` | Persistent governance write is atomic across concurrent workers. | Atomic SQL primitive or store override test. |
+| `pressure_mapped(change)` | Code-change pressure, bottleneck, and lower-risk path are explicitly recorded. | `CodeChangePhysicsPacket` validation. |
 
 ---
 
@@ -384,7 +409,7 @@ Use this checklist before editing a governed surface:
 1. Distinction: name the exact files and runtime surfaces affected.
 2. Constraint: list hard constraints and reject conditions.
 3. Ontology: define new types, statuses, fields, routes, or symbols.
-4. Topology: identify dependencies and forbidden bypass paths.
+4. Topology: identify dependencies, pressure points, bottlenecks, and forbidden bypass paths.
 5. Form: define units, bounds, enum values, status states, and error shape.
 6. Organization: name preserved invariants.
 7. Module: confirm the target module owns the responsibility.
@@ -399,8 +424,9 @@ Completion checklist:
 
 1. Tests or validators executed.
 2. Proof or witness updated when behavior changed.
-3. Open issues listed explicitly.
-4. Status block records completeness, invariants, and next action.
+3. Code-change physics packet updated or explicitly marked not applicable.
+4. Open issues listed explicitly.
+5. Status block records completeness, invariants, and next action.
 
 ---
 

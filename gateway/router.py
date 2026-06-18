@@ -8,6 +8,7 @@ Invariants:
   - Tenant is resolved from channel user identity, never from message content.
   - Failed governance checks return structured denial to the user.
   - Every message produces an audit trail entry.
+  - Response delivery is recorded separately from execution closure.
 """
 
 from __future__ import annotations
@@ -24,6 +25,13 @@ from gateway.authority import evaluate_approval_authority
 from gateway.authority_obligation_mesh import ApprovalChain, ApprovalChainStatus, AuthorityObligationMesh
 from gateway.capability_isolation import CapabilityIsolationPolicy, IsolatedCapabilityExecutor
 from gateway.causal_closure_kernel import CausalClosureKernel
+from gateway.channel_approval_strength import (
+    ApprovalRisk,
+    ApprovalStrengthDecision,
+    ChannelApprovalStrengthRequest,
+    ChannelApprovalStrengthResult,
+    evaluate_channel_approval_strength,
+)
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
 from gateway.dedup import MessageDeduplicator
 from gateway.memory_constitution import (
@@ -46,6 +54,13 @@ from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanPr
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
 from gateway.plan_ledger import CapabilityPlanLedger, CapabilityPlanWitnessRecord
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
+
+
+_APPROVAL_RISK_BY_GATEWAY_RISK: dict[RiskTier, ApprovalRisk] = {
+    RiskTier.LOW: ApprovalRisk.LOW,
+    RiskTier.MEDIUM: ApprovalRisk.MEDIUM,
+    RiskTier.HIGH: ApprovalRisk.HIGH,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,18 +240,20 @@ class GatewayRouter:
         """Send a response through its registered channel adapter when present."""
         adapter = self._channels.get(response.channel)
         if adapter is None:
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
                     "delivery_status": "skipped_no_adapter",
                 },
             )
+            self._record_delivery_observation(delivered)
+            return delivered
         try:
             sent = bool(adapter.send(response.recipient_id, response.body))
         except Exception:
             self._record_error("adapter_exception")
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
@@ -244,9 +261,11 @@ class GatewayRouter:
                     "delivery_error_type": "adapter_exception",
                 },
             )
+            self._record_delivery_observation(delivered)
+            return delivered
         if not sent:
             self._record_error("adapter_rejected")
-            return replace(
+            delivered = replace(
                 response,
                 metadata={
                     **response.metadata,
@@ -254,11 +273,48 @@ class GatewayRouter:
                     "delivery_error_type": "adapter_rejected",
                 },
             )
-        return replace(
+            self._record_delivery_observation(delivered)
+            return delivered
+        delivered = replace(
             response,
             metadata={
                 **response.metadata,
                 "delivery_status": "sent",
+            },
+        )
+        self._record_delivery_observation(delivered)
+        return delivered
+
+    def _record_delivery_observation(self, response: GatewayResponse) -> None:
+        """Record delivery outcome without changing execution success semantics."""
+        command_id = str(response.metadata.get("command_id") or "").strip()
+        if not command_id and response.message_id.startswith("resp-"):
+            command_id = response.message_id.removeprefix("resp-")
+        if not command_id:
+            return
+        command = self._commands.get(command_id)
+        if command is None or command.state is not CommandState.RESPONDED:
+            return
+        delivery_status = str(response.metadata.get("delivery_status") or "delivery_status_not_recorded")
+        delivery_error_type = str(response.metadata.get("delivery_error_type") or "")
+        terminal_certificate_id = str(response.metadata.get("terminal_certificate_id") or "")
+        recipient_id_hash = hashlib.sha256(response.recipient_id.encode("utf-8")).hexdigest()
+        self._commands.transition(
+            command_id,
+            CommandState.RESPONSE_EVIDENCE_CLOSED,
+            detail={
+                "delivery_status": delivery_status,
+                "delivery_error_type": delivery_error_type,
+                "delivery_succeeded": delivery_status == "sent",
+                "delivery_attempted": delivery_status not in {"", "skipped_no_adapter"},
+                "execution_status": "terminal_certified"
+                if terminal_certificate_id
+                else "responded_without_terminal_certificate",
+                "execution_delivery_separated": True,
+                "response_message_id": response.message_id,
+                "response_channel": response.channel,
+                "recipient_id_hash": recipient_id_hash,
+                "terminal_certificate_id": terminal_certificate_id,
             },
         )
 
@@ -595,6 +651,7 @@ class GatewayRouter:
             metadata={
                 **closure.metadata,
                 **self._interpretation_metadata(command),
+                "command_id": command.command_id,
                 "closure_response_kind": closure.response_kind.value,
                 "closure_disposition": closure.disposition.value if closure.disposition else None,
                 "response_allowed": closure.response_allowed,
@@ -964,6 +1021,72 @@ class GatewayRouter:
                 "queued": True,
             },
         )
+
+    @staticmethod
+    def _tenant_metadata_flag(mapping: TenantMapping, key: str) -> bool:
+        """Read a tenant metadata flag without treating missing values as authority."""
+        value = mapping.metadata.get(key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "present"}
+        return bool(value)
+
+    def _evaluate_approval_strength(
+        self,
+        request: ApprovalRequest,
+        *,
+        request_id: str,
+        resolver: TenantMapping,
+    ) -> ChannelApprovalStrengthResult:
+        """Evaluate channel approval-strength before resolving an approval."""
+        risk_tier = _APPROVAL_RISK_BY_GATEWAY_RISK[request.risk_tier]
+        same_channel = request.channel.strip().lower() == resolver.channel.strip().lower()
+        return evaluate_channel_approval_strength(
+            ChannelApprovalStrengthRequest(
+                request_channel=request.channel,
+                response_channel=resolver.channel,
+                risk_tier=risk_tier,
+                tenant_id_matches=request.tenant_id == resolver.tenant_id,
+                identity_id_matches=bool(
+                    resolver.identity_id and resolver.tenant_id == request.tenant_id
+                ),
+                request_id_matches=request.request_id == request_id,
+                approval_not_expired=request.status != ApprovalStatus.EXPIRED,
+                actor_has_approval_authority=resolver.approval_authority,
+                channel_binding_present=same_channel
+                or self._tenant_metadata_flag(resolver, "channel_binding_present"),
+                operator_session_present=resolver.channel == "operator_console"
+                or self._tenant_metadata_flag(resolver, "operator_session_present"),
+                second_approval_present=self._tenant_metadata_flag(
+                    resolver,
+                    "second_approval_present",
+                ),
+            )
+        )
+
+    @staticmethod
+    def _approval_strength_metadata(result: ChannelApprovalStrengthResult) -> dict[str, Any]:
+        """Serialize channel approval-strength evidence for receipts and responses."""
+        return {
+            "approval_strength_policy": "channel_approval_strength_policy.foundation",
+            "approval_strength_decision": result.decision.value,
+            "approval_strength": result.observed_strength.value,
+            "required_approval_strength": result.required_strength.value,
+            "request_channel_trust": result.request_channel_trust.value,
+            "response_channel_trust": result.response_channel_trust.value,
+            "cross_channel_approval": result.cross_channel,
+            "approval_strength_reasons": result.reasons,
+            "approval_strength_required_controls": result.required_controls,
+        }
+
+    @staticmethod
+    def _with_approval_strength_metadata(
+        response: GatewayResponse,
+        metadata: dict[str, Any],
+    ) -> GatewayResponse:
+        """Attach approval-strength evidence to an existing response."""
+        return replace(response, metadata={**response.metadata, **metadata})
 
     def _handle_approval_message(
         self,
@@ -1467,6 +1590,28 @@ class GatewayRouter:
                 },
             )
 
+        strength = self._evaluate_approval_strength(
+            request,
+            request_id=request_id,
+            resolver=resolver,
+        )
+        strength_metadata = self._approval_strength_metadata(strength)
+        if strength.decision == ApprovalStrengthDecision.BLOCK:
+            self._record_error("approval_strength_denied")
+            return GatewayResponse(
+                message_id=self._gen_id("apr-resp", request_id),
+                channel=request.channel,
+                recipient_id=resolver_sender_id,
+                body="This approval response does not satisfy channel approval-strength policy.",
+                governed=True,
+                metadata={
+                    "error": "approval_strength_denied",
+                    "authority_reason": "approval_strength_insufficient",
+                    "request_id": request_id,
+                    **strength_metadata,
+                },
+            )
+
         result = self._approval.resolve(request_id, approved=approved, resolved_by=resolver.identity_id)
         if result is None:
             return None
@@ -1483,15 +1628,19 @@ class GatewayRouter:
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
+                detail=strength_metadata,
             )
             if result.status == ApprovalStatus.APPROVED:
                 command = self._commands.get(result.command_id)
                 if command is not None:
                     if self._defer_approved_execution:
-                        return self._approval_queued_response(
-                            request_id,
-                            result,
-                            recipient_id=resolver_sender_id,
+                        return self._with_approval_strength_metadata(
+                            self._approval_queued_response(
+                                request_id,
+                                result,
+                                recipient_id=resolver_sender_id,
+                            ),
+                            strength_metadata,
                         )
                     response = self._execute_command(command, recipient_id=resolver_sender_id)
                     return GatewayResponse(
@@ -1506,9 +1655,13 @@ class GatewayRouter:
                             "status": "approved",
                             "request_id": request_id,
                             "command_id": result.command_id,
+                            **strength_metadata,
                         },
                     )
-        return self._approval_response(request_id, result, recipient_id=resolver_sender_id)
+        return self._with_approval_strength_metadata(
+            self._approval_response(request_id, result, recipient_id=resolver_sender_id),
+            strength_metadata,
+        )
 
     @property
     def pending_approvals(self) -> int:

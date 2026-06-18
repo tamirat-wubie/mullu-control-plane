@@ -62,6 +62,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
+        "channel_approval_strength_policy",
         "component_registry",
         "component_lifecycle_transition_receipts",
         "component_authority_envelope_witnesses",
@@ -98,6 +99,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "component_bundle_compiler",
         "component_graph",
         "component_dead_detector",
+        "read_only_first_worker_path",
+        "read_only_document_worker_path",
+        "read_only_search_worker_path",
+        "worker_failure_receipt",
         "agentic_service_harness_live_task_run_producer_evidence",
         "agentic_service_harness_live_task_run_producer_rehearsal",
         "agentic_service_harness_live_producer_admission_gate",
@@ -142,6 +147,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "governed_code_change_loop_sandbox_probe_example",
         "governed_code_change_loop_sandbox_readiness_runbook",
+        "code_change_physics_packet",
+        "search_decision_receipt",
         "intelligence_coordination_episode_receipt",
         "engineering_puzzle_universality_witness",
         "mil_audit_runbook_operator_checklist",
@@ -224,6 +231,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_authority_transitions",
+        "channel_approval_strength_policy",
+    )
+    assert_ordered(
+        "channel_approval_strength_policy",
         "component_registry",
     )
     assert_ordered(
@@ -368,6 +379,22 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_dead_detector",
+        "read_only_first_worker_path",
+    )
+    assert_ordered(
+        "read_only_first_worker_path",
+        "read_only_document_worker_path",
+    )
+    assert_ordered(
+        "read_only_document_worker_path",
+        "read_only_search_worker_path",
+    )
+    assert_ordered(
+        "read_only_search_worker_path",
+        "worker_failure_receipt",
+    )
+    assert_ordered(
+        "worker_failure_receipt",
         "agentic_service_harness_live_task_run_producer_evidence",
     )
     assert_ordered(
@@ -502,6 +529,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_funding_team_boundary", "foundation_funding_team_obligation_rehearsal_boundary")
     assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
+    assert_ordered("code_change_physics_packet", "search_decision_receipt")
+    assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 
     assert args_by_name["local_assurance_plan"][1:] == (
         "scripts/refresh_local_assurance.py",
@@ -554,6 +583,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["governed_code_change_loop_sandbox_readiness_runbook"][1:] == (
         "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py",
+    )
+    assert args_by_name["code_change_physics_packet"][1:] == (
+        "scripts/validate_code_change_physics_packet.py",
+    )
+    assert args_by_name["search_decision_receipt"][1:] == (
+        "scripts/validate_search_decision_receipt.py",
     )
     assert args_by_name["intelligence_coordination_episode_receipt"][1:] == (
         "scripts/validate_intelligence_coordination_episode_receipt.py",

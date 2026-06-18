@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-document-worker-path:1",
+  "title": "Read-Only Document Worker Path",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "selection_id",
+    "selected_capability_id",
+    "status",
+    "mode",
+    "decision_rationale",
+    "mutation_allowed",
+    "external_network_allowed",
+    "secrets_required",
+    "spend_required",
+    "parser_scope",
+    "allowed_inputs",
+    "blocked_inputs",
+    "allowed_outputs",
+    "required_receipts",
+    "proof_obligations",
+    "acceptance_tests",
+    "rollback_plan",
+    "next_action"
+  ],
+  "properties": {
+    "schema_ref": {"const": "urn:mullusi:schema:read-only-document-worker-path:1"},
+    "selection_id": {"type": "string", "pattern": "^read-only-document-worker-path-[0-9]{8}$"},
+    "selected_capability_id": {"const": "document.inspect_read_only"},
+    "status": {"const": "selected_for_foundation_mode"},
+    "mode": {"const": "read_only"},
+    "decision_rationale": {"type": "string", "minLength": 1},
+    "mutation_allowed": {"const": false},
+    "external_network_allowed": {"const": false},
+    "secrets_required": {"const": false},
+    "spend_required": {"const": false},
+    "parser_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text_like_documents_only", "rich_document_parsing_allowed", "supported_extensions"],
+      "properties": {
+        "text_like_documents_only": {"const": true},
+        "rich_document_parsing_allowed": {"const": false},
+        "supported_extensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "pattern": "^\\.[a-z0-9]+$"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "allowed_inputs": {"$ref": "#/$defs/allowed_inputs"},
+    "blocked_inputs": {"$ref": "#/$defs/blocked_inputs"},
+    "allowed_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_receipts": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "worker_lease_receipt",
+          "input_hash_receipt",
+          "document_boundary_witness",
+          "format_allowlist_witness",
+          "read_only_result_receipt",
+          "redaction_witness",
+          "terminal_closure_or_blocker_receipt"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "proof_obligations": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "string",
+        "enum": [
+          "no_write_operation",
+          "no_external_network",
+          "document_path_boundary",
+          "format_allowlist",
+          "scan_bounds",
+          "secret_redaction",
+          "deterministic_traversal"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "rollback_plan": {"type": "string", "minLength": 1},
+    "next_action": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "allowed_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_relative_paths", "query_text", "max_documents", "max_bytes_per_document"],
+      "properties": {
+        "document_relative_paths": {"const": true},
+        "query_text": {"const": true},
+        "max_documents": {"type": "integer", "minimum": 1},
+        "max_bytes_per_document": {"type": "integer", "minimum": 1}
+      }
+    },
+    "blocked_inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "absolute_paths_outside_document_root",
+        "raw_secret_values",
+        "write_requests",
+        "network_targets",
+        "tenant_external_resources",
+        "rich_document_binary_parsing"
+      ],
+      "properties": {
+        "absolute_paths_outside_document_root": {"const": true},
+        "raw_secret_values": {"const": true},
+        "write_requests": {"const": true},
+        "network_targets": {"const": true},
+        "tenant_external_resources": {"const": true},
+        "rich_document_binary_parsing": {"const": true}
+      }
+    }
+  }
+}

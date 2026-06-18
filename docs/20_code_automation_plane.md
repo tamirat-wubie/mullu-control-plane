@@ -22,6 +22,8 @@ Make coding a first-class governed automation surface: repository inspection, fi
 - `BuildResult` — typed build command outcome
 - `TestResult` — typed test command outcome with pass/fail/error counts
 - `CodeReviewRecord` — summary of a code review assessment
+- `CodeChangePhysicsPacket` - non-executing map of governance, creative, and
+  repair physics signals before a code-change plan is allowed to choose a path
 
 ## 3. Inputs
 
@@ -37,6 +39,8 @@ Make coding a first-class governed automation surface: repository inspection, fi
 - Patch application results
 - Build/test results with structured output
 - Code review summaries
+- Code-change physics packets that expose pressure, barriers, lower-risk paths,
+  repair needs, and selected advisory path
 
 ## 5. Prohibited Behaviors
 
@@ -54,6 +58,8 @@ Make coding a first-class governed automation surface: repository inspection, fi
 - Approval-required mode blocks code mutations without explicit approval
 - All code operations are typed, replayable, and persistable
 - Successful verified code runs can be promoted into runbooks
+- Code-change planning should emit or reference a `CodeChangePhysicsPacket`
+  when a direct path is risky, blocked, overloaded, or repair-dependent
 
 ## 7. Failure Modes
 
@@ -63,6 +69,7 @@ Make coding a first-class governed automation surface: repository inspection, fi
 - `build_failed` — build command returned nonzero
 - `test_failed` — test command returned failures
 - `write_blocked` — mutation denied by autonomy/approval
+- `physics_planning_failed` - governance, creative, or repair physics planning failed
 
 ## 8. Adapter Boundaries
 

@@ -223,7 +223,7 @@ def run_pilot_proof_slice(config: PilotProofSliceConfig) -> dict[str, Any]:
             "response_evidence_closed": CommandState.RESPONSE_EVIDENCE_CLOSED.value in event_states,
             "memory_promoted": CommandState.MEMORY_PROMOTED.value in event_states,
             "learning_decided": CommandState.LEARNING_DECIDED.value in event_states,
-            "responded": event_states[-1] == CommandState.RESPONDED.value if event_states else False,
+            "responded": CommandState.RESPONDED.value in event_states,
         },
     }
     _validate_witness(witness)

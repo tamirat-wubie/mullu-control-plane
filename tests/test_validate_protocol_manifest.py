@@ -1142,6 +1142,17 @@ def test_protocol_manifest_indexes_temporal_evidence_freshness_receipt() -> None
     assert evidence_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_search_decision_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    search_entry = entries["search-decision-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert search_entry["path"] == "schemas/search_decision_receipt.schema.json"
+    assert search_entry["urn"] == "urn:mullusi:schema:search-decision-receipt:1"
+    assert search_entry["surface"] == "search"
+
+
 def test_protocol_manifest_indexes_temporal_reapproval_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -1551,11 +1562,27 @@ def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     worker_entry = entries["worker-mesh"]
+    failure_entry = entries["worker-failure-receipt"]
+    first_worker_entry = entries["read-only-first-worker-path"]
+    document_worker_entry = entries["read-only-document-worker-path"]
+    search_worker_entry = entries["read-only-search-worker-path"]
 
     assert validate_protocol_manifest(manifest) == []
     assert worker_entry["path"] == "schemas/worker_mesh.schema.json"
     assert worker_entry["urn"] == "urn:mullusi:schema:worker-mesh:1"
     assert worker_entry["surface"] == "worker"
+    assert failure_entry["path"] == "schemas/worker_failure_receipt.schema.json"
+    assert failure_entry["urn"] == "urn:mullusi:schema:worker-failure-receipt:1"
+    assert failure_entry["surface"] == "worker"
+    assert first_worker_entry["path"] == "schemas/read_only_first_worker_path.schema.json"
+    assert first_worker_entry["urn"] == "urn:mullusi:schema:read-only-first-worker-path:1"
+    assert first_worker_entry["surface"] == "worker"
+    assert document_worker_entry["path"] == "schemas/read_only_document_worker_path.schema.json"
+    assert document_worker_entry["urn"] == "urn:mullusi:schema:read-only-document-worker-path:1"
+    assert document_worker_entry["surface"] == "worker"
+    assert search_worker_entry["path"] == "schemas/read_only_search_worker_path.schema.json"
+    assert search_worker_entry["urn"] == "urn:mullusi:schema:read-only-search-worker-path:1"
+    assert search_worker_entry["surface"] == "worker"
 
 
 def test_protocol_manifest_indexes_worker_failure_receipt_contract() -> None:

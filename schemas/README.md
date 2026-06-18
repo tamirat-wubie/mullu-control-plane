@@ -35,6 +35,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_improvement_portfolio.schema.json` | Canonical activation-blocked portfolio of ranked capability improvement proposals |
 | `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
 | `claim_verification_report.schema.json` | Canonical claim graph verification report for support, contradiction, freshness, and execution admission |
+| `code_change_physics_packet.schema.json` | Canonical non-executing code-change physics packet for governance, creative path discovery, and repair planning |
 | `commercial_metering_snapshot.schema.json` | Canonical commercial metering snapshot with plans, usage, provider costs, decisions, and tenant billing summaries |
 | `economic_intelligence_snapshot.schema.json` | Canonical governed economic routing snapshot with utility decisions, blocked candidates, and policy override closure |
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
@@ -93,6 +94,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |
+| `channel_approval_strength_policy.schema.json` | Canonical Foundation Mode channel trust and approval-strength policy |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `production_evidence_witness.schema.json` | Canonical live gateway production evidence witness response |
 | `proof_verification_endpoint.schema.json` | Canonical live gateway proof verification response |
@@ -114,6 +116,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `sdlc_deployment_candidate.schema.json` | Canonical governed software-delivery deployment readiness artifact |
 | `sdlc_recovery_handoff_receipt.schema.json` | Canonical governed software-delivery rollback and incident handoff receipt |
 | `sdlc_closure_receipt.schema.json` | Canonical governed software-delivery terminal closure receipt |
+| `search_decision_receipt.schema.json` | Canonical search classification, freshness, budget, and retrieval-authority receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |
 | `software_dev/*.output.schema.json` | Governed output and receipt contracts for repository maps, context bundles, gate plans, software-change receipts, app task graphs, and PR candidates |
@@ -161,7 +164,11 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |
+| `read_only_document_worker_path.schema.json` | Canonical Foundation Mode read-only document worker path selection |
+| `read_only_first_worker_path.schema.json` | Canonical Foundation Mode first worker path selection |
+| `read_only_search_worker_path.schema.json` | Canonical Foundation Mode read-only search worker path selection |
 | `world_state.schema.json` | Canonical world-state graph projection |
+| `worker_failure_receipt.schema.json` | Canonical non-terminal worker failure and recovery receipt |
 | `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
 | `read_only_worker_runtime_receipt_handoff.schema.json` | Canonical Foundation Mode handoff from read-only worker rehearsal evidence to future runtime receipt-emitter obligations |
 | `read_only_worker_runtime_receipt_emitter_dry_run.schema.json` | Canonical Foundation Mode dry-run receipt for future read-only worker runtime receipt-emitter evidence |

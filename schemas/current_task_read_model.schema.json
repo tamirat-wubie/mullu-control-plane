@@ -97,8 +97,15 @@
         "plan_step_id",
         "approval_request_id",
         "approval_recovery_available",
+        "worker_failure_receipt_id",
+        "worker_failure_state",
+        "worker_failure_recovery_action",
         "command_state",
         "task_status",
+        "response_state",
+        "response_claim_allowed",
+        "response_terminal_certificate_id",
+        "response_blocker",
         "task_terminal",
         "task_blocked",
         "waiting_for",
@@ -122,8 +129,44 @@
         "plan_step_id": {"type": "string"},
         "approval_request_id": {"type": "string"},
         "approval_recovery_available": {"type": "boolean"},
+        "worker_failure_receipt_id": {"type": "string"},
+        "worker_failure_state": {
+          "type": "string",
+          "enum": [
+            "",
+            "rejected_before_handler",
+            "failed_during_handler",
+            "failed_after_handler",
+            "partial_completion",
+            "unknown_failure"
+          ]
+        },
+        "worker_failure_recovery_action": {
+          "type": "string",
+          "enum": [
+            "",
+            "retry_same_lease",
+            "retry_new_lease",
+            "operator_review",
+            "safe_halt",
+            "no_retry"
+          ]
+        },
         "command_state": {"type": "string", "minLength": 1},
         "task_status": {"$ref": "#/$defs/task_status"},
+        "response_state": {"$ref": "#/$defs/response_state"},
+        "response_claim_allowed": {"type": "boolean"},
+        "response_terminal_certificate_id": {"type": "string"},
+        "response_blocker": {
+          "type": "string",
+          "enum": [
+            "",
+            "terminal_certificate_missing",
+            "explicit_blocker_receipt_required",
+            "approval_required",
+            "operator_review_required"
+          ]
+        },
         "task_terminal": {"type": "boolean"},
         "task_blocked": {"type": "boolean"},
         "waiting_for": {"type": "string"},
@@ -155,6 +198,18 @@
         "requires_review",
         "blocked",
         "completed"
+      ]
+    },
+    "response_state": {
+      "type": "string",
+      "enum": [
+        "received",
+        "in_progress",
+        "waiting_for_approval",
+        "requires_review",
+        "blocked",
+        "awaiting_terminal_evidence",
+        "completed_verified"
       ]
     }
   }

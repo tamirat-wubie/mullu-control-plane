@@ -93,6 +93,15 @@
         "requested_at",
         "resolved_at",
         "resolved_by",
+        "approval_strength_policy",
+        "approval_strength_decision",
+        "approval_strength",
+        "required_approval_strength",
+        "request_channel_trust",
+        "response_channel_trust",
+        "cross_channel_approval",
+        "approval_strength_reasons",
+        "approval_strength_required_controls",
         "event_count",
         "latest_event_hash",
         "trace_id",
@@ -114,6 +123,38 @@
         "requested_at": {"type": "string", "minLength": 1},
         "resolved_at": {"type": "string"},
         "resolved_by": {"type": "string"},
+        "approval_strength_policy": {"type": "string"},
+        "approval_strength_decision": {
+          "type": "string",
+          "enum": ["", "allow", "block"]
+        },
+        "approval_strength": {
+          "type": "string",
+          "enum": ["", "none", "contextual", "request_bound", "operator_bound", "dual_control"]
+        },
+        "required_approval_strength": {
+          "type": "string",
+          "enum": ["", "contextual", "request_bound", "operator_bound", "dual_control"]
+        },
+        "request_channel_trust": {
+          "type": "string",
+          "enum": ["", "trusted_control", "verified_external", "weak_external", "untrusted"]
+        },
+        "response_channel_trust": {
+          "type": "string",
+          "enum": ["", "trusted_control", "verified_external", "weak_external", "untrusted"]
+        },
+        "cross_channel_approval": {"type": "boolean"},
+        "approval_strength_reasons": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "approval_strength_required_controls": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
         "event_count": {"type": "integer", "minimum": 1},
         "latest_event_hash": {"type": "string", "minLength": 1},
         "trace_id": {"type": "string", "minLength": 1},

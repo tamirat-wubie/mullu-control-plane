@@ -28,20 +28,20 @@ Tenant identity must not be inferred from free-form message text.
 | Message Normalizer | produce canonical message fields | channel event | `GatewayMessage` | implemented / partial | Add product-facing receipt field map. |
 | Message Receipt Writer | record inbound message trace | raw message hash, channel IDs | MessageReceipt | partial | Ensure each channel writes the same core receipt fields. |
 | Deduplicator | block duplicate webhook or replay | channel message ID, idempotency key | duplicate or accepted decision | implemented / partial | Add cross-channel replay cases. |
-| Identity Resolver | bind sender to actor | session, webhook identity, API key | actor identity | implemented / partial | Add channel trust strength labels. |
+| Identity Resolver | bind sender to actor | session, webhook identity, API key | actor identity | implemented / partial | Extend `channel_approval_strength_policy.foundation` from HTTP approval callbacks to channel-native approvals and cross-channel handoffs. |
 | Tenant Resolver | bind actor to tenant | actor identity, workspace mapping | tenant identity | implemented / partial | Deny missing or ambiguous tenant mapping. |
 | Conversation Context Store | bind thread and follow-up context | conversation ID, request ID | context snapshot | partial / unknown | Map expiration and scope rules. |
-| Response Composer | format safe channel response | final receipt or blocker | channel-specific response | partial | Separate execution status from delivery status. |
-| Communication Receipt Writer | record outbound delivery | response payload hash, delivery result | FinalUserReceipt or delivery error | partial | Track delivery failure separately from task failure. |
+| Response Composer | format safe channel response | final receipt or blocker | channel-specific response | implemented / partial | Keep external channel formatting bounded by approval and receipt state. |
+| Communication Receipt Writer | record outbound delivery | response payload hash, delivery result | FinalUserReceipt or delivery error | implemented / partial | Extend delivery observation events to each hardened external adapter. |
 
 ## 3. Channel trust requirements
 
 | Channel | Required Identity Fields | Approval Ceiling | Required Hardening |
 | --- | --- | --- | --- |
-| Web dashboard | session user, tenant, role | strongest local default | strong auth, CSRF/session checks, audit trail |
-| Slack | workspace ID, user ID, channel/thread ID | low to medium until role-bound | request ID binding, role mapping, event signature |
+| Web dashboard | session user, tenant, role | operator-bound local default | strong auth, CSRF/session checks, audit trail |
+| Slack | workspace ID, user ID, channel/thread ID | request-bound until operator-bound bridge exists | request ID binding, role mapping, event signature |
 | Telegram | bot sender ID, chat ID | low to medium | stable sender ID, deduplication, approval expiration |
-| WhatsApp | phone identity, provider message ID | low unless dashboard-confirmed | webhook signature, explicit request IDs, risk ceiling |
+| WhatsApp | phone identity, provider message ID | request-bound only, high-risk blocked without operator-bound bridge | webhook signature, explicit request IDs, risk ceiling |
 | Discord | guild ID, user ID, channel/thread ID | low unless role-bound | guild and role checks, shared-server ambiguity handling |
 | Email | verified sender and thread ID | low by default | spoofing controls and signed approval links |
 | API | scoped key or token identity | policy-defined | signed requests, rate limit, audit log |

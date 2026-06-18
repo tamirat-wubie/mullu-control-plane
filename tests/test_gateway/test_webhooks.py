@@ -43,7 +43,10 @@ from gateway.server import (  # noqa: E402
     create_gateway_app,
 )
 from gateway.router import TenantMapping  # noqa: E402
+from gateway.search_governance import SearchDecisionRequest, build_search_decision_receipt  # noqa: E402
 from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
+from gateway.worker_failure_receipt import build_worker_failure_receipt  # noqa: E402
+from gateway.worker_mesh import WorkerDispatchReceipt  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
@@ -482,6 +485,36 @@ def _create_completed_receipt_viewer_command(ledger, *, idempotency_key: str):
         response_evidence_closure=closure,
     )
     return command, certificate
+
+
+def _worker_failure_receipt_payload(command_id: str) -> dict:
+    worker_receipt = WorkerDispatchReceipt(
+        receipt_id=f"worker-receipt-{command_id}",
+        request_id=f"worker-request-{command_id}",
+        worker_id="operator-viewer-worker",
+        capability="repository.inspect_read_only",
+        tenant_id="t1",
+        lease_id=f"worker-lease-{command_id}",
+        operation="inspect",
+        command_id=command_id,
+        status="failed",
+        reason="worker_timeout",
+        input_hash="sha256:" + "1" * 64,
+        output_hash="sha256:" + "2" * 64,
+        evidence_refs=["worker:evidence:partial"],
+        verification_ref="verification:operator-viewer-worker",
+        recovery_ref="recovery:operator-review",
+        terminal_closure_required=True,
+        dispatched_at="2026-06-17T13:01:00+00:00",
+        receipt_hash="sha256:" + "3" * 64,
+        metadata={"receipt_is_not_terminal_closure": True},
+    )
+    return build_worker_failure_receipt(
+        worker_receipt,
+        attempted_units=5,
+        completed_units=2,
+        generated_at="2026-06-17T13:02:00+00:00",
+    ).to_dict()
 
 
 def _configure_fabric_env(
@@ -1957,6 +1990,7 @@ class TestApprovalWebhook:
                 tenant_id="t1",
                 identity_id="operator-1",
                 approval_authority=True,
+                metadata={"operator_session_present": True},
             )
         )
         client = TestClient(app)
@@ -1984,6 +2018,130 @@ class TestApprovalWebhook:
         assert data["status"] == "resolved"
         assert "approved" in data["body"]
         assert data["metadata"]["approval_resolved"] is True
+        assert data["metadata"]["approval_strength_decision"] == "allow"
+        assert data["metadata"]["approval_strength"] == "operator_bound"
+        assert data["metadata"]["required_approval_strength"] == "operator_bound"
+        events = app.state.command_ledger.events_for(data["metadata"]["command_id"])
+        approval_event = next(
+            event for event in events if event.next_state == CommandState.APPROVED
+        )
+        assert approval_event.detail["approval_strength_decision"] == "allow"
+        assert approval_event.detail["approval_strength"] == "operator_bound"
+        assert (
+            approval_event.detail["approval_strength_policy"]
+            == "channel_approval_strength_policy.foundation"
+        )
+
+    def test_approval_callback_blocks_under_strength_high_risk_resolver(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="operator",
+                tenant_id="t1",
+                identity_id="operator-1",
+                approval_authority=True,
+            )
+        )
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "operator",
+                }
+            ),
+        )
+
+        assert resp.status_code == 403
+        detail = resp.json()["detail"]
+        assert detail["error"] == "approval_strength_denied"
+        assert detail["approval_strength_decision"] == "block"
+        assert "operator_session_missing" in detail["approval_strength_reasons"]
+        assert (
+            "operator_bound_approval_required"
+            in detail["approval_strength_required_controls"]
+        )
+        assert app.state.router.pending_approvals == 1
+
+    def test_approval_callback_strength_appears_in_operator_history(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="operator",
+                tenant_id="t1",
+                identity_id="operator-1",
+                approval_authority=True,
+                metadata={"operator_session_present": True},
+            )
+        )
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        approve_resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "operator",
+                }
+            ),
+        )
+        history_resp = client.get(
+            f"/operator/approvals/read-model?tenant_id=t1&request_id={request_id}"
+        )
+        detail_resp = client.get(f"/operator/approvals/{request_id}?tenant_id=t1")
+
+        assert approve_resp.status_code == 200
+        assert history_resp.status_code == 200
+        history_data = history_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_APPROVAL_HISTORY_READ_MODEL_SCHEMA),
+            history_data,
+        ) == []
+        approval = history_data["approvals"][0]
+        assert approval["approval_strength_policy"] == (
+            "channel_approval_strength_policy.foundation"
+        )
+        assert approval["approval_strength_decision"] == "allow"
+        assert approval["approval_strength"] == "operator_bound"
+        assert approval["required_approval_strength"] == "operator_bound"
+        assert approval["approval_strength_required_controls"] == []
+        assert detail_resp.status_code == 200
+        assert "operator_bound" in detail_resp.text
+        assert "channel_approval_strength_policy.foundation" in detail_resp.text
 
     def test_approval_callback_requires_resolver_identity(self):
         app = create_gateway_app(platform=StubPlatform())
@@ -4187,6 +4345,189 @@ class TestGatewayStatus:
             data, sort_keys=True
         )
 
+    def test_operator_receipt_viewer_projects_search_decision_receipts(
+        self, gateway_app, client
+    ):
+        raw_query = "latest governance docs"
+        receipt = build_search_decision_receipt(
+            SearchDecisionRequest(
+                tenant_id="t1",
+                actor_id="u1",
+                query=raw_query,
+                generated_at="2026-06-17T12:00:00+00:00",
+                budget_limit_units=2.0,
+                max_result_count=3,
+            )
+        ).to_dict()
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-search-decision-receipt",
+            idempotency_key="search-decision-receipt",
+            intent="enterprise.knowledge_search",
+            payload={
+                "body": raw_query,
+                "search_decision_receipt": receipt,
+                "search_decision_receipt_id": receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=search_decision_receipt"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        search_receipt = row["receipts"][0]
+        assert row["receipt_types"] == ["search_decision_receipt"]
+        assert search_receipt["receipt_id"] == receipt["receipt_id"]
+        assert search_receipt["receipt_hash"] == receipt["receipt_hash"]
+        assert search_receipt["status"] == "allow_search"
+        assert search_receipt["details"]["query_hash"] == receipt["query_hash"]
+        assert search_receipt["details"]["freshness_state"] == "source_required"
+        assert search_receipt["details"]["retrieval_authority"] == "evidence_only"
+        assert search_receipt["details"]["retrieval_instruction_authority_allowed"] is False
+        assert search_receipt["evidence_refs"]["query_hash"] == receipt["query_hash"]
+        assert raw_query not in json.dumps(data, sort_keys=True)
+
+    def test_operator_receipt_viewer_projects_search_decision_from_event_output(
+        self, gateway_app, client
+    ):
+        receipt = build_search_decision_receipt(
+            SearchDecisionRequest(
+                tenant_id="t1",
+                actor_id="u1",
+                query="search docs",
+                generated_at="2026-06-17T12:05:00+00:00",
+                budget_limit_units=1.0,
+                max_result_count=5,
+            )
+        ).to_dict()
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-search-decision-event",
+            idempotency_key="search-decision-event",
+            intent="enterprise.knowledge_search",
+            payload={"body": "search docs"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.OBSERVED,
+            output={"response": "bounded search result", "total_chunks_searched": 1},
+            detail={
+                "search_decision_receipt": receipt,
+                "search_decision_receipt_id": receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=search_decision_receipt&receipt_status=allow_search"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        search_receipt = row["receipts"][0]
+        assert search_receipt["receipt_type"] == "search_decision_receipt"
+        assert search_receipt["receipt_id"] == receipt["receipt_id"]
+        assert search_receipt["evidence_refs"]["source_event_hash"]
+        assert search_receipt["details"]["budget_state"] == "allowed"
+        assert "search docs" not in json.dumps(data, sort_keys=True)
+
+    def test_operator_receipt_viewer_projects_worker_failure_drilldown(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-worker-failure-receipt",
+            idempotency_key="worker-failure-receipt",
+            intent="repository.inspect_read_only",
+            payload={"body": "worker failure raw body must stay hidden"},
+        )
+        failure_receipt = _worker_failure_receipt_payload(command.command_id)
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DENIED,
+            detail={
+                "cause": "worker_partial_completion",
+                "worker_failure_receipt": failure_receipt,
+                "worker_failure_receipt_id": failure_receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=worker_failure_receipt"
+            "&receipt_status=partial_completion"
+        )
+        current_resp = client.get("/operator/current-task/read-model?tenant_id=t1")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        worker_failure = row["receipts"][0]
+        assert row["receipt_types"] == ["worker_failure_receipt"]
+        assert worker_failure["receipt_id"] == failure_receipt["receipt_id"]
+        assert worker_failure["receipt_hash"] == failure_receipt["metadata"]["failure_hash"]
+        assert worker_failure["status"] == "partial_completion"
+        assert worker_failure["details"]["worker_dispatch_ref"] == (
+            failure_receipt["worker_dispatch_ref"]
+        )
+        assert worker_failure["details"]["recovery_action_refs"] == [
+            "recovery:operator-review"
+        ]
+        assert worker_failure["evidence_refs"]["source_receipt_hash"] == (
+            failure_receipt["metadata"]["source_receipt_hash"]
+        )
+        assert worker_failure["evidence_refs"]["source_event_hash"]
+
+        assert current_resp.status_code == 200
+        current_data = current_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(CURRENT_TASK_READ_MODEL_SCHEMA),
+            current_data,
+        ) == []
+        task = next(
+            item
+            for item in current_data["tasks"]
+            if item["command_id"] == command.command_id
+        )
+        assert task["worker_failure_receipt_id"] == failure_receipt["receipt_id"]
+        assert task["worker_failure_state"] == "partial_completion"
+        assert task["worker_failure_recovery_action"] == "safe_halt"
+        assert "worker failure raw body must stay hidden" not in json.dumps(
+            {"receipt": data, "current_task": current_data},
+            sort_keys=True,
+        )
+
     def test_operator_receipt_viewer_filters_type_status_task_and_search(
         self, gateway_app, client
     ):
@@ -4312,6 +4653,63 @@ class TestGatewayStatus:
         assert overlong_search_resp.json()["detail"] == (
             "search must be 128 characters or fewer"
         )
+
+    def test_operator_receipt_viewer_separates_execution_and_delivery_status(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-delivery-separated",
+            idempotency_key="delivery-separated",
+            intent="llm_completion",
+            payload={"body": "delivery separated raw body"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.RESPONDED,
+            detail={"success_claim": False},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.RESPONSE_EVIDENCE_CLOSED,
+            detail={
+                "delivery_status": "failed",
+                "delivery_error_type": "adapter_exception",
+                "delivery_succeeded": False,
+                "delivery_attempted": True,
+                "execution_status": "terminal_certified",
+                "execution_delivery_separated": True,
+                "terminal_certificate_id": "terminal-delivery-separated",
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=delivery_receipt&receipt_status=failed"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        delivery_receipt = row["receipts"][0]
+        assert delivery_receipt["status"] == "failed"
+        assert delivery_receipt["details"]["execution_status"] == "terminal_certified"
+        assert delivery_receipt["details"]["delivery_status"] == "failed"
+        assert delivery_receipt["details"]["delivery_error_type"] == "adapter_exception"
+        assert delivery_receipt["details"]["delivery_succeeded"] is False
+        assert delivery_receipt["details"]["delivery_attempted"] is True
+        assert delivery_receipt["details"]["execution_delivery_separated"] is True
+        assert delivery_receipt["evidence_refs"]["delivery_event_hash"]
 
     def test_operator_approval_history_links_receipts_and_current_task(
         self, gateway_app, client
@@ -4488,9 +4886,18 @@ class TestGatewayStatus:
             intent="llm_completion",
             payload={"body": "blocked raw body"},
         )
-        completed, _certificate = _create_completed_receipt_viewer_command(
+        completed, certificate = _create_completed_receipt_viewer_command(
             gateway_app.state.command_ledger,
             idempotency_key="current-task-completed",
+        )
+        awaiting_evidence = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-current-task-awaiting-evidence",
+            idempotency_key="current-task-awaiting-evidence",
+            intent="llm_completion",
+            payload={"body": "awaiting evidence raw body"},
         )
         gateway_app.state.command_ledger.transition(
             waiting.command_id,
@@ -4501,6 +4908,11 @@ class TestGatewayStatus:
             blocked.command_id,
             CommandState.DENIED,
             detail={"cause": "policy_denied"},
+        )
+        gateway_app.state.command_ledger.transition(
+            awaiting_evidence.command_id,
+            CommandState.RESPONDED,
+            detail={"cause": "response_emitted_without_terminal_certificate"},
         )
 
         resp = client.get("/operator/current-task/read-model?tenant_id=t1")
@@ -4524,6 +4936,9 @@ class TestGatewayStatus:
         ) == []
         tasks = {task["command_id"]: task for task in data["tasks"]}
         assert tasks[waiting.command_id]["task_status"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["response_state"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["response_claim_allowed"] is False
+        assert tasks[waiting.command_id]["response_blocker"] == "approval_required"
         assert tasks[waiting.command_id]["waiting_for"] == "operator_approval"
         assert tasks[waiting.command_id]["next_action"] == "resolve_approval"
         assert tasks[waiting.command_id]["goal_intake_preview_id"] == ""
@@ -4533,18 +4948,43 @@ class TestGatewayStatus:
         assert tasks[waiting.command_id]["approval_request_id"] == ""
         assert tasks[waiting.command_id]["approval_recovery_available"] is False
         assert tasks[blocked.command_id]["task_status"] == "blocked"
+        assert tasks[blocked.command_id]["response_state"] == "blocked"
+        assert tasks[blocked.command_id]["response_claim_allowed"] is False
+        assert (
+            tasks[blocked.command_id]["response_blocker"]
+            == "explicit_blocker_receipt_required"
+        )
         assert tasks[blocked.command_id]["task_blocked"] is True
         assert (
             tasks[blocked.command_id]["next_action"]
             == "inspect_denial_or_block_receipts"
         )
         assert tasks[completed.command_id]["task_status"] == "completed"
+        assert tasks[completed.command_id]["response_state"] == "completed_verified"
+        assert tasks[completed.command_id]["response_claim_allowed"] is True
+        assert (
+            tasks[completed.command_id]["response_terminal_certificate_id"]
+            == certificate.certificate_id
+        )
+        assert tasks[completed.command_id]["response_blocker"] == ""
         assert tasks[completed.command_id]["task_terminal"] is True
+        assert tasks[awaiting_evidence.command_id]["task_status"] == "completed"
+        assert (
+            tasks[awaiting_evidence.command_id]["response_state"]
+            == "awaiting_terminal_evidence"
+        )
+        assert tasks[awaiting_evidence.command_id]["response_claim_allowed"] is False
+        assert (
+            tasks[awaiting_evidence.command_id]["response_blocker"]
+            == "terminal_certificate_missing"
+        )
+        assert tasks[awaiting_evidence.command_id]["task_terminal"] is False
         assert data["status_counts"]["waiting_for_approval"] >= 1
         assert data["status_counts"]["blocked"] >= 1
-        assert data["status_counts"]["completed"] >= 1
+        assert data["status_counts"]["completed"] >= 2
         assert "waiting raw body" not in json.dumps(data, sort_keys=True)
         assert "blocked raw body" not in json.dumps(data, sort_keys=True)
+        assert "awaiting evidence raw body" not in json.dumps(data, sort_keys=True)
         assert blocked_resp.status_code == 200
         assert blocked_resp.json()["count"] == 1
         assert blocked_resp.json()["tasks"][0]["command_id"] == blocked.command_id
