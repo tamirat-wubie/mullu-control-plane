@@ -43,6 +43,20 @@ def test_approval_strength_denial_preserves_controls_without_raw_detail() -> Non
     assert denial.metadata["denial_next_action"] == "provide_bound_approval_evidence"
 
 
+def test_approval_denied_template_is_receipt_oriented() -> None:
+    denial = compose_policy_denial_response(
+        DenialResponseKind.APPROVAL_DENIED,
+        request_id="req-deny-1",
+        evidence_refs=("approval-request://req-deny-1",),
+    )
+
+    assert "will not execute" in denial.body
+    assert denial.metadata["denial_kind"] == "approval_denied"
+    assert denial.metadata["request_id"] == "req-deny-1"
+    assert denial.metadata["denial_next_action"] == "inspect_denial_or_block_receipts"
+    assert denial.metadata["denial_evidence_refs"] == ("approval-request://req-deny-1",)
+
+
 def test_unknown_denial_kind_degrades_to_policy_denied() -> None:
     denial = compose_policy_denial_response("new_internal_block_reason")
 

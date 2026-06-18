@@ -5349,6 +5349,17 @@ class TestGatewayStatus:
             denial_receipt["evidence_refs"]["approval_request_id"]
             == waiting_task["approval_request_id"]
         )
+        assert (
+            denial_receipt["details"]["denial_template_id"]
+            == "policy_denial_response.approval_denied.v1"
+        )
+        assert denial_receipt["details"]["denial_kind"] == "approval_denied"
+        assert denial_receipt["details"]["denial_redacted"] is True
+        assert denial_receipt["details"]["denial_internal_reason_exposed"] is False
+        assert (
+            denial_receipt["evidence_refs"]["denial_evidence_refs"]
+            == [f"approval-request://{waiting_task['approval_request_id']}"]
+        )
         assert denied_row["task_status"] == "blocked"
         assert "receipt-secret-7" not in json.dumps(denied_data, sort_keys=True)
 

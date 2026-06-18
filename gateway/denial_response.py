@@ -23,6 +23,7 @@ class DenialResponseKind(StrEnum):
     TENANT_NOT_FOUND = "tenant_not_found"
     APPROVAL_CONTEXT_DENIED = "approval_context_denied"
     APPROVAL_STRENGTH_DENIED = "approval_strength_denied"
+    APPROVAL_DENIED = "approval_denied"
     CAPABILITY_ADMISSION_REJECTED = "capability_admission_rejected"
     POLICY_DENIED = "policy_denied"
 
@@ -49,6 +50,9 @@ _DENIAL_BODY_BY_KIND: dict[DenialResponseKind, str] = {
         "This approval response does not satisfy channel approval-strength policy. "
         "Use the bound request, a fresh request ID, or an approved operator channel."
     ),
+    DenialResponseKind.APPROVAL_DENIED: (
+        "This request was denied, so it will not execute."
+    ),
     DenialResponseKind.CAPABILITY_ADMISSION_REJECTED: (
         "This command requires capability review before execution."
     ),
@@ -61,6 +65,7 @@ _NEXT_ACTION_BY_KIND: dict[DenialResponseKind, str] = {
     DenialResponseKind.TENANT_NOT_FOUND: "register_or_bind_channel_account",
     DenialResponseKind.APPROVAL_CONTEXT_DENIED: "use_authorized_approver",
     DenialResponseKind.APPROVAL_STRENGTH_DENIED: "provide_bound_approval_evidence",
+    DenialResponseKind.APPROVAL_DENIED: "inspect_denial_or_block_receipts",
     DenialResponseKind.CAPABILITY_ADMISSION_REJECTED: "complete_capability_review",
     DenialResponseKind.POLICY_DENIED: "inspect_denial_or_block_receipts",
 }

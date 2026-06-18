@@ -1104,6 +1104,18 @@ class GatewayRouter:
         """Attach approval-strength evidence to an existing response."""
         return replace(response, metadata={**response.metadata, **metadata})
 
+    @staticmethod
+    def _approval_denial_metadata(result: ApprovalRequest) -> dict[str, Any]:
+        """Return redacted denial-template metadata for an explicitly denied approval."""
+        if result.status != ApprovalStatus.DENIED:
+            return {}
+        denial = compose_policy_denial_response(
+            DenialResponseKind.APPROVAL_DENIED,
+            request_id=result.request_id,
+            evidence_refs=(f"approval-request://{result.request_id}",),
+        )
+        return denial.metadata
+
     def _handle_approval_message(
         self,
         message: GatewayMessage,
@@ -1190,6 +1202,7 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "approval_not_found"},
             )
+        denial_metadata = self._approval_denial_metadata(result)
         if result.command_id:
             chain = self._authority_obligation_mesh.record_approval(
                 command_id=result.command_id,
@@ -1203,7 +1216,7 @@ class GatewayRouter:
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
-                detail=strength_metadata,
+                detail={**strength_metadata, **denial_metadata},
             )
             if result.status == ApprovalStatus.APPROVED:
                 if chain is not None and chain.status not in {
@@ -1248,7 +1261,7 @@ class GatewayRouter:
                     )
         return self._with_approval_strength_metadata(
             self._approval_response(request_id, result, recipient_id=message.sender_id),
-            strength_metadata,
+            {**strength_metadata, **denial_metadata},
         )
 
     def handle_message(self, message: GatewayMessage) -> GatewayResponse:
@@ -1567,13 +1580,14 @@ class GatewayRouter:
                 approver_roles=chain.required_roles if chain is not None else (),
                 approved=result.status == ApprovalStatus.APPROVED,
             )
+            denial_metadata = self._approval_denial_metadata(result)
             next_state = CommandState.APPROVED if result.status == ApprovalStatus.APPROVED else CommandState.DENIED
             self._commands.transition(
                 result.command_id,
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
-                detail=strength_metadata,
+                detail={**strength_metadata, **denial_metadata},
             )
             if result.status == ApprovalStatus.APPROVED:
                 command = self._commands.get(result.command_id)
@@ -1623,9 +1637,10 @@ class GatewayRouter:
                             **strength_metadata,
                         },
                     )
+        denial_metadata = self._approval_denial_metadata(result)
         return self._with_approval_strength_metadata(
             self._approval_response(request_id, result),
-            strength_metadata,
+            {**strength_metadata, **denial_metadata},
         )
 
     def handle_external_approval_callback(
@@ -1708,6 +1723,7 @@ class GatewayRouter:
         result = self._approval.resolve(request_id, approved=approved, resolved_by=resolver.identity_id)
         if result is None:
             return None
+        denial_metadata = self._approval_denial_metadata(result)
         if result.command_id:
             self._authority_obligation_mesh.record_approval(
                 command_id=result.command_id,
@@ -1721,7 +1737,7 @@ class GatewayRouter:
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
-                detail=strength_metadata,
+                detail={**strength_metadata, **denial_metadata},
             )
             if result.status == ApprovalStatus.APPROVED:
                 command = self._commands.get(result.command_id)
@@ -1753,7 +1769,7 @@ class GatewayRouter:
                     )
         return self._with_approval_strength_metadata(
             self._approval_response(request_id, result, recipient_id=resolver_sender_id),
-            strength_metadata,
+            {**strength_metadata, **denial_metadata},
         )
 
     @property

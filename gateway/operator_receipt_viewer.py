@@ -2146,6 +2146,16 @@ def _denial_receipts(
             "next_state": event.next_state.value,
             "cause": str(detail.get("cause", "")),
             "risk_tier": str(event.risk_tier or ""),
+            "denial_template_id": str(detail.get("denial_template_id", "")),
+            "denial_template_version": str(detail.get("denial_template_version", "")),
+            "denial_kind": str(detail.get("denial_kind", "")),
+            "denial_user_facing": bool(detail.get("denial_user_facing", False)),
+            "denial_redacted": bool(detail.get("denial_redacted", False)),
+            "denial_internal_reason_exposed": bool(
+                detail.get("denial_internal_reason_exposed", False)
+            ),
+            "denial_next_action": str(detail.get("denial_next_action", "")),
+            "denial_required_controls": list(_text_tuple(detail.get("denial_required_controls"))),
         }
         evidence_refs = {
             "event_hash": event.event_hash,
@@ -2153,6 +2163,7 @@ def _denial_receipts(
             "approval_request_id": str(event.approval_id or ""),
             "payload_hash": command.payload_hash,
             "trace_id": command.trace_id,
+            "denial_evidence_refs": list(_text_tuple(detail.get("denial_evidence_refs"))),
         }
         receipt_hash = _stable_hash(
             {"details": details, "evidence_refs": evidence_refs}
