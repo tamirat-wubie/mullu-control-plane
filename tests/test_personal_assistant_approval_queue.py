@@ -14,6 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 
@@ -23,8 +24,15 @@ from mcoi_runtime.personal_assistant import (
     ApprovalDecision,
     ApprovalProposedAction,
     ApprovalScope,
+    GovernedIntent,
     PersonalAssistantApprovalQueue,
     PersonalAssistantInvariantError,
+    RequestExecutionMode,
+    RequestInterface,
+    SkillRiskLevel,
+    build_personal_assistant_preview_plan,
+    interpret_user_request,
+    prepare_approval_proposal_from_plan,
 )
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
@@ -199,6 +207,146 @@ def test_approval_queue_rejects_raw_payload_fields_and_secret_like_values() -> N
     assert "raw_connector_payload" in str(raw_exc.value)
     assert "secret-like values" in str(secret_exc.value)
     assert "message_body" not in str(raw_exc.value)
+
+
+def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
+    intent = GovernedIntent(
+        request_id="pa_request_approval_proposal_p4_001",
+        submitted_at=CREATED_AT,
+        interface=RequestInterface.OPERATOR_CONSOLE,
+        user_goal="Send one approved email draft to Daniel.",
+        requested_capabilities=("email.send.with_approval",),
+        requested_skill_ids=("email.send.with_approval",),
+        risk_level=SkillRiskLevel.P4,
+        requires_approval=True,
+        execution_mode=RequestExecutionMode.EXECUTE_WITH_APPROVAL,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+        blocked_actions=("send", "forward", "connector_mutation"),
+        evidence_refs=("proof://personal-assistant/request/approval-proposal-p4-001",),
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_approval_proposal_p4_001",
+        created_at=CREATED_AT,
+    )
+    proposal = prepare_approval_proposal_from_plan(
+        envelope.plan,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+    )
+    queue = PersonalAssistantApprovalQueue()
+    record = queue.enqueue(
+        **proposal.as_enqueue_kwargs(
+            approver_ref="operator:tamirat",
+            created_at=CREATED_AT,
+        )
+    )
+
+    assert proposal.execution_allowed is False
+    assert proposal.approval_matrix_ref == "personal_assistant_approval_matrix.foundation.v1"
+    assert proposal.risk_level is SkillRiskLevel.P4
+    assert proposal.proposed_actions[0].skill_id == "email.send.with_approval"
+    assert "send" in proposal.forbidden_without_approval
+    assert "connector_mutation" in proposal.forbidden_without_approval
+    assert record.packet["approval_state"] == "requested"
+    assert record.packet["metadata"]["approval_matrix_ref"] == proposal.approval_matrix_ref
+    assert record.latest_receipt["metadata"]["approval_is_execution"] is False
+    assert queue.read_model()["execution_allowed"] is False
+
+
+def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> None:
+    intent = GovernedIntent(
+        request_id="pa_request_approval_proposal_p5_001",
+        submitted_at=CREATED_AT,
+        interface=RequestInterface.OPERATOR_CONSOLE,
+        user_goal="Review deployment publication readiness without deploying.",
+        requested_capabilities=("deployment.publish.review",),
+        requested_skill_ids=("deployment.publish.review",),
+        risk_level=SkillRiskLevel.P5,
+        requires_approval=True,
+        execution_mode=RequestExecutionMode.EXECUTE_WITH_APPROVAL,
+        approval_scope=ApprovalScope.PER_PLAN,
+        blocked_actions=("deploy_service", "publish", "live_nested_mind_activation"),
+        evidence_refs=("proof://personal-assistant/request/approval-proposal-p5-001",),
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_approval_proposal_p5_001",
+        created_at=CREATED_AT,
+    )
+    proposal = prepare_approval_proposal_from_plan(envelope.plan)
+    queue = PersonalAssistantApprovalQueue()
+    record = queue.enqueue(
+        **proposal.as_enqueue_kwargs(
+            approver_ref="operator:tamirat",
+            created_at=CREATED_AT,
+        )
+    )
+
+    assert envelope.plan["mode"] == "blocked"
+    assert proposal.risk_level is SkillRiskLevel.P5
+    assert proposal.proposed_actions[0].skill_id == "deployment.publish.review"
+    assert "deploy_service" in proposal.forbidden_without_approval
+    assert "publish" in proposal.forbidden_without_approval
+    assert "live_nested_mind_activation" in proposal.forbidden_without_approval
+    assert record.packet["risk_level"] == "P5"
+    assert record.latest_receipt["metadata"]["money_legal_public_action_allowed"] is False
+    assert record.latest_receipt["metadata"]["live_connector_execution_allowed"] is False
+
+
+def test_approval_proposal_rejects_non_approval_plan() -> None:
+    intent = interpret_user_request(
+        "Check important inbox items and prepare response drafts only.",
+        request_id="pa_request_approval_proposal_read_only_001",
+        submitted_at=CREATED_AT,
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_approval_proposal_read_only_001",
+        created_at=CREATED_AT,
+    )
+
+    with pytest.raises(PersonalAssistantInvariantError) as exc_info:
+        prepare_approval_proposal_from_plan(envelope.plan)
+
+    assert "does not require approval" in str(exc_info.value)
+    assert envelope.plan["execution_allowed"] is False
+    assert envelope.receipt["approval_required"] is False
+    assert envelope.receipt["metadata"]["execution_allowed"] is False
+
+
+def test_approval_proposal_rejects_plan_matrix_metadata_drift() -> None:
+    intent = GovernedIntent(
+        request_id="pa_request_approval_proposal_drift_001",
+        submitted_at=CREATED_AT,
+        interface=RequestInterface.OPERATOR_CONSOLE,
+        user_goal="Send one approved email draft to Daniel.",
+        requested_capabilities=("email.send.with_approval",),
+        requested_skill_ids=("email.send.with_approval",),
+        risk_level=SkillRiskLevel.P4,
+        requires_approval=True,
+        execution_mode=RequestExecutionMode.EXECUTE_WITH_APPROVAL,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+        blocked_actions=("send", "forward", "connector_mutation"),
+        evidence_refs=("proof://personal-assistant/request/approval-proposal-drift-001",),
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_approval_proposal_drift_001",
+        created_at=CREATED_AT,
+    )
+    drifted_plan = deepcopy(dict(envelope.plan))
+    drifted_metadata = dict(drifted_plan["metadata"])
+    drifted_matrix = dict(drifted_metadata["approval_matrix"])
+    drifted_matrix["matrix_id"] = "personal_assistant_approval_matrix.drifted"
+    drifted_metadata["approval_matrix"] = drifted_matrix
+    drifted_plan["metadata"] = drifted_metadata
+
+    with pytest.raises(PersonalAssistantInvariantError) as exc_info:
+        prepare_approval_proposal_from_plan(drifted_plan)
+
+    assert "does not match runtime" in str(exc_info.value)
+    assert "personal_assistant_approval_matrix.drifted" in str(exc_info.value)
+    assert "personal_assistant_approval_matrix.foundation.v1" in str(exc_info.value)
 
 
 def _enqueue_email_send(
