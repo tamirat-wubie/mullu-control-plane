@@ -96,6 +96,12 @@ When a local source line contains instruction-like override text, the worker
 records an `instruction_authority_rejected` retrieval error and keeps the
 matched source content out of the receipt body.
 
+Bounded local conflict detection is limited to matched lines with the same
+normalized claim subject and opposing polarity terms such as `enabled` versus
+`disabled`, `allowed` versus `blocked`, `true` versus `false`, or `present`
+versus `missing`. These are recorded as `conflict://local-docs/...` refs and
+do not grant answer synthesis or current-claim authority.
+
 ## 6. Foundation Example
 
 `examples/search_receipt.foundation.json` records a deep web search that remains blocked in Foundation Mode because budget proof is `BudgetUnknown` and approval evidence is missing.
@@ -125,5 +131,5 @@ python scripts/validate_protocol_manifest.py
 STATUS:
   Completeness: 100%
   Invariants verified: evidence-only retrieval, no content body retention, current-claim freshness, citation requirement, prompt-injection authority rejection, raw secret rejection, Mfidel atomicity
-  Open issues: citation-bound conflict classification is still partial
-  Next action: add citation-bound conflict classification across disagreeing evidence sources
+  Open issues: tenant-scoped cache reuse policy is still missing
+  Next action: define cache admission before any cache reuse path

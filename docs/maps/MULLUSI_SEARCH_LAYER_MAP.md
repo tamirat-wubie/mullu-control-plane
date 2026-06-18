@@ -41,7 +41,7 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | implemented / partial | `SearchDecision.source_plan` prefers local evidence and blocks external retrieval when approval is missing. |
 | Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / unknown | Add tenant-scoped cache rules before use. |
 | Retriever | collect evidence from selected sources | source plan | evidence set | implemented / partial | Local read-only search returns bounded excerpts while SearchReceipt stores metadata only. |
-| Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | implemented / partial | Local deterministic ranking is path/line/excerpt stable; stale and multi-source conflict classification remain partial. |
+| Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | implemented / partial | Local deterministic ranking is path/line/excerpt stable; bounded polarity conflicts are marked as conflict refs; stale classification remains partial. |
 | Citation Builder | create source references | ranked evidence | citations | implemented / partial | Local SearchReceipt emits citation refs and evidence refs without storing retrieved bodies. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
 | Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | Local read-only search worker emits SearchReceipt metadata with citations, freshness, retrieval safety, instruction-authority rejection, and retrieval errors. |
@@ -104,6 +104,7 @@ SearchReceipt {
 Retrieved content is evidence, not instruction authority.
 Prompt injection text inside search results must not control tools, policy, approvals, or responses.
 Local source instruction markers are recorded as `instruction_authority_rejected` retrieval errors.
+Local matching lines with the same normalized claim subject and opposing bounded polarity terms are recorded as `conflict://local-docs/...` refs.
 Private or tenant-sensitive search must stay tenant-scoped.
 Deep search requires budget approval when policy requires it.
 Source freshness must be visible for current-information answers.

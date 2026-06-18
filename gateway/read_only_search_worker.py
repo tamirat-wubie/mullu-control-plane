@@ -78,6 +78,16 @@ _SOURCE_INSTRUCTION_PATTERN = re.compile(
     r"execute\s+(?:command|shell)"
     r")\b"
 )
+_CONFLICT_POLARITY_PAIRS = (
+    ("enabled", "disabled"),
+    ("allowed", "blocked"),
+    ("true", "false"),
+    ("yes", "no"),
+    ("present", "missing"),
+    ("passed", "failed"),
+    ("pass", "fail"),
+)
+_CONFLICT_POLARITY_TERMS = frozenset(term for pair in _CONFLICT_POLARITY_PAIRS for term in pair)
 _SEARCH_INTENT_WORDS = frozenset({"search", "find", "lookup", "look", "up", "docs", "document", "documents", "knowledge", "for"})
 
 
@@ -272,16 +282,22 @@ def _build_search_receipt(
     )
     citation_refs = [item["citation_ref"] for item in evidence_items]
     instruction_authority_errors = _instruction_authority_errors(ranked_results)
+    conflict_refs = _conflict_refs(ranked_results)
     freshness_status = "unknown_blocked" if current_freshness_required else "not_required"
     freshness_proof_state = "Unknown" if current_freshness_required else "Pass"
     retrieval_errors = instruction_authority_errors if evidence_items else [_retrieval_failed_error(request.request_id)]
-    receipt_state = "EVIDENCE_AVAILABLE" if evidence_items else "RETRIEVAL_FAILED"
+    receipt_state = _receipt_state(evidence_items=evidence_items, conflict_refs=conflict_refs)
     search_state = "LOCAL_SEARCH" if evidence_items else "SEARCH_FAILED_WITH_EXPLANATION"
-    solver_outcome = "AwaitingEvidence" if current_freshness_required or not evidence_items else "SolvedVerified"
+    solver_outcome = (
+        "AwaitingEvidence"
+        if current_freshness_required or not evidence_items or conflict_refs
+        else "SolvedVerified"
+    )
     prompt_injection_detected = bool(instruction_authority_errors)
     conflict_handling = _conflict_handling(
         freshness_required=current_freshness_required,
         prompt_injection_detected=prompt_injection_detected,
+        conflict_detected=bool(conflict_refs),
     )
     receipt_seed = canonical_hash(
         {
@@ -359,14 +375,14 @@ def _build_search_receipt(
         "evidence_summary": {
             "evidence_count": len(evidence_items),
             "citation_count": len(citation_refs),
-            "conflict_count": 0,
+            "conflict_count": len(conflict_refs),
             "stale_source_count": 0,
             "retrieval_error_count": len(retrieval_errors),
             "content_body_included": False,
         },
         "evidence_items": evidence_items,
         "citation_refs": citation_refs,
-        "conflict_refs": [],
+        "conflict_refs": conflict_refs,
         "stale_source_refs": [],
         "retrieval_errors": retrieval_errors,
         "retrieval_safety_result": {
@@ -407,6 +423,7 @@ def _build_search_receipt(
             "result_excerpt_count": len(ranked_results),
             "local_source_count": len(relative_sources),
             "prompt_injection_marker_count": len(instruction_authority_errors),
+            "conflict_marker_count": len(conflict_refs),
             "source_excerpt_body_excluded_from_receipt": True,
         },
     }
@@ -487,11 +504,54 @@ def _instruction_authority_errors(ranked_results: list[dict[str, Any]]) -> list[
     return errors
 
 
-def _conflict_handling(*, freshness_required: bool, prompt_injection_detected: bool) -> str:
+def _conflict_refs(ranked_results: list[dict[str, Any]]) -> list[str]:
+    claims_by_subject: dict[str, dict[str, set[str]]] = {}
+    for result in ranked_results:
+        subject = result.get("claim_subject")
+        polarity = result.get("claim_polarity")
+        if not isinstance(subject, str) or not subject:
+            continue
+        if not isinstance(polarity, str) or not polarity:
+            continue
+        source_ref = f"{result['relative_path']}#L{result['line']}"
+        claims_by_subject.setdefault(subject, {}).setdefault(polarity, set()).add(source_ref)
+
+    conflict_refs = []
+    for subject, polarity_sources in sorted(claims_by_subject.items()):
+        for positive, negative in _CONFLICT_POLARITY_PAIRS:
+            if positive in polarity_sources and negative in polarity_sources:
+                conflict_seed = canonical_hash(
+                    {
+                        "subject": subject,
+                        "positive": sorted(polarity_sources[positive]),
+                        "negative": sorted(polarity_sources[negative]),
+                    }
+                )
+                conflict_refs.append(f"conflict://local-docs/{conflict_seed[:16]}")
+                break
+    return conflict_refs
+
+
+def _receipt_state(*, evidence_items: list[dict[str, Any]], conflict_refs: list[str]) -> str:
+    if not evidence_items:
+        return "RETRIEVAL_FAILED"
+    if conflict_refs:
+        return "CONFLICT_DETECTED"
+    return "EVIDENCE_AVAILABLE"
+
+
+def _conflict_handling(
+    *,
+    freshness_required: bool,
+    prompt_injection_detected: bool,
+    conflict_detected: bool,
+) -> str:
     if prompt_injection_detected:
         return "escalate"
     if freshness_required:
         return "block_current_claim"
+    if conflict_detected:
+        return "cite_conflict"
     return "cite_conflict"
 
 
@@ -658,6 +718,8 @@ def _line_matches(
                     "source_freshness": "local_snapshot",
                     "retrieval_authority": "evidence_only",
                     "source_instruction_marker": _source_instruction_marker(line),
+                    "claim_subject": _claim_subject(line),
+                    "claim_polarity": _claim_polarity(line),
                     "score": 1.0,
                 }
             )
@@ -681,6 +743,25 @@ def _redacted_excerpt(line: str) -> str:
 
 def _source_instruction_marker(line: str) -> bool:
     return _SOURCE_INSTRUCTION_PATTERN.search(line) is not None
+
+
+def _claim_subject(line: str) -> str:
+    terms = [
+        term
+        for term in re.findall(r"[A-Za-z0-9_:-]+", line.lower())
+        if term not in _CONFLICT_POLARITY_TERMS
+    ]
+    return " ".join(terms)
+
+
+def _claim_polarity(line: str) -> str:
+    terms = set(re.findall(r"[A-Za-z0-9_:-]+", line.lower()))
+    for positive, negative in _CONFLICT_POLARITY_PAIRS:
+        if positive in terms:
+            return positive
+        if negative in terms:
+            return negative
+    return ""
 
 
 def _string_list(value: Any, field_name: str) -> list[str]:
