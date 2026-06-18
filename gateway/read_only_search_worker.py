@@ -65,6 +65,19 @@ _SECRET_KEYS = frozenset({"secret", "secrets", "token", "tokens", "password", "a
 _SECRET_VALUE_PATTERN = re.compile(
     r"(?i)\b([a-z0-9_-]*(?:api[_-]?key|secret|token|password|private[_-]?key)[a-z0-9_-]*)\b\s*[:=]\s*[^,\s]+"
 )
+_SOURCE_INSTRUCTION_PATTERN = re.compile(
+    r"(?i)\b("
+    r"ignore\s+(?:all\s+)?previous|"
+    r"bypass\s+(?:governance|policy|approval|instructions?)|"
+    r"disable\s+(?:governance|policy|safety)|"
+    r"reveal\s+(?:secret|token|password|key)|"
+    r"send\s+secrets?|"
+    r"system\s+prompt|"
+    r"developer\s+message|"
+    r"call\s+(?:tool|function)|"
+    r"execute\s+(?:command|shell)"
+    r")\b"
+)
 _SEARCH_INTENT_WORDS = frozenset({"search", "find", "lookup", "look", "up", "docs", "document", "documents", "knowledge", "for"})
 
 
@@ -258,12 +271,18 @@ def _build_search_receipt(
         freshness_required=current_freshness_required,
     )
     citation_refs = [item["citation_ref"] for item in evidence_items]
+    instruction_authority_errors = _instruction_authority_errors(ranked_results)
     freshness_status = "unknown_blocked" if current_freshness_required else "not_required"
     freshness_proof_state = "Unknown" if current_freshness_required else "Pass"
-    retrieval_errors = [] if evidence_items else [_retrieval_failed_error(request.request_id)]
+    retrieval_errors = instruction_authority_errors if evidence_items else [_retrieval_failed_error(request.request_id)]
     receipt_state = "EVIDENCE_AVAILABLE" if evidence_items else "RETRIEVAL_FAILED"
     search_state = "LOCAL_SEARCH" if evidence_items else "SEARCH_FAILED_WITH_EXPLANATION"
     solver_outcome = "AwaitingEvidence" if current_freshness_required or not evidence_items else "SolvedVerified"
+    prompt_injection_detected = bool(instruction_authority_errors)
+    conflict_handling = _conflict_handling(
+        freshness_required=current_freshness_required,
+        prompt_injection_detected=prompt_injection_detected,
+    )
     receipt_seed = canonical_hash(
         {
             "request_id": request.request_id,
@@ -353,12 +372,12 @@ def _build_search_receipt(
         "retrieval_safety_result": {
             "retrieved_content_authority": "evidence_only",
             "prompt_injection_guard_applied": True,
-            "prompt_injection_detected": False,
+            "prompt_injection_detected": prompt_injection_detected,
             "source_instruction_authority_granted": False,
             "tool_instruction_from_source_allowed": False,
             "policy_instruction_from_source_allowed": False,
             "private_source_scope_verified": True,
-            "conflict_handling": "block_current_claim" if current_freshness_required else "cite_conflict",
+            "conflict_handling": conflict_handling,
         },
         "governance_guards": {
             "execution_authority_granted": False,
@@ -387,6 +406,7 @@ def _build_search_receipt(
             "raw_query_exposed": False,
             "result_excerpt_count": len(ranked_results),
             "local_source_count": len(relative_sources),
+            "prompt_injection_marker_count": len(instruction_authority_errors),
             "source_excerpt_body_excluded_from_receipt": True,
         },
     }
@@ -437,6 +457,42 @@ def _retrieval_failed_error(request_id: str) -> dict[str, Any]:
             "reason:no_local_search_evidence",
         ],
     }
+
+
+def _instruction_authority_errors(ranked_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    errors = []
+    for result in ranked_results:
+        if result.get("source_instruction_marker") is not True:
+            continue
+        source_ref = f"{result['relative_path']}#L{result['line']}"
+        error_seed = canonical_hash(
+            {
+                "source_ref": source_ref,
+                "content_hash": result["content_hash"],
+                "error": "instruction_authority_rejected",
+            }
+        )
+        errors.append(
+            {
+                "error_ref": f"error://local-docs/{error_seed[:16]}",
+                "source_type": "local_docs",
+                "error_class": "instruction_authority_rejected",
+                "blocking": False,
+                "rationale_refs": [
+                    "policy:retrieved-content-evidence-only",
+                    f"source://local-docs/{canonical_hash(source_ref)[:16]}",
+                ],
+            }
+        )
+    return errors
+
+
+def _conflict_handling(*, freshness_required: bool, prompt_injection_detected: bool) -> str:
+    if prompt_injection_detected:
+        return "escalate"
+    if freshness_required:
+        return "block_current_claim"
+    return "cite_conflict"
 
 
 def _unique_texts(values: list[str]) -> list[str]:
@@ -601,6 +657,7 @@ def _line_matches(
                     "content_hash": content_hash,
                     "source_freshness": "local_snapshot",
                     "retrieval_authority": "evidence_only",
+                    "source_instruction_marker": _source_instruction_marker(line),
                     "score": 1.0,
                 }
             )
@@ -620,6 +677,10 @@ def _redacted_excerpt(line: str) -> str:
     if len(redacted) > 160:
         return f"{redacted[:157]}..."
     return redacted
+
+
+def _source_instruction_marker(line: str) -> bool:
+    return _SOURCE_INSTRUCTION_PATTERN.search(line) is not None
 
 
 def _string_list(value: Any, field_name: str) -> list[str]:

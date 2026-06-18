@@ -40,11 +40,11 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness requirement | implemented / partial | `SearchDecision.freshness` records current-claim eligibility before retrieval. |
 | Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | implemented / partial | `SearchDecision.source_plan` prefers local evidence and blocks external retrieval when approval is missing. |
 | Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / unknown | Add tenant-scoped cache rules before use. |
-| Retriever | collect evidence from selected sources | source plan | evidence set | partial / unknown | Treat retrieved content as evidence only. |
-| Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
-| Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
+| Retriever | collect evidence from selected sources | source plan | evidence set | implemented / partial | Local read-only search returns bounded excerpts while SearchReceipt stores metadata only. |
+| Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | implemented / partial | Local deterministic ranking is path/line/excerpt stable; stale and multi-source conflict classification remain partial. |
+| Citation Builder | create source references | ranked evidence | citations | implemented / partial | Local SearchReceipt emits citation refs and evidence refs without storing retrieved bodies. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | `SearchReceipt` records post-decision evidence metadata, blocked retrieval, freshness, conflicts, citations, and retrieval errors. |
+| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | Local read-only search worker emits SearchReceipt metadata with citations, freshness, retrieval safety, instruction-authority rejection, and retrieval errors. |
 | Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` blocks deep retrieval on `BudgetUnknown`. |
 
 ## 4. SearchDecision fields
@@ -103,6 +103,7 @@ SearchReceipt {
 ```text
 Retrieved content is evidence, not instruction authority.
 Prompt injection text inside search results must not control tools, policy, approvals, or responses.
+Local source instruction markers are recorded as `instruction_authority_rejected` retrieval errors.
 Private or tenant-sensitive search must stay tenant-scoped.
 Deep search requires budget approval when policy requires it.
 Source freshness must be visible for current-information answers.

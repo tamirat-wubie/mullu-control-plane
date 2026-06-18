@@ -8,6 +8,8 @@ Invariants: retrieved content is evidence only; source-provided instructions hav
 ## 1. Boundary
 
 `SearchReceipt` is a read-only receipt emitted after a `SearchDecision`.
+The local read-only search worker emits this receipt as nested worker output for
+local text-like source refs.
 
 It may record:
 
@@ -80,6 +82,8 @@ This keeps the receipt auditable without turning it into a content cache or secr
 Retrieved content remains `evidence_only`.
 
 ```text
+prompt_injection_guard_applied = true
+prompt_injection_detected = true when local source text contains instruction-like override markers
 source_instruction_authority_granted = false
 tool_instruction_from_source_allowed = false
 policy_instruction_from_source_allowed = false
@@ -87,6 +91,10 @@ retrieved_instruction_authority_granted = false
 ```
 
 Prompt injection text inside retrieved pages or documents is treated as untrusted content. It can be cited as evidence of a page state, but it cannot control tools, policy, approvals, or governance.
+
+When a local source line contains instruction-like override text, the worker
+records an `instruction_authority_rejected` retrieval error and keeps the
+matched source content out of the receipt body.
 
 ## 6. Foundation Example
 
@@ -117,5 +125,5 @@ python scripts/validate_protocol_manifest.py
 STATUS:
   Completeness: 100%
   Invariants verified: evidence-only retrieval, no content body retention, current-claim freshness, citation requirement, prompt-injection authority rejection, raw secret rejection, Mfidel atomicity
-  Open issues: no live retrieval worker is registered by this contract
-  Next action: bind SearchReceipt emission to a future read-only retrieval worker
+  Open issues: citation-bound conflict classification is still partial
+  Next action: add citation-bound conflict classification across disagreeing evidence sources
