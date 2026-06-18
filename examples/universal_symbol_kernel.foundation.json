@@ -184,13 +184,18 @@
     "symbol_native_boundary": true,
     "everything_symbolizable": true,
     "authority_denial_count": 9,
-    "symbolizable_surface_count": 8,
-    "evidence_ref_count": 5
+    "symbolizable_surface_count": 16,
+    "evidence_ref_count": 10
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
     "examples/universal_symbol_kernel.foundation.json",
     "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+    "mcoi/mcoi_runtime/app/software_receipt_observability.py",
+    "mcoi/tests/test_symbol_skill_adapter.py",
+    "mcoi/tests/test_software_receipt_observability.py",
     "scripts/validate_universal_symbol_kernel.py",
     "tests/test_validate_universal_symbol_kernel.py"
   ]

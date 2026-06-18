@@ -475,6 +475,28 @@ def test_runtime_id_lookups_reject_shape_drift_before_mutation() -> None:
     assert mesh.metadata == {metadata.metadata_id: metadata}
 
 
+def test_extract_metadata_rejects_answer_question_mismatch_before_mutation() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    answer_question_id, mismatched_question_id = tick.generated_question_ids[:2]
+    answer = mesh.ingest_answer(
+        answer_question_id,
+        "Seed answer",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    before_symbol = mesh.symbols[seed.symbol_id]
+    before_metadata = dict(mesh.metadata)
+
+    with pytest.raises(ValueError, match="answer_id must belong"):
+        mesh.extract_metadata(mismatched_question_id, answer.answer_id)
+
+    assert mesh.metadata == before_metadata
+    assert mesh.symbols[seed.symbol_id] == before_symbol
+    assert mesh.answers == {answer.answer_id: answer}
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

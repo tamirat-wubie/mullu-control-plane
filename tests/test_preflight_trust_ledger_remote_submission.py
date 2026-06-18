@@ -64,10 +64,14 @@ def test_trust_ledger_remote_submission_preflight_accepts_ready_export(tmp_path:
     assert report.ledger_path == ledger_path.name
     assert report.next_ledger_sequence == 1
     assert report.previous_submission_hash == "0" * 64
+    assert len(report.anchor_artifact_root_hash) == 64
+    assert report.anchor_artifact_count == 8
     assert "provider_observation" in report.required_artifact_types
     assert len(report.expected_remote_submission_payload_hash) == 64
     assert report.expected_remote_idempotency_key == report.expected_remote_submission_payload_hash
     assert payload["ledger_path"] == ledger_path.name
+    assert payload["anchor_artifact_root_hash"] == report.anchor_artifact_root_hash
+    assert payload["anchor_artifact_count"] == report.anchor_artifact_count
     assert payload["required_artifact_types"] == list(report.required_artifact_types)
     assert payload["metadata"]["remote_submit_executed"] is False
     assert payload["metadata"]["ledger_append_executed"] is False
@@ -122,6 +126,8 @@ def test_trust_ledger_remote_submission_preflight_projects_final_submit_payload_
     assert submission["valid"] is True
     assert preflight.next_ledger_sequence == submission["ledger_sequence"]
     assert preflight.previous_submission_hash == submission["previous_submission_hash"]
+    assert preflight.anchor_artifact_root_hash == submission["submission_receipt"]["anchor_artifact_root_hash"]
+    assert preflight.anchor_artifact_count == submission["submission_receipt"]["anchor_artifact_count"]
     assert "provider_observation" in preflight.required_artifact_types
     assert "provider_observation" in submission["submission_receipt"]["required_artifact_types"]
     assert preflight.expected_remote_submission_payload_hash == submission["remote_submission"]["submission_payload_hash"]
@@ -314,6 +320,8 @@ def test_trust_ledger_remote_submission_preflight_writer_validates_schema(tmp_pa
     assert payload["receipt_id"].startswith("trust-ledger-remote-submission-preflight-")
     assert payload["receipt_id"] == _remote_preflight_receipt_id(payload)
     assert payload["next_ledger_sequence"] == 1
+    assert len(payload["anchor_artifact_root_hash"]) == 64
+    assert payload["anchor_artifact_count"] == 8
     assert "provider_observation" in payload["required_artifact_types"]
     assert payload["expected_remote_idempotency_key"] == payload["expected_remote_submission_payload_hash"]
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []

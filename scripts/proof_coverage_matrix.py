@@ -335,6 +335,54 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "component_symbol_read_model",
+            ["/api/v1/components/symbols"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/symbol_operator_read_models.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+                "schemas/universal_symbol.schema.json",
+                "scripts/validate_universal_symbol_kernel.py",
+                "mcoi/tests/test_symbol_operator_read_models.py",
+                "mcoi/tests/test_symbol_skill_adapter.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            (
+                "Component Harness symbol read model projects component registry "
+                "entries into UniversalSymbol envelopes through one read-only route "
+                "without granting runtime dispatch, connector calls, filesystem "
+                "writes, terminal closure, or success-claim authority."
+            ),
+            [
+                "component_symbol_read_model_projects_schema_valid_symbols",
+                "component_symbol_route_is_read_only",
+                "symbol_operator_read_models_deny_runtime_authority",
+                "symbol_operator_read_model_rejects_invalid_limits",
+                "universal_symbol_kernel_validates",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_symbol_read_model_projects_schema_valid_symbols": [
+                    "component_symbol_read_model_projects_schema_valid_symbols",
+                ],
+                "component_symbol_route_is_read_only": [
+                    "component_symbol_route_is_read_only",
+                ],
+                "symbol_operator_read_models_deny_runtime_authority": [
+                    "symbol_operator_read_models_deny_runtime_authority",
+                ],
+                "symbol_operator_read_model_rejects_invalid_limits": [
+                    "symbol_operator_read_model_rejects_invalid_limits",
+                ],
+                "universal_symbol_kernel_validates": [
+                    "foundation_universal_symbol_kernel_validates",
+                ],
+            },
+        ),
+        _surface(
             "component_autopsy",
             ["/api/v1/components/{component_id}/autopsy"],
             "read_model",
@@ -5177,7 +5225,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions with certificate and proof-explorer projections, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -7668,6 +7716,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "maf_abi_cli_contract_witness_sdlc_artifacts_valid": [
                     "sdlc_requirement_and_design_validate_for_maf_abi_cli_contract_witness"
+                ],
+            },
+        ),
+        _surface(
+            "maf_subprocess_effect_boundary_witness",
+            [
+                "MafSubprocessEffectBoundaryWitness",
+                "validate_maf_subprocess_effect_boundary_witness",
+                "maf_subprocess_effect_boundary_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+                "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+                "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+                "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+                "schemas/maf_abi_cli_contract_witness.schema.json",
+                "examples/maf_abi_cli_contract_witness.foundation.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/95_maf_subprocess_effect_boundary_witness.md",
+                "docs/94_maf_abi_cli_contract_witness.md",
+                "maf/rust/crates/maf-cli/src/main.rs",
+            ],
+            "MAF subprocess effect boundary witnesses bind static process-spawn, filesystem-write, network-call, secret-read, dispatch, and state-mutation controls while keeping subprocess execution, CLI execution, Rust execution, PyO3, connector calls, writes, runtime dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_subprocess_effect_boundary_witness_schema_valid",
+                "maf_subprocess_effect_boundary_witness_denies_subprocess_execution",
+                "maf_subprocess_effect_boundary_witness_requires_effect_controls",
+                "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift",
+                "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift",
+                "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_subprocess_effect_boundary_witness_schema_valid": [
+                    "maf_subprocess_effect_boundary_witness_passes"
+                ],
+                "maf_subprocess_effect_boundary_witness_denies_subprocess_execution": [
+                    "maf_subprocess_effect_boundary_witness_passes",
+                    "maf_subprocess_effect_boundary_rejects_authority_drift",
+                ],
+                "maf_subprocess_effect_boundary_witness_requires_effect_controls": [
+                    "maf_subprocess_effect_boundary_witness_passes",
+                    "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift",
+                ],
+                "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift": [
+                    "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+                ],
+                "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift": [
+                    "maf_subprocess_effect_boundary_rejects_digest_and_summary_drift"
+                ],
+                "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_subprocess_effect_boundary"
                 ],
             },
         ),
@@ -11992,6 +12097,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_abi_cli_contract_witness_contract",
             "surfaces": ["maf_abi_cli_contract_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_subprocess_effect_boundary_witness_contract",
+            "surfaces": ["maf_subprocess_effect_boundary_witness"],
             "status": "closed",
         },
         {

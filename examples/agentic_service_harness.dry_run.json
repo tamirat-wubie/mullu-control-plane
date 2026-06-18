@@ -199,10 +199,23 @@
       "credential_binding_ref": "credential-binding://github-app-presence-only",
       "default_branch": "main",
       "installation_ref": "github-installation://presence-only",
+      "installation_state": "presence_only",
+      "last_verified_at": "2026-06-11T22:00:00Z",
       "permission_scope": "dry_run",
+      "permission_scopes": [
+        "metadata_read",
+        "contents_read",
+        "checks_read",
+        "pull_requests_read"
+      ],
       "project_id": "project.foundation",
       "provider": "github",
+      "provider_repository_ref": "github-repository://tamirat-wubie/mullu-control-plane",
+      "repository_name": "mullu-control-plane",
+      "repository_owner": "tamirat-wubie",
       "repository_slug": "tamirat-wubie/mullu-control-plane",
+      "revocation_evidence_ref": "revocation://github-app/not-revoked-presence-only",
+      "revocation_state": "not_revoked",
       "secret_values_serialized": false,
       "write_authority_enabled": false
     }

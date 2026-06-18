@@ -66,6 +66,9 @@ def test_projected_read_only_contract_preserves_core_refs() -> None:
     assert projection["durable_entity_bindings"]["read_only"] is True
     assert projection["durable_entity_bindings"]["entity_bindings"][0]["read_model_source"] == "fixture_projection"
     assert projection["permission_snapshot"]["can_merge"] is False
+    assert projection["repositories"][0]["installation_ref"] == source["repository_connections"][0]["installation_ref"]
+    assert projection["repositories"][0]["permission_scopes"] == source["repository_connections"][0]["permission_scopes"]
+    assert projection["repositories"][0]["revocation_state"] == "not_revoked"
 
 
 def test_read_model_projection_rejects_source_write_authority(tmp_path: Path) -> None:

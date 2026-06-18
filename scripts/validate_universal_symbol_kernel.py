@@ -45,6 +45,11 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol.schema.json",
     "examples/universal_symbol_kernel.foundation.json",
     "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+    "mcoi/mcoi_runtime/app/software_receipt_observability.py",
+    "mcoi/tests/test_symbol_skill_adapter.py",
+    "mcoi/tests/test_software_receipt_observability.py",
     "scripts/validate_universal_symbol_kernel.py",
     "tests/test_validate_universal_symbol_kernel.py",
 )
@@ -88,7 +93,7 @@ def validate_universal_symbol_kernel(
     _validate_foundation_governance(symbol, errors)
     _validate_symbolizable_surfaces(symbol, errors)
     _validate_authority_denials(symbol, errors)
-    _validate_contract_summary(symbol, errors)
+    _validate_contract_summary(symbol, schema, errors)
     _validate_evidence_refs(symbol, errors)
     _validate_evidence_ref_files(symbol, errors)
 
@@ -115,6 +120,15 @@ def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> N
     required = schema.get("required")
     if not isinstance(required, list) or "symbol_authority_boundary" not in required:
         errors.append("schema must require symbol_authority_boundary")
+    if not _schema_symbol_kind_values(schema):
+        errors.append("schema must declare symbol_identity.symbol_kind enum")
+    if len(_schema_symbol_kind_values(schema)) != len(set(_schema_symbol_kind_values(schema))):
+        errors.append("schema symbol_kind enum must not contain duplicates")
+    defs = _mapping(schema.get("$defs"))
+    string_array = _mapping(defs.get("string_array"))
+    string_items = _mapping(string_array.get("items"))
+    if string_items.get("minLength") != 1:
+        errors.append("schema string_array items must be non-empty")
 
 
 def _validate_json_schema(symbol: Mapping[str, Any], schema: Mapping[str, Any], errors: list[str]) -> None:
@@ -164,10 +178,16 @@ def _validate_foundation_governance(symbol: Mapping[str, Any], errors: list[str]
     governance = _mapping(symbol.get("symbol_governance"))
     if governance.get("governance_mode") != "foundation":
         errors.append("foundation example must remain governance_mode=foundation")
+    if governance.get("authority_refs") not in ([], None):
+        errors.append("foundation example must not carry authority refs")
+    if governance.get("approval_refs") not in ([], None):
+        errors.append("foundation example must not carry approval refs")
     blocked = governance.get("blocked_action_refs")
     if not isinstance(blocked, list) or len(blocked) < 7:
         errors.append("foundation example must list blocked action refs")
     proof = _mapping(symbol.get("symbol_proof"))
+    if proof.get("proof_state") != "awaiting_evidence":
+        errors.append("foundation example proof_state must remain awaiting_evidence")
     if proof.get("terminal_closure_ref") != "":
         errors.append("foundation example must not carry terminal closure ref")
     projection = _mapping(symbol.get("symbol_skill_projection"))
@@ -194,13 +214,18 @@ def _validate_authority_denials(symbol: Mapping[str, Any], errors: list[str]) ->
             errors.append(f"authority boundary must deny {field_name}")
 
 
-def _validate_contract_summary(symbol: Mapping[str, Any], errors: list[str]) -> None:
+def _validate_contract_summary(symbol: Mapping[str, Any], schema: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(symbol.get("contract_summary"))
     if summary.get("authority_denial_count") != len(AUTHORITY_DENIAL_FIELDS):
         errors.append("authority_denial_count drift")
     symbolizable_count = summary.get("symbolizable_surface_count")
-    if not isinstance(symbolizable_count, int) or symbolizable_count < 5:
-        errors.append("symbolizable_surface_count must be >= 5")
+    expected_symbolizable_count = len(_schema_symbol_kind_values(schema))
+    if not isinstance(symbolizable_count, int):
+        errors.append("symbolizable_surface_count must be an integer")
+    elif symbolizable_count != expected_symbolizable_count:
+        errors.append(
+            f"symbolizable_surface_count drift: expected {expected_symbolizable_count}, got {symbolizable_count}"
+        )
     evidence_count = summary.get("evidence_ref_count")
     evidence_refs = symbol.get("evidence_refs")
     if isinstance(evidence_refs, list) and evidence_count != len(evidence_refs):
@@ -224,12 +249,33 @@ def _validate_evidence_ref_files(symbol: Mapping[str, Any], errors: list[str]) -
     for ref in refs:
         if not isinstance(ref, str) or "://" in ref:
             continue
-        if not (REPO_ROOT / ref).exists():
+        ref_path = Path(ref)
+        if ref_path.is_absolute():
+            errors.append(f"evidence ref must be repository-relative: {ref}")
+            continue
+        candidate_path = (REPO_ROOT / ref_path).resolve()
+        try:
+            candidate_path.relative_to(REPO_ROOT.resolve())
+        except ValueError:
+            errors.append(f"evidence ref escapes repository: {ref}")
+            continue
+        if not candidate_path.exists():
             errors.append(f"evidence ref file missing: {ref}")
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
+
+
+def _schema_symbol_kind_values(schema: Mapping[str, Any]) -> tuple[str, ...]:
+    properties = _mapping(schema.get("properties"))
+    identity = _mapping(properties.get("symbol_identity"))
+    identity_properties = _mapping(identity.get("properties"))
+    symbol_kind = _mapping(identity_properties.get("symbol_kind"))
+    values = symbol_kind.get("enum")
+    if not isinstance(values, list):
+        return ()
+    return tuple(value for value in values if isinstance(value, str))
 
 
 def _repo_relative(path: Path) -> str:

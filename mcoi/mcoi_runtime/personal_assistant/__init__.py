@@ -15,6 +15,13 @@ from .contracts import (
     SkillMode,
     SkillRiskLevel,
 )
+from .capability_pack import (
+    PersonalAssistantCapabilityPackEntry,
+    PersonalAssistantCapabilityPackIndex,
+    PersonalAssistantSkillCapabilityBindingReport,
+    load_default_personal_assistant_capability_pack,
+    load_personal_assistant_capability_pack,
+)
 from .console import (
     build_personal_assistant_console_read_model,
     render_personal_assistant_console_html,
@@ -104,6 +111,9 @@ __all__ = (
     "PersonalAssistantInvariantError",
     "PersonalAssistantClarificationBundle",
     "PersonalAssistantSkill",
+    "PersonalAssistantCapabilityPackEntry",
+    "PersonalAssistantCapabilityPackIndex",
+    "PersonalAssistantSkillCapabilityBindingReport",
     "PersonalAssistantSkillRegistry",
     "ApprovalDecision",
     "ApprovalProposedAction",
@@ -149,7 +159,9 @@ __all__ = (
     "draft_task",
     "interpret_user_request",
     "load_default_skill_registry",
+    "load_default_personal_assistant_capability_pack",
     "load_skill_registry",
+    "load_personal_assistant_capability_pack",
     "prepare_memory_observation",
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",

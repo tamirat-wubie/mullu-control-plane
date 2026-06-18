@@ -24,6 +24,7 @@
         "component_autopsy",
         "component_harness_read_model",
         "component_request_simulator",
+        "component_symbol_read_model",
         "gateway_approval_resolution",
         "gateway_capability_fabric",
         "gateway_webhook_ingress"
@@ -38,11 +39,18 @@
         "mcoi/mcoi_runtime/app/component_read_model.py",
         "mcoi/mcoi_runtime/app/component_request_simulator.py",
         "mcoi/mcoi_runtime/app/routers/components.py",
+        "mcoi/mcoi_runtime/app/symbol_operator_read_models.py",
+        "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
         "schemas/component_autopsy.schema.json",
+        "schemas/universal_symbol.schema.json",
         "examples/component_autopsy.nested_mind_bridge.json",
         "scripts/validate_component_autopsy.py",
+        "scripts/validate_universal_symbol_kernel.py",
         "mcoi/tests/test_component_autopsy_route.py",
+        "mcoi/tests/test_symbol_operator_read_models.py",
+        "mcoi/tests/test_symbol_skill_adapter.py",
         "tests/test_validate_component_autopsy.py",
+        "tests/test_validate_universal_symbol_kernel.py",
         "tests/test_governed_capability_fabric.py"
       ],
       "required_runtime_witnesses": [
@@ -50,7 +58,12 @@
         "component_autopsy_route_is_read_only",
         "component_autopsy_explains_missing_evidence",
         "component_read_model_route_is_read_only",
+        "component_symbol_read_model_projects_schema_valid_symbols",
+        "component_symbol_route_is_read_only",
         "component_request_simulator_route_is_preview_only",
+        "symbol_operator_read_model_rejects_invalid_limits",
+        "symbol_operator_read_models_deny_runtime_authority",
+        "universal_symbol_kernel_validates",
         "command_lifecycle_events_are_hash_linked"
       ],
       "required_surface_ids": [

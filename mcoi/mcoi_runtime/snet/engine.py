@@ -220,6 +220,8 @@ class SNetRecursiveMesh:
         """Convert one answer into contextual metadata and record contradictions."""
         question = self._require_question(question_id)
         answer = self._require_answer(answer_id)
+        if answer.question_id != question.question_id:
+            raise ValueError("SNet answer_id must belong to the supplied question_id")
         metadata_id = _stable_id("snet-metadata", question_id, answer_id, question.facet)
         promotion_score = self.score_metadata(
             facet=question.facet,

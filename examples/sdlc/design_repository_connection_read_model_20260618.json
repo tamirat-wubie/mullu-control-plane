@@ -1,0 +1,53 @@
+{
+  "design_id": "DES-repository-connection-read-model-20260618",
+  "requirement_id": "REQ-repository-connection-read-model-20260618",
+  "architecture_summary": "Harden the existing Agentic Service Harness RepositoryConnection source contract and read-model projection with durable GitHub repository identity, installation presence state, effective read scopes, revocation evidence, last verification timestamp, and reference-only credential binding while preserving read-only Foundation Mode authority.",
+  "affected_modules": [
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "sdlc"
+  ],
+  "data_model_changes": [
+    "Add provider_repository_ref, repository_owner, repository_name, installation_state, permission_scopes, revocation_state, revocation_evidence_ref, and last_verified_at to RepositoryConnection contract records",
+    "Add the same durable fields to harness_repository_read_model so the UI-facing read model can render repository connection status without runtime provider calls",
+    "Extend durable RepositoryConnection owner_ref_fields with provider repository, installation, credential binding, and revocation evidence refs",
+    "Keep credential binding as a ref and secret_values_serialized as false"
+  ],
+  "schema_changes": [
+    "schemas/agentic_service_harness.schema.json",
+    "schemas/agentic_service_harness_read_models.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_agentic_service_harness_contract.py",
+    "scripts/validate_agentic_service_harness_read_models.py",
+    "scripts/validate_agentic_service_harness_read_model_projections.py",
+    "tests/test_gateway/test_agentic_service_harness_contract.py",
+    "tests/test_validate_agentic_service_harness_read_models.py",
+    "tests/test_validate_agentic_service_harness_read_model_projections.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Revert the RepositoryConnection schema fields, fixture fields, projection copies, validator checks, tests, and SDLC artifacts; rerun harness contract/read-model validators, schema validation, SDLC validators, and workspace governance preflight.",
+  "migration_plan": "No runtime migration. This changes contract fixtures and read-model validation only; no persistent provider store, mutation route, dashboard, or adapter execution path is created.",
+  "test_plan": [
+    "python scripts/validate_agentic_service_harness_contract.py --strict",
+    "python scripts/validate_agentic_service_harness_read_models.py --strict",
+    "python scripts/validate_agentic_service_harness_read_model_projections.py --strict",
+    "python scripts/validate_agentic_service_harness_read_model_persistence.py --json",
+    "python scripts/validate_agentic_service_harness_read_model_integrity.py --strict",
+    "python scripts/validate_schemas.py --strict",
+    "python -m pytest tests/test_gateway/test_agentic_service_harness_contract.py tests/test_validate_agentic_service_harness_read_models.py tests/test_validate_agentic_service_harness_read_model_projections.py tests/test_validate_agentic_service_harness_read_model_persistence.py tests/test_validate_agentic_service_harness_read_model_integrity.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_repository_connection_read_model_20260618.json --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/repository-connection-read-model-preflight-receipt.json"
+  ],
+  "uao_ref": "uao://sdlc/repository-connection-read-model/design",
+  "causal_decision_trace_ref": "trace://sdlc/repository-connection-read-model/design",
+  "receipt_ref": "receipt://sdlc/repository-connection-read-model/design"
+}

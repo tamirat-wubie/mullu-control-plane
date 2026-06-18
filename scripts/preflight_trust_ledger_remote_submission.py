@@ -88,6 +88,8 @@ class TrustLedgerRemoteSubmissionPreflightReport:
     ledger_path: str
     next_ledger_sequence: int
     previous_submission_hash: str
+    anchor_artifact_root_hash: str
+    anchor_artifact_count: int
     required_artifact_types: tuple[str, ...]
     expected_remote_submission_payload_hash: str
     expected_remote_idempotency_key: str
@@ -119,6 +121,8 @@ class TrustLedgerRemoteSubmissionPreflightReport:
             "ledger_path": self.ledger_path,
             "next_ledger_sequence": self.next_ledger_sequence,
             "previous_submission_hash": self.previous_submission_hash,
+            "anchor_artifact_root_hash": self.anchor_artifact_root_hash,
+            "anchor_artifact_count": self.anchor_artifact_count,
             "required_artifact_types": list(self.required_artifact_types),
             "expected_remote_submission_payload_hash": self.expected_remote_submission_payload_hash,
             "expected_remote_idempotency_key": self.expected_remote_idempotency_key,
@@ -322,6 +326,8 @@ def preflight_trust_ledger_remote_submission(
         "ledger_path": ledger_path_label,
         "next_ledger_sequence": int(projection["next_ledger_sequence"]),
         "previous_submission_hash": str(projection["previous_submission_hash"]),
+        "anchor_artifact_root_hash": str(projection["anchor_artifact_root_hash"]),
+        "anchor_artifact_count": int(projection["anchor_artifact_count"]),
         "required_artifact_types": list(projection["required_artifact_types"]),
         "expected_remote_submission_payload_hash": str(projection["expected_remote_submission_payload_hash"]),
         "expected_remote_idempotency_key": str(projection["expected_remote_idempotency_key"]),
@@ -353,6 +359,8 @@ def preflight_trust_ledger_remote_submission(
         ledger_path=ledger_path_label,
         next_ledger_sequence=int(projection["next_ledger_sequence"]),
         previous_submission_hash=str(projection["previous_submission_hash"]),
+        anchor_artifact_root_hash=str(projection["anchor_artifact_root_hash"]),
+        anchor_artifact_count=int(projection["anchor_artifact_count"]),
         required_artifact_types=tuple(projection["required_artifact_types"]),
         expected_remote_submission_payload_hash=str(projection["expected_remote_submission_payload_hash"]),
         expected_remote_idempotency_key=str(projection["expected_remote_idempotency_key"]),
@@ -388,6 +396,8 @@ def _project_remote_payload_identity(
             "hard_block": False,
             "next_ledger_sequence": 0,
             "previous_submission_hash": "",
+            "anchor_artifact_root_hash": "",
+            "anchor_artifact_count": 0,
             "required_artifact_types": (),
             "expected_remote_submission_payload_hash": "",
             "expected_remote_idempotency_key": "",
@@ -403,6 +413,8 @@ def _project_remote_payload_identity(
             "hard_block": True,
             "next_ledger_sequence": 0,
             "previous_submission_hash": "",
+            "anchor_artifact_root_hash": "",
+            "anchor_artifact_count": 0,
             "required_artifact_types": (),
             "expected_remote_submission_payload_hash": "",
             "expected_remote_idempotency_key": "",
@@ -410,6 +422,8 @@ def _project_remote_payload_identity(
 
     next_ledger_sequence = int(ledger_state.get("submission_count", 0)) + 1
     previous_submission_hash = str(ledger_state.get("latest_submission_hash", ZERO_HASH))
+    anchor_artifact_root_hash = str(receipt_payload["payload"]["artifact_root_hash"])
+    anchor_artifact_count = int(receipt_payload["payload"]["artifact_count"])
     required_artifact_types = tuple(str(value) for value in receipt_payload["payload"]["required_artifact_types"])
     remote_payload = _build_remote_submission_payload(
         verification=anchor_verification,
@@ -428,6 +442,8 @@ def _project_remote_payload_identity(
         "hard_block": False,
         "next_ledger_sequence": next_ledger_sequence,
         "previous_submission_hash": previous_submission_hash,
+        "anchor_artifact_root_hash": anchor_artifact_root_hash,
+        "anchor_artifact_count": anchor_artifact_count,
         "required_artifact_types": required_artifact_types,
         "expected_remote_submission_payload_hash": payload_hash,
         "expected_remote_idempotency_key": payload_hash,

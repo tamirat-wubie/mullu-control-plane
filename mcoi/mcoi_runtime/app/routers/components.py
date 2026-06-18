@@ -28,6 +28,10 @@ from mcoi_runtime.app.component_request_simulator import (
     ComponentRequestSimulationError,
     simulate_component_request,
 )
+from mcoi_runtime.app.symbol_operator_read_models import (
+    SymbolOperatorReadModelError,
+    build_component_symbol_read_model,
+)
 from mcoi_runtime.app.routers.deps import deps
 
 
@@ -53,6 +57,25 @@ def components_read_model() -> dict[str, Any]:
             detail={
                 "error": "component read model unavailable",
                 "error_code": "component_read_model_unavailable",
+                "governed": True,
+                "detail": str(exc)[:200],
+            },
+        ) from exc
+
+
+@router.get("/api/v1/components/symbols")
+def components_symbol_read_model() -> dict[str, Any]:
+    """Return read-only UniversalSymbol projections for registered components."""
+
+    _inc_metric("requests_governed")
+    try:
+        return build_component_symbol_read_model()
+    except (ComponentReadModelError, SymbolOperatorReadModelError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "component symbol read model unavailable",
+                "error_code": "component_symbol_read_model_unavailable",
                 "governed": True,
                 "detail": str(exc)[:200],
             },

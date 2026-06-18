@@ -14,10 +14,16 @@ Invariants:
 
 from __future__ import annotations
 
+from copy import deepcopy
+import json
 from pathlib import Path
+
+import pytest
 
 from mcoi_runtime.personal_assistant import (
     ConnectorProofRef,
+    PersonalAssistantInvariantError,
+    PersonalAssistantSkillRegistry,
     RequestExecutionMode,
     SkillRiskLevel,
     build_clarification_requests,
@@ -28,6 +34,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 ROOT = Path(__file__).resolve().parent.parent
 REQUEST_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_request.schema.json"
+REGISTRY_PATH = ROOT / "examples" / "personal_assistant_skill_registry.json"
 SUBMITTED_AT = "2026-06-14T00:00:00+00:00"
 
 
@@ -54,6 +61,8 @@ def test_inbox_request_with_connector_proof_compiles_to_read_and_draft_intent() 
     assert intent.missing_bindings == ()
     assert intent.requested_skill_ids == ("email.inbox.summarize", "email.response.draft")
     assert "send" in intent.blocked_actions
+    assert request_payload["metadata"]["capability_pack_binding_valid"] is True
+    assert request_payload["metadata"]["local_capability_ref_count"] >= 1
     assert request_payload["metadata"]["live_connector_execution_allowed"] is False
 
 
@@ -177,3 +186,44 @@ def test_unknown_request_blocks_on_action_boundary_clarification() -> None:
     assert clarification.request_id.endswith("action_boundary_unknown")
     assert "missing_skill_boundary" in clarification.context
     assert clarification.requested_at == SUBMITTED_AT
+
+
+def test_intake_rejects_registry_with_unbound_local_capability_ref() -> None:
+    registry_payload = _load_json(REGISTRY_PATH)
+    mutated_skill = deepcopy(_skill_by_id(registry_payload, "email.inbox.summarize"))
+    mutated_skill["skill_id"] = "email.inbox.unbound_local_ref"
+    mutated_skill["capability_refs"] = ["personal_assistant.unbound_intake_ref"]
+    registry_payload["skills"] = [mutated_skill]
+    registry = PersonalAssistantSkillRegistry.from_mapping(registry_payload)
+
+    with pytest.raises(PersonalAssistantInvariantError) as exc_info:
+        interpret_user_request(
+            "Check important inbox items.",
+            request_id="pa_request_runtime_unbound_capability_001",
+            submitted_at=SUBMITTED_AT,
+            connector_refs=(
+                ConnectorProofRef(
+                    connector_id="connector:gmail:operator",
+                    connector_name="gmail",
+                    proof_state="Pass",
+                    private_data_allowed=True,
+                    scopes=("gmail.readonly",),
+                ),
+            ),
+            registry=registry,
+        )
+
+    assert "unbound local capability refs" in str(exc_info.value)
+    assert "personal_assistant.unbound_intake_ref" in str(exc_info.value)
+    assert "email.inbox.unbound_local_ref" not in str(exc_info.value)
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _skill_by_id(registry_payload: dict, skill_id: str) -> dict:
+    for skill in registry_payload["skills"]:
+        if skill["skill_id"] == skill_id:
+            return skill
+    raise AssertionError(f"missing skill {skill_id}")
