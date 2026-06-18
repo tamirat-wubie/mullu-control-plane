@@ -1966,6 +1966,43 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "channel_approval_strength_policy",
+            [
+                "evaluate_channel_approval_strength",
+                "validate_channel_approval_strength_policy",
+                "channel_approval_strength_policy.foundation",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/channel_approval_strength.py",
+                "schemas/channel_approval_strength_policy.schema.json",
+                "examples/channel_approval_strength_policy.foundation.json",
+                "scripts/validate_channel_approval_strength_policy.py",
+                "tests/test_gateway/test_channel_approval_strength.py",
+                "tests/test_validate_channel_approval_strength_policy.py",
+            ],
+            "Foundation Mode channel approval-strength policy blocks casual approvals without request ids, unbound cross-channel approvals, expired approvals, identity or tenant mismatches, high-risk approvals without operator-bound sessions, and critical approvals without dual control.",
+            [
+                "casual_yes_without_request_id_is_blocked",
+                "bound_same_channel_medium_approval_is_allowed",
+                "cross_channel_approval_requires_binding_witness",
+                "cross_channel_bound_medium_approval_is_allowed",
+                "high_risk_external_message_without_operator_session_is_blocked",
+                "high_risk_operator_bound_approval_is_allowed",
+                "critical_risk_requires_second_approval",
+                "critical_dual_control_approval_is_allowed",
+                "unknown_channel_is_untrusted_and_blocks",
+                "channel_approval_strength_policy_example_passes",
+                "channel_approval_strength_policy_rejects_default_allow",
+                "channel_approval_strength_policy_rejects_missing_cross_channel_binding",
+                "channel_approval_strength_policy_rejects_high_risk_downgrade",
+                "channel_approval_strength_policy_rejects_missing_casual_text_obligation",
+            ],
+        ),
+        _surface(
             "restricted_adapter_worker_boundaries",
             [
                 "/browser/execute",
@@ -11660,6 +11697,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_read_only_search_worker_path_contract",
             "surfaces": ["read_only_search_worker_path"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_channel_approval_strength_policy_contract",
+            "surfaces": ["channel_approval_strength_policy"],
             "status": "closed",
         },
         {

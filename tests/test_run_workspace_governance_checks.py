@@ -62,6 +62,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
+        "channel_approval_strength_policy",
         "component_registry",
         "component_lifecycle_transition_receipts",
         "component_authority_envelope_witnesses",
@@ -229,6 +230,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_authority_transitions",
+        "channel_approval_strength_policy",
+    )
+    assert_ordered(
+        "channel_approval_strength_policy",
         "component_registry",
     )
     assert_ordered(

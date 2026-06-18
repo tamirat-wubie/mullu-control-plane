@@ -316,7 +316,7 @@ The flow gives the product a clear first-time user path without forcing the user
 Fracture delta:
 
 ```text
-The flow exposes missing durable interpretation, clarification, search gating, receipt viewer, and channel approval-strength rules.
+The flow exposes remaining gaps in clarification expansion, source-level search evidence, approval-strength receipt wiring, and external-channel hardening.
 ```
 
 Refinement:

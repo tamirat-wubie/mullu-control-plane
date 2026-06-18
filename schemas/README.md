@@ -94,6 +94,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `gateway_health.schema.json` | Canonical public gateway health read model |
 | `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |
+| `channel_approval_strength_policy.schema.json` | Canonical Foundation Mode channel trust and approval-strength policy |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `production_evidence_witness.schema.json` | Canonical live gateway production evidence witness response |
 | `proof_verification_endpoint.schema.json` | Canonical live gateway proof verification response |

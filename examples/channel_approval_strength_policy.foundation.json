@@ -1,0 +1,131 @@
+{
+  "policy_id": "channel_approval_strength_policy.foundation",
+  "schema_ref": "urn:mullusi:schema:channel-approval-strength-policy:1",
+  "foundation_mode_only": true,
+  "default_decision": "block",
+  "channel_trust": [
+    {
+      "channel": "operator_console",
+      "trust_class": "trusted_control",
+      "approval_ceiling": "dual_control"
+    },
+    {
+      "channel": "operator_goal_intake",
+      "trust_class": "trusted_control",
+      "approval_ceiling": "operator_bound"
+    },
+    {
+      "channel": "web",
+      "trust_class": "trusted_control",
+      "approval_ceiling": "operator_bound"
+    },
+    {
+      "channel": "slack",
+      "trust_class": "verified_external",
+      "approval_ceiling": "request_bound"
+    },
+    {
+      "channel": "teams",
+      "trust_class": "verified_external",
+      "approval_ceiling": "request_bound"
+    },
+    {
+      "channel": "whatsapp",
+      "trust_class": "weak_external",
+      "approval_ceiling": "request_bound"
+    },
+    {
+      "channel": "sms",
+      "trust_class": "weak_external",
+      "approval_ceiling": "contextual"
+    },
+    {
+      "channel": "email",
+      "trust_class": "weak_external",
+      "approval_ceiling": "request_bound"
+    }
+  ],
+  "risk_strength_matrix": [
+    {
+      "risk_tier": "low",
+      "required_strength": "contextual",
+      "minimum_controls": [
+        "tenant_identity_bound",
+        "actor_identity_bound"
+      ]
+    },
+    {
+      "risk_tier": "medium",
+      "required_strength": "request_bound",
+      "minimum_controls": [
+        "tenant_identity_bound",
+        "actor_identity_bound",
+        "request_id_bound",
+        "approval_not_expired"
+      ]
+    },
+    {
+      "risk_tier": "high",
+      "required_strength": "operator_bound",
+      "minimum_controls": [
+        "tenant_identity_bound",
+        "actor_identity_bound",
+        "request_id_bound",
+        "approval_not_expired",
+        "actor_approval_authority_required",
+        "operator_bound_approval_required"
+      ]
+    },
+    {
+      "risk_tier": "critical",
+      "required_strength": "dual_control",
+      "minimum_controls": [
+        "tenant_identity_bound",
+        "actor_identity_bound",
+        "request_id_bound",
+        "approval_not_expired",
+        "actor_approval_authority_required",
+        "operator_bound_approval_required",
+        "dual_control_required"
+      ]
+    }
+  ],
+  "cross_channel_rules": {
+    "same_identity_required": true,
+    "same_tenant_required": true,
+    "same_request_id_required": true,
+    "binding_witness_required": true,
+    "unbound_cross_channel_approval_decision": "block"
+  },
+  "blocked_patterns": [
+    "casual_yes_without_request_id",
+    "expired_approval_response",
+    "identity_mismatch",
+    "tenant_mismatch",
+    "untrusted_response_channel",
+    "cross_channel_without_binding_witness",
+    "high_risk_without_operator_bound_approval",
+    "critical_without_dual_control"
+  ],
+  "required_receipts": [
+    "approval_request_receipt",
+    "approval_strength_policy_receipt",
+    "identity_binding_receipt",
+    "tenant_binding_receipt",
+    "request_id_binding_receipt",
+    "channel_binding_witness",
+    "approval_resolution_receipt",
+    "denial_receipt"
+  ],
+  "proof_obligations": [
+    "tenant_identity_bound",
+    "actor_identity_bound",
+    "request_id_bound",
+    "approval_not_expired",
+    "risk_strength_satisfied",
+    "cross_channel_binding_when_channels_differ",
+    "high_risk_operator_bound",
+    "critical_dual_control",
+    "no_casual_text_approval"
+  ]
+}

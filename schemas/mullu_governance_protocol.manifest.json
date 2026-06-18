@@ -1181,6 +1181,12 @@
       "surface": "policy"
     },
     {
+      "schema_id": "channel-approval-strength-policy",
+      "path": "schemas/channel_approval_strength_policy.schema.json",
+      "urn": "urn:mullusi:schema:channel-approval-strength-policy:1",
+      "surface": "approval"
+    },
+    {
       "schema_id": "policy-rule",
       "path": "schemas/policy_rule.schema.json",
       "urn": "urn:mullusi:schema:policy-rule:1",

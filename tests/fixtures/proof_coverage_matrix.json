@@ -818,6 +818,13 @@
       ]
     },
     {
+      "action_id": "publish_channel_approval_strength_policy_contract",
+      "status": "closed",
+      "surfaces": [
+        "channel_approval_strength_policy"
+      ]
+    },
+    {
       "action_id": "publish_software_dev_capability_pack_contract",
       "status": "closed",
       "surfaces": [
@@ -1413,7 +1420,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 130,
+      "action_proof": 131,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1421,13 +1428,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 182,
+      "audit_chain": 183,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 75,
+      "proven": 76,
       "unproven": 0,
       "witnessed": 110
     },
@@ -1436,14 +1443,14 @@
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 129
+      "request_proof": 130
     },
-    "surface_count": 185
+    "surface_count": 186
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 185,
+      "strong": 186,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5500,6 +5507,43 @@
         "read_only_search_worker_rejects_secret_like_input_values"
       ],
       "surface_id": "read_only_search_worker_path"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/channel_approval_strength.py",
+        "schemas/channel_approval_strength_policy.schema.json",
+        "examples/channel_approval_strength_policy.foundation.json",
+        "scripts/validate_channel_approval_strength_policy.py",
+        "tests/test_gateway/test_channel_approval_strength.py",
+        "tests/test_validate_channel_approval_strength_policy.py"
+      ],
+      "notes": "Foundation Mode channel approval-strength policy blocks casual approvals without request ids, unbound cross-channel approvals, expired approvals, identity or tenant mismatches, high-risk approvals without operator-bound sessions, and critical approvals without dual control.",
+      "representative_paths": [
+        "evaluate_channel_approval_strength",
+        "validate_channel_approval_strength_policy",
+        "channel_approval_strength_policy.foundation"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "casual_yes_without_request_id_is_blocked",
+        "bound_same_channel_medium_approval_is_allowed",
+        "cross_channel_approval_requires_binding_witness",
+        "cross_channel_bound_medium_approval_is_allowed",
+        "high_risk_external_message_without_operator_session_is_blocked",
+        "high_risk_operator_bound_approval_is_allowed",
+        "critical_risk_requires_second_approval",
+        "critical_dual_control_approval_is_allowed",
+        "unknown_channel_is_untrusted_and_blocks",
+        "channel_approval_strength_policy_example_passes",
+        "channel_approval_strength_policy_rejects_default_allow",
+        "channel_approval_strength_policy_rejects_missing_cross_channel_binding",
+        "channel_approval_strength_policy_rejects_high_risk_downgrade",
+        "channel_approval_strength_policy_rejects_missing_casual_text_obligation"
+      ],
+      "surface_id": "channel_approval_strength_policy"
     },
     {
       "action_proof": "action_proof",
@@ -14774,8 +14818,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1875,
-    "runtime_witness_count": 1875,
+    "exact_test_anchor_count": 1889,
+    "runtime_witness_count": 1889,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16699,6 +16743,99 @@
         "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "read_only_search_worker_path",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_casual_yes_without_request_id_is_blocked"
+            ],
+            "witness": "casual_yes_without_request_id_is_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_bound_same_channel_medium_approval_is_allowed"
+            ],
+            "witness": "bound_same_channel_medium_approval_is_allowed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_cross_channel_approval_requires_binding_witness"
+            ],
+            "witness": "cross_channel_approval_requires_binding_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_cross_channel_bound_medium_approval_is_allowed"
+            ],
+            "witness": "cross_channel_bound_medium_approval_is_allowed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_high_risk_external_message_without_operator_session_is_blocked"
+            ],
+            "witness": "high_risk_external_message_without_operator_session_is_blocked"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_high_risk_operator_bound_approval_is_allowed"
+            ],
+            "witness": "high_risk_operator_bound_approval_is_allowed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_critical_risk_requires_second_approval"
+            ],
+            "witness": "critical_risk_requires_second_approval"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_critical_dual_control_approval_is_allowed"
+            ],
+            "witness": "critical_dual_control_approval_is_allowed"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_channel_approval_strength.py::test_unknown_channel_is_untrusted_and_blocks"
+            ],
+            "witness": "unknown_channel_is_untrusted_and_blocks"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_channel_approval_strength_policy.py::test_channel_approval_strength_policy_example_passes"
+            ],
+            "witness": "channel_approval_strength_policy_example_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_channel_approval_strength_policy.py::test_channel_approval_strength_policy_rejects_default_allow"
+            ],
+            "witness": "channel_approval_strength_policy_rejects_default_allow"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_channel_approval_strength_policy.py::test_channel_approval_strength_policy_rejects_missing_cross_channel_binding"
+            ],
+            "witness": "channel_approval_strength_policy_rejects_missing_cross_channel_binding"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_channel_approval_strength_policy.py::test_channel_approval_strength_policy_rejects_high_risk_downgrade"
+            ],
+            "witness": "channel_approval_strength_policy_rejects_high_risk_downgrade"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_channel_approval_strength_policy.py::test_channel_approval_strength_policy_rejects_missing_casual_text_obligation"
+            ],
+            "witness": "channel_approval_strength_policy_rejects_missing_casual_text_obligation"
+          }
+        ],
+        "exact_test_anchor_count": 14,
+        "runtime_witness_count": 14,
+        "surface_id": "channel_approval_strength_policy",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

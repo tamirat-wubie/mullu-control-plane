@@ -32,8 +32,8 @@ Receipts prove.
 | --- | --- | --- | --- | --- | --- |
 | Policy Engine | allow, deny, constrain, or require approval | InterpretedRequest, plan, actor, tenant | PolicyReceipt | implemented / partial | Map user-friendly denial explanations. |
 | Budget Gate | decide whether search, LLM, worker, or execution cost is allowed | estimate, tenant budget, task class | BudgetReceipt | implemented | Plan Review exposes redacted preview, witness, explicit `capability_cost_model` estimates, and optional tenant budget-report evidence with read-only drilldowns. |
-| Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Add channel approval-strength matrix. |
-| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Add cross-channel approval-strength policy. |
+| Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Bind `ChannelApprovalStrengthResult` into channel adapters. |
+| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Record approval-strength policy decisions in approval receipts. |
 | Command Ledger | hold command state and idempotency | approved command | ledger record | implemented / partial | Add richer Current Task filters after worker path selection. |
 | Plan Builder | create actionable plan preview | action intent and slots | CapabilityPlanPreview | implemented / partial | Budget/tool display is exposed in preview and Plan Review with explicit plan-cost estimate sources and optional tenant budget-report overlays. |
 | Plan Ledger | retain plan versions and changes | plan, correction, approval | plan trace | partial | Record re-plan on scope change. |
@@ -65,11 +65,10 @@ blocked_request
 
 | Risk Tier | Example | Minimum Approval |
 | --- | --- | --- |
-| read-only low | search docs, inspect repository | channel approval may be enough when tenant-bound |
-| read-only sensitive | inspect private tenant data | dashboard or stronger verified session |
-| write low | edit draft doc or local file | explicit request-bound approval |
-| write high | deploy, delete, send external message | dashboard confirmation or stronger auth |
-| critical | payment, account change, tenant boundary change | multi-step approval or admin role |
+| low | search docs, inspect repository | contextual approval with tenant and actor binding |
+| medium | inspect private tenant data or schedule low-risk work | request-bound approval with tenant, actor, request ID, and freshness |
+| high | deploy, delete, send external message | operator-bound approval with actor authority and operator session |
+| critical | payment, account change, tenant boundary change | dual-control approval with operator-bound authority |
 
 ## 5. No-bypass rules
 
