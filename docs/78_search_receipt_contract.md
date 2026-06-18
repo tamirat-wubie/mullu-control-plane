@@ -131,5 +131,5 @@ python scripts/validate_protocol_manifest.py
 STATUS:
   Completeness: 100%
   Invariants verified: evidence-only retrieval, no content body retention, current-claim freshness, citation requirement, prompt-injection authority rejection, raw secret rejection, Mfidel atomicity
-  Open issues: tenant-scoped cache reuse policy is still missing
-  Next action: define cache admission before any cache reuse path
+  Open issues: persisted Receipt Viewer search-evidence panel binding is still missing
+  Next action: bind search decision and read-only search evidence into the persisted Receipt Viewer search-evidence panel

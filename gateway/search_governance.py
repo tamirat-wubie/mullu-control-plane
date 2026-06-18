@@ -41,6 +41,40 @@ _CLASSIFICATION_COST = {
 
 
 @dataclass(frozen=True, slots=True)
+class SearchCacheEvidence:
+    """Tenant-scoped cache evidence required before cache reuse."""
+
+    tenant_id: str
+    query_hash: str
+    cache_key_ref: str
+    observed_at: str
+    fresh_until: str
+    stale_cache_used: bool = False
+    evidence_refs: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.tenant_id, str) or not self.tenant_id.strip():
+            raise ValueError("cache_tenant_id_required")
+        if not isinstance(self.query_hash, str) or not self.query_hash.strip():
+            raise ValueError("cache_query_hash_required")
+        if not isinstance(self.cache_key_ref, str) or not self.cache_key_ref.startswith("cache://"):
+            raise ValueError("cache_key_ref_required")
+        if not isinstance(self.observed_at, str) or not self.observed_at.strip():
+            raise ValueError("cache_observed_at_required")
+        if not isinstance(self.fresh_until, str) or not self.fresh_until.strip():
+            raise ValueError("cache_fresh_until_required")
+        if self.stale_cache_used is not False:
+            raise ValueError("stale_cache_reuse_forbidden")
+        object.__setattr__(self, "evidence_refs", tuple(_normalized_text_list(self.evidence_refs, "cache_evidence_refs")))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return JSON-compatible cache evidence metadata."""
+        payload = asdict(self)
+        payload["evidence_refs"] = list(self.evidence_refs)
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
 class SearchDecisionRequest:
     """Input to the deterministic search governance classifier."""
 
@@ -51,6 +85,7 @@ class SearchDecisionRequest:
     budget_limit_units: float = 0.0
     max_result_count: int = 5
     cache_fresh: bool = False
+    cache_evidence: SearchCacheEvidence | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.tenant_id, str) or not self.tenant_id.strip():
@@ -65,6 +100,8 @@ class SearchDecisionRequest:
             raise ValueError("search_budget_limit_nonnegative_required")
         if self.max_result_count < 0:
             raise ValueError("search_max_result_count_nonnegative_required")
+        if self.cache_evidence is not None and not isinstance(self.cache_evidence, SearchCacheEvidence):
+            raise ValueError("search_cache_evidence_invalid")
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,15 +154,21 @@ class SearchDecisionReceipt:
 def build_search_decision_receipt(request: SearchDecisionRequest) -> SearchDecisionReceipt:
     """Build a deterministic search decision receipt."""
     initial_classification = classify_search_need(request.query)
-    classification = "cache" if request.cache_fresh and initial_classification != "no_search" else initial_classification
+    query_hash = canonical_hash({"query": request.query})
+    cache_admission = (
+        _cache_admission(request, query_hash=query_hash)
+        if initial_classification != "no_search"
+        else _cache_not_requested_admission()
+    )
+    classification = "cache" if _cache_path_requested(request, initial_classification) else initial_classification
     estimated_cost = _CLASSIFICATION_COST[classification]
-    freshness_state = _freshness_state(classification, cache_fresh=request.cache_fresh)
+    freshness_state = _freshness_state(classification, cache_admission_state=cache_admission["state"])
     budget_state, budget_blockers = _budget_state(
         classification=classification,
         estimated_cost_units=estimated_cost,
         budget_limit_units=request.budget_limit_units,
     )
-    blocked_reasons = tuple(dict.fromkeys(budget_blockers))
+    blocked_reasons = tuple(dict.fromkeys((*budget_blockers, *_cache_blockers(classification, cache_admission))))
     decision = _decision(
         classification=classification,
         freshness_state=freshness_state,
@@ -138,7 +181,7 @@ def build_search_decision_receipt(request: SearchDecisionRequest) -> SearchDecis
         tenant_id=request.tenant_id.strip(),
         actor_id=request.actor_id.strip(),
         capability_id=SEARCH_CAPABILITY_ID,
-        query_hash=canonical_hash({"query": request.query}),
+        query_hash=query_hash,
         search_classification=classification,
         freshness_state=freshness_state,
         budget_state=budget_state,
@@ -154,6 +197,7 @@ def build_search_decision_receipt(request: SearchDecisionRequest) -> SearchDecis
             "raw_query_exposed": False,
             "search_budget_checked": True,
             "search_freshness_checked": True,
+            "cache_admission": cache_admission,
         },
     )
     receipt_hash = canonical_hash(asdict(receipt))
@@ -178,11 +222,13 @@ def classify_search_need(text: str) -> str:
     return "cache" if query.endswith("?") else "no_search"
 
 
-def _freshness_state(classification: str, *, cache_fresh: bool) -> str:
+def _freshness_state(classification: str, *, cache_admission_state: str) -> str:
     if classification == "no_search":
         return "not_required"
-    if cache_fresh:
+    if classification == "cache" and cache_admission_state == "allowed":
         return "cache_fresh"
+    if classification == "cache":
+        return "refresh_required"
     if classification in {"light_web_search", "deep_search"}:
         return "source_required"
     return "not_required"
@@ -217,6 +263,85 @@ def _decision(
     if freshness_state == "cache_fresh":
         return "use_cache"
     return "allow_search"
+
+
+def _cache_path_requested(request: SearchDecisionRequest, initial_classification: str) -> bool:
+    return initial_classification == "cache" or (
+        (request.cache_fresh or request.cache_evidence is not None) and initial_classification != "no_search"
+    )
+
+
+def _cache_admission(request: SearchDecisionRequest, *, query_hash: str) -> dict[str, Any]:
+    if not request.cache_fresh and request.cache_evidence is None:
+        return _cache_not_requested_admission()
+    if request.cache_evidence is None:
+        return _blocked_cache_admission("cache_evidence_required")
+
+    evidence = request.cache_evidence
+    blocked_reasons = []
+    if evidence.tenant_id.strip() != request.tenant_id.strip():
+        blocked_reasons.append("cache_tenant_mismatch")
+    if evidence.query_hash.strip() != query_hash:
+        blocked_reasons.append("cache_query_hash_mismatch")
+    if evidence.stale_cache_used is not False:
+        blocked_reasons.append("stale_cache_reuse_forbidden")
+    if not evidence.evidence_refs:
+        blocked_reasons.append("cache_evidence_refs_required")
+
+    return {
+        "state": "blocked" if blocked_reasons else "allowed",
+        "cache_key_ref": evidence.cache_key_ref,
+        "tenant_scoped": evidence.tenant_id.strip() == request.tenant_id.strip(),
+        "query_hash_matches": evidence.query_hash.strip() == query_hash,
+        "freshness_proved": not blocked_reasons,
+        "stale_cache_used": evidence.stale_cache_used,
+        "blocked_reasons": blocked_reasons,
+        "evidence_refs": list(evidence.evidence_refs),
+        "observed_at": evidence.observed_at,
+        "fresh_until": evidence.fresh_until,
+    }
+
+
+def _blocked_cache_admission(reason: str) -> dict[str, Any]:
+    return {
+        "state": "blocked",
+        "cache_key_ref": None,
+        "tenant_scoped": False,
+        "query_hash_matches": False,
+        "freshness_proved": False,
+        "stale_cache_used": False,
+        "blocked_reasons": [reason],
+        "evidence_refs": [],
+    }
+
+
+def _cache_not_requested_admission() -> dict[str, Any]:
+    return {
+        "state": "not_requested",
+        "cache_key_ref": None,
+        "tenant_scoped": True,
+        "query_hash_matches": False,
+        "freshness_proved": False,
+        "stale_cache_used": False,
+        "blocked_reasons": [],
+        "evidence_refs": [],
+    }
+
+
+def _cache_blockers(classification: str, cache_admission: dict[str, Any]) -> tuple[str, ...]:
+    blockers = tuple(cache_admission["blocked_reasons"])
+    if classification == "cache" and cache_admission["state"] != "allowed" and not blockers:
+        return ("cache_evidence_required",)
+    return blockers
+
+
+def _normalized_text_list(values: tuple[str, ...], field_name: str) -> list[str]:
+    normalized = []
+    for index, value in enumerate(values):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name}_{index}_required")
+        normalized.append(value.strip())
+    return normalized
 
 
 def _utc_timestamp() -> str:

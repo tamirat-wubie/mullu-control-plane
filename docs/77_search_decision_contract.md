@@ -14,6 +14,7 @@ Does this request need search?
 Does it require fresh evidence?
 Which source classes are allowed?
 Is budget approval required?
+Is cache reuse backed by tenant-scoped fresh evidence?
 Can retrieved content influence tools or policy?
 What evidence proves the decision?
 ```
@@ -51,6 +52,23 @@ Retrieved content is evidence only. A page, document, email, or connector result
 
 Prompt-injection text inside retrieved content is classified as source content, not governance authority. If retrieved sources conflict or freshness is stale, the answer path must cite uncertainty or block the current-information claim.
 
-## 5. Foundation Mode
+## 5. Cache Admission
+
+`CACHE_HIT_ALLOWED` requires `metadata.cache_admission.state = allowed`.
+
+Cache reuse is denied unless all cache evidence is:
+
+```text
+tenant-scoped to the request tenant
+query-hash matched to the request query
+freshness-proved by retained evidence refs
+non-stale
+raw-query free
+```
+
+A `cache_fresh` flag without matching `SearchCacheEvidence` records
+`cache_evidence_required` and returns `block_search`.
+
+## 6. Foundation Mode
 
 Foundation Mode prefers local evidence and reversible proof threads. External retrieval and connector retrieval remain `AwaitingEvidence` unless a governed worker, budget gate, tenant scope, and receipt chain prove the action.

@@ -59,6 +59,27 @@ def test_search_decision_receipt_rejects_instruction_authority() -> None:
     assert "retrieval instruction authority must be false" in errors
 
 
+def test_search_decision_receipt_rejects_cache_without_admission() -> None:
+    payload = _example_payload()
+    payload["search_classification"] = "cache"
+    payload["freshness_state"] = "cache_fresh"
+    payload["budget_state"] = "not_required"
+    payload["decision"] = "use_cache"
+    payload["metadata"] = copy.deepcopy(payload["metadata"])
+    payload["metadata"]["cache_admission"] = {
+        "state": "blocked",
+        "tenant_scoped": False,
+        "query_hash_matches": False,
+        "stale_cache_used": False,
+    }
+
+    errors = validator.validate_search_decision_receipt(payload)
+
+    assert "use_cache requires allowed cache_admission" in errors
+    assert "use_cache requires tenant-scoped cache evidence" not in errors
+    assert payload["decision"] == "use_cache"
+
+
 def test_search_decision_runtime_scenarios_cover_budget_and_freshness() -> None:
     errors = validator.validate_generated_search_scenarios()
 

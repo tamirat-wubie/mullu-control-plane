@@ -39,7 +39,7 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Search Need Classifier | decide whether retrieval is needed | interpreted intent, local knowledge | search state | implemented / partial | `SearchDecision` records the pre-retrieval classification. |
 | Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness requirement | implemented / partial | `SearchDecision.freshness` records current-claim eligibility before retrieval. |
 | Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | implemented / partial | `SearchDecision.source_plan` prefers local evidence and blocks external retrieval when approval is missing. |
-| Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / unknown | Add tenant-scoped cache rules before use. |
+| Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | implemented / partial | `SearchDecision.metadata.cache_admission` allows cache reuse only with tenant-scoped, query-hash-matched, fresh, non-stale evidence; no cache store is implemented here. |
 | Retriever | collect evidence from selected sources | source plan | evidence set | implemented / partial | Local read-only search returns bounded excerpts while SearchReceipt stores metadata only. |
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | implemented / partial | Local deterministic ranking is path/line/excerpt stable; bounded polarity conflicts are marked as conflict refs; stale classification remains partial. |
 | Citation Builder | create source references | ranked evidence | citations | implemented / partial | Local SearchReceipt emits citation refs and evidence refs without storing retrieved bodies. |
@@ -106,6 +106,7 @@ Prompt injection text inside search results must not control tools, policy, appr
 Local source instruction markers are recorded as `instruction_authority_rejected` retrieval errors.
 Local matching lines with the same normalized claim subject and opposing bounded polarity terms are recorded as `conflict://local-docs/...` refs.
 Private or tenant-sensitive search must stay tenant-scoped.
+Cache reuse requires tenant-scoped, query-hash-matched, fresh evidence.
 Deep search requires budget approval when policy requires it.
 Source freshness must be visible for current-information answers.
 ```

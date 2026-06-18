@@ -28,10 +28,11 @@ WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
-from gateway.command_spine import _CAPABILITY_PASSPORTS  # noqa: E402
+from gateway.command_spine import _CAPABILITY_PASSPORTS, canonical_hash  # noqa: E402
 from gateway.search_governance import (  # noqa: E402
     SEARCH_CAPABILITY_ID,
     SEARCH_DECISION_RECEIPT_SCHEMA_REF,
+    SearchCacheEvidence,
     SearchDecisionRequest,
     build_search_decision_receipt,
 )
@@ -79,6 +80,18 @@ def validate_search_decision_receipt(
             errors.append("current or deep search must require source freshness")
     if payload.get("decision") == "allow_search" and payload.get("budget_state") != "allowed":
         errors.append("allow_search requires allowed budget_state")
+    if payload.get("decision") == "use_cache":
+        cache_admission = payload.get("metadata", {}).get("cache_admission")
+        if not isinstance(cache_admission, dict):
+            errors.append("use_cache requires metadata.cache_admission")
+        elif cache_admission.get("state") != "allowed":
+            errors.append("use_cache requires allowed cache_admission")
+        elif cache_admission.get("tenant_scoped") is not True:
+            errors.append("use_cache requires tenant-scoped cache evidence")
+        elif cache_admission.get("query_hash_matches") is not True:
+            errors.append("use_cache requires query-hash-matched cache evidence")
+        elif cache_admission.get("stale_cache_used") is not False:
+            errors.append("use_cache forbids stale cache reuse")
 
     return errors
 
@@ -104,6 +117,33 @@ def validate_generated_search_scenarios() -> list[str]:
             generated_at="2026-06-16T14:00:00+00:00",
         )
     )
+    cache_query = "what is the stable internal policy?"
+    cache_allowed = build_search_decision_receipt(
+        SearchDecisionRequest(
+            tenant_id="foundation-tenant",
+            actor_id="operator",
+            query=cache_query,
+            cache_fresh=True,
+            cache_evidence=SearchCacheEvidence(
+                tenant_id="foundation-tenant",
+                query_hash=canonical_hash({"query": cache_query}),
+                cache_key_ref="cache://foundation-tenant/stable-internal-policy",
+                observed_at="2026-06-16T13:55:00+00:00",
+                fresh_until="2026-06-16T14:30:00+00:00",
+                evidence_refs=("cache-evidence://foundation-tenant/stable-internal-policy",),
+            ),
+            generated_at="2026-06-16T14:00:00+00:00",
+        )
+    )
+    cache_blocked = build_search_decision_receipt(
+        SearchDecisionRequest(
+            tenant_id="foundation-tenant",
+            actor_id="operator",
+            query=cache_query,
+            cache_fresh=True,
+            generated_at="2026-06-16T14:00:00+00:00",
+        )
+    )
 
     if current_info.search_classification != "light_web_search":
         errors.append("current information query must classify as light_web_search")
@@ -120,6 +160,14 @@ def validate_generated_search_scenarios() -> list[str]:
         errors.append("under-budgeted deep search must be blocked")
     if "search_budget_limit_exceeded" not in deep_blocked.blocked_reasons:
         errors.append("under-budgeted deep search must record budget blocker")
+    if cache_allowed.decision != "use_cache":
+        errors.append("fresh tenant cache evidence must allow cache reuse")
+    if cache_allowed.metadata["cache_admission"]["state"] != "allowed":
+        errors.append("fresh tenant cache evidence must have allowed cache_admission")
+    if cache_blocked.decision != "block_search":
+        errors.append("cache reuse without evidence must be blocked")
+    if "cache_evidence_required" not in cache_blocked.blocked_reasons:
+        errors.append("cache reuse without evidence must record cache_evidence_required")
 
     return errors
 
