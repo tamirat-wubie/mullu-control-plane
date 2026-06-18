@@ -7837,6 +7837,66 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_failure_receipt_path_witness",
+            [
+                "MafFailureReceiptPathWitness",
+                "validate_maf_failure_receipt_path_witness",
+                "maf_failure_receipt_path_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_failure_receipt_path_witness.schema.json",
+                "examples/maf_failure_receipt_path_witness.foundation.json",
+                "scripts/validate_maf_failure_receipt_path_witness.py",
+                "tests/test_validate_maf_failure_receipt_path_witness.py",
+                "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+                "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+                "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+                "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/verification_result.schema.json",
+                "schemas/kernel_proof.schema.json",
+                "schemas/sdlc_transition_receipt.schema.json",
+                "docs/97_maf_failure_receipt_path_witness.md",
+                "docs/96_maf_deterministic_fixture_parity_witness.md",
+                "maf/rust/crates/maf-cli/src/main.rs",
+            ],
+            "MAF failure receipt path witnesses bind static failure materialization path descriptor digests for verify-receipt-chain, verify-kernel-proof, and emit-transition-receipt while keeping runtime binding, command behavior, CLI execution, subprocess execution, Rust execution, PyO3, connector calls, writes, raw failure payload retention, runtime dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_failure_receipt_path_witness_schema_valid",
+                "maf_failure_receipt_path_witness_denies_execution",
+                "maf_failure_receipt_path_witness_requires_failure_path_controls",
+                "maf_failure_receipt_path_witness_rejects_control_drift",
+                "maf_failure_receipt_path_witness_rejects_digest_and_summary_drift",
+                "maf_failure_receipt_path_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_failure_receipt_path_witness_schema_valid": [
+                    "maf_failure_receipt_path_witness_passes"
+                ],
+                "maf_failure_receipt_path_witness_denies_execution": [
+                    "maf_failure_receipt_path_witness_passes",
+                    "maf_failure_receipt_path_rejects_authority_drift",
+                ],
+                "maf_failure_receipt_path_witness_requires_failure_path_controls": [
+                    "maf_failure_receipt_path_witness_passes",
+                    "maf_failure_receipt_path_rejects_scope_and_future_drift",
+                ],
+                "maf_failure_receipt_path_witness_rejects_control_drift": [
+                    "maf_failure_receipt_path_rejects_control_drift"
+                ],
+                "maf_failure_receipt_path_witness_rejects_digest_and_summary_drift": [
+                    "maf_failure_receipt_path_rejects_digest_and_summary_drift"
+                ],
+                "maf_failure_receipt_path_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_failure_receipt_path"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -12167,6 +12227,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_deterministic_fixture_parity_witness_contract",
             "surfaces": ["maf_deterministic_fixture_parity_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_failure_receipt_path_witness_contract",
+            "surfaces": ["maf_failure_receipt_path_witness"],
             "status": "closed",
         },
         {

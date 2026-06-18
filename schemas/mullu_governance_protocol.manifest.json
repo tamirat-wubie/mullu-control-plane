@@ -755,6 +755,12 @@
       "surface": "maf"
     },
     {
+      "schema_id": "maf-failure-receipt-path-witness",
+      "path": "schemas/maf_failure_receipt_path_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-failure-receipt-path-witness:1",
+      "surface": "maf"
+    },
+    {
       "schema_id": "world-substrate-replay-witness",
       "path": "schemas/world_substrate_replay_witness.schema.json",
       "urn": "urn:mullusi:schema:world-substrate-replay-witness:1",

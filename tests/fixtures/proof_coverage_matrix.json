@@ -1070,6 +1070,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_failure_receipt_path_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_failure_receipt_path_witness"
+      ]
+    },
+    {
       "action_id": "publish_world_substrate_replay_witness_contract",
       "status": "closed",
       "surfaces": [
@@ -1448,7 +1455,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 135,
+      "action_proof": 136,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 53,
@@ -1456,7 +1463,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 188,
+      "audit_chain": 189,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1464,21 +1471,21 @@
     "by_coverage_state": {
       "proven": 77,
       "unproven": 0,
-      "witnessed": 114
+      "witnessed": 115
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 134
+      "request_proof": 135
     },
-    "surface_count": 191
+    "surface_count": 192
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 191,
+      "strong": 192,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11622,6 +11629,66 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_failure_receipt_path_witness.schema.json",
+        "examples/maf_failure_receipt_path_witness.foundation.json",
+        "scripts/validate_maf_failure_receipt_path_witness.py",
+        "tests/test_validate_maf_failure_receipt_path_witness.py",
+        "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+        "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+        "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+        "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/verification_result.schema.json",
+        "schemas/kernel_proof.schema.json",
+        "schemas/sdlc_transition_receipt.schema.json",
+        "docs/97_maf_failure_receipt_path_witness.md",
+        "docs/96_maf_deterministic_fixture_parity_witness.md",
+        "maf/rust/crates/maf-cli/src/main.rs"
+      ],
+      "notes": "MAF failure receipt path witnesses bind static failure materialization path descriptor digests for verify-receipt-chain, verify-kernel-proof, and emit-transition-receipt while keeping runtime binding, command behavior, CLI execution, subprocess execution, Rust execution, PyO3, connector calls, writes, raw failure payload retention, runtime dispatch, terminal closure, and success claims denied.",
+      "representative_paths": [
+        "MafFailureReceiptPathWitness",
+        "validate_maf_failure_receipt_path_witness",
+        "maf_failure_receipt_path_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_failure_receipt_path_witness_denies_execution": [
+          "maf_failure_receipt_path_witness_passes",
+          "maf_failure_receipt_path_rejects_authority_drift"
+        ],
+        "maf_failure_receipt_path_witness_rejects_control_drift": [
+          "maf_failure_receipt_path_rejects_control_drift"
+        ],
+        "maf_failure_receipt_path_witness_rejects_digest_and_summary_drift": [
+          "maf_failure_receipt_path_rejects_digest_and_summary_drift"
+        ],
+        "maf_failure_receipt_path_witness_requires_failure_path_controls": [
+          "maf_failure_receipt_path_witness_passes",
+          "maf_failure_receipt_path_rejects_scope_and_future_drift"
+        ],
+        "maf_failure_receipt_path_witness_schema_valid": [
+          "maf_failure_receipt_path_witness_passes"
+        ],
+        "maf_failure_receipt_path_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_failure_receipt_path"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_failure_receipt_path_witness_schema_valid",
+        "maf_failure_receipt_path_witness_denies_execution",
+        "maf_failure_receipt_path_witness_requires_failure_path_controls",
+        "maf_failure_receipt_path_witness_rejects_control_drift",
+        "maf_failure_receipt_path_witness_rejects_digest_and_summary_drift",
+        "maf_failure_receipt_path_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_failure_receipt_path_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -15138,8 +15205,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1922,
-    "runtime_witness_count": 1922,
+    "exact_test_anchor_count": 1928,
+    "runtime_witness_count": 1928,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -24340,6 +24407,53 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "maf_deterministic_fixture_parity_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_witness_passes"
+            ],
+            "witness": "maf_failure_receipt_path_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_witness_passes",
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_authority_drift"
+            ],
+            "witness": "maf_failure_receipt_path_witness_denies_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_witness_passes",
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_scope_and_future_drift"
+            ],
+            "witness": "maf_failure_receipt_path_witness_requires_failure_path_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_control_drift"
+            ],
+            "witness": "maf_failure_receipt_path_witness_rejects_control_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_digest_and_summary_drift"
+            ],
+            "witness": "maf_failure_receipt_path_witness_rejects_digest_and_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_failure_receipt_path_witness.py::test_sdlc_requirement_and_design_validate_for_maf_failure_receipt_path"
+            ],
+            "witness": "maf_failure_receipt_path_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_failure_receipt_path_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
