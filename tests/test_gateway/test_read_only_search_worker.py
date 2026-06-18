@@ -27,11 +27,13 @@ from gateway.read_only_search_worker import (
 )
 from gateway.search_governance import SEARCH_CAPABILITY_ID, SearchDecisionRequest, build_search_decision_receipt
 from gateway.worker_mesh import NetworkedWorkerMesh, WorkerDispatchRequest
+from scripts import validate_search_receipt as search_receipt_validator
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 WORKER_MESH_SCHEMA_PATH = ROOT / "schemas" / "worker_mesh.schema.json"
+SEARCH_RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "search_receipt.schema.json"
 
 
 def test_read_only_search_worker_dispatches_schema_valid_receipt(tmp_path: Path) -> None:
@@ -52,15 +54,28 @@ def test_read_only_search_worker_dispatches_schema_valid_receipt(tmp_path: Path)
         }
     )
 
+    handler_result = inspect_search_request(knowledge_root.resolve(), request)
     receipt = mesh.dispatch(lease.lease_id, request)
     envelope = {"lease": asdict(lease), "request": asdict(request), "receipt": asdict(receipt)}
     errors = _validate_schema_instance(_load_schema(WORKER_MESH_SCHEMA_PATH), envelope)
+    search_receipt = handler_result.output["search_receipt"]
+    search_receipt_errors = _validate_schema_instance(_load_schema(SEARCH_RECEIPT_SCHEMA_PATH), search_receipt)
 
     assert errors == []
+    assert search_receipt_errors == []
+    assert search_receipt_validator.validate_receipt_record(search_receipt) == []
     assert receipt.status == "succeeded"
     assert receipt.reason == "succeeded"
     assert receipt.evidence_refs[0].startswith("knowledge-search:decision:")
+    assert receipt.evidence_refs[3].startswith("knowledge-search:search-receipt:")
     assert receipt.output_hash
+    assert handler_result.output["search_receipt_hash"] == canonical_hash(search_receipt)
+    assert search_receipt["receipt_state"] == "EVIDENCE_AVAILABLE"
+    assert search_receipt["search_state"] == "LOCAL_SEARCH"
+    assert search_receipt["evidence_summary"]["evidence_count"] == 1
+    assert search_receipt["citation_refs"] == [search_receipt["evidence_items"][0]["citation_ref"]]
+    assert search_receipt["evidence_items"][0]["content_body"] is None
+    assert search_receipt["governance_guards"]["answer_claim_authority_granted"] is False
 
 
 def test_read_only_search_worker_redacts_secret_like_matches(tmp_path: Path) -> None:
@@ -86,6 +101,8 @@ def test_read_only_search_worker_redacts_secret_like_matches(tmp_path: Path) -> 
     assert handler_result.status == "succeeded"
     assert "API_TOKEN=[REDACTED]" in excerpt
     assert "search-secret-value" not in excerpt
+    assert handler_result.output["search_receipt"]["evidence_items"][0]["content_body"] is None
+    assert handler_result.output["search_receipt"]["governance_guards"]["raw_secret_material_included"] is False
     assert receipt.status == "succeeded"
     assert "knowledge-search:result:" in receipt.evidence_refs[2]
     assert receipt.output_hash

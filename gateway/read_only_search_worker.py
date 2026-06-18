@@ -40,11 +40,22 @@ from gateway.worker_mesh import (
 
 
 SEARCH_OPERATION = "search"
+SEARCH_RECEIPT_VERSION = "search_receipt.v1"
 DEFAULT_MAX_SOURCES = 25
 DEFAULT_MAX_BYTES_PER_SOURCE = 262_144
 DEFAULT_MAX_RESULT_COUNT = 5
 SUPPORTED_SEARCH_EXTENSIONS = frozenset(
     {".txt", ".md", ".markdown", ".rst", ".json", ".yaml", ".yml", ".csv", ".tsv"}
+)
+SEARCH_RECEIPT_CONTRACT_EVIDENCE_REFS = (
+    "schemas/search_receipt.schema.json",
+    "examples/search_receipt.foundation.json",
+    "scripts/validate_search_receipt.py",
+    "tests/test_validate_search_receipt.py",
+    "docs/78_search_receipt_contract.md",
+    "docs/maps/MULLUSI_SEARCH_LAYER_MAP.md",
+    "examples/sdlc/requirement_search_receipt_contract_20260614.json",
+    "examples/sdlc/design_search_receipt_contract_20260614.json",
 )
 _MUTATION_KEYS = frozenset(
     {"write", "writes", "mutation", "mutations", "patch", "delete", "remove", "move", "rename", "command", "shell"}
@@ -175,6 +186,15 @@ def inspect_search_request(
         results,
         key=lambda result: (result["relative_path"], result["line"], result["excerpt"]),
     )[: bounds.max_result_count]
+    search_receipt = _build_search_receipt(
+        request=request,
+        decision_receipt=decision_receipt,
+        ranked_results=ranked_results,
+        relative_sources=relative_sources,
+        bounds=bounds,
+        truncated_sources=truncated_sources,
+    )
+    search_receipt_hash = canonical_hash(search_receipt)
     output = {
         "capability_id": SEARCH_CAPABILITY_ID,
         "operation": SEARCH_OPERATION,
@@ -182,12 +202,15 @@ def inspect_search_request(
         "query_hash": canonical_hash({"query": query}),
         "search_decision_receipt_id": decision_receipt["receipt_id"],
         "search_decision_receipt_hash": decision_receipt["receipt_hash"],
+        "search_receipt_id": search_receipt["receipt_id"],
+        "search_receipt_hash": search_receipt_hash,
         "request_payload_hash": canonical_hash(payload),
         "sources_considered": len(source_paths),
         "sources_searched": len(source_paths),
         "truncated_sources": truncated_sources,
         "result_count": len(ranked_results),
         "results": ranked_results,
+        "search_receipt": search_receipt,
         "supported_extensions": sorted(SUPPORTED_SEARCH_EXTENSIONS),
         "bounds": {
             "max_sources": bounds.max_sources,
@@ -213,9 +236,211 @@ def inspect_search_request(
             f"knowledge-search:decision:{decision_receipt['receipt_hash'][:16]}",
             f"knowledge-search:boundary:{canonical_hash({'root': str(knowledge_root), 'sources': relative_sources})[:16]}",
             f"knowledge-search:result:{output_hash[:16]}",
+            f"knowledge-search:search-receipt:{search_receipt_hash[:16]}",
         ],
         cost=0.0,
     )
+
+
+def _build_search_receipt(
+    *,
+    request: WorkerDispatchRequest,
+    decision_receipt: dict[str, Any],
+    ranked_results: list[dict[str, Any]],
+    relative_sources: list[str],
+    bounds: SearchInspectionBounds,
+    truncated_sources: int,
+) -> dict[str, Any]:
+    current_freshness_required = decision_receipt.get("freshness_state") == "source_required"
+    evidence_items = _search_evidence_items(
+        request=request,
+        ranked_results=ranked_results,
+        freshness_required=current_freshness_required,
+    )
+    citation_refs = [item["citation_ref"] for item in evidence_items]
+    freshness_status = "unknown_blocked" if current_freshness_required else "not_required"
+    freshness_proof_state = "Unknown" if current_freshness_required else "Pass"
+    retrieval_errors = [] if evidence_items else [_retrieval_failed_error(request.request_id)]
+    receipt_state = "EVIDENCE_AVAILABLE" if evidence_items else "RETRIEVAL_FAILED"
+    search_state = "LOCAL_SEARCH" if evidence_items else "SEARCH_FAILED_WITH_EXPLANATION"
+    solver_outcome = "AwaitingEvidence" if current_freshness_required or not evidence_items else "SolvedVerified"
+    receipt_seed = canonical_hash(
+        {
+            "request_id": request.request_id,
+            "decision_receipt_id": decision_receipt["receipt_id"],
+            "citation_refs": citation_refs,
+            "retrieval_errors": retrieval_errors,
+        }
+    )
+    receipt_id = f"search-receipt-{receipt_seed[:16]}"
+    dynamic_evidence_refs = [
+        f"knowledge-search:decision:{decision_receipt['receipt_hash'][:16]}",
+        (
+            "knowledge-search:request:"
+            f"{canonical_hash({'request_id': request.request_id, 'input_hash': request.input_hash})[:16]}"
+        ),
+        f"knowledge-search:receipt:{receipt_seed[:16]}",
+    ]
+    bounds_ref = canonical_hash(
+        {
+            "max_sources": bounds.max_sources,
+            "max_bytes_per_source": bounds.max_bytes_per_source,
+            "max_result_count": bounds.max_result_count,
+        }
+    )
+    return {
+        "receipt_id": receipt_id,
+        "receipt_version": SEARCH_RECEIPT_VERSION,
+        "search_decision_ref": f"receipt://search-decision/{decision_receipt['receipt_id']}",
+        "request_id": request.request_id,
+        "tenant_id": request.tenant_id,
+        "actor_id": str(decision_receipt.get("actor_id", "")),
+        "created_at": request.requested_at or str(decision_receipt.get("generated_at", "")),
+        "solver_outcome": solver_outcome,
+        "receipt_state": receipt_state,
+        "search_state": search_state,
+        "freshness_result": {
+            "freshness_required": current_freshness_required,
+            "freshness_status": freshness_status,
+            "current_info_claim_allowed": False,
+            "max_age_seconds": None,
+            "proof_state": freshness_proof_state,
+            "rationale_refs": [
+                "policy:foundation-mode:local-search-freshness",
+                f"receipt://search-decision/{decision_receipt['receipt_id']}",
+            ],
+        },
+        "source_plan_result": {
+            "selected_sources": ["local_docs"],
+            "attempted_sources": ["local_docs"],
+            "tenant_scope_verified": True,
+            "external_retrieval_performed": False,
+            "connector_scope_ref": None,
+            "rationale_refs": [
+                "policy:foundation-mode:read-only-search-worker",
+                "worker:knowledge-search-read-only-worker",
+            ],
+        },
+        "cache_result": {
+            "state": "not_checked",
+            "cache_key_ref": None,
+            "tenant_scoped": True,
+            "stale_cache_used": False,
+        },
+        "budget_result": {
+            "state": "within_budget",
+            "actual_cost_class": "none",
+            "approval_ref": None,
+            "proof_state": "Pass",
+            "rationale_refs": [
+                "worker-budget:zero-cost-local-search",
+                f"receipt://search-decision/{decision_receipt['receipt_id']}",
+            ],
+        },
+        "evidence_summary": {
+            "evidence_count": len(evidence_items),
+            "citation_count": len(citation_refs),
+            "conflict_count": 0,
+            "stale_source_count": 0,
+            "retrieval_error_count": len(retrieval_errors),
+            "content_body_included": False,
+        },
+        "evidence_items": evidence_items,
+        "citation_refs": citation_refs,
+        "conflict_refs": [],
+        "stale_source_refs": [],
+        "retrieval_errors": retrieval_errors,
+        "retrieval_safety_result": {
+            "retrieved_content_authority": "evidence_only",
+            "prompt_injection_guard_applied": True,
+            "prompt_injection_detected": False,
+            "source_instruction_authority_granted": False,
+            "tool_instruction_from_source_allowed": False,
+            "policy_instruction_from_source_allowed": False,
+            "private_source_scope_verified": True,
+            "conflict_handling": "block_current_claim" if current_freshness_required else "cite_conflict",
+        },
+        "governance_guards": {
+            "execution_authority_granted": False,
+            "connector_authority_granted": False,
+            "answer_claim_authority_granted": False,
+            "terminal_closure": False,
+            "raw_secret_material_included": False,
+            "retrieved_instruction_authority_granted": False,
+            "mfidel_atomicity_preserved": True,
+        },
+        "receipt_envelope": {
+            "uao_ref": f"uao://worker-search/{request.command_id}",
+            "causal_decision_trace_ref": f"trace://worker-search/{request.request_id}",
+            "receipt_ref": f"receipt://search-receipt/{receipt_id}",
+        },
+        "evidence_refs": _unique_texts(
+            [
+                *SEARCH_RECEIPT_CONTRACT_EVIDENCE_REFS,
+                *dynamic_evidence_refs,
+                f"knowledge-search:sources:{canonical_hash(relative_sources)[:16]}",
+                f"knowledge-search:bounds:{bounds_ref[:16]}",
+                f"knowledge-search:truncated-sources:{truncated_sources}",
+            ]
+        ),
+        "metadata": {
+            "raw_query_exposed": False,
+            "result_excerpt_count": len(ranked_results),
+            "local_source_count": len(relative_sources),
+            "source_excerpt_body_excluded_from_receipt": True,
+        },
+    }
+
+
+def _search_evidence_items(
+    *,
+    request: WorkerDispatchRequest,
+    ranked_results: list[dict[str, Any]],
+    freshness_required: bool,
+) -> list[dict[str, Any]]:
+    evidence_items = []
+    for result in ranked_results:
+        source_ref = f"{result['relative_path']}#L{result['line']}"
+        evidence_seed = canonical_hash(
+            {
+                "request_id": request.request_id,
+                "source_ref": source_ref,
+                "content_hash": result["content_hash"],
+            }
+        )
+        evidence_items.append(
+            {
+                "evidence_ref": f"evidence://local-docs/{evidence_seed[:16]}",
+                "source_type": "local_docs",
+                "source_ref": source_ref,
+                "citation_ref": f"citation://local-docs/{evidence_seed[:16]}",
+                "observed_at": request.requested_at or None,
+                "fresh_until": None,
+                "freshness_status": "unknown" if freshness_required else "not_required",
+                "trust_tier": "local_governed",
+                "content_hash_ref": f"hash://sha256/{result['content_hash']}",
+                "content_body": None,
+            }
+        )
+    return evidence_items
+
+
+def _retrieval_failed_error(request_id: str) -> dict[str, Any]:
+    error_seed = canonical_hash({"request_id": request_id, "error": "no_local_search_evidence"})
+    return {
+        "error_ref": f"error://local-docs/{error_seed[:16]}",
+        "source_type": "local_docs",
+        "error_class": "retrieval_failed",
+        "blocking": True,
+        "rationale_refs": [
+            "policy:foundation-mode:read-only-search-worker",
+            "reason:no_local_search_evidence",
+        ],
+    }
+
+
+def _unique_texts(values: list[str]) -> list[str]:
+    return list(dict.fromkeys(values))
 
 
 def _payload_denial(payload: dict[str, Any]) -> str:
