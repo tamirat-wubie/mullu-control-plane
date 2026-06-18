@@ -13,9 +13,15 @@ import pytest
 from mcoi_runtime.personal_assistant import (
     ApprovalProposedAction,
     ApprovalScope,
+    GovernedIntent,
     PersonalAssistantApprovalQueue,
     PersonalAssistantInvariantError,
+    RequestExecutionMode,
+    RequestInterface,
+    SkillRiskLevel,
+    build_personal_assistant_preview_plan,
     build_personal_assistant_console_read_model,
+    prepare_approval_proposal_from_plan,
     render_personal_assistant_console_html,
 )
 
@@ -120,6 +126,77 @@ def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
     assert "<script>alert(1)</script>" not in html
     assert "Execution Allowed" in html
+
+
+def test_console_projects_approval_proposals_without_enqueue_or_execution() -> None:
+    intent = GovernedIntent(
+        request_id="pa_request_console_proposal_001",
+        submitted_at=GENERATED_AT,
+        interface=RequestInterface.OPERATOR_CONSOLE,
+        user_goal="Send one approved email draft to Daniel.",
+        requested_capabilities=("email.send.with_approval",),
+        requested_skill_ids=("email.send.with_approval",),
+        risk_level=SkillRiskLevel.P4,
+        requires_approval=True,
+        execution_mode=RequestExecutionMode.EXECUTE_WITH_APPROVAL,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+        blocked_actions=("send", "forward", "connector_mutation"),
+        evidence_refs=("proof://personal-assistant/console/proposal-001",),
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_console_proposal_001",
+        created_at=GENERATED_AT,
+    )
+    proposal = prepare_approval_proposal_from_plan(
+        envelope.plan,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+    )
+    payload = build_personal_assistant_console_read_model(
+        generated_at=GENERATED_AT,
+        approval_proposals=(proposal.as_dict(),),
+    )
+    html = render_personal_assistant_console_html(payload)
+
+    assert payload["solver_outcome"] == "SolvedVerified"
+    assert payload["approval_queue"]["approval_count"] == 0
+    assert payload["approval_queue"]["proposal_count"] == 1
+    assert payload["approval_queue"]["proposal_ids"] == ["pa_plan_console_proposal_001"]
+    assert payload["approval_queue"]["proposal_execution_allowed"] is False
+    assert payload["approval_queue"]["proposals"][0]["execution_allowed"] is False
+    assert payload["approval_queue"]["proposals"][0]["approval_is_execution"] is False
+    assert payload["approval_queue"]["proposals"][0]["approval_matrix_ref"] == proposal.approval_matrix_ref
+    assert payload["assurance"]["authority_drift_detected"] is False
+    assert "Approval Proposals" in html
+    assert "pa_plan_console_proposal_001" in html
+
+
+def test_console_fails_closed_when_approval_proposal_claims_execution() -> None:
+    payload = build_personal_assistant_console_read_model(
+        generated_at=GENERATED_AT,
+        approval_proposals=(
+            {
+                "request_id": "pa_request_console_unsafe_proposal_001",
+                "plan_id": "pa_plan_console_unsafe_proposal_001",
+                "approval_scope": "per_plan",
+                "risk_level": "P4",
+                "proposed_actions": [],
+                "forbidden_without_approval": ["send"],
+                "evidence_refs": ["proof://personal-assistant/console/unsafe-proposal-001"],
+                "approval_matrix_ref": "personal_assistant_approval_matrix.foundation.v1",
+                "execution_allowed": True,
+                "approval_is_execution": True,
+            },
+        ),
+    )
+
+    assert payload["solver_outcome"] == "GovernanceBlocked"
+    assert payload["assurance"]["authority_drift_detected"] is True
+    assert "approval_proposals[0].execution_allowed" in payload["assurance"]["blocking_reasons"]
+    assert "approval_proposals[0].approval_is_execution" in payload["assurance"]["blocking_reasons"]
+    assert payload["approval_queue"]["proposal_execution_allowed"] is False
+    assert payload["approval_queue"]["proposals"][0]["execution_allowed"] is False
+    assert payload["approval_queue"]["proposals"][0]["approval_is_execution"] is False
 
 
 def test_console_rejects_raw_private_fields_and_secret_like_values() -> None:
