@@ -420,6 +420,61 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
     assert mesh.questions[question_id].question_id == question_id
 
 
+def test_runtime_id_lookups_reject_shape_drift_before_mutation() -> None:
+    class TextSubclass(str):
+        pass
+
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+    answer = mesh.ingest_answer(
+        question_id,
+        "Seed",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    metadata = mesh.extract_metadata(question_id, answer.answer_id)
+    before_state = (
+        len(mesh.questions),
+        len(mesh.answers),
+        len(mesh.metadata),
+        len(mesh.relations),
+        mesh.symbols[seed.symbol_id].settlement_state,
+    )
+
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(TextSubclass(seed.symbol_id))
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(f" {seed.symbol_id}")
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.ingest_answer(TextSubclass(question_id), "Seed")
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.ingest_answer(1, "Seed")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.extract_metadata(TextSubclass(question_id), answer.answer_id)
+    with pytest.raises(ValueError, match="answer_id"):
+        mesh.extract_metadata(question_id, TextSubclass(answer.answer_id))
+    with pytest.raises(ValueError, match="metadata_id"):
+        mesh.promote_metadata(TextSubclass(metadata.metadata_id))
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.settle_symbol(TextSubclass(seed.symbol_id))
+
+    after_state = (
+        len(mesh.questions),
+        len(mesh.answers),
+        len(mesh.metadata),
+        len(mesh.relations),
+        mesh.symbols[seed.symbol_id].settlement_state,
+    )
+
+    assert after_state == before_state
+    assert mesh.answers == {answer.answer_id: answer}
+    assert mesh.metadata == {metadata.metadata_id: metadata}
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

@@ -10,6 +10,7 @@ scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet.
 Invariants:
   - Certificates must satisfy the canonical terminal closure schema.
   - TeamOps committed closure must bind the ready terminal review packet.
+  - Provider-observation receipt identity must match the source review packet.
   - Raw content, secret markers, provider effects, and production claims are rejected.
 """
 
@@ -37,6 +38,7 @@ from scripts.mint_team_ops_shared_inbox_terminal_closure_certificate import (  #
 from scripts.produce_team_ops_shared_inbox_operator_handoff import SECRET_VALUE_MARKERS  # noqa: E402
 from scripts.produce_team_ops_shared_inbox_send_execution_receipt import SHA256_HEX_PATTERN  # noqa: E402
 from scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet import (  # noqa: E402
+    PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN,
     validate_team_ops_shared_inbox_terminal_closure_review_packet,
 )
 from scripts.validate_terminal_closure_certificate import (  # noqa: E402
@@ -105,6 +107,8 @@ class TeamOpsSharedInboxTerminalClosureCertificateValidation:
     source_review_packet_path: str
     certificate_id: str
     source_review_packet_id: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     disposition: str
     evidence_ref_count: int
     errors: tuple[str, ...]
@@ -153,6 +157,8 @@ def validate_team_ops_shared_inbox_terminal_closure_certificate(
         source_review_packet_path=_path_label(source_review_packet_path),
         certificate_id=str(certificate.get("certificate_id", "")),
         source_review_packet_id=str(metadata.get("source_review_packet_id", "")),
+        provider_observation_receipt_id=str(metadata.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=metadata.get("provider_observation_receipt_valid") is True,
         disposition=str(certificate.get("disposition", "")),
         evidence_ref_count=len(evidence_refs) if isinstance(evidence_refs, list) else 0,
         errors=tuple(errors),
@@ -206,6 +212,15 @@ def _validate_certificate_semantics(certificate: dict[str, Any], errors: list[st
         errors.append("metadata.terminal_certificate_schema_id must bind terminal closure schema")
     if SHA256_HEX_PATTERN.fullmatch(str(metadata.get("source_review_packet_hash", ""))) is None:
         errors.append("metadata.source_review_packet_hash must be sha256 hex")
+    provider_receipt_id = str(metadata.get("provider_observation_receipt_id", ""))
+    if PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(provider_receipt_id) is None:
+        errors.append("metadata.provider_observation_receipt_id must bind provider observation receipt")
+    if not str(metadata.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("metadata.provider_observation_receipt_ref must be non-empty")
+    if metadata.get("provider_observation_receipt_valid") is not True:
+        errors.append("metadata.provider_observation_receipt_valid must be true")
+    if isinstance(graph_refs, list) and f"provider_observation:{provider_receipt_id}" not in graph_refs:
+        errors.append("graph_refs must include provider observation receipt ref")
 
 
 def _validate_review_binding(
@@ -227,6 +242,12 @@ def _validate_review_binding(
         errors.append("metadata.source_review_packet_ref must match review packet ref")
     if metadata.get("source_review_packet_hash") != review_packet.get("review_packet_hash"):
         errors.append("metadata.source_review_packet_hash must match review packet hash")
+    if metadata.get("provider_observation_receipt_ref") != review_packet.get("provider_observation_receipt_ref"):
+        errors.append("metadata.provider_observation_receipt_ref must match review packet provider ref")
+    if metadata.get("provider_observation_receipt_id") != review_packet.get("provider_observation_receipt_id"):
+        errors.append("metadata.provider_observation_receipt_id must match review packet provider receipt_id")
+    if metadata.get("provider_observation_receipt_valid") is not True:
+        errors.append("metadata.provider_observation_receipt_valid must be true")
     if certificate.get("execution_id") != review_packet.get("receipt_id"):
         errors.append("execution_id must match review packet receipt_id")
     if certificate.get("verification_result_id") != review_packet.get("review_packet_ref"):
@@ -246,6 +267,8 @@ def _validate_review_binding(
         errors.append("evidence_refs must include every required terminal review evidence ref")
     if review_packet.get("review_packet_ref") not in evidence_refs:
         errors.append("evidence_refs must include review packet ref")
+    if review_packet.get("provider_observation_receipt_ref") not in evidence_refs:
+        errors.append("evidence_refs must include provider observation receipt ref")
 
 
 def _certificate_ready(certificate: Mapping[str, Any]) -> bool:
@@ -264,6 +287,14 @@ def _certificate_ready(certificate: Mapping[str, Any]) -> bool:
         and all(metadata.get(field_name) is False for field_name in FALSE_METADATA_FIELDS)
         and metadata.get("terminal_certificate_schema_id") == TERMINAL_CERTIFICATE_SCHEMA_ID
         and SHA256_HEX_PATTERN.fullmatch(str(metadata.get("source_review_packet_hash", ""))) is not None
+        and (
+            PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+                str(metadata.get("provider_observation_receipt_id", ""))
+            )
+            is not None
+        )
+        and bool(str(metadata.get("provider_observation_receipt_ref", "")).strip())
+        and metadata.get("provider_observation_receipt_valid") is True
     )
 
 

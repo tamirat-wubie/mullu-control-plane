@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
   "title": "Chaos Rehearsal Execution Report",
-  "description": "Dry-run report for chaos rehearsal scenarios before runtime resilience or production-readiness claims.",
+  "description": "Foundation Mode report contract for plan-only or deterministic dry-run chaos rehearsal evidence without runtime disruption, staging or production targeting, external effects, raw log retention, or terminal closure.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,9 +10,11 @@
     "report_version",
     "generated_at",
     "rehearsal_scope",
-    "rehearsal_result",
-    "scenarios",
-    "rollback_recovery",
+    "execution_mode",
+    "scenario_plan",
+    "execution_results",
+    "authority_boundary",
+    "safety_guards",
     "receipt_refs",
     "contract_summary",
     "evidence_refs"
@@ -25,94 +27,153 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "target_surface",
-        "scenario_set_ref",
-        "owner",
-        "execution_mode",
+        "source_family",
+        "borrowed_concept",
+        "foundation_mode",
+        "tenant_scope",
         "uao_ref",
-        "phi_gov_ref"
+        "life_meaning_judgment_ref"
       ],
       "properties": {
-        "target_surface": {"type": "string", "enum": ["worker", "scheduler", "connector", "gateway", "governance"]},
-        "scenario_set_ref": {"type": "string", "minLength": 1},
-        "owner": {"type": "string", "minLength": 1},
-        "execution_mode": {"const": "dry_run"},
+        "source_family": {"const": "external/nested-mind-platform"},
+        "borrowed_concept": {"const": "chaos-rehearsal-dry-run"},
+        "foundation_mode": {"type": "boolean"},
+        "tenant_scope": {"type": "string", "minLength": 1},
         "uao_ref": {"type": "string", "minLength": 1},
-        "phi_gov_ref": {"type": ["string", "null"], "minLength": 1}
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1}
       }
     },
-    "rehearsal_result": {
+    "execution_mode": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "decision",
-        "runtime_execution_performed",
-        "external_effects_performed",
-        "filesystem_mutation_performed",
-        "deployment_mutation_allowed",
-        "production_readiness_claim_allowed",
-        "terminal_closure_allowed",
-        "success_claim_allowed",
+        "mode",
+        "dry_run_only",
+        "plan_only_allowed",
+        "production_target_allowed",
+        "staging_target_allowed",
+        "destructive_injection_allowed",
+        "runtime_target_ref"
+      ],
+      "properties": {
+        "mode": {"type": "string", "enum": ["plan_only", "deterministic_dry_run"]},
+        "dry_run_only": {"type": "boolean"},
+        "plan_only_allowed": {"type": "boolean"},
+        "production_target_allowed": {"type": "boolean"},
+        "staging_target_allowed": {"type": "boolean"},
+        "destructive_injection_allowed": {"type": "boolean"},
+        "runtime_target_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "scenario_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_hash_ref",
+        "scenario_refs",
+        "invariant_refs",
+        "injection_point_refs",
+        "expected_containment_refs",
+        "expected_signal_refs",
         "required_evidence_refs",
-        "blocked_reason_refs"
+        "rollback_guard_refs"
       ],
       "properties": {
-        "decision": {"type": "string", "enum": ["CHAOS_REHEARSAL_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE", "CHAOS_REHEARSAL_READY_FOR_OPERATOR_REVIEW", "CHAOS_REHEARSAL_EXECUTED"]},
-        "runtime_execution_performed": {"type": "boolean"},
-        "external_effects_performed": {"type": "boolean"},
-        "filesystem_mutation_performed": {"type": "boolean"},
-        "deployment_mutation_allowed": {"type": "boolean"},
-        "production_readiness_claim_allowed": {"type": "boolean"},
-        "terminal_closure_allowed": {"type": "boolean"},
-        "success_claim_allowed": {"type": "boolean"},
-        "required_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-        "blocked_reason_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        "plan_hash_ref": {"type": "string", "minLength": 1},
+        "scenario_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "invariant_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "injection_point_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "expected_containment_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "expected_signal_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "required_evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "rollback_guard_refs": {"$ref": "#/$defs/non_empty_string_array"}
       }
     },
-    "scenarios": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "scenario_id",
-          "scenario_class",
-          "input_fixture_ref",
-          "expected_invariant_ref",
-          "expected_result",
-          "observed_result",
-          "rollback_obligation_ref",
-          "incident_handoff_ref"
-        ],
-        "properties": {
-          "scenario_id": {"type": "string", "minLength": 1},
-          "scenario_class": {"type": "string", "enum": ["worker_timeout", "lease_contention", "connector_denial", "gateway_health_drop", "receipt_store_unavailable"]},
-          "input_fixture_ref": {"type": "string", "minLength": 1},
-          "expected_invariant_ref": {"type": "string", "minLength": 1},
-          "expected_result": {"type": "string", "minLength": 1},
-          "observed_result": {"const": "not_executed_dry_run"},
-          "rollback_obligation_ref": {"type": "string", "minLength": 1},
-          "incident_handoff_ref": {"type": "string", "minLength": 1}
-        }
-      }
-    },
-    "rollback_recovery": {
+    "execution_results": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "rollback_required_before_live_execution",
-        "rollback_plan_ref",
-        "replay_bundle_ref",
-        "incident_handoff_required",
-        "terminal_closure_ref"
+        "result_state",
+        "scenarios_declared_count",
+        "scenarios_executed_count",
+        "scenarios_passed_count",
+        "unexpected_accept_count",
+        "unexpected_reject_count",
+        "containment_verified",
+        "result_bank_hash_ref"
       ],
       "properties": {
-        "rollback_required_before_live_execution": {"type": "boolean"},
-        "rollback_plan_ref": {"type": "string", "minLength": 1},
-        "replay_bundle_ref": {"type": "string", "minLength": 1},
-        "incident_handoff_required": {"type": "boolean"},
-        "terminal_closure_ref": {"type": ["string", "null"], "minLength": 1}
+        "result_state": {
+          "type": "string",
+          "enum": ["REHEARSAL_RECORDED", "REHEARSAL_BLOCKED", "REHEARSAL_INVALIDATED"]
+        },
+        "scenarios_declared_count": {"type": "integer", "minimum": 1},
+        "scenarios_executed_count": {"type": "integer", "minimum": 0},
+        "scenarios_passed_count": {"type": "integer", "minimum": 0},
+        "unexpected_accept_count": {"type": "integer", "minimum": 0},
+        "unexpected_reject_count": {"type": "integer", "minimum": 0},
+        "containment_verified": {"type": "boolean"},
+        "result_bank_hash_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_chaos_execution_performed",
+        "production_target_touched",
+        "staging_cluster_touched",
+        "runtime_disruption_performed",
+        "network_fault_injected",
+        "service_restart_performed",
+        "data_corruption_performed",
+        "event_chain_mutation_performed",
+        "external_connector_called",
+        "secret_access_performed",
+        "filesystem_write_performed",
+        "rollback_executed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_chaos_execution_performed": {"type": "boolean"},
+        "production_target_touched": {"type": "boolean"},
+        "staging_cluster_touched": {"type": "boolean"},
+        "runtime_disruption_performed": {"type": "boolean"},
+        "network_fault_injected": {"type": "boolean"},
+        "service_restart_performed": {"type": "boolean"},
+        "data_corruption_performed": {"type": "boolean"},
+        "event_chain_mutation_performed": {"type": "boolean"},
+        "external_connector_called": {"type": "boolean"},
+        "secret_access_performed": {"type": "boolean"},
+        "filesystem_write_performed": {"type": "boolean"},
+        "rollback_executed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "safety_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_hashes_required",
+        "required_evidence_declared",
+        "rollback_obligations_declared",
+        "containment_expected",
+        "raw_runtime_logs_retained",
+        "raw_secret_material_retained",
+        "operator_review_required",
+        "incident_handoff_required_if_live"
+      ],
+      "properties": {
+        "scenario_hashes_required": {"type": "boolean"},
+        "required_evidence_declared": {"type": "boolean"},
+        "rollback_obligations_declared": {"type": "boolean"},
+        "containment_expected": {"type": "boolean"},
+        "raw_runtime_logs_retained": {"type": "boolean"},
+        "raw_secret_material_retained": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "incident_handoff_required_if_live": {"type": "boolean"}
       }
     },
     "receipt_refs": {
@@ -121,12 +182,18 @@
       "required": [
         "chaos_rehearsal_execution_report_schema",
         "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema",
+        "effect_assurance_schema",
+        "simulation_receipt_schema",
         "worker_failure_receipt_schema",
         "sdlc_recovery_handoff_receipt_schema"
       ],
       "properties": {
         "chaos_rehearsal_execution_report_schema": {"type": "string", "minLength": 1},
         "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1},
+        "effect_assurance_schema": {"type": "string", "minLength": 1},
+        "simulation_receipt_schema": {"type": "string", "minLength": 1},
         "worker_failure_receipt_schema": {"type": "string", "minLength": 1},
         "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1}
       }
@@ -135,20 +202,45 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "scenario_count",
+        "dry_run_only",
+        "runtime_disruption_denied",
+        "scenario_ref_count",
+        "invariant_ref_count",
+        "injection_point_ref_count",
         "required_evidence_ref_count",
-        "blocked_reason_ref_count",
+        "rollback_guard_ref_count",
+        "authority_denial_count",
+        "safety_guard_count",
         "receipt_ref_count",
         "evidence_ref_count"
       ],
       "properties": {
-        "scenario_count": {"type": "integer", "minimum": 1},
-        "required_evidence_ref_count": {"type": "integer", "minimum": 1},
-        "blocked_reason_ref_count": {"type": "integer", "minimum": 1},
-        "receipt_ref_count": {"type": "integer", "minimum": 1},
-        "evidence_ref_count": {"type": "integer", "minimum": 1}
+        "dry_run_only": {"type": "boolean"},
+        "runtime_disruption_denied": {"type": "boolean"},
+        "scenario_ref_count": {"type": "integer", "minimum": 0},
+        "invariant_ref_count": {"type": "integer", "minimum": 0},
+        "injection_point_ref_count": {"type": "integer", "minimum": 0},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 0},
+        "rollback_guard_ref_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "safety_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
       }
     },
-    "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
   }
 }

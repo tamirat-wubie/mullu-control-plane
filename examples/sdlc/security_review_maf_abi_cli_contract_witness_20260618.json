@@ -1,0 +1,95 @@
+{
+  "security_review_id": "SEC-maf-abi-cli-contract-witness-20260618",
+  "change_id": "maf-abi-cli-contract-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF ABI/CLI contract evidence can accidentally become a runtime execution claim if a scaffold-only CLI surface is conflated with command implementation, subprocess execution, PyO3 binding, or Python-to-Rust runtime binding. The mitigation is a read-only witness and validator that reject authority drift, scaffold drift, digest drift, command execution drift, raw secret markers, receipt ref drift, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "CLI execution, subprocess execution, PyO3 binding, Rust crate execution, Python Rust imports, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls and network calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms secret marker validation rejects client_secret, tokens, API keys, and private-key markers in witness payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Foundation Mode contract mode remains scaffold_only_static_cli_contract and command behavior remains AwaitingEvidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the witness schema, example, validator, tests, MAF parity witness, MAF boundary doc, receipt coverage doc, UAO schema, LifeMeaningJudgment schema, and WorkerFailureReceipt schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms CLI artifact digests, command counts, authority denial counts, and gap counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_digest_and_summary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-cli-execution-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks CLI execution, subprocess execution, PyO3 binding, Rust crate execution, Python Rust imports, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_abi_cli_contract_witness.schema.json",
+        "scripts/validate_maf_abi_cli_contract_witness.py",
+        "tests/test_validate_maf_abi_cli_contract_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-cli-scaffold-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness records scaffold-only CLI status and requires command contracts to remain AwaitingEvidence with execution_allowed false.",
+      "evidence_refs": [
+        "examples/maf_abi_cli_contract_witness.foundation.json",
+        "tests/test_validate_maf_abi_cli_contract_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafAbiCliContractWitness validation read-only and deterministic",
+    "require canonical source digests for MAF CLI artifacts",
+    "require open gap refs for every command contract",
+    "deny CLI, subprocess, PyO3, Rust execution, connectors, network, secrets, writes, dispatch, terminal closure, and success claims",
+    "reject secret markers and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "receipt://sdlc/maf-abi-cli-contract-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-abi-cli-contract-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-abi-cli-contract-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-abi-cli-contract-witness/security"
+}

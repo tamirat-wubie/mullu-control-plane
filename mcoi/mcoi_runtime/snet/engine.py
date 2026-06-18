@@ -509,24 +509,28 @@ class SNetRecursiveMesh:
         self.symbols[symbol.symbol_id] = symbol
 
     def _require_symbol(self, symbol_id: str) -> SNetSymbol:
+        symbol_id = _require_id_text(symbol_id, "symbol_id")
         try:
             return self.symbols[symbol_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet symbol_id: {symbol_id}") from exc
 
     def _require_question(self, question_id: str) -> SNetQuestion:
+        question_id = _require_id_text(question_id, "question_id")
         try:
             return self.questions[question_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet question_id: {question_id}") from exc
 
     def _require_answer(self, answer_id: str) -> SNetAnswer:
+        answer_id = _require_id_text(answer_id, "answer_id")
         try:
             return self.answers[answer_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet answer_id: {answer_id}") from exc
 
     def _require_metadata(self, metadata_id: str) -> SNetMetadata:
+        metadata_id = _require_id_text(metadata_id, "metadata_id")
         try:
             return self.metadata[metadata_id]
         except KeyError as exc:
@@ -613,6 +617,12 @@ def _optional_text(value: str, field_name: str) -> str:
     if value == "":
         return ""
     return _require_text(value, field_name)
+
+
+def _require_id_text(value: str, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty string")
+    return value
 
 
 def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:

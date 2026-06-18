@@ -78,8 +78,21 @@ def test_team_ops_terminal_closure_certificate_mints_ready_review(tmp_path: Path
     assert certificate["verification_result_id"] == "teamops-terminal-closure-review:aaaaaaaaaaaaaaaa"
     assert certificate["effect_reconciliation_id"] == "teamops-effect-reconciliation:" + HEX_B[:16]
     assert certificate["metadata"]["terminal_proof"] is True
+    assert (
+        certificate["metadata"]["provider_observation_receipt_id"]
+        == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert (
+        certificate["metadata"]["provider_observation_receipt_ref"]
+        == ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    )
+    assert certificate["metadata"]["provider_observation_receipt_valid"] is True
     assert certificate["metadata"]["provider_call_performed_by_minting_producer"] is False
     assert certificate["metadata"]["production_ready_claimed"] is False
+    assert (
+        "provider_observation:teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+        in certificate["graph_refs"]
+    )
     assert len(certificate["evidence_refs"]) >= 9
     assert generic_validation.valid is True
     assert teamops_validation.valid is True
@@ -135,6 +148,7 @@ def test_team_ops_terminal_closure_certificate_cli_writes_certificate(tmp_path: 
     assert file_payload["certificate_id"] == stdout_payload["certificate_id"]
     assert file_payload["disposition"] == "committed"
     assert file_payload["metadata"]["team_ops_terminal_closure"] is True
+    assert file_payload["metadata"]["provider_observation_receipt_valid"] is True
     assert file_payload["metadata"]["external_message_sent_by_minting_producer"] is False
     assert captured.err == ""
 

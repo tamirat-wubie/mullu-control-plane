@@ -1,0 +1,69 @@
+{
+  "requirement_id": "REQ-maf-abi-cli-contract-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-abi-cli-contract-witness",
+  "problem_statement": "MAF runtime binding readiness needs a static ABI/CLI contract witness before any subprocess, CLI execution, PyO3, or Python-to-Rust call path can be reconsidered.",
+  "success_criteria": [
+    "MafAbiCliContractWitness validates against a public JSON schema and Foundation Mode example",
+    "MafAbiCliContractWitness binds MAF workspace manifest, maf-cli manifest, maf-cli entry, MAF parity witness refs, command contracts, gap refs, UAO refs, LifeMeaningJudgment refs, and receipt refs",
+    "MafAbiCliContractWitness records CLI scaffold-only status and keeps command behavior AwaitingEvidence",
+    "MafAbiCliContractWitness blocks CLI execution, subprocess execution, PyO3 binding, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafAbiCliContractWitness rejects authority drift, scaffold drift, digest drift, command execution drift, missing gap refs, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no CLI execution",
+    "no subprocess execution",
+    "no PyO3 binding",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no command implementation claim",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "contract mode remains scaffold_only_static_cli_contract",
+    "solver outcome remains AwaitingEvidence",
+    "cli_scaffold_only remains true",
+    "runtime_binding_claimed, command_behavior_claimed, and subprocess_effect_boundary_closed remain false",
+    "each CLI artifact digest must match repository-local source files",
+    "all command contracts must retain execution_allowed false and non-empty gap refs",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "docs/94_maf_abi_cli_contract_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_abi_cli_contract_witness.py",
+    "python -m pytest tests/test_validate_maf_abi_cli_contract_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_abi_cli_contract_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "docs/94_maf_abi_cli_contract_witness.md",
+    "examples/sdlc/design_maf_abi_cli_contract_witness_20260618.json",
+    "examples/sdlc/security_review_maf_abi_cli_contract_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-abi-cli-contract-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-abi-cli-contract-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-abi-cli-contract-witness/requirement"
+}

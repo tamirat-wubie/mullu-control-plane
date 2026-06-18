@@ -1,87 +1,131 @@
 {
-  "report_id": "chaos-rehearsal-foundation-20260616",
+  "report_id": "chaos-rehearsal-execution-report-foundation-20260616",
   "report_version": "chaos_rehearsal_execution_report.v1",
   "generated_at": "2026-06-16T00:00:00Z",
   "rehearsal_scope": {
-    "target_surface": "worker",
-    "scenario_set_ref": "scenario-set://foundation/worker-runtime-receipt-resilience",
-    "owner": "Mullusi Foundation Mode",
-    "execution_mode": "dry_run",
-    "uao_ref": "uao://foundation/chaos-rehearsal-execution-report",
-    "phi_gov_ref": null
+    "source_family": "external/nested-mind-platform",
+    "borrowed_concept": "chaos-rehearsal-dry-run",
+    "foundation_mode": true,
+    "tenant_scope": "foundation-local-only",
+    "uao_ref": "uao://chaos-rehearsal-execution-report/foundation/dry-run",
+    "life_meaning_judgment_ref": "schemas/life_meaning_judgment.schema.json"
   },
-  "rehearsal_result": {
-    "decision": "CHAOS_REHEARSAL_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE",
-    "runtime_execution_performed": false,
-    "external_effects_performed": false,
-    "filesystem_mutation_performed": false,
-    "deployment_mutation_allowed": false,
-    "production_readiness_claim_allowed": false,
-    "terminal_closure_allowed": false,
-    "success_claim_allowed": false,
-    "required_evidence_refs": [
-      "evidence://chaos-rehearsal/operator-approval",
-      "evidence://chaos-rehearsal/runtime-sandbox",
-      "evidence://chaos-rehearsal/rollback-rehearsal",
-      "evidence://chaos-rehearsal/incident-handoff",
-      "evidence://chaos-rehearsal/monitoring-witness"
+  "execution_mode": {
+    "mode": "deterministic_dry_run",
+    "dry_run_only": true,
+    "plan_only_allowed": true,
+    "production_target_allowed": false,
+    "staging_target_allowed": false,
+    "destructive_injection_allowed": false,
+    "runtime_target_ref": "none://foundation-local-dry-run"
+  },
+  "scenario_plan": {
+    "plan_hash_ref": "hash://sha256/chaos-rehearsal-plan-redacted",
+    "scenario_refs": [
+      "scenario://chaos-rehearsal/append-before-apply",
+      "scenario://chaos-rehearsal/event-hash-chain-fracture",
+      "scenario://chaos-rehearsal/duplicate-lease"
     ],
-    "blocked_reason_refs": [
-      "blocked://chaos-rehearsal/runtime-sandbox-missing",
-      "blocked://chaos-rehearsal/operator-approval-missing",
-      "blocked://chaos-rehearsal/rollback-rehearsal-missing",
-      "blocked://production-readiness/denied"
+    "invariant_refs": [
+      "invariant://append-before-apply",
+      "invariant://event-chain-integrity",
+      "invariant://lease-fencing-token"
+    ],
+    "injection_point_refs": [
+      "injection://plan-only/event-append-order",
+      "injection://plan-only/hash-chain-gap",
+      "injection://plan-only/lease-duplication"
+    ],
+    "expected_containment_refs": [
+      "containment://dry-run/reject-out-of-order-append",
+      "containment://dry-run/reject-hash-chain-fracture",
+      "containment://dry-run/reject-duplicate-lease"
+    ],
+    "expected_signal_refs": [
+      "signal://dry-run/invariant-violation",
+      "signal://dry-run/hash-chain-invalidated",
+      "signal://dry-run/fencing-token-conflict"
+    ],
+    "required_evidence_refs": [
+      "evidence://dry-run/scenario-plan-hash",
+      "evidence://dry-run/containment-result-bank",
+      "evidence://dry-run/rollback-obligation-list"
+    ],
+    "rollback_guard_refs": [
+      "rollback://dry-run/no-runtime-state-touched",
+      "rollback://dry-run/no-event-chain-mutation",
+      "rollback://dry-run/incident-handoff-required-if-live"
     ]
   },
-  "scenarios": [
-    {
-      "scenario_id": "worker-timeout-receipt-preservation",
-      "scenario_class": "worker_timeout",
-      "input_fixture_ref": "fixtures://worker/runtime-timeout-dry-run",
-      "expected_invariant_ref": "invariant://worker/no-success-without-receipt",
-      "expected_result": "worker timeout remains a failure receipt with rollback obligation",
-      "observed_result": "not_executed_dry_run",
-      "rollback_obligation_ref": "rollback://worker/runtime-timeout-rehearsal",
-      "incident_handoff_ref": "incident://worker/runtime-timeout-handoff"
-    },
-    {
-      "scenario_id": "lease-contention-fencing-token",
-      "scenario_class": "lease_contention",
-      "input_fixture_ref": "fixtures://worker/lease-contention-dry-run",
-      "expected_invariant_ref": "invariant://lease/fencing-token-required",
-      "expected_result": "lease contention cannot dispatch without a valid fencing token",
-      "observed_result": "not_executed_dry_run",
-      "rollback_obligation_ref": "rollback://lease/contention-rehearsal",
-      "incident_handoff_ref": "incident://lease/contention-handoff"
-    }
-  ],
-  "rollback_recovery": {
-    "rollback_required_before_live_execution": true,
-    "rollback_plan_ref": "rollback://chaos-rehearsal/foundation-plan",
-    "replay_bundle_ref": "replay://chaos-rehearsal/foundation-dry-run",
-    "incident_handoff_required": true,
-    "terminal_closure_ref": null
+  "execution_results": {
+    "result_state": "REHEARSAL_RECORDED",
+    "scenarios_declared_count": 3,
+    "scenarios_executed_count": 3,
+    "scenarios_passed_count": 3,
+    "unexpected_accept_count": 0,
+    "unexpected_reject_count": 0,
+    "containment_verified": true,
+    "result_bank_hash_ref": "hash://sha256/chaos-rehearsal-result-bank-redacted"
+  },
+  "authority_boundary": {
+    "live_chaos_execution_performed": false,
+    "production_target_touched": false,
+    "staging_cluster_touched": false,
+    "runtime_disruption_performed": false,
+    "network_fault_injected": false,
+    "service_restart_performed": false,
+    "data_corruption_performed": false,
+    "event_chain_mutation_performed": false,
+    "external_connector_called": false,
+    "secret_access_performed": false,
+    "filesystem_write_performed": false,
+    "rollback_executed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "safety_guards": {
+    "scenario_hashes_required": true,
+    "required_evidence_declared": true,
+    "rollback_obligations_declared": true,
+    "containment_expected": true,
+    "raw_runtime_logs_retained": false,
+    "raw_secret_material_retained": false,
+    "operator_review_required": true,
+    "incident_handoff_required_if_live": true
   },
   "receipt_refs": {
     "chaos_rehearsal_execution_report_schema": "schemas/chaos_rehearsal_execution_report.schema.json",
     "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "effect_assurance_schema": "schemas/effect_assurance.schema.json",
+    "simulation_receipt_schema": "schemas/simulation_receipt.schema.json",
     "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
     "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json"
   },
   "contract_summary": {
-    "scenario_count": 2,
-    "required_evidence_ref_count": 5,
-    "blocked_reason_ref_count": 4,
-    "receipt_ref_count": 4,
-    "evidence_ref_count": 7
+    "dry_run_only": true,
+    "runtime_disruption_denied": true,
+    "scenario_ref_count": 3,
+    "invariant_ref_count": 3,
+    "injection_point_ref_count": 3,
+    "required_evidence_ref_count": 3,
+    "rollback_guard_ref_count": 3,
+    "authority_denial_count": 14,
+    "safety_guard_count": 8,
+    "receipt_ref_count": 7,
+    "evidence_ref_count": 11
   },
   "evidence_refs": [
     "schemas/chaos_rehearsal_execution_report.schema.json",
     "examples/chaos_rehearsal_execution_report.foundation.json",
-    "scripts/validate_resilience_rehearsal_reports.py",
-    "tests/test_validate_resilience_rehearsal_reports.py",
-    "docs/91_resilience_rehearsal_reports_contract.md",
+    "scripts/validate_chaos_rehearsal_execution_report.py",
+    "tests/test_validate_chaos_rehearsal_execution_report.py",
+    "docs/91_chaos_rehearsal_execution_report_contract.md",
+    "docs/82_cross_repo_opportunity_map.md",
     "schemas/universal_action_orchestration.schema.json",
-    "schemas/worker_failure_receipt.schema.json"
+    "schemas/life_meaning_judgment.schema.json",
+    "schemas/effect_assurance.schema.json",
+    "schemas/simulation_receipt.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json"
   ]
 }

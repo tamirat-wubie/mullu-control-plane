@@ -1,0 +1,118 @@
+{
+  "request_id": "agentic_service_harness_github_pr_operator_approval_request",
+  "schema_version": 1,
+  "generated_at": "2026-06-17T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_preflight_ref": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+  "witness_kind": "operator_approval_request",
+  "requested_evidence_ref": "approval://operator-github-pr-admission-required",
+  "approval_status": "AwaitingEvidence",
+  "approval_collected": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true,
+    "approval_request_only": true
+  },
+  "approval_request": {
+    "approval_request_id": "approval-request.github-pr-admission",
+    "approver_role": "operator",
+    "question": "Record whether the operator permits a future GitHub pull-request admission path after branch-write authority, UAO admission, rollback, CI, and effect reconciliation evidence exist.",
+    "decision_required": "operator_response_required",
+    "allowed_response_kinds": [
+      "record_operator_pr_approval_witness",
+      "record_operator_pr_rejection_witness"
+    ],
+    "default_response_kind": "record_operator_pr_rejection_witness",
+    "response_record_required": true,
+    "response_record_collected": false,
+    "approval_effect": "satisfies_operator_pr_approval_witness_only",
+    "pr_creation_authorized_after_response": false
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "operator_response_record",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://operator-approval-for-pr-admission",
+      "blocks_pr_admission": true
+    },
+    {
+      "witness_kind": "branch_write_authority",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://branch-write-authority-binding",
+      "blocks_pr_admission": true
+    },
+    {
+      "witness_kind": "uao_pr_admission",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://uao-pr-admission",
+      "blocks_pr_admission": true
+    },
+    {
+      "witness_kind": "repository_effect_rollback_plan",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://repository-effect-rollback-plan",
+      "blocks_pr_admission": true
+    },
+    {
+      "witness_kind": "ci_gate_before_ready_for_review",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://ci-gate-before-ready-for-review",
+      "blocks_pr_admission": true
+    },
+    {
+      "witness_kind": "effect_reconciliation",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+      "blocks_pr_admission": true
+    }
+  ],
+  "authority_denials": {
+    "operator_approval_collected": false,
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "branch_created": false,
+    "pull_request_opened": false,
+    "repository_written": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "receipt_store_appended": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "github_task_receipt_emitter_dry_run_schema": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
+    "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-operator-approval-request",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_operator_approval_request.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Record operator response as a separate witness, then add branch-write authority binding before any GitHub PR creation path is admitted."
+}

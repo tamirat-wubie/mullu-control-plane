@@ -9,6 +9,7 @@ Dependencies: schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.sc
 and scripts.validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.
 Invariants:
   - Ready receipts must bind a ready TeamOps terminal closure evidence bundle.
+  - Ready receipts must preserve provider-observation receipt identity and artifact anchoring.
   - Anchor receipts, remote submits, and ledger appends must remain false.
   - Secret markers and raw provider/message fields are rejected.
 """
@@ -47,6 +48,9 @@ from scripts.mint_team_ops_shared_inbox_terminal_closure_certificate import (  #
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 from scripts.validate_team_ops_shared_inbox_terminal_closure_evidence_bundle import (  # noqa: E402
     validate_team_ops_shared_inbox_terminal_closure_evidence_bundle,
+)
+from scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet import (  # noqa: E402
+    PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN,
 )
 
 
@@ -92,6 +96,8 @@ class TeamOpsTerminalClosureAnchorPreflightValidation:
     bundle_id: str
     command_id: str
     terminal_certificate_id: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     artifact_count: int
     artifact_root_hash: str
     errors: tuple[str, ...]
@@ -149,6 +155,8 @@ def validate_team_ops_shared_inbox_terminal_closure_anchor_preflight(
         bundle_id=str(preflight.get("bundle_id", "")),
         command_id=str(preflight.get("command_id", "")),
         terminal_certificate_id=str(preflight.get("terminal_certificate_id", "")),
+        provider_observation_receipt_id=str(preflight.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=preflight.get("provider_observation_receipt_valid") is True,
         artifact_count=int(preflight.get("artifact_count", 0) or 0),
         artifact_root_hash=str(preflight.get("artifact_root_hash", "")),
         errors=tuple(dict.fromkeys(errors)),
@@ -176,6 +184,14 @@ def _validate_preflight_semantics(preflight: dict[str, Any], errors: list[str]) 
         errors.append("planned_external_anchor_status must be pending")
     if preflight.get("planned_external_anchor_ref") != "":
         errors.append("planned_external_anchor_ref must be empty before anchor creation")
+    if not str(preflight.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("provider_observation_receipt_ref must be non-empty")
+    if PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+        str(preflight.get("provider_observation_receipt_id", ""))
+    ) is None:
+        errors.append("provider_observation_receipt_id must bind provider observation receipt")
+    if preflight.get("provider_observation_receipt_valid") is not True:
+        errors.append("provider_observation_receipt_valid must be true")
     required_types = set(preflight.get("required_artifact_types", []))
     if not set(REQUIRED_ARTIFACT_TYPES).issubset(required_types):
         errors.append("required_artifact_types must include trust-ledger anchor requirements")
@@ -215,6 +231,17 @@ def _validate_bundle_binding(
     for field_name in ("bundle_id", "command_id", "terminal_certificate_id", "bundle_hash"):
         if preflight.get(field_name) != bundle.get(field_name):
             errors.append(f"{field_name} must match source TeamOps evidence bundle")
+    metadata = bundle.get("metadata", {})
+    if not isinstance(metadata, dict):
+        errors.append("source TeamOps evidence bundle metadata must be an object")
+        return
+    for field_name in (
+        "provider_observation_receipt_ref",
+        "provider_observation_receipt_id",
+        "provider_observation_receipt_valid",
+    ):
+        if preflight.get(field_name) != metadata.get(field_name):
+            errors.append(f"{field_name} must match source TeamOps evidence bundle metadata")
     expected_artifacts = list(_project_anchor_artifacts(bundle))
     if preflight.get("artifacts") != expected_artifacts:
         errors.append("artifacts must match deterministic source-bundle projection")

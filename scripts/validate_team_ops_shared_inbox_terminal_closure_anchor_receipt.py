@@ -9,6 +9,7 @@ Dependencies: schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.sche
 schemas/trust_ledger_anchor_receipt.schema.json, and gateway.trust_ledger.
 Invariants:
   - Ready wrappers must bind a ready TeamOps anchor preflight and source bundle.
+  - Ready wrappers must preserve provider-observation receipt identity and required artifact anchoring.
   - The embedded trust-ledger anchor receipt must verify with anchor secret.
   - Remote submits, provider calls, ledger appends, and production claims are rejected.
 """
@@ -51,6 +52,9 @@ from scripts.mint_team_ops_shared_inbox_terminal_closure_certificate import (  #
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 from scripts.validate_team_ops_shared_inbox_terminal_closure_anchor_preflight import (  # noqa: E402
     validate_team_ops_shared_inbox_terminal_closure_anchor_preflight,
+)
+from scripts.validate_team_ops_shared_inbox_terminal_closure_review_packet import (  # noqa: E402
+    PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN,
 )
 
 
@@ -104,6 +108,8 @@ class TeamOpsTerminalClosureAnchorReceiptValidation:
     bundle_id: str
     command_id: str
     terminal_certificate_id: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     artifact_count: int
     artifact_root_hash: str
     errors: tuple[str, ...]
@@ -174,6 +180,8 @@ def validate_team_ops_shared_inbox_terminal_closure_anchor_receipt(
         bundle_id=str(receipt.get("bundle_id", "")),
         command_id=str(receipt.get("command_id", "")),
         terminal_certificate_id=str(receipt.get("terminal_certificate_id", "")),
+        provider_observation_receipt_id=str(receipt.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=receipt.get("provider_observation_receipt_valid") is True,
         artifact_count=int(receipt.get("artifact_count", 0) or 0),
         artifact_root_hash=str(receipt.get("artifact_root_hash", "")),
         errors=tuple(dict.fromkeys(errors)),
@@ -199,6 +207,14 @@ def _validate_receipt_semantics(receipt: dict[str, Any], errors: list[str]) -> N
         errors.append("external_anchor_status must remain pending")
     if receipt.get("external_anchor_ref") != "":
         errors.append("external_anchor_ref must remain empty before remote submission")
+    if not str(receipt.get("provider_observation_receipt_ref", "")).strip():
+        errors.append("provider_observation_receipt_ref must be non-empty")
+    if PROVIDER_OBSERVATION_RECEIPT_ID_PATTERN.fullmatch(
+        str(receipt.get("provider_observation_receipt_id", ""))
+    ) is None:
+        errors.append("provider_observation_receipt_id must bind provider observation receipt")
+    if receipt.get("provider_observation_receipt_valid") is not True:
+        errors.append("provider_observation_receipt_valid must be true")
     required_types = set(receipt.get("required_artifact_types", []))
     if not set(REQUIRED_ARTIFACT_TYPES).issubset(required_types):
         errors.append("required_artifact_types must include trust-ledger anchor requirements")
@@ -227,9 +243,27 @@ def _validate_source_binding(
     for field_name in ("bundle_id", "command_id", "terminal_certificate_id", "bundle_hash", "anchor_target"):
         if receipt.get(field_name) != preflight.get(field_name):
             errors.append(f"{field_name} must match TeamOps anchor preflight")
+    for field_name in (
+        "provider_observation_receipt_ref",
+        "provider_observation_receipt_id",
+        "provider_observation_receipt_valid",
+    ):
+        if receipt.get(field_name) != preflight.get(field_name):
+            errors.append(f"{field_name} must match TeamOps anchor preflight")
     for field_name in ("bundle_id", "command_id", "terminal_certificate_id", "bundle_hash"):
         if receipt.get(field_name) != bundle.get(field_name):
             errors.append(f"{field_name} must match source TeamOps evidence bundle")
+    metadata = bundle.get("metadata", {})
+    if not isinstance(metadata, dict):
+        errors.append("source TeamOps evidence bundle metadata must be an object")
+        return
+    for field_name in (
+        "provider_observation_receipt_ref",
+        "provider_observation_receipt_id",
+        "provider_observation_receipt_valid",
+    ):
+        if receipt.get(field_name) != metadata.get(field_name):
+            errors.append(f"{field_name} must match source TeamOps evidence bundle metadata")
     expected_artifacts = list(_project_anchor_artifacts(bundle))
     if receipt.get("artifacts") != expected_artifacts:
         errors.append("artifacts must match deterministic source-bundle projection")

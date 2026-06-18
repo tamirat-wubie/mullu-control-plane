@@ -5279,7 +5279,7 @@ def test_sccml_trace_adapter_witness_blocks_kernel_authority() -> None:
     assert closure_actions["publish_sccml_trace_adapter_witness_contract"]["status"] == "closed"
 
 
-def test_resilience_rehearsal_reports_block_live_execution() -> None:
+def test_chaos_rehearsal_execution_report_blocks_runtime_disruption() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     witness_surfaces = {
@@ -5288,32 +5288,157 @@ def test_resilience_rehearsal_reports_block_live_execution() -> None:
     }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     chaos_surface = surfaces["chaos_rehearsal_execution_report"]
-    fuzz_surface = surfaces["invariant_fuzz_execution_report"]
     chaos_witness_surface = witness_surfaces["chaos_rehearsal_execution_report"]
-    fuzz_witness_surface = witness_surfaces["invariant_fuzz_execution_report"]
-    chaos_witnesses = set(chaos_surface["runtime_witnesses"])
-    fuzz_witnesses = set(fuzz_surface["runtime_witnesses"])
+    witnesses = set(chaos_surface["runtime_witnesses"])
 
     assert chaos_surface["coverage_state"] == "witnessed"
-    assert fuzz_surface["coverage_state"] == "witnessed"
     assert chaos_surface["request_proof"] == "request_proof"
-    assert fuzz_surface["action_proof"] == "action_proof"
-    assert "ChaosRehearsalExecutionReport" in chaos_surface["representative_paths"]
-    assert "InvariantFuzzExecutionReport" in fuzz_surface["representative_paths"]
+    assert chaos_surface["action_proof"] == "action_proof"
     assert "schemas/chaos_rehearsal_execution_report.schema.json" in chaos_surface["evidence_files"]
-    assert "schemas/invariant_fuzz_execution_report.schema.json" in fuzz_surface["evidence_files"]
-    assert "scripts/validate_resilience_rehearsal_reports.py" in chaos_surface["evidence_files"]
-    assert "tests/test_validate_resilience_rehearsal_reports.py" in fuzz_surface["evidence_files"]
-    assert "chaos_rehearsal_execution_report_blocks_runtime_execution" in chaos_witnesses
-    assert "chaos_rehearsal_execution_report_rejects_rollback_drift" in chaos_witnesses
-    assert "invariant_fuzz_execution_report_blocks_live_fuzzing" in fuzz_witnesses
-    assert "invariant_fuzz_execution_report_rejects_case_drift" in fuzz_witnesses
-    assert chaos_witness_surface["exact_test_anchor_count"] == 6
-    assert fuzz_witness_surface["exact_test_anchor_count"] == 6
+    assert "examples/chaos_rehearsal_execution_report.foundation.json" in chaos_surface["evidence_files"]
+    assert "scripts/validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "tests/test_validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "chaos_rehearsal_execution_report_schema_valid" in witnesses
+    assert "chaos_rehearsal_execution_report_blocks_runtime_disruption" in witnesses
+    assert "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_raw_runtime_retention" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_result_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_sdlc_artifacts_valid" in witnesses
+    assert chaos_witness_surface["exact_test_anchor_count"] == 7
     assert chaos_witness_surface["unanchored_witness_count"] == 0
-    assert fuzz_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_chaos_rehearsal_execution_report_contract"]["status"] == "closed"
+
+
+def test_invariant_fuzz_execution_report_blocks_canonical_mutation() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    fuzz_surface = surfaces["invariant_fuzz_execution_report"]
+    fuzz_witness_surface = witness_surfaces["invariant_fuzz_execution_report"]
+    witnesses = set(fuzz_surface["runtime_witnesses"])
+
+    assert fuzz_surface["coverage_state"] == "witnessed"
+    assert fuzz_surface["request_proof"] == "request_proof"
+    assert fuzz_surface["action_proof"] == "action_proof"
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in fuzz_surface["evidence_files"]
+    assert "examples/invariant_fuzz_execution_report.foundation.json" in fuzz_surface["evidence_files"]
+    assert "scripts/validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "tests/test_validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "invariant_fuzz_execution_report_schema_valid" in witnesses
+    assert "invariant_fuzz_execution_report_blocks_canonical_mutation" in witnesses
+    assert "invariant_fuzz_execution_report_requires_case_bank_and_oracles" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_projection_and_raw_retention" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_result_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_sdlc_artifacts_valid" in witnesses
+    assert fuzz_witness_surface["exact_test_anchor_count"] == 7
+    assert fuzz_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_invariant_fuzz_execution_report_contract"]["status"] == "closed"
+
+
+def test_maf_receipt_parity_witness_denies_runtime_binding() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    parity_surface = surfaces["maf_receipt_parity_witness"]
+    parity_witness_surface = witness_surfaces["maf_receipt_parity_witness"]
+    witnesses = set(parity_surface["runtime_witnesses"])
+
+    assert parity_surface["coverage_state"] == "witnessed"
+    assert parity_surface["request_proof"] == "request_proof"
+    assert parity_surface["action_proof"] == "action_proof"
+    assert parity_surface["audit"] == "audit_chain"
+    assert "MafReceiptParityWitness" in parity_surface["representative_paths"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in parity_surface["evidence_files"]
+    assert "examples/maf_receipt_parity_witness.foundation.json" in parity_surface["evidence_files"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "maf/rust/Cargo.toml" in parity_surface["evidence_files"]
+    assert "maf_receipt_parity_witness_schema_valid" in witnesses
+    assert "maf_receipt_parity_witness_denies_runtime_binding" in witnesses
+    assert "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs" in witnesses
+    assert "maf_receipt_parity_witness_rejects_digest_drift" in witnesses
+    assert "maf_receipt_parity_witness_rejects_gap_closure_without_evidence" in witnesses
+    assert "maf_receipt_parity_witness_rejects_summary_drift" in witnesses
+    assert "maf_receipt_parity_witness_sdlc_artifacts_valid" in witnesses
+    assert parity_witness_surface["exact_test_anchor_count"] == 7
+    assert parity_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_receipt_parity_witness_contract"]["status"] == "closed"
+
+
+def test_maf_abi_cli_contract_witness_denies_cli_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    cli_surface = surfaces["maf_abi_cli_contract_witness"]
+    cli_witness_surface = witness_surfaces["maf_abi_cli_contract_witness"]
+    witnesses = set(cli_surface["runtime_witnesses"])
+
+    assert cli_surface["coverage_state"] == "witnessed"
+    assert cli_surface["request_proof"] == "request_proof"
+    assert cli_surface["action_proof"] == "action_proof"
+    assert cli_surface["audit"] == "audit_chain"
+    assert "MafAbiCliContractWitness" in cli_surface["representative_paths"]
+    assert "schemas/maf_abi_cli_contract_witness.schema.json" in cli_surface["evidence_files"]
+    assert "examples/maf_abi_cli_contract_witness.foundation.json" in cli_surface["evidence_files"]
+    assert "scripts/validate_maf_abi_cli_contract_witness.py" in cli_surface["evidence_files"]
+    assert "tests/test_validate_maf_abi_cli_contract_witness.py" in cli_surface["evidence_files"]
+    assert "maf/rust/crates/maf-cli/src/main.rs" in cli_surface["evidence_files"]
+    assert "maf_abi_cli_contract_witness_schema_valid" in witnesses
+    assert "maf_abi_cli_contract_witness_denies_cli_execution" in witnesses
+    assert "maf_abi_cli_contract_witness_requires_cli_artifact_refs" in witnesses
+    assert "maf_abi_cli_contract_witness_rejects_scaffold_and_command_drift" in witnesses
+    assert "maf_abi_cli_contract_witness_rejects_digest_and_summary_drift" in witnesses
+    assert "maf_abi_cli_contract_witness_sdlc_artifacts_valid" in witnesses
+    assert cli_witness_surface["exact_test_anchor_count"] == 6
+    assert cli_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_abi_cli_contract_witness_contract"]["status"] == "closed"
+
+
+def test_world_substrate_replay_witness_blocks_live_world_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    world_surface = surfaces["world_substrate_replay_witness"]
+    world_witness_surface = witness_surfaces["world_substrate_replay_witness"]
+    witnesses = set(world_surface["runtime_witnesses"])
+
+    assert world_surface["coverage_state"] == "witnessed"
+    assert world_surface["request_proof"] == "request_proof"
+    assert world_surface["action_proof"] == "action_proof"
+    assert "WorldSubstrateReplayWitness" in world_surface["representative_paths"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in world_surface["evidence_files"]
+    assert "examples/world_substrate_replay_witness.foundation.json" in world_surface["evidence_files"]
+    assert "scripts/validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "tests/test_validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "world_substrate_replay_witness_schema_valid" in witnesses
+    assert "world_substrate_replay_witness_blocks_live_world_authority" in witnesses
+    assert "world_substrate_replay_witness_requires_digest_refs" in witnesses
+    assert "world_substrate_replay_witness_requires_invariant_controls" in witnesses
+    assert "world_substrate_replay_witness_rejects_raw_payload_retention" in witnesses
+    assert "world_substrate_replay_witness_rejects_parity_drift" in witnesses
+    assert "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "world_substrate_replay_witness_sdlc_artifacts_valid" in witnesses
+    assert world_witness_surface["exact_test_anchor_count"] == 8
+    assert world_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_world_substrate_replay_witness_contract"]["status"] == "closed"
 
 
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:

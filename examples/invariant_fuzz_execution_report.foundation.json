@@ -1,88 +1,124 @@
 {
-  "report_id": "invariant-fuzz-foundation-20260616",
+  "report_id": "invariant-fuzz-execution-report-foundation-20260617",
   "report_version": "invariant_fuzz_execution_report.v1",
-  "generated_at": "2026-06-16T00:00:00Z",
+  "generated_at": "2026-06-17T00:00:00Z",
   "fuzz_scope": {
-    "target_surface": "governance",
-    "invariant_family": "receipt_integrity",
-    "generator_ref": "generator://foundation/deterministic-receipt-integrity-cases",
-    "seed_policy": "deterministic_fixture_only",
-    "execution_mode": "dry_run",
-    "uao_ref": "uao://foundation/invariant-fuzz-execution-report",
-    "phi_gov_ref": null
+    "source_family": "external/nested-mind-platform",
+    "borrowed_concept": "invariant-fuzz-execution",
+    "foundation_mode": true,
+    "tenant_scope": "foundation-local-only",
+    "uao_ref": "uao://invariant-fuzz-execution-report/foundation/dry-run",
+    "life_meaning_judgment_ref": "schemas/life_meaning_judgment.schema.json"
   },
-  "fuzz_result": {
-    "decision": "INVARIANT_FUZZ_DRY_RUN_BLOCKED_AWAITING_RUNTIME_EVIDENCE",
-    "cases_executed": 0,
-    "random_generation_performed": false,
-    "runtime_execution_performed": false,
-    "external_effects_performed": false,
-    "filesystem_mutation_performed": false,
-    "production_readiness_claim_allowed": false,
-    "terminal_closure_allowed": false,
-    "success_claim_allowed": false,
-    "required_evidence_refs": [
-      "evidence://invariant-fuzz/operator-approval",
-      "evidence://invariant-fuzz/runtime-sandbox",
-      "evidence://invariant-fuzz/deterministic-seed-manifest",
-      "evidence://invariant-fuzz/rollback-rehearsal",
-      "evidence://invariant-fuzz/incident-handoff"
+  "harness_mode": {
+    "mode": "deterministic_dry_run",
+    "dry_run_only": true,
+    "strict_baseline_required": true,
+    "apply_successful_cases": true,
+    "projection_redaction_required": true,
+    "production_target_allowed": false,
+    "staging_target_allowed": false,
+    "runtime_target_ref": "none://foundation-local-invariant-fuzz-harness"
+  },
+  "case_bank": {
+    "run_id_ref": "run://invariant-fuzz/foundation/seed-17",
+    "target_symbol_ref": "symbol://foundation-local/fuzz-target",
+    "seed": 17,
+    "case_bank_hash_ref": "hash://sha256/invariant-fuzz-case-bank-redacted",
+    "mutation_class_refs": [
+      "mutation://empty_patch",
+      "mutation://immutable_identity_change",
+      "mutation://required_key_removal",
+      "mutation://forbidden_key_insertion",
+      "mutation://wrong_target",
+      "mutation://valid_state_expansion",
+      "mutation://projection_secret_leak_probe"
     ],
-    "blocked_reason_refs": [
-      "blocked://invariant-fuzz/runtime-sandbox-missing",
-      "blocked://invariant-fuzz/operator-approval-missing",
-      "blocked://invariant-fuzz/seed-manifest-missing",
-      "blocked://terminal-closure/denied"
+    "declared_case_count": 7,
+    "expected_accept_count": 1,
+    "expected_reject_count": 6,
+    "mutation_free_rejection_count": 2,
+    "projection_probe_count": 1,
+    "oracle_refs": [
+      "oracle://reject-empty-patch",
+      "oracle://reject-immutable-identity-change",
+      "oracle://reject-required-key-removal",
+      "oracle://reject-forbidden-key-insertion",
+      "oracle://reject-wrong-target",
+      "oracle://accept-valid-state-expansion",
+      "oracle://redact-or-reject-projection-secret-probe"
     ]
   },
-  "cases": [
-    {
-      "case_id": "receipt-ref-count-drift",
-      "fixture_ref": "fixtures://governance/receipt-ref-count-drift",
-      "invariant_ref": "invariant://receipt/summary-counts-match-arrays",
-      "expected_result": "receipt summary count drift is rejected before execution",
-      "observed_result": "not_executed_dry_run",
-      "rollback_obligation_ref": "rollback://invariant-fuzz/receipt-count-drift",
-      "incident_handoff_ref": "incident://invariant-fuzz/receipt-count-drift"
-    },
-    {
-      "case_id": "authority-flag-drift",
-      "fixture_ref": "fixtures://governance/authority-flag-drift",
-      "invariant_ref": "invariant://authority/no-success-without-approval",
-      "expected_result": "authority flags cannot flip to success without approval refs",
-      "observed_result": "not_executed_dry_run",
-      "rollback_obligation_ref": "rollback://invariant-fuzz/authority-flag-drift",
-      "incident_handoff_ref": "incident://invariant-fuzz/authority-flag-drift"
-    }
-  ],
-  "rollback_recovery": {
-    "rollback_required_before_live_execution": true,
-    "rollback_plan_ref": "rollback://invariant-fuzz/foundation-plan",
-    "replay_bundle_ref": "replay://invariant-fuzz/foundation-dry-run",
-    "incident_handoff_required": true,
-    "terminal_closure_ref": null
+  "execution_results": {
+    "result_state": "FUZZ_EXECUTION_RECORDED",
+    "cases_executed_count": 7,
+    "cases_passed_count": 7,
+    "cases_failed_count": 0,
+    "unexpected_accept_count": 0,
+    "unexpected_reject_count": 0,
+    "projection_leak_detected": false,
+    "public_projection_checked": true,
+    "result_bank_hash_ref": "hash://sha256/invariant-fuzz-result-bank-redacted"
+  },
+  "authority_boundary": {
+    "live_runtime_execution_performed": false,
+    "production_target_touched": false,
+    "staging_cluster_touched": false,
+    "canonical_state_mutation_performed": false,
+    "event_chain_mutation_performed": false,
+    "lawbook_runtime_migration_performed": false,
+    "external_connector_called": false,
+    "secret_access_performed": false,
+    "filesystem_write_performed": false,
+    "rollback_executed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "safety_guards": {
+    "case_bank_hash_required": true,
+    "deterministic_seed_required": true,
+    "oracle_refs_required": true,
+    "projection_leak_check_required": true,
+    "expected_accept_reject_declared": true,
+    "raw_case_payload_retained": false,
+    "raw_secret_material_retained": false,
+    "operator_review_required": true,
+    "incident_handoff_required_if_live": true
   },
   "receipt_refs": {
     "invariant_fuzz_execution_report_schema": "schemas/invariant_fuzz_execution_report.schema.json",
     "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
-    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json",
-    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "effect_assurance_schema": "schemas/effect_assurance.schema.json",
+    "simulation_receipt_schema": "schemas/simulation_receipt.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "sdlc_recovery_handoff_receipt_schema": "schemas/sdlc_recovery_handoff_receipt.schema.json"
   },
   "contract_summary": {
-    "case_count": 2,
-    "cases_executed": 0,
-    "required_evidence_ref_count": 5,
-    "blocked_reason_ref_count": 4,
-    "receipt_ref_count": 4,
-    "evidence_ref_count": 7
+    "dry_run_only": true,
+    "canonical_mutation_denied": true,
+    "mutation_class_count": 7,
+    "oracle_ref_count": 7,
+    "declared_case_count": 7,
+    "expected_accept_count": 1,
+    "expected_reject_count": 6,
+    "projection_probe_count": 1,
+    "authority_denial_count": 12,
+    "safety_guard_count": 9,
+    "receipt_ref_count": 7,
+    "evidence_ref_count": 11
   },
   "evidence_refs": [
     "schemas/invariant_fuzz_execution_report.schema.json",
     "examples/invariant_fuzz_execution_report.foundation.json",
-    "scripts/validate_resilience_rehearsal_reports.py",
-    "tests/test_validate_resilience_rehearsal_reports.py",
-    "docs/91_resilience_rehearsal_reports_contract.md",
+    "scripts/validate_invariant_fuzz_execution_report.py",
+    "tests/test_validate_invariant_fuzz_execution_report.py",
+    "docs/92_invariant_fuzz_execution_report_contract.md",
+    "docs/82_cross_repo_opportunity_map.md",
     "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "schemas/effect_assurance.schema.json",
+    "schemas/simulation_receipt.schema.json",
     "schemas/sdlc_recovery_handoff_receipt.schema.json"
   ]
 }

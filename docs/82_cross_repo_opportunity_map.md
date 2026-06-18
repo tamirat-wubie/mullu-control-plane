@@ -39,7 +39,11 @@ The control plane already absorbed several high-fit ideas:
 | Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
 | Capture policy and trusted reality evidence packet | `TrustedCaptureEvidencePacket` | Implemented |
 | SCCML trace adapter boundary | `SccmlTraceAdapterWitness` | Implemented |
-| Chaos rehearsal and invariant fuzz evidence | `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport` | Implemented |
+| Chaos rehearsal dry-run evidence | `ChaosRehearsalExecutionReport` | Implemented |
+| Invariant fuzz execution evidence | `InvariantFuzzExecutionReport` | Implemented |
+| MAF receipt parity boundary | `MafReceiptParityWitness` | Implemented |
+| MAF ABI/CLI contract boundary | `MafAbiCliContractWitness` | Implemented |
+| SWEWS world substrate replay evidence | `WorldSubstrateReplayWitness` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -49,14 +53,14 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
 | --- | --- | --- | --- | --- |
 | 1 | `external/nested-mind-platform` v25 | Connector orchestration and action-promotion gate | The control plane has connector descriptors and UAO, but still needs a promotion gate that proves a connector action moved from plan-only to admissible authority without bypassing receipts. | Add `ConnectorActionPromotionGate` schema, example, validator, proof-matrix row, and docs. Keep `promotion_allowed=false` until all live evidence exists. |
 | 2 | `external/nested-mind-platform` v17-v20 | Readiness gate, waiver proposal, waiver certificate, waiver application | Release, deployment, and runtime promotion already use readiness claims; waiver handling needs a typed review queue instead of scattered accepted-risk notes. | Add a `ReadinessWaiverReviewPacket` contract with operator approvals, expiry, compensating controls, and no deployment authority. |
-| 3 | `external/nested-mind-platform` v18-v19 | Chaos rehearsal and invariant fuzz execution reports | Control-plane validators prove static contracts well, but runtime resilience claims need rehearsal evidence before production exposure. | Implemented with dry-run `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport` contracts that record scenario refs, expected invariant refs, observed non-execution results, rollback obligations, and incident handoff refs. |
+| 3 | `external/nested-mind-platform` v18-v19 | Chaos rehearsal and invariant fuzz execution reports | Control-plane validators prove static contracts well, but runtime resilience claims need rehearsal evidence before production exposure. | Implemented as dry-run `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport`; future live use remains blocked pending staging boundary, rollback, incident, and operator approval witnesses. |
 | 4 | `external/nested-mind-platform` v14-v16 | SQLite-backed job receipt and distributed lease execution ledger | Scheduler-worker proof threads now exist, but there is no operator read model summarizing lease, worker, failure, and runtime receipt chain status. | Add `WorkerReceiptLedgerReadModel` that projects existing receipts without executing jobs or reading a live database. |
-| 5 | `maf/rust` | MAF receipt parity boundary | The Rust workspace is organized into kernel, capability, event, governance, orchestration, ops, learning, and truth-kernel crates, but Python control-plane claims need an explicit parity witness before runtime binding. | Add `MafReceiptParityWitness` contract that maps Python schemas to Rust crate surfaces and records gaps. No PyO3, subprocess, or CLI authority. |
-| 6 | `msic-sdk`, `tatoken-kernel`, `tarc-core` | Mfidel substrate conformance witness | Mfidel atomicity is a hard invariant, but SDK/kernel drift can still occur across TypeScript, Python, and Rust implementations. | Add `MfidelSubstrateConformanceReceipt` with substrate digest, row/column bounds, no-normalization proof refs, and cross-runtime fixture refs. |
-| 7 | `Virecai` | Capture policy and trusted reality evidence packet | Control-plane capture policy exists, but future browser, screen, video, and sensor receipts need a standard evidence envelope before any live capture. | Extend capture-policy work with a `TrustedCaptureEvidencePacket` dry-run contract. Keep media capture, file writes, and connector calls denied. |
-| 8 | `mullu-inspect`, `mullu-browser` | Browser observation receipt | Browser inspection is valuable for operator evidence, but it must be separated from navigation control and external effect authority. | Add a `BrowserObservationReceipt` contract for URL hash, DOM digest, screenshot digest ref, consent scope, and no-click/no-submit/no-secret flags. |
-| 9 | `mullu-search` | Research source conflict map | Search decisions and receipts exist, but the control plane should preserve disagreements across sources as first-class operator evidence. | Add `ResearchSourceConflictMap` as a read-only receipt that binds citation refs, freshness, contradiction class, and follow-up sensing needs. |
-| 10 | `symbolic-causal-chain-machine-language` | SCCML trace adapter contract | SCCML can provide deterministic execution-chain trace semantics, but the control plane needs a boundary before accepting any kernel trace as governance proof. | Add `SccmlTraceAdapterWitness` that records instruction-trace refs, state-hash refs, proof refs, and unsupported-op gaps. |
+| 5 | `maf/rust` | MAF receipt parity boundary | The Rust workspace is organized into kernel, capability, event, governance, orchestration, ops, learning, and truth-kernel crates, but Python control-plane claims need an explicit parity witness before runtime binding. | Implemented as `MafReceiptParityWitness`; future runtime binding remains blocked until ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path exist. |
+| 6 | `external/swews-core` | Future world substrate runtime adapter | `WorldSubstrateReplayWitness` covers digest-only replay admission, but live world runtime binding remains unavailable. | Defer adapter code until replay witnesses, SQLite boundaries, service-call receipts, rollback plans, and branch quarantine evidence are all verified. |
+| 7 | `msic-sdk`, `tatoken-kernel`, `tarc-core` | Mfidel substrate conformance witness | Mfidel atomicity is a hard invariant, but SDK/kernel drift can still occur across TypeScript, Python, and Rust implementations. | Add `MfidelSubstrateConformanceReceipt` with substrate digest, row/column bounds, no-normalization proof refs, and cross-runtime fixture refs. |
+| 8 | `Virecai` | Capture policy and trusted reality evidence packet | Control-plane capture policy exists, but future browser, screen, video, and sensor receipts need a standard evidence envelope before any live capture. | Extend capture-policy work with a `TrustedCaptureEvidencePacket` dry-run contract. Keep media capture, file writes, and connector calls denied. |
+| 9 | `mullu-inspect`, `mullu-browser` | Browser observation receipt | Browser inspection is valuable for operator evidence, but it must be separated from navigation control and external effect authority. | Add a `BrowserObservationReceipt` contract for URL hash, DOM digest, screenshot digest ref, consent scope, and no-click/no-submit/no-secret flags. |
+| 10 | `mullu-search` | Research source conflict map | Search decisions and receipts exist, but the control plane should preserve disagreements across sources as first-class operator evidence. | Add `ResearchSourceConflictMap` as a read-only receipt that binds citation refs, freshness, contradiction class, and follow-up sensing needs. |
 
 ## 4. Do Not Borrow Yet
 
@@ -70,13 +74,13 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
 
 ## 5. Recommended Implementation Sequence
 
-1. `MafReceiptParityWitness`
-   - Highest remaining leverage because Python control-plane claims need explicit parity evidence before any Rust runtime binding.
-   - Must avoid PyO3, subprocess, or CLI authority in Foundation Mode.
+1. `ConnectorActionPromotionGate`
+   - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
+   - Must remain plan-only in Foundation Mode.
 
-2. `WorldSubstrateReplayWitness`
-   - SWEWS-style replay-aware world evidence can improve simulation and replay governance before any world-service runtime binding.
-   - Should remain witness-only with digest refs, no local service calls, no SQLite writes, and no state mutation authority.
+2. MAF subprocess effect boundary witness
+   - Follows `MafAbiCliContractWitness` and proves that any future Python-to-Rust CLI path has a denied-by-default subprocess effect envelope before execution can be reconsidered.
+   - Must remain `AwaitingEvidence` until subprocess input, output, timeout, filesystem, environment, and failure receipt boundaries are independently validated.
 
 ## 6. Project Discipline Mesh Findings
 

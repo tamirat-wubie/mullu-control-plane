@@ -1,0 +1,67 @@
+{
+  "requirement_id": "REQ-world-substrate-replay-witness-20260617",
+  "request_id": "continue-cross-repo-opportunity-map-world-substrate-replay-witness",
+  "problem_statement": "SWEWS-style world substrate replay can provide sparse-cache truth, legal geometry, replay probe, branch quarantine, and planner/executor parity evidence, but the control plane needs a witness-only boundary before accepting any world replay evidence as governance proof.",
+  "success_criteria": [
+    "WorldSubstrateReplayWitness validates against a public JSON schema and Foundation Mode example",
+    "WorldSubstrateReplayWitness binds world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, WorldState refs, and SDLC recovery refs",
+    "WorldSubstrateReplayWitness blocks live world service calls, SQLite reads, SQLite writes, world mutation, replay execution, planner execution, executor execution, branch unquarantine, external endpoint calls, secret access, filesystem writes, raw world snapshot storage, raw replay trace storage, terminal closure, and success claims",
+    "WorldSubstrateReplayWitness rejects authority drift, raw payload retention, digest and scope drift, missing invariant controls, parity drift, receipt ref drift, missing evidence refs, and summary count drift",
+    "WorldSubstrateReplayWitness is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live world service call",
+    "no SQLite read",
+    "no SQLite write",
+    "no world mutation",
+    "no replay execution",
+    "no planner execution",
+    "no executor execution",
+    "no branch unquarantine",
+    "no external endpoint call",
+    "no secret access",
+    "no filesystem write",
+    "no raw world snapshot retention",
+    "no raw replay trace retention",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "world substrate evidence remains witness-only",
+    "world snapshot, replay trace, sparse-cache, invariant registry, legal geometry, branch quarantine, planner trace, executor trace, and parity evidence remain digest refs",
+    "sparse-cache truth, legal geometry, invariant registry, planner/executor parity, and branch quarantine refs must be declared",
+    "live service calls, SQLite access, replay execution, mutation, external endpoints, writes, and terminal closure remain false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/world_substrate_replay_witness.schema.json",
+    "examples/world_substrate_replay_witness.foundation.json",
+    "scripts/validate_world_substrate_replay_witness.py",
+    "tests/test_validate_world_substrate_replay_witness.py",
+    "docs/92_world_substrate_replay_witness_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_world_substrate_replay_witness.py",
+    "python -m pytest tests/test_validate_world_substrate_replay_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_world_substrate_replay_witness_20260617.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/world_substrate_replay_witness.schema.json",
+    "examples/world_substrate_replay_witness.foundation.json",
+    "scripts/validate_world_substrate_replay_witness.py",
+    "tests/test_validate_world_substrate_replay_witness.py",
+    "docs/92_world_substrate_replay_witness_contract.md",
+    "examples/sdlc/design_world_substrate_replay_witness_20260617.json",
+    "examples/sdlc/security_review_world_substrate_replay_witness_20260617.json"
+  ],
+  "uao_ref": "uao://sdlc/world-substrate-replay-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/world-substrate-replay-witness/requirement",
+  "receipt_ref": "receipt://sdlc/world-substrate-replay-witness/requirement"
+}

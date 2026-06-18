@@ -642,11 +642,11 @@ def test_sccml_trace_adapter_witness_sdlc_artifacts_validate() -> None:
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
-def test_resilience_rehearsal_reports_sdlc_artifacts_validate() -> None:
-    requirement_path = Path("examples/sdlc/requirement_resilience_rehearsal_reports_20260616.json")
-    design_path = Path("examples/sdlc/design_resilience_rehearsal_reports_20260616.json")
-    requirement_record = validator.load_json_object(requirement_path, "resilience rehearsal reports requirement")
-    design_record = validator.load_json_object(design_path, "resilience rehearsal reports design")
+def test_chaos_rehearsal_execution_report_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_chaos_rehearsal_execution_report_20260616.json")
+    design_path = Path("examples/sdlc/design_chaos_rehearsal_execution_report_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "chaos rehearsal requirement")
+    design_record = validator.load_json_object(design_path, "chaos rehearsal design")
 
     requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
     design_errors = validator.validate_artifact_record("design_decision", design_record)
@@ -655,12 +655,53 @@ def test_resilience_rehearsal_reports_sdlc_artifacts_validate() -> None:
     assert design_errors == []
     assert design_record["requirement_id"] == requirement_record["requirement_id"]
     assert "ChaosRehearsalExecutionReport" in design_record["architecture_summary"]
-    assert "InvariantFuzzExecutionReport" in design_record["architecture_summary"]
     assert "schemas/chaos_rehearsal_execution_report.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in design_record["schema_changes"]
+    assert "no live chaos execution" in requirement_record["non_goals"]
+    assert "scripts/validate_chaos_rehearsal_execution_report.py" in design_record["validator_changes"]
+    assert "tests/test_validate_chaos_rehearsal_execution_report.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_invariant_fuzz_execution_report_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_invariant_fuzz_execution_report_20260617.json")
+    design_path = Path("examples/sdlc/design_invariant_fuzz_execution_report_20260617.json")
+    requirement_record = validator.load_json_object(requirement_path, "invariant fuzz requirement")
+    design_record = validator.load_json_object(design_path, "invariant fuzz design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "InvariantFuzzExecutionReport" in design_record["architecture_summary"]
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in requirement_record["affected_surfaces"]
     assert "schemas/invariant_fuzz_execution_report.schema.json" in design_record["schema_changes"]
-    assert "no runtime execution" in requirement_record["non_goals"]
-    assert "scripts/validate_resilience_rehearsal_reports.py" in design_record["validator_changes"]
-    assert "tests/test_validate_resilience_rehearsal_reports.py" in design_record["validator_changes"]
+    assert "no canonical runtime mutation" in requirement_record["non_goals"]
+    assert "scripts/validate_invariant_fuzz_execution_report.py" in design_record["validator_changes"]
+    assert "tests/test_validate_invariant_fuzz_execution_report.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_world_substrate_replay_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_world_substrate_replay_witness_20260617.json")
+    design_path = Path("examples/sdlc/design_world_substrate_replay_witness_20260617.json")
+    requirement_record = validator.load_json_object(requirement_path, "world substrate replay witness requirement")
+    design_record = validator.load_json_object(design_path, "world substrate replay witness design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "WorldSubstrateReplayWitness" in design_record["architecture_summary"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in design_record["schema_changes"]
+    assert "no live world service call" in requirement_record["non_goals"]
+    assert "scripts/validate_world_substrate_replay_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_world_substrate_replay_witness.py" in design_record["validator_changes"]
     assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
@@ -870,3 +911,40 @@ def test_mfidel_substrate_conformance_receipt_requirement_and_design_validate() 
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in requirement["affected_surfaces"]
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in design["schema_changes"]
     assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in design["validator_changes"]
+
+
+def test_maf_receipt_parity_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_receipt_parity_witness_20260618.json")
+    design_path = Path("examples/sdlc/design_maf_receipt_parity_witness_20260618.json")
+    requirement_record = validator.load_json_object(requirement_path, "maf receipt parity requirement")
+    design_record = validator.load_json_object(design_path, "maf receipt parity design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
+
+
+def test_maf_abi_cli_contract_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_abi_cli_contract_witness_20260618.json")
+    design_path = Path("examples/sdlc/design_maf_abi_cli_contract_witness_20260618.json")
+    requirement_record = validator.load_json_object(requirement_path, "maf ABI CLI requirement")
+    design_record = validator.load_json_object(design_path, "maf ABI CLI design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "schemas/maf_abi_cli_contract_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_abi_cli_contract_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_abi_cli_contract_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_abi_cli_contract_witness.py" in design_record["validator_changes"]
+    assert "no CLI execution" in requirement_record["non_goals"]
