@@ -1,5 +1,5 @@
 {
-  "check_count": 211,
+  "check_count": 213,
   "checks": [
     {
       "args": [
@@ -260,6 +260,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS AUTHORITY TRANSITIONS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_channel_approval_strength_policy.py"
+      ],
+      "name": "channel_approval_strength_policy",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "channel approval-strength policy ok: channel_approval_strength_policy.foundation\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -754,6 +767,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "read-only document worker path ok: read-only-document-worker-path-20260617 -> document.inspect_read_only\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_read_only_search_worker_path.py"
+      ],
+      "name": "read_only_search_worker_path",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "read-only search worker path ok: read-only-search-worker-path-20260617 -> enterprise.knowledge_search\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2798,7 +2824,7 @@
       "termination_signal": null
     }
   ],
-  "generated_at_epoch": 1781748389.3289173,
+  "generated_at_epoch": 1781749490.6327348,
   "receipt_id": "workspace_governance_preflight_receipt",
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
