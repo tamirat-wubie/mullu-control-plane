@@ -24,6 +24,30 @@ from scripts.validate_universal_symbol_append_audit_witness import (
     UniversalSymbolAppendAuditWitnessError,
     validate_universal_symbol_append_audit_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_writer_registration_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_WRITER_REGISTRATION_WITNESS_PATH,
+    UniversalSymbolReceiptStoreWriterRegistrationWitnessError,
+    validate_universal_symbol_receipt_store_writer_registration_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_writer_identity_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_WRITER_IDENTITY_WITNESS_PATH,
+    UniversalSymbolReceiptStoreWriterIdentityWitnessError,
+    validate_universal_symbol_receipt_store_writer_identity_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_write_path_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_WRITE_PATH_WITNESS_PATH,
+    UniversalSymbolReceiptStoreWritePathWitnessError,
+    validate_universal_symbol_receipt_store_write_path_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_path_custody_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_PATH_CUSTODY_WITNESS_PATH,
+    UniversalSymbolReceiptStorePathCustodyWitnessError,
+    validate_universal_symbol_receipt_store_path_custody_witness,
+)
 from scripts.validate_universal_symbol_receipt_store_authority_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_RECEIPT_STORE_AUTHORITY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_RECEIPT_STORE_AUTHORITY_WITNESS_PATH,
@@ -55,7 +79,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 29
+    assert report["evidence_ref_count"] == 41
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
@@ -65,7 +89,7 @@ def test_foundation_universal_symbol_runtime_admission_policy_validates() -> Non
     assert report["admission_decision"] == "blocked"
     assert report["authority_denial_count"] == 9
     assert report["skill_admission_count"] == 4
-    assert report["evidence_ref_count"] == 16
+    assert report["evidence_ref_count"] == 28
 
 
 def test_foundation_universal_symbol_adapter_receipt_persistence_policy_validates() -> None:
@@ -75,7 +99,7 @@ def test_foundation_universal_symbol_adapter_receipt_persistence_policy_validate
     assert report["persistence_decision"] == "blocked_pending_receipt_store_authority"
     assert report["authority_denial_count"] == 9
     assert report["projection_source_count"] == 4
-    assert report["evidence_ref_count"] == 17
+    assert report["evidence_ref_count"] == 29
 
 
 def test_foundation_universal_symbol_receipt_store_authority_witness_validates() -> None:
@@ -86,7 +110,7 @@ def test_foundation_universal_symbol_receipt_store_authority_witness_validates()
     assert report["authority_denial_count"] == 10
     assert report["authority_requirement_count"] == 7
     assert report["append_precondition_count"] == 7
-    assert report["evidence_ref_count"] == 15
+    assert report["evidence_ref_count"] == 27
 
 
 def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
@@ -96,7 +120,47 @@ def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
     assert report["append_audit_decision"] == "blocked_pending_writer_registration_and_replay_evidence"
     assert report["authority_denial_count"] == 10
     assert report["audit_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 14
+    assert report["evidence_ref_count"] == 26
+
+
+def test_foundation_universal_symbol_receipt_store_writer_registration_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_writer_registration_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["writer_registration_decision"] == "blocked_pending_write_path_and_operator_authority"
+    assert report["authority_denial_count"] == 10
+    assert report["writer_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 25
+
+
+def test_foundation_universal_symbol_receipt_store_writer_identity_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_writer_identity_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["writer_identity_decision"] == "blocked_pending_operator_tenant_scope_and_recovery_evidence"
+    assert report["authority_denial_count"] == 10
+    assert report["identity_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 22
+
+
+def test_foundation_universal_symbol_receipt_store_path_custody_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_path_custody_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["path_custody_decision"] == "blocked_pending_confinement_idempotency_replay_and_recovery_evidence"
+    assert report["authority_denial_count"] == 10
+    assert report["custody_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 21
+
+
+def test_foundation_universal_symbol_receipt_store_write_path_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_write_path_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["write_path_decision"] == "blocked_pending_writer_registration_replay_and_operator_authority"
+    assert report["authority_denial_count"] == 10
+    assert report["write_path_requirement_count"] == 10
+    assert report["evidence_ref_count"] == 24
 
 
 def test_rejects_connector_authority_drift(tmp_path: Path) -> None:
@@ -387,4 +451,266 @@ def test_append_audit_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -
         validate_universal_symbol_append_audit_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_APPEND_AUDIT_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_append_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_registration_is_not_append_authority"] = False
+    changed["authority_denials"]["receipt_store_append_performed"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="append authority"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_requirements"] = changed["writer_requirements"][1:]
+    changed["contract_summary"]["writer_requirement_count"] = len(changed["writer_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="writer-identity-witness"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_writer_identity_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_scope_constraints"]["writer_identity_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="writer_identity_required"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_writer_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_registration_is_not_append_authority"] = False
+    changed["authority_denials"]["receipt_store_writer_registered"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="writer registration"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_registration_witness_rejects_scope_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_REGISTRATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_scope_constraints"]["operator_approval_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreWriterRegistrationWitnessError, match="operator_approval_required"):
+        validate_universal_symbol_receipt_store_writer_registration_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_REGISTRATION_SCHEMA_PATH,
+        )
+
+
+def test_writer_identity_witness_rejects_registration_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["writer_identity_witness_is_not_registration_authority"] = False
+    changed["authority_denials"]["receipt_store_writer_identity_registered"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreWriterIdentityWitnessError, match="registration authority"):
+        validate_universal_symbol_receipt_store_writer_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_writer_identity_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_requirements"] = changed["identity_requirements"][1:]
+    changed["contract_summary"]["identity_requirement_count"] = len(changed["identity_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreWriterIdentityWitnessError, match="unique-writer-identity"):
+        validate_universal_symbol_receipt_store_writer_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_writer_identity_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreWriterIdentityWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_writer_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_writer_identity_witness_rejects_identity_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_constraints"]["unique_writer_identity_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreWriterIdentityWitnessError, match="unique_writer_identity_required"):
+        validate_universal_symbol_receipt_store_writer_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_writer_identity_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITER_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreWriterIdentityWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_writer_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITER_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_path_custody_witness_rejects_write_path_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_PATH_CUSTODY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["path_custody_witness_is_not_write_path_authority"] = False
+    changed["authority_denials"]["receipt_store_path_custody_registered"] = True
+    with pytest.raises(UniversalSymbolReceiptStorePathCustodyWitnessError, match="write-path authority"):
+        validate_universal_symbol_receipt_store_path_custody_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+        )
+
+
+def test_path_custody_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_PATH_CUSTODY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["custody_requirements"] = changed["custody_requirements"][1:]
+    changed["contract_summary"]["custody_requirement_count"] = len(changed["custody_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStorePathCustodyWitnessError, match="canonical-path-identity"):
+        validate_universal_symbol_receipt_store_path_custody_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+        )
+
+
+def test_path_custody_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_PATH_CUSTODY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["custody_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStorePathCustodyWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_path_custody_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+        )
+
+
+def test_path_custody_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_PATH_CUSTODY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["custody_constraints"]["repository_relative_path_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStorePathCustodyWitnessError, match="repository_relative_path_required"):
+        validate_universal_symbol_receipt_store_path_custody_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+        )
+
+
+def test_path_custody_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_PATH_CUSTODY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStorePathCustodyWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_path_custody_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_PATH_CUSTODY_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_append_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["write_path_witness_is_not_append_authority"] = False
+    changed["authority_denials"]["receipt_store_append_performed"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="append authority"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["write_path_requirements"] = changed["write_path_requirements"][1:]
+    changed["contract_summary"]["write_path_requirement_count"] = len(changed["write_path_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="receipt-store-writer-registration"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_path_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["authority_denials"]["receipt_store_write_path_registered"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="receipt_store_write_path_registered"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["write_path_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["write_path_constraints"]["idempotency_key_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="idempotency_key_required"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
+        )
+
+
+def test_write_path_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_WRITE_PATH_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreWritePathWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_write_path_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_WRITE_PATH_SCHEMA_PATH,
         )

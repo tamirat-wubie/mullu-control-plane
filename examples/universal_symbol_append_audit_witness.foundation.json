@@ -118,8 +118,16 @@
   "evidence_refs": [
     "schemas/universal_symbol_append_audit_witness.schema.json",
     "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
     "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
     "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
@@ -127,6 +135,10 @@
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_append_audit_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py"
@@ -137,6 +149,6 @@
     "candidate_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 11,
-    "evidence_ref_count": 14
+    "evidence_ref_count": 26
   }
 }

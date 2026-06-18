@@ -1,5 +1,5 @@
 {
-  "check_count": 219,
+  "check_count": 223,
   "checks": [
     {
       "args": [
@@ -2154,6 +2154,58 @@
         "scripts/validate_universal_symbol_append_audit_witness.py"
       ],
       "name": "universal_symbol_append_audit_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_writer_identity_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_writer_registration_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_path_custody_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_write_path_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_write_path_witness",
       "passed": true,
       "return_code": 0,
       "stderr": "",

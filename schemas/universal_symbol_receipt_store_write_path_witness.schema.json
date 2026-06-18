@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-witness:1",
+  "title": "Universal Symbol Receipt Store Write Path Witness",
+  "description": "Foundation Mode witness for a future UniversalSymbol receipt-store write path. This witness defines write-path evidence obligations while denying writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "generated_at",
+    "witness_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "write_path_decision",
+    "write_path_witness_is_not_append_authority",
+    "write_path_requirements",
+    "authority_denials",
+    "write_path_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "witness_id": { "type": "string", "const": "universal-symbol-receipt-store-write-path-witness-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "witness_scope": { "type": "string", "const": "foundation-mode-universal-symbol-receipt-store-write-path" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "write_path_decision": { "type": "string", "const": "blocked_pending_writer_registration_replay_and_operator_authority" },
+    "write_path_witness_is_not_append_authority": { "type": "boolean", "const": true },
+    "write_path_requirements": {
+      "type": "array",
+      "minItems": 10,
+      "items": { "$ref": "#/$defs/write_path_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "write_path_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "writer_registration_witness_required",
+        "path_custody_required",
+        "path_confinement_required",
+        "append_only_required",
+        "digest_only_required",
+        "idempotency_key_required",
+        "durability_replay_required",
+        "rollback_recovery_required",
+        "tenant_actor_boundary_required",
+        "operator_approval_required"
+      ],
+      "properties": {
+        "writer_registration_witness_required": { "type": "boolean", "const": true },
+        "path_custody_required": { "type": "boolean", "const": true },
+        "path_confinement_required": { "type": "boolean", "const": true },
+        "append_only_required": { "type": "boolean", "const": true },
+        "digest_only_required": { "type": "boolean", "const": true },
+        "idempotency_key_required": { "type": "boolean", "const": true },
+        "durability_replay_required": { "type": "boolean", "const": true },
+        "rollback_recovery_required": { "type": "boolean", "const": true },
+        "tenant_actor_boundary_required": { "type": "boolean", "const": true },
+        "operator_approval_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_writer_registration_blocks_write_path",
+        "missing_path_custody_blocks_write_path",
+        "missing_idempotency_blocks_write_path",
+        "missing_replay_blocks_write_path",
+        "unknown_hard_constraint_blocks_write_path",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_writer_registration_blocks_write_path": { "type": "boolean", "const": true },
+        "missing_path_custody_blocks_write_path": { "type": "boolean", "const": true },
+        "missing_idempotency_blocks_write_path": { "type": "boolean", "const": true },
+        "missing_replay_blocks_write_path": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_write_path": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string",
+        "enum": [
+          "writer_registration_witness_missing",
+          "path_custody_witness_missing",
+          "path_confinement_witness_missing",
+          "append_only_policy_missing",
+          "digest_only_policy_missing",
+          "idempotency_key_witness_missing",
+          "durability_replay_witness_missing",
+          "rollback_recovery_witness_missing",
+          "tenant_actor_boundary_missing",
+          "operator_approval_missing",
+          "receipt_store_append_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "write_path_requirement_count",
+        "authority_denial_count",
+        "write_path_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "write_path_requirement_count": { "type": "integer", "minimum": 10 },
+        "authority_denial_count": { "type": "integer", "const": 10 },
+        "write_path_constraint_count": { "type": "integer", "const": 10 },
+        "rejection_check_count": { "type": "integer", "const": 6 },
+        "blocked_reason_count": { "type": "integer", "minimum": 10 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "write_path_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "write_path_registration_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_writer_registered",
+        "receipt_store_write_path_registered",
+        "receipt_store_append_performed",
+        "write_path_witness_claimed_terminal",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "receipt_store_writer_registered": { "type": "boolean", "const": false },
+        "receipt_store_write_path_registered": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "write_path_witness_claimed_terminal": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@ Purpose: apply the user-defined Mullu symbol concept as a platform-wide Foundati
 
 Governance scope: symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority denial, and evidence references.
 
-Dependencies: `schemas/universal_symbol.schema.json`, `schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json`, `schemas/universal_symbol_append_audit_witness.schema.json`, `schemas/universal_symbol_receipt_store_authority_witness.schema.json`, `schemas/universal_symbol_runtime_admission_policy.schema.json`, `examples/universal_symbol_kernel.foundation.json`, `examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json`, `examples/universal_symbol_append_audit_witness.foundation.json`, `examples/universal_symbol_receipt_store_authority_witness.foundation.json`, `examples/universal_symbol_runtime_admission_policy.foundation.json`, `docs/40_proof_coverage_matrix.md`, `scripts/validate_universal_symbol_kernel.py`, `scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py`, `scripts/validate_universal_symbol_append_audit_witness.py`, `scripts/validate_universal_symbol_receipt_store_authority_witness.py`, `scripts/validate_universal_symbol_runtime_admission_policy.py`, `scripts/proof_coverage_matrix.py`, `tests/test_validate_universal_symbol_kernel.py`, `tests/test_proof_coverage_matrix.py`, `tests/fixtures/proof_coverage_matrix.json`, `mcoi/mcoi_runtime/core/symbol_skill_adapter.py`, `mcoi/mcoi_runtime/app/symbol_operator_read_models.py`, `mcoi/mcoi_runtime/app/software_receipt_observability.py`, `mcoi/mcoi_runtime/app/routers/components.py`, `mcoi/tests/test_symbol_skill_adapter.py`, `mcoi/tests/test_symbol_operator_read_models.py`, `mcoi/tests/test_software_receipt_observability.py`, `mcoi/mcoi_runtime/contracts/snet.py`, `mcoi/mcoi_runtime/snet/engine.py`, and `docs/MULLU_COMPONENT_HARNESS.md`.
+Dependencies: `schemas/universal_symbol.schema.json`, `schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json`, `schemas/universal_symbol_append_audit_witness.schema.json`, `schemas/universal_symbol_receipt_store_authority_witness.schema.json`, `schemas/universal_symbol_receipt_store_path_custody_witness.schema.json`, `schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json`, `schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json`, `schemas/universal_symbol_receipt_store_write_path_witness.schema.json`, `schemas/universal_symbol_runtime_admission_policy.schema.json`, `examples/universal_symbol_kernel.foundation.json`, `examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json`, `examples/universal_symbol_append_audit_witness.foundation.json`, `examples/universal_symbol_receipt_store_authority_witness.foundation.json`, `examples/universal_symbol_receipt_store_path_custody_witness.foundation.json`, `examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json`, `examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json`, `examples/universal_symbol_receipt_store_write_path_witness.foundation.json`, `examples/universal_symbol_runtime_admission_policy.foundation.json`, `docs/40_proof_coverage_matrix.md`, `scripts/validate_universal_symbol_kernel.py`, `scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py`, `scripts/validate_universal_symbol_append_audit_witness.py`, `scripts/validate_universal_symbol_receipt_store_authority_witness.py`, `scripts/validate_universal_symbol_receipt_store_path_custody_witness.py`, `scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py`, `scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py`, `scripts/validate_universal_symbol_receipt_store_write_path_witness.py`, `scripts/validate_universal_symbol_runtime_admission_policy.py`, `scripts/proof_coverage_matrix.py`, `tests/test_validate_universal_symbol_kernel.py`, `tests/test_proof_coverage_matrix.py`, `tests/fixtures/proof_coverage_matrix.json`, `mcoi/mcoi_runtime/core/symbol_skill_adapter.py`, `mcoi/mcoi_runtime/app/symbol_operator_read_models.py`, `mcoi/mcoi_runtime/app/software_receipt_observability.py`, `mcoi/mcoi_runtime/app/routers/components.py`, `mcoi/tests/test_symbol_skill_adapter.py`, `mcoi/tests/test_symbol_operator_read_models.py`, `mcoi/tests/test_software_receipt_observability.py`, `mcoi/mcoi_runtime/contracts/snet.py`, `mcoi/mcoi_runtime/snet/engine.py`, and `docs/MULLU_COMPONENT_HARNESS.md`.
 
 Invariants:
 
@@ -324,6 +324,104 @@ receipt-store write-path authority
 
 It remains a Foundation Mode denial. It does not register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure.
 
+## Receipt-store writer identity witness
+
+The first UniversalSymbol receipt-store writer identity witness is:
+
+```text
+schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json
+examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json
+```
+
+It defines the evidence required before a receipt-store writer identity can be accepted:
+
+```text
+unique writer identity
+operator approval
+tenant scope witness
+writer duty scope
+receipt schema manifest
+write-path boundary
+lease or idempotency witness
+rollback/recovery witness
+```
+
+It remains a Foundation Mode denial. It does not register writer identity, register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
+## Receipt-store writer registration witness
+
+The first UniversalSymbol receipt-store writer registration witness is:
+
+```text
+schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json
+examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json
+```
+
+It defines the evidence required before a receipt-store writer can be registered:
+
+```text
+writer identity witness
+operator approval
+append audit witness
+receipt-store write path
+lease or idempotency witness
+rollback/recovery witness
+receipt schema manifest binding
+tenant scope witness
+```
+
+It remains a Foundation Mode denial. It does not register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
+## Receipt-store path custody witness
+
+The first UniversalSymbol receipt-store path custody witness is:
+
+```text
+schemas/universal_symbol_receipt_store_path_custody_witness.schema.json
+examples/universal_symbol_receipt_store_path_custody_witness.foundation.json
+```
+
+It defines the evidence required before receipt-store path custody can be accepted:
+
+```text
+canonical path identity
+repository-relative path
+path confinement witness
+append-only boundary
+digest-only boundary
+tenant-actor partition
+idempotency binding
+rollback/recovery witness
+```
+
+It remains a Foundation Mode denial. It does not register path custody, register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
+## Receipt-store write-path witness
+
+The first UniversalSymbol receipt-store write-path witness is:
+
+```text
+schemas/universal_symbol_receipt_store_write_path_witness.schema.json
+examples/universal_symbol_receipt_store_write_path_witness.foundation.json
+```
+
+It defines the evidence required before a receipt-store write path can be registered:
+
+```text
+receipt-store writer registration witness
+path custody witness
+path confinement witness
+append-only policy
+digest-only policy
+idempotency key witness
+durability replay witness
+rollback/recovery witness
+tenant-actor boundary witness
+operator approval
+```
+
+It remains a Foundation Mode denial. It does not register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
 ## Verification
 
 Run:
@@ -333,6 +431,10 @@ python scripts\validate_universal_symbol_kernel.py
 python scripts\validate_universal_symbol_adapter_receipt_persistence_policy.py
 python scripts\validate_universal_symbol_append_audit_witness.py
 python scripts\validate_universal_symbol_receipt_store_authority_witness.py
+python scripts\validate_universal_symbol_receipt_store_path_custody_witness.py
+python scripts\validate_universal_symbol_receipt_store_writer_identity_witness.py
+python scripts\validate_universal_symbol_receipt_store_writer_registration_witness.py
+python scripts\validate_universal_symbol_receipt_store_write_path_witness.py
 python scripts\validate_universal_symbol_runtime_admission_policy.py
 python -m pytest tests\test_validate_universal_symbol_kernel.py -q
 python -m pytest mcoi\tests\test_symbol_skill_adapter.py -q
@@ -367,9 +469,9 @@ public SaaS readiness
 
 ## Next action
 
-The next real implementation step is a receipt-store writer registration witness that proves append authority remains scoped, reversible, replayable, and terminal-closure-denied before any write path exists.
+The next real implementation step is the remaining writer/path evidence chain: operator approval, tenant scope, duty scope, path confinement, idempotency, durability replay, and recovery witnesses before any append path exists.
 
 STATUS:
-  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, and append audit witness contract added
-  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, UAO and LifeMeaningJudgment append preconditions
-  Open issues: proof-state coverage report, receipt-store writer registration witness, receipt-store write-path witness, runtime authority witnesses, and live runtime admission remain AwaitingEvidence
+  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, append audit witness contract added, receipt-store writer identity witness contract added, receipt-store writer registration witness contract added, receipt-store path custody witness contract added, and receipt-store write-path witness contract added
+  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, UAO and LifeMeaningJudgment append preconditions, writer identity registration denial, unique writer identity requirement, writer registration denial, writer identity requirement, operator approval requirement, write-path requirement, tenant-scope requirement, path custody denial, canonical path identity requirement, repository-relative path requirement, write-path denial, custody requirement, confinement requirement, digest-only requirement, durability replay requirement
+  Open issues: proof-state coverage report, operator approval witness, tenant scope witness, writer duty scope witness, path confinement witness, write-path idempotency witness, durability replay witness, receipt-store recovery plan, runtime authority witnesses, and live runtime admission remain AwaitingEvidence

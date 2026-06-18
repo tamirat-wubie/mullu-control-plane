@@ -72,10 +72,31 @@
       ]
     },
     {
-      "action_id": "publish_universal_symbol_append_audit_witness",
+      "action_id": "publish_universal_symbol_receipt_store_writer_identity_witness",
       "status": "closed",
       "surfaces": [
-        "universal_symbol_append_audit_witness"
+        "universal_symbol_receipt_store_writer_identity_witness"
+      ]
+    },
+    {
+      "action_id": "publish_universal_symbol_receipt_store_writer_registration_witness",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_receipt_store_writer_registration_witness"
+      ]
+    },
+    {
+      "action_id": "publish_universal_symbol_receipt_store_path_custody_witness",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_receipt_store_path_custody_witness"
+      ]
+    },
+    {
+      "action_id": "publish_universal_symbol_receipt_store_write_path_witness",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_receipt_store_write_path_witness"
       ]
     },
     {
@@ -1469,7 +1490,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 136,
+      "action_proof": 140,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 53,
@@ -1477,7 +1498,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 189,
+      "audit_chain": 193,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1485,21 +1506,21 @@
     "by_coverage_state": {
       "proven": 78,
       "unproven": 0,
-      "witnessed": 114
+      "witnessed": 118
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 135
+      "request_proof": 139
     },
-    "surface_count": 192
+    "surface_count": 196
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 192,
+      "strong": 196,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4152,8 +4173,7 @@
         "docs/91_universal_symbol_kernel.md",
         "docs/92_universal_symbol_kernel_audit.md",
         "scripts/validate_universal_symbol_append_audit_witness.py",
-        "tests/test_validate_universal_symbol_kernel.py",
-        "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json"
+        "tests/test_validate_universal_symbol_kernel.py"
       ],
       "notes": "UniversalSymbol append audit witness defines digest-ref custody, append sequence, idempotency, durability replay, rollback/recovery, UAO, and LifeMeaningJudgment requirements while denying writer registration, write-path registration, append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
       "representative_paths": [
@@ -4175,9 +4195,6 @@
         "append_audit_witness_rejects_missing_delta_reject": [
           "append_audit_witness_rejects_missing_delta_reject"
         ],
-        "append_audit_witness_rejects_missing_requirement": [
-          "append_audit_witness_rejects_missing_requirement"
-        ],
         "foundation_universal_symbol_append_audit_witness_validates": [
           "foundation_universal_symbol_append_audit_witness_validates"
         ]
@@ -4187,8 +4204,7 @@
         "append_audit_witness_rejects_append_authority_drift",
         "append_audit_witness_rejects_missing_delta_reject",
         "append_audit_witness_rejects_candidate_raw_payload_drift",
-        "append_audit_witness_rejects_evidence_ref_count_drift",
-        "append_audit_witness_rejects_missing_requirement"
+        "append_audit_witness_rejects_evidence_ref_count_drift"
       ],
       "surface_id": "universal_symbol_append_audit_witness"
     },
@@ -4240,6 +4256,264 @@
         "receipt_store_authority_witness_rejects_evidence_ref_count_drift"
       ],
       "surface_id": "universal_symbol_receipt_store_authority_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+        "schemas/universal_symbol_append_audit_witness.schema.json",
+        "examples/universal_symbol_append_audit_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+        "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store writer identity witness defines unique identity, operator approval, tenant scope, duty scope, schema-manifest, write-path boundary, lease/idempotency, and recovery requirements while denying writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+        "validate_universal_symbol_receipt_store_writer_identity_witness"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_receipt_store_writer_identity_witness_validates": [
+          "foundation_universal_symbol_receipt_store_writer_identity_witness_validates"
+        ],
+        "writer_identity_witness_rejects_evidence_ref_count_drift": [
+          "writer_identity_witness_rejects_evidence_ref_count_drift"
+        ],
+        "writer_identity_witness_rejects_identity_constraint_drift": [
+          "writer_identity_witness_rejects_identity_constraint_drift"
+        ],
+        "writer_identity_witness_rejects_missing_delta_reject": [
+          "writer_identity_witness_rejects_missing_delta_reject"
+        ],
+        "writer_identity_witness_rejects_missing_requirement": [
+          "writer_identity_witness_rejects_missing_requirement"
+        ],
+        "writer_identity_witness_rejects_registration_authority_drift": [
+          "writer_identity_witness_rejects_registration_authority_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_receipt_store_writer_identity_witness_validates",
+        "writer_identity_witness_rejects_registration_authority_drift",
+        "writer_identity_witness_rejects_missing_requirement",
+        "writer_identity_witness_rejects_missing_delta_reject",
+        "writer_identity_witness_rejects_identity_constraint_drift",
+        "writer_identity_witness_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_writer_identity_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+        "schemas/universal_symbol_append_audit_witness.schema.json",
+        "examples/universal_symbol_append_audit_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+        "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+        "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store writer registration witness defines writer identity, operator approval, append audit, write-path, idempotency, recovery, receipt-schema, and tenant-scope requirements while denying writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+        "validate_universal_symbol_receipt_store_writer_registration_witness"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_receipt_store_writer_registration_witness_validates": [
+          "foundation_universal_symbol_receipt_store_writer_registration_witness_validates"
+        ],
+        "writer_registration_witness_rejects_append_authority_drift": [
+          "writer_registration_witness_rejects_append_authority_drift"
+        ],
+        "writer_registration_witness_rejects_evidence_ref_count_drift": [
+          "writer_registration_witness_rejects_evidence_ref_count_drift"
+        ],
+        "writer_registration_witness_rejects_missing_delta_reject": [
+          "writer_registration_witness_rejects_missing_delta_reject"
+        ],
+        "writer_registration_witness_rejects_missing_requirement": [
+          "writer_registration_witness_rejects_missing_requirement"
+        ],
+        "writer_registration_witness_rejects_scope_constraint_drift": [
+          "writer_registration_witness_rejects_scope_constraint_drift"
+        ],
+        "writer_registration_witness_rejects_writer_authority_drift": [
+          "writer_registration_witness_rejects_writer_authority_drift"
+        ],
+        "writer_registration_witness_rejects_writer_identity_constraint_drift": [
+          "writer_registration_witness_rejects_writer_identity_constraint_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_receipt_store_writer_registration_witness_validates",
+        "writer_registration_witness_rejects_append_authority_drift",
+        "writer_registration_witness_rejects_missing_requirement",
+        "writer_registration_witness_rejects_writer_identity_constraint_drift",
+        "writer_registration_witness_rejects_evidence_ref_count_drift",
+        "writer_registration_witness_rejects_writer_authority_drift",
+        "writer_registration_witness_rejects_missing_delta_reject",
+        "writer_registration_witness_rejects_scope_constraint_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_writer_registration_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+        "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+        "schemas/universal_symbol_append_audit_witness.schema.json",
+        "examples/universal_symbol_append_audit_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+        "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store path custody witness defines repository-relative custody, confinement, append-only, digest-only, idempotency, replay, recovery, and tenant/actor requirements while denying path custody registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+        "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+        "validate_universal_symbol_receipt_store_path_custody_witness"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_receipt_store_path_custody_witness_validates": [
+          "foundation_universal_symbol_receipt_store_path_custody_witness_validates"
+        ],
+        "path_custody_witness_rejects_constraint_drift": [
+          "path_custody_witness_rejects_constraint_drift"
+        ],
+        "path_custody_witness_rejects_evidence_ref_count_drift": [
+          "path_custody_witness_rejects_evidence_ref_count_drift"
+        ],
+        "path_custody_witness_rejects_missing_delta_reject": [
+          "path_custody_witness_rejects_missing_delta_reject"
+        ],
+        "path_custody_witness_rejects_missing_requirement": [
+          "path_custody_witness_rejects_missing_requirement"
+        ],
+        "path_custody_witness_rejects_write_path_authority_drift": [
+          "path_custody_witness_rejects_write_path_authority_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_receipt_store_path_custody_witness_validates",
+        "path_custody_witness_rejects_write_path_authority_drift",
+        "path_custody_witness_rejects_missing_requirement",
+        "path_custody_witness_rejects_missing_delta_reject",
+        "path_custody_witness_rejects_constraint_drift",
+        "path_custody_witness_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_path_custody_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+        "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+        "schemas/universal_symbol_append_audit_witness.schema.json",
+        "examples/universal_symbol_append_audit_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+        "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+        "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store write-path witness defines writer registration, custody, confinement, append-only, digest-only, idempotency, replay, recovery, tenant-actor, and operator approval requirements while denying writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+        "validate_universal_symbol_receipt_store_write_path_witness"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_receipt_store_write_path_witness_validates": [
+          "foundation_universal_symbol_receipt_store_write_path_witness_validates"
+        ],
+        "write_path_witness_rejects_append_authority_drift": [
+          "write_path_witness_rejects_append_authority_drift"
+        ],
+        "write_path_witness_rejects_constraint_drift": [
+          "write_path_witness_rejects_constraint_drift"
+        ],
+        "write_path_witness_rejects_evidence_ref_count_drift": [
+          "write_path_witness_rejects_evidence_ref_count_drift"
+        ],
+        "write_path_witness_rejects_missing_delta_reject": [
+          "write_path_witness_rejects_missing_delta_reject"
+        ],
+        "write_path_witness_rejects_missing_requirement": [
+          "write_path_witness_rejects_missing_requirement"
+        ],
+        "write_path_witness_rejects_path_authority_drift": [
+          "write_path_witness_rejects_path_authority_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_receipt_store_write_path_witness_validates",
+        "write_path_witness_rejects_append_authority_drift",
+        "write_path_witness_rejects_missing_requirement",
+        "write_path_witness_rejects_path_authority_drift",
+        "write_path_witness_rejects_missing_delta_reject",
+        "write_path_witness_rejects_constraint_drift",
+        "write_path_witness_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_write_path_witness"
     },
     {
       "action_proof": "read_model",
@@ -15171,8 +15445,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1924,
-    "runtime_witness_count": 1924,
+    "exact_test_anchor_count": 1950,
+    "runtime_witness_count": 1950,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -15626,16 +15900,10 @@
               "tests/test_validate_universal_symbol_kernel.py::test_append_audit_witness_rejects_evidence_ref_count_drift"
             ],
             "witness": "append_audit_witness_rejects_evidence_ref_count_drift"
-          },
-          {
-            "anchors": [
-              "tests/test_validate_universal_symbol_kernel.py::test_append_audit_witness_rejects_missing_requirement"
-            ],
-            "witness": "append_audit_witness_rejects_missing_requirement"
           }
         ],
-        "exact_test_anchor_count": 6,
-        "runtime_witness_count": 6,
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
         "surface_id": "universal_symbol_append_audit_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -15676,6 +15944,204 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "universal_symbol_receipt_store_authority_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_receipt_store_writer_identity_witness_validates"
+            ],
+            "witness": "foundation_universal_symbol_receipt_store_writer_identity_witness_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_identity_witness_rejects_registration_authority_drift"
+            ],
+            "witness": "writer_identity_witness_rejects_registration_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_identity_witness_rejects_missing_requirement"
+            ],
+            "witness": "writer_identity_witness_rejects_missing_requirement"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_identity_witness_rejects_missing_delta_reject"
+            ],
+            "witness": "writer_identity_witness_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_identity_witness_rejects_identity_constraint_drift"
+            ],
+            "witness": "writer_identity_witness_rejects_identity_constraint_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_identity_witness_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "writer_identity_witness_rejects_evidence_ref_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "universal_symbol_receipt_store_writer_identity_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_receipt_store_writer_registration_witness_validates"
+            ],
+            "witness": "foundation_universal_symbol_receipt_store_writer_registration_witness_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_append_authority_drift"
+            ],
+            "witness": "writer_registration_witness_rejects_append_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_missing_requirement"
+            ],
+            "witness": "writer_registration_witness_rejects_missing_requirement"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_writer_identity_constraint_drift"
+            ],
+            "witness": "writer_registration_witness_rejects_writer_identity_constraint_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "writer_registration_witness_rejects_evidence_ref_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_writer_authority_drift"
+            ],
+            "witness": "writer_registration_witness_rejects_writer_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_missing_delta_reject"
+            ],
+            "witness": "writer_registration_witness_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_writer_registration_witness_rejects_scope_constraint_drift"
+            ],
+            "witness": "writer_registration_witness_rejects_scope_constraint_drift"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "universal_symbol_receipt_store_writer_registration_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_receipt_store_path_custody_witness_validates"
+            ],
+            "witness": "foundation_universal_symbol_receipt_store_path_custody_witness_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_path_custody_witness_rejects_write_path_authority_drift"
+            ],
+            "witness": "path_custody_witness_rejects_write_path_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_path_custody_witness_rejects_missing_requirement"
+            ],
+            "witness": "path_custody_witness_rejects_missing_requirement"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_path_custody_witness_rejects_missing_delta_reject"
+            ],
+            "witness": "path_custody_witness_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_path_custody_witness_rejects_constraint_drift"
+            ],
+            "witness": "path_custody_witness_rejects_constraint_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_path_custody_witness_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "path_custody_witness_rejects_evidence_ref_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "universal_symbol_receipt_store_path_custody_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_receipt_store_write_path_witness_validates"
+            ],
+            "witness": "foundation_universal_symbol_receipt_store_write_path_witness_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_append_authority_drift"
+            ],
+            "witness": "write_path_witness_rejects_append_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_missing_requirement"
+            ],
+            "witness": "write_path_witness_rejects_missing_requirement"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_path_authority_drift"
+            ],
+            "witness": "write_path_witness_rejects_path_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_missing_delta_reject"
+            ],
+            "witness": "write_path_witness_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_constraint_drift"
+            ],
+            "witness": "write_path_witness_rejects_constraint_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_write_path_witness_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "write_path_witness_rejects_evidence_ref_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "universal_symbol_receipt_store_write_path_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

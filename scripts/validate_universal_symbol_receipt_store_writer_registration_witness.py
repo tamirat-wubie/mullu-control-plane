@@ -1,18 +1,18 @@
-"""Validate the Universal Symbol receipt-store authority witness.
+"""Validate the Universal Symbol receipt-store writer registration witness.
 
-Purpose: prove UniversalSymbol receipt-store authority remains blocked until
-append audit, writer registration, write-path registration, approval,
-idempotency, durability replay, and recovery evidence exist.
+Purpose: prove UniversalSymbol receipt-store writer registration remains
+blocked until writer identity, operator approval, append audit, write path,
+lease/idempotency, recovery, receipt schema, and tenant-scope evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: authority witness schema/example, UniversalSymbol schema,
-runtime admission policy, adapter persistence policy, docs, and tests.
+Dependencies: writer registration schema/example, append audit witness,
+receipt-store authority witness, adapter persistence policy, docs, and tests.
 Invariants:
-  - The witness does not grant receipt-store authority.
-  - Receipt-store writer registration, write-path registration, and append are
-    denied.
-  - Raw payloads, raw secrets, runtime dispatch, connector calls, mutation, and
-    terminal closure remain denied.
-  - Unknown hard preconditions block append and log Delta_reject references.
+  - The witness is not append authority.
+  - Writer registration, write-path registration, receipt append, raw payload
+    storage, raw secret storage, runtime dispatch, connector calls, mutation,
+    and terminal closure remain denied.
+  - Unknown hard preconditions block writer registration and log Delta_reject
+    references.
 """
 
 from __future__ import annotations
@@ -29,14 +29,14 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_authority_witness.schema.json"
-DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_receipt_store_authority_witness.foundation.json"
+DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_writer_registration_witness.schema.json"
+DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_receipt_store_writer_registration_witness.foundation.json"
 
 AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
-    "receipt_store_authority_granted",
     "receipt_store_writer_registered",
     "receipt_store_write_path_registered",
     "receipt_store_append_performed",
+    "writer_registration_claimed_terminal",
     "raw_payload_stored",
     "raw_secret_stored",
     "runtime_dispatch_performed",
@@ -45,81 +45,81 @@ AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
     "terminal_closure_allowed",
 )
 
-REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "unknown_hard_constraint_blocks_append",
-    "budget_unknown_escalates_to_phi_gov",
-    "failed_precondition_logs_delta_reject",
-    "raw_payload_rejected",
-    "raw_secret_rejected",
-    "terminal_closure_rejected",
-)
-
 REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
-    "requirement://append-audit-witness",
-    "requirement://receipt-store-writer-registration",
-    "requirement://receipt-store-write-path",
+    "requirement://writer-identity-witness",
     "requirement://operator-approval",
+    "requirement://append-audit-witness",
+    "requirement://receipt-store-write-path",
+    "requirement://lease-or-idempotency",
     "requirement://rollback-recovery",
-    "requirement://idempotency",
-    "requirement://durability-replay",
+    "requirement://receipt-schema-manifest",
+    "requirement://tenant-scope-witness",
 )
 
-REQUIRED_PRECONDITION_IDS: tuple[str, ...] = (
-    "precondition://authority-granted",
-    "precondition://append-audit",
-    "precondition://writer-registration",
-    "precondition://write-path-registration",
-    "precondition://idempotency-key",
-    "precondition://rollback-recovery",
-    "precondition://raw-payload-secret-denial",
+WRITER_SCOPE_TRUE_FIELDS: tuple[str, ...] = (
+    "writer_identity_required",
+    "operator_approval_required",
+    "append_audit_witness_required",
+    "write_path_registration_required",
+    "lease_or_idempotency_required",
+    "rollback_recovery_required",
+    "receipt_schema_manifest_required",
+    "tenant_scope_required",
+)
+
+REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
+    "missing_writer_identity_blocks_registration",
+    "missing_operator_approval_blocks_registration",
+    "missing_append_audit_blocks_registration",
+    "missing_write_path_blocks_registration",
+    "unknown_hard_constraint_blocks_registration",
+    "failed_precondition_logs_delta_reject",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
-    "append_audit_witness_not_admitted",
-    "receipt_store_writer_registration_missing",
-    "receipt_store_write_path_missing",
+    "writer_identity_witness_missing",
     "operator_approval_missing",
+    "append_audit_witness_missing",
+    "receipt_store_write_path_missing",
+    "lease_or_idempotency_witness_missing",
     "rollback_recovery_witness_missing",
-    "idempotency_witness_missing",
-    "durability_replay_witness_missing",
-    "raw_payload_storage_forbidden",
-    "raw_secret_storage_forbidden",
+    "receipt_schema_manifest_binding_missing",
+    "tenant_scope_witness_missing",
+    "receipt_store_append_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
-    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
-    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
-    "schemas/universal_symbol_append_audit_witness.schema.json",
-    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
-    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
     "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
     "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
-    "scripts/validate_universal_symbol_append_audit_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py",
 )
 
 
-class UniversalSymbolReceiptStoreAuthorityWitnessError(ValueError):
-    """Raised when the receipt-store authority witness violates Foundation Mode."""
+class UniversalSymbolReceiptStoreWriterRegistrationWitnessError(ValueError):
+    """Raised when the writer registration witness violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -128,19 +128,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolReceiptStoreAuthorityWitnessError(f"missing file: {path}") from exc
+        raise UniversalSymbolReceiptStoreWriterRegistrationWitnessError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolReceiptStoreAuthorityWitnessError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolReceiptStoreWriterRegistrationWitnessError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolReceiptStoreAuthorityWitnessError(f"expected object: {path}")
+        raise UniversalSymbolReceiptStoreWriterRegistrationWitnessError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_receipt_store_authority_witness(
+def validate_universal_symbol_receipt_store_writer_registration_witness(
     witness_path: Path = DEFAULT_WITNESS_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied authority, and append-blocking evidence."""
+    """Validate schema shape, denied writer authority, and evidence custody."""
 
     schema = load_json_object(schema_path)
     witness = load_json_object(witness_path)
@@ -149,9 +149,9 @@ def validate_universal_symbol_receipt_store_authority_witness(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(witness, schema, errors)
     _validate_witness_boundary(witness, errors)
-    _validate_authority_requirements(witness, errors)
+    _validate_writer_requirements(witness, errors)
     _validate_authority_denials(witness, errors)
-    _validate_append_preconditions(witness, errors)
+    _validate_writer_scope_constraints(witness, errors)
     _validate_rejection_policy(witness, errors)
     _validate_blocked_reasons(witness, errors)
     _validate_contract_summary(witness, errors)
@@ -164,13 +164,10 @@ def validate_universal_symbol_receipt_store_authority_witness(
         "valid": not errors,
         "witness_id": witness.get("witness_id", ""),
         "solver_outcome": witness.get("solver_outcome", ""),
-        "authority_decision": witness.get("authority_decision", ""),
+        "writer_registration_decision": witness.get("writer_registration_decision", ""),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "authority_requirement_count": len(witness.get("authority_requirements", []))
-        if isinstance(witness.get("authority_requirements"), list)
-        else 0,
-        "append_precondition_count": len(witness.get("append_preconditions", []))
-        if isinstance(witness.get("append_preconditions"), list)
+        "writer_requirement_count": len(witness.get("writer_requirements", []))
+        if isinstance(witness.get("writer_requirements"), list)
         else 0,
         "evidence_ref_count": len(witness.get("evidence_refs", []))
         if isinstance(witness.get("evidence_refs"), list)
@@ -178,12 +175,12 @@ def validate_universal_symbol_receipt_store_authority_witness(
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolReceiptStoreAuthorityWitnessError("; ".join(errors))
+        raise UniversalSymbolReceiptStoreWriterRegistrationWitnessError("; ".join(errors))
     return result
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-authority-witness:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-writer-registration-witness:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
@@ -208,28 +205,30 @@ def _validate_witness_boundary(witness: Mapping[str, Any], errors: list[str]) ->
         errors.append("foundation_mode must remain true")
     if witness.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
-    if witness.get("authority_decision") != "blocked_pending_append_audit_and_store_authority":
-        errors.append("authority_decision must remain blocked")
-    if witness.get("authority_is_granted") is not False:
-        errors.append("authority_is_granted must remain false")
+    if witness.get("writer_registration_decision") != "blocked_pending_write_path_and_operator_authority":
+        errors.append("writer_registration_decision must remain blocked")
+    if witness.get("writer_registration_is_not_append_authority") is not True:
+        errors.append("writer registration must not grant append authority")
 
 
-def _validate_authority_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
-    requirements = witness.get("authority_requirements")
+def _validate_writer_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
+    requirements = witness.get("writer_requirements")
     if not isinstance(requirements, list) or not requirements:
-        errors.append("authority_requirements must be non-empty")
+        errors.append("writer_requirements must be non-empty")
         return
     requirement_ids: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("authority requirement entries must be objects")
+            errors.append("writer requirement entries must be objects")
             continue
         requirement_ids.append(str(requirement.get("requirement_id")))
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('requirement_id')}: proof_state must block authority")
-        if requirement.get("current_decision") != "authority_blocked":
-            errors.append(f"{requirement.get('requirement_id')}: current_decision must be authority_blocked")
-    _require_members("authority_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
+            errors.append(f"{requirement.get('requirement_id')}: proof_state must block writer registration")
+        if requirement.get("current_decision") != "writer_registration_blocked":
+            errors.append(f"{requirement.get('requirement_id')}: current_decision must be writer_registration_blocked")
+        if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
+            errors.append(f"{requirement.get('requirement_id')}: delta_reject_ref must be logged")
+    _require_members("writer_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
 
 
 def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -239,24 +238,11 @@ def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -
             errors.append(f"authority_denials.{field_name} must remain false")
 
 
-def _validate_append_preconditions(witness: Mapping[str, Any], errors: list[str]) -> None:
-    preconditions = witness.get("append_preconditions")
-    if not isinstance(preconditions, list) or not preconditions:
-        errors.append("append_preconditions must be non-empty")
-        return
-    precondition_ids: list[str] = []
-    for precondition in preconditions:
-        if not isinstance(precondition, dict):
-            errors.append("append precondition entries must be objects")
-            continue
-        precondition_ids.append(str(precondition.get("precondition_id")))
-        if precondition.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{precondition.get('precondition_id')}: proof_state must block append")
-        if precondition.get("append_decision") != "block_append":
-            errors.append(f"{precondition.get('precondition_id')}: append_decision must be block_append")
-        if not str(precondition.get("delta_reject_ref", "")).startswith("delta-reject://"):
-            errors.append(f"{precondition.get('precondition_id')}: delta_reject_ref must be logged")
-    _require_members("append_preconditions", precondition_ids, REQUIRED_PRECONDITION_IDS, errors)
+def _validate_writer_scope_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
+    constraints = _mapping(witness.get("writer_scope_constraints"))
+    for field_name in WRITER_SCOPE_TRUE_FIELDS:
+        if constraints.get(field_name) is not True:
+            errors.append(f"writer_scope_constraints.{field_name} must remain true")
 
 
 def _validate_rejection_policy(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -277,9 +263,9 @@ def _validate_blocked_reasons(witness: Mapping[str, Any], errors: list[str]) -> 
 def _validate_contract_summary(witness: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(witness.get("contract_summary"))
     observed_counts = {
-        "authority_requirement_count": _list_len(witness.get("authority_requirements")),
+        "writer_requirement_count": _list_len(witness.get("writer_requirements")),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "append_precondition_count": _list_len(witness.get("append_preconditions")),
+        "writer_scope_constraint_count": len(WRITER_SCOPE_TRUE_FIELDS),
         "rejection_check_count": len(REJECTION_POLICY_TRUE_FIELDS),
         "blocked_reason_count": _list_len(witness.get("blocked_reasons")),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")),
@@ -353,19 +339,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        report = validate_universal_symbol_receipt_store_authority_witness(args.witness, args.schema)
-    except UniversalSymbolReceiptStoreAuthorityWitnessError as exc:
+        report = validate_universal_symbol_receipt_store_writer_registration_witness(args.witness, args.schema)
+    except UniversalSymbolReceiptStoreWriterRegistrationWitnessError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": str(exc).split("; ")}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_receipt_store_authority_witness: {exc}")
+            print(f"[FAIL] universal_symbol_receipt_store_writer_registration_witness: {exc}")
             print("STATUS: failed")
         return 1
 
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_receipt_store_authority_witness")
+        print("[PASS] universal_symbol_receipt_store_writer_registration_witness")
         print("STATUS: passed")
     return 0
 

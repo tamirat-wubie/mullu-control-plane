@@ -6951,7 +6951,7 @@ def test_universal_symbol_receipt_store_authority_witness_surface_blocks_authori
     assert closure_actions["publish_universal_symbol_receipt_store_authority_witness"]["status"] == "closed"
 
 
-def test_universal_symbol_append_audit_witness_surface_blocks_append_authority() -> None:
+def test_universal_symbol_receipt_store_write_path_witness_surface_blocks_write_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     witness_surfaces = {
@@ -6959,21 +6959,96 @@ def test_universal_symbol_append_audit_witness_surface_blocks_append_authority()
         for surface in matrix["witness_integrity"]["surfaces"]
     }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    surface = surfaces["universal_symbol_append_audit_witness"]
+    surface = surfaces["universal_symbol_receipt_store_write_path_witness"]
     witnesses = set(surface["runtime_witnesses"])
 
     assert surface["coverage_state"] == "witnessed"
     assert surface["request_proof"] == "request_proof"
     assert surface["action_proof"] == "action_proof"
-    assert "schemas/universal_symbol_append_audit_witness.schema.json" in surface["representative_paths"]
-    assert "examples/universal_symbol_append_audit_witness.foundation.json" in surface["representative_paths"]
-    assert "scripts/validate_universal_symbol_append_audit_witness.py" in surface["evidence_files"]
-    assert "foundation_universal_symbol_append_audit_witness_validates" in witnesses
-    assert "append_audit_witness_rejects_append_authority_drift" in witnesses
-    assert "append_audit_witness_rejects_missing_delta_reject" in witnesses
-    assert witness_surfaces["universal_symbol_append_audit_witness"]["exact_test_anchor_count"] == 6
-    assert witness_surfaces["universal_symbol_append_audit_witness"]["unanchored_witness_count"] == 0
-    assert closure_actions["publish_universal_symbol_append_audit_witness"]["status"] == "closed"
+    assert "schemas/universal_symbol_receipt_store_write_path_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_receipt_store_write_path_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_receipt_store_write_path_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_receipt_store_write_path_witness_validates" in witnesses
+    assert "write_path_witness_rejects_append_authority_drift" in witnesses
+    assert "write_path_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_write_path_witness"]["exact_test_anchor_count"] == 7
+    assert witness_surfaces["universal_symbol_receipt_store_write_path_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_write_path_witness"]["status"] == "closed"
+
+
+def test_universal_symbol_receipt_store_path_custody_witness_surface_blocks_path_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_path_custody_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_receipt_store_path_custody_witness_validates" in witnesses
+    assert "path_custody_witness_rejects_write_path_authority_drift" in witnesses
+    assert "path_custody_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_path_custody_witness"]["exact_test_anchor_count"] == 6
+    assert witness_surfaces["universal_symbol_receipt_store_path_custody_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_path_custody_witness"]["status"] == "closed"
+
+
+def test_universal_symbol_receipt_store_writer_identity_witness_surface_blocks_identity_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_writer_identity_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_receipt_store_writer_identity_witness_validates" in witnesses
+    assert "writer_identity_witness_rejects_registration_authority_drift" in witnesses
+    assert "writer_identity_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_writer_identity_witness"]["exact_test_anchor_count"] == 6
+    assert witness_surfaces["universal_symbol_receipt_store_writer_identity_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_writer_identity_witness"]["status"] == "closed"
+
+
+def test_universal_symbol_receipt_store_writer_registration_witness_surface_blocks_writer_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_writer_registration_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_receipt_store_writer_registration_witness_validates" in witnesses
+    assert "writer_registration_witness_rejects_append_authority_drift" in witnesses
+    assert "writer_registration_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_writer_registration_witness"]["exact_test_anchor_count"] == 8
+    assert witness_surfaces["universal_symbol_receipt_store_writer_registration_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_writer_registration_witness"]["status"] == "closed"
 
 
 def test_cross_channel_conversation_binding_policy_surface_blocks_ambiguous_handoffs() -> None:

@@ -563,6 +563,12 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "llm-interpretation-proposal",
+      "path": "schemas/llm_interpretation_proposal.schema.json",
+      "urn": "urn:mullusi:schema:llm-interpretation-proposal:1",
+      "surface": "interpretation"
+    },
+    {
       "schema_id": "command-interpretation-receipt-read-model",
       "path": "schemas/command_interpretation_receipt_read_model.schema.json",
       "urn": "urn:mullusi:schema:command-interpretation-receipt-read-model:1",
@@ -1688,6 +1694,30 @@
       "schema_id": "universal-symbol-receipt-store-authority-witness",
       "path": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-authority-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-path-custody-witness",
+      "path": "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-path-custody-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-writer-identity-witness",
+      "path": "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-writer-identity-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-writer-registration-witness",
+      "path": "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-writer-registration-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-write-path-witness",
+      "path": "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-witness:1",
       "surface": "symbol"
     },
     {
