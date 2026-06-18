@@ -16,7 +16,11 @@ from pathlib import Path
 
 from gateway.capability_dispatch import CapabilityIntent
 from gateway.command_spine import canonical_hash
-from gateway.interpretation import clarification_request_for, interpret_gateway_message
+from gateway.interpretation import (
+    clarification_request_for,
+    interpret_gateway_message,
+    validate_llm_interpretation_proposal,
+)
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
@@ -195,3 +199,98 @@ def test_generic_unclear_text_does_not_force_clarification_request():
     assert interpreted.intent_class == "unclear_message"
     assert interpreted.missing_slots == ("intent",)
     assert clarification is None
+
+
+def test_llm_interpretation_proposal_is_accepted_only_as_proposal():
+    interpreted, _receipt = interpret_gateway_message(
+        message=StubMessage("msg-proposal", "web", "user-7", "fix the report"),
+        tenant_id="tenant-7",
+        actor_id="actor-7",
+        intent=None,
+        created_at="2026-06-11T10:00:00+00:00",
+    )
+
+    proposal = validate_llm_interpretation_proposal(
+        interpreted_request=interpreted,
+        proposal={
+            "proposal_source": "llm_assisted_interpretation",
+            "intent_class": "document_instruction",
+            "capability_id": "enterprise.document_generate",
+            "slots": {"target": "report secret-token-456", "action": "draft"},
+            "confidence": 0.82,
+        },
+        created_at="2026-06-11T10:00:02+00:00",
+    )
+    proposal_payload = proposal.to_dict()
+
+    assert proposal.validation_status == "accepted_as_proposal"
+    assert proposal.authority_level == "proposal_only"
+    assert proposal.execution_allowed is False
+    assert proposal.action_authority_granted is False
+    assert proposal.deterministic_override_allowed is False
+    assert proposal.proposed_slot_names == ("action", "target")
+    assert "secret-token-456" not in str(proposal_payload)
+
+
+def test_llm_interpretation_proposal_rejects_authority_and_raw_text():
+    interpreted, _receipt = interpret_gateway_message(
+        message=StubMessage("msg-proposal-reject", "web", "user-8", "deploy now secret-token-789"),
+        tenant_id="tenant-8",
+        actor_id="actor-8",
+        intent=None,
+        created_at="2026-06-11T10:00:00+00:00",
+    )
+
+    proposal = validate_llm_interpretation_proposal(
+        interpreted_request=interpreted,
+        proposal={
+            "intent_class": "action_request",
+            "capability_id": "enterprise.notification_send",
+            "body": "deploy now secret-token-789",
+            "execution_allowed": True,
+            "action_authority_granted": True,
+            "deterministic_override_allowed": True,
+            "confidence": 1.5,
+        },
+        created_at="2026-06-11T10:00:02+00:00",
+    )
+
+    assert proposal.validation_status == "rejected"
+    assert proposal.proposal_confidence == 1.0
+    assert "raw_payload_field_present" in proposal.rejected_reasons
+    assert "proposal_attempted_execution_authority" in proposal.rejected_reasons
+    assert "proposal_attempted_action_authority" in proposal.rejected_reasons
+    assert "proposal_attempted_deterministic_override" in proposal.rejected_reasons
+    assert "secret-token-789" not in str(proposal.to_dict())
+
+
+def test_llm_interpretation_proposal_cannot_override_confident_deterministic_result():
+    intent = CapabilityIntent(
+        domain="enterprise",
+        action="knowledge_search",
+        params={"query": "policy"},
+    )
+    interpreted, _receipt = interpret_gateway_message(
+        message=StubMessage("msg-proposal-conflict", "web", "user-9", "search policy"),
+        tenant_id="tenant-9",
+        actor_id="actor-9",
+        intent=intent,
+        created_at="2026-06-11T10:00:00+00:00",
+    )
+
+    proposal = validate_llm_interpretation_proposal(
+        interpreted_request=interpreted,
+        proposal={
+            "intent_class": "explicit_command",
+            "capability_id": "financial.send_payment",
+            "slots": {"amount": "500"},
+            "confidence": 0.9,
+        },
+        created_at="2026-06-11T10:00:02+00:00",
+    )
+
+    assert interpreted.confidence == 0.95
+    assert proposal.validation_status == "rejected"
+    assert "deterministic_capability_conflict" in proposal.rejected_reasons
+    assert "deterministic_interpretation_conflict" in proposal.rejected_reasons
+    assert proposal.execution_allowed is False

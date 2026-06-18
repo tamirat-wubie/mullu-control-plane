@@ -93,7 +93,42 @@ ClarificationRequest {
 }
 ```
 
-## 4b. CapabilityPlanPreview contract
+## 4b. LLMInterpretationProposal contract
+
+```text
+LLMInterpretationProposal {
+  proposal_id
+  request_id
+  raw_message_hash
+  proposal_source
+  proposed_intent_class
+  proposed_capability_id
+  proposed_slot_names
+  proposed_slots_hash
+  proposal_confidence
+  deterministic_intent_class
+  deterministic_capability_id
+  deterministic_confidence
+  validation_status
+  authority_level = proposal_only
+  deterministic_override_allowed = false
+  action_authority_granted = false
+  execution_allowed = false
+  rejected_reasons
+  created_at
+}
+```
+
+Proposal rule:
+
+```text
+LLM-assisted interpretation may produce a lower-authority proposal record only.
+It cannot override deterministic interpretation, grant action authority, grant
+execution authority, or retain raw message or slot text. Proposed slots are
+represented by names plus a hash.
+```
+
+## 4c. CapabilityPlanPreview contract
 
 ```text
 CapabilityPlanPreview {

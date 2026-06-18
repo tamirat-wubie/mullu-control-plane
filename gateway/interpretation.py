@@ -16,10 +16,26 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Protocol
+from typing import Any, Mapping, Protocol
 
 from gateway.capability_dispatch import CapabilityIntent
 from gateway.command_spine import canonical_hash
+
+
+_ALLOWED_INTENT_CLASSES = {
+    "question",
+    "action_request",
+    "explicit_command",
+    "approval_response",
+    "correction",
+    "follow_up",
+    "support_issue",
+    "document_instruction",
+    "connector_request",
+    "blocked_request",
+    "unclear_message",
+}
+_RAW_TEXT_KEYS = {"raw_message", "message", "message_body", "body", "text", "prompt"}
 
 
 class InterpretableMessage(Protocol):
@@ -111,6 +127,38 @@ class ClarificationRequest:
         """Return a JSON-safe clarification request without raw message text."""
         payload = asdict(self)
         payload["missing_fields"] = list(self.missing_fields)
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class LLMInterpretationProposal:
+    """Lower-authority interpretation proposal validated behind deterministic rules."""
+
+    proposal_id: str
+    request_id: str
+    raw_message_hash: str
+    proposal_source: str
+    proposed_intent_class: str
+    proposed_capability_id: str
+    proposed_slot_names: tuple[str, ...]
+    proposed_slots_hash: str
+    proposal_confidence: float
+    deterministic_intent_class: str
+    deterministic_capability_id: str
+    deterministic_confidence: float
+    validation_status: str
+    authority_level: str
+    deterministic_override_allowed: bool
+    action_authority_granted: bool
+    execution_allowed: bool
+    rejected_reasons: tuple[str, ...]
+    created_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-safe proposal without raw message or slot text."""
+        payload = asdict(self)
+        payload["proposed_slot_names"] = list(self.proposed_slot_names)
+        payload["rejected_reasons"] = list(self.rejected_reasons)
         return payload
 
 
@@ -222,6 +270,91 @@ def clarification_request_for(
         max_questions=1,
         safe_default="no_execution",
         question=question,
+        created_at=created_at,
+    )
+
+
+def validate_llm_interpretation_proposal(
+    *,
+    interpreted_request: InterpretedRequest,
+    proposal: Mapping[str, Any],
+    created_at: str,
+) -> LLMInterpretationProposal:
+    """Validate a lower-authority interpretation proposal.
+
+    Input contract: ``interpreted_request`` is the deterministic authority;
+    ``proposal`` is untrusted and may contain only proposed classification
+    facts.
+    Output contract: returns a proposal-only record. It never grants action,
+    approval, override, or execution authority, even when accepted.
+    Error contract: malformed proposal fields are converted to explicit
+    rejection reasons rather than exceptions.
+    """
+    proposal_source = _bounded_text(proposal.get("proposal_source"), default="llm_assisted_interpretation")
+    proposed_intent_class = _bounded_text(proposal.get("intent_class"))
+    proposed_capability_id = _bounded_text(proposal.get("capability_id"))
+    proposed_slots = proposal.get("slots")
+    proposed_slot_mapping = dict(proposed_slots) if isinstance(proposed_slots, Mapping) else {}
+    proposed_slot_names = tuple(sorted(str(key) for key in proposed_slot_mapping))
+    proposed_slots_hash = canonical_hash(proposed_slot_mapping)
+    proposal_confidence = _bounded_float(proposal.get("confidence"))
+    rejected_reasons: list[str] = []
+
+    if proposed_intent_class not in _ALLOWED_INTENT_CLASSES:
+        rejected_reasons.append("proposed_intent_class_unknown")
+    if proposed_slots is not None and not isinstance(proposed_slots, Mapping):
+        rejected_reasons.append("proposed_slots_not_mapping")
+    if any(str(key).strip().lower() in _RAW_TEXT_KEYS for key in proposal):
+        rejected_reasons.append("raw_payload_field_present")
+    if _truthy(proposal.get("execution_allowed")):
+        rejected_reasons.append("proposal_attempted_execution_authority")
+    if _truthy(proposal.get("action_authority_granted")):
+        rejected_reasons.append("proposal_attempted_action_authority")
+    if _truthy(proposal.get("deterministic_override_allowed")):
+        rejected_reasons.append("proposal_attempted_deterministic_override")
+    if (
+        interpreted_request.capability_id
+        and proposed_capability_id
+        and proposed_capability_id != interpreted_request.capability_id
+    ):
+        rejected_reasons.append("deterministic_capability_conflict")
+    if (
+        interpreted_request.confidence >= 0.75
+        and proposed_intent_class
+        and proposed_intent_class != interpreted_request.intent_class
+    ):
+        rejected_reasons.append("deterministic_interpretation_conflict")
+
+    validation_status = "rejected" if rejected_reasons else "accepted_as_proposal"
+    payload = {
+        "request_id": interpreted_request.request_id,
+        "raw_message_hash": interpreted_request.raw_message_hash,
+        "proposal_source": proposal_source,
+        "proposed_intent_class": proposed_intent_class,
+        "proposed_capability_id": proposed_capability_id,
+        "proposed_slots_hash": proposed_slots_hash,
+        "validation_status": validation_status,
+        "rejected_reasons": rejected_reasons,
+    }
+    return LLMInterpretationProposal(
+        proposal_id=f"interpretation-proposal-{canonical_hash(payload)[:16]}",
+        request_id=interpreted_request.request_id,
+        raw_message_hash=interpreted_request.raw_message_hash,
+        proposal_source=proposal_source,
+        proposed_intent_class=proposed_intent_class,
+        proposed_capability_id=proposed_capability_id,
+        proposed_slot_names=proposed_slot_names,
+        proposed_slots_hash=proposed_slots_hash,
+        proposal_confidence=proposal_confidence,
+        deterministic_intent_class=interpreted_request.intent_class,
+        deterministic_capability_id=interpreted_request.capability_id,
+        deterministic_confidence=interpreted_request.confidence,
+        validation_status=validation_status,
+        authority_level="proposal_only",
+        deterministic_override_allowed=False,
+        action_authority_granted=False,
+        execution_allowed=False,
+        rejected_reasons=tuple(dict.fromkeys(rejected_reasons)),
         created_at=created_at,
     )
 
@@ -377,3 +510,29 @@ def _clarification_question_for(missing_fields: tuple[str, ...]) -> str:
     if "capability_id" in missing_fields:
         return "Which governed capability should handle this request?"
     return "What do you want me to know or do next?"
+
+
+def _bounded_text(value: Any, *, default: str = "") -> str:
+    if value is None:
+        return default
+    return str(value).strip()[:120]
+
+
+def _bounded_float(value: Any) -> float:
+    try:
+        numeric_value = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if numeric_value < 0:
+        return 0.0
+    if numeric_value > 1:
+        return 1.0
+    return numeric_value
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "present", "allowed"}
+    return bool(value)
