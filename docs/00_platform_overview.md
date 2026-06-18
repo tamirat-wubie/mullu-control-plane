@@ -52,6 +52,7 @@ and receipt-backed until a later status witness promotes the project.
 - `MafAbiCliContractWitness Contract` records the MAF CLI/ABI boundary as scaffold-only static evidence while keeping command behavior, CLI execution, subprocess execution, PyO3 binding, Rust execution, runtime dispatch, terminal closure, and success claims denied.
 - `MafSubprocessEffectBoundaryWitness Contract` records process-spawn, filesystem-write, network-call, secret-read, dispatch, and state-mutation controls as static subprocess boundary evidence while keeping subprocess execution, command behavior, runtime binding, terminal closure, and success claims denied.
 - `MafFailureReceiptPathWitness Contract` records static failure receipt materialization paths for MAF CLI descriptors while keeping runtime binding, command behavior, CLI execution, subprocess execution, raw failure payload retention, writes, terminal closure, and success claims denied.
+- `MafRuntimeBindingAdmissionWitness Contract` records the governed admission gate for future MAF runtime binding while keeping implementation start, executable binding, PyO3, subprocess execution, backend default flips, terminal closure, and success claims denied.
 - `WorldSubstrateReplayWitness Contract` binds world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, and SDLC recovery refs without live world service calls, SQLite reads or writes, world mutation, replay execution, planner/executor execution, external endpoint calls, raw world or replay payload retention, terminal closure, or success claims.
 - `WorkerFailureReceipt Contract` is a non-terminal post-dispatch worker receipt that records failed steps, partial effects, unknown effects, rollback obligations, recovery obligations, and no-success guards.
 - `ReadOnlyWorkerBinding Contract` selects local repo inspection as the first worker path and binds worker mesh plus failure receipts while denying runtime dispatch, network, secrets, writes, connector authority, terminal closure, and raw output retention.
@@ -95,7 +96,7 @@ operators and downstream systems can inspect.
 
 - Shared definitions live in `docs/` and `schemas/`.
 - Rust scaffold lives under `maf/rust/`.
-- MAF runtime binding remains unclaimed; receipt parity, ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path are static Foundation Mode witnesses, while executable runtime binding remains a separate future implementation thread.
+- MAF runtime binding remains unclaimed; receipt parity, ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, failure receipt path, and runtime-binding admission are Foundation Mode witnesses, while executable runtime binding implementation remains `AwaitingEvidence`.
 - Python scaffold lives under `mcoi/`.
 - Cross-runtime compatibility work lives under `integration/`.
 

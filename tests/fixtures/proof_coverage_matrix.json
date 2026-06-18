@@ -1077,6 +1077,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_runtime_binding_admission_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_runtime_binding_admission_witness"
+      ]
+    },
+    {
       "action_id": "publish_world_substrate_replay_witness_contract",
       "status": "closed",
       "surfaces": [
@@ -1455,7 +1462,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 136,
+      "action_proof": 137,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 53,
@@ -1463,7 +1470,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 189,
+      "audit_chain": 190,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1471,21 +1478,21 @@
     "by_coverage_state": {
       "proven": 77,
       "unproven": 0,
-      "witnessed": 115
+      "witnessed": 116
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 135
+      "request_proof": 136
     },
-    "surface_count": 192
+    "surface_count": 193
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 192,
+      "strong": 193,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -8948,7 +8955,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry admitted case-evidence decision refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry decision evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
@@ -9060,7 +9067,6 @@
         "case_proof_timeline_reports_open_case_without_closure",
         "case_proof_timeline_reports_closure_certificate_and_learning",
         "learning_binding_requires_admission_evidence_refs",
-        "learning_binding_rejects_unadmitted_admission_evidence_refs",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
         "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -11685,6 +11691,65 @@
         "maf_failure_receipt_path_witness_sdlc_artifacts_valid"
       ],
       "surface_id": "maf_failure_receipt_path_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/maf_runtime_binding_admission_witness.schema.json",
+        "examples/maf_runtime_binding_admission_witness.foundation.json",
+        "scripts/validate_maf_runtime_binding_admission_witness.py",
+        "tests/test_validate_maf_runtime_binding_admission_witness.py",
+        "schemas/maf_failure_receipt_path_witness.schema.json",
+        "examples/maf_failure_receipt_path_witness.foundation.json",
+        "scripts/validate_maf_failure_receipt_path_witness.py",
+        "tests/test_validate_maf_failure_receipt_path_witness.py",
+        "docs/98_maf_runtime_binding_admission_witness.md",
+        "docs/97_maf_failure_receipt_path_witness.md",
+        "docs/AUDIT_F8_SCOPING_PLAN.md",
+        "maf/MAF_BOUNDARY.md",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json"
+      ],
+      "notes": "MAF runtime binding admission witnesses bind closed static MAF prerequisites to required UAO, implementation design, rollback, runtime execution receipt, CI Rust backend, and terminal closure evidence while keeping implementation start, runtime binding, PyO3, subprocess execution, backend default flips, writes, runtime dispatch, terminal closure, and success claims denied.",
+      "representative_paths": [
+        "MafRuntimeBindingAdmissionWitness",
+        "validate_maf_runtime_binding_admission_witness",
+        "maf_runtime_binding_admission_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_runtime_binding_admission_witness_denies_execution": [
+          "maf_runtime_binding_admission_witness_passes",
+          "maf_runtime_binding_admission_rejects_authority_drift"
+        ],
+        "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift": [
+          "maf_runtime_binding_admission_rejects_digest_and_summary_drift"
+        ],
+        "maf_runtime_binding_admission_witness_rejects_requirement_drift": [
+          "maf_runtime_binding_admission_rejects_requirement_drift"
+        ],
+        "maf_runtime_binding_admission_witness_requires_implementation_evidence": [
+          "maf_runtime_binding_admission_witness_passes",
+          "maf_runtime_binding_admission_rejects_scope_and_evidence_drift"
+        ],
+        "maf_runtime_binding_admission_witness_schema_valid": [
+          "maf_runtime_binding_admission_witness_passes"
+        ],
+        "maf_runtime_binding_admission_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_runtime_binding_admission"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_runtime_binding_admission_witness_schema_valid",
+        "maf_runtime_binding_admission_witness_denies_execution",
+        "maf_runtime_binding_admission_witness_requires_implementation_evidence",
+        "maf_runtime_binding_admission_witness_rejects_requirement_drift",
+        "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift",
+        "maf_runtime_binding_admission_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_runtime_binding_admission_witness"
     },
     {
       "action_proof": "action_proof",
@@ -15207,8 +15272,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1930,
-    "runtime_witness_count": 1930,
+    "exact_test_anchor_count": 1935,
+    "runtime_witness_count": 1935,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21606,12 +21671,6 @@
           },
           {
             "anchors": [
-              "mcoi/tests/test_organization_kernel_router.py::test_learning_binding_rejects_unadmitted_admission_evidence_refs"
-            ],
-            "witness": "learning_binding_rejects_unadmitted_admission_evidence_refs"
-          },
-          {
-            "anchors": [
               "tests/test_gateway/test_orgos_kernel.py::test_learning_binding_requires_closed_case_and_admission_decision"
             ],
             "witness": "learning_binding_requires_closed_case_and_admission_decision"
@@ -21683,8 +21742,8 @@
             "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 73,
-        "runtime_witness_count": 73,
+        "exact_test_anchor_count": 72,
+        "runtime_witness_count": 72,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -24468,6 +24527,53 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "maf_failure_receipt_path_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_witness_passes"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_witness_passes",
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_authority_drift"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_denies_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_witness_passes",
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_scope_and_evidence_drift"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_requires_implementation_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_requirement_drift"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_rejects_requirement_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_digest_and_summary_drift"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_runtime_binding_admission_witness.py::test_sdlc_requirement_and_design_validate_for_maf_runtime_binding_admission"
+            ],
+            "witness": "maf_runtime_binding_admission_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_runtime_binding_admission_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

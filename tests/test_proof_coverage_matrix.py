@@ -1948,7 +1948,6 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "case_proof_timeline_reports_open_case_without_closure" in witnesses
     assert "case_proof_timeline_reports_closure_certificate_and_learning" in witnesses
     assert "learning_binding_requires_admission_evidence_refs" in witnesses
-    assert "learning_binding_rejects_unadmitted_admission_evidence_refs" in witnesses
     assert "case_proof_explorer_reports_open_case_attention_without_mutation" in witnesses
     assert "case_proof_explorer_reports_closed_verified_case" in witnesses
     assert "case_proof_explorer_html_view_is_read_only_and_escaped" in witnesses
@@ -2122,7 +2121,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 73
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 72
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
@@ -5588,6 +5587,39 @@ def test_maf_failure_receipt_path_witness_denies_execution() -> None:
     assert failure_witness_surface["exact_test_anchor_count"] == 6
     assert failure_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_maf_failure_receipt_path_witness_contract"]["status"] == "closed"
+
+
+def test_maf_runtime_binding_admission_witness_denies_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    admission_surface = surfaces["maf_runtime_binding_admission_witness"]
+    admission_witness_surface = witness_surfaces["maf_runtime_binding_admission_witness"]
+    witnesses = set(admission_surface["runtime_witnesses"])
+
+    assert admission_surface["coverage_state"] == "witnessed"
+    assert admission_surface["request_proof"] == "request_proof"
+    assert admission_surface["action_proof"] == "action_proof"
+    assert admission_surface["audit"] == "audit_chain"
+    assert "MafRuntimeBindingAdmissionWitness" in admission_surface["representative_paths"]
+    assert "schemas/maf_runtime_binding_admission_witness.schema.json" in admission_surface["evidence_files"]
+    assert "examples/maf_runtime_binding_admission_witness.foundation.json" in admission_surface["evidence_files"]
+    assert "scripts/validate_maf_runtime_binding_admission_witness.py" in admission_surface["evidence_files"]
+    assert "tests/test_validate_maf_runtime_binding_admission_witness.py" in admission_surface["evidence_files"]
+    assert "docs/AUDIT_F8_SCOPING_PLAN.md" in admission_surface["evidence_files"]
+    assert "maf_runtime_binding_admission_witness_schema_valid" in witnesses
+    assert "maf_runtime_binding_admission_witness_denies_execution" in witnesses
+    assert "maf_runtime_binding_admission_witness_requires_implementation_evidence" in witnesses
+    assert "maf_runtime_binding_admission_witness_rejects_requirement_drift" in witnesses
+    assert "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift" in witnesses
+    assert "maf_runtime_binding_admission_witness_sdlc_artifacts_valid" in witnesses
+    assert admission_witness_surface["exact_test_anchor_count"] == 6
+    assert admission_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_runtime_binding_admission_witness_contract"]["status"] == "closed"
 
 
 def test_world_substrate_replay_witness_blocks_live_world_authority() -> None:

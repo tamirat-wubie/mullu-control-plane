@@ -1,0 +1,102 @@
+{
+  "security_review_id": "SEC-maf-runtime-binding-admission-witness-20260618",
+  "change_id": "maf-runtime-binding-admission-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "network",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF runtime-binding admission can accidentally become executable binding authority if static prerequisite closure is conflated with implementation start, PyO3 binding, subprocess execution, Rust backend default flips, runtime dispatch, or terminal closure. The mitigation is a read-only witness and validator that reject authority drift, scope drift, evidence drift, requirement drift, digest drift, secret markers, receipt ref drift, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "Implementation start, runtime binding, PyO3 binding, subprocess execution, CLI execution, Rust execution, Python Rust imports, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_authority_drift"
+    },
+    {
+      "category": "network",
+      "check": "SSRF check confirms network calls remain denied while runtime-binding evidence remains static refs",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms secret access and secret-bearing execution authority remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms admission mode remains governed_runtime_binding_admission and static prerequisite closure does not imply executable runtime binding",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_scope_and_evidence_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the admission witness schema, example, validator, tests, MAF failure receipt path witness, F8 scoping plan, MAF boundary, UAO schema, and LifeMeaningJudgment schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_receipt_ref_and_gap_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms source artifact digests, admission requirement counts, authority denial counts, and open evidence counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_runtime_binding_admission_witness.py::test_maf_runtime_binding_admission_rejects_digest_and_summary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-runtime-binding-premature-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks implementation start, runtime binding, PyO3 binding, subprocess execution, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_runtime_binding_admission_witness.schema.json",
+        "scripts/validate_maf_runtime_binding_admission_witness.py",
+        "tests/test_validate_maf_runtime_binding_admission_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-runtime-binding-missing-rollback-evidence",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness keeps rollback, runtime execution receipts, CI Rust backend lane, and terminal closure review as explicit AwaitingEvidence gates.",
+      "evidence_refs": [
+        "examples/maf_runtime_binding_admission_witness.foundation.json",
+        "tests/test_validate_maf_runtime_binding_admission_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafRuntimeBindingAdmissionWitness validation read-only and deterministic",
+    "require canonical source digests for MAF failure receipt path and F8 boundary artifacts",
+    "require UAO admission, implementation design, rollback recovery, runtime execution receipts, CI Rust backend lane, and terminal closure review before implementation",
+    "deny implementation start, runtime binding, PyO3 binding, subprocess execution, backend default flips, network, secrets, writes, dispatch, terminal closure, and success claims",
+    "reject authority drift, scope drift, evidence drift, secret markers, and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_runtime_binding_admission_witness.schema.json",
+    "examples/maf_runtime_binding_admission_witness.foundation.json",
+    "scripts/validate_maf_runtime_binding_admission_witness.py",
+    "tests/test_validate_maf_runtime_binding_admission_witness.py",
+    "receipt://sdlc/maf-runtime-binding-admission-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-runtime-binding-admission-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-runtime-binding-admission-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-runtime-binding-admission-witness/security"
+}
