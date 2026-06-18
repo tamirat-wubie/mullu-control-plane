@@ -1976,6 +1976,7 @@ class TestApprovalWebhook:
                 tenant_id="t1",
                 identity_id="operator-1",
                 approval_authority=True,
+                metadata={"operator_session_present": True},
             )
         )
         client = TestClient(app)
@@ -2003,6 +2004,68 @@ class TestApprovalWebhook:
         assert data["status"] == "resolved"
         assert "approved" in data["body"]
         assert data["metadata"]["approval_resolved"] is True
+        assert data["metadata"]["approval_strength_decision"] == "allow"
+        assert data["metadata"]["approval_strength"] == "operator_bound"
+        assert data["metadata"]["required_approval_strength"] == "operator_bound"
+        events = app.state.command_ledger.events_for(data["metadata"]["command_id"])
+        approval_event = next(
+            event for event in events if event.next_state == CommandState.APPROVED
+        )
+        assert approval_event.detail["approval_strength_decision"] == "allow"
+        assert approval_event.detail["approval_strength"] == "operator_bound"
+        assert (
+            approval_event.detail["approval_strength_policy"]
+            == "channel_approval_strength_policy.foundation"
+        )
+
+    def test_approval_callback_blocks_under_strength_high_risk_resolver(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="operator",
+                tenant_id="t1",
+                identity_id="operator-1",
+                approval_authority=True,
+            )
+        )
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "operator",
+                }
+            ),
+        )
+
+        assert resp.status_code == 403
+        detail = resp.json()["detail"]
+        assert detail["error"] == "approval_strength_denied"
+        assert detail["approval_strength_decision"] == "block"
+        assert "operator_session_missing" in detail["approval_strength_reasons"]
+        assert (
+            "operator_bound_approval_required"
+            in detail["approval_strength_required_controls"]
+        )
+        assert app.state.router.pending_approvals == 1
 
     def test_approval_callback_requires_resolver_identity(self):
         app = create_gateway_app(platform=StubPlatform())
