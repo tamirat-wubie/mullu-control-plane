@@ -4496,14 +4496,16 @@ class TestGatewayStatus:
         worker_failure = row["receipts"][0]
         assert row["receipt_types"] == ["worker_failure_receipt"]
         assert worker_failure["receipt_id"] == failure_receipt["receipt_id"]
-        assert worker_failure["receipt_hash"] == failure_receipt["failure_hash"]
+        assert worker_failure["receipt_hash"] == failure_receipt["metadata"]["failure_hash"]
         assert worker_failure["status"] == "partial_completion"
-        assert worker_failure["details"]["worker_receipt_id"] == (
-            failure_receipt["worker_receipt_id"]
+        assert worker_failure["details"]["worker_dispatch_ref"] == (
+            failure_receipt["worker_dispatch_ref"]
         )
-        assert worker_failure["details"]["recovery_action"] == "safe_halt"
+        assert worker_failure["details"]["recovery_action_refs"] == [
+            "recovery:operator-review"
+        ]
         assert worker_failure["evidence_refs"]["source_receipt_hash"] == (
-            failure_receipt["source_receipt_hash"]
+            failure_receipt["metadata"]["source_receipt_hash"]
         )
         assert worker_failure["evidence_refs"]["source_event_hash"]
 

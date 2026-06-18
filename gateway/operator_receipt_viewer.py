@@ -2274,9 +2274,16 @@ def _worker_failure_receipt(
             "receipt_is_not_terminal_closure",
             "generated_at",
             "metadata",
+            "receipt_state",
+            "worker_dispatch_ref",
+            "failure_class",
+            "effect_status",
+            "recovery_action_refs",
         )
         if key in raw_receipt
     }
+    metadata = raw_receipt.get("metadata") if isinstance(raw_receipt.get("metadata"), Mapping) else {}
+    status = _worker_failure_status(raw_receipt)
     receipt_id = str(
         details.get("receipt_id")
         or command.redacted_payload.get("worker_failure_receipt_id")
@@ -2286,8 +2293,9 @@ def _worker_failure_receipt(
         "command_id": command.command_id,
         "worker_failure_receipt_id": receipt_id,
         "worker_receipt_id": str(details.get("worker_receipt_id", "")),
-        "source_receipt_hash": str(raw_receipt.get("source_receipt_hash", "")),
-        "failure_hash": str(raw_receipt.get("failure_hash", "")),
+        "worker_dispatch_ref": str(details.get("worker_dispatch_ref", "")),
+        "source_receipt_hash": str(raw_receipt.get("source_receipt_hash") or metadata.get("source_receipt_hash") or ""),
+        "failure_hash": str(raw_receipt.get("failure_hash") or metadata.get("failure_hash") or ""),
         "source_event_hash": source_event.event_hash if source_event is not None else "",
         "payload_hash": command.payload_hash,
         "trace_id": command.trace_id,
@@ -2295,14 +2303,14 @@ def _worker_failure_receipt(
         if isinstance(raw_receipt.get("evidence_refs"), list)
         else [],
     }
-    receipt_hash = str(raw_receipt.get("failure_hash", "")) or _stable_hash(
+    receipt_hash = str(evidence_refs["failure_hash"]) or _stable_hash(
         {"details": details, "evidence_refs": evidence_refs}
     )
     return {
         "receipt_type": "worker_failure_receipt",
         "receipt_id": receipt_id,
         "receipt_hash": receipt_hash,
-        "status": str(details.get("failure_state") or "recorded"),
+        "status": status,
         "details": details,
         "evidence_refs": evidence_refs,
     }
@@ -2328,6 +2336,28 @@ def _raw_worker_failure_receipt(
                 if isinstance(raw_execution_receipt, Mapping):
                     return raw_execution_receipt, event
     return None, None
+
+
+def _worker_failure_status(raw_receipt: Mapping[str, Any]) -> str:
+    failure_state = str(raw_receipt.get("failure_state") or "").strip()
+    if failure_state:
+        return failure_state
+    receipt_state = str(raw_receipt.get("receipt_state") or "").strip().lower()
+    if receipt_state == "partial_execution_recorded":
+        return "partial_completion"
+    if receipt_state:
+        return receipt_state
+    return "recorded"
+
+
+def _worker_failure_recovery_action(raw_receipt: Mapping[str, Any]) -> str:
+    recovery_action = str(raw_receipt.get("recovery_action") or "").strip()
+    if recovery_action:
+        return recovery_action
+    recovery_refs = raw_receipt.get("recovery_action_refs")
+    if isinstance(recovery_refs, list) and recovery_refs:
+        return "safe_halt"
+    return ""
 
 
 def _delivery_receipt(
@@ -2635,8 +2665,8 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
             task_status == "waiting_for_approval" and bool(approval_request_id)
         ),
         "worker_failure_receipt_id": str(worker_failure.get("receipt_id", "")),
-        "worker_failure_state": str(worker_failure.get("failure_state", "")),
-        "worker_failure_recovery_action": str(worker_failure.get("recovery_action", "")),
+        "worker_failure_state": _worker_failure_status(worker_failure),
+        "worker_failure_recovery_action": _worker_failure_recovery_action(worker_failure),
         "command_state": command.state.value,
         "task_status": task_status,
         "response_state": response_state,
