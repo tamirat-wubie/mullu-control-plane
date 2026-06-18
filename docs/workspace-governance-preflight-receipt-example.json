@@ -1,5 +1,5 @@
 {
-  "check_count": 216,
+  "check_count": 217,
   "checks": [
     {
       "args": [
@@ -234,6 +234,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR OPERATOR RESPONSE WITNESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_branch_write_authority_binding.py"
+      ],
+      "name": "agentic_service_harness_github_pr_branch_write_authority_binding",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR BRANCH WRITE AUTHORITY BINDING VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

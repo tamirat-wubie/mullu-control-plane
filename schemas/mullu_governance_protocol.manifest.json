@@ -71,6 +71,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-branch-write-authority-binding",
+      "path": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-branch-write-authority-binding:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",
