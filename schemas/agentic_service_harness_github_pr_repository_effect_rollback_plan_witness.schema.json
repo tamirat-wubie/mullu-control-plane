@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-repository-effect-rollback-plan-witness:1",
+  "title": "Agentic Service Harness GitHub PR Repository Effect Rollback Plan Witness",
+  "description": "Foundation Mode witness request for GitHub pull-request repository-effect rollback planning after UAO admission evidence. This schema records the rollback-plan requirement only and does not create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize secrets, perform destructive operations, or provide terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_uao_admission_witness_ref",
+    "witness_kind",
+    "requested_evidence_ref",
+    "rollback_plan_status",
+    "rollback_plan_collected",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "rollback_plan",
+    "remaining_witnesses",
+    "authority_denials",
+    "effect_boundary",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_uao_admission_witness_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+    },
+    "witness_kind": { "type": "string", "const": "repository_effect_rollback_plan_witness" },
+    "requested_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+    "rollback_plan_status": { "type": "string", "const": "AwaitingEvidence" },
+    "rollback_plan_collected": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "rollback_plan": { "$ref": "#/$defs/rollback_plan" },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/remaining_witness" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "read_only"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_service_id": {
+          "type": "string",
+          "const": "github-repo-task-service-read-only-foundation"
+        },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "rollback_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_plan_request_id",
+        "source_approval_request_id",
+        "source_response_record_ref",
+        "required_witness_kind",
+        "required_evidence_ref",
+        "uao_admission_witness_required",
+        "uao_admission_witness_satisfied",
+        "repository_effect_rollback_plan_required",
+        "repository_effect_rollback_plan_collected",
+        "repository_effect_rollback_plan_effect",
+        "pr_creation_authorized_after_rollback_plan"
+      ],
+      "properties": {
+        "rollback_plan_request_id": {
+          "type": "string",
+          "const": "rollback-plan.github-pr-repository-effect"
+        },
+        "source_approval_request_id": {
+          "type": "string",
+          "const": "approval-request.github-pr-admission"
+        },
+        "source_response_record_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_witness_kind": {
+          "type": "string",
+          "const": "repository_effect_rollback_plan"
+        },
+        "required_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "uao_admission_witness_required": { "type": "boolean", "const": true },
+        "uao_admission_witness_satisfied": { "type": "boolean", "const": false },
+        "repository_effect_rollback_plan_required": { "type": "boolean", "const": true },
+        "repository_effect_rollback_plan_collected": { "type": "boolean", "const": false },
+        "repository_effect_rollback_plan_effect": {
+          "type": "string",
+          "const": "permits_pull_request_creation_request_only_after_ci_gate_and_effect_reconciliation"
+        },
+        "pr_creation_authorized_after_rollback_plan": { "type": "boolean", "const": false }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_kind",
+        "status",
+        "evidence_ref",
+        "blocks_pr_admission",
+        "authority_granted"
+      ],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "ci_gate_before_ready_for_review",
+            "effect_reconciliation"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "blocks_pr_admission": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_granted",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "connector_calls_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "authority_granted": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_created",
+        "pull_request_opened",
+        "repository_written",
+        "connector_called",
+        "mutation_route_admitted",
+        "receipt_store_appended",
+        "secret_values_serialized",
+        "network_policy"
+      ],
+      "properties": {
+        "branch_created": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "repository_written": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_repository_effect_rollback_plan_witness_schema",
+        "github_pr_uao_admission_witness_schema",
+        "github_pr_branch_write_authority_binding_schema",
+        "github_pr_operator_approval_request_schema",
+        "github_pr_admission_preflight_schema",
+        "github_repo_task_service_schema"
+      ],
+      "properties": {
+        "github_pr_repository_effect_rollback_plan_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_uao_admission_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_branch_write_authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "check_count": 218,
+  "check_count": 219,
   "checks": [
     {
       "args": [
@@ -260,6 +260,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR UAO ADMISSION WITNESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR REPOSITORY EFFECT ROLLBACK PLAN WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
