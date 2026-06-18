@@ -111,12 +111,19 @@ def test_optional_termination_diagnosis_is_validated() -> None:
     invalid_reason["checks"][0]["termination_reason"] = "unknown"
     invalid_signal = copy.deepcopy(passed_receipt)
     invalid_signal["checks"][0]["termination_signal"] = 15
+    exception_receipt = copy.deepcopy(passed_receipt)
+    exception_receipt["checks"][0]["return_code"] = 126
+    exception_receipt["checks"][0]["passed"] = False
+    exception_receipt["checks"][0]["termination_reason"] = "exception"
+    exception_receipt["status"] = "failed"
 
     terminated_errors = validator.validate_receipt(terminated_receipt)
     reason_errors = validator.validate_receipt(invalid_reason)
     signal_errors = validator.validate_receipt(invalid_signal)
+    exception_errors = validator.validate_receipt(exception_receipt)
 
     assert terminated_errors == []
+    assert exception_errors == []
     assert "check 0 termination_reason is invalid" in reason_errors
     assert "check 0 non-terminated checks must not set termination_signal" in signal_errors
 
