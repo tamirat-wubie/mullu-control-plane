@@ -633,6 +633,7 @@ class LearningAdmissionBinding(ContractRecord):
     closure_id: str
     decision_id: str
     admitted: bool
+    evidence_refs: tuple[str, ...]
     created_at: str
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
@@ -641,6 +642,14 @@ class LearningAdmissionBinding(ContractRecord):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if not isinstance(self.admitted, bool):
             raise ValueError("admitted must be a boolean")
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_array(
+                require_non_empty_tuple(self.evidence_refs, "evidence_refs"),
+                "evidence_refs",
+            ),
+        )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
