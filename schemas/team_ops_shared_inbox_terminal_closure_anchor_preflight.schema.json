@@ -16,6 +16,9 @@
     "command_id",
     "terminal_certificate_id",
     "bundle_hash",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
     "anchor_target",
     "planned_external_anchor_status",
     "planned_external_anchor_ref",
@@ -52,6 +55,12 @@
     "command_id": {"type": "string", "const": "team_ops.shared_inbox_triage"},
     "terminal_certificate_id": {"type": "string", "minLength": 1},
     "bundle_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "provider_observation_receipt_ref": {"type": "string", "minLength": 1},
+    "provider_observation_receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "provider_observation_receipt_valid": {"type": "boolean", "const": true},
     "anchor_target": {
       "type": "string",
       "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
@@ -61,16 +70,17 @@
     "operator_authority_ref": {"type": "string"},
     "anchor_signing_secret_present": {"type": "boolean"},
     "signature_key_id_present": {"type": "boolean"},
-    "artifact_count": {"type": "integer", "minimum": 4},
+    "artifact_count": {"type": "integer", "minimum": 5},
     "artifact_root_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "required_artifact_types": {
       "type": "array",
-      "minItems": 4,
+      "minItems": 5,
       "items": {
         "type": "string",
         "enum": [
           "command",
           "execution_receipt",
+          "provider_observation",
           "verification_result",
           "terminal_certificate"
         ]
@@ -79,7 +89,7 @@
     },
     "artifacts": {
       "type": "array",
-      "minItems": 4,
+      "minItems": 5,
       "items": {"$ref": "#/$defs/evidence_artifact"}
     },
     "step_count": {"type": "integer", "minimum": 8, "maximum": 8},
@@ -152,6 +162,7 @@
             "command",
             "approval",
             "execution_receipt",
+            "provider_observation",
             "verification_result",
             "effect_reconciliation",
             "terminal_certificate",
