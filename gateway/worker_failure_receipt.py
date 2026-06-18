@@ -92,10 +92,83 @@ class WorkerFailureReceipt:
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
-        """Return a JSON-compatible failure receipt payload."""
-        payload = asdict(self)
-        payload["evidence_refs"] = list(self.evidence_refs)
-        return payload
+        """Return the public schema-facing failure receipt payload."""
+        completed_step_refs = _metadata_refs(self.metadata, "completed_step_refs")
+        failed_step_refs = _metadata_refs(
+            self.metadata,
+            "failed_step_refs",
+            default=(f"step://worker/{self.worker_receipt_id}/failed",),
+        )
+        partial_effect_refs = _metadata_refs(self.metadata, "partial_effect_refs")
+        rollback_action_refs = _metadata_refs(self.metadata, "rollback_action_refs")
+        recovery_action_refs = _metadata_refs(
+            self.metadata,
+            "recovery_action_refs",
+            default=(self.recovery_ref,),
+        )
+        blocked_reason_refs = _metadata_refs(
+            self.metadata,
+            "blocked_reason_refs",
+            default=(f"blocked://worker/{self.worker_receipt_id}/{self.reason}",),
+        )
+        return {
+            "receipt_id": self.receipt_id,
+            "receipt_version": "worker_failure_receipt.v1",
+            "worker_dispatch_ref": f"receipt://worker-dispatch/{self.worker_receipt_id}",
+            "request_id": self.request_id,
+            "tenant_id": self.tenant_id,
+            "actor_id": str(self.metadata.get("actor_id") or "operator_local_foundation"),
+            "worker_id": str(self.metadata.get("worker_id") or self.worker_receipt_id),
+            "capability": self.capability,
+            "operation": self.operation,
+            "command_id": self.command_id,
+            "lease_id": self.lease_id,
+            "created_at": self.generated_at,
+            "solver_outcome": _solver_outcome(self),
+            "receipt_state": _receipt_state(self),
+            "failure_class": _failure_class(self),
+            "effect_status": _effect_status(self),
+            "rollback_required": _rollback_required(self),
+            "recovery_required": True,
+            "failure_summary": {
+                "completed_step_count": len(completed_step_refs),
+                "failed_step_count": len(failed_step_refs),
+                "partial_effect_count": len(partial_effect_refs),
+                "rollback_action_count": len(rollback_action_refs),
+                "recovery_action_count": len(recovery_action_refs),
+                "blocked_reason_count": len(blocked_reason_refs),
+                "raw_output_included": False,
+                "raw_secret_material_included": False,
+            },
+            "completed_step_refs": list(completed_step_refs),
+            "failed_step_refs": list(failed_step_refs),
+            "partial_effect_refs": list(partial_effect_refs),
+            "rollback_action_refs": list(rollback_action_refs),
+            "recovery_action_refs": list(recovery_action_refs),
+            "blocked_reason_refs": list(blocked_reason_refs),
+            "governance_guards": {
+                "terminal_closure": False,
+                "success_claim_allowed": False,
+                "execution_authority_renewal_allowed": False,
+                "raw_secret_material_included": False,
+                "mfidel_atomicity_preserved": True,
+                "partial_or_unknown_effect_requires_recovery": True,
+            },
+            "receipt_envelope": {
+                "uao_ref": f"uao://worker-failure/{self.worker_receipt_id}",
+                "causal_decision_trace_ref": f"trace://worker-failure/{self.worker_receipt_id}",
+                "receipt_ref": f"receipt://worker-failure/{self.receipt_id}",
+            },
+            "evidence_refs": list(self.evidence_refs)
+            or ["schemas/worker_failure_receipt.schema.json"],
+            "metadata": {
+                "foundation_mode": True,
+                "worker_receipt_status": self.metadata.get("worker_receipt_status"),
+                "worker_receipt_reason": self.metadata.get("worker_receipt_reason"),
+                "source_receipt_hash": self.source_receipt_hash,
+                "failure_hash": self.failure_hash,
+            },
+        }
 
 
 def build_worker_failure_receipt(
@@ -154,7 +227,7 @@ def build_worker_failure_receipt(
     failure_hash = canonical_hash(asdict(receipt))
     return replace(
         receipt,
-        receipt_id=f"worker-failure-{failure_hash[:16]}",
+        receipt_id=f"worker-failure-receipt-{failure_hash[:16]}",
         failure_hash=failure_hash,
     )
 
@@ -185,3 +258,63 @@ def _default_recovery_action(failure_state: str) -> str:
 
 def _utc_timestamp() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _metadata_refs(
+    metadata: dict[str, Any],
+    key: str,
+    *,
+    default: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    refs = metadata.get(key)
+    if refs is None:
+        return default
+    if isinstance(refs, str):
+        return (refs,)
+    if isinstance(refs, list | tuple):
+        normalized = tuple(str(ref) for ref in refs if str(ref))
+        return normalized or default
+    return default
+
+
+def _solver_outcome(receipt: WorkerFailureReceipt) -> str:
+    if receipt.failure_state == "rejected_before_handler":
+        return "GovernanceBlocked"
+    if receipt.failure_state == "partial_completion":
+        return "AwaitingEvidence"
+    return "AwaitingEvidence"
+
+
+def _receipt_state(receipt: WorkerFailureReceipt) -> str:
+    if receipt.failure_state == "rejected_before_handler":
+        return "FAILED_BEFORE_EXECUTION"
+    if receipt.failure_state == "partial_completion":
+        return "PARTIAL_EXECUTION_RECORDED"
+    if receipt.recovery_action == "safe_halt":
+        return "SAFE_HALT_RECORDED"
+    return "RECOVERY_REQUIRED"
+
+
+def _failure_class(receipt: WorkerFailureReceipt) -> str:
+    reason = receipt.reason.lower()
+    if "timeout" in reason:
+        return "timeout"
+    if receipt.failure_state == "rejected_before_handler":
+        return "policy_denial"
+    if "budget" in reason:
+        return "budget_blocked"
+    if "tenant" in reason:
+        return "tenant_scope_failure"
+    return "worker_error"
+
+
+def _effect_status(receipt: WorkerFailureReceipt) -> str:
+    if receipt.partial_completion:
+        return "partial_effect_recorded"
+    if receipt.failure_state == "rejected_before_handler":
+        return "no_effect_confirmed"
+    return "effect_unknown"
+
+
+def _rollback_required(receipt: WorkerFailureReceipt) -> bool:
+    return receipt.partial_completion or receipt.failure_state not in {"rejected_before_handler"}

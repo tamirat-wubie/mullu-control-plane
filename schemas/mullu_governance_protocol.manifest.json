@@ -1997,12 +1997,6 @@
       "surface": "team_ops"
     },
     {
-      "schema_id": "worker-failure-receipt",
-      "path": "schemas/worker_failure_receipt.schema.json",
-      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
-      "surface": "worker"
-    },
-    {
       "schema_id": "worker-receipt-ledger-read-model",
       "path": "schemas/worker_receipt_ledger_read_model.schema.json",
       "urn": "urn:mullusi:schema:worker-receipt-ledger-read-model:1",
