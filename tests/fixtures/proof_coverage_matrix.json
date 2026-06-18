@@ -1007,6 +1007,27 @@
       ]
     },
     {
+      "action_id": "publish_invariant_fuzz_execution_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "invariant_fuzz_execution_report"
+      ]
+    },
+    {
+      "action_id": "publish_maf_receipt_parity_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_receipt_parity_witness"
+      ]
+    },
+    {
+      "action_id": "publish_world_substrate_replay_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "world_substrate_replay_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1378,7 +1399,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 125,
+      "action_proof": 128,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1386,7 +1407,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 177,
+      "audit_chain": 180,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1394,21 +1415,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 108
+      "witnessed": 111
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 124
+      "request_proof": 127
     },
-    "surface_count": 180
+    "surface_count": 183
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 180,
+      "strong": 183,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11059,6 +11080,128 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/invariant_fuzz_execution_report.schema.json",
+        "examples/invariant_fuzz_execution_report.foundation.json",
+        "scripts/validate_invariant_fuzz_execution_report.py",
+        "tests/test_validate_invariant_fuzz_execution_report.py",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/effect_assurance.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/92_invariant_fuzz_execution_report_contract.md"
+      ],
+      "notes": "Invariant fuzz execution reports bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime-hardening or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+      "representative_paths": [
+        "InvariantFuzzExecutionReport",
+        "validate_invariant_fuzz_execution_report",
+        "invariant_fuzz_execution_report.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "invariant_fuzz_execution_report_blocks_canonical_mutation": [
+          "invariant_fuzz_execution_report_passes",
+          "invariant_fuzz_execution_report_rejects_authority_drift",
+          "invariant_fuzz_execution_report_rejects_live_scope_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_projection_and_raw_retention": [
+          "invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift": [
+          "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+        ],
+        "invariant_fuzz_execution_report_rejects_result_count_drift": [
+          "invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+        ],
+        "invariant_fuzz_execution_report_requires_case_bank_and_oracles": [
+          "invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+        ],
+        "invariant_fuzz_execution_report_schema_valid": [
+          "invariant_fuzz_execution_report_passes"
+        ],
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+        ]
+      },
+      "runtime_witnesses": [
+        "invariant_fuzz_execution_report_schema_valid",
+        "invariant_fuzz_execution_report_blocks_canonical_mutation",
+        "invariant_fuzz_execution_report_requires_case_bank_and_oracles",
+        "invariant_fuzz_execution_report_rejects_projection_and_raw_retention",
+        "invariant_fuzz_execution_report_rejects_result_count_drift",
+        "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift",
+        "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+      ],
+      "surface_id": "invariant_fuzz_execution_report"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "examples/maf_receipt_parity_witness.foundation.json",
+        "scripts/validate_maf_receipt_parity_witness.py",
+        "tests/test_validate_maf_receipt_parity_witness.py",
+        "schemas/sdlc_transition_receipt.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/93_maf_receipt_parity_witness_contract.md",
+        "docs/82_cross_repo_opportunity_map.md",
+        "docs/MAF_RECEIPT_COVERAGE.md",
+        "maf/MAF_BOUNDARY.md",
+        "maf/rust/Cargo.toml"
+      ],
+      "notes": "MAF receipt parity witnesses bind Python receipt schema digests to Rust MAF crate manifest and entry digests while keeping PyO3, subprocess, CLI execution, Rust execution, connector calls, writes, runtime dispatch, terminal closure, and success claims denied until ABI, subprocess, fixture, and failure-path witnesses exist.",
+      "representative_paths": [
+        "MafReceiptParityWitness",
+        "validate_maf_receipt_parity_witness",
+        "maf_receipt_parity_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_receipt_parity_witness_denies_runtime_binding": [
+          "maf_receipt_parity_witness_passes",
+          "maf_receipt_parity_witness_rejects_runtime_authority_drift"
+        ],
+        "maf_receipt_parity_witness_rejects_digest_drift": [
+          "maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+          "maf_receipt_parity_witness_rejects_rust_crate_digest_drift"
+        ],
+        "maf_receipt_parity_witness_rejects_gap_closure_without_evidence": [
+          "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+        ],
+        "maf_receipt_parity_witness_rejects_summary_drift": [
+          "maf_receipt_parity_witness_rejects_summary_drift"
+        ],
+        "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs": [
+          "maf_receipt_parity_witness_passes"
+        ],
+        "maf_receipt_parity_witness_schema_valid": [
+          "maf_receipt_parity_witness_passes"
+        ],
+        "maf_receipt_parity_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_receipt_parity_witness_schema_valid",
+        "maf_receipt_parity_witness_denies_runtime_binding",
+        "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs",
+        "maf_receipt_parity_witness_rejects_digest_drift",
+        "maf_receipt_parity_witness_rejects_gap_closure_without_evidence",
+        "maf_receipt_parity_witness_rejects_summary_drift",
+        "maf_receipt_parity_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_receipt_parity_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -11161,6 +11304,70 @@
         "worker_receipt_ledger_read_model_sdlc_artifacts_valid"
       ],
       "surface_id": "worker_receipt_ledger_read_model"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/world_substrate_replay_witness.schema.json",
+        "examples/world_substrate_replay_witness.foundation.json",
+        "scripts/validate_world_substrate_replay_witness.py",
+        "tests/test_validate_world_substrate_replay_witness.py",
+        "schemas/world_state.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "schemas/effect_assurance.schema.json",
+        "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        "docs/92_world_substrate_replay_witness_contract.md"
+      ],
+      "notes": "World substrate replay witnesses bind world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, SDLC recovery refs, safety guards, and authority-denial flags before world replay evidence can become governance proof.",
+      "representative_paths": [
+        "WorldSubstrateReplayWitness",
+        "validate_world_substrate_replay_witness",
+        "world_substrate_replay_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "world_substrate_replay_witness_blocks_live_world_authority": [
+          "world_substrate_replay_witness_passes",
+          "world_substrate_replay_witness_rejects_authority_drift"
+        ],
+        "world_substrate_replay_witness_rejects_parity_drift": [
+          "world_substrate_replay_witness_rejects_parity_drift"
+        ],
+        "world_substrate_replay_witness_rejects_raw_payload_retention": [
+          "world_substrate_replay_witness_rejects_raw_payload_retention"
+        ],
+        "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift": [
+          "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+        ],
+        "world_substrate_replay_witness_requires_digest_refs": [
+          "world_substrate_replay_witness_passes",
+          "world_substrate_replay_witness_rejects_digest_and_scope_drift"
+        ],
+        "world_substrate_replay_witness_requires_invariant_controls": [
+          "world_substrate_replay_witness_rejects_invariant_control_gaps"
+        ],
+        "world_substrate_replay_witness_schema_valid": [
+          "world_substrate_replay_witness_passes"
+        ],
+        "world_substrate_replay_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "world_substrate_replay_witness_schema_valid",
+        "world_substrate_replay_witness_blocks_live_world_authority",
+        "world_substrate_replay_witness_requires_digest_refs",
+        "world_substrate_replay_witness_requires_invariant_controls",
+        "world_substrate_replay_witness_rejects_raw_payload_retention",
+        "world_substrate_replay_witness_rejects_parity_drift",
+        "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift",
+        "world_substrate_replay_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "world_substrate_replay_witness"
     },
     {
       "action_proof": "audit_chain",
@@ -14511,8 +14718,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1829,
-    "runtime_witness_count": 1829,
+    "exact_test_anchor_count": 1851,
+    "runtime_witness_count": 1851,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23111,6 +23318,112 @@
         "anchored_witnesses": [
           {
             "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_passes"
+            ],
+            "witness": "invariant_fuzz_execution_report_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_passes",
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_authority_drift",
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_live_scope_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_blocks_canonical_mutation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_requires_case_bank_and_oracles"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_projection_and_raw_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_result_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_invariant_fuzz_execution_report.py::test_sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+            ],
+            "witness": "invariant_fuzz_execution_report_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "invariant_fuzz_execution_report",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes"
+            ],
+            "witness": "maf_receipt_parity_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes",
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_runtime_authority_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_denies_runtime_binding"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes"
+            ],
+            "witness": "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_rust_crate_digest_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_digest_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_summary_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+            ],
+            "witness": "maf_receipt_parity_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "maf_receipt_parity_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
               "tests/test_validate_research_source_conflict_map.py::test_research_source_conflict_map_passes"
             ],
             "witness": "research_source_conflict_map_schema_valid"
@@ -23197,6 +23510,65 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "worker_receipt_ledger_read_model",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes"
+            ],
+            "witness": "world_substrate_replay_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes",
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_authority_drift"
+            ],
+            "witness": "world_substrate_replay_witness_blocks_live_world_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_passes",
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_digest_and_scope_drift"
+            ],
+            "witness": "world_substrate_replay_witness_requires_digest_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_invariant_control_gaps"
+            ],
+            "witness": "world_substrate_replay_witness_requires_invariant_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_raw_payload_retention"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_raw_payload_retention"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_parity_drift"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_parity_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+            ],
+            "witness": "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_world_substrate_replay_witness.py::test_sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
+            ],
+            "witness": "world_substrate_replay_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
+        "surface_id": "world_substrate_replay_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

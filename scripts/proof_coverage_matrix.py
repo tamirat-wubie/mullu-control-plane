@@ -7346,6 +7346,128 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "invariant_fuzz_execution_report",
+            [
+                "InvariantFuzzExecutionReport",
+                "validate_invariant_fuzz_execution_report",
+                "invariant_fuzz_execution_report.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/invariant_fuzz_execution_report.schema.json",
+                "examples/invariant_fuzz_execution_report.foundation.json",
+                "scripts/validate_invariant_fuzz_execution_report.py",
+                "tests/test_validate_invariant_fuzz_execution_report.py",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/92_invariant_fuzz_execution_report_contract.md",
+            ],
+            "Invariant fuzz execution reports bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime-hardening or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+            [
+                "invariant_fuzz_execution_report_schema_valid",
+                "invariant_fuzz_execution_report_blocks_canonical_mutation",
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles",
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention",
+                "invariant_fuzz_execution_report_rejects_result_count_drift",
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift",
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "invariant_fuzz_execution_report_schema_valid": [
+                    "invariant_fuzz_execution_report_passes"
+                ],
+                "invariant_fuzz_execution_report_blocks_canonical_mutation": [
+                    "invariant_fuzz_execution_report_passes",
+                    "invariant_fuzz_execution_report_rejects_authority_drift",
+                    "invariant_fuzz_execution_report_rejects_live_scope_drift",
+                ],
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles": [
+                    "invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention": [
+                    "invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_result_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+                ],
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+                ],
+            },
+        ),
+        _surface(
+            "maf_receipt_parity_witness",
+            [
+                "MafReceiptParityWitness",
+                "validate_maf_receipt_parity_witness",
+                "maf_receipt_parity_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_receipt_parity_witness.schema.json",
+                "examples/maf_receipt_parity_witness.foundation.json",
+                "scripts/validate_maf_receipt_parity_witness.py",
+                "tests/test_validate_maf_receipt_parity_witness.py",
+                "schemas/sdlc_transition_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/93_maf_receipt_parity_witness_contract.md",
+                "docs/82_cross_repo_opportunity_map.md",
+                "docs/MAF_RECEIPT_COVERAGE.md",
+                "maf/MAF_BOUNDARY.md",
+                "maf/rust/Cargo.toml",
+            ],
+            "MAF receipt parity witnesses bind Python receipt schema digests to Rust MAF crate manifest and entry digests while keeping PyO3, subprocess, CLI execution, Rust execution, connector calls, writes, runtime dispatch, terminal closure, and success claims denied until ABI, subprocess, fixture, and failure-path witnesses exist.",
+            [
+                "maf_receipt_parity_witness_schema_valid",
+                "maf_receipt_parity_witness_denies_runtime_binding",
+                "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs",
+                "maf_receipt_parity_witness_rejects_digest_drift",
+                "maf_receipt_parity_witness_rejects_gap_closure_without_evidence",
+                "maf_receipt_parity_witness_rejects_summary_drift",
+                "maf_receipt_parity_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_receipt_parity_witness_schema_valid": [
+                    "maf_receipt_parity_witness_passes"
+                ],
+                "maf_receipt_parity_witness_denies_runtime_binding": [
+                    "maf_receipt_parity_witness_passes",
+                    "maf_receipt_parity_witness_rejects_runtime_authority_drift",
+                ],
+                "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs": [
+                    "maf_receipt_parity_witness_passes"
+                ],
+                "maf_receipt_parity_witness_rejects_digest_drift": [
+                    "maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+                    "maf_receipt_parity_witness_rejects_rust_crate_digest_drift",
+                ],
+                "maf_receipt_parity_witness_rejects_gap_closure_without_evidence": [
+                    "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+                ],
+                "maf_receipt_parity_witness_rejects_summary_drift": [
+                    "maf_receipt_parity_witness_rejects_summary_drift"
+                ],
+                "maf_receipt_parity_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -7450,6 +7572,70 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "worker_receipt_ledger_read_model_sdlc_artifacts_valid": [
                     "sdlc_requirement_and_design_validate_for_worker_receipt_ledger_read_model"
+                ],
+            },
+        ),
+        _surface(
+            "world_substrate_replay_witness",
+            [
+                "WorldSubstrateReplayWitness",
+                "validate_world_substrate_replay_witness",
+                "world_substrate_replay_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/world_substrate_replay_witness.schema.json",
+                "examples/world_substrate_replay_witness.foundation.json",
+                "scripts/validate_world_substrate_replay_witness.py",
+                "tests/test_validate_world_substrate_replay_witness.py",
+                "schemas/world_state.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/92_world_substrate_replay_witness_contract.md",
+            ],
+            "World substrate replay witnesses bind world snapshot digest refs, replay trace digest refs, sparse-cache truth refs, legal geometry refs, field derivation refs, invariant registry refs, branch quarantine refs, replay probe refs, planner/executor parity refs, UAO refs, LifeMeaningJudgment refs, SimulationReceipt refs, EffectAssurance refs, SDLC recovery refs, safety guards, and authority-denial flags before world replay evidence can become governance proof.",
+            [
+                "world_substrate_replay_witness_schema_valid",
+                "world_substrate_replay_witness_blocks_live_world_authority",
+                "world_substrate_replay_witness_requires_digest_refs",
+                "world_substrate_replay_witness_requires_invariant_controls",
+                "world_substrate_replay_witness_rejects_raw_payload_retention",
+                "world_substrate_replay_witness_rejects_parity_drift",
+                "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift",
+                "world_substrate_replay_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "world_substrate_replay_witness_schema_valid": [
+                    "world_substrate_replay_witness_passes"
+                ],
+                "world_substrate_replay_witness_blocks_live_world_authority": [
+                    "world_substrate_replay_witness_passes",
+                    "world_substrate_replay_witness_rejects_authority_drift",
+                ],
+                "world_substrate_replay_witness_requires_digest_refs": [
+                    "world_substrate_replay_witness_passes",
+                    "world_substrate_replay_witness_rejects_digest_and_scope_drift",
+                ],
+                "world_substrate_replay_witness_requires_invariant_controls": [
+                    "world_substrate_replay_witness_rejects_invariant_control_gaps"
+                ],
+                "world_substrate_replay_witness_rejects_raw_payload_retention": [
+                    "world_substrate_replay_witness_rejects_raw_payload_retention"
+                ],
+                "world_substrate_replay_witness_rejects_parity_drift": [
+                    "world_substrate_replay_witness_rejects_parity_drift"
+                ],
+                "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift": [
+                    "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift"
+                ],
+                "world_substrate_replay_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_world_substrate_replay_witness"
                 ],
             },
         ),
@@ -11567,6 +11753,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_chaos_rehearsal_execution_report_contract",
             "surfaces": ["chaos_rehearsal_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_invariant_fuzz_execution_report_contract",
+            "surfaces": ["invariant_fuzz_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_receipt_parity_witness_contract",
+            "surfaces": ["maf_receipt_parity_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_world_substrate_replay_witness_contract",
+            "surfaces": ["world_substrate_replay_witness"],
             "status": "closed",
         },
         {

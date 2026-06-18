@@ -170,10 +170,22 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
             right=WHQRNode(role=WHRole.WHY, target="invoice_due"),
         )
     )
+    metadata_sequence_tampered = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="payment_request",
+            metadata={"evidence_refs": ("evidence:invoice",)},
+        )
+    )
 
     object.__setattr__(node_tampered.root, "role", "what")
     object.__setattr__(logical_tampered.root, "args", list(logical_tampered.root.args))
     object.__setattr__(connector_tampered.root.right, "metadata", {"evidence": object()})
+    object.__setattr__(
+        metadata_sequence_tampered.root,
+        "metadata",
+        {"evidence_refs": ["evidence:invoice"]},
+    )
 
     with pytest.raises(ValueError, match=r"root\.role"):
         node_tampered.verify_semantics()
@@ -181,6 +193,8 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
         logical_tampered.verify_semantics()
     with pytest.raises(ValueError, match="metadata value"):
         connector_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata value must be immutable"):
+        metadata_sequence_tampered.verify_semantics()
 
 
 def test_document_imports_canonical_json_with_replay_hash() -> None:

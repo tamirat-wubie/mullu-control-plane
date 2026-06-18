@@ -5310,6 +5310,104 @@ def test_chaos_rehearsal_execution_report_blocks_runtime_disruption() -> None:
     assert closure_actions["publish_chaos_rehearsal_execution_report_contract"]["status"] == "closed"
 
 
+def test_invariant_fuzz_execution_report_blocks_canonical_mutation() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    fuzz_surface = surfaces["invariant_fuzz_execution_report"]
+    fuzz_witness_surface = witness_surfaces["invariant_fuzz_execution_report"]
+    witnesses = set(fuzz_surface["runtime_witnesses"])
+
+    assert fuzz_surface["coverage_state"] == "witnessed"
+    assert fuzz_surface["request_proof"] == "request_proof"
+    assert fuzz_surface["action_proof"] == "action_proof"
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in fuzz_surface["evidence_files"]
+    assert "examples/invariant_fuzz_execution_report.foundation.json" in fuzz_surface["evidence_files"]
+    assert "scripts/validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "tests/test_validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "invariant_fuzz_execution_report_schema_valid" in witnesses
+    assert "invariant_fuzz_execution_report_blocks_canonical_mutation" in witnesses
+    assert "invariant_fuzz_execution_report_requires_case_bank_and_oracles" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_projection_and_raw_retention" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_result_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_sdlc_artifacts_valid" in witnesses
+    assert fuzz_witness_surface["exact_test_anchor_count"] == 7
+    assert fuzz_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_invariant_fuzz_execution_report_contract"]["status"] == "closed"
+
+
+def test_maf_receipt_parity_witness_denies_runtime_binding() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    parity_surface = surfaces["maf_receipt_parity_witness"]
+    parity_witness_surface = witness_surfaces["maf_receipt_parity_witness"]
+    witnesses = set(parity_surface["runtime_witnesses"])
+
+    assert parity_surface["coverage_state"] == "witnessed"
+    assert parity_surface["request_proof"] == "request_proof"
+    assert parity_surface["action_proof"] == "action_proof"
+    assert parity_surface["audit"] == "audit_chain"
+    assert "MafReceiptParityWitness" in parity_surface["representative_paths"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in parity_surface["evidence_files"]
+    assert "examples/maf_receipt_parity_witness.foundation.json" in parity_surface["evidence_files"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "maf/rust/Cargo.toml" in parity_surface["evidence_files"]
+    assert "maf_receipt_parity_witness_schema_valid" in witnesses
+    assert "maf_receipt_parity_witness_denies_runtime_binding" in witnesses
+    assert "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs" in witnesses
+    assert "maf_receipt_parity_witness_rejects_digest_drift" in witnesses
+    assert "maf_receipt_parity_witness_rejects_gap_closure_without_evidence" in witnesses
+    assert "maf_receipt_parity_witness_rejects_summary_drift" in witnesses
+    assert "maf_receipt_parity_witness_sdlc_artifacts_valid" in witnesses
+    assert parity_witness_surface["exact_test_anchor_count"] == 7
+    assert parity_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_receipt_parity_witness_contract"]["status"] == "closed"
+
+
+def test_world_substrate_replay_witness_blocks_live_world_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    world_surface = surfaces["world_substrate_replay_witness"]
+    world_witness_surface = witness_surfaces["world_substrate_replay_witness"]
+    witnesses = set(world_surface["runtime_witnesses"])
+
+    assert world_surface["coverage_state"] == "witnessed"
+    assert world_surface["request_proof"] == "request_proof"
+    assert world_surface["action_proof"] == "action_proof"
+    assert "WorldSubstrateReplayWitness" in world_surface["representative_paths"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in world_surface["evidence_files"]
+    assert "examples/world_substrate_replay_witness.foundation.json" in world_surface["evidence_files"]
+    assert "scripts/validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "tests/test_validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "world_substrate_replay_witness_schema_valid" in witnesses
+    assert "world_substrate_replay_witness_blocks_live_world_authority" in witnesses
+    assert "world_substrate_replay_witness_requires_digest_refs" in witnesses
+    assert "world_substrate_replay_witness_requires_invariant_controls" in witnesses
+    assert "world_substrate_replay_witness_rejects_raw_payload_retention" in witnesses
+    assert "world_substrate_replay_witness_rejects_parity_drift" in witnesses
+    assert "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "world_substrate_replay_witness_sdlc_artifacts_valid" in witnesses
+    assert world_witness_surface["exact_test_anchor_count"] == 8
+    assert world_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_world_substrate_replay_witness_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

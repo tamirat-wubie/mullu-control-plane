@@ -191,9 +191,7 @@ def _require_metadata_value_tree(value: Any, name: str) -> None:
             _require_metadata_value_tree(item, name)
         return
     if isinstance(value, list):
-        for item in value:
-            _require_metadata_value_tree(item, name)
-        return
+        raise ValueError(f"{name} metadata value must be immutable")
     if value is None or isinstance(value, (str, bool, int)):
         return
     if isinstance(value, float):

@@ -140,12 +140,12 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
 | `temporal_sla_receipt.schema.json` | Canonical governed SLA, business-window, and escalation receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate; TeamOps use binds provider-observation receipt identity through certificate metadata and graph refs |
-| `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
+| `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles; TeamOps anchors require provider-observation artifact binding |
 | `trust_ledger_anchor_submission_receipt.schema.json` | Canonical signed operator submission receipt for externally anchored trust-ledger exports |
 | `trust_ledger_anchor_verification_report.schema.json` | Canonical offline verifier report for trust ledger anchor and package replay |
 | `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring; TeamOps use binds provider-observation receipt identity through bundle metadata and proof refs |
 | `trust_ledger_bundle_verification_report.schema.json` | Canonical offline verifier report for trust ledger bundle replay |
-| `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification |
+| `trust_ledger_evidence_artifacts.schema.json` | Canonical typed evidence artifact export for trust ledger anchor verification, including provider-observation artifacts when a domain chain requires them |
 | `trust_ledger_export_package.schema.json` | Canonical manifest binding trust ledger bundle, anchor receipt, and artifact export files |
 | `trust_ledger_remote_submission_preflight.schema.json` | Canonical read-only remote anchor submission preflight receipt |
 | `verification_result.schema.json` | Canonical verification closure |
@@ -172,6 +172,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_runtime_runner_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime runner registration evidence |
 | `read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime dispatch endpoint registration evidence |
 | `read_only_worker_runtime_receipt_emitter_registration_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt emitter registration evidence |
+| `read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt schema-binding activation evidence |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |

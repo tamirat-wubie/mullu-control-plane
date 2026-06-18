@@ -113,6 +113,9 @@ def test_protocol_manifest_is_valid() -> None:
     read_only_worker_runtime_receipt_emitter_registration_witness_entry = entries[
         "read-only-worker-runtime-receipt-emitter-registration-witness"
     ]
+    read_only_worker_runtime_receipt_schema_binding_activation_witness_entry = entries[
+        "read-only-worker-runtime-receipt-schema-binding-activation-witness"
+    ]
     world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
     receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
@@ -409,6 +412,13 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-registration-witness:1"
     )
     assert read_only_worker_runtime_receipt_emitter_registration_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_schema_binding_activation_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_schema_binding_activation_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-activation-witness:1"
+    )
+    assert read_only_worker_runtime_receipt_schema_binding_activation_witness_entry["surface"] == "worker"
     assert world_state_entry["path"] == "schemas/world_state.schema.json"
     assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
     assert world_state_entry["surface"] == "world"
