@@ -948,3 +948,22 @@ def test_maf_abi_cli_contract_witness_sdlc_artifacts_validate() -> None:
     assert "scripts/validate_maf_abi_cli_contract_witness.py" in design_record["validator_changes"]
     assert "tests/test_validate_maf_abi_cli_contract_witness.py" in design_record["validator_changes"]
     assert "no CLI execution" in requirement_record["non_goals"]
+
+
+def test_maf_subprocess_effect_boundary_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_subprocess_effect_boundary_witness_20260618.json")
+    design_path = Path("examples/sdlc/design_maf_subprocess_effect_boundary_witness_20260618.json")
+    requirement_record = validator.load_json_object(requirement_path, "maf subprocess requirement")
+    design_record = validator.load_json_object(design_path, "maf subprocess design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "schemas/maf_subprocess_effect_boundary_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_subprocess_effect_boundary_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_subprocess_effect_boundary_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_subprocess_effect_boundary_witness.py" in design_record["validator_changes"]
+    assert "no subprocess execution" in requirement_record["non_goals"]

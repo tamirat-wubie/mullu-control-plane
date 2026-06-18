@@ -1056,6 +1056,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_subprocess_effect_boundary_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_subprocess_effect_boundary_witness"
+      ]
+    },
+    {
       "action_id": "publish_world_substrate_replay_witness_contract",
       "status": "closed",
       "surfaces": [
@@ -1434,7 +1441,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 133,
+      "action_proof": 134,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1442,7 +1449,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 185,
+      "audit_chain": 186,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1450,21 +1457,21 @@
     "by_coverage_state": {
       "proven": 76,
       "unproven": 0,
-      "witnessed": 112
+      "witnessed": 113
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 132
+      "request_proof": 133
     },
-    "surface_count": 188
+    "surface_count": 189
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 188,
+      "strong": 189,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11441,6 +11448,63 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+        "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+        "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+        "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+        "schemas/maf_abi_cli_contract_witness.schema.json",
+        "examples/maf_abi_cli_contract_witness.foundation.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/95_maf_subprocess_effect_boundary_witness.md",
+        "docs/94_maf_abi_cli_contract_witness.md",
+        "maf/rust/crates/maf-cli/src/main.rs"
+      ],
+      "notes": "MAF subprocess effect boundary witnesses bind static process-spawn, filesystem-write, network-call, secret-read, dispatch, and state-mutation controls while keeping subprocess execution, CLI execution, Rust execution, PyO3, connector calls, writes, runtime dispatch, terminal closure, and success claims denied.",
+      "representative_paths": [
+        "MafSubprocessEffectBoundaryWitness",
+        "validate_maf_subprocess_effect_boundary_witness",
+        "maf_subprocess_effect_boundary_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_subprocess_effect_boundary_witness_denies_subprocess_execution": [
+          "maf_subprocess_effect_boundary_witness_passes",
+          "maf_subprocess_effect_boundary_rejects_authority_drift"
+        ],
+        "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift": [
+          "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+        ],
+        "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift": [
+          "maf_subprocess_effect_boundary_rejects_digest_and_summary_drift"
+        ],
+        "maf_subprocess_effect_boundary_witness_requires_effect_controls": [
+          "maf_subprocess_effect_boundary_witness_passes",
+          "maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+        ],
+        "maf_subprocess_effect_boundary_witness_schema_valid": [
+          "maf_subprocess_effect_boundary_witness_passes"
+        ],
+        "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_subprocess_effect_boundary"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_subprocess_effect_boundary_witness_schema_valid",
+        "maf_subprocess_effect_boundary_witness_denies_subprocess_execution",
+        "maf_subprocess_effect_boundary_witness_requires_effect_controls",
+        "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift",
+        "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift",
+        "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_subprocess_effect_boundary_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14957,8 +15021,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1903,
-    "runtime_witness_count": 1903,
+    "exact_test_anchor_count": 1909,
+    "runtime_witness_count": 1909,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -24014,6 +24078,53 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "maf_abi_cli_contract_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_witness_passes"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_witness_passes",
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_authority_drift"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_denies_subprocess_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_witness_passes",
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_requires_effect_controls"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_scope_and_gap_drift"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_rejects_command_effect_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_maf_subprocess_effect_boundary_rejects_digest_and_summary_drift"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_rejects_digest_and_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_subprocess_effect_boundary_witness.py::test_sdlc_requirement_and_design_validate_for_maf_subprocess_effect_boundary"
+            ],
+            "witness": "maf_subprocess_effect_boundary_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_subprocess_effect_boundary_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
