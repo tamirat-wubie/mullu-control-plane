@@ -357,6 +357,179 @@ def test_gateway_personal_assistant_read_only_preview_rejects_raw_projection_pay
     assert "calendar_day_brief_generated" not in serialized
 
 
+def test_gateway_personal_assistant_email_draft_preview_prepares_draft_without_send() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/email/preview",
+        json={
+            "request_id": "pa_request_gateway_email_draft_001",
+            "submitted_at": "2026-06-16T12:00:00+00:00",
+            "generated_at": "2026-06-16T12:01:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "draft_input": {
+                "message_ref": "msg:redacted:reply-001",
+                "recipient_label": "known customer",
+                "sender_label": "operator",
+                "subject_digest": "invoice follow-up",
+                "thread_summary_digest": "customer asked for a revised timeline",
+                "response_goal": "Confirm the revised timeline and request approval before sending.",
+                "tone": "clear",
+                "constraints": ["do not promise shipment date"],
+            },
+            "include_console_read_model": True,
+        },
+    )
+    payload = response.json()
+    draft_set = payload["draft_projection"]
+    draft_projection = draft_set["drafts"][0]
+    draft = draft_projection["draft"]
+    receipt = payload["receipt"]
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["draft_preparation_allowed"] is True
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_mutation_allowed"] is False
+    assert payload["approval_boundary"]["approval_required_before_external_action"] is True
+    assert draft_projection["skill_id"] == "email.response.draft"
+    assert draft["draft_type"] == "email_response"
+    assert draft["approval_required_before_send"] is True
+    assert "wait for explicit approval" in draft["body"]
+    assert "email_not_sent" in receipt["actions_not_taken"]
+    assert "connector_state_not_mutated" in receipt["actions_not_taken"]
+    assert payload["console_read_model"]["effect_boundary"]["external_send_allowed"] is False
+    assert "raw_private_connector_payload" not in serialized
+
+
+def test_gateway_personal_assistant_calendar_event_draft_preview_prepares_draft_without_invite() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/calendar-event/preview",
+        json={
+            "request_id": "pa_request_gateway_calendar_draft_001",
+            "submitted_at": "2026-06-16T13:00:00+00:00",
+            "generated_at": "2026-06-16T13:01:00+00:00",
+            "connector_refs": [_calendar_connector_ref()],
+            "draft_input": {
+                "meeting_goal": "Review operator handoff boundaries",
+                "title_digest": "handoff review",
+                "proposed_window": "2026-06-17T15:00:00+00:00/PT30M",
+                "duration_minutes": 30,
+                "attendee_labels": ["operator", "reviewer"],
+                "location_label": "video",
+                "agenda_digest": "review no-effect route evidence",
+                "constraints": ["no invite until approval"],
+            },
+        },
+    )
+    payload = response.json()
+    draft_projection = payload["draft_projection"]["drafts"][0]
+    draft = draft_projection["draft"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert payload["effect_boundary"]["connector_mutation_allowed"] is False
+    assert draft_projection["skill_id"] == "calendar.event.draft"
+    assert draft["draft_type"] == "calendar_event"
+    assert draft["approval_required_before_create_or_invite"] is True
+    assert draft["duration_minutes"] == 30
+    assert "calendar_event_not_created" in receipt["actions_not_taken"]
+    assert "people_not_invited" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_task_draft_preview_prepares_draft_without_task_write() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/task/preview",
+        json={
+            "request_id": "pa_request_gateway_task_draft_001",
+            "submitted_at": "2026-06-16T14:00:00+00:00",
+            "generated_at": "2026-06-16T14:01:00+00:00",
+            "draft_input": {
+                "task_goal": "Track read-only and draft route closure",
+                "source_ref": "conversation:personal-assistant-draft-preview",
+                "title_digest": "close draft route PR",
+                "priority": "high",
+                "due_hint": "today",
+                "acceptance_digest": "routes tested and CI passing",
+                "constraints": ["do not write task system"],
+            },
+        },
+    )
+    payload = response.json()
+    draft_projection = payload["draft_projection"]["drafts"][0]
+    draft = draft_projection["draft"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["effect_boundary"]["task_write_allowed"] is False
+    assert payload["effect_boundary"]["memory_write_allowed"] is False
+    assert payload["draft_projection"]["connectors_used"] == []
+    assert draft_projection["skill_id"] == "task.create_draft"
+    assert draft["draft_type"] == "task"
+    assert draft["approval_required_before_task_write"] is True
+    assert "task_not_written" in receipt["actions_not_taken"]
+    assert "memory_not_written" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_email_draft_preview_rejects_missing_connector_proof() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/email/preview",
+        json={
+            "request_id": "pa_request_gateway_email_draft_missing_connector_001",
+            "submitted_at": "2026-06-16T12:00:00+00:00",
+            "draft_input": {
+                "message_ref": "msg:redacted:reply-001",
+                "recipient_label": "known customer",
+                "sender_label": "operator",
+                "subject_digest": "invoice follow-up",
+                "thread_summary_digest": "customer asked for a revised timeline",
+                "response_goal": "Confirm the revised timeline.",
+            },
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_email_draft_preview"
+
+
+def test_gateway_personal_assistant_draft_preview_rejects_raw_payload() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/email/preview",
+        json={
+            "request_id": "pa_request_gateway_email_draft_raw_001",
+            "submitted_at": "2026-06-16T12:00:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "draft_input": {
+                "message_ref": "msg:redacted:reply-001",
+                "recipient_label": "known customer",
+                "sender_label": "operator",
+                "subject_digest": "invoice follow-up",
+                "thread_summary_digest": "customer asked for a revised timeline",
+                "response_goal": "Confirm the revised timeline.",
+                "raw_body": "private mailbox body",
+            },
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_body" in serialized
+    assert "private mailbox body" not in serialized
+    assert "email_response_draft_prepared" not in serialized
+
+
 def test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 

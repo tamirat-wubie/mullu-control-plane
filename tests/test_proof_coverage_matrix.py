@@ -1772,6 +1772,18 @@ def test_representative_routes_are_not_unclassified() -> None:
         == "assistant_kernel_planning"
     )
     assert (
+        classified_routes["/api/v1/personal-assistant/drafts/email/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/drafts/calendar-event/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/drafts/task/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
         classified_routes["/api/v1/personal-assistant/memory-observations"]["surface_id"]
         == "assistant_kernel_planning"
     )

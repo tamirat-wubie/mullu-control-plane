@@ -76,6 +76,9 @@ from mcoi_runtime.personal_assistant import (
     build_clarification_requests,
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
+    draft_calendar_event,
+    draft_email_response,
+    draft_task,
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
@@ -325,6 +328,95 @@ class GatewayPersonalAssistantReadOnlyCalendarPreviewRequest(BaseModel):
     connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
     events: list[GatewayPersonalAssistantReadOnlyCalendarEvent] = Field(default_factory=list)
     thread_id: str = "thread-personal-assistant-read-only-calendar-preview"
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantEmailDraftInput(BaseModel):
+    """Redacted email source projection accepted by the draft-only boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    message_ref: str
+    recipient_label: str
+    sender_label: str
+    subject_digest: str
+    thread_summary_digest: str
+    response_goal: str
+    tone: str = "clear"
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantCalendarEventDraftInput(BaseModel):
+    """Redacted calendar source projection accepted by the draft-only boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    meeting_goal: str
+    title_digest: str
+    proposed_window: str
+    duration_minutes: int
+    attendee_labels: list[str] = Field(default_factory=list)
+    location_label: str = ""
+    agenda_digest: str = ""
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantTaskDraftInput(BaseModel):
+    """Task proposal source projection accepted by the draft-only boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    task_goal: str
+    source_ref: str
+    title_digest: str
+    priority: str
+    due_hint: str = ""
+    acceptance_digest: str = ""
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantEmailDraftPreviewRequest(BaseModel):
+    """Preview-only email response draft request over redacted operator evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Check my inbox and draft a reply today."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantEmailDraftInput
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantCalendarEventDraftPreviewRequest(BaseModel):
+    """Preview-only calendar event draft request over redacted operator evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Draft a calendar event for today."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantCalendarEventDraftInput
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantTaskDraftPreviewRequest(BaseModel):
+    """Preview-only task draft request over operator evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Create a task draft from this request."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantTaskDraftInput
     include_console_read_model: bool = False
 
 
@@ -705,6 +797,106 @@ def _gateway_personal_assistant_read_only_projection_set(
             "connector_mutation_allowed": False,
             "external_send_allowed": False,
             "system_of_record_write_allowed": False,
+            "connector_count": len(connectors_used),
+        },
+    }
+
+
+def _gateway_personal_assistant_draft_projection_set(
+    *,
+    projection: Mapping[str, Any],
+    generated_at: str,
+) -> dict[str, Any]:
+    """Return a schema-ready no-effect draft projection set."""
+    receipt = dict(projection["receipt"])
+    draft = dict(projection["draft"])
+    draft_id = "pa_draft_projection_item_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-draft-projection-item",
+            "request_id": projection["request_id"],
+            "skill_id": projection["skill_id"],
+            "receipt_id": receipt.get("receipt_id", ""),
+        }
+    )[:32]
+    draft_set_id = "pa_draft_projection_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-draft-projection-set",
+            "draft_id": draft_id,
+        }
+    )[:32]
+    connectors_used = list(receipt.get("connectors_used", ()))
+    connector_payload_projection = "redacted_summary" if connectors_used else "mixed_redacted_or_no_connector"
+    return {
+        "draft_set_id": draft_set_id,
+        "generated_at": generated_at,
+        "governed": True,
+        "source_projection": "operator_supplied_redacted_projection",
+        "draft_count": 1,
+        "draft_ids": [draft_id],
+        "receipt_ids": [str(receipt.get("receipt_id", ""))],
+        "connectors_used": connectors_used,
+        "drafts": [
+            {
+                "draft_id": draft_id,
+                "request_id": projection["request_id"],
+                "skill_id": projection["skill_id"],
+                "draft_type": draft["draft_type"],
+                "draft": draft,
+                "receipt": receipt,
+            }
+        ],
+        "effect_boundary": {
+            "draft_preparation_allowed": True,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "memory_write_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+            "deployment_mutation_allowed": False,
+            "public_readiness_claim_allowed": False,
+        },
+        "private_payload_policy": {
+            "raw_private_payload_serialized": False,
+            "secret_values_serialized": False,
+            "connector_payload_projection": connector_payload_projection,
+            "body_projection": "operator_visible_draft",
+        },
+        "approval_boundary": {
+            "risk_level": "P2",
+            "approval_required_before_external_action": True,
+            "approval_required_before_system_write": True,
+            "approval_required_before_connector_mutation": True,
+        },
+        "assurance": {
+            "assurance_id": "personal_assistant_draft_projection_no_effect_assurance",
+            "outcome": "SolvedVerified",
+            "foundation_only": True,
+            "ready_for_live_execution": False,
+            "ready_for_customer_readiness_claim": False,
+            "authority_drift_detected": False,
+            "checked_controls": [
+                "operator_supplied_redacted_projection",
+                "draft_only_boundary",
+                "no_live_connector_calls",
+                "approval_required_before_effect_bearing_action",
+                "receipt_required",
+            ],
+            "blocking_reasons": [],
+            "next_action": "review_draft_and_request_explicit_approval_before_any_external_or_system_write",
+        },
+        "metadata": {
+            "foundation_only": True,
+            "projection_contract": "draft_only_redacted_evidence",
+            "runtime_boundary": "no_live_connector_calls",
+            "live_connector_execution_allowed": False,
+            "connector_mutation_allowed": False,
+            "external_send_allowed": False,
+            "system_of_record_write_allowed": False,
+            "memory_write_allowed": False,
             "connector_count": len(connectors_used),
         },
     }
@@ -2387,6 +2579,166 @@ def create_gateway_app(
                 receipts=(receipt,),
             )
         return response
+
+    @app.post("/api/v1/personal-assistant/drafts/email/preview")
+    def preview_personal_assistant_email_draft(
+        req: GatewayPersonalAssistantEmailDraftPreviewRequest,
+    ):
+        try:
+            generated_at = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or generated_at
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_email_response(
+                intent,
+                _pydantic_payload(req.draft_input),
+                generated_at=generated_at,
+            ).as_dict()
+            draft_set = _gateway_personal_assistant_draft_projection_set(
+                projection=projection,
+                generated_at=generated_at,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant email draft preview",
+                    "error_code": "invalid_personal_assistant_email_draft_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        receipt = dict(projection["receipt"])
+        response: dict[str, Any] = {
+            "draft_projection": draft_set,
+            "receipt": receipt,
+            "outcome": "SolvedVerified",
+            "governed": True,
+            "execution_allowed": False,
+            "effect_boundary": draft_set["effect_boundary"],
+            "approval_boundary": draft_set["approval_boundary"],
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=generated_at,
+                recent_requests=(
+                    {
+                        "request_id": projection["request_id"],
+                        "summary": req.user_request,
+                        "status": "draft_preview",
+                    },
+                ),
+                receipts=(receipt,),
+            )
+        return response
+
+    @app.post("/api/v1/personal-assistant/drafts/calendar-event/preview")
+    def preview_personal_assistant_calendar_event_draft(
+        req: GatewayPersonalAssistantCalendarEventDraftPreviewRequest,
+    ):
+        try:
+            generated_at = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or generated_at
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_calendar_event(
+                intent,
+                _pydantic_payload(req.draft_input),
+                generated_at=generated_at,
+            ).as_dict()
+            draft_set = _gateway_personal_assistant_draft_projection_set(
+                projection=projection,
+                generated_at=generated_at,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant calendar event draft preview",
+                    "error_code": "invalid_personal_assistant_calendar_event_draft_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        receipt = dict(projection["receipt"])
+        return {
+            "draft_projection": draft_set,
+            "receipt": receipt,
+            "outcome": "SolvedVerified",
+            "governed": True,
+            "execution_allowed": False,
+            "effect_boundary": draft_set["effect_boundary"],
+            "approval_boundary": draft_set["approval_boundary"],
+        }
+
+    @app.post("/api/v1/personal-assistant/drafts/task/preview")
+    def preview_personal_assistant_task_draft(
+        req: GatewayPersonalAssistantTaskDraftPreviewRequest,
+    ):
+        try:
+            generated_at = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or generated_at
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_task(
+                intent,
+                _pydantic_payload(req.draft_input),
+                generated_at=generated_at,
+            ).as_dict()
+            draft_set = _gateway_personal_assistant_draft_projection_set(
+                projection=projection,
+                generated_at=generated_at,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant task draft preview",
+                    "error_code": "invalid_personal_assistant_task_draft_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        receipt = dict(projection["receipt"])
+        return {
+            "draft_projection": draft_set,
+            "receipt": receipt,
+            "outcome": "SolvedVerified",
+            "governed": True,
+            "execution_allowed": False,
+            "effect_boundary": draft_set["effect_boundary"],
+            "approval_boundary": draft_set["approval_boundary"],
+        }
 
     @app.get("/api/v1/personal-assistant/approval-queue")
     def personal_assistant_approval_queue_read_model():

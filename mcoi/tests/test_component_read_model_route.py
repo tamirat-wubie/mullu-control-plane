@@ -31,7 +31,7 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
     assert read_model["summary"]["component_count"] == 10
     assert read_model["summary"]["bound_route_count"] == 31
     assert read_model["summary"]["route_family_classification_count"] == 78
-    assert read_model["summary"]["classified_declared_route_count"] == 441
+    assert read_model["summary"]["classified_declared_route_count"] == 444
     assert read_model["summary"]["lifecycle_receipt_count"] == 10
     assert read_model["summary"]["authority_witness_count"] == 10
     assert components["governance_core"]["route_binding"]["route_count"] == 23
@@ -68,7 +68,7 @@ def test_component_read_model_blocks_live_authority() -> None:
     assert payload["summary"]["proof_bound_count"] == 9
     assert payload["summary"]["awaiting_binding_count"] == 1
     assert payload["summary"]["blocked_component_count"] == 1
-    assert payload["summary"]["classified_declared_route_count"] == 441
+    assert payload["summary"]["classified_declared_route_count"] == 444
     for component in payload["components"]:
         authority = component["authority"]
         assert authority["can_execute"] is False

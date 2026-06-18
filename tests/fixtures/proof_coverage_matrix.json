@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 281,
+      "proven": 284,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 441,
+    "route_count": 444,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2780,6 +2780,21 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/approval-queue/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/drafts/calendar-event/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/drafts/email/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/drafts/task/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -6001,6 +6016,9 @@
         "/api/v1/personal-assistant/approval-proposals/preview",
         "/api/v1/personal-assistant/read-only/inbox/preview",
         "/api/v1/personal-assistant/read-only/calendar/preview",
+        "/api/v1/personal-assistant/drafts/email/preview",
+        "/api/v1/personal-assistant/drafts/calendar-event/preview",
+        "/api/v1/personal-assistant/drafts/task/preview",
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",
         "/api/v1/personal-assistant/memory-observations/review/preview",
