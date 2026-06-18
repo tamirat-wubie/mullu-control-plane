@@ -205,6 +205,9 @@ def _bind_uao_fixture_to_universal_action_detail(
         "governed_action_id": f"governed-action://{record['action_id']}",
         "dispatch_ledger_hash": f"dispatch-ledger://{record['action_id']}",
         "terminal_certificate_id": f"terminal-certificate://{record['action_id']}",
+        "whqr_replay_binding": copy.deepcopy(
+            record["closure"].get("whqr_replay_binding") or {}
+        ),
         "learning_admission_id": f"learning-admission://{record['action_id']}",
         "reconciliation_ref": record["closure"]["reconciliation_ref"] or "",
         "memory_ref": record["closure"]["memory_ref"] or "",
@@ -277,6 +280,7 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
         "governed_action_id": universal_detail["governed_action_id"],
         "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
         "terminal_certificate_id": universal_detail["terminal_certificate_id"],
+        "whqr_replay_binding": dict(universal_detail["whqr_replay_binding"]),
         "learning_admission_id": universal_detail["learning_admission_id"],
         "reconciliation_ref": universal_detail["reconciliation_ref"],
         "memory_ref": universal_detail["memory_ref"],
