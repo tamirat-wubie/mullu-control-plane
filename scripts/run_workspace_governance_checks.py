@@ -8,6 +8,7 @@ Dependencies: Python standard library and repository-local validation scripts.
 Invariants:
   - Default checks are read-only and deterministic.
   - Every check emits an explicit command receipt.
+  - Long preflights emit progress witnesses without corrupting JSON stdout.
   - Full unsharded preflights use a workspace-local lock.
   - Saved canonical receipts require full unsharded preflight execution.
   - The process returns nonzero when any required check fails.
@@ -32,6 +33,7 @@ from typing import TextIO
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 TIMEOUT_RETURN_CODE = 124
 PREFLIGHT_LOCK_RETURN_CODE = 125
+CHECK_EXCEPTION_RETURN_CODE = 126
 PREFLIGHT_LOCK_ID = "workspace_governance_preflight_lock"
 DEFAULT_PREFLIGHT_LOCK_PATH = WORKSPACE_ROOT / ".tmp" / "workspace-governance-preflight.lock"
 CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME = "workspace_governance_preflight_receipt_example"
@@ -1216,6 +1218,15 @@ def run_check(
             stderr,
             termination_reason="timeout",
         )
+    except OSError as exc:
+        return CheckResult(
+            command.name,
+            command.args,
+            CHECK_EXCEPTION_RETURN_CODE,
+            "",
+            f"[EXCEPTION] {command.name} could not start: {exc}\n",
+            termination_reason="exception",
+        )
     return_code = int(completed.returncode)
     return CheckResult(
         command.name,
@@ -1233,6 +1244,7 @@ def run_checks(
     workspace_root: Path = WORKSPACE_ROOT,
     max_workers: int = 1,
     timeout_seconds: float | None = None,
+    progress_stream: TextIO | None = None,
 ) -> tuple[CheckResult, ...]:
     """Run governance checks and preserve the declared result order."""
 
@@ -1241,16 +1253,34 @@ def run_checks(
     if timeout_seconds is not None and timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive when provided")
     if max_workers == 1:
-        return tuple(run_check(command, workspace_root, timeout_seconds) for command in commands)
+        results: list[CheckResult] = []
+        total = len(commands)
+        for index, command in enumerate(commands, start=1):
+            _emit_progress(progress_stream, "RUN", index, total, command)
+            result = run_check(command, workspace_root, timeout_seconds)
+            _emit_progress(progress_stream, "PASS" if result.passed else "FAIL", index, total, command, result)
+            results.append(result)
+        return tuple(results)
 
     results_by_index: list[CheckResult | None] = [None] * len(commands)
+    total = len(commands)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_by_index = {
-            executor.submit(run_check, command, workspace_root, timeout_seconds): index
-            for index, command in enumerate(commands)
-        }
+        future_by_index = {}
+        for index, command in enumerate(commands):
+            _emit_progress(progress_stream, "RUN", index + 1, total, command)
+            future_by_index[executor.submit(run_check, command, workspace_root, timeout_seconds)] = index
         for future in as_completed(future_by_index):
-            results_by_index[future_by_index[future]] = future.result()
+            index = future_by_index[future]
+            result = future.result()
+            results_by_index[index] = result
+            _emit_progress(
+                progress_stream,
+                "PASS" if result.passed else "FAIL",
+                index + 1,
+                total,
+                commands[index],
+                result,
+            )
     return tuple(result for result in results_by_index if result is not None)
 
 
@@ -1260,6 +1290,7 @@ def run_checks_for_canonical_receipt_refresh(
     workspace_root: Path = WORKSPACE_ROOT,
     max_workers: int = 1,
     timeout_seconds: float | None = None,
+    progress_stream: TextIO | None = None,
 ) -> tuple[CheckResult, ...]:
     """Run checks while safely refreshing the self-validating receipt example."""
 
@@ -1279,6 +1310,7 @@ def run_checks_for_canonical_receipt_refresh(
         workspace_root,
         max_workers=max_workers,
         timeout_seconds=timeout_seconds,
+        progress_stream=progress_stream,
     )
     if not all(result.passed for result in non_receipt_results):
         placeholder_result = CheckResult(
@@ -1294,7 +1326,16 @@ def run_checks_for_canonical_receipt_refresh(
     provisional_results = _insert_check_result(non_receipt_results, receipt_index, provisional_result)
     write_receipt(build_receipt(provisional_results), receipt_path, workspace_root)
 
+    _emit_progress(progress_stream, "RUN", receipt_index + 1, len(commands), receipt_command)
     receipt_result = run_check(receipt_command, workspace_root, timeout_seconds)
+    _emit_progress(
+        progress_stream,
+        "PASS" if receipt_result.passed else "FAIL",
+        receipt_index + 1,
+        len(commands),
+        receipt_command,
+        receipt_result,
+    )
     final_results = _insert_check_result(non_receipt_results, receipt_index, receipt_result)
     write_receipt(build_receipt(final_results), receipt_path, workspace_root)
     return final_results
@@ -1372,6 +1413,23 @@ def render_results(results: tuple[CheckResult, ...], output_stream: TextIO, erro
             error_stream.write(result.stderr)
             if not result.stderr.endswith("\n"):
                 error_stream.write("\n")
+
+
+def _emit_progress(
+    progress_stream: TextIO | None,
+    status: str,
+    index: int,
+    total: int,
+    command: CheckCommand,
+    result: CheckResult | None = None,
+) -> None:
+    """Emit a non-JSON progress witness for long-running preflights."""
+
+    if progress_stream is None:
+        return
+    result_suffix = "" if result is None else f" return_code={result.return_code} termination={result.termination_reason}"
+    progress_stream.write(f"[{status}] preflight {index}/{total} {command.name}{result_suffix}\n")
+    progress_stream.flush()
 
 
 def build_receipt(results: tuple[CheckResult, ...], generated_at_epoch: float | None = None) -> dict[str, object]:
@@ -1479,6 +1537,7 @@ def main(argv: list[str] | None = None) -> int:
                     WORKSPACE_ROOT,
                     max_workers=int(args.max_workers),
                     timeout_seconds=args.per_check_timeout_seconds,
+                    progress_stream=sys.stderr,
                 )
             else:
                 results = run_checks(
@@ -1486,6 +1545,7 @@ def main(argv: list[str] | None = None) -> int:
                     WORKSPACE_ROOT,
                     max_workers=int(args.max_workers),
                     timeout_seconds=args.per_check_timeout_seconds,
+                    progress_stream=sys.stderr,
                 )
     except PreflightLockError as exc:
         sys.stderr.write(f"[FAIL] preflight-lock: {exc}\nSTATUS: failed\n")

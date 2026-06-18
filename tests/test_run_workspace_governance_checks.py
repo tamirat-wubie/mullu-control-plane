@@ -11,6 +11,7 @@ Invariants:
 from __future__ import annotations
 
 import ast
+import io
 import json
 import re
 import sys
@@ -934,6 +935,23 @@ def test_run_check_records_timeout_diagnosis() -> None:
     assert "[TIMEOUT] intentional_timeout exceeded" in result.stderr
 
 
+def test_run_check_records_subprocess_start_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    command = runner.CheckCommand("missing_interpreter", ("missing-python", "validator.py"))
+
+    def fake_subprocess_run(*args: object, **kwargs: object) -> SimpleNamespace:
+        raise OSError("interpreter not found")
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_subprocess_run)
+
+    result = runner.run_check(command, runner.WORKSPACE_ROOT)
+
+    assert result.passed is False
+    assert result.return_code == runner.CHECK_EXCEPTION_RETURN_CODE
+    assert result.termination_reason == "exception"
+    assert result.termination_signal is None
+    assert "[EXCEPTION] missing_interpreter could not start" in result.stderr
+
+
 def test_run_check_records_signal_termination_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:
     command = runner.CheckCommand("terminated_check", ("python", "terminated.py"))
 
@@ -949,6 +967,36 @@ def test_run_check_records_signal_termination_diagnosis(monkeypatch: pytest.Monk
     assert result.termination_reason == "terminated"
     assert result.termination_signal == 15
     assert result.stderr == "terminated\n"
+
+
+def test_run_checks_emits_progress_witnesses(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand("beta", ("python", "beta.py")),
+    )
+    progress_stream = io.StringIO()
+
+    def fake_run_check(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        if observed_command.name == "alpha":
+            return runner.CheckResult("alpha", observed_command.args, 0, "alpha ok\n", "")
+        return runner.CheckResult("beta", observed_command.args, 2, "", "beta failed\n")
+
+    monkeypatch.setattr(runner, "run_check", fake_run_check)
+
+    results = runner.run_checks(commands, progress_stream=progress_stream)
+    progress_lines = progress_stream.getvalue().splitlines()
+
+    assert [result.name for result in results] == ["alpha", "beta"]
+    assert results[0].passed is True
+    assert results[1].passed is False
+    assert progress_lines[0] == "[RUN] preflight 1/2 alpha"
+    assert progress_lines[1] == "[PASS] preflight 1/2 alpha return_code=0 termination=completed"
+    assert progress_lines[2] == "[RUN] preflight 2/2 beta"
+    assert progress_lines[3] == "[FAIL] preflight 2/2 beta return_code=2 termination=completed"
 
 
 def test_select_check_commands_filters_and_shards() -> None:
@@ -1015,6 +1063,7 @@ def test_canonical_receipt_refresh_bootstraps_self_validating_example(
         workspace_root: Path = runner.WORKSPACE_ROOT,
         max_workers: int = 1,
         timeout_seconds: float | None = None,
+        progress_stream: object | None = None,
     ) -> tuple[runner.CheckResult, ...]:
         assert [command.name for command in observed_commands] == ["alpha", "omega"]
         return (
@@ -1062,6 +1111,7 @@ def test_canonical_receipt_refresh_does_not_mask_prior_failure(monkeypatch: pyte
         workspace_root: Path = runner.WORKSPACE_ROOT,
         max_workers: int = 1,
         timeout_seconds: float | None = None,
+        progress_stream: object | None = None,
     ) -> tuple[runner.CheckResult, ...]:
         return (runner.CheckResult("alpha", ("python", "alpha.py"), 1, "", "alpha failed\n"),)
 
