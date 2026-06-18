@@ -77,6 +77,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-uao-admission-witness",
+      "path": "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-uao-admission-witness:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",

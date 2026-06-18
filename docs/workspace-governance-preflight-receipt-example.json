@@ -1,5 +1,5 @@
 {
-  "check_count": 217,
+  "check_count": 218,
   "checks": [
     {
       "args": [
@@ -247,6 +247,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR BRANCH WRITE AUTHORITY BINDING VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_uao_admission_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_uao_admission_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR UAO ADMISSION WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
