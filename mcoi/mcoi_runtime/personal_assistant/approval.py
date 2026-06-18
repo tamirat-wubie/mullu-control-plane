@@ -1,7 +1,8 @@
 """Purpose: deterministic approval queue for personal-assistant actions.
 Governance scope: P3/P4/P5 approval packets, decision records, receipt
 emission, and no-execution guarantees for effect-bearing proposed actions.
-Dependencies: personal-assistant contracts, skill registry, and standard regex.
+Dependencies: personal-assistant contracts, skill registry, approval matrix,
+and standard regex.
 Invariants:
   - The queue records approval evidence only and never executes a proposed action.
   - Approval-required packets require explicit approver and evidence bindings.
@@ -17,6 +18,10 @@ import re
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from .approval_matrix import (
+    PersonalAssistantApprovalMatrix,
+    load_default_personal_assistant_approval_matrix,
+)
 from .contracts import PersonalAssistantInvariantError, SkillRiskLevel
 from .intake import ApprovalScope
 from .skill_registry import PersonalAssistantSkillRegistry, load_default_skill_registry
@@ -168,6 +173,7 @@ class PersonalAssistantApprovalQueue:
         evidence_refs: Sequence[str],
         created_at: str,
         registry: PersonalAssistantSkillRegistry | None = None,
+        approval_matrix: PersonalAssistantApprovalMatrix | None = None,
         approval_id: str | None = None,
     ) -> ApprovalQueueRecord:
         """Create a requested approval packet and request receipt."""
@@ -180,8 +186,14 @@ class PersonalAssistantApprovalQueue:
         forbidden = _text_tuple(forbidden_without_approval, "forbidden_without_approval")
         evidence = _text_tuple(evidence_refs, "evidence_refs")
         skill_registry = registry or load_default_skill_registry()
+        matrix = approval_matrix or load_default_personal_assistant_approval_matrix()
         _assert_actions_match_registry(actions, skill_registry)
         risk_level = _max_action_risk(actions)
+        matrix.assert_action_admitted(
+            risk_level=risk_level,
+            execution_mode="blocked" if risk_level is SkillRiskLevel.P5 else "execute_with_approval",
+            forbidden_without_approval=forbidden,
+        )
         if not risk_level.requires_explicit_approval:
             raise PersonalAssistantInvariantError(
                 f"{risk_level.value} proposed actions do not belong in the approval queue"
@@ -216,6 +228,7 @@ class PersonalAssistantApprovalQueue:
                 approval_decision="pending",
                 execution_allowed=False,
                 queue_state="requested",
+                approval_matrix_ref=matrix.matrix_id,
             ),
         }
         receipt = _approval_receipt(
@@ -230,6 +243,7 @@ class PersonalAssistantApprovalQueue:
                 "approval_decision": "pending",
                 "queue_state": "requested",
                 "execution_allowed": False,
+                "approval_matrix_ref": matrix.matrix_id,
             },
         )
         record = ApprovalQueueRecord(packet_id, packet, (receipt,))
@@ -428,6 +442,7 @@ def _approval_metadata(
     execution_allowed: bool,
     queue_state: str,
     revision_request: str = "",
+    approval_matrix_ref: str = "",
 ) -> dict[str, Any]:
     metadata = {
         "foundation_only": True,
@@ -441,6 +456,8 @@ def _approval_metadata(
         "system_of_record_write_allowed": False,
         "money_legal_public_action_allowed": False,
     }
+    if approval_matrix_ref:
+        metadata["approval_matrix_ref"] = approval_matrix_ref
     if revision_request:
         metadata["revision_request"] = revision_request
     return metadata
