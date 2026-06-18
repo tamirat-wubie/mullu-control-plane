@@ -192,6 +192,14 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
             metadata={"details": {"evidence_ref": "evidence:invoice"}},
         )
     )
+    document_metadata_tampered = WHQRDocument(
+        root=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+        metadata={"tenant": "foundation"},
+    )
+    document_nested_metadata_tampered = WHQRDocument(
+        root=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+        metadata={"details": {"tenant": "foundation"}},
+    )
 
     object.__setattr__(node_tampered.root, "role", "what")
     object.__setattr__(logical_tampered.root, "args", list(logical_tampered.root.args))
@@ -215,6 +223,12 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
         "metadata",
         MappingProxyType({"details": {"evidence_ref": "evidence:invoice"}}),
     )
+    object.__setattr__(document_metadata_tampered, "metadata", {"tenant": "foundation"})
+    object.__setattr__(
+        document_nested_metadata_tampered,
+        "metadata",
+        MappingProxyType({"details": {"tenant": "foundation"}}),
+    )
 
     with pytest.raises(ValueError, match=r"root\.role"):
         node_tampered.verify_semantics()
@@ -228,6 +242,10 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
         metadata_mapping_tampered.verify_semantics()
     with pytest.raises(ValueError, match="metadata must be immutable"):
         metadata_nested_mapping_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata must be immutable"):
+        document_metadata_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata must be immutable"):
+        document_nested_metadata_tampered.verify_semantics()
 
 
 def test_document_imports_canonical_json_with_replay_hash() -> None:
