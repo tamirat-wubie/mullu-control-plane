@@ -1,0 +1,102 @@
+{
+  "security_review_id": "SEC-maf-failure-receipt-path-witness-20260618",
+  "change_id": "maf-failure-receipt-path-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "network",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF failure receipt path evidence can accidentally become runtime execution authority if static failure materialization paths are conflated with CLI execution, subprocess execution, command behavior, raw failure payload retention, secret-bearing payloads, filesystem writes, or terminal closure. The mitigation is a read-only witness and validator that reject authority drift, path scope drift, failure path descriptor drift, digest drift, future witness drift, secret markers, receipt ref drift, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "Runtime binding, CLI execution, subprocess execution, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_authority_drift"
+    },
+    {
+      "category": "network",
+      "check": "SSRF check confirms network calls remain denied while failure path descriptors are static digest refs",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw failure payload retention and secret-bearing execution authority remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms path mode remains static_failure_receipt_materialization_path and closed failure receipt path does not imply runtime execution",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_scope_and_future_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the witness schema, example, validator, tests, MAF deterministic fixture parity witness, MAF CLI scaffold, UAO schema, LifeMeaningJudgment schema, WorkerFailureReceipt schema, VerificationResult schema, transition receipt schema, and kernel proof schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_receipt_ref_and_evidence_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms source artifact digests, failure path descriptor digests, authority denial counts, and open gap counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_failure_receipt_path_witness.py::test_maf_failure_receipt_path_rejects_digest_and_summary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-failure-path-execution-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks runtime binding, CLI execution, subprocess execution, shell invocation, child process spawn, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_failure_receipt_path_witness.schema.json",
+        "scripts/validate_maf_failure_receipt_path_witness.py",
+        "tests/test_validate_maf_failure_receipt_path_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-failure-payload-secret-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness denies raw failure payload retention, secret access, filesystem writes, and network effects.",
+      "evidence_refs": [
+        "examples/maf_failure_receipt_path_witness.foundation.json",
+        "tests/test_validate_maf_failure_receipt_path_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafFailureReceiptPathWitness validation read-only and deterministic",
+    "require canonical source digests for deterministic fixture parity and MAF CLI artifacts",
+    "require canonical failure path descriptor digests for verify-receipt-chain, verify-kernel-proof, and emit-transition-receipt",
+    "deny runtime binding, CLI execution, subprocess execution, shell invocation, child process spawn, network, secrets, raw failure payload retention, writes, dispatch, terminal closure, and success claims",
+    "reject future witness drift, failure path descriptor drift, secret markers, and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_failure_receipt_path_witness.schema.json",
+    "examples/maf_failure_receipt_path_witness.foundation.json",
+    "scripts/validate_maf_failure_receipt_path_witness.py",
+    "tests/test_validate_maf_failure_receipt_path_witness.py",
+    "receipt://sdlc/maf-failure-receipt-path-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-failure-receipt-path-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-failure-receipt-path-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-failure-receipt-path-witness/security"
+}

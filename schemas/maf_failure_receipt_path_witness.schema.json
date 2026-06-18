@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:maf-failure-receipt-path-witness:1",
+  "title": "MAF Failure Receipt Path Witness",
+  "description": "Foundation Mode witness that closes the static MAF failure receipt path prerequisite while denying runtime binding, CLI execution, subprocess execution, raw failure payload retention, writes, terminal closure, and success authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "solver_outcome",
+    "path_scope",
+    "source_artifacts",
+    "failure_path_controls",
+    "authority_boundary",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "minLength": 1},
+    "witness_version": {"const": "maf_failure_receipt_path_witness.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "solver_outcome": {"const": "AwaitingEvidence"},
+    "path_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "foundation_mode",
+        "path_mode",
+        "failure_receipt_path_closed",
+        "runtime_binding_claimed",
+        "subprocess_execution_claimed",
+        "cli_execution_claimed",
+        "command_behavior_claimed",
+        "runtime_binding_reconsideration_only",
+        "deterministic_fixture_parity_ref",
+        "subprocess_effect_boundary_ref",
+        "abi_cli_contract_ref",
+        "parity_witness_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref",
+        "required_future_witnesses"
+      ],
+      "properties": {
+        "source_family": {"const": "maf/rust"},
+        "foundation_mode": {"type": "boolean"},
+        "path_mode": {"const": "static_failure_receipt_materialization_path"},
+        "failure_receipt_path_closed": {"type": "boolean"},
+        "runtime_binding_claimed": {"type": "boolean"},
+        "subprocess_execution_claimed": {"type": "boolean"},
+        "cli_execution_claimed": {"type": "boolean"},
+        "command_behavior_claimed": {"type": "boolean"},
+        "runtime_binding_reconsideration_only": {"type": "boolean"},
+        "deterministic_fixture_parity_ref": {"const": "witness://maf/deterministic-fixture-parity"},
+        "subprocess_effect_boundary_ref": {"const": "witness://maf/subprocess-effect-boundary"},
+        "abi_cli_contract_ref": {"const": "witness://maf/abi-cli-contract"},
+        "parity_witness_ref": {"const": "witness://maf/receipt-parity"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1},
+        "required_future_witnesses": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source_artifact"}
+    },
+    "failure_path_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/failure_path_control"}
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_failure_path_read_allowed",
+        "runtime_binding_allowed",
+        "cli_execution_allowed",
+        "subprocess_execution_allowed",
+        "pyo3_binding_allowed",
+        "rust_crate_execution_allowed",
+        "python_imports_rust_allowed",
+        "shell_invocation_allowed",
+        "child_process_spawn_allowed",
+        "network_call_allowed",
+        "secret_access_allowed",
+        "raw_failure_payload_retention_allowed",
+        "filesystem_write_allowed",
+        "runtime_dispatch_allowed",
+        "canonical_state_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "static_failure_path_read_allowed": {"type": "boolean"},
+        "runtime_binding_allowed": {"type": "boolean"},
+        "cli_execution_allowed": {"type": "boolean"},
+        "subprocess_execution_allowed": {"type": "boolean"},
+        "pyo3_binding_allowed": {"type": "boolean"},
+        "rust_crate_execution_allowed": {"type": "boolean"},
+        "python_imports_rust_allowed": {"type": "boolean"},
+        "shell_invocation_allowed": {"type": "boolean"},
+        "child_process_spawn_allowed": {"type": "boolean"},
+        "network_call_allowed": {"type": "boolean"},
+        "secret_access_allowed": {"type": "boolean"},
+        "raw_failure_payload_retention_allowed": {"type": "boolean"},
+        "filesystem_write_allowed": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"type": "boolean"},
+        "canonical_state_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {"type": "object"},
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact_count",
+        "failure_path_control_count",
+        "authority_denial_count",
+        "open_gap_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_artifact_count": {"type": "integer", "minimum": 0},
+        "failure_path_control_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "open_gap_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"}
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_ref",
+        "artifact_digest_sha256",
+        "artifact_role",
+        "execution_authority_denied"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "artifact_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_role": {"type": "string", "minLength": 1},
+        "execution_authority_denied": {"type": "boolean"}
+      }
+    },
+    "failure_path_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id",
+        "command_name",
+        "failure_source_ref",
+        "failure_receipt_ref",
+        "verification_ref",
+        "path_descriptor_digest_sha256",
+        "materialization_status",
+        "runtime_materialization_allowed",
+        "raw_failure_payload_retained"
+      ],
+      "properties": {
+        "path_id": {"type": "string", "minLength": 1},
+        "command_name": {"type": "string", "minLength": 1},
+        "failure_source_ref": {"type": "string", "minLength": 1},
+        "failure_receipt_ref": {"type": "string", "minLength": 1},
+        "verification_ref": {"type": "string", "minLength": 1},
+        "path_descriptor_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "materialization_status": {"const": "static_failure_receipt_path"},
+        "runtime_materialization_allowed": {"type": "boolean"},
+        "raw_failure_payload_retained": {"type": "boolean"}
+      }
+    }
+  }
+}

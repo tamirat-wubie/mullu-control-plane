@@ -1,0 +1,74 @@
+{
+  "requirement_id": "REQ-maf-failure-receipt-path-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-failure-receipt-path-witness",
+  "problem_statement": "MAF runtime binding readiness needs a static failure receipt path witness after deterministic fixture parity before executable Python-to-Rust binding can be reconsidered.",
+  "success_criteria": [
+    "MafFailureReceiptPathWitness validates against a public JSON schema and Foundation Mode example",
+    "MafFailureReceiptPathWitness binds deterministic fixture parity refs, MAF CLI scaffold refs, WorkerFailureReceipt refs, VerificationResult refs, KernelProof refs, transition receipt refs, UAO refs, LifeMeaningJudgment refs, and receipt refs",
+    "MafFailureReceiptPathWitness records failure receipt path closure while keeping solver outcome AwaitingEvidence and runtime binding only reconsiderable",
+    "MafFailureReceiptPathWitness blocks runtime binding, CLI execution, subprocess execution, shell invocation, child process spawn, PyO3 binding, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, raw failure payload retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafFailureReceiptPathWitness rejects authority drift, path scope drift, future witness drift, failure path descriptor drift, digest drift, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no runtime binding",
+    "no CLI execution",
+    "no subprocess execution",
+    "no shell invocation",
+    "no child process spawn",
+    "no PyO3 binding",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no command behavior claim",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no raw failure payload retention",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "path mode remains static_failure_receipt_materialization_path",
+    "solver outcome remains AwaitingEvidence",
+    "failure_receipt_path_closed remains true",
+    "runtime_binding_reconsideration_only remains true",
+    "runtime_binding_claimed, subprocess_execution_claimed, cli_execution_claimed, and command_behavior_claimed remain false",
+    "each source artifact digest must match repository-local source files",
+    "each failure path descriptor digest must match the canonical path id, failure source, failure receipt, verification ref, and materialization status tuple",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_failure_receipt_path_witness.schema.json",
+    "examples/maf_failure_receipt_path_witness.foundation.json",
+    "scripts/validate_maf_failure_receipt_path_witness.py",
+    "tests/test_validate_maf_failure_receipt_path_witness.py",
+    "docs/97_maf_failure_receipt_path_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_failure_receipt_path_witness.py",
+    "python -m pytest tests/test_validate_maf_failure_receipt_path_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_failure_receipt_path_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_failure_receipt_path_witness.schema.json",
+    "examples/maf_failure_receipt_path_witness.foundation.json",
+    "scripts/validate_maf_failure_receipt_path_witness.py",
+    "tests/test_validate_maf_failure_receipt_path_witness.py",
+    "docs/97_maf_failure_receipt_path_witness.md",
+    "examples/sdlc/design_maf_failure_receipt_path_witness_20260618.json",
+    "examples/sdlc/security_review_maf_failure_receipt_path_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-failure-receipt-path-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-failure-receipt-path-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-failure-receipt-path-witness/requirement"
+}
