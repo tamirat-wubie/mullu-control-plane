@@ -371,6 +371,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-record",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_record.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-record:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
@@ -2000,6 +2006,12 @@
       "schema_id": "personal-assistant-runtime-boundary-receipt",
       "path": "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-runtime-boundary-receipt:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-foundation-closure-packet",
+      "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-foundation-closure-packet:1",
       "surface": "assistant"
     },
     {

@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-foundation-closure-packet:1",
+  "title": "Mullu Personal Assistant Foundation Closure Packet",
+  "description": "No-effect packet binding Personal Assistant Foundation Mode evidence receipts without granting live execution, connector mutation, memory writes, deployment mutation, customer readiness, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "packet_is_not_execution_authority",
+    "packet_is_not_terminal_closure",
+    "packet_is_not_customer_readiness",
+    "source_receipts",
+    "authority_denials",
+    "no_effect_boundary",
+    "closure_summary",
+    "secret_value_markers",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "personal_assistant.foundation_closure_packet.v1" },
+    "packet_id": { "type": "string", "pattern": "^personal-assistant-foundation-closure-[0-9a-f]{16}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+    "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+    "governed": { "type": "boolean", "const": true },
+    "packet_is_not_execution_authority": { "type": "boolean", "const": true },
+    "packet_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "packet_is_not_customer_readiness": { "type": "boolean", "const": true },
+    "source_receipts": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_receipt" }
+    },
+    "authority_denials": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/authority_denial" }
+    },
+    "no_effect_boundary": { "$ref": "#/$defs/no_effect_boundary" },
+    "closure_summary": { "$ref": "#/$defs/closure_summary" },
+    "secret_value_markers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "source_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_ref",
+        "source_sha256",
+        "receipt_id",
+        "schema_version",
+        "schema_versioned",
+        "proof_state",
+        "solver_outcome",
+        "closure_field",
+        "closed",
+        "no_effect_boundary_verified",
+        "receipt_non_authoritative",
+        "effect_violation_count",
+        "effect_violations",
+        "bound",
+        "payload_digest_only",
+        "serialized_length"
+      ],
+      "properties": {
+        "source_kind": {
+          "type": "string",
+          "enum": [
+            "foundation_evidence",
+            "readiness_index",
+            "coherence_ledger",
+            "authority_coverage",
+            "capsule_alignment",
+            "policy_matrix",
+            "runtime_boundary"
+          ]
+        },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_sha256": { "type": "string", "pattern": "^$|^[0-9a-f]{64}$" },
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "string", "minLength": 1 },
+        "schema_versioned": { "type": "boolean" },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+        "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+        "closure_field": {
+          "type": "string",
+          "enum": [
+            "foundation_evidence_closed",
+            "readiness_index_closed",
+            "coherence_ledger_closed",
+            "authority_coverage_closed",
+            "capsule_alignment_closed",
+            "policy_matrix_closed",
+            "runtime_boundary_closed"
+          ]
+        },
+        "closed": { "type": "boolean" },
+        "no_effect_boundary_verified": { "type": "boolean" },
+        "receipt_non_authoritative": { "type": "boolean" },
+        "effect_violation_count": { "type": "integer", "minimum": 0 },
+        "effect_violations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "bound": { "type": "boolean" },
+        "payload_digest_only": { "type": "boolean", "const": true },
+        "serialized_length": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "authority_denial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "denied", "denial_reason"],
+      "properties": {
+        "authority": {
+          "type": "string",
+          "enum": [
+            "live_connector_execution",
+            "connector_mutation",
+            "external_write",
+            "system_of_record_write",
+            "memory_write",
+            "deployment_mutation",
+            "money_legal_public_action",
+            "customer_readiness_claim",
+            "production_readiness_claim",
+            "live_nested_mind_activation",
+            "terminal_closure"
+          ]
+        },
+        "denied": { "type": "boolean", "const": true },
+        "denial_reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "no_effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "money_legal_public_allowed",
+        "production_ready_claim_allowed",
+        "customer_ready_claim_allowed",
+        "live_nested_mind_activation_allowed",
+        "terminal_closure_claim_allowed"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "external_effect_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "money_legal_public_allowed": { "type": "boolean", "const": false },
+        "production_ready_claim_allowed": { "type": "boolean", "const": false },
+        "customer_ready_claim_allowed": { "type": "boolean", "const": false },
+        "live_nested_mind_activation_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "closure_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_closure_packet_closed",
+        "source_receipt_count",
+        "bound_source_receipt_count",
+        "solved_verified_source_receipt_count",
+        "closed_source_receipt_count",
+        "effect_violation_count",
+        "secret_value_marker_count",
+        "all_sources_bound",
+        "all_sources_schema_versioned",
+        "all_sources_solved_verified",
+        "all_source_closure_flags_pass",
+        "all_no_effect_boundaries_clear",
+        "all_source_receipts_non_authoritative",
+        "no_secret_values_serialized",
+        "live_connector_execution_ready",
+        "memory_write_ready",
+        "deployment_mutation_ready",
+        "customer_ready",
+        "live_nested_mind_ready",
+        "next_allowed_action"
+      ],
+      "properties": {
+        "foundation_closure_packet_closed": { "type": "boolean" },
+        "source_receipt_count": { "type": "integer", "minimum": 0 },
+        "bound_source_receipt_count": { "type": "integer", "minimum": 0 },
+        "solved_verified_source_receipt_count": { "type": "integer", "minimum": 0 },
+        "closed_source_receipt_count": { "type": "integer", "minimum": 0 },
+        "effect_violation_count": { "type": "integer", "minimum": 0 },
+        "secret_value_marker_count": { "type": "integer", "minimum": 0 },
+        "all_sources_bound": { "type": "boolean" },
+        "all_sources_schema_versioned": { "type": "boolean" },
+        "all_sources_solved_verified": { "type": "boolean" },
+        "all_source_closure_flags_pass": { "type": "boolean" },
+        "all_no_effect_boundaries_clear": { "type": "boolean" },
+        "all_source_receipts_non_authoritative": { "type": "boolean" },
+        "no_secret_values_serialized": { "type": "boolean" },
+        "live_connector_execution_ready": { "type": "boolean", "const": false },
+        "memory_write_ready": { "type": "boolean", "const": false },
+        "deployment_mutation_ready": { "type": "boolean", "const": false },
+        "customer_ready": { "type": "boolean", "const": false },
+        "live_nested_mind_ready": { "type": "boolean", "const": false },
+        "next_allowed_action": { "type": "string", "const": "continue_foundation_hardening_only" }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lineage_delta" }
+        }
+      }
+    },
+    "lineage_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_id", "reason", "logged_in_lineage"],
+      "properties": {
+        "delta_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "logged_in_lineage": { "type": "boolean" }
+      }
+    }
+  }
+}
