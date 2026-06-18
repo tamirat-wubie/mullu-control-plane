@@ -1494,11 +1494,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 278,
+      "proven": 279,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 438,
+    "route_count": 439,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2759,6 +2759,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/partitions",
         "surface_id": "tenant_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/approval-proposals/preview",
+        "surface_id": "assistant_kernel_planning"
       },
       {
         "coverage_state": "proven",
@@ -5967,7 +5972,7 @@
         "scripts/validate_personal_assistant_math_projection.py",
         "scripts/validate_personal_assistant_planning_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval proposal, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -5975,6 +5980,7 @@
         "/api/v1/personal-assistant/skills",
         "/api/v1/personal-assistant/requests/preview",
         "/api/v1/personal-assistant/approval-queue",
+        "/api/v1/personal-assistant/approval-proposals/preview",
         "/api/v1/personal-assistant/approval-queue/preview",
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",

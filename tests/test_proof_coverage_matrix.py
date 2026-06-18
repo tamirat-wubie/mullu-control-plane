@@ -1756,6 +1756,10 @@ def test_representative_routes_are_not_unclassified() -> None:
         == "assistant_kernel_planning"
     )
     assert (
+        classified_routes["/api/v1/personal-assistant/approval-proposals/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
         classified_routes["/api/v1/personal-assistant/approval-queue/preview"]["surface_id"]
         == "assistant_kernel_planning"
     )
