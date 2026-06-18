@@ -6,7 +6,7 @@ Governance scope: TeamOps terminal closure anchor receipt creation, source
 preflight binding, anchor signature verification, and no-effect metadata.
 Dependencies: scripts.produce_team_ops_shared_inbox_terminal_closure_anchor_receipt.
 Invariants:
-  - Ready receipts embed a pending trust-ledger anchor receipt.
+  - Ready receipts embed a pending trust-ledger anchor receipt and provider witness artifact.
   - Missing anchor secret blocks receipt production.
   - Production never serializes secret values or claims remote effects.
 """
@@ -64,9 +64,15 @@ def test_team_ops_terminal_closure_anchor_receipt_accepts_ready_preflight(tmp_pa
     assert receipt.ready is True
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["proof_state"] == "Pass"
+    assert payload["provider_observation_receipt_id"] == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert payload["provider_observation_receipt_valid"] is True
     assert payload["anchor_receipt_id"].startswith("trust-anchor-receipt-")
     assert payload["anchor_receipt"]["external_anchor_status"] == "pending"
     assert payload["anchor_receipt"]["external_anchor_ref"] == ""
+    assert "provider_observation" in payload["anchor_receipt"]["required_artifact_types"]
+    assert any(artifact["artifact_type"] == "provider_observation" for artifact in payload["artifacts"])
     assert payload["metadata"]["anchor_receipt_created"] is True
     assert payload["metadata"]["remote_submit_executed"] is False
     assert payload["metadata"]["ledger_append_executed"] is False

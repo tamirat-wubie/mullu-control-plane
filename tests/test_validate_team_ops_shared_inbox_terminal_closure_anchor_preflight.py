@@ -7,7 +7,7 @@ projection, no-effect metadata, and no-secret serialization.
 Dependencies: scripts.validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.
 Invariants:
   - Validation rejects invalid source bundle signatures.
-  - Validation rejects artifact projection drift.
+  - Validation rejects artifact projection drift and missing provider witness artifacts.
   - Validation rejects effect claims and raw message/provider fields.
 """
 
@@ -61,7 +61,11 @@ def test_team_ops_terminal_closure_anchor_preflight_validation_accepts_ready_rec
     assert validation.valid is True
     assert validation.ready is True
     assert validation.errors == ()
-    assert validation.artifact_count >= 4
+    assert validation.artifact_count >= 5
+    assert validation.provider_observation_receipt_id == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert validation.provider_observation_receipt_valid is True
     assert validation.bundle_id.startswith("trust-bundle-")
     assert validation.next_action.startswith("operator may create")
 
@@ -84,7 +88,7 @@ def test_team_ops_terminal_closure_anchor_preflight_validation_rejects_wrong_bun
     assert validation.ready is False
     assert "source TeamOps terminal closure evidence bundle must be ready" in validation.errors
     assert validation.receipt_id.startswith("teamops-shared-inbox-terminal-anchor-preflight-")
-    assert validation.artifact_count >= 4
+    assert validation.artifact_count >= 5
 
 
 def test_team_ops_terminal_closure_anchor_preflight_validation_rejects_artifact_drift(
@@ -109,6 +113,38 @@ def test_team_ops_terminal_closure_anchor_preflight_validation_rejects_artifact_
     assert "artifact_root_hash must match projected artifacts" in validation.errors
     assert "artifacts must match deterministic source-bundle projection" in validation.errors
     assert validation.artifact_root_hash == payload["artifact_root_hash"]
+
+
+def test_team_ops_terminal_closure_anchor_preflight_validation_rejects_missing_provider_artifact(
+    tmp_path: Path,
+) -> None:
+    bundle_path, certificate_path, review_path, preflight_path = _write_ready_preflight(tmp_path)
+    payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    payload["artifacts"] = [
+        artifact for artifact in payload["artifacts"] if artifact["artifact_type"] != "provider_observation"
+    ]
+    payload["artifact_count"] = len(payload["artifacts"])
+    payload["required_artifact_types"] = [
+        artifact_type
+        for artifact_type in payload["required_artifact_types"]
+        if artifact_type != "provider_observation"
+    ]
+    preflight_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_terminal_closure_anchor_preflight(
+        preflight_path=preflight_path,
+        bundle_path=bundle_path,
+        certificate_path=certificate_path,
+        source_review_packet_path=review_path,
+        bundle_signing_secret=SIGNING_SECRET,
+        require_ready=True,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "required_artifact_types must include trust-ledger anchor requirements" in validation.errors
+    assert "artifacts must match deterministic source-bundle projection" in validation.errors
+    assert validation.provider_observation_receipt_valid is True
 
 
 def test_team_ops_terminal_closure_anchor_preflight_validation_rejects_effect_claim(
@@ -193,7 +229,7 @@ def test_team_ops_terminal_closure_anchor_preflight_validation_cli_writes_receip
     assert file_payload["valid"] is True
     assert stdout_payload["ready"] is True
     assert file_payload["errors"] == []
-    assert file_payload["artifact_count"] >= 4
+    assert file_payload["artifact_count"] >= 5
     assert captured.err == ""
 
 

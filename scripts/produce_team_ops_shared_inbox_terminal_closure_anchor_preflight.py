@@ -12,6 +12,7 @@ and scripts.validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.
 Invariants:
   - Preflight never calls TrustLedger.anchor_bundle.
   - Preflight never writes anchor receipts or submission ledgers.
+  - Preflight preserves provider-observation receipt identity as a required anchor artifact.
   - Preflight never calls providers, mailboxes, or remote transparency logs.
   - Secret values are accepted only as presence checks and are never serialized.
 """
@@ -57,7 +58,13 @@ SCHEMA_PATH = REPO_ROOT / "schemas" / "team_ops_shared_inbox_terminal_closure_an
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "team_ops_shared_inbox_terminal_closure_anchor_preflight.json"
 DEFAULT_ANCHOR_TARGET = "transparency_log"
 DEFAULT_SIGNATURE_KEY_ID = "teamops-anchor-key"
-REQUIRED_ARTIFACT_TYPES = ("command", "execution_receipt", "verification_result", "terminal_certificate")
+REQUIRED_ARTIFACT_TYPES = (
+    "command",
+    "execution_receipt",
+    "provider_observation",
+    "verification_result",
+    "terminal_certificate",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +96,9 @@ class TeamOpsTerminalClosureAnchorPreflight:
     command_id: str
     terminal_certificate_id: str
     bundle_hash: str
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     anchor_target: str
     planned_external_anchor_status: str
     planned_external_anchor_ref: str
@@ -119,6 +129,9 @@ class TeamOpsTerminalClosureAnchorPreflight:
             "command_id": self.command_id,
             "terminal_certificate_id": self.terminal_certificate_id,
             "bundle_hash": self.bundle_hash,
+            "provider_observation_receipt_ref": self.provider_observation_receipt_ref,
+            "provider_observation_receipt_id": self.provider_observation_receipt_id,
+            "provider_observation_receipt_valid": self.provider_observation_receipt_valid,
             "anchor_target": self.anchor_target,
             "planned_external_anchor_status": self.planned_external_anchor_status,
             "planned_external_anchor_ref": self.planned_external_anchor_ref,
@@ -173,6 +186,9 @@ def produce_team_ops_shared_inbox_terminal_closure_anchor_preflight(
         hard=True,
     )
     bundle = _load_bundle(bundle_path) if bundle_valid else {}
+    provider_receipt_ref = str(bundle.get("metadata", {}).get("provider_observation_receipt_ref", ""))
+    provider_receipt_id = str(bundle.get("metadata", {}).get("provider_observation_receipt_id", ""))
+    provider_receipt_valid = bundle.get("metadata", {}).get("provider_observation_receipt_valid") is True
 
     anchor_status_ok = bundle.get("external_anchor_status") == "not_requested" and bundle.get("external_anchor_ref") == ""
     add_step(
@@ -266,6 +282,9 @@ def produce_team_ops_shared_inbox_terminal_closure_anchor_preflight(
         "command_id": str(bundle.get("command_id", "")),
         "terminal_certificate_id": str(bundle.get("terminal_certificate_id", "")),
         "bundle_hash": str(bundle.get("bundle_hash", "")),
+        "provider_observation_receipt_ref": provider_receipt_ref,
+        "provider_observation_receipt_id": provider_receipt_id,
+        "provider_observation_receipt_valid": provider_receipt_valid,
         "anchor_target": anchor_target,
         "planned_external_anchor_status": "pending",
         "planned_external_anchor_ref": "",
@@ -293,6 +312,9 @@ def produce_team_ops_shared_inbox_terminal_closure_anchor_preflight(
         command_id=str(bundle.get("command_id", "")),
         terminal_certificate_id=str(bundle.get("terminal_certificate_id", "")),
         bundle_hash=str(bundle.get("bundle_hash", "")),
+        provider_observation_receipt_ref=provider_receipt_ref,
+        provider_observation_receipt_id=provider_receipt_id,
+        provider_observation_receipt_valid=provider_receipt_valid,
         anchor_target=anchor_target,
         planned_external_anchor_status="pending",
         planned_external_anchor_ref="",
@@ -333,6 +355,8 @@ def _project_anchor_artifacts(bundle: Mapping[str, Any]) -> tuple[dict[str, Any]
     bundle_hash = str(bundle.get("bundle_hash", ""))
     command_id = str(bundle.get("command_id", ""))
     terminal_certificate_id = str(bundle.get("terminal_certificate_id", ""))
+    metadata = bundle.get("metadata", {})
+    provider_receipt_id = str(metadata.get("provider_observation_receipt_id", "")) if isinstance(metadata, Mapping) else ""
     refs = [str(ref) for ref in bundle.get("evidence_refs", []) if isinstance(ref, str)]
     artifacts = [
         _artifact(
@@ -346,6 +370,16 @@ def _project_anchor_artifacts(bundle: Mapping[str, Any]) -> tuple[dict[str, Any]
             artifact_type="execution_receipt",
             artifact_id=_artifact_id("teamops-send-execution", _find_ref(refs, "/evidence-ref/")),
             evidence_ref=_find_ref(refs, "/evidence-ref/") or f"proof://teamops/evidence-ref/{_short_hash(bundle_hash)}",
+            required=True,
+            bundle_hash=bundle_hash,
+        ),
+        _artifact(
+            artifact_type="provider_observation",
+            artifact_id=provider_receipt_id,
+            evidence_ref=(
+                _find_ref(refs, "/provider-observation/")
+                or f"proof://teamops/provider-observation/{provider_receipt_id}"
+            ),
             required=True,
             bundle_hash=bundle_hash,
         ),

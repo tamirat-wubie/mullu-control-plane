@@ -11,6 +11,7 @@ schemas/trust_ledger_anchor_receipt.schema.json, and
 scripts.validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.
 Invariants:
   - A ready TeamOps anchor preflight is required before anchor receipt creation.
+  - The provider-observation receipt identity is preserved from preflight to anchor receipt.
   - The receipt status remains pending and external_anchor_ref remains empty.
   - Remote submission, ledger append, provider calls, and production claims stay false.
 """
@@ -95,6 +96,9 @@ class TeamOpsTerminalClosureAnchorReceipt:
     command_id: str
     terminal_certificate_id: str
     bundle_hash: str
+    provider_observation_receipt_ref: str
+    provider_observation_receipt_id: str
+    provider_observation_receipt_valid: bool
     anchor_target: str
     external_anchor_status: str
     external_anchor_ref: str
@@ -128,6 +132,9 @@ class TeamOpsTerminalClosureAnchorReceipt:
             "command_id": self.command_id,
             "terminal_certificate_id": self.terminal_certificate_id,
             "bundle_hash": self.bundle_hash,
+            "provider_observation_receipt_ref": self.provider_observation_receipt_ref,
+            "provider_observation_receipt_id": self.provider_observation_receipt_id,
+            "provider_observation_receipt_valid": self.provider_observation_receipt_valid,
             "anchor_target": self.anchor_target,
             "external_anchor_status": self.external_anchor_status,
             "external_anchor_ref": self.external_anchor_ref,
@@ -290,6 +297,7 @@ def produce_team_ops_shared_inbox_terminal_closure_anchor_receipt(
         "created_at": created_at_value,
         "source_preflight_receipt_id": str(preflight.get("receipt_id", "")),
         "bundle_id": str(preflight.get("bundle_id", "")),
+        "provider_observation_receipt_id": str(preflight.get("provider_observation_receipt_id", "")),
         "anchor_receipt_id": str(anchor_payload.get("anchor_receipt_id", "")),
         "anchor_receipt_hash": str(anchor_payload.get("anchor_receipt_hash", "")),
         "artifact_root_hash": artifact_root_hash,
@@ -310,6 +318,9 @@ def produce_team_ops_shared_inbox_terminal_closure_anchor_receipt(
         command_id=str(preflight.get("command_id", "")),
         terminal_certificate_id=str(preflight.get("terminal_certificate_id", "")),
         bundle_hash=str(preflight.get("bundle_hash", "")),
+        provider_observation_receipt_ref=str(preflight.get("provider_observation_receipt_ref", "")),
+        provider_observation_receipt_id=str(preflight.get("provider_observation_receipt_id", "")),
+        provider_observation_receipt_valid=preflight.get("provider_observation_receipt_valid") is True,
         anchor_target=str(preflight.get("anchor_target", "")),
         external_anchor_status=str(anchor_payload.get("external_anchor_status", "")),
         external_anchor_ref=str(anchor_payload.get("external_anchor_ref", "")),
