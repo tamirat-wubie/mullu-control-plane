@@ -564,6 +564,7 @@
         "read_only_worker_runtime_dispatch_endpoint_registration_witness_schema",
         "read_only_worker_runtime_runner_registration_witness_schema",
         "read_only_worker_runtime_receipt_store_write_path_witness_schema",
+        "read_only_worker_runtime_receipt_store_operator_approval_witness_schema",
         "read_only_worker_runtime_receipt_schema_binding_activation_witness_schema",
         "read_only_worker_runtime_receipt_schema_binding_witness_schema",
         "read_only_worker_runtime_receipt_candidate_schema",
@@ -582,6 +583,10 @@
         "read_only_worker_runtime_receipt_store_activation_witness_schema": {
           "type": "string",
           "const": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json"
+        },
+        "read_only_worker_runtime_receipt_store_operator_approval_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json"
         },
         "read_only_worker_runtime_receipt_emitter_registration_witness_schema": {
           "type": "string",
@@ -703,7 +708,7 @@
         },
         "receipt_ref_count": {
           "type": "integer",
-          "const": 18
+          "const": 19
         },
         "evidence_ref_count": {
           "type": "integer",

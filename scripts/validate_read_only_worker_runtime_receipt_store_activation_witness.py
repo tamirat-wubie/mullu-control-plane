@@ -77,6 +77,9 @@ EXPECTED_DISPATCH_ENDPOINT_REGISTRATION_WITNESS_REF = (
 )
 EXPECTED_RUNNER_REGISTRATION_WITNESS_REF = "examples/read_only_worker_runtime_runner_registration_witness.foundation.json"
 EXPECTED_STORE_WRITE_PATH_WITNESS_REF = "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json"
+EXPECTED_OPERATOR_APPROVAL_WITNESS_REF = (
+    "examples/read_only_worker_runtime_receipt_store_operator_approval_witness.foundation.json"
+)
 EXPECTED_SCHEMA_BINDING_WITNESS_REF = "examples/read_only_worker_runtime_receipt_schema_binding_witness.foundation.json"
 EXPECTED_SCHEMA_BINDING_ACTIVATION_WITNESS_REF = (
     "examples/read_only_worker_runtime_receipt_schema_binding_activation_witness.foundation.json"
@@ -106,6 +109,7 @@ REQUIRED_SOURCE_RECEIPT_REFS = (
     EXPECTED_DISPATCH_ENDPOINT_REGISTRATION_WITNESS_REF,
     EXPECTED_RUNNER_REGISTRATION_WITNESS_REF,
     EXPECTED_STORE_WRITE_PATH_WITNESS_REF,
+    EXPECTED_OPERATOR_APPROVAL_WITNESS_REF,
     EXPECTED_SCHEMA_BINDING_WITNESS_REF,
     EXPECTED_SCHEMA_BINDING_ACTIVATION_WITNESS_REF,
     EXPECTED_CANDIDATE_REF,
@@ -180,6 +184,9 @@ REQUIRED_RECEIPT_REFS = {
     "read_only_worker_runtime_receipt_store_activation_witness_schema": (
         "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json"
     ),
+    "read_only_worker_runtime_receipt_store_operator_approval_witness_schema": (
+        "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json"
+    ),
     "read_only_worker_runtime_receipt_emitter_registration_witness_schema": (
         "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json"
     ),
@@ -229,6 +236,9 @@ REQUIRED_EVIDENCE_REFS = (
     EXPECTED_STORE_WRITE_PATH_WITNESS_REF,
     "scripts/validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
+    "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json",
+    EXPECTED_OPERATOR_APPROVAL_WITNESS_REF,
+    "scripts/validate_read_only_worker_runtime_receipt_store_operator_approval_witness.py",
     "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json",
     EXPECTED_SCHEMA_BINDING_WITNESS_REF,
     "scripts/validate_read_only_worker_runtime_receipt_schema_binding_witness.py",

@@ -58,6 +58,7 @@
       "examples/read_only_worker_runtime_dispatch_endpoint_registration_witness.foundation.json",
       "examples/read_only_worker_runtime_runner_registration_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json",
+      "examples/read_only_worker_runtime_receipt_store_operator_approval_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_schema_binding_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_schema_binding_activation_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_candidate.foundation.json",
@@ -185,6 +186,7 @@
   },
   "receipt_refs": {
     "read_only_worker_runtime_receipt_store_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json",
+    "read_only_worker_runtime_receipt_store_operator_approval_witness_schema": "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json",
     "read_only_worker_runtime_receipt_emitter_registration_witness_schema": "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json",
     "read_only_worker_runtime_dispatch_endpoint_registration_witness_schema": "schemas/read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json",
     "read_only_worker_runtime_runner_registration_witness_schema": "schemas/read_only_worker_runtime_runner_registration_witness.schema.json",
@@ -204,7 +206,7 @@
     "read_only_worker_runtime_receipt_schema_binding_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json"
   },
   "contract_summary": {
-    "source_receipt_ref_count": 13,
+    "source_receipt_ref_count": 14,
     "activation_input_ref_count": 16,
     "activation_obligation_count": 9,
     "validation_ref_count": 8,
@@ -212,8 +214,8 @@
     "activation_denied_check_count": 9,
     "remaining_denied_until_ref_count": 14,
     "blocked_reason_ref_count": 15,
-    "receipt_ref_count": 18,
-    "evidence_ref_count": 39
+    "receipt_ref_count": 19,
+    "evidence_ref_count": 42
   },
   "governance_refs": [
     "policy://foundation-mode/no-live-worker-dispatch",
@@ -247,6 +249,9 @@
     "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
+    "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_store_operator_approval_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_store_operator_approval_witness.py",
     "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json",
     "examples/read_only_worker_runtime_receipt_schema_binding_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_schema_binding_witness.py",

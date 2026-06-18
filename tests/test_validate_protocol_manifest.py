@@ -1763,6 +1763,23 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_store_activa
     assert witness_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_store_operator_approval_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-receipt-store-operator-approval-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert (
+        witness_entry["path"]
+        == "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json"
+    )
+    assert (
+        witness_entry["urn"]
+        == "urn:mullusi:schema:read-only-worker-runtime-receipt-store-operator-approval-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_emission_admission_witness_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

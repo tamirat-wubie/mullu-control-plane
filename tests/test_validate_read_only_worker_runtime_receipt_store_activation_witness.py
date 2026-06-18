@@ -25,6 +25,13 @@ from scripts.validate_read_only_worker_runtime_receipt_store_activation_witness 
     validate_runtime_receipt_store_activation_witness,
     validate_runtime_receipt_store_activation_witness_record,
 )
+from scripts.validate_read_only_worker_runtime_receipt_store_operator_approval_witness import (
+    DEFAULT_RECEIPT_PATH as DEFAULT_OPERATOR_APPROVAL_RECEIPT_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_OPERATOR_APPROVAL_SCHEMA_PATH,
+    build_mutated_operator_approval_witness,
+    validate_operator_approval_witness,
+    validate_operator_approval_witness_record,
+)
 from scripts.validate_schemas import _load_schema
 
 
@@ -34,6 +41,44 @@ def test_runtime_receipt_store_activation_witness_fixture_passes() -> None:
     assert errors == []
     assert DEFAULT_SCHEMA_PATH.exists()
     assert DEFAULT_RECEIPT_PATH.exists()
+
+
+def test_runtime_receipt_store_operator_approval_witness_fixture_passes() -> None:
+    errors = validate_operator_approval_witness()
+
+    assert errors == []
+    assert DEFAULT_OPERATOR_APPROVAL_SCHEMA_PATH.exists()
+    assert DEFAULT_OPERATOR_APPROVAL_RECEIPT_PATH.exists()
+
+
+def test_runtime_receipt_store_operator_approval_witness_rejects_authority_drift() -> None:
+    schema = _load_schema(DEFAULT_OPERATOR_APPROVAL_SCHEMA_PATH)
+    mutated = build_mutated_operator_approval_witness(
+        authority_scope__operator_approval_collected=True,
+        authority_scope__receipt_store_append_allowed=True,
+        admission_decision__receipt_store_append_admitted=True,
+    )
+
+    errors = validate_operator_approval_witness_record(mutated, schema)
+
+    assert "authority_scope.operator_approval_collected must be false" in errors
+    assert "authority_scope.receipt_store_append_allowed must be false" in errors
+    assert "admission_decision.receipt_store_append_admitted must be false" in errors
+
+
+def test_runtime_receipt_store_operator_approval_witness_rejects_contract_drift() -> None:
+    schema = _load_schema(DEFAULT_OPERATOR_APPROVAL_SCHEMA_PATH)
+    mutated = build_mutated_operator_approval_witness(
+        operator_approval_witness_contract__witness_mode="LIVE_APPROVAL_AUTHORITY",
+        operator_approval_witness_contract__approval_profile="WRONG_PROFILE",
+        operator_approval_witness_contract__target_activation_witness_ref="examples/wrong.json",
+    )
+
+    errors = validate_operator_approval_witness_record(mutated, schema)
+
+    assert any("operator_approval_witness_contract.witness_mode" in error for error in errors)
+    assert any("operator_approval_witness_contract.approval_profile" in error for error in errors)
+    assert any("operator_approval_witness_contract.target_activation_witness_ref" in error for error in errors)
 
 
 def test_runtime_receipt_store_activation_witness_rejects_authority_drift() -> None:
