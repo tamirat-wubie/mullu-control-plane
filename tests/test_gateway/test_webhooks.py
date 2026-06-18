@@ -4855,7 +4855,9 @@ class TestGatewayStatus:
         tasks = {task["command_id"]: task for task in data["tasks"]}
         assert tasks[waiting.command_id]["task_status"] == "waiting_for_approval"
         assert tasks[waiting.command_id]["response_state"] == "waiting_for_approval"
+        assert tasks[waiting.command_id]["response_evidence_state"] == "approval_pending"
         assert tasks[waiting.command_id]["response_claim_allowed"] is False
+        assert tasks[waiting.command_id]["response_evidence_refs"] == []
         assert tasks[waiting.command_id]["response_blocker"] == "approval_required"
         assert tasks[waiting.command_id]["waiting_for"] == "operator_approval"
         assert tasks[waiting.command_id]["next_action"] == "resolve_approval"
@@ -4867,7 +4869,14 @@ class TestGatewayStatus:
         assert tasks[waiting.command_id]["approval_recovery_available"] is False
         assert tasks[blocked.command_id]["task_status"] == "blocked"
         assert tasks[blocked.command_id]["response_state"] == "blocked"
+        assert tasks[blocked.command_id]["response_evidence_state"] == (
+            "blocked_with_receipt"
+        )
         assert tasks[blocked.command_id]["response_claim_allowed"] is False
+        assert len(tasks[blocked.command_id]["response_evidence_refs"]) == 1
+        assert tasks[blocked.command_id]["response_evidence_refs"][0].startswith(
+            "receipt://denial_receipt/denial:evt-"
+        )
         assert (
             tasks[blocked.command_id]["response_blocker"]
             == "explicit_blocker_receipt_required"
@@ -4879,11 +4888,17 @@ class TestGatewayStatus:
         )
         assert tasks[completed.command_id]["task_status"] == "completed"
         assert tasks[completed.command_id]["response_state"] == "completed_verified"
+        assert tasks[completed.command_id]["response_evidence_state"] == (
+            "terminal_verified"
+        )
         assert tasks[completed.command_id]["response_claim_allowed"] is True
         assert (
             tasks[completed.command_id]["response_terminal_certificate_id"]
             == certificate.certificate_id
         )
+        assert tasks[completed.command_id]["response_evidence_refs"] == [
+            f"terminal-certificate://{certificate.certificate_id}"
+        ]
         assert tasks[completed.command_id]["response_blocker"] == ""
         assert tasks[completed.command_id]["task_terminal"] is True
         assert tasks[awaiting_evidence.command_id]["task_status"] == "completed"
@@ -4891,7 +4906,11 @@ class TestGatewayStatus:
             tasks[awaiting_evidence.command_id]["response_state"]
             == "awaiting_terminal_evidence"
         )
+        assert tasks[awaiting_evidence.command_id]["response_evidence_state"] == (
+            "terminal_certificate_missing"
+        )
         assert tasks[awaiting_evidence.command_id]["response_claim_allowed"] is False
+        assert tasks[awaiting_evidence.command_id]["response_evidence_refs"] == []
         assert (
             tasks[awaiting_evidence.command_id]["response_blocker"]
             == "terminal_certificate_missing"
