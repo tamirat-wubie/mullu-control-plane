@@ -1696,6 +1696,11 @@ class TestWebChatWebhook:
         assert preview_rows[preview_plan_id]["status"] == "preview_ready"
         assert preview_rows[preview_plan_id]["budget_required"] is True
         assert preview_rows[preview_plan_id]["budget_gate"] == "budget_reserved"
+        assert preview_rows[preview_plan_id]["search_budget_required"] is True
+        assert preview_rows[preview_plan_id]["search_budget_policy_state"] == (
+            "bound_to_plan_budget"
+        )
+        assert preview_rows[preview_plan_id]["search_budget_step_ids"]
         assert preview_rows[preview_plan_id]["budget_evidence_state"] == "preview_budget"
         assert "step-2" in preview_rows[preview_plan_id]["required_by_steps"]
         assert preview_rows[preview_plan_id]["execution_spend_allowed"] is False
@@ -1767,6 +1772,9 @@ class TestWebChatWebhook:
         assert failed_data["plans"][0]["budget_evidence_state"] == (
             "witness_plan_snapshot"
         )
+        assert failed_data["plans"][0]["search_budget_required"] is False
+        assert failed_data["plans"][0]["search_budget_policy_state"] == "not_required"
+        assert failed_data["plans"][0]["search_budget_step_ids"] == []
         assert failed_data["plans"][0]["recovery_action"] == "wait_for_approval"
         assert recovered_model_resp.status_code == 200
         recovered_data = recovered_model_resp.json()
@@ -1848,6 +1856,9 @@ class TestWebChatWebhook:
         assert row["limit_cost_units"] == 4.0
         assert row["remaining_cost_units"] == 2.75
         assert row["budget_report_href"] == "/operator/plan-review/budget/t1"
+        assert row["search_budget_required"] is True
+        assert row["search_budget_policy_state"] == "bound_to_plan_budget"
+        assert row["search_budget_step_ids"]
         assert row["execution_spend_allowed"] is False
         assert "step-2" in row["required_by_steps"]
         assert "budget-report-secret-21" not in json.dumps(

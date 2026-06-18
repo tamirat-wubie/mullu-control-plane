@@ -224,6 +224,9 @@ _PLAN_REVIEW_COLUMNS = (
     "approval_required",
     "budget_required",
     "budget_gate",
+    "search_budget_required",
+    "search_budget_policy_state",
+    "search_budget_step_ids",
     "budget_evidence_state",
     "estimate_state",
     "used_cost_units",
@@ -799,6 +802,14 @@ def render_operator_plan_review_html(read_model: Mapping[str, Any]) -> str:
         ("Certified", status_counts.get("certified", 0)),
         ("Failed", status_counts.get("failed", 0)),
         ("Budget Required", budget_counts.get("budget_reserved", 0)),
+        (
+            "Search Budget",
+            sum(
+                1
+                for record in records
+                if bool(record.get("search_budget_required", False))
+            ),
+        ),
     )
     return _operator_table_html(
         title="Mullu Plan Review",
@@ -1248,6 +1259,11 @@ def _plan_review_preview_rows(preview_records: tuple[Any, ...]) -> list[dict[str
         if not plan_id:
             continue
         budget = _budget_from_mapping(preview.get("budget"), "preview_budget")
+        search_budget = _search_budget_from_preview_or_snapshot(
+            preview_record=mapping,
+            plan_snapshot={},
+            budget=budget,
+        )
         rows.append(
             _plan_review_row(
                 review_id=str(mapping.get("preview_id") or preview.get("preview_id") or ""),
@@ -1263,6 +1279,7 @@ def _plan_review_preview_rows(preview_records: tuple[Any, ...]) -> list[dict[str
                 goal_hash=str(mapping.get("goal_hash") or preview.get("goal_hash") or ""),
                 evidence_required=_text_tuple(preview.get("evidence_required")),
                 budget=budget,
+                search_budget=search_budget,
                 tools_count=len(_mapping_list(preview.get("tools"))),
                 latest_at=str(mapping.get("decided_at") or mapping.get("created_at") or preview.get("created_at") or ""),
             )
@@ -1288,6 +1305,11 @@ def _plan_review_certificate_rows(
             plan_snapshot={},
             fallback_state="certificate_metadata_only",
         )
+        search_budget = _search_budget_from_preview_or_snapshot(
+            preview_record=preview,
+            plan_snapshot={},
+            budget=budget,
+        )
         rows.append(
             _plan_review_row(
                 review_id=str(certificate.get("certificate_id", "")),
@@ -1303,6 +1325,7 @@ def _plan_review_certificate_rows(
                 goal_hash=str(preview.get("goal_hash", "")),
                 evidence_required=_text_tuple(metadata.get("evidence_required")),
                 budget=budget,
+                search_budget=search_budget,
                 tools_count=_preview_tools_count(preview),
                 certificate_id=str(certificate.get("certificate_id", "")),
                 latest_at=str(certificate.get("issued_at", "")),
@@ -1335,6 +1358,11 @@ def _plan_review_failed_witness_rows(
             plan_snapshot=plan_snapshot,
             fallback_state="witness_plan_snapshot",
         )
+        search_budget = _search_budget_from_preview_or_snapshot(
+            preview_record=preview,
+            plan_snapshot=plan_snapshot,
+            budget=budget,
+        )
         rows.append(
             _plan_review_row(
                 review_id=str(witness.get("witness_id", "")),
@@ -1350,6 +1378,7 @@ def _plan_review_failed_witness_rows(
                 goal_hash=_plan_snapshot_goal_hash(plan_snapshot, preview),
                 evidence_required=_text_tuple(plan_snapshot.get("evidence_required")),
                 budget=budget,
+                search_budget=search_budget,
                 tools_count=_plan_snapshot_tools_count(plan_snapshot, preview),
                 witness_id=str(witness.get("witness_id", "")),
                 recovery_action=str(recovery_decision.get("recovery_action", "")),
@@ -1387,6 +1416,11 @@ def _plan_review_recovery_attempt_rows(
             plan_snapshot=plan_snapshot,
             fallback_state="witness_plan_snapshot" if plan_snapshot else "not_recorded",
         )
+        search_budget = _search_budget_from_preview_or_snapshot(
+            preview_record=preview,
+            plan_snapshot=plan_snapshot,
+            budget=budget,
+        )
         rows.append(
             _plan_review_row(
                 review_id=str(attempt.get("attempt_id", "")),
@@ -1402,6 +1436,7 @@ def _plan_review_recovery_attempt_rows(
                 goal_hash=_plan_snapshot_goal_hash(plan_snapshot, preview),
                 evidence_required=_text_tuple(plan_snapshot.get("evidence_required")),
                 budget=budget,
+                search_budget=search_budget,
                 tools_count=_plan_snapshot_tools_count(plan_snapshot, preview),
                 attempt_id=str(attempt.get("attempt_id", "")),
                 witness_id=str(attempt.get("witness_id", "")),
@@ -1429,6 +1464,7 @@ def _plan_review_row(
     goal_hash: str,
     evidence_required: tuple[str, ...],
     budget: Mapping[str, Any],
+    search_budget: Mapping[str, Any],
     tools_count: int,
     latest_at: str,
     certificate_id: str = "",
@@ -1453,6 +1489,15 @@ def _plan_review_row(
         "evidence_required_count": len(evidence_required),
         "budget_required": bool(budget.get("budget_required", False)),
         "budget_gate": str(budget.get("budget_gate", "not_recorded")),
+        "search_budget_required": bool(
+            search_budget.get("search_budget_required", False)
+        ),
+        "search_budget_policy_state": str(
+            search_budget.get("search_budget_policy_state", "not_recorded")
+        ),
+        "search_budget_step_ids": list(
+            _text_tuple(search_budget.get("search_budget_step_ids"))
+        ),
         "estimate_state": str(budget.get("estimate_state", "not_recorded")),
         "estimate_source": str(budget.get("estimate_source", "not_recorded")),
         "estimated_cost_units": budget.get("estimated_cost_units"),
@@ -1515,6 +1560,67 @@ def _budget_from_preview_record_or_snapshot(
             if contracts:
                 return _budget_from_step_contracts(contracts, "witness_plan_snapshot")
     return _budget_not_recorded(fallback_state)
+
+
+def _search_budget_from_preview_or_snapshot(
+    *,
+    preview_record: Mapping[str, Any],
+    plan_snapshot: Mapping[str, Any],
+    budget: Mapping[str, Any],
+) -> dict[str, Any]:
+    carriers = _search_budget_carriers(preview_record, plan_snapshot)
+    if carriers is None:
+        return _search_budget_state("not_recorded", ())
+    search_step_ids = tuple(
+        str(carrier.get("step_id", "")).strip()
+        for carrier in carriers
+        if "search_budget_checked" in _text_tuple(carrier.get("requires"))
+    )
+    search_step_ids = tuple(step_id for step_id in search_step_ids if step_id)
+    if not search_step_ids:
+        return _search_budget_state("not_required", ())
+    missing_budget_gate_steps = tuple(
+        str(carrier.get("step_id", "")).strip()
+        for carrier in carriers
+        if str(carrier.get("step_id", "")).strip() in search_step_ids
+        and "budget_reserved" not in _text_tuple(carrier.get("requires"))
+    )
+    if missing_budget_gate_steps:
+        return _search_budget_state(
+            "search_budget_gate_missing",
+            search_step_ids,
+        )
+    if str(budget.get("budget_gate", "")) != "budget_reserved":
+        return _search_budget_state("budget_gate_missing", search_step_ids)
+    return _search_budget_state("bound_to_plan_budget", search_step_ids)
+
+
+def _search_budget_carriers(
+    preview_record: Mapping[str, Any],
+    plan_snapshot: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], ...] | None:
+    preview = preview_record.get("preview")
+    if isinstance(preview, Mapping):
+        tools = tuple(_mapping_list(preview.get("tools")))
+        if tools:
+            return tools
+    metadata = plan_snapshot.get("metadata")
+    if isinstance(metadata, Mapping):
+        contracts = tuple(_mapping_list(metadata.get("step_contracts")))
+        if contracts:
+            return contracts
+    return None
+
+
+def _search_budget_state(
+    state: str,
+    step_ids: tuple[str, ...],
+) -> dict[str, Any]:
+    return {
+        "search_budget_required": bool(step_ids),
+        "search_budget_policy_state": state,
+        "search_budget_step_ids": list(step_ids),
+    }
 
 
 def _budget_from_mapping(value: Any, evidence_state: str) -> dict[str, Any]:

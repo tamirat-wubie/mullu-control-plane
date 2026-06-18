@@ -423,6 +423,16 @@
         "not_recorded"
       ]
     },
+    "search_budget_policy_state": {
+      "type": "string",
+      "enum": [
+        "bound_to_plan_budget",
+        "search_budget_gate_missing",
+        "budget_gate_missing",
+        "not_required",
+        "not_recorded"
+      ]
+    },
     "status_counts": {
       "type": "object",
       "additionalProperties": false,
@@ -518,6 +528,9 @@
         "evidence_required_count",
         "budget_required",
         "budget_gate",
+        "search_budget_required",
+        "search_budget_policy_state",
+        "search_budget_step_ids",
         "estimate_state",
         "estimate_source",
         "estimated_cost_units",
@@ -599,6 +612,18 @@
         },
         "budget_gate": {
           "$ref": "#/$defs/budget_gate"
+        },
+        "search_budget_required": {
+          "type": "boolean"
+        },
+        "search_budget_policy_state": {
+          "$ref": "#/$defs/search_budget_policy_state"
+        },
+        "search_budget_step_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "estimate_state": {
           "type": "string",
