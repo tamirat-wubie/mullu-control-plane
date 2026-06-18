@@ -198,6 +198,165 @@ def test_gateway_personal_assistant_preview_rejects_extra_private_connector_fiel
     assert "request_interpreted" not in serialized
 
 
+def test_gateway_personal_assistant_read_only_inbox_preview_summarizes_redacted_projection() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/read-only/inbox/preview",
+        json={
+            "request_id": "pa_request_gateway_read_only_inbox_001",
+            "submitted_at": "2026-06-16T10:00:00+00:00",
+            "generated_at": "2026-06-16T10:01:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "messages": [
+                {
+                    "message_ref": "msg:redacted:001",
+                    "received_at": "2026-06-16T09:30:00+00:00",
+                    "sender_label": "known customer",
+                    "subject_digest": "urgent invoice follow-up",
+                    "snippet_digest": "redacted summary only",
+                    "priority_signals": ["urgent"],
+                    "needs_reply": True,
+                    "has_attachment": True,
+                },
+                {
+                    "message_ref": "msg:redacted:002",
+                    "received_at": "2026-06-16T09:45:00+00:00",
+                    "sender_label": "system notification",
+                    "subject_digest": "weekly digest",
+                    "snippet_digest": "redacted summary only",
+                    "priority_signals": [],
+                    "needs_reply": False,
+                    "has_attachment": False,
+                },
+            ],
+            "include_console_read_model": True,
+        },
+    )
+    payload = response.json()
+    projection_set = payload["read_only_projection"]
+    projection = projection_set["projections"][0]
+    summary = projection["summary"]
+    receipt = payload["receipt"]
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_read_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_mutation_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert projection_set["source_projection"] == "operator_supplied_redacted_projection"
+    assert projection["skill_id"] == "email.inbox.summarize"
+    assert summary["summary_type"] == "inbox_read_only"
+    assert summary["message_count"] == 2
+    assert summary["urgent_count"] == 1
+    assert summary["needs_reply_count"] == 1
+    assert "email_not_sent" in receipt["actions_not_taken"]
+    assert "connector_state_not_mutated" in receipt["actions_not_taken"]
+    assert payload["console_read_model"]["effect_boundary"]["external_send_allowed"] is False
+    assert "raw_private_connector_payload" not in serialized
+
+
+def test_gateway_personal_assistant_read_only_calendar_preview_summarizes_redacted_projection() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/read-only/calendar/preview",
+        json={
+            "request_id": "pa_request_gateway_read_only_calendar_001",
+            "submitted_at": "2026-06-16T11:00:00+00:00",
+            "generated_at": "2026-06-16T11:01:00+00:00",
+            "connector_refs": [_calendar_connector_ref()],
+            "events": [
+                {
+                    "event_ref": "event:redacted:001",
+                    "starts_at": "2026-06-16T14:00:00+00:00",
+                    "ends_at": "2026-06-16T14:30:00+00:00",
+                    "title_digest": "operator sync",
+                    "organizer_label": "internal",
+                    "location_label": "video",
+                    "attendee_count": 3,
+                    "conflict_ref": "conflict:redacted:001",
+                    "preparation_signals": ["agenda_missing"],
+                }
+            ],
+        },
+    )
+    payload = response.json()
+    projection = payload["read_only_projection"]["projections"][0]
+    summary = projection["summary"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert payload["effect_boundary"]["connector_mutation_allowed"] is False
+    assert projection["skill_id"] == "calendar.day.brief"
+    assert summary["summary_type"] == "calendar_day_read_only"
+    assert summary["event_count"] == 1
+    assert summary["conflict_count"] == 1
+    assert summary["needs_preparation_count"] == 1
+    assert "calendar_event_not_created" in receipt["actions_not_taken"]
+    assert "people_not_invited" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_read_only_preview_rejects_missing_connector_proof() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/read-only/inbox/preview",
+        json={
+            "request_id": "pa_request_gateway_read_only_missing_connector_001",
+            "submitted_at": "2026-06-16T10:00:00+00:00",
+            "messages": [
+                {
+                    "message_ref": "msg:redacted:001",
+                    "received_at": "2026-06-16T09:30:00+00:00",
+                    "sender_label": "known customer",
+                    "subject_digest": "urgent invoice follow-up",
+                    "snippet_digest": "redacted summary only",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_read_only_inbox_preview"
+
+
+def test_gateway_personal_assistant_read_only_preview_rejects_raw_projection_payload() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/read-only/calendar/preview",
+        json={
+            "request_id": "pa_request_gateway_read_only_raw_calendar_001",
+            "submitted_at": "2026-06-16T11:00:00+00:00",
+            "connector_refs": [_calendar_connector_ref()],
+            "events": [
+                {
+                    "event_ref": "event:redacted:001",
+                    "starts_at": "2026-06-16T14:00:00+00:00",
+                    "ends_at": "2026-06-16T14:30:00+00:00",
+                    "title_digest": "operator sync",
+                    "organizer_label": "internal",
+                    "attendee_count": 3,
+                    "raw_event_body": "private calendar notes",
+                }
+            ],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_event_body" in serialized
+    assert "private calendar notes" not in serialized
+    assert "calendar_day_brief_generated" not in serialized
+
+
 def test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -1152,6 +1311,16 @@ def _gmail_connector_ref() -> dict[str, object]:
         "proof_state": "Pass",
         "private_data_allowed": True,
         "scopes": ["gmail.readonly"],
+    }
+
+
+def _calendar_connector_ref() -> dict[str, object]:
+    return {
+        "connector_id": "connector:google-calendar:operator",
+        "connector_name": "google_calendar",
+        "proof_state": "Pass",
+        "private_data_allowed": True,
+        "scopes": ["calendar.readonly"],
     }
 
 

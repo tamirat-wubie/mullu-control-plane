@@ -87,6 +87,8 @@ from mcoi_runtime.personal_assistant import (
     prepare_memory_observation,
     render_personal_assistant_console_html,
     review_memory_observation_candidate,
+    summarize_calendar_day_read_only,
+    summarize_inbox_read_only,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -260,6 +262,69 @@ class GatewayPersonalAssistantPreviewRequest(BaseModel):
     connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
     thread_id: str = "thread-personal-assistant-gateway-preview"
     requested_from_id: str = "operator"
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantReadOnlyInboxMessage(BaseModel):
+    """Redacted inbox projection accepted by the gateway read-only boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    message_ref: str
+    received_at: str
+    sender_label: str
+    subject_digest: str
+    snippet_digest: str
+    priority_signals: list[str] = Field(default_factory=list)
+    needs_reply: bool = False
+    has_attachment: bool = False
+
+
+class GatewayPersonalAssistantReadOnlyCalendarEvent(BaseModel):
+    """Redacted calendar projection accepted by the gateway read-only boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_ref: str
+    starts_at: str
+    ends_at: str
+    title_digest: str
+    organizer_label: str
+    location_label: str = ""
+    attendee_count: int = 0
+    conflict_ref: str = ""
+    preparation_signals: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantReadOnlyInboxPreviewRequest(BaseModel):
+    """Preview-only inbox summary request over redacted operator evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Check my inbox today and summarize important items."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    messages: list[GatewayPersonalAssistantReadOnlyInboxMessage] = Field(default_factory=list)
+    thread_id: str = "thread-personal-assistant-read-only-inbox-preview"
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantReadOnlyCalendarPreviewRequest(BaseModel):
+    """Preview-only calendar brief request over redacted operator evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Summarize my calendar today."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    events: list[GatewayPersonalAssistantReadOnlyCalendarEvent] = Field(default_factory=list)
+    thread_id: str = "thread-personal-assistant-read-only-calendar-preview"
     include_console_read_model: bool = False
 
 
@@ -553,6 +618,96 @@ def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_c
     if bool(plan.get("requires_approval")):
         return "AwaitingEvidence"
     return "SolvedVerified"
+
+
+def _gateway_personal_assistant_read_only_projection_set(
+    *,
+    projection: Mapping[str, Any],
+    generated_at: str,
+) -> dict[str, Any]:
+    """Return a schema-ready no-effect read-only projection set."""
+    receipt = dict(projection["receipt"])
+    projection_id = "pa_read_only_projection_item_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-read-only-projection-item",
+            "request_id": projection["request_id"],
+            "skill_id": projection["skill_id"],
+            "receipt_id": receipt.get("receipt_id", ""),
+        }
+    )[:32]
+    projection_set_id = "pa_read_only_projection_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-read-only-projection-set",
+            "projection_id": projection_id,
+        }
+    )[:32]
+    connectors_used = list(receipt.get("connectors_used", ()))
+    summary = dict(projection["summary"])
+    return {
+        "projection_set_id": projection_set_id,
+        "generated_at": generated_at,
+        "governed": True,
+        "source_projection": "operator_supplied_redacted_projection",
+        "projection_count": 1,
+        "projection_ids": [projection_id],
+        "receipt_ids": [str(receipt.get("receipt_id", ""))],
+        "connectors_used": connectors_used,
+        "projections": [
+            {
+                "projection_id": projection_id,
+                "request_id": projection["request_id"],
+                "skill_id": projection["skill_id"],
+                "summary_type": summary["summary_type"],
+                "summary": summary,
+                "receipt": receipt,
+            }
+        ],
+        "effect_boundary": {
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "mailbox_read_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "memory_write_allowed": False,
+            "connector_mutation_allowed": False,
+            "deployment_mutation_allowed": False,
+            "public_readiness_claim_allowed": False,
+        },
+        "private_payload_policy": {
+            "raw_private_payload_serialized": False,
+            "secret_values_serialized": False,
+            "connector_payload_projection": "redacted_summary",
+            "body_projection": "redacted_summary",
+        },
+        "assurance": {
+            "assurance_id": "personal_assistant_read_only_projection_no_effect_assurance",
+            "outcome": "SolvedVerified",
+            "foundation_only": True,
+            "ready_for_live_execution": False,
+            "ready_for_customer_readiness_claim": False,
+            "authority_drift_detected": False,
+            "checked_controls": [
+                "operator_supplied_redacted_projection",
+                "no_live_connector_calls",
+                "no_mailbox_or_calendar_mutation",
+                "receipt_required",
+            ],
+            "blocking_reasons": [],
+            "next_action": "review_projection_receipt_before_any_effect_bearing_follow_up",
+        },
+        "metadata": {
+            "foundation_only": True,
+            "projection_contract": "read_only_redacted_evidence",
+            "runtime_boundary": "no_live_connector_calls",
+            "live_connector_execution_allowed": False,
+            "connector_mutation_allowed": False,
+            "external_send_allowed": False,
+            "system_of_record_write_allowed": False,
+            "connector_count": len(connectors_used),
+        },
+    }
 
 
 def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
@@ -2108,6 +2263,128 @@ def create_gateway_app(
                     },
                 ),
                 receipts=(envelope.receipt,),
+            )
+        return response
+
+    @app.post("/api/v1/personal-assistant/read-only/inbox/preview")
+    def preview_personal_assistant_read_only_inbox(
+        req: GatewayPersonalAssistantReadOnlyInboxPreviewRequest,
+    ):
+        try:
+            generated_at = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or generated_at
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = summarize_inbox_read_only(
+                intent,
+                tuple(_pydantic_payload(message) for message in req.messages),
+                generated_at=generated_at,
+            ).as_dict()
+            projection_set = _gateway_personal_assistant_read_only_projection_set(
+                projection=projection,
+                generated_at=generated_at,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant read-only inbox preview",
+                    "error_code": "invalid_personal_assistant_read_only_inbox_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        receipt = dict(projection["receipt"])
+        response: dict[str, Any] = {
+            "read_only_projection": projection_set,
+            "receipt": receipt,
+            "outcome": "SolvedVerified",
+            "governed": True,
+            "execution_allowed": False,
+            "effect_boundary": projection_set["effect_boundary"],
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=generated_at,
+                recent_requests=(
+                    {
+                        "request_id": projection["request_id"],
+                        "summary": req.user_request,
+                        "status": "read_only_preview",
+                    },
+                ),
+                receipts=(receipt,),
+            )
+        return response
+
+    @app.post("/api/v1/personal-assistant/read-only/calendar/preview")
+    def preview_personal_assistant_read_only_calendar(
+        req: GatewayPersonalAssistantReadOnlyCalendarPreviewRequest,
+    ):
+        try:
+            generated_at = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or generated_at
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = summarize_calendar_day_read_only(
+                intent,
+                tuple(_pydantic_payload(event) for event in req.events),
+                generated_at=generated_at,
+            ).as_dict()
+            projection_set = _gateway_personal_assistant_read_only_projection_set(
+                projection=projection,
+                generated_at=generated_at,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant read-only calendar preview",
+                    "error_code": "invalid_personal_assistant_read_only_calendar_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        receipt = dict(projection["receipt"])
+        response: dict[str, Any] = {
+            "read_only_projection": projection_set,
+            "receipt": receipt,
+            "outcome": "SolvedVerified",
+            "governed": True,
+            "execution_allowed": False,
+            "effect_boundary": projection_set["effect_boundary"],
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=generated_at,
+                recent_requests=(
+                    {
+                        "request_id": projection["request_id"],
+                        "summary": req.user_request,
+                        "status": "read_only_preview",
+                    },
+                ),
+                receipts=(receipt,),
             )
         return response
 

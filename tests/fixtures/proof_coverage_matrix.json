@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 279,
+      "proven": 281,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 439,
+    "route_count": 441,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2810,6 +2810,16 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/planning/schedule/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/read-only/calendar/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/read-only/inbox/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -5989,6 +5999,8 @@
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
         "/api/v1/personal-assistant/approval-proposals/preview",
+        "/api/v1/personal-assistant/read-only/inbox/preview",
+        "/api/v1/personal-assistant/read-only/calendar/preview",
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",
         "/api/v1/personal-assistant/memory-observations/review/preview",

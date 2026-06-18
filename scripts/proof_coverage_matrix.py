@@ -2284,6 +2284,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/personal-assistant/approval-queue",
                 "/api/v1/personal-assistant/approval-queue/preview",
                 "/api/v1/personal-assistant/approval-proposals/preview",
+                "/api/v1/personal-assistant/read-only/inbox/preview",
+                "/api/v1/personal-assistant/read-only/calendar/preview",
                 "/api/v1/personal-assistant/memory-observations",
                 "/api/v1/personal-assistant/memory-observations/preview",
                 "/api/v1/personal-assistant/memory-observations/review/preview",
