@@ -16,6 +16,7 @@ from mcoi_runtime.personal_assistant import (
     PersonalAssistantApprovalQueue,
     PersonalAssistantInvariantError,
     build_personal_assistant_console_read_model,
+    build_personal_assistant_readiness_demo,
     render_personal_assistant_console_html,
 )
 
@@ -54,10 +55,43 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert payload["lane_status"]["lanes"][-1]["route_refs"] == [
         "/api/v1/console/personal-assistant",
         "/api/v1/console/personal-assistant/view",
+        "/api/v1/console/personal-assistant/readiness",
     ]
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]
+
+
+def test_readiness_demo_answers_show_my_assistant_readiness_without_effects() -> None:
+    console_payload = build_personal_assistant_console_read_model(generated_at=GENERATED_AT)
+    demo = build_personal_assistant_readiness_demo(
+        generated_at=GENERATED_AT,
+        console_payload=console_payload,
+    )
+
+    assert demo["demo_id"] == "personal_assistant_readiness_read_only_demo"
+    assert demo["user_ask"] == "Show my assistant readiness."
+    assert demo["status"] == "foundation_read_only"
+    assert demo["solver_outcome"] == "SolvedVerified"
+    assert demo["inbox_projection_status"]["skill_id"] == "email.inbox.summarize"
+    assert demo["inbox_projection_status"]["live_connector_execution_allowed"] is False
+    assert demo["inbox_projection_status"]["mailbox_mutation_allowed"] is False
+    assert demo["calendar_projection_status"]["skill_id"] == "calendar.day.brief"
+    assert demo["calendar_projection_status"]["calendar_write_allowed"] is False
+    assert demo["available_skills"]["skill_count"] >= 13
+    assert demo["available_skills"]["read_only_skill_ids"] == [
+        "email.inbox.summarize",
+        "calendar.day.brief",
+    ]
+    assert "send_email" in demo["blocked_actions"]
+    assert demo["required_approvals"]["approval_before_send_required"] is True
+    assert demo["required_approvals"]["approval_is_execution"] is False
+    assert demo["receipts"]["receipt_count"] == console_payload["receipts"]["receipt_count"]
+    assert demo["receipts"]["viewer_binding"]["runtime_dispatch_allowed"] is False
+    assert demo["effect_boundary"]["execution_allowed"] is False
+    assert demo["effect_boundary"]["external_send_allowed"] is False
+    assert demo["effect_boundary"]["calendar_write_allowed"] is False
+    assert demo["private_payload_policy"]["raw_private_payload_serialized"] is False
 
 
 def test_console_composes_approval_records_receipts_and_escaped_html() -> None:

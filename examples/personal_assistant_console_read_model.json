@@ -1320,7 +1320,8 @@
         "state": "SolvedVerified",
         "route_refs": [
           "/api/v1/console/personal-assistant",
-          "/api/v1/console/personal-assistant/view"
+          "/api/v1/console/personal-assistant/view",
+          "/api/v1/console/personal-assistant/readiness"
         ],
         "schema_refs": [
           "schemas/personal_assistant_console_read_model.schema.json"

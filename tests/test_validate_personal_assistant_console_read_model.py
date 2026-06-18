@@ -64,6 +64,7 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
     assert lane_status["lanes"][-1]["route_refs"] == [
         "/api/v1/console/personal-assistant",
         "/api/v1/console/personal-assistant/view",
+        "/api/v1/console/personal-assistant/readiness",
     ]
 
 

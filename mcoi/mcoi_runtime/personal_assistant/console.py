@@ -252,6 +252,7 @@ _FOUNDATION_LANES = (
         "route_refs": [
             "/api/v1/console/personal-assistant",
             "/api/v1/console/personal-assistant/view",
+            "/api/v1/console/personal-assistant/readiness",
         ],
         "schema_refs": ["schemas/personal_assistant_console_read_model.schema.json"],
         "validator_refs": [
@@ -393,6 +394,107 @@ def build_personal_assistant_console_read_model(
         },
         "evidence_refs": ["examples/personal_assistant_skill_registry.json"],
         "receipt_refs": _receipt_refs(receipt_rows, approval_model, memory_model),
+    }
+
+
+def build_personal_assistant_readiness_demo(
+    *,
+    generated_at: str,
+    console_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the read-only "Show my assistant readiness" demo payload.
+
+    Input contract: callers pass a generation timestamp and may pass an already
+    built console payload.
+    Output contract: returns a compact read-only readiness projection.
+    Error contract: raises PersonalAssistantInvariantError for malformed
+    timestamps, private payload drift, or secret-like values.
+    """
+
+    timestamp = _require_text(generated_at, "generated_at")
+    if isinstance(console_payload, Mapping):
+        payload = dict(console_payload)
+    else:
+        payload = build_personal_assistant_console_read_model(generated_at=timestamp)
+    _scan_private_or_secret_payload(payload, path="console_payload")
+    skills = _mapping_value(payload, "skills")
+    receipts = _mapping_value(payload, "receipts")
+    approval_queue = _mapping_value(payload, "approval_queue")
+    effect_boundary = _mapping_value(payload, "effect_boundary")
+    skill_ids = list(skills.get("skill_ids", ())) if isinstance(skills.get("skill_ids"), list) else []
+    return {
+        "demo_id": "personal_assistant_readiness_read_only_demo",
+        "user_ask": "Show my assistant readiness.",
+        "status": "foundation_read_only",
+        "solver_outcome": payload.get("solver_outcome", "SolvedVerified"),
+        "generated_at": timestamp,
+        "governed": True,
+        "inbox_projection_status": {
+            "status": "projection_contract_ready",
+            "skill_id": "email.inbox.summarize",
+            "source_projection": "operator_supplied_redacted_projection",
+            "required_connector_proof": "gmail.readonly",
+            "live_connector_execution_allowed": False,
+            "mailbox_read_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+        },
+        "calendar_projection_status": {
+            "status": "projection_contract_ready",
+            "skill_id": "calendar.day.brief",
+            "source_projection": "operator_supplied_redacted_projection",
+            "required_connector_proof": "calendar.readonly",
+            "live_connector_execution_allowed": False,
+            "calendar_read_allowed": False,
+            "calendar_write_allowed": False,
+            "invite_allowed": False,
+        },
+        "available_skills": {
+            "skill_count": skills.get("skill_count", 0),
+            "skill_ids": skill_ids,
+            "read_only_skill_ids": [
+                skill_id
+                for skill_id in ("email.inbox.summarize", "calendar.day.brief")
+                if skill_id in skill_ids
+            ],
+        },
+        "blocked_actions": list(payload.get("blocked_actions", ())),
+        "required_approvals": {
+            "approval_count": approval_queue.get("approval_count", 0),
+            "state_counts": dict(approval_queue.get("state_counts", {}))
+            if isinstance(approval_queue.get("state_counts"), Mapping)
+            else {},
+            "records": list(approval_queue.get("records", ()))
+            if isinstance(approval_queue.get("records"), list)
+            else [],
+            "approval_before_send_required": True,
+            "approval_is_execution": False,
+        },
+        "receipts": {
+            "receipt_count": receipts.get("receipt_count", 0),
+            "items": list(receipts.get("items", ())) if isinstance(receipts.get("items"), list) else [],
+            "receipt_refs": (
+                list(payload.get("receipt_refs", ()))
+                if isinstance(payload.get("receipt_refs"), list)
+                else []
+            ),
+            "viewer_binding": dict(receipts.get("viewer_binding", {}))
+            if isinstance(receipts.get("viewer_binding"), Mapping)
+            else {},
+        },
+        "effect_boundary": {
+            **dict(effect_boundary),
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "calendar_write_allowed": False,
+        },
+        "private_payload_policy": dict(payload.get("private_payload_policy", {}))
+        if isinstance(payload.get("private_payload_policy"), Mapping)
+        else {},
+        "assurance": dict(payload.get("assurance", {})) if isinstance(payload.get("assurance"), Mapping) else {},
+        "next_action": "continue read-only demo hardening before approval-gated execution",
     }
 
 

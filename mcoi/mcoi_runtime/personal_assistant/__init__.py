@@ -17,6 +17,7 @@ from .contracts import (
 )
 from .console import (
     build_personal_assistant_console_read_model,
+    build_personal_assistant_readiness_demo,
     render_personal_assistant_console_html,
 )
 from .approval import (
@@ -143,6 +144,7 @@ __all__ = (
     "SkillRiskLevel",
     "build_clarification_requests",
     "build_personal_assistant_console_read_model",
+    "build_personal_assistant_readiness_demo",
     "build_personal_assistant_preview_plan",
     "draft_calendar_event",
     "draft_email_response",

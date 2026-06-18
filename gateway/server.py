@@ -76,6 +76,7 @@ from mcoi_runtime.personal_assistant import (
     build_clarification_requests,
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
+    build_personal_assistant_readiness_demo,
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
@@ -539,6 +540,67 @@ def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_c
     if bool(plan.get("requires_approval")):
         return "AwaitingEvidence"
     return "SolvedVerified"
+
+
+def _personal_assistant_approval_queue_v0_projection(
+    approval_record: Mapping[str, Any],
+    approval_queue_read_model: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the compact Approval Queue v0 operator projection."""
+
+    packet = approval_record.get("packet")
+    if not isinstance(packet, Mapping):
+        packet = {}
+    receipts = approval_record.get("receipts")
+    receipt = receipts[-1] if isinstance(receipts, list) and receipts and isinstance(receipts[-1], Mapping) else {}
+    proposed_actions = packet.get("proposed_actions")
+    actions = (
+        [dict(action) for action in proposed_actions if isinstance(action, Mapping)]
+        if isinstance(proposed_actions, list)
+        else []
+    )
+    state_counts = approval_queue_read_model.get("state_counts")
+    return {
+        "queue_version": "v0",
+        "approval_id": str(packet.get("approval_id", approval_record.get("approval_id", ""))),
+        "draft_actions": actions,
+        "draft_action_count": len(actions),
+        "risk_class": str(packet.get("risk_level", "")),
+        "requested_approval": {
+            "approval_state": str(packet.get("approval_state", "")),
+            "approver_ref": str(packet.get("approver_ref", "")),
+            "approval_scope": str(packet.get("approval_scope", "")),
+            "explicit_approval_required": packet.get("explicit_approval_required") is True,
+        },
+        "decision_controls": {
+            "approve": "record approved decision without executing the action",
+            "reject": "record rejected decision and keep execution blocked",
+            "revise": "record revision request and keep execution blocked",
+        },
+        "state_counts": dict(state_counts) if isinstance(state_counts, Mapping) else {},
+        "receipt": {
+            "receipt_id": str(receipt.get("receipt_id", "")),
+            "decision": str(receipt.get("decision", "")),
+            "actions_taken": (
+                list(receipt.get("actions_taken", ()))
+                if isinstance(receipt.get("actions_taken"), list)
+                else []
+            ),
+            "actions_not_taken": (
+                list(receipt.get("actions_not_taken", ()))
+                if isinstance(receipt.get("actions_not_taken"), list)
+                else []
+            ),
+        },
+        "effect_boundary": {
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+        },
+    }
 
 
 def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
@@ -2023,6 +2085,14 @@ def create_gateway_app(
             )
         )
 
+    @app.get("/api/v1/console/personal-assistant/readiness")
+    def personal_assistant_readiness_demo():
+        generated_at = _clock()
+        return build_personal_assistant_readiness_demo(
+            generated_at=generated_at,
+            console_payload=build_personal_assistant_console_read_model(generated_at=generated_at),
+        )
+
     @app.post("/api/v1/personal-assistant/requests/preview")
     def preview_personal_assistant_request(req: GatewayPersonalAssistantPreviewRequest):
         try:
@@ -2149,6 +2219,10 @@ def create_gateway_app(
         return {
             "approval": record.as_dict(),
             "approval_queue": queue.read_model(),
+            "approval_queue_v0": _personal_assistant_approval_queue_v0_projection(
+                record.as_dict(),
+                queue.read_model(),
+            ),
             "receipt": dict(record.latest_receipt),
             "outcome": str(record.latest_receipt.get("outcome", "AwaitingEvidence")),
             "effect_boundary": {

@@ -31,6 +31,7 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 from mcoi_runtime.personal_assistant.console import (
     build_personal_assistant_console_read_model,
+    build_personal_assistant_readiness_demo,
     render_personal_assistant_console_html,
 )
 
@@ -545,6 +546,18 @@ def console_personal_assistant_view():
 
     deps.metrics.inc("requests_governed")
     return HTMLResponse(render_personal_assistant_console_html(_personal_assistant_console_payload()))
+
+
+@router.get("/api/v1/console/personal-assistant/readiness")
+def console_personal_assistant_readiness():
+    """Read-only answer for: Show my assistant readiness."""
+
+    deps.metrics.inc("requests_governed")
+    generated_at = _utc_timestamp()
+    return build_personal_assistant_readiness_demo(
+        generated_at=generated_at,
+        console_payload=build_personal_assistant_console_read_model(generated_at=generated_at),
+    )
 
 
 def _personal_assistant_console_payload() -> dict[str, object]:

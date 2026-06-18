@@ -114,6 +114,33 @@ def test_gateway_personal_assistant_console_html_view_is_read_only() -> None:
     assert "False" in body
 
 
+def test_gateway_personal_assistant_readiness_demo_is_read_only() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/console/personal-assistant/readiness")
+    post_response = client.post("/api/v1/console/personal-assistant/readiness", json={})
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert payload["governed"] is True
+    assert payload["user_ask"] == "Show my assistant readiness."
+    assert payload["inbox_projection_status"]["status"] == "projection_contract_ready"
+    assert payload["inbox_projection_status"]["mailbox_read_allowed"] is False
+    assert payload["inbox_projection_status"]["mailbox_mutation_allowed"] is False
+    assert payload["calendar_projection_status"]["status"] == "projection_contract_ready"
+    assert payload["calendar_projection_status"]["calendar_write_allowed"] is False
+    assert payload["available_skills"]["skill_count"] >= 15
+    assert "email.inbox.summarize" in payload["available_skills"]["read_only_skill_ids"]
+    assert "calendar.day.brief" in payload["available_skills"]["read_only_skill_ids"]
+    assert "send_email" in payload["blocked_actions"]
+    assert payload["required_approvals"]["approval_before_send_required"] is True
+    assert payload["required_approvals"]["approval_is_execution"] is False
+    assert payload["receipts"]["viewer_binding"]["runtime_dispatch_allowed"] is False
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+
+
 def test_gateway_personal_assistant_preview_blocks_effects_and_emits_receipt() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -220,6 +247,7 @@ def test_gateway_personal_assistant_approval_queue_preview_records_pending_packe
     )
     payload = response.json()
     queue = payload["approval_queue"]
+    queue_v0 = payload["approval_queue_v0"]
 
     assert response.status_code == 200
     assert payload["governed"] is True
@@ -232,6 +260,15 @@ def test_gateway_personal_assistant_approval_queue_preview_records_pending_packe
     assert queue["approval_count"] == 1
     assert queue["state_counts"]["requested"] == 1
     assert queue["execution_allowed"] is False
+    assert queue_v0["queue_version"] == "v0"
+    assert queue_v0["draft_action_count"] == 1
+    assert queue_v0["draft_actions"][0]["action_id"] == "send_prepared_email_draft"
+    assert queue_v0["risk_class"] == "P4"
+    assert queue_v0["requested_approval"]["approval_state"] == "requested"
+    assert queue_v0["requested_approval"]["explicit_approval_required"] is True
+    assert sorted(queue_v0["decision_controls"]) == ["approve", "reject", "revise"]
+    assert queue_v0["receipt"]["decision"] == "approval_required"
+    assert "external_message_not_sent" in queue_v0["receipt"]["actions_not_taken"]
     assert payload["effect_boundary"]["approval_is_execution"] is False
     assert payload["effect_boundary"]["connector_mutation_allowed"] is False
 
@@ -261,6 +298,34 @@ def test_gateway_personal_assistant_approval_queue_approved_still_defers_executi
     assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
     assert payload["effect_boundary"]["execution_allowed"] is False
     assert payload["effect_boundary"]["external_send_allowed"] is False
+
+
+def test_gateway_personal_assistant_approval_queue_revise_projection_still_defers_execution() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = {
+        **_approval_preview_payload(),
+        "decision": "revised",
+        "reason_codes": ["draft_requires_revision"],
+        "decided_at": "2026-06-14T10:36:00+00:00",
+        "revision_request": "Revise the draft before any later approval.",
+    }
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-queue/preview",
+        json=request_payload,
+    )
+    payload = response.json()
+    queue_v0 = payload["approval_queue_v0"]
+
+    assert response.status_code == 200
+    assert payload["approval"]["packet"]["approval_state"] == "revised"
+    assert payload["receipt"]["decision"] == "deferred"
+    assert "approval_revision_requested" in payload["receipt"]["actions_taken"]
+    assert queue_v0["requested_approval"]["approval_state"] == "revised"
+    assert queue_v0["state_counts"]["revised"] == 1
+    assert queue_v0["receipt"]["decision"] == "deferred"
+    assert queue_v0["effect_boundary"]["execution_allowed"] is False
+    assert queue_v0["effect_boundary"]["external_send_allowed"] is False
 
 
 def test_gateway_personal_assistant_approval_queue_expired_blocks_execution() -> None:
