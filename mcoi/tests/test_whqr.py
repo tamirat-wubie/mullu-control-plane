@@ -436,6 +436,39 @@ def test_canonical_serialization_rejects_tampered_non_text_mapping_keys() -> Non
         root_metadata_tampered.canonical_json()
 
 
+def test_canonical_serialization_rejects_tampered_mutable_sequences() -> None:
+    logical_args_tampered = WHQRDocument(
+        root=LogicalExpr(
+            op=LogicalOp.AND,
+            args=(
+                WHQRNode(role=WHRole.WHAT, target="payment_request"),
+                WHQRNode(role=WHRole.WHY, target="invoice_due"),
+            ),
+        )
+    )
+    metadata_sequence_tampered = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="vendor_record",
+            metadata={"evidence_refs": ("evidence:vendor-1",)},
+        )
+    )
+
+    object.__setattr__(logical_args_tampered.root, "args", list(logical_args_tampered.root.args))
+    object.__setattr__(
+        metadata_sequence_tampered.root,
+        "metadata",
+        MappingProxyType({"evidence_refs": ["evidence:vendor-1"]}),
+    )
+
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        logical_args_tampered.canonical_json()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        logical_args_tampered.canonical_hash()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        metadata_sequence_tampered.canonical_json()
+
+
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")
