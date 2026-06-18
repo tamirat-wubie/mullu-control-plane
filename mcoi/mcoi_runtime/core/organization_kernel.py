@@ -6,7 +6,7 @@ Invariants:
   - Cases cannot open without organization, department, assigned departments, and owner role.
   - Plan steps cannot be admitted without checked preconditions, authority, capability certification, evidence, and approvals.
   - Case terminal closure requires all plan steps admitted plus effect reconciliation evidence.
-  - Learning admission can only bind after terminal closure exists.
+  - Learning admission can only bind after terminal closure exists and admission evidence is admitted.
 """
 
 from __future__ import annotations
@@ -49,6 +49,7 @@ from .request_tenant_guard import assert_owns
 
 
 LAUNCH_GATEWAY_PILOT_CASE_TYPE = "launch_gateway_pilot"
+LEARNING_ADMISSION_DECISION_REQUIREMENT = "learning_admission_decision"
 DEFAULT_ORGANIZATION_DEPARTMENT_IDS = (
     "executive",
     "product",
@@ -485,6 +486,10 @@ class OrganizationKernel:
             raise RuntimeCoreInvariantError("terminal closure unavailable")
         if closure.case_id != binding.case_id:
             raise RuntimeCoreInvariantError("learning binding case mismatch")
+        for evidence_ref in binding.evidence_refs:
+            evidence = self._case_evidence.get(evidence_ref)
+            if evidence is None or evidence.case_id != binding.case_id:
+                raise RuntimeCoreInvariantError("learning admission evidence unavailable")
         self._learning_bindings[binding.binding_id] = binding
         self._emit(binding.case_id, "learning_admission_bound", {"binding_id": binding.binding_id})
         return binding
@@ -1463,7 +1468,7 @@ def default_department_packs(org_id: str) -> tuple[DepartmentPack, ...]:
             owns=("objectives", "risk_tolerance", "closure_boundary"),
             allowed_case_types=case_types,
             allowed_capabilities=("executive.objective.freeze",),
-            required_evidence=("executive_objective",),
+            required_evidence=("executive_objective", LEARNING_ADMISSION_DECISION_REQUIREMENT),
             escalation_departments=("security_compliance",),
             metrics=("objective_change_count", "unresolved_risk_count"),
             failure_modes=("unowned_objective", "risk_tolerance_missing"),
@@ -1659,6 +1664,14 @@ def default_evidence_requirements(org_id: str) -> tuple[EvidenceRequirement, ...
             case_type=LAUNCH_GATEWAY_PILOT_CASE_TYPE,
             evidence_type="objective_record",
             description="Frozen objective and risk tolerance.",
+        ),
+        EvidenceRequirement(
+            requirement_id=LEARNING_ADMISSION_DECISION_REQUIREMENT,
+            org_id=org_id,
+            department_id="executive",
+            case_type=LAUNCH_GATEWAY_PILOT_CASE_TYPE,
+            evidence_type="learning_admission_decision",
+            description="Evidence that a closure-derived learning admission decision was reviewed.",
         ),
         EvidenceRequirement(
             requirement_id="product_launch_boundary",

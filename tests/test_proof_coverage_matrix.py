@@ -1948,6 +1948,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "case_proof_timeline_reports_open_case_without_closure" in witnesses
     assert "case_proof_timeline_reports_closure_certificate_and_learning" in witnesses
     assert "learning_binding_requires_admission_evidence_refs" in witnesses
+    assert "learning_binding_rejects_unadmitted_admission_evidence_refs" in witnesses
     assert "case_proof_explorer_reports_open_case_attention_without_mutation" in witnesses
     assert "case_proof_explorer_reports_closed_verified_case" in witnesses
     assert "case_proof_explorer_html_view_is_read_only_and_escaped" in witnesses
@@ -2121,7 +2122,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 72
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 73
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

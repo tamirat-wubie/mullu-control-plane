@@ -198,6 +198,7 @@ def _admit_all_pilot_evidence(client: TestClient) -> None:
         "security_public_claim_boundary",
         "security_approval",
         "finance_budget_check",
+        "learning_admission_decision",
     )
     for requirement_id in requirements:
         response = client.post(
@@ -1729,7 +1730,10 @@ def test_authority_map_view_is_read_only_escaped_and_chained(tmp_path: Path) -> 
     assert executive_chain["role"]["role_id"] == "executive.owner"
     assert executive_authority["authority_rule"]["rule_id"] == "authority.executive.objective.freeze"
     assert executive_authority["capability_ids"] == ["executive.objective.freeze"]
-    assert executive_authority["evidence_requirement_ids"] == ["executive_objective"]
+    assert executive_authority["evidence_requirement_ids"] == [
+        "executive_objective",
+        "learning_admission_decision",
+    ]
     assert executive_authority["escalation_path"][0]["department_id"] == "security_compliance"
     assert view.status_code == 200
     assert "text/html" in view.headers["content-type"]
@@ -1890,7 +1894,7 @@ def test_case_portfolio_reports_closed_verified_case(tmp_path: Path) -> None:
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
 
@@ -2058,7 +2062,7 @@ def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
     fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
@@ -2119,6 +2123,52 @@ def test_learning_binding_requires_admission_evidence_refs(tmp_path: Path) -> No
     assert fetched.json()["learning_bindings"] == []
 
 
+def test_learning_binding_rejects_unadmitted_admission_evidence_refs(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+            "evidence_refs": ["evidence:unadmitted_learning_decision"],
+        },
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 400
+    assert learning.json()["detail"]["error_code"] == "learning_admission_rejected"
+    assert fetched.json()["learning_bindings"] == []
+
+
 def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -2153,7 +2203,7 @@ def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: 
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
 
@@ -2174,10 +2224,10 @@ def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: 
     assert payload["closure_certificate"]["effect_reconciled"] is True
     assert payload["closure_certificate"]["learning_admitted"] is True
     assert payload["closure_certificate"]["learning_admissions"][0]["evidence_refs"] == [
-        "evidence:learning-admission-decision",
+        "evidence:learning_admission_decision",
     ]
     learning_events = [item for item in payload["proof_timeline"] if item["kind"] == "learning_admission"]
-    assert learning_events[0]["payload"]["evidence_refs"] == ["evidence:learning-admission-decision"]
+    assert learning_events[0]["payload"]["evidence_refs"] == ["evidence:learning_admission_decision"]
     assert {step["gate_status"] for step in payload["plan_step_proof"]} == {"allowed"}
     assert {
         "approval",
@@ -2224,7 +2274,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
     before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
@@ -2241,7 +2291,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     assert certificate.json()["closure_certificate"]["effect_reconciled"] is True
     assert certificate.json()["closure_certificate"]["learning_admitted"] is True
     assert certificate.json()["learning_admissions"][0]["evidence_refs"] == [
-        "evidence:learning-admission-decision",
+        "evidence:learning_admission_decision",
     ]
     assert certificate.json()["closure_gate_evidence"]["required_gate_evidence_refs"] == _closure_gate_evidence_refs()
     assert certificate.json()["closure_gate_evidence"]["closure_evidence_refs"] == _closure_gate_evidence_refs()
@@ -2253,7 +2303,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     assert "json certificate" in view.text
     assert "proof timeline" in view.text
     assert "proof explorer" in view.text
-    assert "evidence:learning-admission-decision" in view.text
+    assert "evidence:learning_admission_decision" in view.text
     assert "<script>alert('terminal')</script>" not in view.text
     assert "&lt;script&gt;alert(&#x27;terminal&#x27;)&lt;/script&gt;" in view.text
     assert before["events"] == after["events"]
@@ -2294,7 +2344,7 @@ def test_closed_case_reports_closure_packet_drift_after_gate_refresh(tmp_path: P
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
     newer_evidence = client.post(
@@ -2382,7 +2432,7 @@ def test_closure_packet_drift_accepts_remediation_routing(tmp_path: Path) -> Non
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
     newer_evidence = client.post(
@@ -3058,7 +3108,7 @@ def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> Non
             "closure_id": closure.json()["closure"]["closure_id"],
             "decision_id": "learning-admission:gateway-pilot",
             "admitted": True,
-            "evidence_refs": ["evidence:learning-admission-decision"],
+            "evidence_refs": ["evidence:learning_admission_decision"],
         },
     )
 
@@ -3075,7 +3125,7 @@ def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> Non
     assert payload["closure_panel"]["effect_reconciled"] is True
     assert payload["closure_panel"]["learning_admitted"] is True
     assert payload["closure_panel"]["learning_admissions"][0]["evidence_refs"] == [
-        "evidence:learning-admission-decision",
+        "evidence:learning_admission_decision",
     ]
     assert {item["label"]: item["status"] for item in payload["status_cards"]} == {
         "case_status": "closed",
