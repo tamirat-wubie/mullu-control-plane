@@ -1063,6 +1063,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_deterministic_fixture_parity_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_deterministic_fixture_parity_witness"
+      ]
+    },
+    {
       "action_id": "publish_world_substrate_replay_witness_contract",
       "status": "closed",
       "surfaces": [
@@ -1441,7 +1448,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 134,
+      "action_proof": 135,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 53,
@@ -1449,7 +1456,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 187,
+      "audit_chain": 188,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1457,21 +1464,21 @@
     "by_coverage_state": {
       "proven": 77,
       "unproven": 0,
-      "witnessed": 113
+      "witnessed": 114
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 133
+      "request_proof": 134
     },
-    "surface_count": 190
+    "surface_count": 191
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 190,
+      "strong": 191,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11556,6 +11563,64 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+        "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+        "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+        "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+        "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+        "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/verification_result.schema.json",
+        "schemas/kernel_proof.schema.json",
+        "schemas/sdlc_transition_receipt.schema.json",
+        "docs/96_maf_deterministic_fixture_parity_witness.md",
+        "docs/95_maf_subprocess_effect_boundary_witness.md",
+        "maf/rust/crates/maf-cli/src/main.rs"
+      ],
+      "notes": "MAF deterministic fixture parity witnesses bind static command descriptor digests for verify-receipt-chain, verify-kernel-proof, and emit-transition-receipt while keeping command behavior, CLI execution, subprocess execution, runtime binding, Rust execution, PyO3, connector calls, writes, raw fixture payload retention, runtime dispatch, terminal closure, and success claims denied.",
+      "representative_paths": [
+        "MafDeterministicFixtureParityWitness",
+        "validate_maf_deterministic_fixture_parity_witness",
+        "maf_deterministic_fixture_parity_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_deterministic_fixture_parity_witness_denies_execution": [
+          "maf_deterministic_fixture_parity_witness_passes",
+          "maf_deterministic_fixture_parity_rejects_authority_drift"
+        ],
+        "maf_deterministic_fixture_parity_witness_rejects_digest_and_summary_drift": [
+          "maf_deterministic_fixture_parity_rejects_digest_and_summary_drift"
+        ],
+        "maf_deterministic_fixture_parity_witness_rejects_fixture_drift": [
+          "maf_deterministic_fixture_parity_rejects_fixture_vector_drift"
+        ],
+        "maf_deterministic_fixture_parity_witness_requires_fixture_vectors": [
+          "maf_deterministic_fixture_parity_witness_passes",
+          "maf_deterministic_fixture_parity_rejects_scope_and_future_drift"
+        ],
+        "maf_deterministic_fixture_parity_witness_schema_valid": [
+          "maf_deterministic_fixture_parity_witness_passes"
+        ],
+        "maf_deterministic_fixture_parity_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_deterministic_fixture_parity"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_deterministic_fixture_parity_witness_schema_valid",
+        "maf_deterministic_fixture_parity_witness_denies_execution",
+        "maf_deterministic_fixture_parity_witness_requires_fixture_vectors",
+        "maf_deterministic_fixture_parity_witness_rejects_fixture_drift",
+        "maf_deterministic_fixture_parity_witness_rejects_digest_and_summary_drift",
+        "maf_deterministic_fixture_parity_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_deterministic_fixture_parity_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -15072,8 +15137,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1915,
-    "runtime_witness_count": 1915,
+    "exact_test_anchor_count": 1921,
+    "runtime_witness_count": 1921,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -24221,6 +24286,53 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "maf_subprocess_effect_boundary_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_witness_passes"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_witness_passes",
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_authority_drift"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_denies_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_witness_passes",
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_scope_and_future_drift"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_requires_fixture_vectors"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_fixture_vector_drift"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_rejects_fixture_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_digest_and_summary_drift"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_rejects_digest_and_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_sdlc_requirement_and_design_validate_for_maf_deterministic_fixture_parity"
+            ],
+            "witness": "maf_deterministic_fixture_parity_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_deterministic_fixture_parity_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

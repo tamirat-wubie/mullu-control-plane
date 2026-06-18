@@ -1,0 +1,181 @@
+{
+  "witness_id": "maf-deterministic-fixture-parity-witness-foundation-20260618",
+  "witness_version": "maf_deterministic_fixture_parity_witness.v1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "parity_scope": {
+    "source_family": "maf/rust",
+    "foundation_mode": true,
+    "parity_mode": "static_digest_fixture_parity",
+    "deterministic_fixture_parity_closed": true,
+    "runtime_binding_claimed": false,
+    "subprocess_execution_claimed": false,
+    "cli_execution_claimed": false,
+    "command_behavior_claimed": false,
+    "subprocess_effect_boundary_ref": "witness://maf/subprocess-effect-boundary",
+    "abi_cli_contract_ref": "witness://maf/abi-cli-contract",
+    "parity_witness_ref": "witness://maf/receipt-parity",
+    "uao_ref": "schema://universal-action-orchestration",
+    "life_meaning_judgment_ref": "schema://life-meaning-judgment",
+    "required_future_witnesses": [
+      "witness://maf/failure-receipt-path"
+    ]
+  },
+  "source_artifacts": [
+    {
+      "artifact_id": "maf_subprocess_effect_boundary_schema",
+      "artifact_ref": "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+      "artifact_digest_sha256": "843b3b62dbdfc048ef16ac958a6ab8062b4f20237184bf0456f0de5971d823e4",
+      "artifact_role": "subprocess_effect_boundary_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_subprocess_effect_boundary_example",
+      "artifact_ref": "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+      "artifact_digest_sha256": "3dc5badffe68246c2c274d55c7af6e28a783e7d58586f2a3ee6a845597c0e8cb",
+      "artifact_role": "subprocess_effect_boundary_example",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_subprocess_effect_boundary_validator",
+      "artifact_ref": "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+      "artifact_digest_sha256": "fa5e9822314fc6fef92365ec879e3c20a320bf5c35b7d71f3d09128ce97dcf96",
+      "artifact_role": "subprocess_effect_boundary_validator",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_subprocess_effect_boundary_tests",
+      "artifact_ref": "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+      "artifact_digest_sha256": "ee9acaf9193f8ed706c1f13f9f84a60aa4b0a70569535cc2751b073db72ffeb0",
+      "artifact_role": "subprocess_effect_boundary_tests",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "rust_cli_entry",
+      "artifact_ref": "maf/rust/crates/maf-cli/src/main.rs",
+      "artifact_digest_sha256": "c2b6c37eb6fddce6eacf47cc100b2b17d09eecf239cee29c832f89f659826a07",
+      "artifact_role": "cli_entry",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "worker_failure_receipt_schema",
+      "artifact_ref": "schemas/worker_failure_receipt.schema.json",
+      "artifact_digest_sha256": "359721d22f0e671de6fcc1bed49b228acbd1f454b6b694e6e07c5c977c0b23c5",
+      "artifact_role": "failure_receipt_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "verification_result_schema",
+      "artifact_ref": "schemas/verification_result.schema.json",
+      "artifact_digest_sha256": "4d7831f2f47f2809075c05de27ed444fe2a3b5c84a2eb2220ee7dceec724306f",
+      "artifact_role": "verification_result_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "sdlc_transition_receipt_schema",
+      "artifact_ref": "schemas/sdlc_transition_receipt.schema.json",
+      "artifact_digest_sha256": "31a21e0440cecfd087d0970325bf2e99ce5c57376387875adb5fd90e16af5e5b",
+      "artifact_role": "transition_receipt_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "kernel_proof_schema",
+      "artifact_ref": "schemas/kernel_proof.schema.json",
+      "artifact_digest_sha256": "71f8a5717e7d9d8ea9b3097993f4466b6448b8ab9867c3aa33d6a50aff3ae4f9",
+      "artifact_role": "kernel_proof_schema",
+      "execution_authority_denied": true
+    }
+  ],
+  "fixture_vectors": [
+    {
+      "fixture_id": "maf-static-fixture-verify-receipt-chain-v1",
+      "command_name": "verify-receipt-chain",
+      "fixture_material_ref": "fixture://maf/verify-receipt-chain/static-digest-v1",
+      "input_contract_ref": "schemas/worker_failure_receipt.schema.json",
+      "expected_output_contract_ref": "schemas/verification_result.schema.json",
+      "fixture_material_digest_sha256": "946c65dfa457c5b90a4e74a62b40eabb56771cf536117e27b81901b873004321",
+      "execution_allowed": false,
+      "raw_payload_retained": false,
+      "parity_status": "static_digest_parity",
+      "failure_path_blocked_by": "witness://maf/failure-receipt-path"
+    },
+    {
+      "fixture_id": "maf-static-fixture-verify-kernel-proof-v1",
+      "command_name": "verify-kernel-proof",
+      "fixture_material_ref": "fixture://maf/verify-kernel-proof/static-digest-v1",
+      "input_contract_ref": "schemas/kernel_proof.schema.json",
+      "expected_output_contract_ref": "schemas/verification_result.schema.json",
+      "fixture_material_digest_sha256": "6da4609b2a33943d1d4894378ca82d4a7cbeb8d65e1dd70ca04ce8bfd79de6e8",
+      "execution_allowed": false,
+      "raw_payload_retained": false,
+      "parity_status": "static_digest_parity",
+      "failure_path_blocked_by": "witness://maf/failure-receipt-path"
+    },
+    {
+      "fixture_id": "maf-static-fixture-emit-transition-receipt-v1",
+      "command_name": "emit-transition-receipt",
+      "fixture_material_ref": "fixture://maf/emit-transition-receipt/static-digest-v1",
+      "input_contract_ref": "schemas/sdlc_transition_receipt.schema.json",
+      "expected_output_contract_ref": "schemas/worker_failure_receipt.schema.json",
+      "fixture_material_digest_sha256": "1b75ed6a9488f6777a1d999c7e3786714ed61988b3515ea92ecdaef19de93d01",
+      "execution_allowed": false,
+      "raw_payload_retained": false,
+      "parity_status": "static_digest_parity",
+      "failure_path_blocked_by": "witness://maf/failure-receipt-path"
+    }
+  ],
+  "authority_boundary": {
+    "static_fixture_read_allowed": true,
+    "cli_execution_allowed": false,
+    "subprocess_execution_allowed": false,
+    "runtime_binding_allowed": false,
+    "pyo3_binding_allowed": false,
+    "rust_crate_execution_allowed": false,
+    "python_imports_rust_allowed": false,
+    "shell_invocation_allowed": false,
+    "child_process_spawn_allowed": false,
+    "network_call_allowed": false,
+    "secret_access_allowed": false,
+    "raw_fixture_payload_retention_allowed": false,
+    "filesystem_write_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "canonical_state_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_deterministic_fixture_parity_witness_schema": "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+    "maf_deterministic_fixture_parity_witness_example": "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+    "maf_deterministic_fixture_parity_witness_validator": "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+    "maf_deterministic_fixture_parity_witness_tests": "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+    "maf_deterministic_fixture_parity_witness_doc": "docs/96_maf_deterministic_fixture_parity_witness.md",
+    "maf_subprocess_effect_boundary_witness_schema": "schemas/maf_subprocess_effect_boundary_witness.schema.json",
+    "maf_subprocess_effect_boundary_witness_example": "examples/maf_subprocess_effect_boundary_witness.foundation.json",
+    "maf_subprocess_effect_boundary_witness_validator": "scripts/validate_maf_subprocess_effect_boundary_witness.py",
+    "maf_subprocess_effect_boundary_witness_tests": "tests/test_validate_maf_subprocess_effect_boundary_witness.py",
+    "rust_cli_entry": "maf/rust/crates/maf-cli/src/main.rs",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "verification_result_schema": "schemas/verification_result.schema.json",
+    "sdlc_transition_receipt_schema": "schemas/sdlc_transition_receipt.schema.json",
+    "kernel_proof_schema": "schemas/kernel_proof.schema.json"
+  },
+  "contract_summary": {
+    "source_artifact_count": 9,
+    "fixture_vector_count": 3,
+    "authority_denial_count": 16,
+    "open_gap_count": 1,
+    "evidence_ref_count": 8
+  },
+  "evidence_refs": [
+    "witness://maf/subprocess-effect-boundary",
+    "witness://maf/deterministic-fixture-parity",
+    "gap://maf/failure-receipt-path-open",
+    "uao://maf/deterministic-fixture-parity/static-read-only",
+    "life-meaning://maf/deterministic-fixture-parity/no-runtime-effect",
+    "schema://worker-failure-receipt",
+    "schema://verification-result",
+    "schema://kernel-proof"
+  ]
+}

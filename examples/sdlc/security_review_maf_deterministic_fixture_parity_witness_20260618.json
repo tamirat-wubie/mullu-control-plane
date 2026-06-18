@@ -1,0 +1,102 @@
+{
+  "security_review_id": "SEC-maf-deterministic-fixture-parity-witness-20260618",
+  "change_id": "maf-deterministic-fixture-parity-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "network",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF deterministic fixture parity evidence can accidentally become runtime execution authority if static digest parity is conflated with CLI execution, subprocess execution, command behavior, raw fixture payload retention, secret-bearing payloads, filesystem writes, or terminal closure. The mitigation is a read-only witness and validator that reject authority drift, parity scope drift, fixture descriptor drift, digest drift, future witness drift, secret markers, receipt ref drift, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "CLI execution, subprocess execution, runtime binding, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_authority_drift"
+    },
+    {
+      "category": "network",
+      "check": "SSRF check confirms network calls remain denied while fixture descriptors are static digest refs",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms raw fixture payload retention and secret-bearing execution authority remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms parity mode remains static_digest_fixture_parity and closed fixture parity does not imply runtime execution",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_scope_and_future_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the witness schema, example, validator, tests, MAF subprocess witness, MAF CLI scaffold, UAO schema, LifeMeaningJudgment schema, WorkerFailureReceipt schema, VerificationResult schema, transition receipt schema, and kernel proof schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_receipt_ref_and_evidence_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms source artifact digests, fixture descriptor digests, authority denial counts, and open gap counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_deterministic_fixture_parity_witness.py::test_maf_deterministic_fixture_parity_rejects_digest_and_summary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-fixture-parity-execution-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks CLI execution, subprocess execution, shell invocation, child process spawn, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+        "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+        "tests/test_validate_maf_deterministic_fixture_parity_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-fixture-payload-secret-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness denies raw fixture payload retention, secret access, filesystem writes, and network effects.",
+      "evidence_refs": [
+        "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+        "tests/test_validate_maf_deterministic_fixture_parity_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafDeterministicFixtureParityWitness validation read-only and deterministic",
+    "require canonical source digests for subprocess boundary and MAF CLI artifacts",
+    "require canonical fixture descriptor digests for verify-receipt-chain, verify-kernel-proof, and emit-transition-receipt",
+    "deny CLI execution, subprocess execution, shell invocation, child process spawn, network, secrets, raw fixture payload retention, writes, dispatch, terminal closure, and success claims",
+    "reject future witness drift, fixture descriptor drift, secret markers, and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+    "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+    "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+    "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+    "receipt://sdlc/maf-deterministic-fixture-parity-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-deterministic-fixture-parity-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-deterministic-fixture-parity-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-deterministic-fixture-parity-witness/security"
+}
