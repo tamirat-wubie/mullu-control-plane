@@ -192,6 +192,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 162. SCCML trace adapter witnesses are public contracts when they bind instruction-trace digest refs, pre-state and post-state hash refs, proof digest refs, unsupported-operation gap refs, KernelProof refs, TraceEntry refs, UAO refs, LifeMeaningJudgment refs, integrity guards, and authority-denial flags before any SCCML execution-chain trace can become governance proof while denying live kernel execution, subprocess execution, external repository reads, instruction replay, state mutation, proof commitment, governance proof acceptance, unsupported-operation silence, connector calls, external writes, filesystem writes, raw trace retention, raw state retention, raw secret retention, terminal closure, and success claims.
 163. Chaos rehearsal execution reports are public contracts when they bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime resilience or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live chaos execution, staging targets, production targets, runtime disruption, network fault injection, service restarts, data corruption, event-chain mutation, connector calls, secret access, filesystem writes, rollback execution, raw runtime log retention, raw secret retention, terminal closure, and success claims.
 164. Universal symbol kernel records are public contracts when they bind platform objects into symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority-denial, and evidence-reference fields while denying connector access, filesystem writes, runtime dispatch, state mutation, terminal closure, product readiness, customer readiness, public SaaS readiness, and success claims.
+165. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
 ## Verification
 
 Run:
@@ -203,7 +204,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 347 schemas
+protocol manifest ok: 348 schemas
 ```
 
 STATUS:
