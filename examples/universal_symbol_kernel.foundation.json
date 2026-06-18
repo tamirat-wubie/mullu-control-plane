@@ -185,7 +185,7 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 56
+    "evidence_ref_count": 59
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
@@ -196,6 +196,7 @@
     "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
     "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
@@ -210,6 +211,7 @@
     "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
     "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
@@ -237,6 +239,7 @@
     "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",

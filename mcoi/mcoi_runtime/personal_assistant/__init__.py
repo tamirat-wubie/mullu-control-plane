@@ -92,7 +92,9 @@ from .skill_registry import (
     load_skill_registry,
 )
 from .teamops import (
+    TEAMOPS_GMAIL_LIVE_PROBE_READINESS_ROUTE,
     TeamOpsSharedInboxProjection,
+    build_teamops_gmail_live_probe_readiness,
     plan_teamops_shared_inbox,
 )
 from .whqr_bridge import (
@@ -133,6 +135,7 @@ __all__ = (
     "ResearchSourceCompareProjection",
     "TaskDraftInput",
     "TeamOpsSharedInboxProjection",
+    "TEAMOPS_GMAIL_LIVE_PROBE_READINESS_ROUTE",
     "ApprovalScope",
     "ConnectorProofRef",
     "GovernedIntent",
@@ -149,6 +152,7 @@ __all__ = (
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",
+    "build_teamops_gmail_live_probe_readiness",
     "interpret_user_request",
     "load_default_skill_registry",
     "load_skill_registry",

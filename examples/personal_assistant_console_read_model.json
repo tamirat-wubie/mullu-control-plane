@@ -1199,7 +1199,8 @@
         "stage": "runtime_preview",
         "state": "SolvedVerified",
         "route_refs": [
-          "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"
+          "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+          "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness"
         ],
         "schema_refs": [
           "schemas/personal_assistant_teamops_projection.schema.json"

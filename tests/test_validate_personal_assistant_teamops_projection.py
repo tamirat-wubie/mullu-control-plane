@@ -22,6 +22,7 @@ from scripts.validate_personal_assistant_teamops_projection import (
     build_runtime_teamops_projection_evidence,
     validate_personal_assistant_teamops_projection,
 )
+from mcoi_runtime.personal_assistant import build_teamops_gmail_live_probe_readiness
 
 
 def test_personal_assistant_teamops_projection_fixture_validates() -> None:
@@ -53,6 +54,54 @@ def test_runtime_teamops_projection_blocks_effect_boundaries() -> None:
     assert ready_gate["external_provider_call_performed"] is False
     assert "gmail_not_called" in ready_receipt["actions_not_taken"]
     assert "shared_inbox_not_read" in ready_receipt["actions_not_taken"]
+
+
+def test_teamops_gmail_live_probe_readiness_blocks_without_oauth_evidence() -> None:
+    receipt = build_teamops_gmail_live_probe_readiness(
+        generated_at="2026-06-18T12:00:00+00:00",
+        environment={},
+    )
+
+    assert receipt["status"] == "blocked"
+    assert receipt["solver_outcome"] == "AwaitingEvidence"
+    assert receipt["effect_boundary"]["readiness_probe_performed"] is True
+    assert receipt["effect_boundary"]["external_provider_call_performed"] is False
+    assert receipt["effect_boundary"]["mailbox_read_performed"] is False
+    assert receipt["effect_boundary"]["provider_mutation_performed"] is False
+    assert "read_full_mailbox" in receipt["blocked_actions"]
+    assert "gmail_provider_not_called" in receipt["actions_not_taken"]
+
+
+def test_teamops_gmail_live_probe_readiness_accepts_presence_only_ready_env() -> None:
+    receipt = build_teamops_gmail_live_probe_readiness(
+        generated_at="2026-06-18T12:00:00+00:00",
+        environment={
+            "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER": "google",
+            "EMAIL_CALENDAR_CONNECTOR_ID": "gmail",
+            "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY": "read_only_search",
+            "GMAIL_SCOPE_ID": "gmail.readonly",
+            "GMAIL_OAUTH_CLIENT_ID": "client-id-secret-shaped-value",
+            "GMAIL_OAUTH_CLIENT_SECRET": "client_secret=must-not-leak",
+            "GMAIL_REFRESH_TOKEN": "refresh_token=must-not-leak",
+            "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF": "witness:gmail-consent",
+            "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF": "witness:gmail-client",
+            "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF": "receipt:gmail-scope",
+            "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF": "receipt:gmail-refresh-storage",
+            "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF": "receipt:gmail-revocation-recovery",
+        },
+    )
+    serialized = json.dumps(receipt, sort_keys=True)
+
+    assert receipt["status"] == "passed"
+    assert receipt["solver_outcome"] == "SolvedVerified"
+    assert receipt["connector_readiness"]["ready_for_live_probe"] is True
+    assert receipt["durable_oauth_presence"]["all_present"] is True
+    assert receipt["mailbox_access_boundary"]["least_privilege_satisfied"] is True
+    assert receipt["mailbox_access_boundary"]["mailbox_read_allowed"] is False
+    assert receipt["effect_boundary"]["external_provider_call_performed"] is False
+    assert "client_secret=must-not-leak" not in serialized
+    assert "refresh_token=must-not-leak" not in serialized
+    assert "client-id-secret-shaped-value" not in serialized
 
 
 def test_teamops_projection_validator_rejects_live_execution_authority(tmp_path: Path) -> None:

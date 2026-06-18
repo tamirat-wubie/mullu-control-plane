@@ -357,7 +357,7 @@
           "route_binding_is_bound": true
         }
       ],
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family already has selected component ownership, but ownership does not grant execution authority.",
       "ownership_is_not_execution_authority": true,
       "promotion_blockers": [],
@@ -2496,7 +2496,7 @@
           "route_binding_is_bound": true
         }
       ],
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family already has selected component ownership, but ownership does not grant execution authority.",
       "ownership_is_not_execution_authority": true,
       "promotion_blockers": [],
@@ -4020,7 +4020,7 @@
     "router_inventory": "examples/component_router_inventory.foundation.json"
   },
   "summary": {
-    "declared_route_count": 438,
+    "declared_route_count": 440,
     "generic_connector_boundary_count": 1,
     "live_action_enabled_count": 0,
     "platform_family_classified_count": 66,

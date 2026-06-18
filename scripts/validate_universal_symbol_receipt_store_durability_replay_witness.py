@@ -1,20 +1,21 @@
-"""Validate the Universal Symbol receipt-store write-path idempotency witness.
+"""Validate the Universal Symbol receipt-store durability replay witness.
 
-Purpose: prove UniversalSymbol receipt-store write-path idempotency remains
-blocked until deterministic key derivation, canonical input, tenant/actor
-binding, write-path binding, payload digest binding, replay collision checks,
-duplicate-effect denial, and audit receipt evidence exist.
+Purpose: prove UniversalSymbol receipt-store durability replay remains blocked
+until ordered replay, append sequence, digest chain, idempotency reuse,
+crash-window, durability receipt, rollback handoff, and audit receipt evidence
+exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: write-path idempotency schema/example, write-path witness, path
-custody witness, path confinement witness, writer registration witness, append
-audit witness, receipt-store authority witness, docs, and tests.
+Dependencies: durability replay schema/example, write-path idempotency witness,
+write-path witness, path custody witness, path confinement witness, writer
+registration witness, append audit witness, receipt-store authority witness,
+docs, and tests.
 Invariants:
   - The witness is not append authority.
-  - Idempotency binding, write-path registration, path custody registration,
-    receipt append, duplicate append, raw payload storage, raw secret storage,
+  - Durability replay binding, write-path registration, receipt append, replay
+    execution, duplicate effect, raw payload storage, raw secret storage,
     runtime dispatch, connector calls, mutation, and terminal closure remain
     denied.
-  - Unknown hard preconditions block idempotency and log Delta_reject refs.
+  - Unknown hard preconditions block durability replay and log Delta_reject refs.
 """
 
 from __future__ import annotations
@@ -32,18 +33,18 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCHEMA_PATH = (
-    REPO_ROOT / "schemas" / "universal_symbol_receipt_store_write_path_idempotency_witness.schema.json"
+    REPO_ROOT / "schemas" / "universal_symbol_receipt_store_durability_replay_witness.schema.json"
 )
 DEFAULT_WITNESS_PATH = (
-    REPO_ROOT / "examples" / "universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json"
+    REPO_ROOT / "examples" / "universal_symbol_receipt_store_durability_replay_witness.foundation.json"
 )
 
 AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
-    "receipt_store_write_path_idempotency_bound",
+    "receipt_store_durability_replay_bound",
     "receipt_store_write_path_registered",
-    "receipt_store_path_custody_registered",
     "receipt_store_append_performed",
-    "duplicate_append_allowed",
+    "receipt_store_replay_performed",
+    "duplicate_effect_allowed",
     "raw_payload_stored",
     "raw_secret_stored",
     "runtime_dispatch_performed",
@@ -53,50 +54,52 @@ AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
 )
 
 REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
-    "requirement://deterministic-key-derivation",
-    "requirement://canonical-input",
-    "requirement://tenant-actor-binding",
-    "requirement://write-path-binding",
-    "requirement://payload-digest-binding",
-    "requirement://replay-collision-check",
-    "requirement://duplicate-effect-denial",
+    "requirement://ordered-replay",
+    "requirement://append-sequence",
+    "requirement://digest-chain",
+    "requirement://idempotency-key-reuse",
+    "requirement://crash-window",
+    "requirement://durability-receipt",
+    "requirement://rollback-handoff",
     "requirement://audit-receipt",
 )
 
-IDEMPOTENCY_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
-    "deterministic_key_derivation_required",
-    "canonical_input_required",
-    "tenant_actor_binding_required",
-    "write_path_binding_required",
-    "payload_digest_binding_required",
-    "replay_collision_check_required",
-    "duplicate_effect_denial_required",
+DURABILITY_REPLAY_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
+    "ordered_replay_required",
+    "append_sequence_required",
+    "digest_chain_required",
+    "idempotency_key_reuse_required",
+    "crash_window_required",
+    "durability_receipt_required",
+    "rollback_handoff_required",
     "audit_receipt_required",
 )
 
 REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "missing_key_derivation_blocks_idempotency",
-    "missing_canonical_input_blocks_idempotency",
-    "missing_digest_binding_blocks_idempotency",
-    "missing_replay_collision_check_blocks_idempotency",
-    "unknown_hard_constraint_blocks_idempotency",
+    "missing_ordered_replay_blocks_durability",
+    "missing_digest_chain_blocks_durability",
+    "missing_idempotency_reuse_blocks_durability",
+    "missing_crash_window_blocks_durability",
+    "unknown_hard_constraint_blocks_durability",
     "failed_precondition_logs_delta_reject",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
-    "deterministic_key_derivation_missing",
-    "canonical_input_missing",
-    "tenant_actor_binding_missing",
-    "write_path_binding_missing",
-    "payload_digest_binding_missing",
-    "replay_collision_check_missing",
-    "duplicate_effect_denial_missing",
+    "ordered_replay_missing",
+    "append_sequence_missing",
+    "digest_chain_missing",
+    "idempotency_reuse_missing",
+    "crash_window_missing",
+    "durability_receipt_missing",
+    "rollback_handoff_missing",
     "audit_receipt_missing",
-    "receipt_store_write_path_idempotency_forbidden",
+    "receipt_store_durability_replay_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -105,8 +108,6 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
-    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
     "schemas/universal_symbol_append_audit_witness.schema.json",
@@ -118,7 +119,6 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
-    "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
@@ -126,8 +126,8 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
 )
 
 
-class UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError(ValueError):
-    """Raised when the write-path idempotency witness violates Foundation Mode."""
+class UniversalSymbolReceiptStoreDurabilityReplayWitnessError(ValueError):
+    """Raised when the durability replay witness violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -136,19 +136,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError(f"missing file: {path}") from exc
+        raise UniversalSymbolReceiptStoreDurabilityReplayWitnessError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolReceiptStoreDurabilityReplayWitnessError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError(f"expected object: {path}")
+        raise UniversalSymbolReceiptStoreDurabilityReplayWitnessError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_receipt_store_write_path_idempotency_witness(
+def validate_universal_symbol_receipt_store_durability_replay_witness(
     witness_path: Path = DEFAULT_WITNESS_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied append authority, and evidence refs."""
+    """Validate schema shape, denied replay authority, and evidence refs."""
 
     schema = load_json_object(schema_path)
     witness = load_json_object(witness_path)
@@ -157,9 +157,9 @@ def validate_universal_symbol_receipt_store_write_path_idempotency_witness(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(witness, schema, errors)
     _validate_witness_boundary(witness, errors)
-    _validate_idempotency_requirements(witness, errors)
+    _validate_durability_replay_requirements(witness, errors)
     _validate_authority_denials(witness, errors)
-    _validate_idempotency_constraints(witness, errors)
+    _validate_durability_replay_constraints(witness, errors)
     _validate_rejection_policy(witness, errors)
     _validate_blocked_reasons(witness, errors)
     _validate_contract_summary(witness, errors)
@@ -172,10 +172,10 @@ def validate_universal_symbol_receipt_store_write_path_idempotency_witness(
         "valid": not errors,
         "witness_id": witness.get("witness_id", ""),
         "solver_outcome": witness.get("solver_outcome", ""),
-        "idempotency_decision": witness.get("idempotency_decision", ""),
+        "durability_replay_decision": witness.get("durability_replay_decision", ""),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "idempotency_requirement_count": len(witness.get("idempotency_requirements", []))
-        if isinstance(witness.get("idempotency_requirements"), list)
+        "durability_replay_requirement_count": len(witness.get("durability_replay_requirements", []))
+        if isinstance(witness.get("durability_replay_requirements"), list)
         else 0,
         "evidence_ref_count": len(witness.get("evidence_refs", []))
         if isinstance(witness.get("evidence_refs"), list)
@@ -183,12 +183,12 @@ def validate_universal_symbol_receipt_store_write_path_idempotency_witness(
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError("; ".join(errors))
+        raise UniversalSymbolReceiptStoreDurabilityReplayWitnessError("; ".join(errors))
     return report
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-write-path-idempotency-witness:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-witness:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
@@ -214,32 +214,32 @@ def _validate_witness_boundary(witness: Mapping[str, Any], errors: list[str]) ->
     if witness.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
     if (
-        witness.get("idempotency_decision")
-        != "blocked_pending_key_derivation_digest_replay_and_collision_evidence"
+        witness.get("durability_replay_decision")
+        != "blocked_pending_ordered_replay_digest_crash_window_and_audit_evidence"
     ):
-        errors.append("idempotency_decision must remain blocked")
-    if witness.get("idempotency_witness_is_not_append_authority") is not True:
-        errors.append("idempotency witness must not grant append authority")
+        errors.append("durability_replay_decision must remain blocked")
+    if witness.get("durability_replay_witness_is_not_append_authority") is not True:
+        errors.append("durability replay witness must not grant append authority")
 
 
-def _validate_idempotency_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
-    requirements = witness.get("idempotency_requirements")
+def _validate_durability_replay_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
+    requirements = witness.get("durability_replay_requirements")
     if not isinstance(requirements, list) or not requirements:
-        errors.append("idempotency_requirements must be non-empty")
+        errors.append("durability_replay_requirements must be non-empty")
         return
     requirement_ids: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("idempotency requirement entries must be objects")
+            errors.append("durability replay requirement entries must be objects")
             continue
         requirement_ids.append(str(requirement.get("requirement_id")))
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('requirement_id')}: proof_state must block idempotency")
-        if requirement.get("current_decision") != "idempotency_blocked":
-            errors.append(f"{requirement.get('requirement_id')}: current_decision must be idempotency_blocked")
+            errors.append(f"{requirement.get('requirement_id')}: proof_state must block durability replay")
+        if requirement.get("current_decision") != "durability_replay_blocked":
+            errors.append(f"{requirement.get('requirement_id')}: current_decision must be durability_replay_blocked")
         if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
             errors.append(f"{requirement.get('requirement_id')}: delta_reject_ref must be logged")
-    _require_members("idempotency_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
+    _require_members("durability_replay_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
 
 
 def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -249,11 +249,11 @@ def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -
             errors.append(f"authority_denials.{field_name} must remain false")
 
 
-def _validate_idempotency_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
-    constraints = _mapping(witness.get("idempotency_constraints"))
-    for field_name in IDEMPOTENCY_CONSTRAINT_TRUE_FIELDS:
+def _validate_durability_replay_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
+    constraints = _mapping(witness.get("durability_replay_constraints"))
+    for field_name in DURABILITY_REPLAY_CONSTRAINT_TRUE_FIELDS:
         if constraints.get(field_name) is not True:
-            errors.append(f"idempotency_constraints.{field_name} must remain true")
+            errors.append(f"durability_replay_constraints.{field_name} must remain true")
 
 
 def _validate_rejection_policy(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -274,9 +274,9 @@ def _validate_blocked_reasons(witness: Mapping[str, Any], errors: list[str]) -> 
 def _validate_contract_summary(witness: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(witness.get("contract_summary"))
     expected_values = {
-        "idempotency_requirement_count": _list_len(witness.get("idempotency_requirements")),
+        "durability_replay_requirement_count": _list_len(witness.get("durability_replay_requirements")),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "idempotency_constraint_count": len(IDEMPOTENCY_CONSTRAINT_TRUE_FIELDS),
+        "durability_replay_constraint_count": len(DURABILITY_REPLAY_CONSTRAINT_TRUE_FIELDS),
         "rejection_check_count": len(REJECTION_POLICY_TRUE_FIELDS),
         "blocked_reason_count": _list_len(witness.get("blocked_reasons")),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")),
@@ -331,7 +331,7 @@ def _repo_relative(path: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate the UniversalSymbol receipt-store write-path idempotency witness."
+        description="Validate the UniversalSymbol receipt-store durability replay witness."
     )
     parser.add_argument("--witness", type=Path, default=DEFAULT_WITNESS_PATH)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
@@ -339,18 +339,18 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        report = validate_universal_symbol_receipt_store_write_path_idempotency_witness(args.witness, args.schema)
-    except UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError as exc:
+        report = validate_universal_symbol_receipt_store_durability_replay_witness(args.witness, args.schema)
+    except UniversalSymbolReceiptStoreDurabilityReplayWitnessError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": [str(exc)]}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_receipt_store_write_path_idempotency_witness: {exc}")
+            print(f"[FAIL] universal_symbol_receipt_store_durability_replay_witness: {exc}")
             print("STATUS: failed")
         return 1
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_receipt_store_write_path_idempotency_witness")
+        print("[PASS] universal_symbol_receipt_store_durability_replay_witness")
         print("STATUS: passed")
     return 0
 

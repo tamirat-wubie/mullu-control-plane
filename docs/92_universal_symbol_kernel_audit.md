@@ -83,6 +83,12 @@ The write-path idempotency witness pass closed the next duplicate-effect gap:
 2. Idempotency needed explicit deterministic key derivation, canonical input, tenant-actor binding, write-path binding, payload digest binding, replay collision check, duplicate-effect denial, and audit receipt requirements.
 3. Idempotency needed to remain non-authorizing until key, input, binding, digest, collision, duplicate-denial, and audit evidence exists.
 
+The durability replay witness pass closed the next replay-boundary gap:
+
+1. Append audit, receipt-store authority, and write-path evidence named durability replay as a blocker, but no durability replay witness contract existed.
+2. Durability replay needed explicit ordered replay, append sequence, digest chain, idempotency key reuse, crash-window, durability receipt, rollback handoff, and audit receipt requirements.
+3. Durability replay needed to remain non-authorizing until ordered replay, sequence, digest, idempotency reuse, crash-window, receipt, rollback, and audit evidence exists.
+
 The writer-registration witness pass closed the next authority gap:
 
 1. Append audit and receipt-store authority named writer registration as a blocker, but no writer-registration witness contract existed.
@@ -138,6 +144,7 @@ The write-path witness pass closed the next receipt-store path gap:
 | Receipt-store writer duty scope witness | Added blocked writer-duty-scope witness schema, foundation example, validator, drift tests, protocol registration, and preflight check. |
 | Receipt-store path confinement witness | Added blocked path-confinement witness schema, foundation example, validator, drift tests, protocol registration, and preflight check. |
 | Receipt-store write-path idempotency witness | Added blocked write-path idempotency witness schema, foundation example, validator, drift tests, protocol registration, and preflight check. |
+| Receipt-store durability replay witness | Added blocked durability replay witness schema, foundation example, validator, drift tests, protocol registration, preflight check, and proof matrix surface. |
 | Receipt-store writer identity witness | Added blocked writer-identity witness schema, foundation example, validator, drift tests, protocol registration, preflight check, and proof matrix surface. |
 | Receipt-store writer registration witness | Added blocked writer-registration witness schema, foundation example, validator, drift tests, protocol registration, preflight check, and proof matrix surface. |
 | Receipt-store path custody witness | Added blocked path-custody witness schema, foundation example, validator, drift tests, protocol registration, preflight check, and proof matrix surface. |
@@ -213,6 +220,12 @@ write-path idempotency missing requirement drift
 write-path idempotency Delta_reject drift
 write-path idempotency constraint drift
 write-path idempotency evidence count drift
+receipt-store durability replay witness
+durability replay append authority drift
+durability replay missing requirement drift
+durability replay Delta_reject drift
+durability replay constraint drift
+durability replay evidence count drift
 receipt-store writer identity witness
 writer identity registration authority drift
 writer identity missing requirement drift
@@ -260,6 +273,7 @@ path custody evidence count drift
 - UniversalSymbol receipt-store writer duty scope witness contract added.
 - UniversalSymbol receipt-store path confinement witness contract added.
 - UniversalSymbol receipt-store write-path idempotency witness contract added.
+- UniversalSymbol receipt-store durability replay witness contract added.
 - UniversalSymbol receipt-store writer identity witness contract added.
 - UniversalSymbol receipt-store writer registration witness contract added.
 - UniversalSymbol receipt-store path custody witness contract added.
@@ -277,7 +291,7 @@ No product-readiness or customer-readiness claim added.
 
 1. CI root-lane inclusion if required.
 2. Proof-state coverage report across symbol projections.
-3. Operator identity, live approval decision receipt, reapproval/expiry, revocation, durability replay, and recovery witnesses.
+3. Operator identity, live approval decision receipt, reapproval/expiry, revocation, and recovery witnesses.
 5. Runtime promotion witness requirements.
 6. Live runtime admission implementation.
 
@@ -286,7 +300,7 @@ No product-readiness or customer-readiness claim added.
 Use:
 
 ```text
-Universal Symbol Kernel foundation contract added; first read-only Symbol Skill Adapter proof thread added; software receipt, component, and worker symbol inspection sources added; proof coverage matrix binding added; blocked runtime admission policy contract added; adapter receipt persistence policy contract added; receipt-store authority witness contract added; append audit witness contract added; receipt-store operator approval witness contract added; receipt-store tenant scope witness contract added; receipt-store writer duty scope witness contract added; receipt-store path confinement witness contract added; receipt-store write-path idempotency witness contract added; receipt-store writer identity witness contract added; receipt-store writer registration witness contract added; receipt-store path custody witness contract added; receipt-store write-path witness contract added; live runtime admission remains AwaitingEvidence.
+Universal Symbol Kernel foundation contract added; first read-only Symbol Skill Adapter proof thread added; software receipt, component, and worker symbol inspection sources added; proof coverage matrix binding added; blocked runtime admission policy contract added; adapter receipt persistence policy contract added; receipt-store authority witness contract added; append audit witness contract added; receipt-store operator approval witness contract added; receipt-store tenant scope witness contract added; receipt-store writer duty scope witness contract added; receipt-store path confinement witness contract added; receipt-store write-path idempotency witness contract added; receipt-store durability replay witness contract added; receipt-store writer identity witness contract added; receipt-store writer registration witness contract added; receipt-store path custody witness contract added; receipt-store write-path witness contract added; live runtime admission remains AwaitingEvidence.
 ```
 
 Do not use yet:
@@ -300,6 +314,6 @@ Universal symbol closure is complete.
 STATUS:
   Audit: complete
   Inspection: complete
-  Weakness fixes: schema validation, authority custody, proof custody, evidence custody, enum-count binding, adapter projection, component/worker read-only operator projection, raw-payload rejection, proof matrix binding, blocked runtime admission policy, adapter receipt persistence policy, receipt-store authority denial witness, append audit witness, receipt-store operator approval witness, receipt-store tenant scope witness, receipt-store writer duty scope witness, receipt-store path confinement witness, receipt-store write-path idempotency witness, receipt-store writer identity witness, receipt-store writer registration witness, receipt-store path custody witness, receipt-store write-path witness, and edge-test coverage improved
-  Gap fixes: protocol registration, first Symbol Skill Adapter proof thread, software receipt symbol read model, component/worker symbol read models, proof coverage matrix surface, skill-by-skill runtime admission policy contract, adapter receipt persistence policy contract, receipt-store authority witness contract, append audit witness contract, receipt-store operator approval witness contract, receipt-store tenant scope witness contract, receipt-store writer duty scope witness contract, receipt-store path confinement witness contract, receipt-store write-path idempotency witness contract, receipt-store writer identity witness contract, receipt-store writer registration witness contract, receipt-store path custody witness contract, and receipt-store write-path witness contract completed; remaining operator identity, live approval decision, replay, recovery, and live runtime admission gaps recorded
+  Weakness fixes: schema validation, authority custody, proof custody, evidence custody, enum-count binding, adapter projection, component/worker read-only operator projection, raw-payload rejection, proof matrix binding, blocked runtime admission policy, adapter receipt persistence policy, receipt-store authority denial witness, append audit witness, receipt-store operator approval witness, receipt-store tenant scope witness, receipt-store writer duty scope witness, receipt-store path confinement witness, receipt-store write-path idempotency witness, receipt-store durability replay witness, receipt-store writer identity witness, receipt-store writer registration witness, receipt-store path custody witness, receipt-store write-path witness, and edge-test coverage improved
+  Gap fixes: protocol registration, first Symbol Skill Adapter proof thread, software receipt symbol read model, component/worker symbol read models, proof coverage matrix surface, skill-by-skill runtime admission policy contract, adapter receipt persistence policy contract, receipt-store authority witness contract, append audit witness contract, receipt-store operator approval witness contract, receipt-store tenant scope witness contract, receipt-store writer duty scope witness contract, receipt-store path confinement witness contract, receipt-store write-path idempotency witness contract, receipt-store durability replay witness contract, receipt-store writer identity witness contract, receipt-store writer registration witness contract, receipt-store path custody witness contract, and receipt-store write-path witness contract completed; remaining operator identity, live approval decision, recovery, and live runtime admission gaps recorded
   Runtime authority: denied

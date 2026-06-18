@@ -189,7 +189,10 @@ _FOUNDATION_LANES = (
         "display_name": "TeamOps Shared Inbox",
         "stage": "runtime_preview",
         "state": "SolvedVerified",
-        "route_refs": ["/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"],
+        "route_refs": [
+            "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+            "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness",
+        ],
         "schema_refs": ["schemas/personal_assistant_teamops_projection.schema.json"],
         "validator_refs": [
             "scripts/validate_personal_assistant_teamops_projection.py",
@@ -448,6 +451,29 @@ def build_personal_assistant_readiness_demo(
             "calendar_read_allowed": False,
             "calendar_write_allowed": False,
             "invite_allowed": False,
+        },
+        "teamops_gmail_probe_status": {
+            "status": "readiness_probe_available",
+            "route": "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness",
+            "allowed_checks": [
+                "connector_readiness",
+                "token_presence",
+                "gmail_scope_boundary",
+                "mailbox_access_boundary",
+                "receipt",
+            ],
+            "blocked_actions": [
+                "read_full_mailbox",
+                "send_email",
+                "draft_email",
+                "delete_email",
+                "archive_email",
+                "mutate_provider_state",
+            ],
+            "external_provider_call_allowed": False,
+            "mailbox_read_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
         },
         "available_skills": {
             "skill_count": skills.get("skill_count", 0),

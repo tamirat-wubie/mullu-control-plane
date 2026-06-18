@@ -108,9 +108,6 @@
     "terminal_closure_not_allowed"
   ],
   "next_actions": [
-    "define_path_confinement_witness",
-    "define_write_path_idempotency_witness",
-    "define_durability_replay_witness",
     "define_receipt_store_recovery_plan",
     "define_operator_approval_witness"
   ],
@@ -121,6 +118,8 @@
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -140,6 +139,7 @@
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
@@ -152,6 +152,6 @@
     "custody_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 30
+    "evidence_ref_count": 33
   }
 }

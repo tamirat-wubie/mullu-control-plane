@@ -1716,6 +1716,19 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_store_write_
     assert witness_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_durability_replay_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["universal-symbol-receipt-store-durability-replay-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-witness:1"
+    )
+    assert witness_entry["surface"] == "symbol"
+
+
 def test_protocol_manifest_indexes_read_only_worker_runtime_runner_registration_witness_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

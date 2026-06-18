@@ -725,6 +725,281 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_writer_duty_scope_witness",
+            [
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_writer_duty_scope_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store writer duty scope witness defines writer role identity, permitted receipt kinds, permitted action scope, denied action scope, separation-of-duties, tenant-scope link, audit receipt, and revocation or rebinding requirements while denying duty binding, tenant binding, approval recording, writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_writer_duty_scope_witness_validates",
+                "writer_duty_scope_witness_rejects_duty_authority_drift",
+                "writer_duty_scope_witness_rejects_missing_requirement",
+                "writer_duty_scope_witness_rejects_missing_delta_reject",
+                "writer_duty_scope_witness_rejects_constraint_drift",
+                "writer_duty_scope_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_writer_duty_scope_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_writer_duty_scope_witness_validates"
+                ],
+                "writer_duty_scope_witness_rejects_duty_authority_drift": [
+                    "writer_duty_scope_witness_rejects_duty_authority_drift"
+                ],
+                "writer_duty_scope_witness_rejects_missing_requirement": [
+                    "writer_duty_scope_witness_rejects_missing_requirement"
+                ],
+                "writer_duty_scope_witness_rejects_missing_delta_reject": [
+                    "writer_duty_scope_witness_rejects_missing_delta_reject"
+                ],
+                "writer_duty_scope_witness_rejects_constraint_drift": [
+                    "writer_duty_scope_witness_rejects_constraint_drift"
+                ],
+                "writer_duty_scope_witness_rejects_evidence_ref_count_drift": [
+                    "writer_duty_scope_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_path_confinement_witness",
+            [
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_path_confinement_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store path confinement witness defines canonical root, allowed namespace, traversal denial, symlink resolution, reserved path denial, tenant partition, append-only custody, and audit receipt requirements while denying path confinement, path custody registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, filesystem escape, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_path_confinement_witness_validates",
+                "path_confinement_witness_rejects_path_authority_drift",
+                "path_confinement_witness_rejects_missing_requirement",
+                "path_confinement_witness_rejects_missing_delta_reject",
+                "path_confinement_witness_rejects_constraint_drift",
+                "path_confinement_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_path_confinement_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_path_confinement_witness_validates"
+                ],
+                "path_confinement_witness_rejects_path_authority_drift": [
+                    "path_confinement_witness_rejects_path_authority_drift"
+                ],
+                "path_confinement_witness_rejects_missing_requirement": [
+                    "path_confinement_witness_rejects_missing_requirement"
+                ],
+                "path_confinement_witness_rejects_missing_delta_reject": [
+                    "path_confinement_witness_rejects_missing_delta_reject"
+                ],
+                "path_confinement_witness_rejects_constraint_drift": [
+                    "path_confinement_witness_rejects_constraint_drift"
+                ],
+                "path_confinement_witness_rejects_evidence_ref_count_drift": [
+                    "path_confinement_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_write_path_idempotency_witness",
+            [
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_write_path_idempotency_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store write-path idempotency witness defines deterministic key derivation, canonical input, tenant/actor binding, write-path binding, payload digest binding, replay collision checks, duplicate-effect denial, and audit receipt requirements while denying idempotency binding, write-path registration, path custody registration, receipt append, duplicate append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_write_path_idempotency_witness_validates",
+                "write_path_idempotency_witness_rejects_append_authority_drift",
+                "write_path_idempotency_witness_rejects_missing_requirement",
+                "write_path_idempotency_witness_rejects_missing_delta_reject",
+                "write_path_idempotency_witness_rejects_constraint_drift",
+                "write_path_idempotency_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_write_path_idempotency_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_write_path_idempotency_witness_validates"
+                ],
+                "write_path_idempotency_witness_rejects_append_authority_drift": [
+                    "write_path_idempotency_witness_rejects_append_authority_drift"
+                ],
+                "write_path_idempotency_witness_rejects_missing_requirement": [
+                    "write_path_idempotency_witness_rejects_missing_requirement"
+                ],
+                "write_path_idempotency_witness_rejects_missing_delta_reject": [
+                    "write_path_idempotency_witness_rejects_missing_delta_reject"
+                ],
+                "write_path_idempotency_witness_rejects_constraint_drift": [
+                    "write_path_idempotency_witness_rejects_constraint_drift"
+                ],
+                "write_path_idempotency_witness_rejects_evidence_ref_count_drift": [
+                    "write_path_idempotency_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_durability_replay_witness",
+            [
+                "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_durability_replay_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store durability replay witness defines durable replay log, append-sequence continuity, payload digest verification, idempotency binding, write-path binding, recovery snapshot, replay-result audit, and rollback-boundary requirements while denying durability replay binding, write-path registration, receipt append, replay state commit, duplicate append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_durability_replay_witness_validates",
+                "durability_replay_witness_rejects_append_authority_drift",
+                "durability_replay_witness_rejects_missing_requirement",
+                "durability_replay_witness_rejects_missing_delta_reject",
+                "durability_replay_witness_rejects_constraint_drift",
+                "durability_replay_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_durability_replay_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_durability_replay_witness_validates"
+                ],
+                "durability_replay_witness_rejects_append_authority_drift": [
+                    "durability_replay_witness_rejects_append_authority_drift"
+                ],
+                "durability_replay_witness_rejects_missing_requirement": [
+                    "durability_replay_witness_rejects_missing_requirement"
+                ],
+                "durability_replay_witness_rejects_missing_delta_reject": [
+                    "durability_replay_witness_rejects_missing_delta_reject"
+                ],
+                "durability_replay_witness_rejects_constraint_drift": [
+                    "durability_replay_witness_rejects_constraint_drift"
+                ],
+                "durability_replay_witness_rejects_evidence_ref_count_drift": [
+                    "durability_replay_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_writer_identity_witness",
             [
                 "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
@@ -742,6 +1017,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
                 "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -757,6 +1034,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/92_universal_symbol_kernel_audit.md",
                 "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
@@ -876,6 +1154,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
                 "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
                 "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
@@ -893,6 +1177,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
@@ -943,6 +1230,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
                 "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
                 "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
@@ -957,6 +1248,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
@@ -3006,6 +3299,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/personal-assistant/memory-observations",
                 "/api/v1/personal-assistant/memory-observations/preview",
                 "/api/v1/personal-assistant/memory-observations/review/preview",
+                "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness",
                 "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
                 "/api/v1/personal-assistant/github-codex/review/preview",
                 "/api/v1/personal-assistant/research/source-compare/preview",
@@ -3802,6 +4096,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
                 "/api/v1/console/personal-assistant",
+                "/api/v1/console/personal-assistant/readiness",
                 "/api/v1/console/personal-assistant/view",
                 "/api/v1/console/spatial-map",
                 "/api/v1/console/spatial-map/view",
@@ -11886,6 +12181,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_receipt_store_tenant_scope_witness",
             "surfaces": ["universal_symbol_receipt_store_tenant_scope_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_writer_duty_scope_witness",
+            "surfaces": ["universal_symbol_receipt_store_writer_duty_scope_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_path_confinement_witness",
+            "surfaces": ["universal_symbol_receipt_store_path_confinement_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_write_path_idempotency_witness",
+            "surfaces": ["universal_symbol_receipt_store_write_path_idempotency_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_durability_replay_witness",
+            "surfaces": ["universal_symbol_receipt_store_durability_replay_witness"],
             "status": "closed",
         },
         {

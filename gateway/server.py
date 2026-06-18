@@ -77,6 +77,7 @@ from mcoi_runtime.personal_assistant import (
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
     build_personal_assistant_readiness_demo,
+    build_teamops_gmail_live_probe_readiness,
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
@@ -2425,6 +2426,10 @@ def create_gateway_app(
             "governed": True,
             "execution_allowed": False,
         }
+
+    @app.get("/api/v1/personal-assistant/teamops/gmail/live-probe/readiness")
+    def personal_assistant_teamops_gmail_live_probe_readiness():
+        return build_teamops_gmail_live_probe_readiness(generated_at=_clock())
 
     @app.post("/api/v1/personal-assistant/github-codex/review/preview")
     def preview_personal_assistant_github_codex_review(req: GatewayPersonalAssistantGitHubCodexPreviewRequest):

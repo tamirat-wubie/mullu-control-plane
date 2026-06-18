@@ -1763,6 +1763,12 @@
       "surface": "symbol"
     },
     {
+      "schema_id": "universal-symbol-receipt-store-durability-replay-witness",
+      "path": "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-witness:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "universal-symbol-runtime-admission-policy",
       "path": "schemas/universal_symbol_runtime_admission_policy.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-runtime-admission-policy:1",

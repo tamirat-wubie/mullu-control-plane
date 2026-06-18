@@ -66,6 +66,11 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
         "/api/v1/console/personal-assistant/view",
         "/api/v1/console/personal-assistant/readiness",
     ]
+    assert lane_status["lanes"][6]["lane_id"] == "teamops_shared_inbox"
+    assert (
+        "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness"
+        in lane_status["lanes"][6]["route_refs"]
+    )
 
 
 def test_personal_assistant_console_validator_rejects_execution_authority(tmp_path: Path) -> None:

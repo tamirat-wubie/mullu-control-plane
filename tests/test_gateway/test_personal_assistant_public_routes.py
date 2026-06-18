@@ -612,6 +612,45 @@ def test_gateway_personal_assistant_teamops_preview_rejects_raw_payload() -> Non
     assert "teamops_handoff_plan_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_teamops_gmail_live_probe_readiness_is_no_effect(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    for key, value in {
+        "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER": "google",
+        "EMAIL_CALENDAR_CONNECTOR_ID": "gmail",
+        "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY": "read_only_search",
+        "GMAIL_SCOPE_ID": "gmail.readonly",
+        "GMAIL_OAUTH_CLIENT_ID": "client-id-secret-shaped-value",
+        "GMAIL_OAUTH_CLIENT_SECRET": "client_secret=must-not-leak",
+        "GMAIL_REFRESH_TOKEN": "refresh_token=must-not-leak",
+        "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF": "witness:gmail-consent",
+        "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF": "witness:gmail-client",
+        "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF": "receipt:gmail-scope",
+        "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF": "receipt:gmail-refresh-storage",
+        "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF": "receipt:gmail-revocation-recovery",
+    }.items():
+        monkeypatch.setenv(key, value)
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/personal-assistant/teamops/gmail/live-probe/readiness")
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert response.status_code == 200
+    assert payload["status"] == "passed"
+    assert payload["solver_outcome"] == "SolvedVerified"
+    assert payload["connector_readiness"]["ready_for_live_probe"] is True
+    assert payload["token_presence"]["all_present"] is False
+    assert payload["durable_oauth_presence"]["all_present"] is True
+    assert payload["mailbox_access_boundary"]["least_privilege_satisfied"] is True
+    assert payload["effect_boundary"]["external_provider_call_performed"] is False
+    assert payload["effect_boundary"]["mailbox_read_performed"] is False
+    assert payload["effect_boundary"]["provider_mutation_performed"] is False
+    assert "read_full_mailbox" in payload["blocked_actions"]
+    assert "gmail_provider_not_called" in payload["actions_not_taken"]
+    assert "client_secret=must-not-leak" not in serialized
+    assert "refresh_token=must-not-leak" not in serialized
+    assert "client-id-secret-shaped-value" not in serialized
+
+
 def test_gateway_personal_assistant_github_codex_preview_reviews_without_github_call() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 

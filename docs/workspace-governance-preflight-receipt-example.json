@@ -1,5 +1,5 @@
 {
-  "check_count": 229,
+  "check_count": 230,
   "checks": [
     {
       "args": [
@@ -2219,6 +2219,19 @@
         "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py"
       ],
       "name": "universal_symbol_receipt_store_write_path_idempotency_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_durability_replay_witness",
       "passed": true,
       "return_code": 0,
       "stderr": "",

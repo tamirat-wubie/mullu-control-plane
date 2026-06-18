@@ -161,6 +161,7 @@
         "/api/v1/assistant/finance-ops/plans",
         "/api/v1/assistant/profiles",
         "/api/v1/console/personal-assistant",
+        "/api/v1/console/personal-assistant/readiness",
         "/api/v1/console/personal-assistant/view"
       ],
       "notes": "Personal Assistant routes are read/draft projections only; send and mutation paths stay blocked.",
@@ -466,7 +467,7 @@
         "teamops_shared_inbox"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/assistant/finance-ops/plans",
@@ -1666,7 +1667,7 @@
         "personal_assistant"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/console",

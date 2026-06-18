@@ -66,6 +66,12 @@ from scripts.validate_universal_symbol_receipt_store_write_path_idempotency_witn
     UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError,
     validate_universal_symbol_receipt_store_write_path_idempotency_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_durability_replay_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_DURABILITY_REPLAY_WITNESS_PATH,
+    UniversalSymbolReceiptStoreDurabilityReplayWitnessError,
+    validate_universal_symbol_receipt_store_durability_replay_witness,
+)
 from scripts.validate_universal_symbol_receipt_store_write_path_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_WRITE_PATH_WITNESS_PATH,
@@ -109,7 +115,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 56
+    assert report["evidence_ref_count"] == 59
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
@@ -140,7 +146,7 @@ def test_foundation_universal_symbol_receipt_store_authority_witness_validates()
     assert report["authority_denial_count"] == 10
     assert report["authority_requirement_count"] == 7
     assert report["append_precondition_count"] == 7
-    assert report["evidence_ref_count"] == 27
+    assert report["evidence_ref_count"] == 30
 
 
 def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
@@ -150,7 +156,7 @@ def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
     assert report["append_audit_decision"] == "blocked_pending_writer_registration_and_replay_evidence"
     assert report["authority_denial_count"] == 10
     assert report["audit_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 26
+    assert report["evidence_ref_count"] == 29
 
 
 def test_foundation_universal_symbol_receipt_store_writer_registration_witness_validates() -> None:
@@ -235,7 +241,20 @@ def test_foundation_universal_symbol_receipt_store_write_path_idempotency_witnes
     )
     assert report["authority_denial_count"] == 11
     assert report["idempotency_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 23
+    assert report["evidence_ref_count"] == 26
+
+
+def test_foundation_universal_symbol_receipt_store_durability_replay_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_durability_replay_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["durability_replay_decision"]
+        == "blocked_pending_ordered_replay_digest_crash_window_and_audit_evidence"
+    )
+    assert report["authority_denial_count"] == 11
+    assert report["durability_replay_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 25
 
 
 def test_foundation_universal_symbol_receipt_store_path_custody_witness_validates() -> None:
@@ -245,7 +264,7 @@ def test_foundation_universal_symbol_receipt_store_path_custody_witness_validate
     assert report["path_custody_decision"] == "blocked_pending_confinement_idempotency_replay_and_recovery_evidence"
     assert report["authority_denial_count"] == 10
     assert report["custody_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 30
+    assert report["evidence_ref_count"] == 33
 
 
 def test_foundation_universal_symbol_receipt_store_write_path_witness_validates() -> None:
@@ -255,7 +274,7 @@ def test_foundation_universal_symbol_receipt_store_write_path_witness_validates(
     assert report["write_path_decision"] == "blocked_pending_writer_registration_replay_and_operator_authority"
     assert report["authority_denial_count"] == 10
     assert report["write_path_requirement_count"] == 10
-    assert report["evidence_ref_count"] == 33
+    assert report["evidence_ref_count"] == 36
 
 
 def test_rejects_connector_authority_drift(tmp_path: Path) -> None:
@@ -977,6 +996,68 @@ def test_write_path_idempotency_witness_rejects_evidence_ref_count_drift(tmp_pat
         validate_universal_symbol_receipt_store_write_path_idempotency_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_WRITE_PATH_IDEMPOTENCY_SCHEMA_PATH,
+        )
+
+
+def test_durability_replay_witness_rejects_append_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_DURABILITY_REPLAY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["durability_replay_witness_is_not_append_authority"] = False
+    changed["authority_denials"]["receipt_store_durability_replay_bound"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreDurabilityReplayWitnessError, match="append authority"):
+        validate_universal_symbol_receipt_store_durability_replay_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+        )
+
+
+def test_durability_replay_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_DURABILITY_REPLAY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["durability_replay_requirements"] = changed["durability_replay_requirements"][1:]
+    changed["contract_summary"]["durability_replay_requirement_count"] = len(
+        changed["durability_replay_requirements"]
+    )
+    with pytest.raises(UniversalSymbolReceiptStoreDurabilityReplayWitnessError, match="ordered-replay"):
+        validate_universal_symbol_receipt_store_durability_replay_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+        )
+
+
+def test_durability_replay_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_DURABILITY_REPLAY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["durability_replay_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreDurabilityReplayWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_durability_replay_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+        )
+
+
+def test_durability_replay_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_DURABILITY_REPLAY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["durability_replay_constraints"]["append_sequence_required"] = False
+    with pytest.raises(
+        UniversalSymbolReceiptStoreDurabilityReplayWitnessError,
+        match="append_sequence_required",
+    ):
+        validate_universal_symbol_receipt_store_durability_replay_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+        )
+
+
+def test_durability_replay_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_DURABILITY_REPLAY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreDurabilityReplayWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_durability_replay_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
         )
 
 

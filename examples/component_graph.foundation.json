@@ -598,7 +598,7 @@
       "proof_binding_state": "proof_bound",
       "request_path_count": 2,
       "route_binding_state": "bound",
-      "route_count": 4,
+      "route_count": 5,
       "state": "draft_only",
       "type": "assistant_product_core",
       "wiring_state": "draft_only"

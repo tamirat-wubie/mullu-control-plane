@@ -57,6 +57,9 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
         "/api/v1/console/personal-assistant/view",
         "/api/v1/console/personal-assistant/readiness",
     ]
+    teamops_lane = payload["lane_status"]["lanes"][6]
+    assert teamops_lane["lane_id"] == "teamops_shared_inbox"
+    assert "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness" in teamops_lane["route_refs"]
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]
@@ -78,6 +81,10 @@ def test_readiness_demo_answers_show_my_assistant_readiness_without_effects() ->
     assert demo["inbox_projection_status"]["mailbox_mutation_allowed"] is False
     assert demo["calendar_projection_status"]["skill_id"] == "calendar.day.brief"
     assert demo["calendar_projection_status"]["calendar_write_allowed"] is False
+    assert demo["teamops_gmail_probe_status"]["status"] == "readiness_probe_available"
+    assert demo["teamops_gmail_probe_status"]["external_provider_call_allowed"] is False
+    assert demo["teamops_gmail_probe_status"]["mailbox_read_allowed"] is False
+    assert "read_full_mailbox" in demo["teamops_gmail_probe_status"]["blocked_actions"]
     assert demo["available_skills"]["skill_count"] >= 13
     assert demo["available_skills"]["read_only_skill_ids"] == [
         "email.inbox.summarize",

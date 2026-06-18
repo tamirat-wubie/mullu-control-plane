@@ -625,7 +625,7 @@
           "assistant_kernel_planning",
           "operator_console_read_models"
         ],
-        "route_count": 4,
+        "route_count": 5,
         "state": "bound"
       },
       "state": "draft_only",
@@ -1179,9 +1179,9 @@
     "authority_witness_count": 10,
     "awaiting_binding_count": 1,
     "blocked_component_count": 1,
-    "bound_route_count": 31,
+    "bound_route_count": 32,
     "bundle_count": 3,
-    "classified_declared_route_count": 438,
+    "classified_declared_route_count": 440,
     "component_count": 10,
     "lifecycle_receipt_count": 10,
     "proof_bound_count": 9,

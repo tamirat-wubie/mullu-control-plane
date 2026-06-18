@@ -139,6 +139,8 @@
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
@@ -159,6 +161,7 @@
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
@@ -173,6 +176,6 @@
     "write_path_constraint_count": 10,
     "rejection_check_count": 6,
     "blocked_reason_count": 12,
-    "evidence_ref_count": 33
+    "evidence_ref_count": 36
   }
 }
