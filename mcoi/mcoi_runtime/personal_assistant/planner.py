@@ -1,7 +1,8 @@
 """Purpose: schema-backed personal-assistant preview planning.
 Governance scope: governed intent, WHQR binding gaps, skill-step projection,
 approval gates, receipt emission, and no-execution guarantees.
-Dependencies: personal-assistant intake and skill registry contracts.
+Dependencies: personal-assistant intake, skill registry contracts, and approval
+matrix runtime policy.
 Invariants:
   - Planning never calls connectors, sends messages, writes memory, deploys, or
     mutates a system of record.
@@ -14,6 +15,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+from .approval_matrix import (
+    PersonalAssistantApprovalMatrix,
+    load_default_personal_assistant_approval_matrix,
+)
 from .contracts import PersonalAssistantInvariantError, SkillMode, SkillRiskLevel
 from .intake import GovernedIntent, RequestExecutionMode
 from .skill_registry import PersonalAssistantSkillRegistry, load_default_skill_registry
@@ -55,6 +60,7 @@ def build_personal_assistant_preview_plan(
     plan_id: str,
     created_at: str,
     registry: PersonalAssistantSkillRegistry | None = None,
+    approval_matrix: PersonalAssistantApprovalMatrix | None = None,
 ) -> PersonalAssistantPlanningEnvelope:
     """Build a no-execution plan and receipt for a governed intent.
 
@@ -67,7 +73,11 @@ def build_personal_assistant_preview_plan(
     plan_id = _require_prefix(plan_id, "plan_id", "pa_plan_")
     created_at = _require_text(created_at, "created_at")
     skill_registry = registry or load_default_skill_registry()
+    matrix = approval_matrix or load_default_personal_assistant_approval_matrix()
     selected_skills = tuple(skill_registry.get(skill_id) for skill_id in intent.requested_skill_ids)
+    matrix_policy = matrix.policy_for(intent.risk_level)
+    planned_mode = _matrix_mode_for_intent(intent, matrix_policy.allowed_modes)
+    _assert_steps_admitted_by_matrix(intent, selected_skills, matrix)
     steps = _plan_steps(intent, selected_skills, skill_registry)
     approval_required = intent.requires_approval
     reason_codes = _approval_reason_codes(intent)
@@ -77,7 +87,7 @@ def build_personal_assistant_preview_plan(
         "created_at": created_at,
         "goal": intent.user_goal,
         "risk_level": intent.risk_level.value,
-        "mode": intent.execution_mode.value,
+        "mode": planned_mode,
         "requires_approval": approval_required,
         "dry_run_available": True,
         "execution_allowed": False,
@@ -96,6 +106,7 @@ def build_personal_assistant_preview_plan(
         "metadata": {
             "foundation_only": True,
             "planner": "personal_assistant_preview_v1",
+            "approval_matrix": _approval_matrix_plan_metadata(matrix, intent.risk_level),
             "live_connector_execution_allowed": False,
             "connector_mutation_allowed": False,
             "external_write_allowed": False,
@@ -105,7 +116,7 @@ def build_personal_assistant_preview_plan(
             "public_readiness_claim_allowed": False,
         },
     }
-    receipt = _plan_receipt(intent, plan, selected_skills)
+    receipt = _plan_receipt(intent, plan, selected_skills, matrix)
     return PersonalAssistantPlanningEnvelope(intent.as_request_dict(), plan, receipt)
 
 
@@ -131,7 +142,12 @@ def _step_from_skill(
     index: int,
     forced_mode: RequestExecutionMode | None,
 ) -> dict[str, Any]:
-    mode = forced_mode.value if forced_mode is not None else _mode_for_skill(skill.mode, intent.execution_mode)
+    if forced_mode is not None:
+        mode = forced_mode.value
+    elif skill.risk_level is SkillRiskLevel.P5:
+        mode = RequestExecutionMode.BLOCKED.value
+    else:
+        mode = _mode_for_skill(skill.mode, intent.execution_mode)
     return {
         "step_id": f"step_{index:02d}_{skill.skill_id.replace('.', '_')}",
         "skill_id": skill.skill_id,
@@ -155,6 +171,49 @@ def _mode_for_skill(skill_mode: SkillMode, intent_mode: RequestExecutionMode) ->
     if skill_mode is SkillMode.APPROVAL_REQUIRED:
         return RequestExecutionMode.EXECUTE_WITH_APPROVAL.value
     return RequestExecutionMode.BLOCKED.value
+
+
+def _matrix_mode_for_intent(intent: GovernedIntent, allowed_modes: Sequence[str]) -> str:
+    if intent.has_missing_bindings:
+        mode = RequestExecutionMode.BLOCKED.value
+    elif intent.risk_level is SkillRiskLevel.P5:
+        mode = RequestExecutionMode.BLOCKED.value
+    else:
+        mode = intent.execution_mode.value
+    if mode == RequestExecutionMode.BLOCKED.value and intent.has_missing_bindings:
+        return mode
+    if mode not in allowed_modes:
+        raise PersonalAssistantInvariantError(
+            f"{intent.risk_level.value}: planner mode {mode} is not allowed by approval matrix"
+        )
+    return mode
+
+
+def _assert_steps_admitted_by_matrix(
+    intent: GovernedIntent,
+    selected_skills: Sequence[Any],
+    matrix: PersonalAssistantApprovalMatrix,
+) -> None:
+    for skill in selected_skills:
+        policy = matrix.policy_for(skill.risk_level)
+        step_mode = (
+            RequestExecutionMode.BLOCKED.value
+            if intent.has_missing_bindings or skill.risk_level is SkillRiskLevel.P5
+            else _mode_for_skill(skill.mode, intent.execution_mode)
+        )
+        if step_mode == RequestExecutionMode.BLOCKED.value and intent.has_missing_bindings:
+            continue
+        if step_mode not in policy.allowed_modes:
+            raise PersonalAssistantInvariantError(
+                f"{skill.skill_id}: planner mode {step_mode} is not allowed by approval matrix "
+                f"for {skill.risk_level.value}"
+            )
+        if skill.risk_level.requires_explicit_approval and not policy.explicit_approval_required:
+            raise PersonalAssistantInvariantError(
+                f"{skill.skill_id}: approval matrix does not require explicit approval"
+            )
+        if skill.risk_level is SkillRiskLevel.P5 and step_mode != RequestExecutionMode.BLOCKED.value:
+            raise PersonalAssistantInvariantError(f"{skill.skill_id}: P5 planner step must be blocked")
 
 
 def _action_for_skill(skill: Any) -> str:
@@ -205,6 +264,7 @@ def _plan_receipt(
     intent: GovernedIntent,
     plan: Mapping[str, Any],
     selected_skills: Sequence[Any],
+    matrix: PersonalAssistantApprovalMatrix,
 ) -> dict[str, Any]:
     receipt_id = str(plan["receipt_refs"][0])
     primary_skill_id = selected_skills[0].skill_id if selected_skills else "personal_assistant.clarification.request"
@@ -241,6 +301,8 @@ def _plan_receipt(
         "metadata": {
             "foundation_only": True,
             "execution_allowed": False,
+            "approval_matrix_ref": matrix.matrix_id,
+            "approval_matrix": _approval_matrix_plan_metadata(matrix, intent.risk_level),
             "live_connector_execution_allowed": False,
             "connector_mutation_allowed": False,
             "external_write_allowed": False,
@@ -248,6 +310,26 @@ def _plan_receipt(
             "memory_write_allowed": False,
             "deployment_mutation_allowed": False,
         },
+    }
+
+
+def _approval_matrix_plan_metadata(
+    matrix: PersonalAssistantApprovalMatrix,
+    risk_level: SkillRiskLevel,
+) -> dict[str, Any]:
+    read_model = matrix.read_model()
+    policy = matrix.policy_for(risk_level)
+    return {
+        "schema_version": read_model["schema_version"],
+        "matrix_id": read_model["matrix_id"],
+        "foundation_mode_required": read_model["foundation_mode_required"],
+        "risk_level": policy.level.value,
+        "risk_allowed_modes": list(policy.allowed_modes),
+        "explicit_approval_required": policy.explicit_approval_required,
+        "effect_bearing": policy.effect_bearing,
+        "execution_allowed_by_matrix": read_model["execution_allowed_by_matrix"],
+        "approval_is_execution": read_model["approval_is_execution"],
+        "overclaim_blocks": dict(read_model["overclaim_blocks"]),
     }
 
 
