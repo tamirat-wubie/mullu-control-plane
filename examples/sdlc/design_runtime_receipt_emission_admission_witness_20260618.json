@@ -1,0 +1,78 @@
+{
+  "design_id": "sdlc_design_runtime_receipt_emission_admission_witness_20260618",
+  "requirement_id": "sdlc_req_runtime_receipt_emission_admission_witness_20260618",
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerRuntimeReceiptEmissionAdmissionWitness contract, Foundation Mode example, validator, documentation updates, manifest registration, CI target, and focused tests that define the future live runtime receipt emission admission evidence boundary while keeping receipt emission admission, schema registry writes, dispatch, worker invocation, receipt emission, writes, connector calls, success claims, and terminal closure denied.",
+  "affected_modules": [
+    "schemas/read_only_worker_runtime_receipt_emission_admission_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_receipt_emission_admission_witness_20260618.json",
+    "examples/sdlc/design_runtime_receipt_emission_admission_witness_20260618.json"
+  ],
+  "data_model_changes": [
+    "add ReadOnlyWorkerRuntimeReceiptEmissionAdmissionWitness with source witness refs, live runtime receipt emission admission input refs, activation evaluation, admission decision, receipt refs, and evidence refs",
+    "add a Foundation Mode example that defines the future live runtime receipt emission admission evidence boundary while denying receipt emission admission, schema registry writes, runtime dispatch, worker invocation, runtime receipt emission, writes, network, connectors, raw output, success claims, and terminal closure"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/read_only_worker_runtime_receipt_emission_admission_witness.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "scripts/validate_read_only_worker_runtime_receipt_emitter_registration_witness.py",
+    "scripts/validate_read_only_worker_runtime_receipt_schema_binding_witness.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the ReadOnlyWorkerRuntimeReceiptEmissionAdmissionWitness schema, example, validator, focused tests, docs updates, manifest entry, gap-register updates, SDLC artifacts, and CI test target, then rerun schema validation, protocol manifest validation, SDLC validation, and workspace governance preflight before claiming rollback closure.",
+  "migration_plan": "No runtime or data migration is required. This is a Foundation Mode witness-only receipt contract; live worker dispatch, runtime runner registration, dispatch endpoint registration, runtime receipt emitter registration, runtime receipt schema binding, receipt emission admission, schema registry writes, receipt-store appends, and connector calls remain unperformed by this change.",
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_state_machine.py",
+    "python scripts/validate_sdlc_release_readiness.py --strict",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py",
+    "python -m pytest tests/test_root_test_coverage.py::test_ungated_root_tests_match_waiver_baseline -q",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-runtime-receipt-emission-admission-witness-20260618.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-runtime-receipt-emission-admission-witness-20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/design/runtime-receipt-emission-admission-witness/20260618",
+  "causal_decision_trace_ref": "trace://sdlc/design/runtime-receipt-emission-admission-witness/20260618",
+  "receipt_ref": "receipt://sdlc/design/runtime-receipt-emission-admission-witness/20260618"
+}
