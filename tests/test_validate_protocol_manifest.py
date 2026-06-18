@@ -401,6 +401,7 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
     plan_review_entry = entries["operator-plan-review-read-model"]
     budget_report_entry = entries["operator-budget-report-read-model"]
     plan_receipt_export_entry = entries["operator-plan-receipt-export-read-model"]
+    plan_receipt_bundle_entry = entries["operator-plan-receipt-bundle-read-model"]
     task_entry = entries["current-task-read-model"]
 
     assert validate_protocol_manifest(manifest) == []
@@ -439,9 +440,27 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
         "urn:mullusi:schema:operator-plan-receipt-export-read-model:1"
     )
     assert plan_receipt_export_entry["surface"] == "operator"
+    assert plan_receipt_bundle_entry["path"] == (
+        "schemas/operator_plan_receipt_bundle_read_model.schema.json"
+    )
+    assert plan_receipt_bundle_entry["urn"] == (
+        "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+    )
+    assert plan_receipt_bundle_entry["surface"] == "operator"
     assert task_entry["path"] == "schemas/current_task_read_model.schema.json"
     assert task_entry["urn"] == "urn:mullusi:schema:current-task-read-model:1"
     assert task_entry["surface"] == "operator"
+
+
+def test_protocol_manifest_indexes_cdg_rccm_architecture_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    cdg_rccm_entry = entries["cdg-rccm-architecture-contract"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert cdg_rccm_entry["path"] == "schemas/cdg_rccm_architecture_contract.schema.json"
+    assert cdg_rccm_entry["urn"] == "urn:mullusi:schema:cdg-rccm-architecture-contract:1"
+    assert cdg_rccm_entry["surface"] == "governance"
 
 
 def test_protocol_manifest_indexes_claim_verification_report() -> None:

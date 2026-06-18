@@ -1,0 +1,154 @@
+{
+  "witness_id": "universal-symbol-receipt-store-tenant-scope-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-tenant-scope",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "tenant_scope_decision": "blocked_pending_tenant_actor_binding_partition_and_isolation_evidence",
+  "tenant_scope_witness_is_not_tenant_authority": true,
+  "tenant_requirements": [
+    {
+      "requirement_id": "requirement://tenant-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "tenant://universal-symbol/receipt-store/identity",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-tenant-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://actor-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "actor://universal-symbol/receipt-store/identity",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-actor-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-actor-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "binding://universal-symbol/receipt-store/tenant-actor",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-tenant-actor-binding-missing"
+    },
+    {
+      "requirement_id": "requirement://receipt-store-partition",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "partition://universal-symbol/receipt-store/tenant",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-receipt-store-partition-missing"
+    },
+    {
+      "requirement_id": "requirement://cross-tenant-isolation",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "isolation://universal-symbol/receipt-store/cross-tenant",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-cross-tenant-isolation-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-policy",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://universal-symbol/receipt-store/tenant",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-policy-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/tenant-scope-audit",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-audit-receipt-missing"
+    },
+    {
+      "requirement_id": "requirement://rebinding-or-revocation-path",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revoke://universal-symbol/receipt-store/tenant-binding",
+      "current_decision": "tenant_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/tenant-scope-rebinding-revocation-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_tenant_scope_bound": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_writer_identity_registered": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "tenant_scope_constraints": {
+    "tenant_identity_required": true,
+    "actor_identity_required": true,
+    "tenant_actor_binding_required": true,
+    "receipt_store_partition_required": true,
+    "cross_tenant_isolation_required": true,
+    "tenant_policy_required": true,
+    "audit_receipt_required": true,
+    "rebinding_or_revocation_path_required": true
+  },
+  "rejection_policy": {
+    "missing_tenant_identity_blocks_scope": true,
+    "missing_actor_identity_blocks_scope": true,
+    "missing_binding_blocks_scope": true,
+    "missing_partition_blocks_scope": true,
+    "unknown_hard_constraint_blocks_scope": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "tenant_identity_missing",
+    "actor_identity_missing",
+    "tenant_actor_binding_missing",
+    "receipt_store_partition_missing",
+    "cross_tenant_isolation_missing",
+    "tenant_policy_missing",
+    "audit_receipt_missing",
+    "rebinding_or_revocation_path_missing",
+    "receipt_store_tenant_scope_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_writer_duty_scope_witness",
+    "define_path_confinement_witness",
+    "define_write_path_idempotency_witness",
+    "define_durability_replay_witness",
+    "define_receipt_store_recovery_plan"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "tenant_requirement_count": 8,
+    "authority_denial_count": 12,
+    "tenant_scope_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 25
+  }
+}

@@ -584,19 +584,25 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
-            "universal_symbol_receipt_store_writer_identity_witness",
+            "universal_symbol_receipt_store_operator_approval_witness",
             [
-                "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
-                "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
-                "validate_universal_symbol_receipt_store_writer_identity_witness",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_operator_approval_witness",
             ],
             "request_proof",
             "action_proof",
             "audit_chain",
             "witnessed",
             [
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -610,6 +616,147 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store operator approval witness defines operator identity, explicit approval decision, approval scope, tenant scope, expiry/reapproval, revocation, audit receipt, and terminal-closure-denial requirements while denying approval recording, writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_operator_approval_witness_validates",
+                "operator_approval_witness_rejects_approval_authority_drift",
+                "operator_approval_witness_rejects_missing_requirement",
+                "operator_approval_witness_rejects_missing_delta_reject",
+                "operator_approval_witness_rejects_constraint_drift",
+                "operator_approval_witness_rejects_scope_constraint_drift",
+                "operator_approval_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_operator_approval_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_operator_approval_witness_validates"
+                ],
+                "operator_approval_witness_rejects_approval_authority_drift": [
+                    "operator_approval_witness_rejects_approval_authority_drift"
+                ],
+                "operator_approval_witness_rejects_missing_requirement": [
+                    "operator_approval_witness_rejects_missing_requirement"
+                ],
+                "operator_approval_witness_rejects_missing_delta_reject": [
+                    "operator_approval_witness_rejects_missing_delta_reject"
+                ],
+                "operator_approval_witness_rejects_constraint_drift": [
+                    "operator_approval_witness_rejects_constraint_drift"
+                ],
+                "operator_approval_witness_rejects_scope_constraint_drift": [
+                    "operator_approval_witness_rejects_scope_constraint_drift"
+                ],
+                "operator_approval_witness_rejects_evidence_ref_count_drift": [
+                    "operator_approval_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_tenant_scope_witness",
+            [
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_tenant_scope_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store tenant scope witness defines tenant identity, actor identity, tenant-actor binding, receipt-store partition, cross-tenant isolation, tenant policy, audit receipt, and rebinding or revocation requirements while denying tenant binding, approval recording, writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_tenant_scope_witness_validates",
+                "tenant_scope_witness_rejects_tenant_authority_drift",
+                "tenant_scope_witness_rejects_missing_requirement",
+                "tenant_scope_witness_rejects_missing_delta_reject",
+                "tenant_scope_witness_rejects_constraint_drift",
+                "tenant_scope_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_tenant_scope_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_tenant_scope_witness_validates"
+                ],
+                "tenant_scope_witness_rejects_tenant_authority_drift": [
+                    "tenant_scope_witness_rejects_tenant_authority_drift"
+                ],
+                "tenant_scope_witness_rejects_missing_requirement": [
+                    "tenant_scope_witness_rejects_missing_requirement"
+                ],
+                "tenant_scope_witness_rejects_missing_delta_reject": [
+                    "tenant_scope_witness_rejects_missing_delta_reject"
+                ],
+                "tenant_scope_witness_rejects_constraint_drift": [
+                    "tenant_scope_witness_rejects_constraint_drift"
+                ],
+                "tenant_scope_witness_rejects_evidence_ref_count_drift": [
+                    "tenant_scope_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_writer_identity_witness",
+            [
+                "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_writer_identity_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
@@ -659,6 +806,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_append_audit_witness.schema.json",
                 "examples/universal_symbol_append_audit_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
@@ -669,6 +818,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
@@ -726,6 +876,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
                 "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -741,6 +893,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
@@ -790,6 +943,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
                 "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
                 "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
                 "schemas/universal_symbol_append_audit_witness.schema.json",
@@ -802,6 +957,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
@@ -11720,6 +11876,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_adapter_receipt_persistence_policy",
             "surfaces": ["universal_symbol_adapter_receipt_persistence_policy"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_operator_approval_witness",
+            "surfaces": ["universal_symbol_receipt_store_operator_approval_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_tenant_scope_witness",
+            "surfaces": ["universal_symbol_receipt_store_tenant_scope_witness"],
             "status": "closed",
         },
         {

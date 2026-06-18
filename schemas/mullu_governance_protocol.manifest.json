@@ -233,6 +233,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "cdg-rccm-architecture-contract",
+      "path": "schemas/cdg_rccm_architecture_contract.schema.json",
+      "urn": "urn:mullusi:schema:cdg-rccm-architecture-contract:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "component-read-model",
       "path": "schemas/component_read_model.schema.json",
       "urn": "urn:mullusi:schema:component-read-model:1",
@@ -602,6 +608,12 @@
       "schema_id": "operator-plan-receipt-export-read-model",
       "path": "schemas/operator_plan_receipt_export_read_model.schema.json",
       "urn": "urn:mullusi:schema:operator-plan-receipt-export-read-model:1",
+      "surface": "operator"
+    },
+    {
+      "schema_id": "operator-plan-receipt-bundle-read-model",
+      "path": "schemas/operator_plan_receipt_bundle_read_model.schema.json",
+      "urn": "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1",
       "surface": "operator"
     },
     {
@@ -1694,6 +1706,18 @@
       "schema_id": "universal-symbol-receipt-store-authority-witness",
       "path": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-authority-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-operator-approval-witness",
+      "path": "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-operator-approval-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-tenant-scope-witness",
+      "path": "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-tenant-scope-witness:1",
       "surface": "symbol"
     },
     {

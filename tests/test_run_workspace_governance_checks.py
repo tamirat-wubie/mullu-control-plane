@@ -132,6 +132,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_runtime_admission_policy",
         "universal_symbol_adapter_receipt_persistence_policy",
         "universal_symbol_append_audit_witness",
+        "universal_symbol_receipt_store_operator_approval_witness",
+        "universal_symbol_receipt_store_tenant_scope_witness",
         "universal_symbol_receipt_store_writer_identity_witness",
         "universal_symbol_receipt_store_writer_registration_witness",
         "universal_symbol_receipt_store_path_custody_witness",
@@ -179,6 +181,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "public_naming_readiness",
         "public_demo_surfaces",
         "snet_episode_replay",
+        "cdg_rccm_architecture_contract",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -543,6 +546,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_append_audit_witness",
+        "universal_symbol_receipt_store_operator_approval_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_operator_approval_witness",
+        "universal_symbol_receipt_store_tenant_scope_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_tenant_scope_witness",
         "universal_symbol_receipt_store_writer_identity_witness",
     )
     assert_ordered(
@@ -729,6 +740,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "scripts/validate_snet_episode_replay.py",
         "--episode",
         "examples/snet_episode_seed_dependency.json",
+    )
+    assert args_by_name["cdg_rccm_architecture_contract"][1:] == (
+        "scripts/validate_cdg_rccm_architecture_contract.py",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",

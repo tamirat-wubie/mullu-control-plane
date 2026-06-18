@@ -1,0 +1,199 @@
+{
+  "contract_id": "cdg-rccm-architecture-contract-foundation-20260618",
+  "contract_version": "cdg_rccm_architecture_contract.v1",
+  "checked_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_spec": {
+    "canonical_name": "CDG-RCCM",
+    "specification_version": "1.0",
+    "reference_runtime": "RCOK",
+    "primary_algorithm": "DGRCA",
+    "primary_region_solver": "DPCRS",
+    "standard_status": "proposed_canonical_architecture",
+    "universal_termination_claimed": false,
+    "universal_profile_meaning": "shared_interface_protocol_only"
+  },
+  "foundation_boundary": {
+    "foundation_mode": true,
+    "live_runtime_claimed": false,
+    "external_effects_allowed": false,
+    "global_convergence_claimed": false,
+    "world_verification_claimed": false,
+    "runtime_certificate_issuer_claimed": false
+  },
+  "component_model": {
+    "base_symbol_tuple": ["I", "Lambda", "Sigma", "Gamma", "H"],
+    "operational_tuple": ["S", "K", "P", "Q", "B", "nu"],
+    "required_conditions": [
+      "sigma_models_lambda_over_identity",
+      "gamma_exposes_authorized_certified_projections",
+      "history_records_every_accepted_state_transition"
+    ]
+  },
+  "mesh_model": {
+    "mesh_tuple": ["V", "E_H", "E_D", "F", "Q", "W", "R", "J", "L", "X", "epoch"],
+    "epoch_frozen": true,
+    "containment_dependency_separated": true,
+    "containment_acyclic_required": true,
+    "dependency_cycles_allowed_when_classified": true,
+    "dependency_edge_types": [
+      "REQUIRES",
+      "CONSTRAINS",
+      "OBSERVES",
+      "RECONCILES_WITH",
+      "SHARES",
+      "ALTERNATIVE_TO",
+      "PRECEDES",
+      "EVIDENCES",
+      "TEMPORAL_PREVIOUS",
+      "SUPERSEDES"
+    ]
+  },
+  "execution_protocol": {
+    "governing_sequence": [
+      "frame_component",
+      "perform_available_local_work",
+      "discover_exact_dependency",
+      "preserve_blocked_continuation",
+      "recursively_settle_dependency",
+      "receive_certified_projection",
+      "resume_continuation",
+      "integrate_result",
+      "reconcile_boundaries",
+      "propagate_constructive_and_fracture_deltas",
+      "reopen_affected_work",
+      "repeat_until_certified_closure"
+    ],
+    "step_outcomes": ["Need", "Progress", "Candidate", "Conflict", "Unknown", "Fault", "Cancelled"],
+    "settlement_levels": [
+      {
+        "level": 0,
+        "name": "PROVISIONAL"
+      },
+      {
+        "level": 1,
+        "name": "LOCALLY_STABLE"
+      },
+      {
+        "level": 2,
+        "name": "BOUNDARY_RECONCILED"
+      },
+      {
+        "level": 3,
+        "name": "CLOSURE_CERTIFIED"
+      },
+      {
+        "level": 4,
+        "name": "WORLD_VERIFIED"
+      }
+    ],
+    "frame_lifecycle": ["INACTIVE", "READY", "RUNNING", "SUSPENDED", "QUIESCENT", "CANCELLED", "FAULTED", "EXHAUSTED"],
+    "independent_certificate_kernel_required": true
+  },
+  "dependency_request_contract": {
+    "required_fields": [
+      "requester",
+      "provider",
+      "projection",
+      "minimumLevel",
+      "gate",
+      "assumptions",
+      "consistency",
+      "freshness",
+      "budget",
+      "fallback"
+    ],
+    "gates": ["HARD", "PROVISIONAL", "ADVISORY", "ALTERNATIVE", "QUORUM", "STREAMING", "TEMPORAL"],
+    "satisfaction_predicates": [
+      "projection_matches_request",
+      "level_meets_minimum",
+      "certificate_current_for_epoch",
+      "assumptions_compatible",
+      "consistency_compatible"
+    ]
+  },
+  "convergence_contracts": {
+    "declared_methods": [
+      "finite_monotone_convergence",
+      "well_founded_descent",
+      "contractive_approximation",
+      "bounded_search",
+      "widening_and_narrowing",
+      "external_adjudication",
+      "streaming_epochs"
+    ],
+    "budget_exhaustion_outcome": "UNKNOWN",
+    "cycle_region_requires_declared_policy": true
+  },
+  "cycle_handling": {
+    "cycle_classes": [
+      "STRUCTURAL_CONTAINMENT",
+      "SEMANTIC_FEEDBACK",
+      "TEMPORAL_FEEDBACK",
+      "RESOURCE_DEADLOCK",
+      "AUTHORITY_DEADLOCK",
+      "ALTERNATIVE_SELECTION",
+      "HIDDEN_SELF_DEPENDENCY"
+    ],
+    "semantic_feedback_requires_declared_convergence": true,
+    "structural_containment_rejected": true,
+    "hidden_self_dependency_exposed": true
+  },
+  "closure_certification": {
+    "required_conditions": [
+      "all_consumed_information_is_dependency",
+      "components_cannot_self_certify",
+      "containment_and_dependency_separate",
+      "every_loop_has_convergence_or_exhaustion_contract",
+      "cycles_classified_before_resolution",
+      "results_versioned_and_assumption_bound",
+      "invalidation_follows_actual_causal_reads",
+      "local_stability_not_boundary_validity",
+      "quiescence_not_correctness",
+      "world_claims_do_not_exceed_evidence",
+      "external_actions_separated_from_reasoning",
+      "safety_liveness_fairness_independently_governed"
+    ],
+    "closure_outcomes": [
+      "CERTIFIED",
+      "UNSAT",
+      "UNKNOWN",
+      "BLOCKED",
+      "STALE",
+      "FAULT",
+      "CANCELLED",
+      "DEGRADED",
+      "RECOVERY_REQUIRED"
+    ],
+    "quiescence_is_not_correctness": true,
+    "world_claim_requires_evidence": true
+  },
+  "authority_boundary": {
+    "reasoning_only": true,
+    "effect_staging_required": true,
+    "no_component_self_certifies": true,
+    "live_runtime_dispatch_allowed": false,
+    "external_write_allowed": false,
+    "production_certificate_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "contract_summary": {
+    "component_tuple_count": 5,
+    "mesh_tuple_count": 11,
+    "dependency_gate_count": 7,
+    "step_outcome_count": 7,
+    "settlement_level_count": 5,
+    "cycle_class_count": 7,
+    "closure_outcome_count": 9,
+    "evidence_ref_count": 5,
+    "authority_denied": true
+  },
+  "evidence_refs": [
+    "docs/93_cdg_rccm_architecture_contract.md",
+    "schemas/cdg_rccm_architecture_contract.schema.json",
+    "examples/cdg_rccm_architecture_contract.foundation.json",
+    "scripts/validate_cdg_rccm_architecture_contract.py",
+    "tests/test_validate_cdg_rccm_architecture_contract.py"
+  ]
+}

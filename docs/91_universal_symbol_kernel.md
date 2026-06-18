@@ -324,6 +324,54 @@ receipt-store write-path authority
 
 It remains a Foundation Mode denial. It does not register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure.
 
+## Receipt-store operator approval witness
+
+The first UniversalSymbol receipt-store operator approval witness is:
+
+```text
+schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json
+examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json
+```
+
+It defines the evidence required before a receipt-store operator approval can be recorded:
+
+```text
+operator identity
+explicit approval decision
+approval scope
+tenant scope witness
+expiry or reapproval
+revocation path
+audit receipt
+terminal-closure denial
+```
+
+It remains a Foundation Mode denial. It does not record operator approval, register writer identity, register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
+## Receipt-store tenant scope witness
+
+The first UniversalSymbol receipt-store tenant scope witness is:
+
+```text
+schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json
+examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json
+```
+
+It defines the evidence required before receipt-store tenant scope can be bound:
+
+```text
+tenant identity
+actor identity
+tenant-actor binding
+receipt-store partition
+cross-tenant isolation
+tenant policy
+audit receipt
+rebinding or revocation path
+```
+
+It remains a Foundation Mode denial. It does not bind tenant scope, record operator approval, register writer identity, register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure. Unknown hard requirements remain blocked with `Delta_reject` refs.
+
 ## Receipt-store writer identity witness
 
 The first UniversalSymbol receipt-store writer identity witness is:
@@ -431,6 +479,8 @@ python scripts\validate_universal_symbol_kernel.py
 python scripts\validate_universal_symbol_adapter_receipt_persistence_policy.py
 python scripts\validate_universal_symbol_append_audit_witness.py
 python scripts\validate_universal_symbol_receipt_store_authority_witness.py
+python scripts\validate_universal_symbol_receipt_store_operator_approval_witness.py
+python scripts\validate_universal_symbol_receipt_store_tenant_scope_witness.py
 python scripts\validate_universal_symbol_receipt_store_path_custody_witness.py
 python scripts\validate_universal_symbol_receipt_store_writer_identity_witness.py
 python scripts\validate_universal_symbol_receipt_store_writer_registration_witness.py
@@ -469,9 +519,9 @@ public SaaS readiness
 
 ## Next action
 
-The next real implementation step is the remaining writer/path evidence chain: operator approval, tenant scope, duty scope, path confinement, idempotency, durability replay, and recovery witnesses before any append path exists.
+The next real implementation step is the remaining writer/path evidence chain: duty scope, path confinement, idempotency, durability replay, and recovery witnesses before any append path exists.
 
 STATUS:
-  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, append audit witness contract added, receipt-store writer identity witness contract added, receipt-store writer registration witness contract added, receipt-store path custody witness contract added, and receipt-store write-path witness contract added
-  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, UAO and LifeMeaningJudgment append preconditions, writer identity registration denial, unique writer identity requirement, writer registration denial, writer identity requirement, operator approval requirement, write-path requirement, tenant-scope requirement, path custody denial, canonical path identity requirement, repository-relative path requirement, write-path denial, custody requirement, confinement requirement, digest-only requirement, durability replay requirement
-  Open issues: proof-state coverage report, operator approval witness, tenant scope witness, writer duty scope witness, path confinement witness, write-path idempotency witness, durability replay witness, receipt-store recovery plan, runtime authority witnesses, and live runtime admission remain AwaitingEvidence
+  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, append audit witness contract added, receipt-store operator approval witness contract added, receipt-store tenant scope witness contract added, receipt-store writer identity witness contract added, receipt-store writer registration witness contract added, receipt-store path custody witness contract added, and receipt-store write-path witness contract added
+  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no tenant binding refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, UAO and LifeMeaningJudgment append preconditions, operator approval recording denial, explicit approval decision requirement, approval scope requirement, revocation path requirement, tenant identity requirement, actor identity requirement, tenant-actor binding requirement, receipt-store partition requirement, cross-tenant isolation requirement, writer identity registration denial, unique writer identity requirement, writer registration denial, writer identity requirement, operator approval requirement, write-path requirement, tenant-scope requirement, path custody denial, canonical path identity requirement, repository-relative path requirement, write-path denial, custody requirement, confinement requirement, digest-only requirement, durability replay requirement
+  Open issues: proof-state coverage report, writer duty scope witness, path confinement witness, write-path idempotency witness, durability replay witness, receipt-store recovery plan, runtime authority witnesses, and live runtime admission remain AwaitingEvidence

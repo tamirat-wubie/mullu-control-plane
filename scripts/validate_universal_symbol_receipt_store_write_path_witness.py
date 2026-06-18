@@ -99,6 +99,8 @@ REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
@@ -115,6 +117,7 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",

@@ -1,18 +1,20 @@
-"""Validate the Universal Symbol receipt-store path custody witness.
+"""Validate the Universal Symbol receipt-store operator approval witness.
 
-Purpose: prove UniversalSymbol receipt-store path custody remains blocked until
-canonical path, confinement, append-only, digest-only, tenant partition,
-idempotency, and recovery evidence exist.
+Purpose: prove UniversalSymbol receipt-store operator approval remains blocked
+until operator identity, explicit decision, approval scope, tenant scope,
+expiry or reapproval, revocation, audit receipt, and terminal-closure denial
+evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: path custody schema/example, write-path witness, writer identity
-witness, writer registration witness, append audit witness, receipt-store
-authority witness, docs, and tests.
+Dependencies: operator approval schema/example, writer identity witness, path
+custody witness, writer registration witness, write-path witness, append audit
+witness, receipt-store authority witness, docs, and tests.
 Invariants:
-  - The witness is not write-path authority.
-  - Path custody registration, writer registration, write-path registration,
-    receipt append, raw payload storage, raw secret storage, runtime dispatch,
-    connector calls, mutation, and terminal closure remain denied.
-  - Unknown hard preconditions block path custody and log Delta_reject refs.
+  - The witness is not approval authority.
+  - Approval recording, writer identity registration, writer registration,
+    write-path registration, receipt append, raw payload storage, raw secret
+    storage, runtime dispatch, connector calls, mutation, and terminal closure
+    remain denied.
+  - Unknown hard preconditions block operator approval and log Delta_reject refs.
 """
 
 from __future__ import annotations
@@ -29,11 +31,14 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_path_custody_witness.schema.json"
-DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_receipt_store_path_custody_witness.foundation.json"
+DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_operator_approval_witness.schema.json"
+DEFAULT_WITNESS_PATH = (
+    REPO_ROOT / "examples" / "universal_symbol_receipt_store_operator_approval_witness.foundation.json"
+)
 
 AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
-    "receipt_store_path_custody_registered",
+    "receipt_store_operator_approval_recorded",
+    "receipt_store_writer_identity_registered",
     "receipt_store_writer_registered",
     "receipt_store_write_path_registered",
     "receipt_store_append_performed",
@@ -46,60 +51,62 @@ AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
 )
 
 REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
-    "requirement://canonical-path-identity",
-    "requirement://repository-relative-path",
-    "requirement://path-confinement-witness",
-    "requirement://append-only-boundary",
-    "requirement://digest-only-boundary",
-    "requirement://tenant-actor-partition",
-    "requirement://idempotency-binding",
-    "requirement://rollback-recovery",
+    "requirement://operator-identity",
+    "requirement://explicit-approval-decision",
+    "requirement://approval-scope",
+    "requirement://tenant-scope-witness",
+    "requirement://expiry-or-reapproval",
+    "requirement://revocation-path",
+    "requirement://audit-receipt",
+    "requirement://terminal-closure-denial",
 )
 
-CUSTODY_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
-    "canonical_path_identity_required",
-    "repository_relative_path_required",
-    "path_confinement_required",
-    "append_only_boundary_required",
-    "digest_only_boundary_required",
-    "tenant_actor_partition_required",
-    "idempotency_binding_required",
-    "rollback_recovery_required",
+APPROVAL_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
+    "operator_identity_required",
+    "explicit_approval_decision_required",
+    "approval_scope_required",
+    "tenant_scope_required",
+    "expiry_or_reapproval_required",
+    "revocation_path_required",
+    "audit_receipt_required",
+    "terminal_closure_claim_forbidden",
 )
 
 REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "missing_canonical_path_blocks_custody",
-    "missing_confinement_blocks_custody",
-    "missing_append_only_boundary_blocks_custody",
-    "missing_idempotency_blocks_custody",
-    "unknown_hard_constraint_blocks_custody",
+    "missing_operator_identity_blocks_approval",
+    "missing_explicit_decision_blocks_approval",
+    "missing_scope_blocks_approval",
+    "missing_tenant_scope_blocks_approval",
+    "unknown_hard_constraint_blocks_approval",
     "failed_precondition_logs_delta_reject",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
-    "canonical_path_identity_missing",
-    "repository_relative_path_missing",
-    "path_confinement_witness_missing",
-    "append_only_boundary_missing",
-    "digest_only_boundary_missing",
-    "tenant_actor_partition_missing",
-    "idempotency_binding_missing",
-    "rollback_recovery_witness_missing",
-    "receipt_store_path_custody_registration_forbidden",
+    "operator_identity_missing",
+    "explicit_approval_decision_missing",
+    "approval_scope_missing",
+    "tenant_scope_witness_missing",
+    "expiry_or_reapproval_missing",
+    "revocation_path_missing",
+    "audit_receipt_missing",
+    "receipt_store_operator_approval_forbidden",
+    "state_mutation_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
-    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
-    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
-    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "schemas/universal_symbol_append_audit_witness.schema.json",
     "examples/universal_symbol_append_audit_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
@@ -109,16 +116,16 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py",
 )
 
 
-class UniversalSymbolReceiptStorePathCustodyWitnessError(ValueError):
-    """Raised when the path custody witness violates Foundation Mode."""
+class UniversalSymbolReceiptStoreOperatorApprovalWitnessError(ValueError):
+    """Raised when the operator approval witness violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -127,19 +134,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolReceiptStorePathCustodyWitnessError(f"missing file: {path}") from exc
+        raise UniversalSymbolReceiptStoreOperatorApprovalWitnessError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolReceiptStorePathCustodyWitnessError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolReceiptStoreOperatorApprovalWitnessError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolReceiptStorePathCustodyWitnessError(f"expected object: {path}")
+        raise UniversalSymbolReceiptStoreOperatorApprovalWitnessError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_receipt_store_path_custody_witness(
+def validate_universal_symbol_receipt_store_operator_approval_witness(
     witness_path: Path = DEFAULT_WITNESS_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied custody authority, and evidence refs."""
+    """Validate schema shape, denied approval authority, and evidence refs."""
 
     schema = load_json_object(schema_path)
     witness = load_json_object(witness_path)
@@ -148,9 +155,9 @@ def validate_universal_symbol_receipt_store_path_custody_witness(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(witness, schema, errors)
     _validate_witness_boundary(witness, errors)
-    _validate_custody_requirements(witness, errors)
+    _validate_approval_requirements(witness, errors)
     _validate_authority_denials(witness, errors)
-    _validate_custody_constraints(witness, errors)
+    _validate_approval_constraints(witness, errors)
     _validate_rejection_policy(witness, errors)
     _validate_blocked_reasons(witness, errors)
     _validate_contract_summary(witness, errors)
@@ -163,10 +170,10 @@ def validate_universal_symbol_receipt_store_path_custody_witness(
         "valid": not errors,
         "witness_id": witness.get("witness_id", ""),
         "solver_outcome": witness.get("solver_outcome", ""),
-        "path_custody_decision": witness.get("path_custody_decision", ""),
+        "operator_approval_decision": witness.get("operator_approval_decision", ""),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "custody_requirement_count": len(witness.get("custody_requirements", []))
-        if isinstance(witness.get("custody_requirements"), list)
+        "approval_requirement_count": len(witness.get("approval_requirements", []))
+        if isinstance(witness.get("approval_requirements"), list)
         else 0,
         "evidence_ref_count": len(witness.get("evidence_refs", []))
         if isinstance(witness.get("evidence_refs"), list)
@@ -174,12 +181,12 @@ def validate_universal_symbol_receipt_store_path_custody_witness(
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolReceiptStorePathCustodyWitnessError("; ".join(errors))
+        raise UniversalSymbolReceiptStoreOperatorApprovalWitnessError("; ".join(errors))
     return report
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-path-custody-witness:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-operator-approval-witness:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
@@ -204,30 +211,33 @@ def _validate_witness_boundary(witness: Mapping[str, Any], errors: list[str]) ->
         errors.append("foundation_mode must remain true")
     if witness.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
-    if witness.get("path_custody_decision") != "blocked_pending_confinement_idempotency_replay_and_recovery_evidence":
-        errors.append("path_custody_decision must remain blocked")
-    if witness.get("path_custody_witness_is_not_write_path_authority") is not True:
-        errors.append("path custody witness must not grant write-path authority")
+    if (
+        witness.get("operator_approval_decision")
+        != "blocked_pending_live_operator_decision_tenant_scope_and_reapproval_evidence"
+    ):
+        errors.append("operator_approval_decision must remain blocked")
+    if witness.get("operator_approval_witness_is_not_approval_authority") is not True:
+        errors.append("operator approval witness must not grant approval authority")
 
 
-def _validate_custody_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
-    requirements = witness.get("custody_requirements")
+def _validate_approval_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
+    requirements = witness.get("approval_requirements")
     if not isinstance(requirements, list) or not requirements:
-        errors.append("custody_requirements must be non-empty")
+        errors.append("approval_requirements must be non-empty")
         return
     requirement_ids: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("custody requirement entries must be objects")
+            errors.append("approval requirement entries must be objects")
             continue
         requirement_ids.append(str(requirement.get("requirement_id")))
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('requirement_id')}: proof_state must block path custody")
-        if requirement.get("current_decision") != "path_custody_blocked":
-            errors.append(f"{requirement.get('requirement_id')}: current_decision must be path_custody_blocked")
+            errors.append(f"{requirement.get('requirement_id')}: proof_state must block operator approval")
+        if requirement.get("current_decision") != "operator_approval_blocked":
+            errors.append(f"{requirement.get('requirement_id')}: current_decision must be operator_approval_blocked")
         if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
             errors.append(f"{requirement.get('requirement_id')}: delta_reject_ref must be logged")
-    _require_members("custody_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
+    _require_members("approval_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
 
 
 def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -237,11 +247,11 @@ def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -
             errors.append(f"authority_denials.{field_name} must remain false")
 
 
-def _validate_custody_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
-    constraints = _mapping(witness.get("custody_constraints"))
-    for field_name in CUSTODY_CONSTRAINT_TRUE_FIELDS:
+def _validate_approval_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
+    constraints = _mapping(witness.get("approval_constraints"))
+    for field_name in APPROVAL_CONSTRAINT_TRUE_FIELDS:
         if constraints.get(field_name) is not True:
-            errors.append(f"custody_constraints.{field_name} must remain true")
+            errors.append(f"approval_constraints.{field_name} must remain true")
 
 
 def _validate_rejection_policy(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -262,9 +272,9 @@ def _validate_blocked_reasons(witness: Mapping[str, Any], errors: list[str]) -> 
 def _validate_contract_summary(witness: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(witness.get("contract_summary"))
     observed_counts = {
-        "custody_requirement_count": _list_len(witness.get("custody_requirements")),
+        "approval_requirement_count": _list_len(witness.get("approval_requirements")),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "custody_constraint_count": len(CUSTODY_CONSTRAINT_TRUE_FIELDS),
+        "approval_constraint_count": len(APPROVAL_CONSTRAINT_TRUE_FIELDS),
         "rejection_check_count": len(REJECTION_POLICY_TRUE_FIELDS),
         "blocked_reason_count": _list_len(witness.get("blocked_reasons")),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")),
@@ -338,19 +348,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        report = validate_universal_symbol_receipt_store_path_custody_witness(args.witness, args.schema)
-    except UniversalSymbolReceiptStorePathCustodyWitnessError as exc:
+        report = validate_universal_symbol_receipt_store_operator_approval_witness(args.witness, args.schema)
+    except UniversalSymbolReceiptStoreOperatorApprovalWitnessError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": str(exc).split("; ")}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_receipt_store_path_custody_witness: {exc}")
+            print(f"[FAIL] universal_symbol_receipt_store_operator_approval_witness: {exc}")
             print("STATUS: failed")
         return 1
 
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_receipt_store_path_custody_witness")
+        print("[PASS] universal_symbol_receipt_store_operator_approval_witness")
         print("STATUS: passed")
     return 0
 
