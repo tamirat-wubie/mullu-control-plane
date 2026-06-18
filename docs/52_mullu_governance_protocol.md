@@ -205,6 +205,7 @@ Operator approval note: read-only worker runtime receipt-store operator approval
 175. MAF deterministic fixture parity witnesses are public contracts when they bind MAF subprocess effect boundary refs, Rust CLI scaffold digests, WorkerFailureReceipt refs, VerificationResult refs, KernelProof refs, transition receipt refs, static command fixture descriptor digests, UAO refs, LifeMeaningJudgment refs, receipt refs, and authority-denial flags before any executable Python-to-Rust runtime binding claim can be reconsidered while denying CLI execution, subprocess execution, runtime binding, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, connector calls, network calls, secret access, raw fixture payload retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
 176. MAF failure receipt path witnesses are public contracts when they bind MAF deterministic fixture parity refs, Rust CLI scaffold digests, WorkerFailureReceipt refs, VerificationResult refs, KernelProof refs, transition receipt refs, static failure materialization path descriptor digests, UAO refs, LifeMeaningJudgment refs, receipt refs, and authority-denial flags before executable Python-to-Rust runtime binding can be reconsidered as a separate implementation thread while denying runtime binding, CLI execution, subprocess execution, command behavior, PyO3 binding, Rust crate execution, Python Rust imports, shell invocation, child process spawn, connector calls, network calls, secret access, raw failure payload retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
 177. Agentic service harness GitHub PR CI-gate before-ready-for-review witnesses are public contracts when they bind repository-effect rollback-plan evidence to explicit CI gate evidence obligations while denying branch creation, pull-request creation, ready-for-review marking, repository writes, connector calls, mutation routes, receipt-store appends, deployments, DNS mutation, secret mutation, destructive operations, terminal closure, and success claims.
+178. MAF runtime binding admission witnesses are public contracts when they bind closed static MAF prerequisites, F8 scoping evidence, UAO refs, LifeMeaningJudgment refs, implementation-design evidence refs, rollback evidence refs, runtime execution receipt refs, CI Rust backend evidence refs, terminal closure review refs, and authority-denial flags before executable Python-to-Rust runtime binding implementation can begin while denying implementation start, runtime binding, PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, backend default flips, connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
 ## Verification
 
 Run:
@@ -216,7 +217,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 373 schemas
+protocol manifest ok: 374 schemas
 ```
 
 STATUS:

@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:maf-runtime-binding-admission-witness:1",
+  "title": "MAF Runtime Binding Admission Witness",
+  "description": "Foundation Mode witness that admits a future MAF runtime-binding implementation thread while denying executable runtime binding, subprocess execution, PyO3 binding, Python Rust imports, writes, terminal closure, and success authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "solver_outcome",
+    "admission_scope",
+    "source_artifacts",
+    "admission_requirements",
+    "authority_boundary",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "minLength": 1},
+    "witness_version": {"const": "maf_runtime_binding_admission_witness.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "solver_outcome": {"const": "AwaitingEvidence"},
+    "admission_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "foundation_mode",
+        "admission_mode",
+        "static_prerequisites_closed",
+        "runtime_binding_admission_recorded",
+        "runtime_binding_claimed",
+        "implementation_authority_claimed",
+        "terminal_closure_claimed",
+        "failure_receipt_path_ref",
+        "deterministic_fixture_parity_ref",
+        "subprocess_effect_boundary_ref",
+        "abi_cli_contract_ref",
+        "parity_witness_ref",
+        "f8_plan_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref",
+        "required_implementation_evidence"
+      ],
+      "properties": {
+        "source_family": {"const": "maf/rust"},
+        "foundation_mode": {"type": "boolean"},
+        "admission_mode": {"const": "governed_runtime_binding_admission"},
+        "static_prerequisites_closed": {"type": "boolean"},
+        "runtime_binding_admission_recorded": {"type": "boolean"},
+        "runtime_binding_claimed": {"type": "boolean"},
+        "implementation_authority_claimed": {"type": "boolean"},
+        "terminal_closure_claimed": {"type": "boolean"},
+        "failure_receipt_path_ref": {"const": "witness://maf/failure-receipt-path"},
+        "deterministic_fixture_parity_ref": {"const": "witness://maf/deterministic-fixture-parity"},
+        "subprocess_effect_boundary_ref": {"const": "witness://maf/subprocess-effect-boundary"},
+        "abi_cli_contract_ref": {"const": "witness://maf/abi-cli-contract"},
+        "parity_witness_ref": {"const": "witness://maf/receipt-parity"},
+        "f8_plan_ref": {"const": "docs/AUDIT_F8_SCOPING_PLAN.md"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1},
+        "required_implementation_evidence": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source_artifact"}
+    },
+    "admission_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/admission_requirement"}
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_admission_read_allowed",
+        "runtime_binding_allowed",
+        "cli_execution_allowed",
+        "subprocess_execution_allowed",
+        "pyo3_binding_allowed",
+        "rust_crate_execution_allowed",
+        "python_imports_rust_allowed",
+        "implementation_start_allowed",
+        "ci_rust_backend_required_allowed",
+        "default_backend_flip_allowed",
+        "network_call_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "runtime_dispatch_allowed",
+        "canonical_state_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "static_admission_read_allowed": {"type": "boolean"},
+        "runtime_binding_allowed": {"type": "boolean"},
+        "cli_execution_allowed": {"type": "boolean"},
+        "subprocess_execution_allowed": {"type": "boolean"},
+        "pyo3_binding_allowed": {"type": "boolean"},
+        "rust_crate_execution_allowed": {"type": "boolean"},
+        "python_imports_rust_allowed": {"type": "boolean"},
+        "implementation_start_allowed": {"type": "boolean"},
+        "ci_rust_backend_required_allowed": {"type": "boolean"},
+        "default_backend_flip_allowed": {"type": "boolean"},
+        "network_call_allowed": {"type": "boolean"},
+        "secret_access_allowed": {"type": "boolean"},
+        "filesystem_write_allowed": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"type": "boolean"},
+        "canonical_state_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {"type": "object"},
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact_count",
+        "admission_requirement_count",
+        "authority_denial_count",
+        "open_evidence_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_artifact_count": {"type": "integer", "minimum": 0},
+        "admission_requirement_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "open_evidence_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"}
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_ref",
+        "artifact_digest_sha256",
+        "artifact_role",
+        "execution_authority_denied"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "artifact_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_role": {"type": "string", "minLength": 1},
+        "execution_authority_denied": {"type": "boolean"}
+      }
+    },
+    "admission_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "requirement_ref",
+        "required_before",
+        "evidence_state",
+        "admission_status",
+        "execution_allowed"
+      ],
+      "properties": {
+        "requirement_id": {"type": "string", "minLength": 1},
+        "requirement_ref": {"type": "string", "minLength": 1},
+        "required_before": {"const": "runtime_binding_implementation"},
+        "evidence_state": {"const": "AwaitingEvidence"},
+        "admission_status": {"const": "blocked_until_evidence"},
+        "execution_allowed": {"type": "boolean"}
+      }
+    }
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "witness_id": "maf-runtime-binding-admission-witness-foundation-20260618",
+  "witness_version": "maf_runtime_binding_admission_witness.v1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "admission_scope": {
+    "source_family": "maf/rust",
+    "foundation_mode": true,
+    "admission_mode": "governed_runtime_binding_admission",
+    "static_prerequisites_closed": true,
+    "runtime_binding_admission_recorded": true,
+    "runtime_binding_claimed": false,
+    "implementation_authority_claimed": false,
+    "terminal_closure_claimed": false,
+    "failure_receipt_path_ref": "witness://maf/failure-receipt-path",
+    "deterministic_fixture_parity_ref": "witness://maf/deterministic-fixture-parity",
+    "subprocess_effect_boundary_ref": "witness://maf/subprocess-effect-boundary",
+    "abi_cli_contract_ref": "witness://maf/abi-cli-contract",
+    "parity_witness_ref": "witness://maf/receipt-parity",
+    "f8_plan_ref": "docs/AUDIT_F8_SCOPING_PLAN.md",
+    "uao_ref": "schema://universal-action-orchestration",
+    "life_meaning_judgment_ref": "schema://life-meaning-judgment",
+    "required_implementation_evidence": [
+      "evidence://maf/runtime-binding/uao-admission",
+      "evidence://maf/runtime-binding/implementation-design",
+      "evidence://maf/runtime-binding/rollback-recovery",
+      "evidence://maf/runtime-binding/runtime-execution-receipts",
+      "evidence://maf/runtime-binding/ci-rust-backend-lane",
+      "evidence://maf/runtime-binding/terminal-closure-review"
+    ]
+  },
+  "source_artifacts": [
+    {
+      "artifact_id": "maf_failure_receipt_path_schema",
+      "artifact_ref": "schemas/maf_failure_receipt_path_witness.schema.json",
+      "artifact_digest_sha256": "9f45397d77d6f853a037e9f21cae7f20678a632a41faa67b34baa995d3029144",
+      "artifact_role": "failure_receipt_path_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_failure_receipt_path_example",
+      "artifact_ref": "examples/maf_failure_receipt_path_witness.foundation.json",
+      "artifact_digest_sha256": "fe0711ecc7044936019e0bf9c1888e06d6ffb0aaafeda63124eb869ce3ddb34f",
+      "artifact_role": "failure_receipt_path_example",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_failure_receipt_path_validator",
+      "artifact_ref": "scripts/validate_maf_failure_receipt_path_witness.py",
+      "artifact_digest_sha256": "9924d2e8ea29a14c08d57fe93af7549c59dd2f5ac44ebf0bea28db9b61edc6db",
+      "artifact_role": "failure_receipt_path_validator",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_failure_receipt_path_tests",
+      "artifact_ref": "tests/test_validate_maf_failure_receipt_path_witness.py",
+      "artifact_digest_sha256": "1a6a4ebf9e5629053d16898620640d8348fcd069f227aeef0ffcf860b3bb3478",
+      "artifact_role": "failure_receipt_path_tests",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_failure_receipt_path_doc",
+      "artifact_ref": "docs/97_maf_failure_receipt_path_witness.md",
+      "artifact_digest_sha256": "36bd50a37b56b149d3f27ffc91810d2b8973c1e03699ef4ed1a1473c16e6638e",
+      "artifact_role": "failure_receipt_path_doc",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_f8_scoping_plan",
+      "artifact_ref": "docs/AUDIT_F8_SCOPING_PLAN.md",
+      "artifact_digest_sha256": "d162ff189eba0ff1cb743f1027cb4eeb4dd4c43e08f587a98f8ce7bf07a88586",
+      "artifact_role": "runtime_binding_scoping_plan",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "maf_boundary_doc",
+      "artifact_ref": "maf/MAF_BOUNDARY.md",
+      "artifact_digest_sha256": "44f672d2809e48b04d50107a75f1f4ac43e24761858d0c458395b98be3d6ce15",
+      "artifact_role": "maf_boundary",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "universal_action_orchestration_schema",
+      "artifact_ref": "schemas/universal_action_orchestration.schema.json",
+      "artifact_digest_sha256": "bc9b181d0cb5cb4d2d28a210b75303d466d161f5a31a2273d34dcf83eb83074e",
+      "artifact_role": "uao_schema",
+      "execution_authority_denied": true
+    },
+    {
+      "artifact_id": "life_meaning_judgment_schema",
+      "artifact_ref": "schemas/life_meaning_judgment.schema.json",
+      "artifact_digest_sha256": "e188daba0ce9275740bc433d17d709ab01e7138e460d0a2e7523d2f5763a29be",
+      "artifact_role": "life_meaning_judgment_schema",
+      "execution_authority_denied": true
+    }
+  ],
+  "admission_requirements": [
+    {
+      "requirement_id": "maf-runtime-binding-uao-admission",
+      "requirement_ref": "evidence://maf/runtime-binding/uao-admission",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    },
+    {
+      "requirement_id": "maf-runtime-binding-implementation-design",
+      "requirement_ref": "evidence://maf/runtime-binding/implementation-design",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    },
+    {
+      "requirement_id": "maf-runtime-binding-rollback-recovery",
+      "requirement_ref": "evidence://maf/runtime-binding/rollback-recovery",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    },
+    {
+      "requirement_id": "maf-runtime-binding-runtime-execution-receipts",
+      "requirement_ref": "evidence://maf/runtime-binding/runtime-execution-receipts",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    },
+    {
+      "requirement_id": "maf-runtime-binding-ci-rust-backend-lane",
+      "requirement_ref": "evidence://maf/runtime-binding/ci-rust-backend-lane",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    },
+    {
+      "requirement_id": "maf-runtime-binding-terminal-closure-review",
+      "requirement_ref": "evidence://maf/runtime-binding/terminal-closure-review",
+      "required_before": "runtime_binding_implementation",
+      "evidence_state": "AwaitingEvidence",
+      "admission_status": "blocked_until_evidence",
+      "execution_allowed": false
+    }
+  ],
+  "authority_boundary": {
+    "static_admission_read_allowed": true,
+    "implementation_start_allowed": false,
+    "runtime_binding_allowed": false,
+    "pyo3_binding_allowed": false,
+    "subprocess_execution_allowed": false,
+    "cli_execution_allowed": false,
+    "rust_crate_execution_allowed": false,
+    "python_imports_rust_allowed": false,
+    "ci_rust_backend_required_allowed": false,
+    "default_backend_flip_allowed": false,
+    "network_call_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "canonical_state_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_runtime_binding_admission_witness_schema": "schemas/maf_runtime_binding_admission_witness.schema.json",
+    "maf_runtime_binding_admission_witness_example": "examples/maf_runtime_binding_admission_witness.foundation.json",
+    "maf_runtime_binding_admission_witness_validator": "scripts/validate_maf_runtime_binding_admission_witness.py",
+    "maf_runtime_binding_admission_witness_tests": "tests/test_validate_maf_runtime_binding_admission_witness.py",
+    "maf_runtime_binding_admission_witness_doc": "docs/98_maf_runtime_binding_admission_witness.md",
+    "maf_failure_receipt_path_witness_schema": "schemas/maf_failure_receipt_path_witness.schema.json",
+    "maf_failure_receipt_path_witness_example": "examples/maf_failure_receipt_path_witness.foundation.json",
+    "maf_failure_receipt_path_witness_validator": "scripts/validate_maf_failure_receipt_path_witness.py",
+    "maf_failure_receipt_path_witness_tests": "tests/test_validate_maf_failure_receipt_path_witness.py",
+    "maf_failure_receipt_path_witness_doc": "docs/97_maf_failure_receipt_path_witness.md",
+    "maf_f8_scoping_plan": "docs/AUDIT_F8_SCOPING_PLAN.md",
+    "maf_boundary_doc": "maf/MAF_BOUNDARY.md",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "source_artifact_count": 9,
+    "admission_requirement_count": 6,
+    "authority_denial_count": 16,
+    "open_evidence_count": 6,
+    "evidence_ref_count": 8
+  },
+  "evidence_refs": [
+    "witness://maf/receipt-parity",
+    "witness://maf/abi-cli-contract",
+    "witness://maf/subprocess-effect-boundary",
+    "witness://maf/deterministic-fixture-parity",
+    "witness://maf/failure-receipt-path",
+    "uao://maf/runtime-binding/admission-required",
+    "life-meaning://maf/runtime-binding/no-runtime-effect",
+    "gap://maf/runtime-binding-implementation-evidence"
+  ]
+}
