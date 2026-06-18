@@ -28,9 +28,11 @@ from .console import (
 )
 from .approval import (
     ApprovalDecision,
+    ApprovalPlanProposal,
     ApprovalProposedAction,
     ApprovalQueueRecord,
     PersonalAssistantApprovalQueue,
+    prepare_approval_proposal_from_plan,
 )
 from .approval_matrix import (
     ApprovalRiskPolicy,
@@ -122,6 +124,7 @@ __all__ = (
     "PersonalAssistantSkillCapabilityBindingReport",
     "PersonalAssistantSkillRegistry",
     "ApprovalDecision",
+    "ApprovalPlanProposal",
     "ApprovalProposedAction",
     "ApprovalQueueRecord",
     "ApprovalRiskPolicy",
@@ -173,6 +176,7 @@ __all__ = (
     "load_personal_assistant_capability_pack",
     "load_personal_assistant_approval_matrix",
     "prepare_memory_observation",
+    "prepare_approval_proposal_from_plan",
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
     "plan_github_codex_review",

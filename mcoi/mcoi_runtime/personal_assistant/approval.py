@@ -124,6 +124,78 @@ class ApprovalProposedAction:
 
 
 @dataclass(frozen=True, slots=True)
+class ApprovalPlanProposal:
+    """No-effect approval proposal derived from a matrix-bound plan."""
+
+    request_id: str
+    plan_id: str
+    approval_scope: ApprovalScope
+    risk_level: SkillRiskLevel
+    proposed_actions: tuple[ApprovalProposedAction, ...]
+    forbidden_without_approval: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    approval_matrix_ref: str
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "request_id", _require_prefix(self.request_id, "request_id", "pa_request_"))
+        object.__setattr__(self, "plan_id", _require_prefix(self.plan_id, "plan_id", "pa_plan_"))
+        object.__setattr__(self, "approval_scope", _coerce_approval_scope(self.approval_scope))
+        risk_level = (
+            self.risk_level
+            if isinstance(self.risk_level, SkillRiskLevel)
+            else SkillRiskLevel.coerce(str(self.risk_level))
+        )
+        object.__setattr__(self, "risk_level", risk_level)
+        object.__setattr__(self, "proposed_actions", _action_tuple(self.proposed_actions))
+        object.__setattr__(
+            self,
+            "forbidden_without_approval",
+            _text_tuple(self.forbidden_without_approval, "forbidden_without_approval"),
+        )
+        object.__setattr__(self, "evidence_refs", _text_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(
+            self,
+            "approval_matrix_ref",
+            _require_text(self.approval_matrix_ref, "approval_matrix_ref"),
+        )
+        if not isinstance(self.execution_allowed, bool):
+            raise PersonalAssistantInvariantError("execution_allowed must be a boolean")
+        if self.execution_allowed:
+            raise PersonalAssistantInvariantError("approval proposal cannot authorize execution")
+        if _max_action_risk(self.proposed_actions) is not risk_level:
+            raise PersonalAssistantInvariantError("proposal risk_level must match proposed action risk")
+
+    def as_enqueue_kwargs(self, *, approver_ref: str, created_at: str) -> dict[str, Any]:
+        """Return keyword arguments accepted by PersonalAssistantApprovalQueue.enqueue."""
+        return {
+            "request_id": self.request_id,
+            "plan_id": self.plan_id,
+            "approver_ref": _require_text(approver_ref, "approver_ref"),
+            "approval_scope": self.approval_scope,
+            "proposed_actions": self.proposed_actions,
+            "forbidden_without_approval": self.forbidden_without_approval,
+            "evidence_refs": self.evidence_refs,
+            "created_at": _require_text(created_at, "created_at"),
+        }
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a deterministic JSON-ready approval proposal."""
+        return {
+            "request_id": self.request_id,
+            "plan_id": self.plan_id,
+            "approval_scope": self.approval_scope.value,
+            "risk_level": self.risk_level.value,
+            "proposed_actions": [action.as_dict() for action in self.proposed_actions],
+            "forbidden_without_approval": list(self.forbidden_without_approval),
+            "evidence_refs": list(self.evidence_refs),
+            "approval_matrix_ref": self.approval_matrix_ref,
+            "execution_allowed": self.execution_allowed,
+            "approval_is_execution": False,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class ApprovalQueueRecord:
     """Immutable approval packet plus its emitted receipts."""
 
@@ -153,6 +225,67 @@ class ApprovalQueueRecord:
             "packet": dict(self.packet),
             "receipts": [dict(receipt) for receipt in self.receipts],
         }
+
+
+def prepare_approval_proposal_from_plan(
+    plan: Mapping[str, Any],
+    *,
+    approval_scope: ApprovalScope | str = ApprovalScope.PER_PLAN,
+    approval_matrix: PersonalAssistantApprovalMatrix | None = None,
+) -> ApprovalPlanProposal:
+    """Derive an approval-queue proposal from a no-execution preview plan.
+
+    Input contract: a planner-produced mapping with approval matrix metadata.
+    Output contract: enqueue-ready approval proposal with no execution authority.
+    Error contract: raises PersonalAssistantInvariantError for non-approval
+    plans, matrix drift, unsafe forbidden actions, or missing evidence refs.
+    """
+    if not isinstance(plan, Mapping):
+        raise PersonalAssistantInvariantError("plan must be a mapping")
+    matrix = approval_matrix or load_default_personal_assistant_approval_matrix()
+    request_id = _require_prefix(plan.get("request_id"), "request_id", "pa_request_")
+    plan_id = _require_prefix(plan.get("plan_id"), "plan_id", "pa_plan_")
+    if plan.get("execution_allowed") is not False:
+        raise PersonalAssistantInvariantError(f"{plan_id}: plan must not authorize execution")
+    gate = plan.get("approval_gate")
+    if not isinstance(gate, Mapping):
+        raise PersonalAssistantInvariantError(f"{plan_id}: approval_gate must be a mapping")
+    if gate.get("approval_required") is not True:
+        raise PersonalAssistantInvariantError(f"{plan_id}: plan does not require approval")
+    matrix_metadata = _plan_approval_matrix_metadata(plan)
+    metadata_matrix_id = _require_mapping_text(matrix_metadata, "matrix_id")
+    if metadata_matrix_id != matrix.matrix_id:
+        raise PersonalAssistantInvariantError(
+            f"{plan_id}: plan approval matrix {metadata_matrix_id} does not match runtime {matrix.matrix_id}"
+        )
+    plan_risk = SkillRiskLevel.coerce(_require_mapping_text(plan, "risk_level"))
+    approval_level = _require_mapping_text(gate, "approval_level")
+    if approval_level != plan_risk.value:
+        raise PersonalAssistantInvariantError(f"{plan_id}: approval level must match plan risk")
+    approval_ref = _require_mapping_text(gate, "approval_ref")
+    if not approval_ref.endswith(f"#{plan_risk.value}"):
+        raise PersonalAssistantInvariantError(f"{plan_id}: approval_ref must bind matrix risk level")
+
+    actions = _proposal_actions_from_plan_steps(plan)
+    risk_level = max((plan_risk, *(action.risk_level for action in actions)), key=lambda risk: risk.order)
+    forbidden = _matrix_forbidden_actions_from_plan(plan, matrix)
+    evidence_refs = _text_tuple(plan.get("evidence_refs"), "evidence_refs")
+    matrix.assert_action_admitted(
+        risk_level=risk_level,
+        execution_mode="blocked" if risk_level is SkillRiskLevel.P5 else "execute_with_approval",
+        forbidden_without_approval=forbidden,
+    )
+    return ApprovalPlanProposal(
+        request_id=request_id,
+        plan_id=plan_id,
+        approval_scope=approval_scope,
+        risk_level=risk_level,
+        proposed_actions=actions,
+        forbidden_without_approval=forbidden,
+        evidence_refs=evidence_refs,
+        approval_matrix_ref=matrix.matrix_id,
+        execution_allowed=False,
+    )
 
 
 @dataclass(slots=True)
@@ -374,6 +507,67 @@ def _assert_actions_match_registry(
             )
         if not skill.requires_approval:
             raise PersonalAssistantInvariantError(f"{skill.skill_id}: skill does not require approval")
+
+
+def _plan_approval_matrix_metadata(plan: Mapping[str, Any]) -> Mapping[str, Any]:
+    metadata = plan.get("metadata")
+    if not isinstance(metadata, Mapping):
+        raise PersonalAssistantInvariantError("plan metadata must be a mapping")
+    matrix_metadata = metadata.get("approval_matrix")
+    if not isinstance(matrix_metadata, Mapping):
+        raise PersonalAssistantInvariantError("plan metadata.approval_matrix must be a mapping")
+    return matrix_metadata
+
+
+def _proposal_actions_from_plan_steps(plan: Mapping[str, Any]) -> tuple[ApprovalProposedAction, ...]:
+    steps = plan.get("steps")
+    if isinstance(steps, (str, bytes)) or not isinstance(steps, Sequence):
+        raise PersonalAssistantInvariantError("plan steps must be a sequence")
+    actions: list[ApprovalProposedAction] = []
+    for offset, step in enumerate(steps):
+        if not isinstance(step, Mapping):
+            raise PersonalAssistantInvariantError(f"steps[{offset}] must be a mapping")
+        approval_required = step.get("approval_required")
+        if approval_required is not True:
+            continue
+        risk_level = SkillRiskLevel.coerce(_require_mapping_text(step, "risk_level"))
+        if not risk_level.requires_explicit_approval:
+            continue
+        skill_id = _require_mapping_text(step, "skill_id")
+        step_id = _require_mapping_text(step, "step_id")
+        action = _require_mapping_text(step, "action")
+        effect_boundary = _require_mapping_text(step, "effect_boundary")
+        actions.append(
+            ApprovalProposedAction(
+                action_id=_safe_identifier(f"{step_id}_{action}"),
+                skill_id=skill_id,
+                risk_level=risk_level,
+                effect_boundary=effect_boundary,
+                summary=f"Request approval for {action} through {skill_id} at {effect_boundary}.",
+            )
+        )
+    if not actions:
+        raise PersonalAssistantInvariantError("plan has no approval-required effect-bearing steps")
+    return tuple(actions)
+
+
+def _matrix_forbidden_actions_from_plan(
+    plan: Mapping[str, Any],
+    matrix: PersonalAssistantApprovalMatrix,
+) -> tuple[str, ...]:
+    not_authorized = _text_tuple(plan.get("actions_not_authorized"), "actions_not_authorized")
+    matrix_blockers = set(matrix.blocked_without_approval)
+    forbidden = [action for action in not_authorized if action in matrix_blockers]
+    if not forbidden:
+        step_actions = [
+            _require_mapping_text(step, "action")
+            for step in plan.get("steps", ())
+            if isinstance(step, Mapping) and step.get("approval_required") is True
+        ]
+        forbidden = [action for action in step_actions if action in matrix_blockers]
+    if not forbidden:
+        raise PersonalAssistantInvariantError("plan has no matrix-blocked actions for approval proposal")
+    return tuple(_dedupe_texts(forbidden))
 
 
 def _approval_receipt(
