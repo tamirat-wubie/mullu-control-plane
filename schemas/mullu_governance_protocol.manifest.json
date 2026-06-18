@@ -719,6 +719,12 @@
       "surface": "maf"
     },
     {
+      "schema_id": "world-substrate-replay-witness",
+      "path": "schemas/world_substrate_replay_witness.schema.json",
+      "urn": "urn:mullusi:schema:world-substrate-replay-witness:1",
+      "surface": "world"
+    },
+    {
       "schema_id": "research-source-conflict-map",
       "path": "schemas/research_source_conflict_map.schema.json",
       "urn": "urn:mullusi:schema:research-source-conflict-map:1",

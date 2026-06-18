@@ -5454,6 +5454,39 @@ def test_maf_receipt_parity_witness_denies_runtime_binding() -> None:
     assert closure_actions["publish_maf_receipt_parity_witness_contract"]["status"] == "closed"
 
 
+def test_world_substrate_replay_witness_blocks_live_world_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    world_surface = surfaces["world_substrate_replay_witness"]
+    world_witness_surface = witness_surfaces["world_substrate_replay_witness"]
+    witnesses = set(world_surface["runtime_witnesses"])
+
+    assert world_surface["coverage_state"] == "witnessed"
+    assert world_surface["request_proof"] == "request_proof"
+    assert world_surface["action_proof"] == "action_proof"
+    assert "WorldSubstrateReplayWitness" in world_surface["representative_paths"]
+    assert "schemas/world_substrate_replay_witness.schema.json" in world_surface["evidence_files"]
+    assert "examples/world_substrate_replay_witness.foundation.json" in world_surface["evidence_files"]
+    assert "scripts/validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "tests/test_validate_world_substrate_replay_witness.py" in world_surface["evidence_files"]
+    assert "world_substrate_replay_witness_schema_valid" in witnesses
+    assert "world_substrate_replay_witness_blocks_live_world_authority" in witnesses
+    assert "world_substrate_replay_witness_requires_digest_refs" in witnesses
+    assert "world_substrate_replay_witness_requires_invariant_controls" in witnesses
+    assert "world_substrate_replay_witness_rejects_raw_payload_retention" in witnesses
+    assert "world_substrate_replay_witness_rejects_parity_drift" in witnesses
+    assert "world_substrate_replay_witness_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "world_substrate_replay_witness_sdlc_artifacts_valid" in witnesses
+    assert world_witness_surface["exact_test_anchor_count"] == 8
+    assert world_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_world_substrate_replay_witness_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
