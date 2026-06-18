@@ -139,10 +139,20 @@ def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
     version_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
     hash_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
     root_tampered = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    source_ref_blank_tampered = WHQRDocument(
+        root=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+        source_ref="request:payment-approval",
+    )
+    source_ref_type_tampered = WHQRDocument(
+        root=WHQRNode(role=WHRole.WHAT, target="payment_request"),
+        source_ref="request:payment-approval",
+    )
 
     object.__setattr__(version_tampered, "whqr_version", "0.2.0")
     object.__setattr__(hash_tampered, "semantics_hash", "sha256:other")
     object.__setattr__(root_tampered, "root", object())
+    object.__setattr__(source_ref_blank_tampered, "source_ref", " ")
+    object.__setattr__(source_ref_type_tampered, "source_ref", ("request", "payment-approval"))
 
     assert document.verify_semantics() == document.canonical_hash()
     with pytest.raises(ValueError, match="semantic version mismatch"):
@@ -151,6 +161,10 @@ def test_document_verify_semantics_rejects_replay_header_tampering() -> None:
         hash_tampered.verify_semantics()
     with pytest.raises(ValueError, match="root"):
         root_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="source_ref"):
+        source_ref_blank_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="source_ref"):
+        source_ref_type_tampered.verify_semantics()
 
 
 def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:

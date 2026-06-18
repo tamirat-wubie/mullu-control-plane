@@ -513,6 +513,7 @@ class WHQRDocument:
         if self.semantics_hash != SEMANTICS_HASH:
             raise ValueError("WHQR replay semantics hash mismatch")
         _require_whqr_expr_tree(self.root, "root")
+        _require_optional_text(self.source_ref, "source_ref")
         _require_metadata_tree(self.metadata, "document")
         canonical_hash = self.canonical_hash()
         if expected_canonical_hash is not None:
