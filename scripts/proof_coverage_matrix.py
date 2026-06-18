@@ -7476,6 +7476,68 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_receipt_parity_witness",
+            [
+                "MafReceiptParityWitness",
+                "validate_maf_receipt_parity_witness",
+                "maf_receipt_parity_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_receipt_parity_witness.schema.json",
+                "examples/maf_receipt_parity_witness.foundation.json",
+                "scripts/validate_maf_receipt_parity_witness.py",
+                "tests/test_validate_maf_receipt_parity_witness.py",
+                "schemas/sdlc_transition_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/93_maf_receipt_parity_witness_contract.md",
+                "docs/82_cross_repo_opportunity_map.md",
+                "docs/MAF_RECEIPT_COVERAGE.md",
+                "maf/MAF_BOUNDARY.md",
+                "maf/rust/Cargo.toml",
+            ],
+            "MAF receipt parity witnesses bind Python receipt schema digests to Rust MAF crate manifest and entry digests while keeping PyO3, subprocess, CLI execution, Rust execution, connector calls, writes, runtime dispatch, terminal closure, and success claims denied until ABI, subprocess, fixture, and failure-path witnesses exist.",
+            [
+                "maf_receipt_parity_witness_schema_valid",
+                "maf_receipt_parity_witness_denies_runtime_binding",
+                "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs",
+                "maf_receipt_parity_witness_rejects_digest_drift",
+                "maf_receipt_parity_witness_rejects_gap_closure_without_evidence",
+                "maf_receipt_parity_witness_rejects_summary_drift",
+                "maf_receipt_parity_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_receipt_parity_witness_schema_valid": [
+                    "maf_receipt_parity_witness_passes"
+                ],
+                "maf_receipt_parity_witness_denies_runtime_binding": [
+                    "maf_receipt_parity_witness_passes",
+                    "maf_receipt_parity_witness_rejects_runtime_authority_drift",
+                ],
+                "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs": [
+                    "maf_receipt_parity_witness_passes"
+                ],
+                "maf_receipt_parity_witness_rejects_digest_drift": [
+                    "maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+                    "maf_receipt_parity_witness_rejects_rust_crate_digest_drift",
+                ],
+                "maf_receipt_parity_witness_rejects_gap_closure_without_evidence": [
+                    "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+                ],
+                "maf_receipt_parity_witness_rejects_summary_drift": [
+                    "maf_receipt_parity_witness_rejects_summary_drift"
+                ],
+                "maf_receipt_parity_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -11712,6 +11774,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_invariant_fuzz_execution_report_contract",
             "surfaces": ["invariant_fuzz_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_receipt_parity_witness_contract",
+            "surfaces": ["maf_receipt_parity_witness"],
             "status": "closed",
         },
         {
