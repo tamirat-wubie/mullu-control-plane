@@ -186,6 +186,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_operator_response_witness.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_github_pr_branch_write_authority_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_branch_write_authority_binding.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_read_only_status_route_design",
             (
                 python_executable,
