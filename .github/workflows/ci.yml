@@ -268,7 +268,7 @@ jobs:
           python scripts/validate_world_substrate_replay_witness.py
           python scripts/validate_research_source_conflict_map.py
           python scripts/validate_mfidel_substrate_conformance_receipt.py
-          python scripts/proof_coverage_matrix.py --check
+          python -m scripts.proof_coverage_matrix --check
 
       - name: Validate terminal closure certificate
         run: python scripts/validate_terminal_closure_certificate.py --json
@@ -638,7 +638,7 @@ jobs:
         run: python scripts/validate_protocol_manifest.py
 
       - name: Proof coverage matrix check
-        run: python scripts/proof_coverage_matrix.py --check
+        run: python -m scripts.proof_coverage_matrix --check
 
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict

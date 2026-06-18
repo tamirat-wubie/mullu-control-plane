@@ -369,7 +369,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
-    assert "python scripts/proof_coverage_matrix.py --check" in REQUIRED_CI_LITERALS
+    assert "python -m scripts.proof_coverage_matrix --check" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_terminal_closure_certificate.py --json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_gateway_ingress_manifest.py --allow-placeholder" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_reflective_contracts.py" in REQUIRED_CI_LITERALS
@@ -410,7 +410,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
         for literal in REQUIRED_CI_LITERALS
     )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
-    assert content.count("python scripts/proof_coverage_matrix.py --check") == 2
+    assert content.count("python -m scripts.proof_coverage_matrix --check") == 2
     assert content.count("python scripts/validate_terminal_closure_certificate.py --json") == 1
     assert content.count("python scripts/validate_gateway_ingress_manifest.py --allow-placeholder") == 2
     assert content.count("python scripts/validate_reflective_contracts.py") == 1
