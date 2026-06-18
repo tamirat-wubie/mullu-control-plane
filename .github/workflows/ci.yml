@@ -531,6 +531,9 @@ jobs:
       - name: Run worker receipt emission admission witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py -q
 
+      - name: Run worker active lease admission witness tests
+        run: python -m pytest tests/test_validate_read_only_worker_runtime_active_lease_admission_witness.py -q
+
       - name: Run worker runtime dispatch admission witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_dispatch_admission_witness.py -q
 
