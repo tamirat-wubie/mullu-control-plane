@@ -2509,6 +2509,10 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
         },
     )
     after = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions")
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    certificate_view = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate/view")
+    explorer = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-explorer")
+    explorer_view = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-explorer/view")
 
     assert approval.status_code == 200
     assert closure.status_code == 200
@@ -2544,6 +2548,30 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
     assert after_by_disposition["requires_review"]["available_evidence_refs_by_type"] == {
         "closure_drift_review_decision": ["evidence:closure_drift_review"],
     }
+    assert certificate.status_code == 200
+    certificate_actions = certificate.json()["closure_drift_remediation_actions"]
+    assert certificate_actions["ready_action_count"] == 1
+    assert certificate_actions["action_count"] == 3
+    assert certificate_actions["drift_evidence_refs"] == ["evidence:engineering_health_endpoint:v2"]
+    certificate_actions_by_disposition = {
+        item["terminal_disposition"]: item for item in certificate_actions["actions"]
+    }
+    assert certificate_actions_by_disposition["requires_review"]["ready"] is True
+    assert certificate_actions_by_disposition["compensated"]["ready"] is False
+    assert explorer.status_code == 200
+    assert explorer.json()["closure_drift_remediation_actions"]["ready_action_count"] == 1
+    assert explorer.json()["status_cards"][-1] == {
+        "label": "closure_drift_actions",
+        "value": 3,
+        "status": "ready",
+    }
+    assert certificate_view.status_code == 200
+    assert "Closure Drift Actions" in certificate_view.text
+    assert "review_required" in certificate_view.text
+    assert "compensation_effect_reconciliation" in certificate_view.text
+    assert explorer_view.status_code == 200
+    assert "Closure Drift Actions" in explorer_view.text
+    assert "accepted_risk_record" in explorer_view.text
 
 
 def test_closure_packet_drift_operator_action_binds_review_remediation(tmp_path: Path) -> None:
