@@ -12,12 +12,15 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from mcoi_runtime.contracts.effect_assurance import ReconciliationStatus
 from mcoi_runtime.contracts.organization_kernel import (
     ApprovalRecord,
     CaseEvidence,
+    ClosureDriftRemediationBinding,
     LearningAdmissionBinding,
     OrganizationEffectReconciliation,
     OrganizationPlan,
@@ -412,6 +415,103 @@ def test_learning_admission_binding_rejects_non_decision_evidence() -> None:
 
     assert kernel.snapshot_state().learning_bindings == ()
     assert kernel.list_case_events(plan.case_id)[-1].event_type == "case_terminal_closure_recorded"
+
+
+def test_closure_drift_remediation_requires_recorded_case_authority() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, _terminal_closure_evidence_refs(kernel, plan.case_id)),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id=TERMINAL_CERTIFICATE_EVIDENCE_REF,
+    )
+    kernel.admit_case_evidence(
+        CaseEvidence(
+            evidence_ref="evidence:engineering_health_endpoint:v2",
+            case_id=plan.case_id,
+            requirement_id="engineering_health_endpoint",
+            submitted_by="test-harness",
+            submitted_at="2026-05-27T17:04:00+00:00",
+        )
+    )
+    kernel.admit_case_evidence(
+        CaseEvidence(
+            evidence_ref="evidence:closure_drift_review",
+            case_id=plan.case_id,
+            requirement_id="security_public_claim_boundary",
+            submitted_by="human-executive",
+            submitted_at="2026-05-27T17:04:30+00:00",
+        )
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="closure drift remediation authority unavailable"):
+        kernel.bind_closure_drift_remediation(
+            ClosureDriftRemediationBinding(
+                remediation_id="remediation.gateway-pilot.missing-authority",
+                case_id=plan.case_id,
+                closure_id=closure.closure_id,
+                terminal_disposition=TerminalClosureDisposition.REQUIRES_REVIEW,
+                drift_evidence_refs=("evidence:engineering_health_endpoint:v2",),
+                superseded_evidence_refs=("evidence:engineering_health_endpoint",),
+                authority_ref="approval.security.missing",
+                evidence_refs=("evidence:closure_drift_review",),
+                created_at="2026-05-27T17:05:00+00:00",
+            )
+        )
+
+    assert kernel.snapshot_state().closure_drift_remediations == ()
+    assert kernel.closure_count == 1
+
+
+def test_closure_drift_remediation_restore_rejects_forged_authority_ref() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    approval = _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, _terminal_closure_evidence_refs(kernel, plan.case_id)),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id=TERMINAL_CERTIFICATE_EVIDENCE_REF,
+    )
+    for evidence_ref, requirement_id in (
+        ("evidence:engineering_health_endpoint:v2", "engineering_health_endpoint"),
+        ("evidence:closure_drift_review", "security_public_claim_boundary"),
+    ):
+        kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=evidence_ref,
+                case_id=plan.case_id,
+                requirement_id=requirement_id,
+                submitted_by="test-harness",
+                submitted_at="2026-05-27T17:04:00+00:00",
+            )
+        )
+    binding = kernel.bind_closure_drift_remediation(
+        ClosureDriftRemediationBinding(
+            remediation_id="remediation.gateway-pilot.review",
+            case_id=plan.case_id,
+            closure_id=closure.closure_id,
+            terminal_disposition=TerminalClosureDisposition.REQUIRES_REVIEW,
+            drift_evidence_refs=("evidence:engineering_health_endpoint:v2",),
+            superseded_evidence_refs=("evidence:engineering_health_endpoint",),
+            authority_ref=approval.approval_id,
+            evidence_refs=("evidence:closure_drift_review",),
+            created_at="2026-05-27T17:05:00+00:00",
+        )
+    )
+    forged_state = replace(
+        kernel.snapshot_state(),
+        closure_drift_remediations=(replace(binding, authority_ref="approval.security.forged"),),
+    )
+    restored = OrganizationKernel(clock=_clock())
+
+    with pytest.raises(RuntimeCoreInvariantError, match="closure drift remediation authority unavailable"):
+        restored.restore_state(forged_state)
+
+    assert restored.snapshot_state().closure_drift_remediations == ()
+    assert binding.authority_ref == approval.approval_id
 
 
 def test_organization_plan_rejects_cycles() -> None:

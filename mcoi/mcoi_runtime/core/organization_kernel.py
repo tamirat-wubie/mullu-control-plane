@@ -511,6 +511,7 @@ class OrganizationKernel:
             raise RuntimeCoreInvariantError("closure drift remediation case mismatch")
         if binding.terminal_disposition not in _NON_COMMITTED_TERMINAL_DISPOSITIONS:
             raise RuntimeCoreInvariantError("closure drift remediation requires non-committed disposition")
+        self._validate_closure_drift_authority(binding.case_id, binding.authority_ref)
         for evidence_ref in (*binding.drift_evidence_refs, *binding.evidence_refs):
             evidence = self._case_evidence.get(evidence_ref)
             if evidence is None or evidence.case_id != binding.case_id:
@@ -1013,6 +1014,7 @@ class OrganizationKernel:
             closure = self._closures.get(remediation.closure_id)
             if closure is None or closure.case_id != remediation.case_id:
                 raise RuntimeCoreInvariantError("restored closure drift remediation closure mismatch")
+            self._validate_closure_drift_authority(remediation.case_id, remediation.authority_ref)
             for evidence_ref in (*remediation.drift_evidence_refs, *remediation.evidence_refs):
                 evidence = self._case_evidence.get(evidence_ref)
                 if evidence is None or evidence.case_id != remediation.case_id:
@@ -1424,6 +1426,11 @@ class OrganizationKernel:
                 raise RuntimeCoreInvariantError("learning admission evidence unavailable")
             if evidence.requirement_id != LEARNING_ADMISSION_DECISION_REQUIREMENT:
                 raise RuntimeCoreInvariantError("learning admission decision evidence unavailable")
+
+    def _validate_closure_drift_authority(self, case_id: str, authority_ref: str) -> None:
+        approval = self._approvals.get(authority_ref)
+        if approval is None or approval.case_id != case_id:
+            raise RuntimeCoreInvariantError("closure drift remediation authority unavailable")
 
     def _all_plan_steps_allowed(self, case_id: str) -> bool:
         plan = self._require_case_plan(case_id)
