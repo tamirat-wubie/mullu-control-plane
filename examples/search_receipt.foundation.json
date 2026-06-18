@@ -42,6 +42,18 @@
     "actual_cost_class": "none",
     "approval_ref": null,
     "proof_state": "BudgetUnknown",
+    "budget_policy_ref": "policy://foundation-mode/no-unbounded-retrieval",
+    "budget_decision_ref": "receipt://search-decision/foundation-current-status/20260614",
+    "decision_budget_state": "unknown",
+    "decision_estimated_cost_units": null,
+    "decision_budget_limit_units": null,
+    "decision_budget_remaining_units": null,
+    "budget_binding_state": "budget_unknown_blocked",
+    "budget_evidence_refs": [
+      "gap://GAP-SEARCH-003",
+      "policy://foundation-mode/no-unbounded-retrieval",
+      "receipt://search-decision/foundation-current-status/20260614"
+    ],
     "rationale_refs": [
       "gap://GAP-SEARCH-003",
       "policy://foundation-mode/no-unbounded-retrieval"

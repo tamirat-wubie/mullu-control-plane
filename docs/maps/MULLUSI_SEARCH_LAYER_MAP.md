@@ -44,8 +44,8 @@ SEARCH_FAILED_WITH_EXPLANATION
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | implemented / partial | Local deterministic ranking is path/line/excerpt stable; bounded polarity conflicts are marked as conflict refs; stale classification remains partial. |
 | Citation Builder | create source references | ranked evidence | citations | implemented / partial | Local SearchReceipt emits citation refs and evidence refs without storing retrieved bodies. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | Local read-only search worker emits SearchReceipt metadata with citations, freshness, retrieval safety, instruction-authority rejection, and retrieval errors. |
-| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` blocks deep retrieval on `BudgetUnknown`. |
+| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | Local read-only search worker emits SearchReceipt metadata with citations, freshness, budget-decision binding, retrieval safety, instruction-authority rejection, and retrieval errors. |
+| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` blocks deep retrieval on `BudgetUnknown`, and `SearchReceipt.budget_result` preserves the accepted decision state, cost estimate, limit, headroom, policy ref, and decision receipt ref. |
 
 ## 4. SearchDecision fields
 
@@ -60,7 +60,16 @@ SearchDecision {
   freshness
   source_plan
   cache_decision
-  budget_decision
+  budget_result {
+    budget_policy_ref
+    budget_decision_ref
+    decision_budget_state
+    decision_estimated_cost_units
+    decision_budget_limit_units
+    decision_budget_remaining_units
+    budget_binding_state
+    budget_evidence_refs
+  }
   retrieval_safety
   governance_guards
   receipt_envelope
@@ -108,6 +117,9 @@ Local matching lines with the same normalized claim subject and opposing bounded
 Private or tenant-sensitive search must stay tenant-scoped.
 Cache reuse requires tenant-scoped, query-hash-matched, fresh evidence.
 Deep search requires budget approval when policy requires it.
+Runtime local search receipts must bind `budget_result.budget_decision_ref` to
+`search_decision_ref`, so the post-retrieval receipt cannot claim a budget
+state disconnected from the pre-retrieval decision.
 Source freshness must be visible for current-information answers.
 ```
 

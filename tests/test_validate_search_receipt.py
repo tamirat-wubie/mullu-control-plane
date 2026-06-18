@@ -27,6 +27,8 @@ def test_search_receipt_passes() -> None:
     assert receipt["solver_outcome"] == "AwaitingEvidence"
     assert receipt["evidence_summary"]["evidence_count"] == 0
     assert receipt["source_plan_result"]["external_retrieval_performed"] is False
+    assert receipt["budget_result"]["budget_binding_state"] == "budget_unknown_blocked"
+    assert receipt["budget_result"]["budget_decision_ref"] == receipt["search_decision_ref"]
     assert validator.validate_receipt_record(receipt) == []
 
 
@@ -88,6 +90,12 @@ def test_receipt_accepts_fresh_evidence_with_citation_metadata_only() -> None:
         budget_result__state="within_budget",
         budget_result__actual_cost_class="none",
         budget_result__proof_state="Pass",
+        budget_result__budget_decision_ref="receipt://search-decision/foundation-current-status/20260614",
+        budget_result__decision_budget_state="allowed",
+        budget_result__decision_estimated_cost_units=0.1,
+        budget_result__decision_budget_limit_units=1.0,
+        budget_result__decision_budget_remaining_units=0.9,
+        budget_result__budget_binding_state="bound_to_search_decision",
         evidence_summary__evidence_count=1,
         evidence_summary__citation_count=1,
         evidence_summary__retrieval_error_count=0,
@@ -116,6 +124,26 @@ def test_receipt_accepts_fresh_evidence_with_citation_metadata_only() -> None:
     assert mutated["evidence_items"][0]["content_body"] is None
     assert mutated["freshness_result"]["current_info_claim_allowed"] is True
     assert mutated["governance_guards"]["answer_claim_authority_granted"] is True
+
+
+def test_receipt_rejects_budget_decision_binding_drift() -> None:
+    mutated = validator.build_mutated_receipt(
+        budget_result__budget_decision_ref="receipt://search-decision/different",
+        budget_result__decision_budget_state="allowed",
+        budget_result__decision_estimated_cost_units=0.1,
+        budget_result__decision_budget_limit_units=1.0,
+        budget_result__decision_budget_remaining_units=0.8,
+        budget_result__budget_binding_state="bound_to_search_decision",
+        budget_result__state="approval_required",
+        budget_result__proof_state="BudgetUnknown",
+    )
+
+    errors = validator.validate_receipt_record(mutated)
+
+    assert any("budget_decision_ref must match search_decision_ref" in error for error in errors)
+    assert any("bound search budget requires allowed decision" in error for error in errors)
+    assert any("remaining_units must match" in error for error in errors)
+    assert mutated["budget_result"]["budget_decision_ref"] != mutated["search_decision_ref"]
 
 
 def test_receipt_rejects_evidence_item_with_unlisted_citation_or_body() -> None:

@@ -41,6 +41,7 @@ from gateway.worker_mesh import (
 
 SEARCH_OPERATION = "search"
 SEARCH_RECEIPT_VERSION = "search_receipt.v1"
+SEARCH_BUDGET_POLICY_REF = "policy:search-decision-budget-gate"
 DEFAULT_MAX_SOURCES = 25
 DEFAULT_MAX_BYTES_PER_SOURCE = 262_144
 DEFAULT_MAX_RESULT_COUNT = 5
@@ -323,6 +324,7 @@ def _build_search_receipt(
             "max_result_count": bounds.max_result_count,
         }
     )
+    budget_result = _budget_result_from_decision(decision_receipt)
     return {
         "receipt_id": receipt_id,
         "receipt_version": SEARCH_RECEIPT_VERSION,
@@ -362,16 +364,7 @@ def _build_search_receipt(
             "tenant_scoped": True,
             "stale_cache_used": False,
         },
-        "budget_result": {
-            "state": "within_budget",
-            "actual_cost_class": "none",
-            "approval_ref": None,
-            "proof_state": "Pass",
-            "rationale_refs": [
-                "worker-budget:zero-cost-local-search",
-                f"receipt://search-decision/{decision_receipt['receipt_id']}",
-            ],
-        },
+        "budget_result": budget_result,
         "evidence_summary": {
             "evidence_count": len(evidence_items),
             "citation_count": len(citation_refs),
@@ -427,6 +420,77 @@ def _build_search_receipt(
             "source_excerpt_body_excluded_from_receipt": True,
         },
     }
+
+
+def _budget_result_from_decision(decision_receipt: dict[str, Any]) -> dict[str, Any]:
+    decision_ref = f"receipt://search-decision/{decision_receipt['receipt_id']}"
+    decision_budget_state = str(decision_receipt.get("budget_state") or "unknown")
+    estimated_cost_units = _nonnegative_number_or_none(decision_receipt.get("estimated_cost_units"))
+    budget_limit_units = _nonnegative_number_or_none(decision_receipt.get("budget_limit_units"))
+    remaining_units = _remaining_budget_units(
+        budget_limit_units=budget_limit_units,
+        estimated_cost_units=estimated_cost_units,
+    )
+    state, proof_state, binding_state = _runtime_budget_binding_state(decision_budget_state)
+    rationale_refs = _unique_texts(
+        [
+            SEARCH_BUDGET_POLICY_REF,
+            "worker-budget:zero-cost-local-search",
+            decision_ref,
+        ]
+    )
+    evidence_refs = _unique_texts(
+        [
+            f"knowledge-search:decision:{str(decision_receipt.get('receipt_hash', ''))[:16]}",
+            decision_ref,
+            SEARCH_BUDGET_POLICY_REF,
+        ]
+    )
+    return {
+        "state": state,
+        "actual_cost_class": "none",
+        "approval_ref": None,
+        "proof_state": proof_state,
+        "budget_policy_ref": SEARCH_BUDGET_POLICY_REF,
+        "budget_decision_ref": decision_ref,
+        "decision_budget_state": decision_budget_state,
+        "decision_estimated_cost_units": estimated_cost_units,
+        "decision_budget_limit_units": budget_limit_units,
+        "decision_budget_remaining_units": remaining_units,
+        "budget_binding_state": binding_state,
+        "budget_evidence_refs": evidence_refs,
+        "rationale_refs": rationale_refs,
+    }
+
+
+def _runtime_budget_binding_state(decision_budget_state: str) -> tuple[str, str, str]:
+    if decision_budget_state == "allowed":
+        return "within_budget", "Pass", "bound_to_search_decision"
+    if decision_budget_state == "not_required":
+        return "not_applicable", "Pass", "not_applicable"
+    if decision_budget_state == "blocked":
+        return "blocked_by_budget", "Fail", "blocked_by_budget"
+    return "unknown_blocked", "BudgetUnknown", "budget_unknown_blocked"
+
+
+def _remaining_budget_units(
+    *,
+    budget_limit_units: float | None,
+    estimated_cost_units: float | None,
+) -> float | None:
+    if budget_limit_units is None or estimated_cost_units is None:
+        return None
+    if budget_limit_units <= 0:
+        return None
+    return max(budget_limit_units - estimated_cost_units, 0.0)
+
+
+def _nonnegative_number_or_none(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if value < 0:
+        return None
+    return float(value)
 
 
 def _search_evidence_items(

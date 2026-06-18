@@ -64,7 +64,28 @@ current_info_claim_allowed = true
 
 If any part is missing, the receipt can record `AwaitingEvidence` or `GovernanceBlocked`, but cannot authorize a current-information answer.
 
-## 4. Evidence Metadata Rule
+## 4. Budget Binding Rule
+
+`SearchReceipt.budget_result` must preserve the upstream search budget decision.
+The receipt records:
+
+```text
+budget_policy_ref
+budget_decision_ref = search_decision_ref
+decision_budget_state
+decision_estimated_cost_units
+decision_budget_limit_units
+decision_budget_remaining_units
+budget_binding_state
+budget_evidence_refs
+```
+
+When `budget_binding_state = bound_to_search_decision`, the decision state must
+be `allowed`, the receipt state must be `within_budget`, and proof state must be
+`Pass`. If budget proof is unknown, `budget_binding_state` is
+`budget_unknown_blocked` and proof state is `BudgetUnknown`.
+
+## 5. Evidence Metadata Rule
 
 `SearchReceipt` stores evidence references, source references, citation references, timestamps, freshness state, trust tier, and hash refs.
 
@@ -77,7 +98,7 @@ evidence_summary.content_body_included = false
 
 This keeps the receipt auditable without turning it into a content cache or secret sink.
 
-## 5. Retrieval Safety Rule
+## 6. Retrieval Safety Rule
 
 Retrieved content remains `evidence_only`.
 
@@ -102,7 +123,7 @@ normalized claim subject and opposing polarity terms such as `enabled` versus
 versus `missing`. These are recorded as `conflict://local-docs/...` refs and
 do not grant answer synthesis or current-claim authority.
 
-## 6. Foundation Example
+## 7. Foundation Example
 
 `examples/search_receipt.foundation.json` records a deep web search that remains blocked in Foundation Mode because budget proof is `BudgetUnknown` and approval evidence is missing.
 
@@ -112,12 +133,13 @@ The example proves:
 external_retrieval_performed = false
 evidence_count = 0
 retrieval_errors = budget_unknown + approval_missing
+budget_binding_state = budget_unknown_blocked
 current_info_claim_allowed = false
 answer_claim_authority_granted = false
 terminal_closure = false
 ```
 
-## 7. Validation
+## 8. Validation
 
 Run:
 
@@ -130,6 +152,6 @@ python scripts/validate_protocol_manifest.py
 
 STATUS:
   Completeness: 100%
-  Invariants verified: evidence-only retrieval, no content body retention, current-claim freshness, citation requirement, prompt-injection authority rejection, raw secret rejection, Mfidel atomicity
-  Open issues: persisted Receipt Viewer search-evidence panel binding is still missing
-  Next action: bind search decision and read-only search evidence into the persisted Receipt Viewer search-evidence panel
+  Invariants verified: evidence-only retrieval, no content body retention, current-claim freshness, citation requirement, search budget decision binding, prompt-injection authority rejection, raw secret rejection, Mfidel atomicity
+  Open issues: external retrieval adapters remain unregistered in Foundation Mode
+  Next action: keep external retrieval behind the same SearchDecision and SearchReceipt budget-binding contract

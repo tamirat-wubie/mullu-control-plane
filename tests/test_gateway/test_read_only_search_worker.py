@@ -75,6 +75,13 @@ def test_read_only_search_worker_dispatches_schema_valid_receipt(tmp_path: Path)
     assert search_receipt["evidence_summary"]["evidence_count"] == 1
     assert search_receipt["citation_refs"] == [search_receipt["evidence_items"][0]["citation_ref"]]
     assert search_receipt["evidence_items"][0]["content_body"] is None
+    assert search_receipt["budget_result"]["budget_binding_state"] == "bound_to_search_decision"
+    assert search_receipt["budget_result"]["decision_budget_state"] == "allowed"
+    assert search_receipt["budget_result"]["decision_estimated_cost_units"] == 0.1
+    assert search_receipt["budget_result"]["decision_budget_limit_units"] == 1.0
+    assert search_receipt["budget_result"]["decision_budget_remaining_units"] == 0.9
+    assert search_receipt["budget_result"]["budget_decision_ref"] == search_receipt["search_decision_ref"]
+    assert search_receipt["budget_result"]["budget_decision_ref"] in search_receipt["budget_result"]["budget_evidence_refs"]
     assert search_receipt["governance_guards"]["answer_claim_authority_granted"] is False
 
 

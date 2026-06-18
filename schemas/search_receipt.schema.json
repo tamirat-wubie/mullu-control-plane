@@ -152,6 +152,14 @@
         "actual_cost_class",
         "approval_ref",
         "proof_state",
+        "budget_policy_ref",
+        "budget_decision_ref",
+        "decision_budget_state",
+        "decision_estimated_cost_units",
+        "decision_budget_limit_units",
+        "decision_budget_remaining_units",
+        "budget_binding_state",
+        "budget_evidence_refs",
         "rationale_refs"
       ],
       "properties": {
@@ -162,6 +170,29 @@
         "actual_cost_class": { "type": "string", "enum": ["none", "low", "medium", "high", "unknown"] },
         "approval_ref": { "type": ["string", "null"], "minLength": 1 },
         "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "budget_policy_ref": { "type": "string", "minLength": 1 },
+        "budget_decision_ref": {
+          "type": "string",
+          "pattern": "^receipt://search-decision/.+$"
+        },
+        "decision_budget_state": {
+          "type": "string",
+          "enum": ["allowed", "not_required", "blocked", "unknown"]
+        },
+        "decision_estimated_cost_units": { "type": ["number", "null"], "minimum": 0 },
+        "decision_budget_limit_units": { "type": ["number", "null"], "minimum": 0 },
+        "decision_budget_remaining_units": { "type": ["number", "null"], "minimum": 0 },
+        "budget_binding_state": {
+          "type": "string",
+          "enum": [
+            "bound_to_search_decision",
+            "not_applicable",
+            "approval_required",
+            "blocked_by_budget",
+            "budget_unknown_blocked"
+          ]
+        },
+        "budget_evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
         "rationale_refs": { "$ref": "#/$defs/non_empty_string_array" }
       }
     },

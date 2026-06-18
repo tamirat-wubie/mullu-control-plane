@@ -128,6 +128,7 @@ def validate_receipt_record(record: Any, schema: dict[str, Any] | None = None) -
         errors.append("receipt_version must match search_receipt.v1")
     _validate_counts(record, errors)
     _validate_blocked_or_failed_state(record, errors)
+    _validate_budget_result(record, errors)
     _validate_current_claim_authority(record, errors)
     _validate_evidence_items(record.get("evidence_items"), record.get("citation_refs"), errors)
     _validate_retrieval_safety(record.get("retrieval_safety_result"), errors)
@@ -210,6 +211,48 @@ def _validate_blocked_or_failed_state(record: dict[str, Any], errors: list[str])
             errors.append("EVIDENCE_AVAILABLE requires at least one evidence item")
         if not record.get("citation_refs"):
             errors.append("EVIDENCE_AVAILABLE requires citation_refs")
+
+
+def _validate_budget_result(record: dict[str, Any], errors: list[str]) -> None:
+    budget = record.get("budget_result")
+    if not isinstance(budget, dict):
+        errors.append("budget_result must be an object")
+        return
+    if budget.get("budget_decision_ref") != record.get("search_decision_ref"):
+        errors.append("budget_result.budget_decision_ref must match search_decision_ref")
+    evidence_refs = budget.get("budget_evidence_refs")
+    if not isinstance(evidence_refs, list) or not evidence_refs:
+        errors.append("budget_result.budget_evidence_refs must be a non-empty list")
+    elif budget.get("budget_decision_ref") not in evidence_refs:
+        errors.append("budget_result.budget_evidence_refs must include budget_decision_ref")
+
+    state = budget.get("state")
+    proof_state = budget.get("proof_state")
+    decision_state = budget.get("decision_budget_state")
+    binding_state = budget.get("budget_binding_state")
+    if binding_state == "bound_to_search_decision":
+        if decision_state != "allowed" or state != "within_budget" or proof_state != "Pass":
+            errors.append("bound search budget requires allowed decision, within_budget state, and Pass proof")
+    elif binding_state == "not_applicable":
+        if decision_state != "not_required" or state != "not_applicable" or proof_state != "Pass":
+            errors.append("not_applicable search budget requires not_required decision and Pass proof")
+    elif binding_state == "blocked_by_budget":
+        if decision_state != "blocked" or state != "blocked_by_budget" or proof_state != "Fail":
+            errors.append("blocked_by_budget requires blocked decision, blocked_by_budget state, and Fail proof")
+    elif binding_state == "budget_unknown_blocked":
+        if decision_state != "unknown" or proof_state != "BudgetUnknown":
+            errors.append("budget_unknown_blocked requires unknown decision and BudgetUnknown proof")
+
+    estimated_cost = budget.get("decision_estimated_cost_units")
+    budget_limit = budget.get("decision_budget_limit_units")
+    remaining = budget.get("decision_budget_remaining_units")
+    if state == "within_budget" and (estimated_cost is None or budget_limit is None):
+        errors.append("within_budget requires decision estimated cost and budget limit units")
+    if isinstance(estimated_cost, (int, float)) and not isinstance(estimated_cost, bool):
+        if isinstance(budget_limit, (int, float)) and not isinstance(budget_limit, bool) and budget_limit > 0:
+            expected_remaining = max(float(budget_limit) - float(estimated_cost), 0.0)
+            if remaining != expected_remaining:
+                errors.append("budget_result.decision_budget_remaining_units must match decision budget headroom")
 
 
 def _validate_current_claim_authority(record: dict[str, Any], errors: list[str]) -> None:
