@@ -517,6 +517,9 @@ jobs:
       - name: Run worker receipt store activation witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_store_activation_witness.py -q
 
+      - name: Run worker receipt emission admission witness tests
+        run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py -q
+
       - name: Upload SDLC validation receipt
         uses: actions/upload-artifact@v6
         with:
