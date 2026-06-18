@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Validate the Agentic Service Harness readiness map.
+
+Purpose: keep the readiness-map-only closure artifact explicit, ordered, and
+planning-only before any read-model, UI, mutation endpoint, or live adapter
+implementation begins.
+Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
+Dependencies: MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md.
+Invariants:
+  - The map contains the required readiness sections and scale.
+  - The first next PR remains the durable RepositoryConnection read model.
+  - Dashboard, mutation endpoint, external adapter, and high-risk authority
+    remain denied by default.
+  - The map does not contain API mutation route strings or route decorators.
+"""
+
+from __future__ import annotations
+
+import argparse
+from dataclasses import asdict, dataclass
+import json
+from pathlib import Path
+import re
+import sys
+from typing import Sequence
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MAP = REPO_ROOT / "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+
+REQUIRED_SECTIONS = (
+    "# Mullusi Agentic Service Harness Readiness Map",
+    "## Closure Evidence",
+    "## Readiness Scale",
+    "## Area Summary",
+    "## 1. Public API Foundation - READY",
+    "## 2. User/Project/Tenant Model - PARTIAL",
+    "## 3. Agent Service Harness Contract - PARTIAL",
+    "## 4. First MVP Adapter Path - PARTIAL",
+    "## 5. Permission And Authority Model - READY",
+    "## 6. Sandbox/Workspace Safety - PARTIAL",
+    "## 7. Receipt And Evidence Model - PARTIAL",
+    "## 8. Dashboard/UI Requirements - MISSING",
+    "## 9. Explicit Non-Goals For The First Harness Phase - READY",
+    "## Smallest Next PR Sequence",
+    "## Governance Decision",
+)
+REQUIRED_STATUSES = ("READY", "PARTIAL", "MISSING")
+REQUIRED_PARTIAL_SYMBOLS = (
+    "RepositoryConnection",
+    "AgentRun",
+    "ApprovalRequest",
+    "Receipt",
+    "WorkspaceSandbox",
+    "EvidenceBundle",
+    "ResultSummary",
+)
+REQUIRED_DENIALS = (
+    "Do not start the dashboard yet.",
+    "Do not add mutation endpoints yet.",
+    "Do not integrate Claude Code or OpenClaw yet.",
+    "Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted automation, or email-send authority by default.",
+)
+REQUIRED_REPOSITORY_CONNECTION_TERMS = (
+    "durable GitHub App installation",
+    "revocation",
+    "redacted credential bindings",
+    "provider",
+    "repository id/name",
+    "installation ref",
+    "scopes",
+    "revocation state",
+    "default branch",
+    "no secret serialization",
+)
+FORBIDDEN_PATTERNS = (
+    ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
+    ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
+    ("route_implementation", re.compile(r"\b(?:router|app)\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
+    ("ui_enablement", re.compile(r"\bui_created=true\b", re.IGNORECASE)),
+    ("mutation_enablement", re.compile(r"\bmutation_endpoints_admitted=true\b", re.IGNORECASE)),
+    ("external_adapter_enablement", re.compile(r"\bexternal_adapter_integrated=true\b", re.IGNORECASE)),
+    ("high_risk_enablement", re.compile(r"\bdefault_high_risk_authority=true\b", re.IGNORECASE)),
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ReadinessMapValidation:
+    """Deterministic validation result for the readiness map."""
+
+    ok: bool
+    errors: tuple[str, ...]
+    map_path: str
+    required_section_count: int
+    required_status_count: int
+    required_partial_symbol_count: int
+    required_denial_count: int
+
+    def as_dict(self) -> dict[str, object]:
+        payload = asdict(self)
+        payload["errors"] = list(self.errors)
+        return payload
+
+
+def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidation:
+    """Validate that the readiness map is complete and planning-only."""
+    errors: list[str] = []
+    try:
+        map_text = map_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return ReadinessMapValidation(
+            ok=False,
+            errors=(f"map load failed: {exc}",),
+            map_path=_path_label(map_path),
+            required_section_count=0,
+            required_status_count=0,
+            required_partial_symbol_count=0,
+            required_denial_count=0,
+        )
+
+    _require_all(map_text, REQUIRED_SECTIONS, "section", errors)
+    _require_all(map_text, REQUIRED_STATUSES, "status", errors)
+    _require_all(map_text, REQUIRED_PARTIAL_SYMBOLS, "partial_symbol", errors)
+    _require_all(map_text, REQUIRED_DENIALS, "denial", errors)
+    _require_all(
+        map_text,
+        REQUIRED_REPOSITORY_CONNECTION_TERMS,
+        "repository_connection_term",
+        errors,
+    )
+    _validate_forbidden_patterns(map_text, errors)
+    _validate_repository_connection_first(map_text, errors)
+    _validate_next_pr_sequence(map_text, errors)
+
+    return ReadinessMapValidation(
+        ok=not errors,
+        errors=tuple(errors),
+        map_path=_path_label(map_path),
+        required_section_count=len(REQUIRED_SECTIONS),
+        required_status_count=len(REQUIRED_STATUSES),
+        required_partial_symbol_count=len(REQUIRED_PARTIAL_SYMBOLS),
+        required_denial_count=len(REQUIRED_DENIALS),
+    )
+
+
+def _require_all(
+    map_text: str,
+    required_values: Sequence[str],
+    label: str,
+    errors: list[str],
+) -> None:
+    for required_value in required_values:
+        if required_value not in map_text:
+            errors.append(f"missing {label}: {required_value}")
+
+
+def _validate_forbidden_patterns(map_text: str, errors: list[str]) -> None:
+    for pattern_name, pattern in FORBIDDEN_PATTERNS:
+        if pattern.search(map_text):
+            errors.append(f"forbidden {pattern_name}")
+
+
+def _validate_repository_connection_first(map_text: str, errors: list[str]) -> None:
+    first_sequence_item = re.search(
+        r"^1\.\s+`harness\(repository-connection\): add durable read model`$",
+        map_text,
+        re.MULTILINE,
+    )
+    if first_sequence_item is None:
+        errors.append("missing first next PR: RepositoryConnection durable read model")
+
+
+def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
+    sequence_markers = (
+        "harness(repository-connection): add durable read model",
+        "harness(agent-run): add lifecycle read model",
+        "harness(approval): bind approval request projection",
+        "harness(receipts): add dry-run run receipt emitter",
+        "harness(sandbox): bind temporary branch workspace preflight",
+        "harness(github): add read-only repo task intake",
+        "harness(ui-contract): add dashboard data contract",
+    )
+    positions: list[int] = []
+    for marker in sequence_markers:
+        position = map_text.find(marker)
+        if position == -1:
+            errors.append(f"missing next PR marker: {marker}")
+        else:
+            positions.append(position)
+    if positions and positions != sorted(positions):
+        errors.append("next PR sequence is not ordered")
+
+
+def _path_label(path: Path) -> str:
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--map", type=Path, default=DEFAULT_MAP)
+    parser.add_argument("--json", action="store_true")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the readiness map validator."""
+    args = build_arg_parser().parse_args(argv)
+    validation = validate_readiness_map(args.map)
+    if args.json:
+        print(json.dumps(validation.as_dict(), indent=2, sort_keys=True))
+    elif validation.ok:
+        print("AGENTIC SERVICE HARNESS READINESS MAP VALID")
+    else:
+        print(
+            "AGENTIC SERVICE HARNESS READINESS MAP INVALID "
+            f"errors={list(validation.errors)}"
+        )
+    return 0 if validation.ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
