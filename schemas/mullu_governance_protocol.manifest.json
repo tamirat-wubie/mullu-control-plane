@@ -2247,6 +2247,12 @@
       "path": "schemas/read_only_worker_runtime_receipt_emission_admission_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emission-admission-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-dispatch-admission-witness",
+      "path": "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-dispatch-admission-witness:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [
