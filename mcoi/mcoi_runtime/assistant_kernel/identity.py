@@ -8,6 +8,7 @@ Invariants:
   - Skills describe procedure; capabilities grant executable authority.
   - Profile skill identifiers stay inside the profile-kind namespace.
   - Allowed and forbidden capabilities are disjoint after protected denials.
+  - Profile metadata cannot grant execution authority or production readiness.
   - Evidence requirements and escalation paths are never implicit.
 """
 
@@ -42,6 +43,16 @@ PROTECTED_FORBIDDEN_CAPABILITIES = frozenset(
         "payment.execute.unapproved",
         "policy.modify",
         "policy.promote",
+    }
+)
+FORBIDDEN_PROFILE_METADATA_KEYS = frozenset(
+    {
+        "deployment_witness_closed",
+        "execution_authority_granted",
+        "live_execution_ready",
+        "production_ready",
+        "public_production_ready",
+        "public_readiness_claim_allowed",
     }
 )
 _FORBIDDEN_CAPABILITIES_FIELD = "forbidden_capabilities"
@@ -115,7 +126,9 @@ class AssistantProfile:
         )
         object.__setattr__(self, "evidence_required", _normalize_text_tuple(self.evidence_required, "evidence_required"))
         object.__setattr__(self, "escalation_path", _normalize_text_tuple(self.escalation_path, "escalation_path"))
-        object.__setattr__(self, "metadata", dict(self.metadata))
+        metadata = dict(self.metadata)
+        _validate_profile_metadata(metadata)
+        object.__setattr__(self, "metadata", metadata)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-oriented immutable profile projection."""
@@ -409,6 +422,12 @@ def _validate_skill_namespace(kind: str, skill_ids: tuple[str, ...]) -> None:
     namespace = f"skill.{kind}."
     if any(not skill_id.startswith(namespace) for skill_id in skill_ids):
         raise RuntimeCoreInvariantError("skill_ids must stay within assistant kind namespace")
+
+
+def _validate_profile_metadata(metadata: dict[str, Any]) -> None:
+    forbidden_keys = sorted(str(key) for key in metadata if str(key) in FORBIDDEN_PROFILE_METADATA_KEYS)
+    if forbidden_keys:
+        raise RuntimeCoreInvariantError("assistant profile metadata cannot carry authority or readiness claim keys")
 
 
 def _apply_protected_forbidden_capability_floor(capabilities: tuple[str, ...]) -> tuple[str, ...]:

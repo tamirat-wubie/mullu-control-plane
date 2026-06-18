@@ -57,7 +57,7 @@ from mcoi_runtime.assistant_kernel.goals import (
     FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES,
     TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
 )
-from mcoi_runtime.assistant_kernel.identity import PROTECTED_FORBIDDEN_CAPABILITIES
+from mcoi_runtime.assistant_kernel.identity import FORBIDDEN_PROFILE_METADATA_KEYS, PROTECTED_FORBIDDEN_CAPABILITIES
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
@@ -192,6 +192,8 @@ def test_builtin_finance_ops_profile_preserves_skill_capability_boundary() -> No
     assert set(PROTECTED_FORBIDDEN_CAPABILITIES).issubset(finance_profile.forbidden_capabilities)
     assert set(finance_profile.skill_ids).isdisjoint(finance_profile.allowed_capabilities)
     assert "signed_evidence_bundle" in finance_profile.evidence_required
+    assert finance_profile.metadata["activation_requires_live_receipts"] is True
+    assert set(finance_profile.metadata).isdisjoint(FORBIDDEN_PROFILE_METADATA_KEYS)
     assert binding.binding_hash
     assert binding.metadata["skill_capability_boundary_enforced"] is True
 
@@ -248,6 +250,36 @@ def test_assistant_profile_rejects_cross_kind_skill_namespace() -> None:
     assert "skill_ids must stay within assistant kind namespace" in message
     assert "capability scope conflict" not in message
     assert "assistant kind is not admitted" not in message
+
+
+def test_assistant_profile_rejects_metadata_authority_claims() -> None:
+    try:
+        AssistantProfile(
+            assistant_id="profile.metadata-overclaim",
+            kind="personal",
+            owner_scope="single_owner",
+            tenant_scope="personal_tenant",
+            role="personal_assistant",
+            skill_ids=("skill.personal.inbox_triage",),
+            allowed_capabilities=("email.read",),
+            forbidden_capabilities=("payment.execute",),
+            memory_policy="verified_preferences_only",
+            approval_policy="owner_approval_for_external_write",
+            budget_policy="personal_budget_awareness_only",
+            external_send_policy="approval_required",
+            data_retention_policy="owner_controlled_retention",
+            evidence_required=("approval_receipt",),
+            escalation_path=("owner",),
+            metadata={"production_ready": False},
+        )
+    except RuntimeCoreInvariantError as exc:
+        message = str(exc)
+    else:  # pragma: no cover - readiness claim keys must fail closed.
+        raise AssertionError("metadata readiness claim key was accepted")
+
+    assert "metadata cannot carry authority or readiness claim keys" in message
+    assert "activation_requires_live_receipts" not in FORBIDDEN_PROFILE_METADATA_KEYS
+    assert "production_ready" in FORBIDDEN_PROFILE_METADATA_KEYS
 
 
 def test_assistant_profiles_read_model_bounded() -> None:
