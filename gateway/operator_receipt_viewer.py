@@ -2339,6 +2339,8 @@ def _raw_worker_failure_receipt(
 
 
 def _worker_failure_status(raw_receipt: Mapping[str, Any]) -> str:
+    if not raw_receipt:
+        return ""
     failure_state = str(raw_receipt.get("failure_state") or "").strip()
     if failure_state:
         return failure_state
