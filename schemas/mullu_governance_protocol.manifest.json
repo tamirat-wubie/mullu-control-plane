@@ -1721,6 +1721,18 @@
       "surface": "symbol"
     },
     {
+      "schema_id": "universal-symbol-receipt-store-writer-duty-scope-witness",
+      "path": "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-writer-duty-scope-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-path-confinement-witness",
+      "path": "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-path-confinement-witness:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "universal-symbol-receipt-store-path-custody-witness",
       "path": "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-path-custody-witness:1",
@@ -1742,6 +1754,12 @@
       "schema_id": "universal-symbol-receipt-store-write-path-witness",
       "path": "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-write-path-idempotency-witness",
+      "path": "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-idempotency-witness:1",
       "surface": "symbol"
     },
     {

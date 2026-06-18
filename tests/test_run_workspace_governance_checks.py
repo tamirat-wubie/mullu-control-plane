@@ -134,6 +134,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_append_audit_witness",
         "universal_symbol_receipt_store_operator_approval_witness",
         "universal_symbol_receipt_store_tenant_scope_witness",
+        "universal_symbol_receipt_store_writer_duty_scope_witness",
+        "universal_symbol_receipt_store_path_confinement_witness",
+        "universal_symbol_receipt_store_write_path_idempotency_witness",
         "universal_symbol_receipt_store_writer_identity_witness",
         "universal_symbol_receipt_store_writer_registration_witness",
         "universal_symbol_receipt_store_path_custody_witness",
@@ -554,6 +557,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_receipt_store_tenant_scope_witness",
+        "universal_symbol_receipt_store_writer_duty_scope_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_writer_duty_scope_witness",
+        "universal_symbol_receipt_store_path_confinement_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_path_confinement_witness",
+        "universal_symbol_receipt_store_write_path_idempotency_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_write_path_idempotency_witness",
         "universal_symbol_receipt_store_writer_identity_witness",
     )
     assert_ordered(

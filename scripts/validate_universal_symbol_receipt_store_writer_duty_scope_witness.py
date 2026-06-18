@@ -1,19 +1,21 @@
-"""Validate the Universal Symbol receipt-store write-path witness.
+"""Validate the Universal Symbol receipt-store writer duty scope witness.
 
-Purpose: prove UniversalSymbol receipt-store write-path registration remains
-blocked until writer registration, custody, confinement, idempotency, replay,
-recovery, tenant boundary, and operator approval evidence exist.
+Purpose: prove UniversalSymbol receipt-store writer duty scope remains blocked
+until writer role identity, permitted receipt kinds, permitted action scope,
+denied action scope, separation-of-duties, tenant-scope link, audit receipt,
+and revocation or rebinding evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: write-path schema/example, writer registration witness, append
-audit witness, receipt-store authority witness, adapter persistence policy,
-docs, and tests.
+Dependencies: writer duty scope schema/example, operator approval witness,
+tenant scope witness, writer identity witness, path custody witness, writer
+registration witness, write-path witness, append audit witness, receipt-store
+authority witness, docs, and tests.
 Invariants:
-  - The witness is not append authority.
-  - Writer registration, write-path registration, receipt append, raw payload
-    storage, raw secret storage, runtime dispatch, connector calls, mutation,
-    and terminal closure remain denied.
-  - Unknown hard preconditions block write-path registration and log
-    Delta_reject references.
+  - The witness is not duty authority.
+  - Duty binding, tenant binding, approval recording, writer identity
+    registration, writer registration, write-path registration, receipt append,
+    raw payload storage, raw secret storage, runtime dispatch, connector calls,
+    mutation, and terminal closure remain denied.
+  - Unknown hard preconditions block duty scope and log Delta_reject refs.
 """
 
 from __future__ import annotations
@@ -30,14 +32,17 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_write_path_witness.schema.json"
-DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_receipt_store_write_path_witness.foundation.json"
+DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_receipt_store_writer_duty_scope_witness.schema.json"
+DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json"
 
 AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
+    "receipt_store_writer_duty_scope_bound",
+    "receipt_store_tenant_scope_bound",
+    "receipt_store_operator_approval_recorded",
+    "receipt_store_writer_identity_registered",
     "receipt_store_writer_registered",
     "receipt_store_write_path_registered",
     "receipt_store_append_performed",
-    "write_path_witness_claimed_terminal",
     "raw_payload_stored",
     "raw_secret_stored",
     "runtime_dispatch_performed",
@@ -47,94 +52,82 @@ AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
 )
 
 REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
-    "requirement://receipt-store-writer-registration-witness",
-    "requirement://path-custody-witness",
-    "requirement://path-confinement-witness",
-    "requirement://append-only-policy",
-    "requirement://digest-only-policy",
-    "requirement://idempotency-key-witness",
-    "requirement://durability-replay-witness",
-    "requirement://rollback-recovery-witness",
-    "requirement://tenant-actor-boundary-witness",
-    "requirement://operator-approval",
+    "requirement://writer-role-identity",
+    "requirement://permitted-receipt-kinds",
+    "requirement://permitted-action-scope",
+    "requirement://denied-action-scope",
+    "requirement://separation-of-duties",
+    "requirement://tenant-scope-link",
+    "requirement://audit-receipt",
+    "requirement://revocation-or-rebinding-path",
 )
 
-WRITE_PATH_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
-    "writer_registration_witness_required",
-    "path_custody_required",
-    "path_confinement_required",
-    "append_only_required",
-    "digest_only_required",
-    "idempotency_key_required",
-    "durability_replay_required",
-    "rollback_recovery_required",
-    "tenant_actor_boundary_required",
-    "operator_approval_required",
+DUTY_SCOPE_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
+    "writer_role_identity_required",
+    "permitted_receipt_kinds_required",
+    "permitted_action_scope_required",
+    "denied_action_scope_required",
+    "separation_of_duties_required",
+    "tenant_scope_link_required",
+    "audit_receipt_required",
+    "revocation_or_rebinding_path_required",
 )
 
 REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "missing_writer_registration_blocks_write_path",
-    "missing_path_custody_blocks_write_path",
-    "missing_idempotency_blocks_write_path",
-    "missing_replay_blocks_write_path",
-    "unknown_hard_constraint_blocks_write_path",
+    "missing_writer_role_blocks_duty_scope",
+    "missing_permitted_receipts_blocks_duty_scope",
+    "missing_action_scope_blocks_duty_scope",
+    "missing_separation_blocks_duty_scope",
+    "unknown_hard_constraint_blocks_duty_scope",
     "failed_precondition_logs_delta_reject",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
-    "writer_registration_witness_missing",
-    "path_custody_witness_missing",
-    "path_confinement_witness_missing",
-    "append_only_policy_missing",
-    "digest_only_policy_missing",
-    "idempotency_key_witness_missing",
-    "durability_replay_witness_missing",
-    "rollback_recovery_witness_missing",
-    "tenant_actor_boundary_missing",
-    "operator_approval_missing",
-    "receipt_store_append_forbidden",
+    "writer_role_identity_missing",
+    "permitted_receipt_kinds_missing",
+    "permitted_action_scope_missing",
+    "denied_action_scope_missing",
+    "separation_of_duties_missing",
+    "tenant_scope_link_missing",
+    "audit_receipt_missing",
+    "revocation_or_rebinding_path_missing",
+    "receipt_store_writer_duty_scope_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
-    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
-    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
-    "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
-    "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
-    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
     "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "schemas/universal_symbol_append_audit_witness.schema.json",
     "examples/universal_symbol_append_audit_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
     "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
     "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
-    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
-    "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py",
 )
 
 
-class UniversalSymbolReceiptStoreWritePathWitnessError(ValueError):
-    """Raised when the write-path witness violates Foundation Mode."""
+class UniversalSymbolReceiptStoreWriterDutyScopeWitnessError(ValueError):
+    """Raised when the writer duty scope witness violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -143,19 +136,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolReceiptStoreWritePathWitnessError(f"missing file: {path}") from exc
+        raise UniversalSymbolReceiptStoreWriterDutyScopeWitnessError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolReceiptStoreWritePathWitnessError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolReceiptStoreWriterDutyScopeWitnessError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolReceiptStoreWritePathWitnessError(f"expected object: {path}")
+        raise UniversalSymbolReceiptStoreWriterDutyScopeWitnessError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_receipt_store_write_path_witness(
+def validate_universal_symbol_receipt_store_writer_duty_scope_witness(
     witness_path: Path = DEFAULT_WITNESS_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied write authority, and evidence custody."""
+    """Validate schema shape, denied duty authority, and evidence refs."""
 
     schema = load_json_object(schema_path)
     witness = load_json_object(witness_path)
@@ -164,25 +157,25 @@ def validate_universal_symbol_receipt_store_write_path_witness(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(witness, schema, errors)
     _validate_witness_boundary(witness, errors)
-    _validate_write_path_requirements(witness, errors)
+    _validate_duty_requirements(witness, errors)
     _validate_authority_denials(witness, errors)
-    _validate_write_path_constraints(witness, errors)
+    _validate_duty_scope_constraints(witness, errors)
     _validate_rejection_policy(witness, errors)
     _validate_blocked_reasons(witness, errors)
     _validate_contract_summary(witness, errors)
     _validate_evidence_refs(witness, errors)
     _validate_evidence_ref_files(witness, errors)
 
-    result = {
+    report = {
         "witness_path": _repo_relative(witness_path),
         "schema_path": _repo_relative(schema_path),
         "valid": not errors,
         "witness_id": witness.get("witness_id", ""),
         "solver_outcome": witness.get("solver_outcome", ""),
-        "write_path_decision": witness.get("write_path_decision", ""),
+        "writer_duty_scope_decision": witness.get("writer_duty_scope_decision", ""),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "write_path_requirement_count": len(witness.get("write_path_requirements", []))
-        if isinstance(witness.get("write_path_requirements"), list)
+        "duty_requirement_count": len(witness.get("duty_requirements", []))
+        if isinstance(witness.get("duty_requirements"), list)
         else 0,
         "evidence_ref_count": len(witness.get("evidence_refs", []))
         if isinstance(witness.get("evidence_refs"), list)
@@ -190,12 +183,12 @@ def validate_universal_symbol_receipt_store_write_path_witness(
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolReceiptStoreWritePathWitnessError("; ".join(errors))
-    return result
+        raise UniversalSymbolReceiptStoreWriterDutyScopeWitnessError("; ".join(errors))
+    return report
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-write-path-witness:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-writer-duty-scope-witness:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
@@ -220,30 +213,33 @@ def _validate_witness_boundary(witness: Mapping[str, Any], errors: list[str]) ->
         errors.append("foundation_mode must remain true")
     if witness.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
-    if witness.get("write_path_decision") != "blocked_pending_writer_registration_replay_and_operator_authority":
-        errors.append("write_path_decision must remain blocked")
-    if witness.get("write_path_witness_is_not_append_authority") is not True:
-        errors.append("write path witness must not grant append authority")
+    if (
+        witness.get("writer_duty_scope_decision")
+        != "blocked_pending_writer_role_action_bounds_and_separation_evidence"
+    ):
+        errors.append("writer_duty_scope_decision must remain blocked")
+    if witness.get("writer_duty_scope_witness_is_not_duty_authority") is not True:
+        errors.append("writer duty scope witness must not grant duty authority")
 
 
-def _validate_write_path_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
-    requirements = witness.get("write_path_requirements")
+def _validate_duty_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
+    requirements = witness.get("duty_requirements")
     if not isinstance(requirements, list) or not requirements:
-        errors.append("write_path_requirements must be non-empty")
+        errors.append("duty_requirements must be non-empty")
         return
     requirement_ids: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("write path requirement entries must be objects")
+            errors.append("duty requirement entries must be objects")
             continue
         requirement_ids.append(str(requirement.get("requirement_id")))
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('requirement_id')}: proof_state must block write-path registration")
-        if requirement.get("current_decision") != "write_path_registration_blocked":
-            errors.append(f"{requirement.get('requirement_id')}: current_decision must be write_path_registration_blocked")
+            errors.append(f"{requirement.get('requirement_id')}: proof_state must block duty scope")
+        if requirement.get("current_decision") != "writer_duty_scope_blocked":
+            errors.append(f"{requirement.get('requirement_id')}: current_decision must be writer_duty_scope_blocked")
         if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
             errors.append(f"{requirement.get('requirement_id')}: delta_reject_ref must be logged")
-    _require_members("write_path_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
+    _require_members("duty_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
 
 
 def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -253,11 +249,11 @@ def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -
             errors.append(f"authority_denials.{field_name} must remain false")
 
 
-def _validate_write_path_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
-    constraints = _mapping(witness.get("write_path_constraints"))
-    for field_name in WRITE_PATH_CONSTRAINT_TRUE_FIELDS:
+def _validate_duty_scope_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
+    constraints = _mapping(witness.get("duty_scope_constraints"))
+    for field_name in DUTY_SCOPE_CONSTRAINT_TRUE_FIELDS:
         if constraints.get(field_name) is not True:
-            errors.append(f"write_path_constraints.{field_name} must remain true")
+            errors.append(f"duty_scope_constraints.{field_name} must remain true")
 
 
 def _validate_rejection_policy(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -278,9 +274,9 @@ def _validate_blocked_reasons(witness: Mapping[str, Any], errors: list[str]) -> 
 def _validate_contract_summary(witness: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(witness.get("contract_summary"))
     observed_counts = {
-        "write_path_requirement_count": _list_len(witness.get("write_path_requirements")),
+        "duty_requirement_count": _list_len(witness.get("duty_requirements")),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "write_path_constraint_count": len(WRITE_PATH_CONSTRAINT_TRUE_FIELDS),
+        "duty_scope_constraint_count": len(DUTY_SCOPE_CONSTRAINT_TRUE_FIELDS),
         "rejection_check_count": len(REJECTION_POLICY_TRUE_FIELDS),
         "blocked_reason_count": _list_len(witness.get("blocked_reasons")),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")),
@@ -354,19 +350,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        report = validate_universal_symbol_receipt_store_write_path_witness(args.witness, args.schema)
-    except UniversalSymbolReceiptStoreWritePathWitnessError as exc:
+        report = validate_universal_symbol_receipt_store_writer_duty_scope_witness(args.witness, args.schema)
+    except UniversalSymbolReceiptStoreWriterDutyScopeWitnessError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": str(exc).split("; ")}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_receipt_store_write_path_witness: {exc}")
+            print(f"[FAIL] universal_symbol_receipt_store_writer_duty_scope_witness: {exc}")
             print("STATUS: failed")
         return 1
 
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_receipt_store_write_path_witness")
+        print("[PASS] universal_symbol_receipt_store_writer_duty_scope_witness")
         print("STATUS: passed")
     return 0
 

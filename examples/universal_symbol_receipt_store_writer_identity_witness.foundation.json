@@ -110,7 +110,7 @@
   "next_actions": [
     "collect_operator_approval_decision_evidence",
     "define_tenant_scope_witness",
-    "define_writer_duty_scope_witness",
+    "collect_writer_duty_scope_evidence",
     "define_writer_identity_lease_or_idempotency_witness",
     "define_writer_identity_recovery_plan"
   ],
@@ -121,6 +121,8 @@
     "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
@@ -138,6 +140,7 @@
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
     "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
@@ -150,6 +153,6 @@
     "identity_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 28
+    "evidence_ref_count": 31
   }
 }

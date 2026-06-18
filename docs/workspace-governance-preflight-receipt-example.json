@@ -1,5 +1,5 @@
 {
-  "check_count": 226,
+  "check_count": 229,
   "checks": [
     {
       "args": [
@@ -2190,6 +2190,45 @@
     {
       "args": [
         "python",
+        "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_writer_duty_scope_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_path_confinement_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_write_path_idempotency_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py"
       ],
       "name": "universal_symbol_receipt_store_writer_identity_witness",
@@ -2993,7 +3032,7 @@
       "termination_signal": null
     }
   ],
-  "generated_at_epoch": 1781775286.2104197,
+  "generated_at_epoch": 1781793421.0829406,
   "receipt_id": "workspace_governance_preflight_receipt",
   "receipt_is_not_terminal_closure": true,
   "status": "passed",

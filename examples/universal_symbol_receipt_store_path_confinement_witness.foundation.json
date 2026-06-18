@@ -1,0 +1,151 @@
+{
+  "witness_id": "universal-symbol-receipt-store-path-confinement-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-path-confinement",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "path_confinement_decision": "blocked_pending_root_namespace_traversal_symlink_partition_and_audit_evidence",
+  "path_confinement_witness_is_not_path_authority": true,
+  "confinement_requirements": [
+    {
+      "requirement_id": "requirement://canonical-root",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "path-root://universal-symbol/receipt-store",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-canonical-root-missing"
+    },
+    {
+      "requirement_id": "requirement://allowed-namespace",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "namespace://universal-symbol/receipt-store/allowed",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-namespace-missing"
+    },
+    {
+      "requirement_id": "requirement://path-traversal-denial",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "deny://universal-symbol/receipt-store/path-traversal",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-traversal-denial-missing"
+    },
+    {
+      "requirement_id": "requirement://symlink-resolution",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "path-resolution://universal-symbol/receipt-store/symlink",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-symlink-resolution-missing"
+    },
+    {
+      "requirement_id": "requirement://reserved-path-denial",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "deny://universal-symbol/receipt-store/reserved-path",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-reserved-path-denial-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-partition",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "partition://universal-symbol/receipt-store/tenant-path",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-tenant-partition-missing"
+    },
+    {
+      "requirement_id": "requirement://append-only-custody",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "custody://universal-symbol/receipt-store/append-only",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-append-only-custody-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/path-confinement-audit",
+      "current_decision": "path_confinement_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/path-confinement-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_path_confinement_bound": false,
+    "receipt_store_path_custody_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "filesystem_escape_allowed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "path_confinement_constraints": {
+    "canonical_root_required": true,
+    "allowed_namespace_required": true,
+    "path_traversal_denial_required": true,
+    "symlink_resolution_required": true,
+    "reserved_path_denial_required": true,
+    "tenant_partition_required": true,
+    "append_only_custody_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_canonical_root_blocks_confinement": true,
+    "missing_allowed_namespace_blocks_confinement": true,
+    "missing_traversal_denial_blocks_confinement": true,
+    "missing_partition_blocks_confinement": true,
+    "unknown_hard_constraint_blocks_confinement": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "canonical_root_missing",
+    "allowed_namespace_missing",
+    "path_traversal_denial_missing",
+    "symlink_resolution_missing",
+    "reserved_path_denial_missing",
+    "tenant_partition_missing",
+    "append_only_custody_missing",
+    "audit_receipt_missing",
+    "receipt_store_path_confinement_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_write_path_idempotency_witness",
+    "define_durability_replay_witness",
+    "define_receipt_store_recovery_plan"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "confinement_requirement_count": 8,
+    "authority_denial_count": 11,
+    "path_confinement_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 25
+  }
+}
