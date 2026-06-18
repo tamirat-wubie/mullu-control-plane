@@ -1,7 +1,7 @@
 """Purpose: deterministic request intake for the personal-assistant layer.
 Governance scope: convert operator text into governed intent records, skill
 references, risk boundaries, connector proof gaps, and missing WHQR bindings.
-Dependencies: personal-assistant skill registry contracts only.
+Dependencies: personal-assistant skill registry and capability-pack contracts.
 Invariants:
   - Intake is pure and performs no connector, mailbox, calendar, memory, or
     deployment execution.
@@ -16,6 +16,10 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from .capability_pack import (
+    PersonalAssistantCapabilityPackIndex,
+    load_default_personal_assistant_capability_pack,
+)
 from .contracts import PersonalAssistantInvariantError, SkillMode, SkillRiskLevel
 from .skill_registry import PersonalAssistantSkillRegistry, load_default_skill_registry
 
@@ -204,11 +208,15 @@ def interpret_user_request(
     interface: RequestInterface | str = RequestInterface.OPERATOR_CONSOLE,
     connector_refs: Sequence[ConnectorProofRef | Mapping[str, Any]] = (),
     registry: PersonalAssistantSkillRegistry | None = None,
+    capability_pack: PersonalAssistantCapabilityPackIndex | None = None,
 ) -> GovernedIntent:
     """Interpret operator text into a governed personal-assistant request."""
     request_text = _require_text(user_request, "user_request")
     request_interface = interface if isinstance(interface, RequestInterface) else RequestInterface.coerce(str(interface))
     skill_registry = registry or load_default_skill_registry()
+    capability_index = capability_pack or load_default_personal_assistant_capability_pack()
+    binding_report = capability_index.bind_skill_registry(skill_registry)
+    binding_report.assert_valid()
     admitted_connectors = tuple(_coerce_connector_ref(connector) for connector in connector_refs)
     selected_skill_ids, explicit_gaps = _select_skill_ids_and_gaps(request_text)
     selected_skills = tuple(skill_registry.get(skill_id) for skill_id in selected_skill_ids)
@@ -236,6 +244,9 @@ def interpret_user_request(
         evidence_refs=(f"proof://personal-assistant/request/{request_id.removeprefix('pa_request_')}",),
         metadata={
             "intake_mode": "deterministic_foundation",
+            "capability_pack_binding_valid": binding_report.valid,
+            "local_capability_ref_count": len(binding_report.local_capability_refs),
+            "external_capability_ref_count": len(binding_report.external_capability_refs),
             "live_connector_execution_allowed": False,
             "system_of_record_write_allowed": False,
         },
