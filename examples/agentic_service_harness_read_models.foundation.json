@@ -53,10 +53,24 @@
       "connection_id": "repo-mullu-control-plane",
       "project_id": "project-agentic-service-harness",
       "provider": "github",
+      "provider_repository_ref": "github-repository://tamirat-wubie/mullu-control-plane",
+      "repository_owner": "tamirat-wubie",
+      "repository_name": "mullu-control-plane",
       "repository_slug": "tamirat-wubie/mullu-control-plane",
       "default_branch": "main",
+      "installation_ref": "github-installation://presence-only",
+      "installation_state": "presence_only",
       "permission_scope": "read_only",
+      "permission_scopes": [
+        "metadata_read",
+        "contents_read",
+        "checks_read",
+        "pull_requests_read"
+      ],
       "credential_binding_ref": "credential-binding://github/read-only-installation",
+      "revocation_state": "not_revoked",
+      "revocation_evidence_ref": "revocation://github-app/not-revoked-presence-only",
+      "last_verified_at": "2026-06-16T00:00:00Z",
       "secret_values_serialized": false,
       "write_authority_enabled": false,
       "read_only": true
@@ -305,7 +319,10 @@
         "tenant_key": "project_id",
         "owner_ref_fields": [
           "project_id",
-          "credential_binding_ref"
+          "provider_repository_ref",
+          "installation_ref",
+          "credential_binding_ref",
+          "revocation_evidence_ref"
         ],
         "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/repository_connection",
         "read_model_source": "fixture_projection",

@@ -1,0 +1,97 @@
+{
+  "security_review_id": "SEC-repository-connection-read-model-20260618",
+  "change_id": "repository-connection-read-model-20260618",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "tenant_scope",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "RepositoryConnection read models can become an authority bridge if provider repository identity, installation status, permission scopes, credential binding, revocation status, and verification time are incomplete or if write-like scopes are treated as executable authority. The mitigation is a reference-only durable contract and validator checks that require revocation evidence, deny raw credential serialization, and keep write authority false.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "RepositoryConnection write authority remains false and write-like effective scopes are rejected",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_agentic_service_harness_contract.py::test_agentic_service_harness_contract_rejects_repository_authority_gap"
+    },
+    {
+      "category": "auth",
+      "check": "Read-model RepositoryConnection write authority remains false and read_only remains true",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_agentic_service_harness_read_models.py::test_agentic_service_harness_read_models_reject_repository_authority_gap"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms credential binding is reference-only and secret_values_serialized remains false",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_agentic_service_harness_read_model_persistence.py --json"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR check confirms RepositoryConnection remains project scoped and project repository refs remain exact",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_agentic_service_harness_read_model_integrity.py --strict"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms projection preserves durable repository connection fields from source contract into read model",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_agentic_service_harness_read_model_projections.py::test_projected_read_only_contract_preserves_core_refs"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms schema and SDLC artifacts validate with strict gates",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_schemas.py --strict"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "repository-connection-authority-drift",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "RepositoryConnection validators reject enabled write authority and write-like effective permission scopes while preserving requested action class as planning metadata only.",
+      "evidence_refs": [
+        "scripts/validate_agentic_service_harness_contract.py",
+        "scripts/validate_agentic_service_harness_read_models.py",
+        "tests/test_gateway/test_agentic_service_harness_contract.py",
+        "tests/test_validate_agentic_service_harness_read_models.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "repository-connection-revocation-gap",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "RepositoryConnection records now require revocation_state and revocation_evidence_ref in both source contracts and read models.",
+      "evidence_refs": [
+        "schemas/agentic_service_harness.schema.json",
+        "schemas/agentic_service_harness_read_models.schema.json",
+        "examples/agentic_service_harness_read_models.foundation.json"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep RepositoryConnection fields reference-only",
+    "deny write authority and write-like effective scopes",
+    "require revocation evidence before the model is considered durable",
+    "keep all examples in Foundation Mode and non-mutating",
+    "do not create dashboard, mutation endpoint, branch workspace, pull request, external adapter integration, deployment, DNS, secret, or destructive-operation authority"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/agentic_service_harness.schema.json",
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "scripts/validate_agentic_service_harness_contract.py",
+    "scripts/validate_agentic_service_harness_read_models.py",
+    "scripts/validate_agentic_service_harness_read_model_projections.py",
+    "receipt://sdlc/repository-connection-read-model/security"
+  ],
+  "uao_ref": "uao://sdlc/repository-connection-read-model/security",
+  "causal_decision_trace_ref": "trace://sdlc/repository-connection-read-model/security",
+  "receipt_ref": "receipt://sdlc/repository-connection-read-model/security"
+}
