@@ -8,7 +8,8 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md.
 Invariants:
   - The map contains the required readiness sections and scale.
-  - The first next PR remains the durable RepositoryConnection read model.
+  - RepositoryConnection remains closed as a read-only READY surface.
+  - The first next PR remains the AgentRun lifecycle read model.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -46,8 +47,10 @@ REQUIRED_SECTIONS = (
     "## Governance Decision",
 )
 REQUIRED_STATUSES = ("READY", "PARTIAL", "MISSING")
-REQUIRED_PARTIAL_SYMBOLS = (
+REQUIRED_READY_SYMBOLS = (
     "RepositoryConnection",
+)
+REQUIRED_PARTIAL_SYMBOLS = (
     "AgentRun",
     "ApprovalRequest",
     "Receipt",
@@ -93,6 +96,7 @@ class ReadinessMapValidation:
     map_path: str
     required_section_count: int
     required_status_count: int
+    required_ready_symbol_count: int
     required_partial_symbol_count: int
     required_denial_count: int
 
@@ -114,12 +118,14 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
             map_path=_path_label(map_path),
             required_section_count=0,
             required_status_count=0,
+            required_ready_symbol_count=0,
             required_partial_symbol_count=0,
             required_denial_count=0,
         )
 
     _require_all(map_text, REQUIRED_SECTIONS, "section", errors)
     _require_all(map_text, REQUIRED_STATUSES, "status", errors)
+    _require_all(map_text, REQUIRED_READY_SYMBOLS, "ready_symbol", errors)
     _require_all(map_text, REQUIRED_PARTIAL_SYMBOLS, "partial_symbol", errors)
     _require_all(map_text, REQUIRED_DENIALS, "denial", errors)
     _require_all(
@@ -129,7 +135,8 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         errors,
     )
     _validate_forbidden_patterns(map_text, errors)
-    _validate_repository_connection_first(map_text, errors)
+    _validate_repository_connection_ready(map_text, errors)
+    _validate_agent_run_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
 
     return ReadinessMapValidation(
@@ -138,6 +145,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         map_path=_path_label(map_path),
         required_section_count=len(REQUIRED_SECTIONS),
         required_status_count=len(REQUIRED_STATUSES),
+        required_ready_symbol_count=len(REQUIRED_READY_SYMBOLS),
         required_partial_symbol_count=len(REQUIRED_PARTIAL_SYMBOLS),
         required_denial_count=len(REQUIRED_DENIALS),
     )
@@ -160,19 +168,28 @@ def _validate_forbidden_patterns(map_text: str, errors: list[str]) -> None:
             errors.append(f"forbidden {pattern_name}")
 
 
-def _validate_repository_connection_first(map_text: str, errors: list[str]) -> None:
+def _validate_repository_connection_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| RepositoryConnection \| READY \| .+ \| None\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if ready_row is None:
+        errors.append("missing ready row: RepositoryConnection read model")
+
+
+def _validate_agent_run_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(repository-connection\): add durable read model`$",
+        r"^1\.\s+`harness\(agent-run\): add lifecycle read model`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: RepositoryConnection durable read model")
+        errors.append("missing first next PR: AgentRun lifecycle read model")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(repository-connection): add durable read model",
         "harness(agent-run): add lifecycle read model",
         "harness(approval): bind approval request projection",
         "harness(receipts): add dry-run run receipt emitter",

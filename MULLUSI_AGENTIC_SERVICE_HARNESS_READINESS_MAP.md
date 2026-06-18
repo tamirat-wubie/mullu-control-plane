@@ -68,7 +68,7 @@ Open PRs after closure pass: none.
 | User | READY | `schemas/agentic_service_harness.schema.json` defines `users`; scenario examples include operator users. | None. |
 | Organization | READY | Harness schema defines organizations; organization kernel surfaces also exist. | None. |
 | Project | READY | Harness schema defines projects with tenant, repositories, runs, receipts, and loop status refs. | None. |
-| RepositoryConnection | PARTIAL | Harness schema and examples define repository connections, but durable GitHub App installation, revocation, and redacted credential bindings are not harness-owned. | Add a `RepositoryConnection` store/read-model PR with provider, repository id/name, installation ref, scopes, revocation state, default branch, and no secret serialization. |
+| RepositoryConnection | READY | Harness contract, read-model schema, fixture projection, durable entity binding, validators, and tests require durable GitHub App installation ref/state, provider repository ref, repository id/name through owner/name and slug, read permission scopes, redacted credential bindings, revocation state/evidence, last verification timestamp, default branch, no secret serialization, false write authority, and read-only projection. | None. |
 | AgentRun | PARTIAL | Harness schema defines agent runs; live producer evidence and read-model projections exist, but durable lifecycle persistence is not complete. | Add an `AgentRun` lifecycle PR with queued/running/awaiting-approval/completed/blocked/cancelled states and read-only query support. |
 | ApprovalRequest | PARTIAL | Gateway approval primitives and harness approval gates exist, but the harness does not own a durable approval request binding. | Add a harness ApprovalRequest binding that maps ApprovalGate to gateway approvals without mutation routes beyond governed request creation. |
 | Receipt | PARTIAL | Many receipt schemas exist and harness receipts are modeled, but durable harness receipt-store append remains witness-bound. | Add a harness Receipt projection and append preflight PR with append disabled until approval. |
@@ -144,7 +144,7 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | login/account | MISSING | No harness login/account screen or account persistence should be built yet. | Add account/user read model first; UI follows after persistence is validated. |
-| connect GitHub repo | MISSING | RepositoryConnection is contract-level only. | Add RepositoryConnection read model and redacted GitHub installation binding. |
+| connect GitHub repo | PARTIAL | RepositoryConnection read model and redacted GitHub installation binding are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight and UI data contract only after AgentRun and approval read models are closed. |
 | create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
 | run status | PARTIAL | Read-only harness and loop status surfaces exist; durable AgentRun status is incomplete. | Add AgentRun read-only status projection. |
 | evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
@@ -166,13 +166,12 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(repository-connection): add durable read model`
-2. `harness(agent-run): add lifecycle read model`
-3. `harness(approval): bind approval request projection`
-4. `harness(receipts): add dry-run run receipt emitter`
-5. `harness(sandbox): bind temporary branch workspace preflight`
-6. `harness(github): add read-only repo task intake`
-7. `harness(ui-contract): add dashboard data contract`
+1. `harness(agent-run): add lifecycle read model`
+2. `harness(approval): bind approval request projection`
+3. `harness(receipts): add dry-run run receipt emitter`
+4. `harness(sandbox): bind temporary branch workspace preflight`
+5. `harness(github): add read-only repo task intake`
+6. `harness(ui-contract): add dashboard data contract`
 
 ## Governance Decision
 
@@ -187,5 +186,5 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 STATUS:
   Completeness: 100%
   Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; no open PRs before this readiness-map branch
-  Open issues: durable RepositoryConnection, AgentRun, ApprovalRequest, Receipt, EvidenceBundle, WorkspaceSandbox, and UI data contracts remain partial or missing
-  Next action: open and merge this readiness-map documentation PR, then start the smallest next PR sequence with RepositoryConnection
+  Open issues: AgentRun, ApprovalRequest, Receipt, EvidenceBundle, WorkspaceSandbox, and UI data contracts remain partial or missing
+  Next action: start the smallest next PR sequence with AgentRun lifecycle read model
