@@ -201,7 +201,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 340 schemas
+protocol manifest ok: 344 schemas
 ```
 
 STATUS:
