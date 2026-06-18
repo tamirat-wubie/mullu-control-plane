@@ -466,7 +466,7 @@
         "teamops_shared_inbox"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/assistant/finance-ops/plans",

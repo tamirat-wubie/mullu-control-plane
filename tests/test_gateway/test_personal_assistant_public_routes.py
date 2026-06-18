@@ -17,6 +17,14 @@ import json
 from fastapi.testclient import TestClient
 
 from gateway.server import create_gateway_app
+from mcoi_runtime.personal_assistant import (
+    ApprovalScope,
+    GovernedIntent,
+    RequestExecutionMode,
+    RequestInterface,
+    SkillRiskLevel,
+    build_personal_assistant_preview_plan,
+)
 
 
 class StubPlatform:
@@ -209,6 +217,88 @@ def test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe(
     assert queue["execution_allowed"] is False
     assert queue["approval_is_execution"] is False
     assert queue["metadata"]["approval_decision_executes_action"] is False
+
+
+def test_gateway_personal_assistant_approval_proposal_preview_does_not_enqueue() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/preview",
+        json={
+            "user_request": "Send one approved email draft to Daniel.",
+            "plan": _approval_proposal_plan(),
+            "submitted_at": "2026-06-14T10:29:00+00:00",
+            "approval_scope": "per_recipient",
+            "include_console_read_model": True,
+        },
+    )
+    payload = response.json()
+    proposal = payload["approval_proposal"]
+    queue = payload["approval_queue"]
+    console = payload["console_read_model"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["outcome"] == "AwaitingEvidence"
+    assert proposal["execution_allowed"] is False
+    assert proposal["approval_is_execution"] is False
+    assert proposal["approval_scope"] == "per_recipient"
+    assert proposal["risk_level"] == "P4"
+    assert proposal["proposed_actions"][0]["skill_id"] == "email.send.with_approval"
+    assert "send" in proposal["forbidden_without_approval"]
+    assert queue["approval_count"] == 0
+    assert queue["records"] == []
+    assert payload["effect_boundary"]["approval_enqueued"] is False
+    assert payload["effect_boundary"]["approval_is_execution"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert console["approval_queue"]["proposal_count"] == 1
+    assert console["approval_queue"]["approval_count"] == 0
+    assert console["approval_queue"]["proposal_execution_allowed"] is False
+
+
+def test_gateway_personal_assistant_approval_proposal_rejects_non_approval_request() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/preview",
+        json={
+            "user_request": "Check my inbox and draft replies only.",
+            "submitted_at": "2026-06-14T10:29:30+00:00",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_approval_proposal_preview"
+
+
+def test_gateway_personal_assistant_approval_proposal_rejects_extra_private_connector_fields() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/preview",
+        json={
+            "user_request": "Send one approved email draft to Daniel.",
+            "submitted_at": "2026-06-14T10:29:45+00:00",
+            "connector_refs": [
+                {
+                    "connector_id": "connector:gmail",
+                    "connector_name": "gmail",
+                    "proof_state": "Pass",
+                    "private_data_allowed": False,
+                    "scopes": ["metadata_only"],
+                    "raw_private_connector_payload": "private transcript",
+                }
+            ],
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 422
+    assert "raw_private_connector_payload" in serialized
+    assert "private transcript" not in serialized
+    assert "approval_proposal" not in serialized
 
 
 def test_gateway_personal_assistant_approval_queue_preview_records_pending_packet() -> None:
@@ -1010,6 +1100,29 @@ def _approval_preview_payload() -> dict[str, object]:
         ],
         "evidence_refs": ["proof://personal-assistant/approval/gateway-email-send-001"],
     }
+
+
+def _approval_proposal_plan() -> dict[str, object]:
+    intent = GovernedIntent(
+        request_id="pa_request_gateway_approval_proposal_001",
+        submitted_at="2026-06-14T10:29:00+00:00",
+        interface=RequestInterface.API_ROUTE,
+        user_goal="Send one approved email draft to Daniel.",
+        requested_capabilities=("email.send.with_approval",),
+        requested_skill_ids=("email.send.with_approval",),
+        risk_level=SkillRiskLevel.P4,
+        requires_approval=True,
+        execution_mode=RequestExecutionMode.EXECUTE_WITH_APPROVAL,
+        approval_scope=ApprovalScope.PER_RECIPIENT,
+        blocked_actions=("send", "forward", "connector_mutation"),
+        evidence_refs=("proof://personal-assistant/gateway/approval-proposal-001",),
+    )
+    envelope = build_personal_assistant_preview_plan(
+        intent,
+        plan_id="pa_plan_gateway_approval_proposal_001",
+        created_at="2026-06-14T10:29:00+00:00",
+    )
+    return dict(envelope.plan)
 
 
 def _memory_preview_payload() -> dict[str, object]:
