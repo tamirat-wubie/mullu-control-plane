@@ -41,6 +41,7 @@
         "/api/v1/components/{component_id}/autopsy",
         "/api/v1/components/read-model",
         "/api/v1/components/simulate",
+        "/api/v1/components/symbols",
         "/webhook/approve/{request_id}",
         "/webhook/discord",
         "/webhook/phone",
@@ -59,7 +60,8 @@
         "component_request_simulator",
         "gateway_approval_resolution",
         "gateway_capability_fabric",
-        "gateway_webhook_ingress"
+        "gateway_webhook_ingress",
+        "universal_symbol_operator_read_models"
       ],
       "route_prefixes": [
         "/api/v1/components",
@@ -767,6 +769,31 @@
         "/api/v1/components/read-model"
       ],
       "surface_id": "component_harness_read_model"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/components/symbols"
+      ],
+      "surface_id": "universal_symbol_operator_read_models"
     },
     {
       "binding_level": "selected_component_bound",

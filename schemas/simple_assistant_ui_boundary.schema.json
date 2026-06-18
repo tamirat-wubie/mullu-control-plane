@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:simple-assistant-ui-boundary:1",
+  "title": "Simple Assistant UI Boundary",
+  "description": "Public contract for projecting governed assistant actions into simple normal-user statuses while keeping proof and operator detail hidden by default.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "boundary_id",
+    "schema_ref",
+    "generated_at",
+    "governed",
+    "foundation_only",
+    "principle",
+    "visibility_levels",
+    "normal_user_allowed_statuses",
+    "normal_user_allowed_actions",
+    "normal_user_forbidden_terms",
+    "normal_user_projection_fields",
+    "normal_user_examples",
+    "audit_details",
+    "effect_boundary",
+    "assurance",
+    "validation_commands",
+    "metadata"
+  ],
+  "properties": {
+    "boundary_id": {
+      "type": "string",
+      "pattern": "^simple_assistant_ui_boundary_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "schema_ref": {
+      "const": "urn:mullusi:schema:simple-assistant-ui-boundary:1"
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "governed": {
+      "const": true
+    },
+    "foundation_only": {
+      "const": true
+    },
+    "principle": {
+      "const": "Heavy governance inside. Simple experience outside."
+    },
+    "visibility_levels": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/visibility_level"
+      }
+    },
+    "normal_user_allowed_statuses": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "enum": [
+          "Ready",
+          "Needs approval",
+          "Blocked for safety",
+          "Draft created",
+          "Sent after approval",
+          "Evidence saved"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "normal_user_allowed_actions": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "enum": [
+          "Approve",
+          "Reject",
+          "Edit draft",
+          "Cancel",
+          "View audit details"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "normal_user_forbidden_terms": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "normal_user_projection_fields": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "enum": [
+          "title",
+          "status_label",
+          "risk_label",
+          "approval_required",
+          "result_label",
+          "evidence_label",
+          "audit_details_available"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "normal_user_examples": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/normal_user_example"
+      }
+    },
+    "audit_details": {
+      "$ref": "#/$defs/audit_details"
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "source_principle",
+        "normal_user_copy_contract",
+        "operator_audit_contract"
+      ],
+      "properties": {
+        "source_principle": {
+          "const": "users_approve_outcomes_mullu_handles_proof_auditors_inspect_proof_developers_maintain_proof"
+        },
+        "normal_user_copy_contract": {
+          "const": "simple_status_only"
+        },
+        "operator_audit_contract": {
+          "const": "details_available_by_explicit_visibility_level"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "visibility_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "audience",
+        "visible",
+        "hidden_by_default"
+      ],
+      "properties": {
+        "level": {
+          "enum": [1, 2, 3]
+        },
+        "audience": {
+          "enum": [
+            "normal_user",
+            "power_user_operator",
+            "auditor_developer"
+          ]
+        },
+        "visible": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "hidden_by_default": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "normal_user_example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_family",
+        "title",
+        "status_label",
+        "risk_label",
+        "approval_required",
+        "result_label",
+        "evidence_label",
+        "audit_details_available",
+        "buttons"
+      ],
+      "properties": {
+        "action_family": {
+          "enum": [
+            "email",
+            "calendar",
+            "task",
+            "file",
+            "code_change",
+            "connector_action"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status_label": {
+          "enum": [
+            "Ready",
+            "Needs approval",
+            "Blocked for safety",
+            "Draft created",
+            "Sent after approval",
+            "Evidence saved"
+          ]
+        },
+        "risk_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "result_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audit_details_available": {
+          "type": "boolean"
+        },
+        "buttons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "Approve",
+              "Reject",
+              "Edit draft",
+              "Cancel",
+              "View audit details"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "audit_details": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_visibility",
+        "normal_user_default_hidden",
+        "operator_access_allowed",
+        "auditor_developer_access_allowed",
+        "detail_link_label"
+      ],
+      "properties": {
+        "default_visibility": {
+          "const": "hidden"
+        },
+        "normal_user_default_hidden": {
+          "const": true
+        },
+        "operator_access_allowed": {
+          "const": true
+        },
+        "auditor_developer_access_allowed": {
+          "const": true
+        },
+        "detail_link_label": {
+          "const": "View audit details"
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_only",
+        "execution_authority_granted",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "system_of_record_write_allowed",
+        "proof_details_hidden_by_default",
+        "operator_details_hidden_by_default"
+      ],
+      "properties": {
+        "projection_only": {
+          "const": true
+        },
+        "execution_authority_granted": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "external_send_allowed": {
+          "const": false
+        },
+        "system_of_record_write_allowed": {
+          "const": false
+        },
+        "proof_details_hidden_by_default": {
+          "const": true
+        },
+        "operator_details_hidden_by_default": {
+          "const": true
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "normal_user_complexity_leak_detected",
+        "authority_drift_detected",
+        "checked_controls",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {
+          "const": "simple_assistant_ui_boundary_assurance"
+        },
+        "outcome": {
+          "enum": [
+            "SolvedVerified",
+            "GovernanceBlocked"
+          ]
+        },
+        "normal_user_complexity_leak_detected": {
+          "type": "boolean"
+        },
+        "authority_drift_detected": {
+          "type": "boolean"
+        },
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

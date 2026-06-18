@@ -29,15 +29,16 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
     assert read_model["governed"] is True
     assert read_model["route"] == "/api/v1/components/read-model"
     assert read_model["summary"]["component_count"] == 10
-    assert read_model["summary"]["bound_route_count"] == 30
-    assert read_model["summary"]["route_family_classification_count"] == 77
-    assert read_model["summary"]["classified_declared_route_count"] == 437
+    assert read_model["summary"]["bound_route_count"] == 31
+    assert read_model["summary"]["route_family_classification_count"] == 78
+    assert read_model["summary"]["classified_declared_route_count"] == 438
     assert read_model["summary"]["lifecycle_receipt_count"] == 10
     assert read_model["summary"]["authority_witness_count"] == 10
-    assert components["governance_core"]["route_binding"]["route_count"] == 22
+    assert components["governance_core"]["route_binding"]["route_count"] == 23
     assert "component_harness_read_model" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_request_simulator" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_autopsy" in components["governance_core"]["route_binding"]["proof_surface_ids"]
+    assert "universal_symbol_operator_read_models" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert components["governance_core"]["lifecycle_receipt"]["proof_state"] == "Pass"
     assert components["governance_core"]["authority_witness"]["proof_state"] == "Pass"
     assert components["nested_mind_bridge"]["proof_binding"]["state"] == "awaiting_binding"
@@ -68,7 +69,7 @@ def test_component_read_model_blocks_live_authority() -> None:
     assert payload["summary"]["proof_bound_count"] == 9
     assert payload["summary"]["awaiting_binding_count"] == 1
     assert payload["summary"]["blocked_component_count"] == 1
-    assert payload["summary"]["classified_declared_route_count"] == 437
+    assert payload["summary"]["classified_declared_route_count"] == 438
     for component in payload["components"]:
         authority = component["authority"]
         assert authority["can_execute"] is False

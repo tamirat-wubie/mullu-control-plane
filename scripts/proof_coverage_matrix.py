@@ -335,6 +335,58 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_operator_read_models",
+            [
+                "/api/v1/components/symbols",
+                "software_receipt_symbols",
+                "build_worker_receipt_symbol_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol.schema.json",
+                "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+                "mcoi/mcoi_runtime/app/symbol_operator_read_models.py",
+                "mcoi/mcoi_runtime/app/software_receipt_observability.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "mcoi/tests/test_symbol_operator_read_models.py",
+                "mcoi/tests/test_symbol_skill_adapter.py",
+                "mcoi/tests/test_software_receipt_observability.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol operator read models project component registry entries, software receipts, and worker receipt chains into schema-valid symbol envelopes while denying connector calls, runtime dispatch, filesystem writes, state mutation, terminal closure, success claims, and raw payload retention.",
+            [
+                "component_symbol_read_model_projects_schema_valid_symbols",
+                "component_symbol_route_is_read_only",
+                "worker_receipt_symbol_read_model_projects_schema_valid_symbols",
+                "symbol_operator_read_models_deny_runtime_authority",
+                "symbol_operator_read_model_rejects_invalid_limits",
+                "worker_receipt_symbol_read_model_rejects_live_fixture_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_symbol_read_model_projects_schema_valid_symbols": [
+                    "component_symbol_read_model_projects_schema_valid_symbols"
+                ],
+                "component_symbol_route_is_read_only": [
+                    "component_symbol_route_is_read_only"
+                ],
+                "worker_receipt_symbol_read_model_projects_schema_valid_symbols": [
+                    "worker_receipt_symbol_read_model_projects_schema_valid_symbols"
+                ],
+                "symbol_operator_read_models_deny_runtime_authority": [
+                    "symbol_operator_read_models_deny_runtime_authority"
+                ],
+                "symbol_operator_read_model_rejects_invalid_limits": [
+                    "symbol_operator_read_model_rejects_invalid_limits"
+                ],
+                "worker_receipt_symbol_read_model_rejects_live_fixture_drift": [
+                    "worker_receipt_symbol_read_model_rejects_live_fixture_drift"
+                ],
+            },
+        ),
+        _surface(
             "component_autopsy",
             ["/api/v1/components/{component_id}/autopsy"],
             "read_model",
@@ -11093,6 +11145,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_component_harness_read_model",
             "surfaces": ["component_harness_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_operator_read_models",
+            "surfaces": ["universal_symbol_operator_read_models"],
             "status": "closed",
         },
         {
