@@ -533,7 +533,7 @@ def _canonical(value: Any) -> Any:
     if isinstance(value, tuple):
         return [_canonical(item) for item in value]
     if isinstance(value, list):
-        return [_canonical(item) for item in value]
+        raise ValueError("canonical sequence must be an immutable tuple")
     if is_dataclass(value):
         return {
             field.name: _canonical(getattr(value, field.name))
