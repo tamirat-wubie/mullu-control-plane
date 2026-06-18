@@ -1,0 +1,80 @@
+{
+  "requirement_id": "sdlc_req_runtime_active_lease_admission_witness_20260618",
+  "request_id": "platform_runtime_active_lease_admission_witness_20260618",
+  "problem_statement": "The selected read-only worker path has lease preflight and runtime dispatch admission witnesses, but it lacks a schema-backed active runtime lease admission witness that binds temporal lease evidence, distributed lease receipts, UAO, Phi_gov, and failure evidence before any future dispatch admission.",
+  "success_criteria": [
+    "ReadOnlyWorkerRuntimeActiveLeaseAdmissionWitness validates against a public JSON schema and Foundation Mode example",
+    "the witness binds the read-only worker binding and lease preflight evidence",
+    "the witness requires active temporal lease evidence before any future dispatch admission",
+    "the witness requires distributed lease claim and distributed lease execution receipts before any future dispatch admission",
+    "active runtime lease admission remains unperformed",
+    "lease claim remains unperformed",
+    "distributed lease claim and execution remain unperformed",
+    "runtime dispatch admission remains denied until active runtime lease admission evidence exists",
+    "runtime dispatch, worker invocation, runtime receipt emission, receipt append, filesystem writes, connector calls, success claims, and terminal closure remain denied",
+    "focused tests reject authority drift, contract drift, missing runtime refs, lease evaluation drift, decision drift, summary drift, malformed payloads, and SDLC artifact drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no active lease claim",
+    "no distributed lease claim",
+    "no distributed lease execution",
+    "no runtime dispatch admission",
+    "no runtime receipt emission",
+    "no receipt append",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "active runtime lease admission witness is witness-only",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "future active lease admission must require operator approval, active temporal lease evidence, distributed lease claim receipt, distributed lease execution receipt, UAO, Phi_gov, WorkerFailureReceipt, and effect reconciliation",
+    "WorkerFailureReceipt remains mandatory for failed or partial lease admission evidence",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json",
+    "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_active_lease_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_active_lease_admission_witness.py",
+    "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json",
+    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_dispatch_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_dispatch_admission_witness.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_active_lease_admission_witness_20260618.json",
+    "examples/sdlc/design_runtime_active_lease_admission_witness_20260618.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_active_lease_admission_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_active_lease_admission_witness.py -q",
+    "python scripts/validate_read_only_worker_runtime_dispatch_admission_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_dispatch_admission_witness.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "active runtime lease admission witness validator receipt",
+    "focused pytest receipt for active runtime lease admission witness behavior",
+    "dispatch admission witness regression receipt",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt"
+  ],
+  "uao_ref": "uao://sdlc/requirement/runtime-active-lease-admission-witness/20260618",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/runtime-active-lease-admission-witness/20260618",
+  "receipt_ref": "receipt://sdlc/requirement/runtime-active-lease-admission-witness/20260618"
+}
