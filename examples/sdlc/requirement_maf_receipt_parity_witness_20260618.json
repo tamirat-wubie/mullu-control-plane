@@ -1,0 +1,69 @@
+{
+  "requirement_id": "REQ-maf-receipt-parity-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-receipt-parity-witness",
+  "problem_statement": "MAF receipt parity claims need a typed static witness that maps Python receipt schemas to Rust crate surfaces before any Python-to-Rust runtime binding, subprocess, CLI, or execution authority can be reconsidered.",
+  "success_criteria": [
+    "MafReceiptParityWitness validates against a public JSON schema and Foundation Mode example",
+    "MafReceiptParityWitness binds Python schema refs, Rust crate manifest refs, Rust crate entry refs, canonical source digests, parity mappings, gap refs, UAO refs, LifeMeaningJudgment refs, and receipt refs",
+    "MafReceiptParityWitness blocks PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafReceiptParityWitness rejects authority drift, schema digest drift, crate digest drift, missing future witnesses, gap closure without evidence, secret markers, receipt ref drift, and summary count drift",
+    "MafReceiptParityWitness is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no PyO3 binding",
+    "no subprocess execution",
+    "no CLI execution",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "parity mode remains digest_only_static_surface_map",
+    "runtime_binding_claimed, rust_execution_performed, and python_to_rust_call_path_claimed remain false",
+    "required future witnesses include ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path",
+    "each Python schema ref and Rust crate surface digest must match repository-local source files",
+    "all parity mappings must retain open gap refs and runtime_binding_allowed false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "docs/93_maf_receipt_parity_witness_contract.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "docs/MAF_RECEIPT_COVERAGE.md",
+    "maf/MAF_BOUNDARY.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_receipt_parity_witness.py",
+    "python -m pytest tests/test_validate_maf_receipt_parity_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_receipt_parity_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "docs/93_maf_receipt_parity_witness_contract.md",
+    "examples/sdlc/design_maf_receipt_parity_witness_20260618.json",
+    "examples/sdlc/security_review_maf_receipt_parity_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-receipt-parity-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-receipt-parity-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-receipt-parity-witness/requirement"
+}

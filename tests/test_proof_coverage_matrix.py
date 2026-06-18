@@ -5341,6 +5341,40 @@ def test_invariant_fuzz_execution_report_blocks_canonical_mutation() -> None:
     assert closure_actions["publish_invariant_fuzz_execution_report_contract"]["status"] == "closed"
 
 
+def test_maf_receipt_parity_witness_denies_runtime_binding() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    parity_surface = surfaces["maf_receipt_parity_witness"]
+    parity_witness_surface = witness_surfaces["maf_receipt_parity_witness"]
+    witnesses = set(parity_surface["runtime_witnesses"])
+
+    assert parity_surface["coverage_state"] == "witnessed"
+    assert parity_surface["request_proof"] == "request_proof"
+    assert parity_surface["action_proof"] == "action_proof"
+    assert parity_surface["audit"] == "audit_chain"
+    assert "MafReceiptParityWitness" in parity_surface["representative_paths"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in parity_surface["evidence_files"]
+    assert "examples/maf_receipt_parity_witness.foundation.json" in parity_surface["evidence_files"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in parity_surface["evidence_files"]
+    assert "maf/rust/Cargo.toml" in parity_surface["evidence_files"]
+    assert "maf_receipt_parity_witness_schema_valid" in witnesses
+    assert "maf_receipt_parity_witness_denies_runtime_binding" in witnesses
+    assert "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs" in witnesses
+    assert "maf_receipt_parity_witness_rejects_digest_drift" in witnesses
+    assert "maf_receipt_parity_witness_rejects_gap_closure_without_evidence" in witnesses
+    assert "maf_receipt_parity_witness_rejects_summary_drift" in witnesses
+    assert "maf_receipt_parity_witness_sdlc_artifacts_valid" in witnesses
+    assert parity_witness_surface["exact_test_anchor_count"] == 7
+    assert parity_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_receipt_parity_witness_contract"]["status"] == "closed"
+
+
 def test_research_source_conflict_map_preserves_source_disagreement() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

@@ -890,3 +890,21 @@ def test_mfidel_substrate_conformance_receipt_requirement_and_design_validate() 
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in requirement["affected_surfaces"]
     assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in design["schema_changes"]
     assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in design["validator_changes"]
+
+
+def test_maf_receipt_parity_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_maf_receipt_parity_witness_20260618.json")
+    design_path = Path("examples/sdlc/design_maf_receipt_parity_witness_20260618.json")
+    requirement_record = validator.load_json_object(requirement_path, "maf receipt parity requirement")
+    design_record = validator.load_json_object(design_path, "maf receipt parity design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/maf_receipt_parity_witness.schema.json" in design_record["schema_changes"]
+    assert "scripts/validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_maf_receipt_parity_witness.py" in design_record["validator_changes"]
