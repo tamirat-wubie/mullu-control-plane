@@ -2537,6 +2537,25 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
         "accepted_risk_record",
         "risk_owner_approval",
     ]
+    assert before_by_disposition["requires_review"]["runbook"] is None
+    compensated_runbook = before_by_disposition["compensated"]["runbook"]
+    accepted_risk_runbook = before_by_disposition["accepted_risk"]["runbook"]
+    assert compensated_runbook["runbook_id"] == "runbook:closure-drift-compensation"
+    assert compensated_runbook["stage_count"] == 5
+    assert compensated_runbook["topology_valid"] is True
+    assert compensated_runbook["missing_predecessor_ids"] == []
+    assert compensated_runbook["invalid_stage_types"] == []
+    assert "approval_gate" in compensated_runbook["stage_types"]
+    assert compensated_runbook["stages"][-1]["verification_evidence"] == [
+        "closure_drift_remediation_bound",
+    ]
+    assert accepted_risk_runbook["runbook_id"] == "runbook:closure-drift-accepted-risk"
+    assert accepted_risk_runbook["stage_count"] == 5
+    assert accepted_risk_runbook["topology_valid"] is True
+    assert "wait_for_event" in accepted_risk_runbook["stage_types"]
+    assert accepted_risk_runbook["terminal_condition"] == (
+        "append closure drift remediation with terminal_disposition=accepted_risk"
+    )
     assert before_by_disposition["requires_review"]["authority_refs"] == [
         "approval:security-dual-control",
     ]
@@ -2558,6 +2577,8 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
     }
     assert certificate_actions_by_disposition["requires_review"]["ready"] is True
     assert certificate_actions_by_disposition["compensated"]["ready"] is False
+    assert certificate_actions_by_disposition["compensated"]["runbook"]["topology_valid"] is True
+    assert certificate_actions_by_disposition["accepted_risk"]["runbook"]["stage_count"] == 5
     assert explorer.status_code == 200
     assert explorer.json()["closure_drift_remediation_actions"]["ready_action_count"] == 1
     assert explorer.json()["status_cards"][-1] == {
@@ -2568,9 +2589,11 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
     assert certificate_view.status_code == 200
     assert "Closure Drift Actions" in certificate_view.text
     assert "review_required" in certificate_view.text
+    assert "runbook:closure-drift-compensation" in certificate_view.text
     assert "compensation_effect_reconciliation" in certificate_view.text
     assert explorer_view.status_code == 200
     assert "Closure Drift Actions" in explorer_view.text
+    assert "runbook:closure-drift-accepted-risk" in explorer_view.text
     assert "accepted_risk_record" in explorer_view.text
 
 

@@ -1328,6 +1328,24 @@ def _proof_explorer_ref_list(value: object) -> str:
     return ""
 
 
+def _closure_drift_action_table_row(item: dict[str, object]) -> dict[str, object]:
+    runbook = item.get("runbook")
+    runbook = runbook if isinstance(runbook, dict) else {}
+    return {
+        "terminal_disposition": item.get("terminal_disposition", ""),
+        "action_kind": item.get("action_kind", ""),
+        "ready": item.get("ready", False),
+        "runbook_id": runbook.get("runbook_id", ""),
+        "stage_count": runbook.get("stage_count", 0),
+        "topology_valid": runbook.get("topology_valid", False),
+        "terminal_condition": runbook.get("terminal_condition", ""),
+        "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
+        "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
+        "authority_refs": _text_list(item.get("authority_refs", [])),
+        "endpoint": item.get("endpoint", ""),
+    }
+
+
 def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
     title = escape(str(payload.get("title", "")))
     raw_case_id = str(payload.get("case_id", ""))
@@ -1399,15 +1417,7 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
         else []
     )
     closure_drift_action_rows = [
-        {
-            "terminal_disposition": item.get("terminal_disposition", ""),
-            "action_kind": item.get("action_kind", ""),
-            "ready": item.get("ready", False),
-            "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
-            "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
-            "authority_refs": _text_list(item.get("authority_refs", [])),
-            "endpoint": item.get("endpoint", ""),
-        }
+        _closure_drift_action_table_row(item)
         for item in closure_drift_actions
         if isinstance(item, dict)
     ]
@@ -1451,7 +1461,7 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Departments", ("department_id", "steps", "allowed", "blocked", "missing_evidence", "evidence_refs"), department_rows)}
     {_proof_explorer_table("Evidence", ("requirement_id", "present", "evidence_refs", "step_ids"), evidence_rows)}
     {_proof_explorer_table("Closure", ("field", "value"), closure_rows)}
-    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
     {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
   </main>
 </body>
@@ -1832,11 +1842,220 @@ _CLOSURE_DRIFT_REMEDIATION_POLICIES: dict[TerminalClosureDisposition, dict[str, 
 }
 
 
+_CLOSURE_DRIFT_REMEDIATION_RUNBOOKS: dict[TerminalClosureDisposition, dict[str, object]] = {
+    TerminalClosureDisposition.COMPENSATED: {
+        "runbook_id": "runbook:closure-drift-compensation",
+        "name": "Closure Drift Compensation",
+        "goal": "Restore governed reliance after a terminal closure packet omitted newer gate evidence.",
+        "actor": "human_finance_or_security_admin",
+        "expected_effect": "closure_drift_compensated_with_reconciled_compensation_effect",
+        "forbidden_effects": (
+            "rewrite_original_closure_packet",
+            "mark_compensation_complete_without_reconciliation",
+            "self_approve_high_risk_compensation",
+        ),
+        "terminal_condition": "append closure drift remediation with terminal_disposition=compensated",
+        "rollback_or_compensation": "If compensation evidence fails reconciliation, suspend closure reliance and route to requires_review.",
+        "stages": (
+            {
+                "stage_id": "bind_drift_context",
+                "stage_type": "observation",
+                "predecessor_ids": (),
+                "input_bindings": ("closure_id", "drift_evidence_refs", "superseded_evidence_refs"),
+                "output_keys": ("current_drift_context",),
+                "timeout": "PT10M",
+                "verification_evidence": ("closure_packet_drift_refs",),
+            },
+            {
+                "stage_id": "prepare_compensation",
+                "stage_type": "skill_execution",
+                "predecessor_ids": ("bind_drift_context",),
+                "skill_id": "orgos.closure_drift.compensation.prepare",
+                "input_bindings": ("current_drift_context",),
+                "output_keys": ("compensation_plan",),
+                "timeout": "PT30M",
+                "verification_evidence": ("compensation_receipt",),
+            },
+            {
+                "stage_id": "approve_compensation",
+                "stage_type": "approval_gate",
+                "predecessor_ids": ("prepare_compensation",),
+                "input_bindings": ("compensation_plan", "authority_ref"),
+                "output_keys": ("approval_ref",),
+                "timeout": "P1D",
+                "verification_evidence": ("approval_receipt",),
+            },
+            {
+                "stage_id": "observe_compensation_effect",
+                "stage_type": "observation",
+                "predecessor_ids": ("approve_compensation",),
+                "input_bindings": ("compensation_plan",),
+                "output_keys": ("compensation_effect_reconciliation",),
+                "timeout": "PT1H",
+                "verification_evidence": ("compensation_effect_reconciliation",),
+            },
+            {
+                "stage_id": "append_remediation_binding",
+                "stage_type": "skill_execution",
+                "predecessor_ids": ("observe_compensation_effect",),
+                "skill_id": "orgos.closure_drift.remediation.bind",
+                "input_bindings": (
+                    "closure_id",
+                    "authority_ref",
+                    "compensation_receipt",
+                    "compensation_effect_reconciliation",
+                ),
+                "output_keys": ("closure_drift_remediation",),
+                "timeout": "PT10M",
+                "verification_evidence": ("closure_drift_remediation_bound",),
+            },
+        ),
+    },
+    TerminalClosureDisposition.ACCEPTED_RISK: {
+        "runbook_id": "runbook:closure-drift-accepted-risk",
+        "name": "Closure Drift Accepted Risk",
+        "goal": "Record bounded residual risk when closure drift cannot be compensated before reliance.",
+        "actor": "risk_owner",
+        "expected_effect": "closure_drift_recorded_as_bounded_accepted_risk_with_review_obligation",
+        "forbidden_effects": (
+            "treat_accepted_risk_as_verified_success",
+            "accept_risk_without_owner_expiry_or_review",
+            "rewrite_original_closure_packet",
+        ),
+        "terminal_condition": "append closure drift remediation with terminal_disposition=accepted_risk",
+        "rollback_or_compensation": "If the risk owner withdraws approval or expiry passes, revoke reliance and open review-required remediation.",
+        "stages": (
+            {
+                "stage_id": "bind_residual_risk_context",
+                "stage_type": "observation",
+                "predecessor_ids": (),
+                "input_bindings": ("closure_id", "drift_evidence_refs", "superseded_evidence_refs"),
+                "output_keys": ("residual_risk_context",),
+                "timeout": "PT10M",
+                "verification_evidence": ("closure_packet_drift_refs",),
+            },
+            {
+                "stage_id": "draft_accepted_risk_record",
+                "stage_type": "skill_execution",
+                "predecessor_ids": ("bind_residual_risk_context",),
+                "skill_id": "orgos.closure_drift.accepted_risk.draft",
+                "input_bindings": ("residual_risk_context",),
+                "output_keys": ("accepted_risk_record", "review_obligation"),
+                "timeout": "PT30M",
+                "verification_evidence": ("accepted_risk_record",),
+            },
+            {
+                "stage_id": "risk_owner_approval",
+                "stage_type": "approval_gate",
+                "predecessor_ids": ("draft_accepted_risk_record",),
+                "input_bindings": ("accepted_risk_record", "risk_owner_approval"),
+                "output_keys": ("risk_owner_approval_ref",),
+                "timeout": "P1D",
+                "verification_evidence": ("risk_owner_approval",),
+            },
+            {
+                "stage_id": "wait_for_review_window",
+                "stage_type": "wait_for_event",
+                "predecessor_ids": ("risk_owner_approval",),
+                "input_bindings": ("review_obligation", "expires_at"),
+                "output_keys": ("review_window_registered",),
+                "timeout": "P1D",
+                "verification_evidence": ("review_obligation",),
+            },
+            {
+                "stage_id": "append_remediation_binding",
+                "stage_type": "skill_execution",
+                "predecessor_ids": ("wait_for_review_window",),
+                "skill_id": "orgos.closure_drift.remediation.bind",
+                "input_bindings": ("closure_id", "authority_ref", "accepted_risk_record", "risk_owner_approval"),
+                "output_keys": ("closure_drift_remediation",),
+                "timeout": "PT10M",
+                "verification_evidence": ("closure_drift_remediation_bound",),
+            },
+        ),
+    },
+}
+
+
+_CLOSURE_DRIFT_RUNBOOK_STAGE_TYPES = {
+    "skill_execution",
+    "approval_gate",
+    "observation",
+    "communication",
+    "wait_for_event",
+}
+
+
 def _closure_drift_remediation_policy(disposition: TerminalClosureDisposition) -> dict[str, object]:
     policy = _CLOSURE_DRIFT_REMEDIATION_POLICIES.get(disposition)
     if policy is None:
         raise RuntimeCoreInvariantError("closure drift remediation policy unavailable")
     return policy
+
+
+def _runbook_string_tuple(value: object) -> tuple[str, ...]:
+    if isinstance(value, (list, tuple)):
+        return tuple(str(item) for item in value if isinstance(item, str))
+    return ()
+
+
+def _closure_drift_runbook_projection(disposition: TerminalClosureDisposition) -> dict[str, object] | None:
+    runbook = _CLOSURE_DRIFT_REMEDIATION_RUNBOOKS.get(disposition)
+    if runbook is None:
+        return None
+    stages = [
+        stage for stage in runbook.get("stages", ())
+        if isinstance(stage, dict)
+    ]
+    stage_ids = {
+        str(stage.get("stage_id"))
+        for stage in stages
+        if isinstance(stage.get("stage_id"), str)
+    }
+    missing_predecessor_ids = sorted({
+        predecessor_id
+        for stage in stages
+        for predecessor_id in _runbook_string_tuple(stage.get("predecessor_ids", ()))
+        if predecessor_id not in stage_ids
+    })
+    invalid_stage_types = sorted({
+        str(stage.get("stage_type"))
+        for stage in stages
+        if str(stage.get("stage_type")) not in _CLOSURE_DRIFT_RUNBOOK_STAGE_TYPES
+    })
+    projected_stages = [
+        {
+            "stage_id": stage.get("stage_id", ""),
+            "stage_type": stage.get("stage_type", ""),
+            "predecessor_ids": list(_runbook_string_tuple(stage.get("predecessor_ids", ()))),
+            "skill_id": stage.get("skill_id", ""),
+            "input_bindings": list(_runbook_string_tuple(stage.get("input_bindings", ()))),
+            "output_keys": list(_runbook_string_tuple(stage.get("output_keys", ()))),
+            "timeout": stage.get("timeout", ""),
+            "verification_evidence": list(_runbook_string_tuple(stage.get("verification_evidence", ()))),
+        }
+        for stage in stages
+    ]
+    return {
+        "runbook_id": runbook["runbook_id"],
+        "name": runbook["name"],
+        "goal": runbook["goal"],
+        "actor": runbook["actor"],
+        "expected_effect": runbook["expected_effect"],
+        "forbidden_effects": list(_runbook_string_tuple(runbook.get("forbidden_effects", ()))),
+        "terminal_condition": runbook["terminal_condition"],
+        "rollback_or_compensation": runbook["rollback_or_compensation"],
+        "stage_count": len(projected_stages),
+        "stage_types": sorted({
+            str(stage.get("stage_type"))
+            for stage in stages
+            if str(stage.get("stage_type")) in _CLOSURE_DRIFT_RUNBOOK_STAGE_TYPES
+        }),
+        "missing_predecessor_ids": missing_predecessor_ids,
+        "invalid_stage_types": invalid_stage_types,
+        "topology_valid": not missing_predecessor_ids and not invalid_stage_types,
+        "stages": projected_stages,
+    }
 
 
 def _case_evidence_by_ref(kernel: OrganizationKernel, case_id: str) -> dict[str, CaseEvidence]:
@@ -1925,6 +2144,7 @@ def _case_closure_drift_remediation_action_projection(
             )
             actions.append({
                 **readiness,
+                "runbook": _closure_drift_runbook_projection(disposition),
                 "action_id": stable_identifier(
                     "closure-drift-remediation-action",
                     {
@@ -2181,15 +2401,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
         else []
     )
     closure_drift_action_rows = [
-        {
-            "terminal_disposition": item.get("terminal_disposition", ""),
-            "action_kind": item.get("action_kind", ""),
-            "ready": item.get("ready", False),
-            "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
-            "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
-            "authority_refs": _text_list(item.get("authority_refs", [])),
-            "endpoint": item.get("endpoint", ""),
-        }
+        _closure_drift_action_table_row(item)
         for item in closure_drift_actions
         if isinstance(item, dict)
     ]
@@ -2237,7 +2449,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
     {_proof_explorer_table("Closure Drift Remediations", ("remediation_id", "terminal_disposition", "drift_evidence_refs", "evidence_refs", "created_at"), remediation_rows)}
-    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
   </main>
 </body>
 </html>
