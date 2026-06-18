@@ -276,6 +276,9 @@ jobs:
       - name: Test Universal State Engine schema contract
         run: python -m pytest tests/test_universal_state_engine_schema.py -q
 
+      - name: Test Universal Symbol kernel contract
+        run: python -m pytest tests/test_validate_universal_symbol_kernel.py -q
+
       - name: Test SNet mesh receipt contract
         run: python -m pytest tests/test_validate_snet_mesh_receipt.py -q
 

@@ -1643,6 +1643,12 @@
       "surface": "construct"
     },
     {
+      "schema_id": "universal-symbol",
+      "path": "schemas/universal_symbol.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",
