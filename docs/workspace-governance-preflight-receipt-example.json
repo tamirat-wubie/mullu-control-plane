@@ -1,5 +1,5 @@
 {
-  "check_count": 214,
+  "check_count": 215,
   "checks": [
     {
       "args": [
@@ -221,6 +221,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR OPERATOR APPROVAL REQUEST VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_operator_response_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_operator_response_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR OPERATOR RESPONSE WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
