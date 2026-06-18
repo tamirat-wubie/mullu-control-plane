@@ -42,6 +42,8 @@ from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
 from gateway.search_governance import SearchDecisionRequest, build_search_decision_receipt  # noqa: E402
 from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
+from gateway.worker_failure_receipt import build_worker_failure_receipt  # noqa: E402
+from gateway.worker_mesh import WorkerDispatchReceipt  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
@@ -469,6 +471,36 @@ def _create_completed_receipt_viewer_command(ledger, *, idempotency_key: str):
         response_evidence_closure=closure,
     )
     return command, certificate
+
+
+def _worker_failure_receipt_payload(command_id: str) -> dict:
+    worker_receipt = WorkerDispatchReceipt(
+        receipt_id=f"worker-receipt-{command_id}",
+        request_id=f"worker-request-{command_id}",
+        worker_id="operator-viewer-worker",
+        capability="repository.inspect_read_only",
+        tenant_id="t1",
+        lease_id=f"worker-lease-{command_id}",
+        operation="inspect",
+        command_id=command_id,
+        status="failed",
+        reason="worker_timeout",
+        input_hash="sha256:" + "1" * 64,
+        output_hash="sha256:" + "2" * 64,
+        evidence_refs=["worker:evidence:partial"],
+        verification_ref="verification:operator-viewer-worker",
+        recovery_ref="recovery:operator-review",
+        terminal_closure_required=True,
+        dispatched_at="2026-06-17T13:01:00+00:00",
+        receipt_hash="sha256:" + "3" * 64,
+        metadata={"receipt_is_not_terminal_closure": True},
+    )
+    return build_worker_failure_receipt(
+        worker_receipt,
+        attempted_units=5,
+        completed_units=2,
+        generated_at="2026-06-17T13:02:00+00:00",
+    ).to_dict()
 
 
 def _configure_fabric_env(
@@ -4051,6 +4083,80 @@ class TestGatewayStatus:
         assert search_receipt["evidence_refs"]["source_event_hash"]
         assert search_receipt["details"]["budget_state"] == "allowed"
         assert "search docs" not in json.dumps(data, sort_keys=True)
+
+    def test_operator_receipt_viewer_projects_worker_failure_drilldown(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-worker-failure-receipt",
+            idempotency_key="worker-failure-receipt",
+            intent="repository.inspect_read_only",
+            payload={"body": "worker failure raw body must stay hidden"},
+        )
+        failure_receipt = _worker_failure_receipt_payload(command.command_id)
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DENIED,
+            detail={
+                "cause": "worker_partial_completion",
+                "worker_failure_receipt": failure_receipt,
+                "worker_failure_receipt_id": failure_receipt["receipt_id"],
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=worker_failure_receipt"
+            "&receipt_status=partial_completion"
+        )
+        current_resp = client.get("/operator/current-task/read-model?tenant_id=t1")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        worker_failure = row["receipts"][0]
+        assert row["receipt_types"] == ["worker_failure_receipt"]
+        assert worker_failure["receipt_id"] == failure_receipt["receipt_id"]
+        assert worker_failure["receipt_hash"] == failure_receipt["failure_hash"]
+        assert worker_failure["status"] == "partial_completion"
+        assert worker_failure["details"]["worker_receipt_id"] == (
+            failure_receipt["worker_receipt_id"]
+        )
+        assert worker_failure["details"]["recovery_action"] == "safe_halt"
+        assert worker_failure["evidence_refs"]["source_receipt_hash"] == (
+            failure_receipt["source_receipt_hash"]
+        )
+        assert worker_failure["evidence_refs"]["source_event_hash"]
+
+        assert current_resp.status_code == 200
+        current_data = current_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(CURRENT_TASK_READ_MODEL_SCHEMA),
+            current_data,
+        ) == []
+        task = next(
+            item
+            for item in current_data["tasks"]
+            if item["command_id"] == command.command_id
+        )
+        assert task["worker_failure_receipt_id"] == failure_receipt["receipt_id"]
+        assert task["worker_failure_state"] == "partial_completion"
+        assert task["worker_failure_recovery_action"] == "safe_halt"
+        assert "worker failure raw body must stay hidden" not in json.dumps(
+            {"receipt": data, "current_task": current_data},
+            sort_keys=True,
+        )
 
     def test_operator_receipt_viewer_filters_type_status_task_and_search(
         self, gateway_app, client
