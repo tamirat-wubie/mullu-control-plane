@@ -128,6 +128,12 @@ execution authority, or retain raw message or slot text. Proposed slots are
 represented by names plus a hash.
 ```
 
+Public schema:
+
+```text
+schemas/llm_interpretation_proposal.schema.json
+```
+
 ## 4c. CapabilityPlanPreview contract
 
 ```text

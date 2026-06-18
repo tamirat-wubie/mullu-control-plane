@@ -28,6 +28,7 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 _INTERPRETED_REQUEST_SCHEMA = _ROOT / "schemas" / "interpreted_request.schema.json"
 _INTERPRETATION_RECEIPT_SCHEMA = _ROOT / "schemas" / "interpretation_receipt.schema.json"
 _CLARIFICATION_REQUEST_SCHEMA = _ROOT / "schemas" / "clarification_request.schema.json"
+_LLM_INTERPRETATION_PROPOSAL_SCHEMA = _ROOT / "schemas" / "llm_interpretation_proposal.schema.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -229,6 +230,10 @@ def test_llm_interpretation_proposal_is_accepted_only_as_proposal():
     assert proposal.action_authority_granted is False
     assert proposal.deterministic_override_allowed is False
     assert proposal.proposed_slot_names == ("action", "target")
+    assert _validate_schema_instance(
+        _load_schema(_LLM_INTERPRETATION_PROPOSAL_SCHEMA),
+        proposal_payload,
+    ) == []
     assert "secret-token-456" not in str(proposal_payload)
 
 
@@ -261,6 +266,10 @@ def test_llm_interpretation_proposal_rejects_authority_and_raw_text():
     assert "proposal_attempted_execution_authority" in proposal.rejected_reasons
     assert "proposal_attempted_action_authority" in proposal.rejected_reasons
     assert "proposal_attempted_deterministic_override" in proposal.rejected_reasons
+    assert _validate_schema_instance(
+        _load_schema(_LLM_INTERPRETATION_PROPOSAL_SCHEMA),
+        proposal.to_dict(),
+    ) == []
     assert "secret-token-789" not in str(proposal.to_dict())
 
 
