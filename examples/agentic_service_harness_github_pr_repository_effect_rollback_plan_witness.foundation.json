@@ -1,0 +1,94 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+  "witness_kind": "repository_effect_rollback_plan_witness",
+  "requested_evidence_ref": "evidence://repository-effect-rollback-plan",
+  "rollback_plan_status": "AwaitingEvidence",
+  "rollback_plan_collected": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "rollback_plan": {
+    "rollback_plan_request_id": "rollback-plan.github-pr-repository-effect",
+    "source_approval_request_id": "approval-request.github-pr-admission",
+    "source_response_record_ref": "evidence://operator-pr-approval-response-record",
+    "required_witness_kind": "repository_effect_rollback_plan",
+    "required_evidence_ref": "evidence://repository-effect-rollback-plan",
+    "uao_admission_witness_required": true,
+    "uao_admission_witness_satisfied": false,
+    "repository_effect_rollback_plan_required": true,
+    "repository_effect_rollback_plan_collected": false,
+    "repository_effect_rollback_plan_effect": "permits_pull_request_creation_request_only_after_ci_gate_and_effect_reconciliation",
+    "pr_creation_authorized_after_rollback_plan": false
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "ci_gate_before_ready_for_review",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://ci-gate-before-ready-for-review",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "effect_reconciliation",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "branch_created": false,
+    "pull_request_opened": false,
+    "repository_written": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "receipt_store_appended": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_repository_effect_rollback_plan_witness_schema": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
+    "github_pr_uao_admission_witness_schema": "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json",
+    "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
+    "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-repository-effect-rollback-plan-witness",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect repository-effect rollback-plan evidence before any CI gate or pull-request creation authority can be considered."
+}

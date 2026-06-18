@@ -83,6 +83,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-repository-effect-rollback-plan-witness",
+      "path": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-repository-effect-rollback-plan-witness:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",
