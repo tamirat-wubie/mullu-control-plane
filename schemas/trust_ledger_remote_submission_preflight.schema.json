@@ -22,6 +22,8 @@
     "ledger_path",
     "next_ledger_sequence",
     "previous_submission_hash",
+    "anchor_artifact_root_hash",
+    "anchor_artifact_count",
     "required_artifact_types",
     "expected_remote_submission_payload_hash",
     "expected_remote_idempotency_key",
@@ -60,6 +62,11 @@
       "type": "string",
       "pattern": "^([0-9a-f]{64})?$"
     },
+    "anchor_artifact_root_hash": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "anchor_artifact_count": {"type": "integer", "minimum": 0},
     "required_artifact_types": {"$ref": "#/$defs/required_artifact_types"},
     "expected_remote_submission_payload_hash": {
       "type": "string",
@@ -119,6 +126,12 @@
               {"contains": {"const": "verification_result"}},
               {"contains": {"const": "terminal_certificate"}}
             ]
+          },
+          "anchor_artifact_root_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "anchor_artifact_count": {
+            "minimum": 1
           }
         }
       }
