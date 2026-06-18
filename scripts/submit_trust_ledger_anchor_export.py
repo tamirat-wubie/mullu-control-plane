@@ -442,6 +442,7 @@ def _build_submission_receipt(
         "previous_submission_hash": previous_submission_hash,
         "package_hash": str(verification["package_hash"]),
         "anchor_receipt_hash": str(anchor_receipt["anchor_receipt_hash"]),
+        "required_artifact_types": [str(value) for value in anchor_receipt["required_artifact_types"]],
         "anchor_verification_reason": str(verification["reason"]),
         "submission_hash": ZERO_HASH,
         "signature_key_id": signature_key_id,
@@ -487,6 +488,7 @@ def _build_remote_submission_payload(
         "previous_submission_hash": previous_submission_hash,
         "package_hash": str(verification["package_hash"]),
         "anchor_receipt_hash": str(anchor_receipt["anchor_receipt_hash"]),
+        "required_artifact_types": [str(value) for value in anchor_receipt["required_artifact_types"]],
         "anchor_verification_reason": str(verification["reason"]),
     }
     return {**payload, "submission_payload_hash": _stable_hash(payload)}
@@ -692,6 +694,7 @@ def _verify_remote_preflight_receipt(
         ("ledger_path", preflight["ledger_path"], _path_label(ledger_path)),
         ("next_ledger_sequence", int(preflight["next_ledger_sequence"]), ledger_sequence),
         ("previous_submission_hash", preflight["previous_submission_hash"], previous_submission_hash),
+        ("required_artifact_types", preflight["required_artifact_types"], payload["required_artifact_types"]),
         ("expected_remote_submission_payload_hash", expected_hash, actual_hash),
         ("expected_remote_idempotency_key", preflight["expected_remote_idempotency_key"], actual_hash),
     )
@@ -966,6 +969,7 @@ def _remote_preflight_receipt_id(preflight: dict[str, Any]) -> str:
         "ledger_path": str(preflight["ledger_path"]),
         "next_ledger_sequence": int(preflight["next_ledger_sequence"]),
         "previous_submission_hash": str(preflight["previous_submission_hash"]),
+        "required_artifact_types": [str(value) for value in preflight["required_artifact_types"]],
         "expected_remote_submission_payload_hash": str(preflight["expected_remote_submission_payload_hash"]),
         "expected_remote_idempotency_key": str(preflight["expected_remote_idempotency_key"]),
         "steps": [
