@@ -8948,7 +8948,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry decision evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry admitted case-evidence decision refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
@@ -9060,6 +9060,7 @@
         "case_proof_timeline_reports_open_case_without_closure",
         "case_proof_timeline_reports_closure_certificate_and_learning",
         "learning_binding_requires_admission_evidence_refs",
+        "learning_binding_rejects_unadmitted_admission_evidence_refs",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
         "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -15206,8 +15207,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1929,
-    "runtime_witness_count": 1929,
+    "exact_test_anchor_count": 1930,
+    "runtime_witness_count": 1930,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21605,6 +21606,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_learning_binding_rejects_unadmitted_admission_evidence_refs"
+            ],
+            "witness": "learning_binding_rejects_unadmitted_admission_evidence_refs"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_orgos_kernel.py::test_learning_binding_requires_closed_case_and_admission_decision"
             ],
             "witness": "learning_binding_requires_closed_case_and_admission_decision"
@@ -21676,8 +21683,8 @@
             "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 72,
-        "runtime_witness_count": 72,
+        "exact_test_anchor_count": 73,
+        "runtime_witness_count": 73,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

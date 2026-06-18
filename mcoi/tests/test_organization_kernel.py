@@ -7,7 +7,7 @@ Invariants:
   - A pilot case has five accountable departments and an owned plan.
   - Plan steps do not pass without preconditions, evidence, authority, and approval.
   - Terminal closure requires matching reconciliation or explicit non-committed disposition.
-  - Learning admission binding requires an existing terminal closure.
+  - Learning admission binding requires an existing terminal closure and admitted case evidence.
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.organization_kernel import (
     DEFAULT_ORGANIZATION_DEPARTMENT_IDS,
+    LEARNING_ADMISSION_DECISION_REQUIREMENT,
     OrganizationKernel,
     bootstrap_minimum_organization,
     open_launch_gateway_pilot,
@@ -80,6 +81,7 @@ def _admit_all_pilot_evidence(kernel: OrganizationKernel, case_id: str) -> None:
         "security_public_claim_boundary",
         "security_approval",
         "finance_budget_check",
+        LEARNING_ADMISSION_DECISION_REQUIREMENT,
     ):
         kernel.admit_case_evidence(
             CaseEvidence(
@@ -315,7 +317,7 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
         closure_id="missing-closure",
         decision_id="learning.decision.gateway-pilot",
         admitted=True,
-        evidence_refs=("evidence:learning-admission-decision",),
+        evidence_refs=("evidence:learning_admission_decision",),
         created_at="2026-05-27T17:04:00+00:00",
     )
 
@@ -336,14 +338,14 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
             closure_id=closure.closure_id,
             decision_id="learning.decision.gateway-pilot",
             admitted=True,
-            evidence_refs=("evidence:learning-admission-decision",),
+            evidence_refs=("evidence:learning_admission_decision",),
             created_at="2026-05-27T17:04:00+00:00",
         )
     )
 
     assert admitted.admitted is True
     assert admitted.closure_id == closure.closure_id
-    assert admitted.evidence_refs == ("evidence:learning-admission-decision",)
+    assert admitted.evidence_refs == ("evidence:learning_admission_decision",)
     assert kernel.list_case_events(plan.case_id)[-1].event_type == "learning_admission_bound"
 
 
