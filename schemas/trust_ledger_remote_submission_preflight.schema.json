@@ -22,6 +22,7 @@
     "ledger_path",
     "next_ledger_sequence",
     "previous_submission_hash",
+    "required_artifact_types",
     "expected_remote_submission_payload_hash",
     "expected_remote_idempotency_key",
     "step_count",
@@ -59,6 +60,7 @@
       "type": "string",
       "pattern": "^([0-9a-f]{64})?$"
     },
+    "required_artifact_types": {"$ref": "#/$defs/required_artifact_types"},
     "expected_remote_submission_payload_hash": {
       "type": "string",
       "pattern": "^([0-9a-f]{64})?$"
@@ -101,7 +103,46 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"ready": {"const": true}},
+        "required": ["ready"]
+      },
+      "then": {
+        "properties": {
+          "required_artifact_types": {
+            "minItems": 4,
+            "allOf": [
+              {"contains": {"const": "command"}},
+              {"contains": {"const": "execution_receipt"}},
+              {"contains": {"const": "verification_result"}},
+              {"contains": {"const": "terminal_certificate"}}
+            ]
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
+    "required_artifact_types": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "string",
+        "enum": [
+          "command",
+          "approval",
+          "execution_receipt",
+          "provider_observation",
+          "verification_result",
+          "effect_reconciliation",
+          "terminal_certificate",
+          "learning_decision",
+          "deployment_witness"
+        ]
+      }
+    },
     "preflight_step": {
       "type": "object",
       "additionalProperties": false,

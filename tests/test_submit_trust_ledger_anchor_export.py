@@ -25,7 +25,12 @@ from scripts.preflight_trust_ledger_remote_submission import (
     preflight_trust_ledger_remote_submission,
     write_trust_ledger_remote_submission_preflight_report,
 )
-from scripts.submit_trust_ledger_anchor_export import main, submit_trust_ledger_anchor_export, verify_submission_ledger
+from scripts.submit_trust_ledger_anchor_export import (
+    _remote_preflight_receipt_id,
+    main,
+    submit_trust_ledger_anchor_export,
+    verify_submission_ledger,
+)
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
@@ -65,6 +70,8 @@ def test_submit_trust_ledger_anchor_export_records_signed_submission(tmp_path: P
     assert ledger_state["valid"] is True
     assert ledger_state["submission_count"] == 1
     assert ledger_state["latest_submission_id"] == report["submission_id"]
+    assert "provider_observation" in receipt["required_artifact_types"]
+    assert receipt["required_artifact_types"] == report["submission_receipt"]["required_artifact_types"]
     assert receipt["metadata"]["submission_is_not_terminal_closure"] is True
     assert receipt["metadata"]["requires_operator_confirmation"] is True
     assert _validate_schema_instance(_load_schema(SUBMISSION_SCHEMA_PATH), receipt) == []
@@ -336,6 +343,8 @@ def test_submit_trust_ledger_anchor_export_posts_remote_transparency_log(tmp_pat
         "trust-ledger-remote-submission-preflight-"
     )
     assert receipt["metadata"]["remote_submission_payload_hash"] == transport.payload["submission_payload_hash"]
+    assert "provider_observation" in transport.payload["required_artifact_types"]
+    assert transport.payload["required_artifact_types"] == receipt["required_artifact_types"]
     assert transport.timeout == 3.0
     assert transport.request.get_header("Authorization") == "Bearer remote-token"
     assert verify_submission_ledger(ledger_path=ledger_path, signing_secret="submission-secret")["valid"] is True
@@ -709,6 +718,46 @@ def test_submit_trust_ledger_anchor_export_blocks_remote_preflight_checked_at_dr
     assert report["reason"] == "remote_preflight_receipt_failed:receipt_id_mismatch"
     assert report["remote_preflight"]["receipt_id"] == preflight_payload["receipt_id"]
     assert report["remote_preflight"]["canonical_receipt_id"] != preflight_payload["receipt_id"]
+    assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
+    assert transport.request is None
+    assert report["submission_receipt"] == {}
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_blocks_remote_required_artifact_drift(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = _write_remote_preflight(tmp_path=tmp_path, export_paths=export_paths, ledger_path=ledger_path)
+    preflight_payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    preflight_payload["required_artifact_types"] = [
+        value for value in preflight_payload["required_artifact_types"] if value != "provider_observation"
+    ]
+    preflight_payload["receipt_id"] = _remote_preflight_receipt_id(preflight_payload)
+    preflight_path.write_text(json.dumps(preflight_payload), encoding="utf-8")
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_preflight_receipt_failed:required_artifact_types_mismatch"
     assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
     assert transport.request is None
     assert report["submission_receipt"] == {}
@@ -1091,6 +1140,12 @@ def _artifacts() -> tuple[TrustLedgerEvidenceArtifact, ...]:
             artifact_id="execution-1",
             artifact_hash=_hash("execution-1"),
             evidence_ref="proof://execution-1",
+        ),
+        TrustLedgerEvidenceArtifact(
+            artifact_type="provider_observation",
+            artifact_id="provider-observation-1",
+            artifact_hash=_hash("provider-observation-1"),
+            evidence_ref="proof://provider-observation-1",
         ),
         TrustLedgerEvidenceArtifact(
             artifact_type="verification_result",

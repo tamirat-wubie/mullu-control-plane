@@ -24,6 +24,7 @@
     "previous_submission_hash",
     "package_hash",
     "anchor_receipt_hash",
+    "required_artifact_types",
     "anchor_verification_reason",
     "submission_hash",
     "signature_key_id",
@@ -53,6 +54,7 @@
     "previous_submission_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "package_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "anchor_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "required_artifact_types": {"$ref": "#/$defs/required_artifact_types"},
     "anchor_verification_reason": {"type": "string", "const": "anchor_verified"},
     "submission_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "signature_key_id": {"type": "string", "minLength": 1},
@@ -65,6 +67,40 @@
         "submission_is_not_terminal_closure": {"type": "boolean", "const": true},
         "requires_operator_confirmation": {"type": "boolean", "const": true},
         "source_package_created_at": {"type": "string"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "required_artifact_types": {
+          "allOf": [
+            {"contains": {"const": "command"}},
+            {"contains": {"const": "execution_receipt"}},
+            {"contains": {"const": "verification_result"}},
+            {"contains": {"const": "terminal_certificate"}}
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "required_artifact_types": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "string",
+        "enum": [
+          "command",
+          "approval",
+          "execution_receipt",
+          "provider_observation",
+          "verification_result",
+          "effect_reconciliation",
+          "terminal_certificate",
+          "learning_decision",
+          "deployment_witness"
+        ]
       }
     }
   }
