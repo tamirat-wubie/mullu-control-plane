@@ -112,8 +112,8 @@
     "define_tenant_scope_witness",
     "collect_live_operator_identity_evidence",
     "collect_live_operator_approval_decision_evidence",
-    "define_operator_approval_reapproval_window",
-    "define_operator_approval_revocation_path"
+    "collect_live_operator_reapproval_expiry_evidence",
+    "collect_live_operator_revocation_evidence"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
@@ -122,6 +122,10 @@
     "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
     "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
     "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
@@ -144,6 +148,8 @@
     "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
     "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
@@ -155,6 +161,6 @@
     "approval_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 32
+    "evidence_ref_count": 38
   }
 }

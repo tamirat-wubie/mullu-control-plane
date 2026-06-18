@@ -778,6 +778,121 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            [
+                "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store operator reapproval expiry witness defines approval decision ref, issued-at bound, expires-at bound, reapproval window, staleness policy, operator identity witness, revocation check, and audit receipt requirements while denying reapproval expiry binding, approval decision recording, approval recording, writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_operator_reapproval_expiry_witness_validates",
+                "operator_reapproval_expiry_witness_rejects_temporal_authority_drift",
+                "operator_reapproval_expiry_witness_rejects_missing_requirement",
+                "operator_reapproval_expiry_witness_rejects_missing_delta_reject",
+                "operator_reapproval_expiry_witness_rejects_constraint_drift",
+                "operator_reapproval_expiry_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_operator_reapproval_expiry_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_operator_reapproval_expiry_witness_validates"
+                ],
+                "operator_reapproval_expiry_witness_rejects_temporal_authority_drift": [
+                    "operator_reapproval_expiry_witness_rejects_temporal_authority_drift"
+                ],
+                "operator_reapproval_expiry_witness_rejects_missing_requirement": [
+                    "operator_reapproval_expiry_witness_rejects_missing_requirement"
+                ],
+                "operator_reapproval_expiry_witness_rejects_missing_delta_reject": [
+                    "operator_reapproval_expiry_witness_rejects_missing_delta_reject"
+                ],
+                "operator_reapproval_expiry_witness_rejects_constraint_drift": [
+                    "operator_reapproval_expiry_witness_rejects_constraint_drift"
+                ],
+                "operator_reapproval_expiry_witness_rejects_evidence_ref_count_drift": [
+                    "operator_reapproval_expiry_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_operator_revocation_witness",
+            [
+                "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_operator_revocation_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store operator revocation witness defines operator identity witness, approval decision ref, revocation state, revocation scope, revocation reason, effective-at bound, propagation receipt, and audit receipt requirements while denying revocation binding, approval decision recording, approval recording, writer identity registration, writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_operator_revocation_witness_validates",
+                "operator_revocation_witness_rejects_revocation_authority_drift",
+                "operator_revocation_witness_rejects_missing_requirement",
+                "operator_revocation_witness_rejects_missing_delta_reject",
+                "operator_revocation_witness_rejects_constraint_drift",
+                "operator_revocation_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_operator_revocation_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_operator_revocation_witness_validates"
+                ],
+                "operator_revocation_witness_rejects_revocation_authority_drift": [
+                    "operator_revocation_witness_rejects_revocation_authority_drift"
+                ],
+                "operator_revocation_witness_rejects_missing_requirement": [
+                    "operator_revocation_witness_rejects_missing_requirement"
+                ],
+                "operator_revocation_witness_rejects_missing_delta_reject": [
+                    "operator_revocation_witness_rejects_missing_delta_reject"
+                ],
+                "operator_revocation_witness_rejects_constraint_drift": [
+                    "operator_revocation_witness_rejects_constraint_drift"
+                ],
+                "operator_revocation_witness_rejects_evidence_ref_count_drift": [
+                    "operator_revocation_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_reapproval_revocation_witness",
             [
                 "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
@@ -837,61 +952,173 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
-            "universal_symbol_receipt_store_reapproval_revocation_witness",
+            "universal_symbol_receipt_store_lifecycle_evidence_receipt",
             [
-                "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
-                "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
-                "validate_universal_symbol_receipt_store_reapproval_revocation_witness",
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+                "validate_universal_symbol_receipt_store_lifecycle_evidence_receipt",
             ],
             "request_proof",
             "action_proof",
             "audit_chain",
             "witnessed",
             [
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
                 "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
                 "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
                 "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
-                "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
-                "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
-                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
-                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/temporal_reapproval_receipt.schema.json",
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
-                "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py",
-                "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store lifecycle evidence receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence requirements while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates",
+                "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift",
+                "lifecycle_evidence_receipt_rejects_missing_live_evidence_kind",
+                "lifecycle_evidence_receipt_rejects_missing_delta_reject",
+                "lifecycle_evidence_receipt_rejects_consistency_drift",
+                "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates": [
+                    "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates"
+                ],
+                "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift": [
+                    "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift"
+                ],
+                "lifecycle_evidence_receipt_rejects_missing_live_evidence_kind": [
+                    "lifecycle_evidence_receipt_rejects_missing_live_evidence_kind"
+                ],
+                "lifecycle_evidence_receipt_rejects_missing_delta_reject": [
+                    "lifecycle_evidence_receipt_rejects_missing_delta_reject"
+                ],
+                "lifecycle_evidence_receipt_rejects_consistency_drift": [
+                    "lifecycle_evidence_receipt_rejects_consistency_drift"
+                ],
+                "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift": [
+                    "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_lifecycle_audit_receipt",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+                "validate_universal_symbol_receipt_store_lifecycle_audit_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+                "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
                 "tests/test_proof_coverage_matrix.py",
             ],
-            "UniversalSymbol receipt-store reapproval revocation witness defines approval decision binding, active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision path, and lifecycle audit receipt requirements while denying reapproval recording, revocation recording, approval decision recording, approval recording, write-path registration, receipt append, replacement decision recording, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            "UniversalSymbol receipt-store lifecycle audit receipt defines source lifecycle witness, approval decision witness, active grant ref, lifecycle event kind, before/after authority envelope, Delta_reject ledger, redaction/digest binding, and auditor identity requirements while denying lifecycle audit recording, reapproval recording, revocation recording, receipt append, replacement decision recording, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, terminal closure, and production readiness.",
             [
-                "foundation_universal_symbol_receipt_store_reapproval_revocation_witness_validates",
-                "reapproval_revocation_witness_rejects_lifecycle_authority_drift",
-                "reapproval_revocation_witness_rejects_missing_requirement",
-                "reapproval_revocation_witness_rejects_missing_delta_reject",
-                "reapproval_revocation_witness_rejects_constraint_drift",
-                "reapproval_revocation_witness_rejects_evidence_ref_count_drift",
+                "foundation_universal_symbol_receipt_store_lifecycle_audit_receipt_validates",
+                "lifecycle_audit_receipt_rejects_lifecycle_authority_drift",
+                "lifecycle_audit_receipt_rejects_missing_requirement",
+                "lifecycle_audit_receipt_rejects_missing_delta_reject",
+                "lifecycle_audit_receipt_rejects_constraint_drift",
+                "lifecycle_audit_receipt_rejects_evidence_ref_count_drift",
             ],
             runtime_witness_anchor_aliases={
-                "foundation_universal_symbol_receipt_store_reapproval_revocation_witness_validates": [
-                    "foundation_universal_symbol_receipt_store_reapproval_revocation_witness_validates"
+                "foundation_universal_symbol_receipt_store_lifecycle_audit_receipt_validates": [
+                    "foundation_universal_symbol_receipt_store_lifecycle_audit_receipt_validates"
                 ],
-                "reapproval_revocation_witness_rejects_lifecycle_authority_drift": [
-                    "reapproval_revocation_witness_rejects_lifecycle_authority_drift"
+                "lifecycle_audit_receipt_rejects_lifecycle_authority_drift": [
+                    "lifecycle_audit_receipt_rejects_lifecycle_authority_drift"
                 ],
-                "reapproval_revocation_witness_rejects_missing_requirement": [
-                    "reapproval_revocation_witness_rejects_missing_requirement"
+                "lifecycle_audit_receipt_rejects_missing_requirement": [
+                    "lifecycle_audit_receipt_rejects_missing_requirement"
                 ],
-                "reapproval_revocation_witness_rejects_missing_delta_reject": [
-                    "reapproval_revocation_witness_rejects_missing_delta_reject"
+                "lifecycle_audit_receipt_rejects_missing_delta_reject": [
+                    "lifecycle_audit_receipt_rejects_missing_delta_reject"
                 ],
-                "reapproval_revocation_witness_rejects_constraint_drift": [
-                    "reapproval_revocation_witness_rejects_constraint_drift"
+                "lifecycle_audit_receipt_rejects_constraint_drift": [
+                    "lifecycle_audit_receipt_rejects_constraint_drift"
                 ],
-                "reapproval_revocation_witness_rejects_evidence_ref_count_drift": [
-                    "reapproval_revocation_witness_rejects_evidence_ref_count_drift"
+                "lifecycle_audit_receipt_rejects_evidence_ref_count_drift": [
+                    "lifecycle_audit_receipt_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_replacement_decision_receipt",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+                "validate_universal_symbol_receipt_store_replacement_decision_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+                "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store replacement decision receipt defines superseded approval decision, replacement approval decision, replacement reason, scope equivalence, tenant continuity, revocation link, lifecycle audit link, and Delta_reject ledger requirements while denying replacement decision recording, approval decision recording, revocation recording, lifecycle audit recording, receipt append, write-path registration, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, terminal closure, and production readiness.",
+            [
+                "foundation_universal_symbol_receipt_store_replacement_decision_receipt_validates",
+                "replacement_decision_receipt_rejects_decision_authority_drift",
+                "replacement_decision_receipt_rejects_missing_requirement",
+                "replacement_decision_receipt_rejects_missing_delta_reject",
+                "replacement_decision_receipt_rejects_constraint_drift",
+                "replacement_decision_receipt_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_replacement_decision_receipt_validates": [
+                    "foundation_universal_symbol_receipt_store_replacement_decision_receipt_validates"
+                ],
+                "replacement_decision_receipt_rejects_decision_authority_drift": [
+                    "replacement_decision_receipt_rejects_decision_authority_drift"
+                ],
+                "replacement_decision_receipt_rejects_missing_requirement": [
+                    "replacement_decision_receipt_rejects_missing_requirement"
+                ],
+                "replacement_decision_receipt_rejects_missing_delta_reject": [
+                    "replacement_decision_receipt_rejects_missing_delta_reject"
+                ],
+                "replacement_decision_receipt_rejects_constraint_drift": [
+                    "replacement_decision_receipt_rejects_constraint_drift"
+                ],
+                "replacement_decision_receipt_rejects_evidence_ref_count_drift": [
+                    "replacement_decision_receipt_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -12508,8 +12735,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            "surfaces": ["universal_symbol_receipt_store_operator_reapproval_expiry_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_operator_revocation_witness",
+            "surfaces": ["universal_symbol_receipt_store_operator_revocation_witness"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_receipt_store_reapproval_revocation_witness",
             "surfaces": ["universal_symbol_receipt_store_reapproval_revocation_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_receipt",
+            "surfaces": ["universal_symbol_receipt_store_lifecycle_evidence_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_lifecycle_audit_receipt",
+            "surfaces": ["universal_symbol_receipt_store_lifecycle_audit_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_replacement_decision_receipt",
+            "surfaces": ["universal_symbol_receipt_store_replacement_decision_receipt"],
             "status": "closed",
         },
         {

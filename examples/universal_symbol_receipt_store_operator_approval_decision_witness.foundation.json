@@ -113,13 +113,17 @@
     "collect_live_operator_identity_evidence",
     "collect_explicit_approval_decision_value",
     "bind_approval_scope_and_tenant_scope",
-    "define_approval_decision_revocation_receipt"
+    "bind_reapproval_expiry_and_revocation_witnesses"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
     "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
     "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
     "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
@@ -129,6 +133,8 @@
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py"
@@ -139,6 +145,6 @@
     "decision_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 16
+    "evidence_ref_count": 22
   }
 }

@@ -135,7 +135,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_operator_approval_witness",
         "universal_symbol_receipt_store_operator_identity_witness",
         "universal_symbol_receipt_store_operator_approval_decision_witness",
+        "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+        "universal_symbol_receipt_store_operator_revocation_witness",
+        "universal_symbol_receipt_store_replacement_decision_receipt",
         "universal_symbol_receipt_store_reapproval_revocation_witness",
+        "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+        "universal_symbol_receipt_store_lifecycle_audit_receipt",
         "universal_symbol_receipt_store_tenant_scope_witness",
         "universal_symbol_receipt_store_writer_duty_scope_witness",
         "universal_symbol_receipt_store_path_confinement_witness",
@@ -566,10 +571,30 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_receipt_store_operator_approval_decision_witness",
+        "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+        "universal_symbol_receipt_store_operator_revocation_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_operator_revocation_witness",
+        "universal_symbol_receipt_store_replacement_decision_receipt",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_receipt",
         "universal_symbol_receipt_store_reapproval_revocation_witness",
     )
     assert_ordered(
         "universal_symbol_receipt_store_reapproval_revocation_witness",
+        "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+        "universal_symbol_receipt_store_lifecycle_audit_receipt",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_receipt",
         "universal_symbol_receipt_store_tenant_scope_witness",
     )
     assert_ordered(

@@ -910,8 +910,31 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_revocation_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_replacement_decision_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_reapproval_revocation_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_audit_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py"),
         ),
         CheckCommand(
             "universal_symbol_receipt_store_tenant_scope_witness",

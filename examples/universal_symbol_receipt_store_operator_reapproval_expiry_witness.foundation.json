@@ -1,0 +1,145 @@
+{
+  "witness_id": "universal-symbol-receipt-store-operator-reapproval-expiry-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-operator-reapproval-expiry",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "reapproval_expiry_decision": "blocked_pending_live_reapproval_window_expiry_and_audit_evidence",
+  "reapproval_expiry_witness_is_not_temporal_authority": true,
+  "temporal_requirements": [
+    {
+      "requirement_id": "requirement://approval-decision-ref",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval://universal-symbol/receipt-store/decision-ref",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-approval-decision-ref-missing"
+    },
+    {
+      "requirement_id": "requirement://issued-at",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/receipt-store/approval-issued-at",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-issued-at-missing"
+    },
+    {
+      "requirement_id": "requirement://expires-at",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/receipt-store/approval-expires-at",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-expires-at-missing"
+    },
+    {
+      "requirement_id": "requirement://reapproval-window",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/receipt-store/reapproval-window",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-window-missing"
+    },
+    {
+      "requirement_id": "requirement://staleness-policy",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://universal-symbol/receipt-store/approval-staleness",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-staleness-policy-missing"
+    },
+    {
+      "requirement_id": "requirement://operator-identity-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "identity://universal-symbol/operator/receipt-store-approval",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-operator-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-check",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revoke://universal-symbol/receipt-store/approval-revocation-check",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-revocation-check-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/reapproval-expiry-audit",
+      "current_decision": "reapproval_expiry_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/reapproval-expiry-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_reapproval_expiry_bound": false,
+    "receipt_store_approval_decision_recorded": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_writer_identity_registered": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "temporal_constraints": {
+    "approval_decision_ref_required": true,
+    "issued_at_required": true,
+    "expires_at_required": true,
+    "reapproval_window_required": true,
+    "staleness_policy_required": true,
+    "operator_identity_witness_required": true,
+    "revocation_check_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_approval_decision_blocks_reapproval": true,
+    "missing_expiry_blocks_reapproval": true,
+    "expired_decision_blocks_approval": true,
+    "missing_reapproval_window_blocks_approval": true,
+    "unknown_hard_constraint_blocks_reapproval": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "approval_decision_ref_missing",
+    "issued_at_missing",
+    "expires_at_missing",
+    "reapproval_window_missing",
+    "staleness_policy_missing",
+    "operator_identity_witness_missing",
+    "revocation_check_missing",
+    "audit_receipt_missing",
+    "receipt_store_reapproval_binding_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_approval_decision_temporal_bounds",
+    "define_reapproval_window_receipt",
+    "collect_revocation_check_evidence",
+    "bind_reapproval_audit_receipt"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "temporal_requirement_count": 8,
+    "authority_denial_count": 13,
+    "temporal_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 16
+  }
+}

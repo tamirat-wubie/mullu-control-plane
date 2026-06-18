@@ -1,69 +1,16 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:mullusi:schema:workspace-governance-preflight-receipt:1",
-  "title": "Workspace Governance Preflight Receipt",
-  "description": "Machine-readable receipt for one repository-local workspace governance preflight run.",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "receipt_id",
-    "terminal_closure_required",
-    "receipt_is_not_terminal_closure",
-    "status",
-    "generated_at_epoch",
-    "check_count",
-    "checks"
-  ],
-  "properties": {
-    "receipt_id": {
-      "type": "string",
-      "const": "workspace_governance_preflight_receipt"
-    },
-    "terminal_closure_required": {
-      "type": "boolean",
-      "const": true
-    },
-    "receipt_is_not_terminal_closure": {
-      "type": "boolean",
-      "const": true
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "passed",
-        "failed"
-      ]
-    },
-    "generated_at_epoch": {
-      "type": "number",
-      "exclusiveMinimum": 0
-    },
-    "check_count": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "checks": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/check_result"
-      }
-    }
-  },
   "$defs": {
     "check_result": {
-      "type": "object",
       "additionalProperties": false,
-      "required": [
-        "name",
-        "args",
-        "return_code",
-        "passed",
-        "stdout",
-        "stderr"
-      ],
       "properties": {
+        "args": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
         "name": {
-          "type": "string",
           "enum": [
             "local_assurance_plan",
             "agents_policy",
@@ -234,7 +181,12 @@
             "universal_symbol_receipt_store_operator_approval_witness",
             "universal_symbol_receipt_store_operator_identity_witness",
             "universal_symbol_receipt_store_operator_approval_decision_witness",
+            "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            "universal_symbol_receipt_store_operator_revocation_witness",
+            "universal_symbol_receipt_store_replacement_decision_receipt",
             "universal_symbol_receipt_store_reapproval_revocation_witness",
+            "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+            "universal_symbol_receipt_store_lifecycle_audit_receipt",
             "universal_symbol_receipt_store_tenant_scope_witness",
             "universal_symbol_receipt_store_writer_duty_scope_witness",
             "universal_symbol_receipt_store_path_confinement_witness",
@@ -299,43 +251,96 @@
             "sdlc_release_readiness_validation",
             "sdlc_security_review_validation",
             "sdlc_pr_enforcement_validation"
-          ]
-        },
-        "args": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "return_code": {
-          "type": "integer"
+          ],
+          "type": "string"
         },
         "passed": {
           "type": "boolean"
         },
-        "stdout": {
-          "type": "string"
+        "return_code": {
+          "type": "integer"
         },
         "stderr": {
           "type": "string"
         },
+        "stdout": {
+          "type": "string"
+        },
         "termination_reason": {
-          "type": "string",
           "enum": [
             "completed",
             "timeout",
             "terminated"
-          ]
+          ],
+          "type": "string"
         },
         "termination_signal": {
+          "minimum": 1,
           "type": [
             "integer",
             "null"
-          ],
-          "minimum": 1
+          ]
         }
-      }
+      },
+      "required": [
+        "name",
+        "args",
+        "return_code",
+        "passed",
+        "stdout",
+        "stderr"
+      ],
+      "type": "object"
     }
-  }
+  },
+  "$id": "urn:mullusi:schema:workspace-governance-preflight-receipt:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Machine-readable receipt for one repository-local workspace governance preflight run.",
+  "properties": {
+    "check_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/check_result"
+      },
+      "type": "array"
+    },
+    "generated_at_epoch": {
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "receipt_id": {
+      "const": "workspace_governance_preflight_receipt",
+      "type": "string"
+    },
+    "receipt_is_not_terminal_closure": {
+      "const": true,
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ],
+      "type": "string"
+    },
+    "terminal_closure_required": {
+      "const": true,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "terminal_closure_required",
+    "receipt_is_not_terminal_closure",
+    "status",
+    "generated_at_epoch",
+    "check_count",
+    "checks"
+  ],
+  "title": "Workspace Governance Preflight Receipt",
+  "type": "object"
 }
