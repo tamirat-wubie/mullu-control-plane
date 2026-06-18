@@ -1,0 +1,76 @@
+{
+  "requirement_id": "REQ-repository-connection-read-model-20260618",
+  "request_id": "continue-agentic-service-harness-repository-connection-read-model",
+  "problem_statement": "The Agentic Service Harness readiness map classifies RepositoryConnection as partial because the read model does not yet carry durable provider repository identity, installation state, effective permission scopes, revocation evidence, and verification timestamp needed before any user-facing harness or adapter path can depend on it.",
+  "success_criteria": [
+    "RepositoryConnection source contract and read model require provider repository refs, repository owner/name, installation ref and state, effective read permission scopes, revocation state/evidence, last verification timestamp, credential binding ref, false secret serialization, and false write authority",
+    "Projection from harness contract fixtures to read models preserves the durable repository connection fields without hand-authored drift",
+    "Validators reject missing repository refs, invalid installation or revocation state, serialized secret values, enabled write authority, and write-like effective permission scopes",
+    "Default examples remain Foundation Mode, read-only, non-mutating, and free of dashboard, mutation endpoint, external adapter, branch creation, pull-request creation, deployment, DNS, secret, or destructive authority",
+    "Focused contract, read-model, projection, persistence, integrity, schema, and SDLC validators pass"
+  ],
+  "non_goals": [
+    "no dashboard creation",
+    "no mutation endpoint",
+    "no external coding adapter integration",
+    "no branch write execution",
+    "no pull-request creation execution",
+    "no merge authority",
+    "no deployment authority",
+    "no DNS mutation",
+    "no secret mutation",
+    "no raw credential serialization"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "RepositoryConnection is read-model and contract hardening only",
+    "Effective permission scopes remain read-only even for approval-gated branch-write and open-PR planning scenarios",
+    "Credential bindings remain reference-only",
+    "Revocation status is evidence-linked and does not authorize provider mutation",
+    "Write authority remains false in schemas, examples, projection, validators, and tests",
+    "Mfidel atomicity remains preserved because no fidel processing is introduced"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/agentic_service_harness.schema.json",
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "examples/agentic_service_harness.read_only.json",
+    "examples/agentic_service_harness.dry_run.json",
+    "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+    "examples/agentic_service_harness.open_pr_awaiting_approval.json",
+    "examples/agentic_service_harness.blocked_high_risk.json",
+    "examples/agentic_service_harness_read_models.foundation.json",
+    "scripts/validate_agentic_service_harness_contract.py",
+    "scripts/validate_agentic_service_harness_read_models.py",
+    "scripts/validate_agentic_service_harness_read_model_projections.py",
+    "tests/test_gateway/test_agentic_service_harness_contract.py",
+    "tests/test_validate_agentic_service_harness_read_models.py",
+    "tests/test_validate_agentic_service_harness_read_model_projections.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_agentic_service_harness_contract.py --strict",
+    "python scripts/validate_agentic_service_harness_read_models.py --strict",
+    "python scripts/validate_agentic_service_harness_read_model_projections.py --strict",
+    "python scripts/validate_agentic_service_harness_read_model_persistence.py --json",
+    "python scripts/validate_agentic_service_harness_read_model_integrity.py --strict",
+    "python scripts/validate_schemas.py --strict",
+    "python -m pytest tests/test_gateway/test_agentic_service_harness_contract.py tests/test_validate_agentic_service_harness_read_models.py tests/test_validate_agentic_service_harness_read_model_projections.py tests/test_validate_agentic_service_harness_read_model_persistence.py tests/test_validate_agentic_service_harness_read_model_integrity.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_repository_connection_read_model_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "examples/sdlc/design_repository_connection_read_model_20260618.json",
+    "examples/sdlc/security_review_repository_connection_read_model_20260618.json",
+    "schemas/agentic_service_harness.schema.json",
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "scripts/validate_agentic_service_harness_contract.py",
+    "scripts/validate_agentic_service_harness_read_models.py",
+    "scripts/validate_agentic_service_harness_read_model_projections.py",
+    "tests/test_gateway/test_agentic_service_harness_contract.py",
+    "tests/test_validate_agentic_service_harness_read_models.py",
+    "tests/test_validate_agentic_service_harness_read_model_projections.py"
+  ],
+  "uao_ref": "uao://sdlc/repository-connection-read-model/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/repository-connection-read-model/requirement",
+  "receipt_ref": "receipt://sdlc/repository-connection-read-model/requirement"
+}

@@ -191,10 +191,19 @@ def project_contract_to_read_model(
                 "connection_id": repository["connection_id"],
                 "project_id": repository["project_id"],
                 "provider": repository["provider"],
+                "provider_repository_ref": repository["provider_repository_ref"],
+                "repository_owner": repository["repository_owner"],
+                "repository_name": repository["repository_name"],
                 "repository_slug": repository["repository_slug"],
                 "default_branch": repository["default_branch"],
+                "installation_ref": repository["installation_ref"],
+                "installation_state": repository["installation_state"],
                 "permission_scope": repository["permission_scope"],
+                "permission_scopes": list(repository["permission_scopes"]),
                 "credential_binding_ref": repository["credential_binding_ref"],
+                "revocation_state": repository["revocation_state"],
+                "revocation_evidence_ref": repository["revocation_evidence_ref"],
+                "last_verified_at": repository["last_verified_at"],
                 "secret_values_serialized": False,
                 "write_authority_enabled": False,
                 "read_only": True,
@@ -457,7 +466,13 @@ def _project_durable_entity_bindings(contract_ref: str) -> dict[str, Any]:
                 collection_ref="read-model://repositories",
                 primary_key="connection_id",
                 tenant_key="project_id",
-                owner_ref_fields=("project_id", "credential_binding_ref"),
+                owner_ref_fields=(
+                    "project_id",
+                    "provider_repository_ref",
+                    "installation_ref",
+                    "credential_binding_ref",
+                    "revocation_evidence_ref",
+                ),
                 identity_source_ref=(
                     "schemas/agentic_service_harness.schema.json#/$defs/repository_connection"
                 ),
@@ -586,6 +601,7 @@ def _validate_source_projection_boundary(
     for repository in _objects(contract.get("repository_connections")):
         if repository.get("write_authority_enabled") is not False:
             errors.append(f"{label}: source repository write authority must remain false")
+        _validate_repository_connection_fields(repository, errors, label)
     for adapter in _objects(contract.get("agent_adapters")):
         if adapter.get("external_adapter_integrated") is not False:
             errors.append(f"{label}: source adapter integration must remain false")
@@ -595,6 +611,45 @@ def _validate_source_projection_boundary(
     for path, value in _walk_strings(contract):
         if MUTATION_ROUTE_PATTERN.search(value):
             errors.append(f"{label}: source mutation route string at {path}")
+
+
+def _validate_repository_connection_fields(
+    repository: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    connection_id = repository.get("connection_id")
+    repository_label = f"{label}: source repository {connection_id}"
+    if repository.get("provider") != "github":
+        errors.append(f"{repository_label} provider must be github")
+    for ref_name in (
+        "provider_repository_ref",
+        "installation_ref",
+        "credential_binding_ref",
+        "revocation_evidence_ref",
+    ):
+        if not isinstance(repository.get(ref_name), str) or not repository.get(ref_name):
+            errors.append(f"{repository_label} {ref_name} must be a non-empty ref")
+    if repository.get("installation_state") not in {
+        "presence_only",
+        "active",
+        "revoked",
+        "requires_reauth",
+    }:
+        errors.append(f"{repository_label} installation_state is invalid")
+    if repository.get("revocation_state") not in {
+        "not_revoked",
+        "revoked",
+        "pending_revalidation",
+    }:
+        errors.append(f"{repository_label} revocation_state is invalid")
+    if repository.get("secret_values_serialized") is not False:
+        errors.append(f"{repository_label} secret_values_serialized must remain false")
+    permission_scopes = repository.get("permission_scopes")
+    if not isinstance(permission_scopes, list) or not permission_scopes:
+        errors.append(f"{repository_label} permission_scopes must be a non-empty list")
+    elif any(str(scope).endswith("_write") for scope in permission_scopes):
+        errors.append(f"{repository_label} permission_scopes must not include write scopes")
 
 
 def _validate_projection_matches_source(

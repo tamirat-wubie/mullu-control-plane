@@ -202,6 +202,7 @@ def _validate_read_model_semantics(
     _validate_collection_presence(example, errors, label)
     _validate_projection_scope(example, errors, label)
     _validate_reference_integrity(example, errors, label)
+    _validate_repository_connections(example, errors, label)
     _validate_workspace_allocations(example, errors, label)
     _validate_durable_entity_bindings(example, errors, label)
     _validate_complete_high_risk_actions(example, errors, label)
@@ -312,6 +313,54 @@ def _validate_reference_integrity(
         )
     if len(allocation_ids) != len(_objects(example.get("workspace_allocations"))):
         errors.append(f"{label}: workspace allocations require unique allocation_id values")
+
+
+def _validate_repository_connections(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    repositories = example.get("repositories")
+    if not isinstance(repositories, list) or not repositories:
+        errors.append(f"{label}: repositories must be a non-empty list")
+        return
+    for repository in _objects(repositories):
+        connection_id = repository.get("connection_id")
+        repository_label = f"{label}: repository {connection_id}"
+        if repository.get("provider") != "github":
+            errors.append(f"{repository_label} provider must be github")
+        for ref_name in (
+            "provider_repository_ref",
+            "installation_ref",
+            "credential_binding_ref",
+            "revocation_evidence_ref",
+        ):
+            if not isinstance(repository.get(ref_name), str) or not repository.get(ref_name):
+                errors.append(f"{repository_label} {ref_name} must be a non-empty ref")
+        if repository.get("installation_state") not in {
+            "presence_only",
+            "active",
+            "revoked",
+            "requires_reauth",
+        }:
+            errors.append(f"{repository_label} installation_state is invalid")
+        if repository.get("revocation_state") not in {
+            "not_revoked",
+            "revoked",
+            "pending_revalidation",
+        }:
+            errors.append(f"{repository_label} revocation_state is invalid")
+        if repository.get("secret_values_serialized") is not False:
+            errors.append(f"{repository_label} secret_values_serialized must remain false")
+        if repository.get("write_authority_enabled") is not False:
+            errors.append(f"{repository_label} write_authority_enabled must remain false")
+        if repository.get("read_only") is not True:
+            errors.append(f"{repository_label} read_only must be true")
+        permission_scopes = repository.get("permission_scopes")
+        if not isinstance(permission_scopes, list) or not permission_scopes:
+            errors.append(f"{repository_label} permission_scopes must be a non-empty list")
+        elif any(str(scope).endswith("_write") for scope in permission_scopes):
+            errors.append(f"{repository_label} permission_scopes must not include write scopes")
 
 
 def _validate_workspace_allocations(

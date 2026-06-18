@@ -199,6 +199,7 @@ def _validate_contract_semantics(
     scenario = str(contract.get("scenario", "<missing>"))
     _validate_denial_flags(contract, errors, label)
     _validate_permission_model(contract, errors, label)
+    _validate_repository_connections(contract, errors, label)
     _validate_non_goals(contract, errors, label)
     _validate_approval_gates(contract, errors, label)
     _validate_blocked_high_risk_scenario(contract, errors, label, scenario)
@@ -248,6 +249,52 @@ def _validate_permission_model(
     for flag_name in HIGH_RISK_PERMISSION_FLAGS:
         if permission_model.get(flag_name) is not False:
             errors.append(f"{label}: permission_model.{flag_name} must remain false")
+
+
+def _validate_repository_connections(
+    contract: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    repositories = contract.get("repository_connections")
+    if not isinstance(repositories, list) or not repositories:
+        errors.append(f"{label}: repository_connections must be a non-empty list")
+        return
+    for repository in _objects(repositories):
+        connection_id = repository.get("connection_id")
+        repository_label = f"{label}: repository_connection {connection_id}"
+        if repository.get("provider") != "github":
+            errors.append(f"{repository_label} provider must be github")
+        for ref_name in (
+            "provider_repository_ref",
+            "installation_ref",
+            "credential_binding_ref",
+            "revocation_evidence_ref",
+        ):
+            if not isinstance(repository.get(ref_name), str) or not repository.get(ref_name):
+                errors.append(f"{repository_label} {ref_name} must be a non-empty ref")
+        if repository.get("installation_state") not in {
+            "presence_only",
+            "active",
+            "revoked",
+            "requires_reauth",
+        }:
+            errors.append(f"{repository_label} installation_state is invalid")
+        if repository.get("revocation_state") not in {
+            "not_revoked",
+            "revoked",
+            "pending_revalidation",
+        }:
+            errors.append(f"{repository_label} revocation_state is invalid")
+        if repository.get("secret_values_serialized") is not False:
+            errors.append(f"{repository_label} secret_values_serialized must remain false")
+        if repository.get("write_authority_enabled") is not False:
+            errors.append(f"{repository_label} write_authority_enabled must remain false")
+        permission_scopes = repository.get("permission_scopes")
+        if not isinstance(permission_scopes, list) or not permission_scopes:
+            errors.append(f"{repository_label} permission_scopes must be a non-empty list")
+        elif any(str(scope).endswith("_write") for scope in permission_scopes):
+            errors.append(f"{repository_label} permission_scopes must not include write scopes")
 
 
 def _validate_non_goals(

@@ -55,6 +55,16 @@ def test_agentic_service_harness_read_models_accept_default_example() -> None:
     assert allocation["workspace_created"] is False
     assert allocation["commands_executed"] is False
     assert allocation["files_written"] is False
+    repository = payload["repositories"][0]
+    assert repository["provider_repository_ref"] == "github-repository://tamirat-wubie/mullu-control-plane"
+    assert repository["installation_state"] == "presence_only"
+    assert repository["revocation_state"] == "not_revoked"
+    assert repository["permission_scopes"] == [
+        "metadata_read",
+        "contents_read",
+        "checks_read",
+        "pull_requests_read",
+    ]
 
 
 def test_agentic_service_harness_read_models_reject_mutation_flag(
@@ -100,6 +110,25 @@ def test_agentic_service_harness_read_models_reject_missing_run_ref(
     assert validation.ok is False
     assert "project project-agentic-service-harness run refs" in serialized_errors
     assert "run-missing" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_repository_authority_gap(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    repository = payload["repositories"][0]
+    repository["write_authority_enabled"] = True
+    repository["permission_scopes"].append("contents_write")
+    repository["revocation_evidence_ref"] = ""
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "write_authority_enabled must remain false" in serialized_errors
+    assert "permission_scopes must not include write scopes" in serialized_errors
+    assert "revocation_evidence_ref must be a non-empty ref" in serialized_errors
 
 
 def test_agentic_service_harness_read_models_reject_secret_like_payload(

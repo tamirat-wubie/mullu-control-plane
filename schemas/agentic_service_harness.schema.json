@@ -375,11 +375,19 @@
         "connection_id",
         "project_id",
         "provider",
+        "provider_repository_ref",
+        "repository_owner",
+        "repository_name",
         "repository_slug",
         "default_branch",
         "installation_ref",
+        "installation_state",
         "permission_scope",
+        "permission_scopes",
         "credential_binding_ref",
+        "revocation_state",
+        "revocation_evidence_ref",
+        "last_verified_at",
         "secret_values_serialized",
         "write_authority_enabled"
       ],
@@ -394,6 +402,15 @@
           "type": "string",
           "const": "github"
         },
+        "provider_repository_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "repository_owner": {
+          "$ref": "#/$defs/identifier"
+        },
+        "repository_name": {
+          "$ref": "#/$defs/identifier"
+        },
         "repository_slug": {
           "type": "string",
           "minLength": 1,
@@ -406,6 +423,15 @@
         "installation_ref": {
           "$ref": "#/$defs/evidence_ref"
         },
+        "installation_state": {
+          "type": "string",
+          "enum": [
+            "presence_only",
+            "active",
+            "revoked",
+            "requires_reauth"
+          ]
+        },
         "permission_scope": {
           "type": "string",
           "enum": [
@@ -415,8 +441,37 @@
             "open_pr"
           ]
         },
+        "permission_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "metadata_read",
+              "contents_read",
+              "checks_read",
+              "pull_requests_read"
+            ]
+          }
+        },
         "credential_binding_ref": {
           "$ref": "#/$defs/evidence_ref"
+        },
+        "revocation_state": {
+          "type": "string",
+          "enum": [
+            "not_revoked",
+            "revoked",
+            "pending_revalidation"
+          ]
+        },
+        "revocation_evidence_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "last_verified_at": {
+          "type": "string",
+          "format": "date-time"
         },
         "secret_values_serialized": {
           "type": "boolean",
