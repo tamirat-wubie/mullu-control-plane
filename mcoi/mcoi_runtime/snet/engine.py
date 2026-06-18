@@ -90,7 +90,13 @@ class SNetRecursiveMesh:
         parent_context_text = _optional_text(parent_context, "parent_context")
         created_from_metadata_id_text = _optional_text(created_from_metadata_id, "created_from_metadata_id")
         if created_from_metadata_id_text:
-            self._require_metadata(created_from_metadata_id_text)
+            self._require_metadata_symbol_provenance(
+                created_from_metadata_id_text,
+                label_text,
+                symbol_type_text,
+                parent_context_text,
+                depth,
+            )
         identity_key = (
             _ascii_lower_stripped(label_text),
             _ascii_lower_stripped(sense_id_text or label_text),
@@ -522,6 +528,26 @@ class SNetRecursiveMesh:
             raise ValueError("SNet parent_question_id must belong to the symbol causal scope") from exc
         if source_metadata.question_id != parent_question.question_id:
             raise ValueError("SNet parent_question_id must belong to the symbol causal scope")
+
+    def _require_metadata_symbol_provenance(
+        self,
+        metadata_id: str,
+        label: str,
+        symbol_type: str,
+        parent_context: str,
+        depth: int,
+    ) -> None:
+        source_metadata = self._require_metadata(metadata_id)
+        parent = self._require_symbol(source_metadata.parent_symbol_id)
+        expected_parent_context = f"{parent.label}:{source_metadata.facet}:{source_metadata.value}"
+        if (
+            label != source_metadata.value
+            or symbol_type != "promoted_metadata"
+            or parent_context != expected_parent_context
+            or type(depth) is not int
+            or depth != parent.depth + 1
+        ):
+            raise ValueError("SNet created_from_metadata_id must match promoted metadata provenance")
 
     def _update_symbol(self, symbol: SNetSymbol) -> None:
         self.symbols[symbol.symbol_id] = symbol
