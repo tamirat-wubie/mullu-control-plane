@@ -497,6 +497,31 @@ def test_extract_metadata_rejects_answer_question_mismatch_before_mutation() -> 
     assert mesh.answers == {answer.answer_id: answer}
 
 
+def test_parent_question_id_must_exist_before_wh_tick_mutation() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    before_symbol = mesh.symbols[seed.symbol_id]
+
+    with pytest.raises(KeyError, match="unknown SNet question_id"):
+        mesh.generate_wh_tick(seed.symbol_id, parent_question_id="snet-question:missing")
+
+    assert mesh.questions == {}
+    assert mesh.symbols[seed.symbol_id] == before_symbol
+    assert mesh.symbols[seed.symbol_id].inquiry_history == ()
+
+    parent_tick = mesh.generate_wh_tick(seed.symbol_id, perspective="root")
+    parent_question_id = parent_tick.generated_question_ids[0]
+    child_tick = mesh.generate_wh_tick(
+        seed.symbol_id,
+        perspective="child",
+        parent_question_id=parent_question_id,
+    )
+
+    assert child_tick.status is SNetTickStatus.RAN
+    assert mesh.questions[child_tick.generated_question_ids[0]].parent_question_id == parent_question_id
+    assert parent_question_id in mesh.questions
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

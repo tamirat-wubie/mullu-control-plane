@@ -128,6 +128,8 @@ class SNetRecursiveMesh:
         perspective = _require_text(perspective, "perspective")
         context = _require_text(context, "context")
         parent_question_id = _optional_text(parent_question_id, "parent_question_id")
+        if parent_question_id:
+            self._require_question(parent_question_id)
         tick_id = _stable_id("snet-tick", symbol_id, perspective, context, str(symbol.depth))
         if symbol.depth >= self.budget.max_depth:
             return SNetTickResult(
