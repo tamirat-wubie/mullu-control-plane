@@ -717,6 +717,12 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     plan_step_proof = proof["plan_step_proof"]
     closure_certificate = proof["closure_certificate"]
     closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    closure_drift_action_projection = _case_closure_drift_remediation_action_projection(
+        kernel=kernel,
+        case_id=case_id,
+        proof=proof,
+        closure_gate_evidence=closure_gate_evidence,
+    )
     evidence_timeline_by_ref = {
         item["ref"]: item
         for item in proof["proof_timeline"]
@@ -865,38 +871,49 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     elif summary["has_plan"]:
         terminal_status = "awaiting_evidence"
 
+    status_cards = [
+        _proof_status_card(
+            "case_status",
+            summary["case_status"],
+            "closed" if summary["case_status"] == "closed" else "open",
+        ),
+        _proof_status_card("plan_steps", len(plan_step_proof), "ready" if plan_step_proof else "missing"),
+        _proof_status_card("evidence", summary["evidence_count"], "ready" if summary["evidence_count"] else "missing"),
+        _proof_status_card(
+            "gate_decisions",
+            summary["gate_decision_count"],
+            "ready" if summary["all_plan_steps_allowed"] else "blocked",
+        ),
+        _proof_status_card(
+            "closure",
+            summary["has_terminal_closure"],
+            "ready" if summary["has_terminal_closure"] else "missing",
+        ),
+        _proof_status_card(
+            "learning",
+            summary["learning_binding_count"],
+            "ready" if summary["learning_binding_count"] else "missing",
+        ),
+    ]
+    if closure_drift_action_projection["action_count"]:
+        status_cards.append(
+            _proof_status_card(
+                "closure_drift_actions",
+                closure_drift_action_projection["action_count"],
+                "ready" if closure_drift_action_projection["ready_action_count"] else "blocked",
+            )
+        )
+
     return {
         "explorer_id": f"proof-explorer:{case_id}",
         "case_id": case_id,
         "title": organization_case["goal"],
         "terminal_status": terminal_status,
         "read_only": True,
-        "status_cards": [
-            _proof_status_card(
-                "case_status",
-                summary["case_status"],
-                "closed" if summary["case_status"] == "closed" else "open",
-            ),
-            _proof_status_card("plan_steps", len(plan_step_proof), "ready" if plan_step_proof else "missing"),
-            _proof_status_card("evidence", summary["evidence_count"], "ready" if summary["evidence_count"] else "missing"),
-            _proof_status_card(
-                "gate_decisions",
-                summary["gate_decision_count"],
-                "ready" if summary["all_plan_steps_allowed"] else "blocked",
-            ),
-            _proof_status_card(
-                "closure",
-                summary["has_terminal_closure"],
-                "ready" if summary["has_terminal_closure"] else "missing",
-            ),
-            _proof_status_card(
-                "learning",
-                summary["learning_binding_count"],
-                "ready" if summary["learning_binding_count"] else "missing",
-            ),
-        ],
+        "status_cards": status_cards,
         "attention_items": attention_items,
         "closure_gate_evidence": closure_gate_evidence,
+        "closure_drift_remediation_actions": closure_drift_action_projection,
         "department_lanes": sorted(department_lanes.values(), key=lambda item: item["department_id"]),
         "evidence_matrix": sorted(evidence_requirements.values(), key=lambda item: item["requirement_id"]),
         "proof_sections": {key: proof_sections[key] for key in sorted(proof_sections)},
@@ -1375,6 +1392,25 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
             {"field": "effect_reconciled", "value": closure_panel.get("effect_reconciled", False)},
             {"field": "learning_admitted", "value": closure_panel.get("learning_admitted", False)},
         ]
+    closure_drift_action_projection = payload.get("closure_drift_remediation_actions", {})
+    closure_drift_actions = (
+        closure_drift_action_projection.get("actions", [])
+        if isinstance(closure_drift_action_projection, dict)
+        else []
+    )
+    closure_drift_action_rows = [
+        {
+            "terminal_disposition": item.get("terminal_disposition", ""),
+            "action_kind": item.get("action_kind", ""),
+            "ready": item.get("ready", False),
+            "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
+            "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
+            "authority_refs": _text_list(item.get("authority_refs", [])),
+            "endpoint": item.get("endpoint", ""),
+        }
+        for item in closure_drift_actions
+        if isinstance(item, dict)
+    ]
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -1415,6 +1451,7 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Departments", ("department_id", "steps", "allowed", "blocked", "missing_evidence", "evidence_refs"), department_rows)}
     {_proof_explorer_table("Evidence", ("requirement_id", "present", "evidence_refs", "step_ids"), evidence_rows)}
     {_proof_explorer_table("Closure", ("field", "value"), closure_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
     {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
   </main>
 </body>
@@ -1867,6 +1904,53 @@ def _closure_drift_action_readiness(
     }
 
 
+def _case_closure_drift_remediation_action_projection(
+    *,
+    kernel: OrganizationKernel,
+    case_id: str,
+    proof: dict[str, Any],
+    closure_gate_evidence: dict[str, Any],
+) -> dict[str, object]:
+    evidence_by_ref = _case_evidence_by_ref(kernel, case_id)
+    approval_refs = _case_approval_refs(kernel, case_id)
+    closure_certificate = proof["closure_certificate"]
+    closure_id = closure_certificate.get("closure_id") if isinstance(closure_certificate, dict) else None
+    actions: list[dict[str, object]] = []
+    if closure_gate_evidence["closure_packet_drift"]:
+        for disposition in _CLOSURE_DRIFT_REMEDIATION_POLICIES:
+            readiness = _closure_drift_action_readiness(
+                disposition=disposition,
+                evidence_by_ref=evidence_by_ref,
+                approval_refs=approval_refs,
+            )
+            actions.append({
+                **readiness,
+                "action_id": stable_identifier(
+                    "closure-drift-remediation-action",
+                    {
+                        "case_id": case_id,
+                        "closure_id": closure_id or "",
+                        "terminal_disposition": disposition.value,
+                    },
+                ),
+                "closure_id": closure_id,
+                "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
+                "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
+                "endpoint": f"/api/v1/cases/{quote(case_id, safe='')}/closure-drift-remediation-actions",
+            })
+    return {
+        "case_id": case_id,
+        "closure_id": closure_id,
+        "closure_packet_drift": closure_gate_evidence["closure_packet_drift"],
+        "closure_packet_drift_remediated": closure_gate_evidence["closure_packet_drift_remediated"],
+        "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
+        "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
+        "action_count": len(actions),
+        "ready_action_count": sum(1 for action in actions if action.get("ready") is True),
+        "actions": actions,
+    }
+
+
 def _closure_gate_stale_attention_item(
     ref: str,
     closure_gate_evidence: dict[str, Any],
@@ -1887,6 +1971,12 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
     proof = _case_proof_timeline(kernel, case_id)
     closure_certificate = proof["closure_certificate"]
     closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    closure_drift_action_projection = _case_closure_drift_remediation_action_projection(
+        kernel=kernel,
+        case_id=case_id,
+        proof=proof,
+        closure_gate_evidence=closure_gate_evidence,
+    )
     status = (
         _closure_packet_drift_terminal_status(closure_gate_evidence)
         if closure_gate_evidence["closure_packet_drift"]
@@ -1985,6 +2075,7 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
         "reconciliation": reconciliation,
         "learning_admissions": learning_admissions,
         "closure_drift_remediations": proof.get("closure_drift_remediations", []),
+        "closure_drift_remediation_actions": closure_drift_action_projection,
         "evidence_refs": evidence_refs,
         "attention_items": attention_items,
         "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
@@ -2083,6 +2174,25 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
         for item in payload.get("closure_drift_remediations", [])
         if isinstance(item, dict)
     ]
+    closure_drift_action_projection = payload.get("closure_drift_remediation_actions", {})
+    closure_drift_actions = (
+        closure_drift_action_projection.get("actions", [])
+        if isinstance(closure_drift_action_projection, dict)
+        else []
+    )
+    closure_drift_action_rows = [
+        {
+            "terminal_disposition": item.get("terminal_disposition", ""),
+            "action_kind": item.get("action_kind", ""),
+            "ready": item.get("ready", False),
+            "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
+            "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
+            "authority_refs": _text_list(item.get("authority_refs", [])),
+            "endpoint": item.get("endpoint", ""),
+        }
+        for item in closure_drift_actions
+        if isinstance(item, dict)
+    ]
     proof_timeline_url = escape(str(payload.get("source_timeline_url", "")))
     proof_explorer_url = escape(str(payload.get("source_explorer_url", "")))
     json_url = f"/api/v1/cases/{quote(raw_case_id, safe='')}/closure-certificate"
@@ -2127,6 +2237,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
     {_proof_explorer_table("Closure Drift Remediations", ("remediation_id", "terminal_disposition", "drift_evidence_refs", "evidence_refs", "created_at"), remediation_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
   </main>
 </body>
 </html>
@@ -5184,41 +5295,14 @@ def get_case_closure_drift_remediation_actions(case_id: str, request: Request):
     _enforce_case_tenant(request, kernel, case_id)
     proof = _case_proof_timeline(kernel, case_id)
     closure_gate_evidence = _closure_gate_evidence_projection(proof)
-    evidence_by_ref = _case_evidence_by_ref(kernel, case_id)
-    approval_refs = _case_approval_refs(kernel, case_id)
-    closure_certificate = proof["closure_certificate"]
-    closure_id = closure_certificate.get("closure_id") if isinstance(closure_certificate, dict) else None
-    actions = []
-    if closure_gate_evidence["closure_packet_drift"]:
-        for disposition in _CLOSURE_DRIFT_REMEDIATION_POLICIES:
-            readiness = _closure_drift_action_readiness(
-                disposition=disposition,
-                evidence_by_ref=evidence_by_ref,
-                approval_refs=approval_refs,
-            )
-            actions.append({
-                **readiness,
-                "action_id": stable_identifier(
-                    "closure-drift-remediation-action",
-                    {
-                        "case_id": case_id,
-                        "closure_id": closure_id or "",
-                        "terminal_disposition": disposition.value,
-                    },
-                ),
-                "closure_id": closure_id,
-                "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
-                "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
-                "endpoint": f"/api/v1/cases/{quote(case_id, safe='')}/closure-drift-remediation-actions",
-            })
+    projection = _case_closure_drift_remediation_action_projection(
+        kernel=kernel,
+        case_id=case_id,
+        proof=proof,
+        closure_gate_evidence=closure_gate_evidence,
+    )
     return {
-        "case_id": case_id,
-        "closure_id": closure_id,
-        "closure_packet_drift": closure_gate_evidence["closure_packet_drift"],
-        "closure_packet_drift_remediated": closure_gate_evidence["closure_packet_drift_remediated"],
-        "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
-        "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
-        "actions": actions,
+        **projection,
         "governed": True,
     }
 
