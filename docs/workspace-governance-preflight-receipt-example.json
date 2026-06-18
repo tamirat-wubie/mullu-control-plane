@@ -1,5 +1,5 @@
 {
-  "check_count": 215,
+  "check_count": 216,
   "checks": [
     {
       "args": [
@@ -2132,6 +2132,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "protocol manifest ok: 362 schemas\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_simple_assistant_ui_boundary.py"
+      ],
+      "name": "simple_assistant_ui_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "simple assistant UI boundary ok: 2 normal-user examples\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
