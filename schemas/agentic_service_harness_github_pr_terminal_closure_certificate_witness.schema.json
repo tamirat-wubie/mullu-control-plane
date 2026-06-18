@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-witness:1",
+  "title": "Agentic Service Harness GitHub PR Terminal Closure Certificate Witness",
+  "description": "Foundation Mode witness request for a GitHub pull-request terminal closure certificate. This schema records the certificate requirement only and does not certify terminal closure, create branches, open pull requests, mark ready for review, merge pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize secrets, or perform destructive operations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_effect_reconciliation_witness_ref",
+    "witness_kind",
+    "requested_evidence_ref",
+    "terminal_closure_status",
+    "terminal_closure_certificate_collected",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "terminal_closure_certificate",
+    "remaining_witnesses",
+    "authority_denials",
+    "effect_boundary",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_pr_terminal_closure_certificate_witness"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_effect_reconciliation_witness_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json"
+    },
+    "witness_kind": { "type": "string", "const": "terminal_closure_certificate_witness" },
+    "requested_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+    "terminal_closure_status": { "type": "string", "const": "AwaitingEvidence" },
+    "terminal_closure_certificate_collected": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "terminal_closure_certificate": { "$ref": "#/$defs/terminal_closure_certificate" },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 0
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "read_only"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_service_id": {
+          "type": "string",
+          "const": "github-repo-task-service-read-only-foundation"
+        },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "terminal_closure_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "terminal_closure_certificate_request_id",
+        "source_effect_reconciliation_request_id",
+        "source_effect_reconciliation_evidence_ref",
+        "required_witness_kind",
+        "required_evidence_ref",
+        "effect_reconciliation_required",
+        "effect_reconciliation_collected",
+        "terminal_closure_certificate_required",
+        "terminal_closure_certificate_collected",
+        "required_certificate_result",
+        "certifies_branch_state",
+        "certifies_pull_request_state",
+        "certifies_check_state",
+        "certifies_merge_state",
+        "certifies_branch_deletion_state",
+        "terminal_closure_authorized"
+      ],
+      "properties": {
+        "terminal_closure_certificate_request_id": {
+          "type": "string",
+          "const": "terminal-closure.github-pr-chain"
+        },
+        "source_effect_reconciliation_request_id": {
+          "type": "string",
+          "const": "effect-reconciliation.github-pr-before-terminal-closure"
+        },
+        "source_effect_reconciliation_evidence_ref": {
+          "type": "string",
+          "const": "evidence://effect-reconciliation-before-terminal-closure"
+        },
+        "required_witness_kind": {
+          "type": "string",
+          "const": "terminal_closure_certificate"
+        },
+        "required_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "effect_reconciliation_required": { "type": "boolean", "const": true },
+        "effect_reconciliation_collected": { "type": "boolean", "const": false },
+        "terminal_closure_certificate_required": { "type": "boolean", "const": true },
+        "terminal_closure_certificate_collected": { "type": "boolean", "const": false },
+        "required_certificate_result": {
+          "type": "string",
+          "const": "terminal_closure_certificate_requires_effect_reconciliation_evidence"
+        },
+        "certifies_branch_state": { "type": "boolean", "const": true },
+        "certifies_pull_request_state": { "type": "boolean", "const": true },
+        "certifies_check_state": { "type": "boolean", "const": true },
+        "certifies_merge_state": { "type": "boolean", "const": true },
+        "certifies_branch_deletion_state": { "type": "boolean", "const": true },
+        "terminal_closure_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_granted",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "ready_for_review_enabled",
+        "pull_request_merge_enabled",
+        "repository_write_enabled",
+        "connector_calls_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "authority_granted": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "ready_for_review_enabled": { "type": "boolean", "const": false },
+        "pull_request_merge_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_created",
+        "pull_request_opened",
+        "ready_for_review_marked",
+        "pull_request_merged",
+        "branch_deleted",
+        "repository_written",
+        "connector_called",
+        "mutation_route_admitted",
+        "receipt_store_appended",
+        "secret_values_serialized",
+        "network_policy"
+      ],
+      "properties": {
+        "branch_created": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "ready_for_review_marked": { "type": "boolean", "const": false },
+        "pull_request_merged": { "type": "boolean", "const": false },
+        "branch_deleted": { "type": "boolean", "const": false },
+        "repository_written": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_terminal_closure_certificate_witness_schema",
+        "github_pr_effect_reconciliation_witness_schema",
+        "github_pr_ci_gate_before_ready_for_review_witness_schema",
+        "github_pr_repository_effect_rollback_plan_witness_schema",
+        "github_pr_uao_admission_witness_schema",
+        "github_pr_branch_write_authority_binding_schema",
+        "github_pr_operator_approval_request_schema",
+        "github_pr_admission_preflight_schema",
+        "github_repo_task_service_schema"
+      ],
+      "properties": {
+        "github_pr_terminal_closure_certificate_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_effect_reconciliation_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_ci_gate_before_ready_for_review_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_repository_effect_rollback_plan_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_uao_admission_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_branch_write_authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

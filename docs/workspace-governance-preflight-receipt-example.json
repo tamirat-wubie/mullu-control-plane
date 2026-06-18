@@ -1,5 +1,5 @@
 {
-  "check_count": 221,
+  "check_count": 222,
   "checks": [
     {
       "args": [
@@ -299,6 +299,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR EFFECT RECONCILIATION WITNESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE CERTIFICATE WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

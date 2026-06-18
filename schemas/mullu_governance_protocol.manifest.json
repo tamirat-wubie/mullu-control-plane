@@ -101,6 +101,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-witness:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",
