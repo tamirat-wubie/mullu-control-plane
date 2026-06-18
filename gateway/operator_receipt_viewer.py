@@ -157,6 +157,10 @@ _APPROVAL_HISTORY_COLUMNS = (
     "tenant_id",
     "command_id",
     "risk_tier",
+    "approval_strength_policy",
+    "approval_strength_decision",
+    "approval_strength",
+    "required_approval_strength",
     "actor_id",
     "source",
     "intent",
@@ -167,6 +171,7 @@ _APPROVAL_HISTORY_COLUMNS = (
     "task_status",
     "event_count",
     "latest_event_hash",
+    "approval_strength_required_controls",
     "receipt_href",
     "current_task_href",
 )
@@ -1722,6 +1727,7 @@ def _approval_history_record(
     )
     resolved_at = latest.timestamp if status in {"approved", "denied", "expired"} else ""
     resolved_by = _approval_history_resolved_by(status, latest)
+    strength_detail = _approval_strength_detail(approval_events)
     receipt_href = _receipt_detail_href(command.command_id, command.tenant_id)
     current_task_href = _current_task_href(command.tenant_id, task_status)
     return {
@@ -1738,6 +1744,7 @@ def _approval_history_record(
         "requested_at": approval_events[0].timestamp,
         "resolved_at": resolved_at,
         "resolved_by": resolved_by,
+        **strength_detail,
         "event_count": len(approval_events),
         "latest_event_hash": latest.event_hash,
         "trace_id": command.trace_id,
@@ -1745,6 +1752,52 @@ def _approval_history_record(
         "receipt_href": receipt_href,
         "current_task_href": current_task_href,
     }
+
+
+def _approval_strength_detail(approval_events: list[CommandEvent]) -> dict[str, Any]:
+    """Return the latest approval-strength witness carried by approval events."""
+    defaults: dict[str, Any] = {
+        "approval_strength_policy": "",
+        "approval_strength_decision": "",
+        "approval_strength": "",
+        "required_approval_strength": "",
+        "request_channel_trust": "",
+        "response_channel_trust": "",
+        "cross_channel_approval": False,
+        "approval_strength_reasons": (),
+        "approval_strength_required_controls": (),
+    }
+    strength_keys = frozenset(defaults)
+    for event in reversed(approval_events):
+        detail = event.detail if isinstance(event.detail, Mapping) else {}
+        if not any(key in detail for key in strength_keys):
+            continue
+        return {
+            "approval_strength_policy": str(
+                detail.get("approval_strength_policy", "")
+            ).strip(),
+            "approval_strength_decision": str(
+                detail.get("approval_strength_decision", "")
+            ).strip(),
+            "approval_strength": str(detail.get("approval_strength", "")).strip(),
+            "required_approval_strength": str(
+                detail.get("required_approval_strength", "")
+            ).strip(),
+            "request_channel_trust": str(
+                detail.get("request_channel_trust", "")
+            ).strip(),
+            "response_channel_trust": str(
+                detail.get("response_channel_trust", "")
+            ).strip(),
+            "cross_channel_approval": bool(detail.get("cross_channel_approval", False)),
+            "approval_strength_reasons": _text_tuple(
+                detail.get("approval_strength_reasons", ()),
+            ),
+            "approval_strength_required_controls": _text_tuple(
+                detail.get("approval_strength_required_controls", ()),
+            ),
+        }
+    return defaults
 
 
 def _approval_history_status(

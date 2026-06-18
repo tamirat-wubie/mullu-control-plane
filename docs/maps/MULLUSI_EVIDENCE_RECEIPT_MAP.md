@@ -33,7 +33,7 @@ No stage may silently succeed or silently fail.
 | PolicyReceipt | Policy Engine | allow, deny, constrain, or approval decision | policy bypass |
 | BudgetReceipt | Budget Gate | budget estimate and decision | cost overrun |
 | ApprovalRequestReceipt | Approval Router | approval was requested | unbound approval |
-| ApprovalReceipt | Approval Router | approval, denial, expiration, or revocation | casual approval misuse |
+| ApprovalReceipt | Approval Router | approval, denial, expiration, revocation, and approval-strength witness when present | casual approval misuse |
 | QueueReceipt | Command Ledger | command entered queue | duplicate or lost task |
 | WorkerReceipt | Worker | execution or inspection result | unverifiable worker result |
 | WorkerFailureReceipt | Worker / Evidence | failed, rejected, or partial worker execution recovery state | unclear recovery path |
