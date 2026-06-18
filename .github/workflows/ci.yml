@@ -1,4 +1,4 @@
-﻿name: CI - Build Verification
+name: CI - Build Verification
 
 on:
   push:
