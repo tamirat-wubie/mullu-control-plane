@@ -1,0 +1,66 @@
+{
+  "contract_id": "cdg_rccm_component_contract_foundation_20260618",
+  "contract_version": "cdg_rccm_component_contract.v1",
+  "protocol_version": "cdg-rccm.v1",
+  "surface": "foundation_cdg_rccm_component_contract",
+  "component_id": "foundation:recursive-convergence-component",
+  "purpose": "Define the static contract for a component in the Causal Dependency-Gated Recursive Component Convergence Mesh.",
+  "schema_version": "recursive-convergence-component.v1",
+  "rule_version": "recursive-convergence-rules.v1",
+  "input_projections": [
+    "dependency_projection_certificate"
+  ],
+  "output_projections": [
+    "component_result_projection"
+  ],
+  "immutable_invariants": [
+    "component_identity_remains_stable",
+    "component_purpose_remains_stable"
+  ],
+  "local_invariants": [
+    "state_changes_only_through_declared_rules",
+    "unknowns_and_conflicts_are_explicit"
+  ],
+  "boundary_contracts": [
+    "required_dependencies_reach_the_declared_settlement_level",
+    "stale_dependency_certificates_are_not_consumed"
+  ],
+  "convergence_policy": {
+    "mode": "bounded_search",
+    "maximum_iterations": 64,
+    "tolerance": 0,
+    "stable_iterations": 1,
+    "oscillation_detection": true
+  },
+  "budgets": {
+    "maximum_depth": 64,
+    "maximum_frames": 1024
+  },
+  "evidence_scope": "model_only",
+  "runtime_guards": {
+    "component_self_certification_denied": true,
+    "hidden_dependency_reads_denied": true,
+    "direct_external_effects_denied": true,
+    "cross_epoch_reads_denied": true,
+    "stale_certificate_consumption_denied": true,
+    "runtime_route_registration_claimed": false,
+    "connector_authority_granted": false,
+    "deployment_claimed": false
+  },
+  "receipt_envelope": {
+    "uao_ref": "uao://platform/cdg-rccm/component-contract/20260618",
+    "causal_decision_trace_ref": "trace://platform/cdg-rccm/component-contract/20260618",
+    "receipt_ref": "receipt://platform/cdg-rccm/component-contract/20260618"
+  },
+  "evidence_refs": [
+    "schemas/cdg_rccm_component_contract.schema.json",
+    "examples/cdg_rccm_component_contract.foundation.json",
+    "scripts/validate_cdg_rccm_component_contract.py",
+    "mcoi/tests/test_cdg_rccm_component_contract.py",
+    "mcoi/mcoi_runtime/convergence/contracts.py",
+    "mcoi/mcoi_runtime/convergence/kernel.py",
+    "docs/CDG_RCCM_RECURSIVE_CONVERGENCE_KERNEL.md",
+    "examples/sdlc/requirement_cdg_rccm_recursive_convergence_kernel_20260618.json",
+    "examples/sdlc/design_cdg_rccm_recursive_convergence_kernel_20260618.json"
+  ]
+}
