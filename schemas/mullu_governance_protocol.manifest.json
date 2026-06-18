@@ -743,6 +743,12 @@
       "surface": "maf"
     },
     {
+      "schema_id": "maf-deterministic-fixture-parity-witness",
+      "path": "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-deterministic-fixture-parity-witness:1",
+      "surface": "maf"
+    },
+    {
       "schema_id": "world-substrate-replay-witness",
       "path": "schemas/world_substrate_replay_witness.schema.json",
       "urn": "urn:mullusi:schema:world-substrate-replay-witness:1",

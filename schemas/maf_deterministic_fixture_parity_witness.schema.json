@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:maf-deterministic-fixture-parity-witness:1",
+  "title": "MAF Deterministic Fixture Parity Witness",
+  "description": "Foundation Mode witness that closes static deterministic fixture parity for MAF CLI command descriptors while denying runtime binding, CLI execution, subprocess execution, raw fixture payload retention, writes, terminal closure, and success authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "solver_outcome",
+    "parity_scope",
+    "source_artifacts",
+    "fixture_vectors",
+    "authority_boundary",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "minLength": 1},
+    "witness_version": {"const": "maf_deterministic_fixture_parity_witness.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "solver_outcome": {"const": "AwaitingEvidence"},
+    "parity_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "foundation_mode",
+        "parity_mode",
+        "deterministic_fixture_parity_closed",
+        "runtime_binding_claimed",
+        "subprocess_execution_claimed",
+        "cli_execution_claimed",
+        "command_behavior_claimed",
+        "subprocess_effect_boundary_ref",
+        "abi_cli_contract_ref",
+        "parity_witness_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref",
+        "required_future_witnesses"
+      ],
+      "properties": {
+        "source_family": {"const": "maf/rust"},
+        "foundation_mode": {"type": "boolean"},
+        "parity_mode": {"const": "static_digest_fixture_parity"},
+        "deterministic_fixture_parity_closed": {"type": "boolean"},
+        "runtime_binding_claimed": {"type": "boolean"},
+        "subprocess_execution_claimed": {"type": "boolean"},
+        "cli_execution_claimed": {"type": "boolean"},
+        "command_behavior_claimed": {"type": "boolean"},
+        "subprocess_effect_boundary_ref": {"const": "witness://maf/subprocess-effect-boundary"},
+        "abi_cli_contract_ref": {"const": "witness://maf/abi-cli-contract"},
+        "parity_witness_ref": {"const": "witness://maf/receipt-parity"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1},
+        "required_future_witnesses": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source_artifact"}
+    },
+    "fixture_vectors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/fixture_vector"}
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_fixture_read_allowed",
+        "cli_execution_allowed",
+        "subprocess_execution_allowed",
+        "runtime_binding_allowed",
+        "pyo3_binding_allowed",
+        "rust_crate_execution_allowed",
+        "python_imports_rust_allowed",
+        "shell_invocation_allowed",
+        "child_process_spawn_allowed",
+        "network_call_allowed",
+        "secret_access_allowed",
+        "raw_fixture_payload_retention_allowed",
+        "filesystem_write_allowed",
+        "runtime_dispatch_allowed",
+        "canonical_state_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "static_fixture_read_allowed": {"type": "boolean"},
+        "cli_execution_allowed": {"type": "boolean"},
+        "subprocess_execution_allowed": {"type": "boolean"},
+        "runtime_binding_allowed": {"type": "boolean"},
+        "pyo3_binding_allowed": {"type": "boolean"},
+        "rust_crate_execution_allowed": {"type": "boolean"},
+        "python_imports_rust_allowed": {"type": "boolean"},
+        "shell_invocation_allowed": {"type": "boolean"},
+        "child_process_spawn_allowed": {"type": "boolean"},
+        "network_call_allowed": {"type": "boolean"},
+        "secret_access_allowed": {"type": "boolean"},
+        "raw_fixture_payload_retention_allowed": {"type": "boolean"},
+        "filesystem_write_allowed": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"type": "boolean"},
+        "canonical_state_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {"type": "object"},
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact_count",
+        "fixture_vector_count",
+        "authority_denial_count",
+        "open_gap_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_artifact_count": {"type": "integer", "minimum": 0},
+        "fixture_vector_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "open_gap_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"}
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_ref",
+        "artifact_digest_sha256",
+        "artifact_role",
+        "execution_authority_denied"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "artifact_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_role": {"type": "string", "minLength": 1},
+        "execution_authority_denied": {"type": "boolean"}
+      }
+    },
+    "fixture_vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "command_name",
+        "fixture_material_ref",
+        "input_contract_ref",
+        "expected_output_contract_ref",
+        "fixture_material_digest_sha256",
+        "execution_allowed",
+        "raw_payload_retained",
+        "parity_status",
+        "failure_path_blocked_by"
+      ],
+      "properties": {
+        "fixture_id": {"type": "string", "minLength": 1},
+        "command_name": {"type": "string", "minLength": 1},
+        "fixture_material_ref": {"type": "string", "minLength": 1},
+        "input_contract_ref": {"type": "string", "minLength": 1},
+        "expected_output_contract_ref": {"type": "string", "minLength": 1},
+        "fixture_material_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "execution_allowed": {"type": "boolean"},
+        "raw_payload_retained": {"type": "boolean"},
+        "parity_status": {"const": "static_digest_parity"},
+        "failure_path_blocked_by": {"const": "witness://maf/failure-receipt-path"}
+      }
+    }
+  }
+}

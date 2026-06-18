@@ -1,0 +1,72 @@
+{
+  "requirement_id": "REQ-maf-deterministic-fixture-parity-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-deterministic-fixture-parity-witness",
+  "problem_statement": "MAF runtime binding readiness needs a static deterministic fixture parity witness after the subprocess effect boundary before any executable Python-to-Rust binding path can be reconsidered.",
+  "success_criteria": [
+    "MafDeterministicFixtureParityWitness validates against a public JSON schema and Foundation Mode example",
+    "MafDeterministicFixtureParityWitness binds the MAF subprocess effect boundary, MAF CLI scaffold, receipt schemas, deterministic fixture descriptors, UAO refs, LifeMeaningJudgment refs, and receipt refs",
+    "MafDeterministicFixtureParityWitness records deterministic fixture parity as closed while keeping solver outcome AwaitingEvidence",
+    "MafDeterministicFixtureParityWitness blocks CLI execution, subprocess execution, shell invocation, child process spawn, PyO3 binding, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, raw fixture payload retention, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafDeterministicFixtureParityWitness rejects authority drift, parity scope drift, future witness drift, fixture descriptor drift, digest drift, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no CLI execution",
+    "no subprocess execution",
+    "no shell invocation",
+    "no child process spawn",
+    "no PyO3 binding",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no command behavior claim",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no raw fixture payload retention",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "parity mode remains static_digest_fixture_parity",
+    "solver outcome remains AwaitingEvidence",
+    "deterministic_fixture_parity_closed remains true",
+    "runtime_binding_claimed, subprocess_execution_claimed, cli_execution_claimed, and command_behavior_claimed remain false",
+    "each source artifact digest must match repository-local source files",
+    "each fixture descriptor digest must match the canonical command, input contract, output contract, and fixture material ref tuple",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+    "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+    "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+    "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+    "docs/96_maf_deterministic_fixture_parity_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_deterministic_fixture_parity_witness.py",
+    "python -m pytest tests/test_validate_maf_deterministic_fixture_parity_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_deterministic_fixture_parity_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_deterministic_fixture_parity_witness.schema.json",
+    "examples/maf_deterministic_fixture_parity_witness.foundation.json",
+    "scripts/validate_maf_deterministic_fixture_parity_witness.py",
+    "tests/test_validate_maf_deterministic_fixture_parity_witness.py",
+    "docs/96_maf_deterministic_fixture_parity_witness.md",
+    "examples/sdlc/design_maf_deterministic_fixture_parity_witness_20260618.json",
+    "examples/sdlc/security_review_maf_deterministic_fixture_parity_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-deterministic-fixture-parity-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-deterministic-fixture-parity-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-deterministic-fixture-parity-witness/requirement"
+}

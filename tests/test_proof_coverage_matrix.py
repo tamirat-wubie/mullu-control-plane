@@ -5521,6 +5521,39 @@ def test_maf_subprocess_effect_boundary_witness_denies_subprocess_execution() ->
     assert closure_actions["publish_maf_subprocess_effect_boundary_witness_contract"]["status"] == "closed"
 
 
+def test_maf_deterministic_fixture_parity_witness_denies_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    fixture_surface = surfaces["maf_deterministic_fixture_parity_witness"]
+    fixture_witness_surface = witness_surfaces["maf_deterministic_fixture_parity_witness"]
+    witnesses = set(fixture_surface["runtime_witnesses"])
+
+    assert fixture_surface["coverage_state"] == "witnessed"
+    assert fixture_surface["request_proof"] == "request_proof"
+    assert fixture_surface["action_proof"] == "action_proof"
+    assert fixture_surface["audit"] == "audit_chain"
+    assert "MafDeterministicFixtureParityWitness" in fixture_surface["representative_paths"]
+    assert "schemas/maf_deterministic_fixture_parity_witness.schema.json" in fixture_surface["evidence_files"]
+    assert "examples/maf_deterministic_fixture_parity_witness.foundation.json" in fixture_surface["evidence_files"]
+    assert "scripts/validate_maf_deterministic_fixture_parity_witness.py" in fixture_surface["evidence_files"]
+    assert "tests/test_validate_maf_deterministic_fixture_parity_witness.py" in fixture_surface["evidence_files"]
+    assert "maf/rust/crates/maf-cli/src/main.rs" in fixture_surface["evidence_files"]
+    assert "maf_deterministic_fixture_parity_witness_schema_valid" in witnesses
+    assert "maf_deterministic_fixture_parity_witness_denies_execution" in witnesses
+    assert "maf_deterministic_fixture_parity_witness_requires_fixture_vectors" in witnesses
+    assert "maf_deterministic_fixture_parity_witness_rejects_fixture_drift" in witnesses
+    assert "maf_deterministic_fixture_parity_witness_rejects_digest_and_summary_drift" in witnesses
+    assert "maf_deterministic_fixture_parity_witness_sdlc_artifacts_valid" in witnesses
+    assert fixture_witness_surface["exact_test_anchor_count"] == 6
+    assert fixture_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_maf_deterministic_fixture_parity_witness_contract"]["status"] == "closed"
+
+
 def test_world_substrate_replay_witness_blocks_live_world_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

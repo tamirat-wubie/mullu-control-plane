@@ -92,6 +92,7 @@ operators and downstream systems can inspect.
 
 - Shared definitions live in `docs/` and `schemas/`.
 - Rust scaffold lives under `maf/rust/`.
+- MAF runtime binding remains blocked behind witness layers; receipt parity, ABI/CLI contract, subprocess effect boundary, and deterministic fixture parity are static Foundation Mode witnesses, while failure receipt path evidence remains open.
 - Python scaffold lives under `mcoi/`.
 - Cross-runtime compatibility work lives under `integration/`.
 
