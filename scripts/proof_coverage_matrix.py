@@ -7468,6 +7468,60 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "maf_abi_cli_contract_witness",
+            [
+                "MafAbiCliContractWitness",
+                "validate_maf_abi_cli_contract_witness",
+                "maf_abi_cli_contract_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_abi_cli_contract_witness.schema.json",
+                "examples/maf_abi_cli_contract_witness.foundation.json",
+                "scripts/validate_maf_abi_cli_contract_witness.py",
+                "tests/test_validate_maf_abi_cli_contract_witness.py",
+                "docs/94_maf_abi_cli_contract_witness_contract.md",
+                "schemas/maf_receipt_parity_witness.schema.json",
+                "examples/maf_receipt_parity_witness.foundation.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "maf/rust/crates/maf-cli/Cargo.toml",
+                "maf/rust/crates/maf-cli/src/main.rs",
+            ],
+            "MAF ABI CLI contract witnesses bind the MAF CLI manifest, CLI entry point, preceding parity witness refs, open argument/output schema gaps, WorkerFailureReceipt refs, UAO refs, LifeMeaningJudgment refs, source digests, receipt refs, and authority denials before ABI stability, CLI execution, subprocess execution, or Python-to-Rust binding can be reconsidered.",
+            [
+                "maf_abi_cli_contract_witness_schema_valid",
+                "maf_abi_cli_contract_witness_denies_execution_authority",
+                "maf_abi_cli_contract_witness_requires_source_digests",
+                "maf_abi_cli_contract_witness_rejects_digest_drift",
+                "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence",
+                "maf_abi_cli_contract_witness_rejects_summary_and_secret_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_abi_cli_contract_witness_schema_valid": [
+                    "maf_abi_cli_contract_witness_passes"
+                ],
+                "maf_abi_cli_contract_witness_denies_execution_authority": [
+                    "maf_abi_cli_contract_witness_passes",
+                    "maf_abi_cli_contract_witness_rejects_authority_drift",
+                ],
+                "maf_abi_cli_contract_witness_requires_source_digests": [
+                    "maf_abi_cli_contract_witness_passes"
+                ],
+                "maf_abi_cli_contract_witness_rejects_digest_drift": [
+                    "maf_abi_cli_contract_witness_rejects_digest_drift"
+                ],
+                "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence": [
+                    "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence"
+                ],
+                "maf_abi_cli_contract_witness_rejects_summary_and_secret_drift": [
+                    "maf_abi_cli_contract_witness_rejects_summary_ref_and_secret_drift"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -11768,6 +11822,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_world_substrate_replay_witness_contract",
             "surfaces": ["world_substrate_replay_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_abi_cli_contract_witness_contract",
+            "surfaces": ["maf_abi_cli_contract_witness"],
             "status": "closed",
         },
         {

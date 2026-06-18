@@ -1,0 +1,76 @@
+{
+  "security_review_id": "SEC-maf-abi-cli-contract-witness-20260618",
+  "change_id": "maf-abi-cli-contract-witness-20260618",
+  "impact_categories": ["auth", "external_api", "secrets", "policy", "receipts", "audit"],
+  "threat_model": "ABI/CLI evidence can be overclaimed as runtime binding or CLI execution if argument, output, subprocess, fixture parity, and failure-path witnesses are absent. The mitigation is a read-only witness that keeps argument and output schema refs as gaps, denies CLI/subprocess/Rust execution and Python binding, rejects secret markers, and requires future witnesses before closure.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "CLI execution, subprocess execution, Rust execution, Python binding, ABI stability claims, dispatch, closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector and network authority remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms secret markers are rejected from witness payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_summary_ref_and_secret_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms ABI argument and output refs remain gaps until independently certified",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms witness refs and WorkerFailureReceipt refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_summary_ref_and_secret_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility confirms source digests and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_digest_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-abi-cli-runtime-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness remains AwaitingEvidence and denies CLI/subprocess/Rust execution, Python binding, ABI stability claims, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_abi_cli_contract_witness.schema.json",
+        "scripts/validate_maf_abi_cli_contract_witness.py",
+        "tests/test_validate_maf_abi_cli_contract_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep ABI/CLI witness read-only and deterministic",
+    "require source digests for MAF CLI manifest and entry point",
+    "retain argument/output schema gaps until certified",
+    "deny CLI, subprocess, Rust execution, Python binding, connectors, network, secrets, writes, dispatch, closure, and success claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "receipt://sdlc/maf-abi-cli-contract-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-abi-cli-contract-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-abi-cli-contract-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-abi-cli-contract-witness/security"
+}

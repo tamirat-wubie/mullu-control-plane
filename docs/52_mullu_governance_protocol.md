@@ -1,9 +1,9 @@
-# Mullu Governance Protocol
+﻿# Mullu Governance Protocol
 
 > **In one box:** The public, open *rules schema* anyone can read and validate
-> against, plus where the closed reference runtime boundary sits — "here is our
-> governance contract, in the open." New here? →
-> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
+> against, plus where the closed reference runtime boundary sits â€” "here is our
+> governance contract, in the open." New here? â†’
+> [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? â†’
 > [Glossary](GLOSSARY.md). *(Doc type: Reference.)*
 
 Purpose: define the public Mullu Governance Protocol open schema surface and closed reference runtime boundary.
@@ -196,6 +196,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 166. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
 167. Invariant fuzz execution reports are public contracts when they bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, mutation-free rejection counts, projection probe counts, public projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime-hardening or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live runtime execution, staging targets, production targets, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, secret access, filesystem writes, rollback execution, raw case payload retention, raw secret retention, terminal closure, and success claims.
 168. MAF receipt parity witnesses are public contracts when they bind Python receipt schema refs, Rust MAF crate manifest refs, Rust crate entry refs, canonical source digests, parity mappings, open gap refs, UAO refs, LifeMeaningJudgment refs, receipt refs, and authority-denial flags before any Python-to-Rust runtime binding claim can be reconsidered while denying PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
+169. MAF ABI CLI contract witnesses are public contracts when they bind the MAF CLI crate manifest, CLI entry point, preceding parity witness refs, open argument schema gaps, open output receipt schema gaps, WorkerFailureReceipt refs, UAO refs, LifeMeaningJudgment refs, source digests, receipt refs, and authority-denial flags before any ABI stability, CLI execution, subprocess execution, or Python-to-Rust binding claim can be reconsidered.
 ## Verification
 
 Run:
@@ -207,7 +208,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 352 schemas
+protocol manifest ok: 353 schemas
 ```
 
 STATUS:

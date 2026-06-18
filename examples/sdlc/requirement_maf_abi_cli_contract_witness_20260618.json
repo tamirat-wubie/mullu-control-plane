@@ -1,0 +1,61 @@
+{
+  "requirement_id": "REQ-maf-abi-cli-contract-witness-20260618",
+  "request_id": "continue-maf-runtime-binding-prerequisite-abi-cli-contract",
+  "problem_statement": "Future MAF Python-to-Rust runtime binding cannot be reconsidered until the ABI/CLI surface is separated from execution authority and recorded as a typed witness with open subprocess, fixture parity, and failure-path gaps.",
+  "success_criteria": [
+    "MafAbiCliContractWitness validates against a public JSON schema and Foundation Mode example",
+    "MafAbiCliContractWitness binds MAF CLI manifest and entry digests, preceding MafReceiptParityWitness refs, open argument/output gap refs, failure receipt ref, UAO ref, LifeMeaningJudgment ref, and receipt refs",
+    "MafAbiCliContractWitness blocks CLI execution, subprocess execution, Rust execution, Python-to-Rust binding, ABI stability claims, connector calls, network calls, secret access, filesystem writes, runtime dispatch, terminal closure, and success claims",
+    "MafAbiCliContractWitness rejects authority drift, digest drift, gap closure without evidence, missing future witnesses, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no CLI execution",
+    "no subprocess execution",
+    "no Rust crate execution",
+    "no Python-to-Rust binding",
+    "no ABI stability claim",
+    "no connector call",
+    "no network call",
+    "no secret access",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "solver_outcome remains AwaitingEvidence",
+    "accepted_argument_schema_ref and output_receipt_schema_ref remain gap refs",
+    "subprocess effect boundary, deterministic fixture parity, and failure receipt path witnesses remain required",
+    "all source digests must match repository-local source files",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "docs/94_maf_abi_cli_contract_witness_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_abi_cli_contract_witness.py",
+    "python -m pytest tests/test_validate_maf_abi_cli_contract_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_abi_cli_contract_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "docs/94_maf_abi_cli_contract_witness_contract.md"
+  ],
+  "uao_ref": "uao://sdlc/maf-abi-cli-contract-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-abi-cli-contract-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-abi-cli-contract-witness/requirement"
+}

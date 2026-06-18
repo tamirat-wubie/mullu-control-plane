@@ -1028,6 +1028,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_abi_cli_contract_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_abi_cli_contract_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1399,7 +1406,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 128,
+      "action_proof": 129,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1407,7 +1414,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 180,
+      "audit_chain": 181,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1415,21 +1422,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 111
+      "witnessed": 112
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 127
+      "request_proof": 128
     },
-    "surface_count": 183
+    "surface_count": 184
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 183,
+      "strong": 184,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11202,6 +11209,60 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_abi_cli_contract_witness.schema.json",
+        "examples/maf_abi_cli_contract_witness.foundation.json",
+        "scripts/validate_maf_abi_cli_contract_witness.py",
+        "tests/test_validate_maf_abi_cli_contract_witness.py",
+        "docs/94_maf_abi_cli_contract_witness_contract.md",
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "examples/maf_receipt_parity_witness.foundation.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "maf/rust/crates/maf-cli/Cargo.toml",
+        "maf/rust/crates/maf-cli/src/main.rs"
+      ],
+      "notes": "MAF ABI CLI contract witnesses bind the MAF CLI manifest, CLI entry point, preceding parity witness refs, open argument/output schema gaps, WorkerFailureReceipt refs, UAO refs, LifeMeaningJudgment refs, source digests, receipt refs, and authority denials before ABI stability, CLI execution, subprocess execution, or Python-to-Rust binding can be reconsidered.",
+      "representative_paths": [
+        "MafAbiCliContractWitness",
+        "validate_maf_abi_cli_contract_witness",
+        "maf_abi_cli_contract_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_abi_cli_contract_witness_denies_execution_authority": [
+          "maf_abi_cli_contract_witness_passes",
+          "maf_abi_cli_contract_witness_rejects_authority_drift"
+        ],
+        "maf_abi_cli_contract_witness_rejects_digest_drift": [
+          "maf_abi_cli_contract_witness_rejects_digest_drift"
+        ],
+        "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence": [
+          "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence"
+        ],
+        "maf_abi_cli_contract_witness_rejects_summary_and_secret_drift": [
+          "maf_abi_cli_contract_witness_rejects_summary_ref_and_secret_drift"
+        ],
+        "maf_abi_cli_contract_witness_requires_source_digests": [
+          "maf_abi_cli_contract_witness_passes"
+        ],
+        "maf_abi_cli_contract_witness_schema_valid": [
+          "maf_abi_cli_contract_witness_passes"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_abi_cli_contract_witness_schema_valid",
+        "maf_abi_cli_contract_witness_denies_execution_authority",
+        "maf_abi_cli_contract_witness_requires_source_digests",
+        "maf_abi_cli_contract_witness_rejects_digest_drift",
+        "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence",
+        "maf_abi_cli_contract_witness_rejects_summary_and_secret_drift"
+      ],
+      "surface_id": "maf_abi_cli_contract_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14718,8 +14779,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1851,
-    "runtime_witness_count": 1851,
+    "exact_test_anchor_count": 1857,
+    "runtime_witness_count": 1857,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23417,6 +23478,52 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "maf_receipt_parity_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes"
+            ],
+            "witness": "maf_abi_cli_contract_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes",
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_authority_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_denies_execution_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_passes"
+            ],
+            "witness": "maf_abi_cli_contract_witness_requires_source_digests"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_digest_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_rejects_digest_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence"
+            ],
+            "witness": "maf_abi_cli_contract_witness_rejects_gap_closure_without_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_abi_cli_contract_witness.py::test_maf_abi_cli_contract_witness_rejects_summary_ref_and_secret_drift"
+            ],
+            "witness": "maf_abi_cli_contract_witness_rejects_summary_and_secret_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "maf_abi_cli_contract_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

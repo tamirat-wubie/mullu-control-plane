@@ -43,6 +43,7 @@ The control plane already absorbed several high-fit ideas:
 | Invariant fuzz execution evidence | `InvariantFuzzExecutionReport` | Implemented |
 | MAF receipt parity boundary | `MafReceiptParityWitness` | Implemented |
 | SWEWS world substrate replay evidence | `WorldSubstrateReplayWitness` | Implemented |
+| MAF ABI/CLI contract boundary | `MafAbiCliContractWitness` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -78,8 +79,8 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Must remain plan-only in Foundation Mode.
 
 2. MAF runtime binding readiness packet
-   - Follows `MafReceiptParityWitness` only after ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path evidence exist.
-   - Must remain `AwaitingEvidence` until those four witnesses are present and independently validated.
+   - Follows `MafReceiptParityWitness` and `MafAbiCliContractWitness` only after subprocess effect boundary, deterministic fixture parity, and failure receipt path evidence exist.
+   - Must remain `AwaitingEvidence` until those remaining witnesses are present and independently validated.
 
 ## 6. Project Discipline Mesh Findings
 

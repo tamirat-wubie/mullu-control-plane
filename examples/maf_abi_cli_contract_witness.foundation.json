@@ -1,0 +1,98 @@
+{
+  "witness_id": "maf-abi-cli-contract-witness-foundation-20260618",
+  "witness_version": "maf_abi_cli_contract_witness.v1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "contract_scope": {
+    "source_family": "maf/rust/maf-cli",
+    "foundation_mode": true,
+    "runtime_binding_claimed": false,
+    "cli_execution_performed": false,
+    "abi_stability_claimed": false,
+    "preceding_witness_ref": "schemas/maf_receipt_parity_witness.schema.json",
+    "uao_ref": "uao://maf/abi-cli-contract-witness/foundation",
+    "life_meaning_judgment_ref": "life-meaning://maf/abi-cli-contract-witness/foundation",
+    "required_future_witnesses": [
+      "witness://maf/subprocess-effect-boundary",
+      "witness://maf/deterministic-fixture-parity",
+      "witness://maf/failure-receipt-path"
+    ]
+  },
+  "source_digests": [
+    {
+      "source_ref": "maf/rust/Cargo.toml",
+      "digest_sha256": "115cfabf239e081f825db80de704c10d65920b6b5d394fff567ca0f7a20066f6",
+      "source_role": "rust_workspace_manifest"
+    },
+    {
+      "source_ref": "maf/rust/crates/maf-cli/Cargo.toml",
+      "digest_sha256": "56b2a166109b9b6d68c9d311d4930be684aa876e38399e0038f7cad79fb7264b",
+      "source_role": "cli_crate_manifest"
+    },
+    {
+      "source_ref": "maf/rust/crates/maf-cli/src/main.rs",
+      "digest_sha256": "c2b6c37eb6fddce6eacf47cc100b2b17d09eecf239cee29c832f89f659826a07",
+      "source_role": "cli_entry_point"
+    },
+    {
+      "source_ref": "schemas/maf_receipt_parity_witness.schema.json",
+      "digest_sha256": "3b8138e21ea15a03dd6a3b173c06180bf051964f8e90daccf0f11cc4dead6822",
+      "source_role": "preceding_parity_witness_schema"
+    },
+    {
+      "source_ref": "examples/maf_receipt_parity_witness.foundation.json",
+      "digest_sha256": "76de4d2f5d328e699ca10633db2f5264063de0b6d16873bfddb0354fd331168d",
+      "source_role": "preceding_parity_witness_example"
+    }
+  ],
+  "cli_contract": {
+    "binary_crate": "maf-cli",
+    "manifest_ref": "maf/rust/crates/maf-cli/Cargo.toml",
+    "entry_ref": "maf/rust/crates/maf-cli/src/main.rs",
+    "declared_contract_state": "ABI_CLI_CONTRACT_AWAITING_EVIDENCE",
+    "accepted_argument_schema_ref": "gap://maf/abi-cli/argument-schema-not-certified",
+    "output_receipt_schema_ref": "gap://maf/abi-cli/output-receipt-schema-not-certified",
+    "failure_receipt_schema_ref": "schemas/worker_failure_receipt.schema.json",
+    "deterministic_fixture_parity_ref": "witness://maf/deterministic-fixture-parity",
+    "subprocess_effect_boundary_ref": "witness://maf/subprocess-effect-boundary"
+  },
+  "authority_boundary": {
+    "cli_execution_allowed": false,
+    "subprocess_execution_allowed": false,
+    "rust_crate_execution_allowed": false,
+    "python_to_rust_binding_allowed": false,
+    "abi_stability_claim_allowed": false,
+    "external_connector_call_allowed": false,
+    "network_call_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_abi_cli_contract_witness_schema": "schemas/maf_abi_cli_contract_witness.schema.json",
+    "maf_abi_cli_contract_witness_example": "examples/maf_abi_cli_contract_witness.foundation.json",
+    "maf_abi_cli_contract_witness_validator": "scripts/validate_maf_abi_cli_contract_witness.py",
+    "maf_abi_cli_contract_witness_tests": "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "maf_receipt_parity_witness_schema": "schemas/maf_receipt_parity_witness.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json"
+  },
+  "contract_summary": {
+    "source_digest_count": 5,
+    "authority_denial_count": 12,
+    "future_witness_count": 3,
+    "evidence_ref_count": 9
+  },
+  "evidence_refs": [
+    "schemas/maf_abi_cli_contract_witness.schema.json",
+    "examples/maf_abi_cli_contract_witness.foundation.json",
+    "scripts/validate_maf_abi_cli_contract_witness.py",
+    "tests/test_validate_maf_abi_cli_contract_witness.py",
+    "docs/94_maf_abi_cli_contract_witness_contract.md",
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "maf/rust/crates/maf-cli/Cargo.toml",
+    "maf/rust/crates/maf-cli/src/main.rs"
+  ]
+}
