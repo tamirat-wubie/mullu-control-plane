@@ -567,7 +567,7 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
     ),
     AssuranceStep(
         name="proof_coverage_matrix",
-        command=(sys.executable, "scripts/proof_coverage_matrix.py"),
+        command=(sys.executable, "-m", "scripts.proof_coverage_matrix"),
         purpose="refresh canonical and assurance proof coverage witnesses",
     ),
     AssuranceStep(
