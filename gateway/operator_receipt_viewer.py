@@ -62,6 +62,7 @@ _RECEIPT_TYPES = (
     "approval_receipt",
     "denial_receipt",
     "worker_receipt",
+    "worker_failure_receipt",
     "delivery_receipt",
     "command_event",
     "universal_action_proof",
@@ -930,6 +931,9 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
         "waiting_for",
         "approval_request_id",
         "approval_recovery_available",
+        "worker_failure_receipt_id",
+        "worker_failure_state",
+        "worker_failure_recovery_action",
         "next_action",
         "created_at",
         "latest_event_hash",
@@ -1863,6 +1867,9 @@ def _receipts_for_command(
     )
     if worker is not None:
         receipts.append(worker)
+    worker_failure = _worker_failure_receipt(command, events)
+    if worker_failure is not None:
+        receipts.append(worker_failure)
     delivery = _delivery_receipt(
         command,
         events=events,
@@ -2184,6 +2191,92 @@ def _worker_receipt(
     }
 
 
+def _worker_failure_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> dict[str, Any] | None:
+    raw_receipt, source_event = _raw_worker_failure_receipt(command, events)
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in (
+            "schema_ref",
+            "receipt_id",
+            "worker_receipt_id",
+            "request_id",
+            "command_id",
+            "capability",
+            "operation",
+            "tenant_id",
+            "lease_id",
+            "failure_state",
+            "reason",
+            "partial_completion",
+            "attempted_units",
+            "completed_units",
+            "recovery_action",
+            "recovery_ref",
+            "terminal_closure_required",
+            "receipt_is_not_terminal_closure",
+            "generated_at",
+            "metadata",
+        )
+        if key in raw_receipt
+    }
+    receipt_id = str(
+        details.get("receipt_id")
+        or command.redacted_payload.get("worker_failure_receipt_id")
+        or f"worker-failure:{command.command_id}"
+    )
+    evidence_refs = {
+        "command_id": command.command_id,
+        "worker_failure_receipt_id": receipt_id,
+        "worker_receipt_id": str(details.get("worker_receipt_id", "")),
+        "source_receipt_hash": str(raw_receipt.get("source_receipt_hash", "")),
+        "failure_hash": str(raw_receipt.get("failure_hash", "")),
+        "source_event_hash": source_event.event_hash if source_event is not None else "",
+        "payload_hash": command.payload_hash,
+        "trace_id": command.trace_id,
+        "evidence_refs": list(raw_receipt.get("evidence_refs", ()))
+        if isinstance(raw_receipt.get("evidence_refs"), list)
+        else [],
+    }
+    receipt_hash = str(raw_receipt.get("failure_hash", "")) or _stable_hash(
+        {"details": details, "evidence_refs": evidence_refs}
+    )
+    return {
+        "receipt_type": "worker_failure_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": receipt_hash,
+        "status": str(details.get("failure_state") or "recorded"),
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _raw_worker_failure_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> tuple[Mapping[str, Any] | None, CommandEvent | None]:
+    raw_payload_receipt = command.redacted_payload.get("worker_failure_receipt")
+    if isinstance(raw_payload_receipt, Mapping):
+        return raw_payload_receipt, None
+    for event in reversed(events):
+        raw_detail = event.detail if isinstance(event.detail, Mapping) else {}
+        raw_detail_receipt = raw_detail.get("worker_failure_receipt")
+        if isinstance(raw_detail_receipt, Mapping):
+            return raw_detail_receipt, event
+        raw_execution = raw_detail.get("execution_result")
+        if isinstance(raw_execution, Mapping):
+            raw_execution_output = raw_execution.get("output")
+            if isinstance(raw_execution_output, Mapping):
+                raw_execution_receipt = raw_execution_output.get("worker_failure_receipt")
+                if isinstance(raw_execution_receipt, Mapping):
+                    return raw_execution_receipt, event
+    return None, None
+
+
 def _delivery_receipt(
     command: CommandEnvelope,
     *,
@@ -2468,6 +2561,7 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         terminal_certificate_id=terminal_certificate_id,
     )
     metadata = _command_metadata(command)
+    worker_failure = _current_task_worker_failure(events)
     approval_request_id = _latest_approval_request_id(events)
     return {
         "command_id": command.command_id,
@@ -2487,6 +2581,9 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
         "approval_recovery_available": (
             task_status == "waiting_for_approval" and bool(approval_request_id)
         ),
+        "worker_failure_receipt_id": str(worker_failure.get("receipt_id", "")),
+        "worker_failure_state": str(worker_failure.get("failure_state", "")),
+        "worker_failure_recovery_action": str(worker_failure.get("recovery_action", "")),
         "command_state": command.state.value,
         "task_status": task_status,
         "response_state": response_state,
@@ -2604,6 +2701,22 @@ def _latest_approval_request_id(events: list[CommandEvent]) -> str:
         if approval_id:
             return approval_id
     return ""
+
+
+def _current_task_worker_failure(events: list[CommandEvent]) -> Mapping[str, Any]:
+    for event in reversed(events):
+        detail = event.detail if isinstance(event.detail, Mapping) else {}
+        receipt = detail.get("worker_failure_receipt")
+        if isinstance(receipt, Mapping):
+            return receipt
+        execution = detail.get("execution_result")
+        if isinstance(execution, Mapping):
+            output = execution.get("output")
+            if isinstance(output, Mapping):
+                nested_receipt = output.get("worker_failure_receipt")
+                if isinstance(nested_receipt, Mapping):
+                    return nested_receipt
+    return {}
 
 
 def _command_task_status(command_ledger: Any, command: CommandEnvelope) -> str:

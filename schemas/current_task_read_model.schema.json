@@ -97,6 +97,9 @@
         "plan_step_id",
         "approval_request_id",
         "approval_recovery_available",
+        "worker_failure_receipt_id",
+        "worker_failure_state",
+        "worker_failure_recovery_action",
         "command_state",
         "task_status",
         "response_state",
@@ -126,6 +129,29 @@
         "plan_step_id": {"type": "string"},
         "approval_request_id": {"type": "string"},
         "approval_recovery_available": {"type": "boolean"},
+        "worker_failure_receipt_id": {"type": "string"},
+        "worker_failure_state": {
+          "type": "string",
+          "enum": [
+            "",
+            "rejected_before_handler",
+            "failed_during_handler",
+            "failed_after_handler",
+            "partial_completion",
+            "unknown_failure"
+          ]
+        },
+        "worker_failure_recovery_action": {
+          "type": "string",
+          "enum": [
+            "",
+            "retry_same_lease",
+            "retry_new_lease",
+            "operator_review",
+            "safe_halt",
+            "no_retry"
+          ]
+        },
         "command_state": {"type": "string", "minLength": 1},
         "task_status": {"$ref": "#/$defs/task_status"},
         "response_state": {"$ref": "#/$defs/response_state"},

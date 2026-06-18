@@ -36,6 +36,7 @@ No stage may silently succeed or silently fail.
 | ApprovalReceipt | Approval Router | approval, denial, expiration, or revocation | casual approval misuse |
 | QueueReceipt | Command Ledger | command entered queue | duplicate or lost task |
 | WorkerReceipt | Worker | execution or inspection result | unverifiable worker result |
+| WorkerFailureReceipt | Worker / Evidence | failed, rejected, or partial worker execution recovery state | unclear recovery path |
 | ClosureReceipt | Causal Closure Kernel | evidence was validated or blocked | false success |
 | TerminalCertificate | Evidence Layer | final closure is complete | incomplete completion claim |
 | FinalUserReceipt | Response Composer | execution status and delivery status are separately visible | response ambiguity |
@@ -56,6 +57,7 @@ MessageReceipt
 -> BudgetReceipt
 -> ApprovalReceipt when needed
 -> WorkerReceipt when executed
+-> WorkerFailureReceipt when worker execution fails or partially completes
 -> ClosureReceipt
 -> TerminalCertificate
 -> FinalUserReceipt

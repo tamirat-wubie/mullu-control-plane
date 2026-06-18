@@ -141,6 +141,7 @@
         "approval_receipt",
         "denial_receipt",
         "worker_receipt",
+        "worker_failure_receipt",
         "delivery_receipt",
         "command_event",
         "universal_action_proof",
