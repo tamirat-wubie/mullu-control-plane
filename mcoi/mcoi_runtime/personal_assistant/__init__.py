@@ -32,6 +32,12 @@ from .approval import (
     ApprovalQueueRecord,
     PersonalAssistantApprovalQueue,
 )
+from .approval_matrix import (
+    ApprovalRiskPolicy,
+    PersonalAssistantApprovalMatrix,
+    load_default_personal_assistant_approval_matrix,
+    load_personal_assistant_approval_matrix,
+)
 from .drafts import (
     CalendarEventDraftInput,
     DraftAssistantProjection,
@@ -118,7 +124,9 @@ __all__ = (
     "ApprovalDecision",
     "ApprovalProposedAction",
     "ApprovalQueueRecord",
+    "ApprovalRiskPolicy",
     "PersonalAssistantApprovalQueue",
+    "PersonalAssistantApprovalMatrix",
     "CalendarEventDraftInput",
     "DraftAssistantProjection",
     "EmailDraftInput",
@@ -160,8 +168,10 @@ __all__ = (
     "interpret_user_request",
     "load_default_skill_registry",
     "load_default_personal_assistant_capability_pack",
+    "load_default_personal_assistant_approval_matrix",
     "load_skill_registry",
     "load_personal_assistant_capability_pack",
+    "load_personal_assistant_approval_matrix",
     "prepare_memory_observation",
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
