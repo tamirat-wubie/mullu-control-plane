@@ -163,9 +163,12 @@ _FOUNDATION_LANES = (
     {
         "lane_id": "read_only_projection",
         "display_name": "Read-Only Inbox and Calendar",
-        "stage": "projection_only",
+        "stage": "runtime_preview",
         "state": "SolvedVerified",
-        "route_refs": [],
+        "route_refs": [
+            "/api/v1/personal-assistant/read-only/inbox/preview",
+            "/api/v1/personal-assistant/read-only/calendar/preview",
+        ],
         "schema_refs": ["schemas/personal_assistant_read_only_projection.schema.json"],
         "validator_refs": [
             "scripts/validate_personal_assistant_read_only_projection.py",
