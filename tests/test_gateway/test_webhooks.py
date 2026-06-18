@@ -4452,6 +4452,165 @@ class TestGatewayStatus:
         assert search_receipt["details"]["budget_state"] == "allowed"
         assert "search docs" not in json.dumps(data, sort_keys=True)
 
+    def test_operator_receipt_viewer_projects_search_receipt_panel(
+        self, gateway_app, client
+    ):
+        raw_query = "search receipt raw query must stay hidden"
+        raw_excerpt = "retrieved excerpt must stay hidden"
+        search_receipt = {
+            "receipt_id": "search-receipt-viewerpanel1",
+            "receipt_version": "search_receipt.v1",
+            "search_decision_ref": "receipt://search-decision/search-decision-viewerpanel1",
+            "request_id": "worker-request-viewer-panel",
+            "tenant_id": "t1",
+            "actor_id": "u1",
+            "created_at": "2026-06-17T12:10:00+00:00",
+            "solver_outcome": "SolvedVerified",
+            "receipt_state": "EVIDENCE_AVAILABLE",
+            "search_state": "LOCAL_SEARCH",
+            "freshness_result": {
+                "freshness_required": False,
+                "freshness_status": "not_required",
+                "current_info_claim_allowed": False,
+                "max_age_seconds": None,
+                "proof_state": "Pass",
+                "rationale_refs": ["policy:foundation-mode:local-search-freshness"],
+            },
+            "source_plan_result": {
+                "selected_sources": ["local_docs"],
+                "attempted_sources": ["local_docs"],
+                "tenant_scope_verified": True,
+                "external_retrieval_performed": False,
+                "connector_scope_ref": None,
+                "rationale_refs": ["policy:foundation-mode:read-only-search-worker"],
+            },
+            "cache_result": {
+                "state": "not_checked",
+                "cache_key_ref": None,
+                "tenant_scoped": True,
+                "stale_cache_used": False,
+            },
+            "budget_result": {
+                "state": "within_budget",
+                "actual_cost_class": "none",
+                "approval_ref": None,
+                "proof_state": "Pass",
+                "rationale_refs": ["worker-budget:zero-cost-local-search"],
+            },
+            "evidence_summary": {
+                "evidence_count": 1,
+                "citation_count": 1,
+                "conflict_count": 0,
+                "stale_source_count": 0,
+                "retrieval_error_count": 0,
+                "content_body_included": False,
+            },
+            "evidence_items": [
+                {
+                    "evidence_ref": "evidence://local-docs/viewerpanel1",
+                    "source_type": "local_docs",
+                    "source_ref": "docs/78_search_receipt_contract.md#L1",
+                    "citation_ref": "citation://local-docs/viewerpanel1",
+                    "observed_at": "2026-06-17T12:10:00+00:00",
+                    "fresh_until": None,
+                    "freshness_status": "not_required",
+                    "trust_tier": "local_governed",
+                    "content_hash_ref": "hash://sha256/viewerpanel1",
+                    "content_body": None,
+                }
+            ],
+            "citation_refs": ["citation://local-docs/viewerpanel1"],
+            "conflict_refs": [],
+            "stale_source_refs": [],
+            "retrieval_errors": [],
+            "retrieval_safety_result": {
+                "retrieved_content_authority": "evidence_only",
+                "prompt_injection_guard_applied": True,
+                "prompt_injection_detected": False,
+                "source_instruction_authority_granted": False,
+                "tool_instruction_from_source_allowed": False,
+                "policy_instruction_from_source_allowed": False,
+                "private_source_scope_verified": True,
+                "conflict_handling": "cite_conflict",
+            },
+            "governance_guards": {
+                "execution_authority_granted": False,
+                "connector_authority_granted": False,
+                "answer_claim_authority_granted": False,
+                "terminal_closure": False,
+                "raw_secret_material_included": False,
+                "retrieved_instruction_authority_granted": False,
+                "mfidel_atomicity_preserved": True,
+            },
+            "receipt_envelope": {
+                "uao_ref": "uao://worker-search/command-viewer-panel",
+                "causal_decision_trace_ref": "trace://worker-search/viewer-panel",
+                "receipt_ref": "receipt://search-receipt/search-receipt-viewerpanel1",
+            },
+            "evidence_refs": ["knowledge-search:receipt:viewerpanel1"],
+            "metadata": {
+                "raw_query_exposed": False,
+                "source_excerpt_body_excluded_from_receipt": True,
+            },
+        }
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-search-receipt-panel",
+            idempotency_key="search-receipt-panel",
+            intent="enterprise.knowledge_search",
+            payload={"body": raw_query},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.OBSERVED,
+            output={"response": "bounded search result"},
+            detail={
+                "execution_result": {
+                    "output": {
+                        "search_receipt": search_receipt,
+                        "search_receipt_hash": "search-receipt-hash-viewerpanel1",
+                        "results": [{"excerpt": raw_excerpt}],
+                    }
+                }
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model?tenant_id=t1"
+            "&receipt_type=search_receipt&receipt_status=EVIDENCE_AVAILABLE"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = next(
+            item
+            for item in data["receipt_groups"]
+            if item["command_id"] == command.command_id
+        )
+        receipt = row["receipts"][0]
+        serialized = json.dumps(data, sort_keys=True)
+        assert row["receipt_types"] == ["search_receipt"]
+        assert receipt["receipt_type"] == "search_receipt"
+        assert receipt["receipt_hash"] == "search-receipt-hash-viewerpanel1"
+        assert receipt["details"]["evidence_summary"]["evidence_count"] == 1
+        assert receipt["details"]["evidence_item_refs"][0]["citation_ref"] == (
+            "citation://local-docs/viewerpanel1"
+        )
+        assert (
+            receipt["details"]["evidence_item_refs"][0]["content_body_included"]
+            is False
+        )
+        assert receipt["details"]["raw_query_exposed"] is False
+        assert receipt["details"]["source_content_body_exposed"] is False
+        assert raw_query not in serialized
+        assert raw_excerpt not in serialized
+
     def test_operator_receipt_viewer_projects_worker_failure_drilldown(
         self, gateway_app, client
     ):

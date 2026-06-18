@@ -58,6 +58,7 @@ _CAPABILITY_INTENT_KEYS = ("capability_intent", "skill_intent")
 _RECEIPT_TYPES = (
     "interpretation_receipt",
     "search_decision_receipt",
+    "search_receipt",
     "plan_step_receipt",
     "approval_receipt",
     "denial_receipt",
@@ -1907,6 +1908,9 @@ def _receipts_for_command(
     search_decision = _search_decision_receipt(command, events)
     if search_decision is not None:
         receipts.append(search_decision)
+    search_receipt = _search_receipt(command, events)
+    if search_receipt is not None:
+        receipts.append(search_receipt)
     plan_step = _plan_step_receipt(command)
     if plan_step is not None:
         receipts.append(plan_step)
@@ -2545,6 +2549,144 @@ def _raw_search_decision_receipt(
                 if isinstance(raw_execution_receipt, Mapping):
                     return raw_execution_receipt, event
     return None, None
+
+
+def _search_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> dict[str, Any] | None:
+    raw_receipt, source_event, raw_receipt_hash = _raw_search_receipt(command, events)
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = _search_receipt_details(raw_receipt)
+    receipt_id = str(
+        details.get("receipt_id")
+        or command.redacted_payload.get("search_receipt_id")
+        or f"search-receipt:{command.command_id}"
+    )
+    receipt_hash = raw_receipt_hash or _stable_hash(
+        {"details": details, "command_id": command.command_id}
+    )
+    evidence_refs = {
+        "command_id": command.command_id,
+        "receipt_hash": receipt_hash,
+        "search_decision_ref": str(details.get("search_decision_ref", "")),
+        "request_id": str(details.get("request_id", "")),
+        "source_event_hash": source_event.event_hash if source_event is not None else "",
+        "payload_hash": command.payload_hash,
+        "trace_id": command.trace_id,
+        "citation_refs": list(_text_tuple(raw_receipt.get("citation_refs"))),
+        "conflict_refs": list(_text_tuple(raw_receipt.get("conflict_refs"))),
+        "stale_source_refs": list(_text_tuple(raw_receipt.get("stale_source_refs"))),
+        "receipt_evidence_refs": list(_text_tuple(raw_receipt.get("evidence_refs"))),
+    }
+    return {
+        "receipt_type": "search_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": receipt_hash,
+        "status": str(
+            details.get("receipt_state")
+            or details.get("solver_outcome")
+            or "recorded"
+        ),
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _search_receipt_details(raw_receipt: Mapping[str, Any]) -> dict[str, Any]:
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in (
+            "receipt_id",
+            "receipt_version",
+            "search_decision_ref",
+            "request_id",
+            "tenant_id",
+            "actor_id",
+            "created_at",
+            "solver_outcome",
+            "receipt_state",
+            "search_state",
+            "freshness_result",
+            "source_plan_result",
+            "cache_result",
+            "budget_result",
+            "evidence_summary",
+            "citation_refs",
+            "conflict_refs",
+            "stale_source_refs",
+            "retrieval_errors",
+            "retrieval_safety_result",
+            "governance_guards",
+            "receipt_envelope",
+            "metadata",
+        )
+        if key in raw_receipt
+    }
+    details["evidence_item_refs"] = _search_receipt_evidence_item_refs(raw_receipt)
+    details["raw_query_exposed"] = False
+    details["source_content_body_exposed"] = False
+    return details
+
+
+def _search_receipt_evidence_item_refs(
+    raw_receipt: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    evidence_items = raw_receipt.get("evidence_items")
+    if not isinstance(evidence_items, list):
+        return []
+    panel_items: list[dict[str, Any]] = []
+    for item in evidence_items:
+        if not isinstance(item, Mapping):
+            continue
+        panel_items.append(
+            {
+                "evidence_ref": str(item.get("evidence_ref", "")),
+                "source_type": str(item.get("source_type", "")),
+                "source_ref": str(item.get("source_ref", "")),
+                "citation_ref": str(item.get("citation_ref", "")),
+                "freshness_status": str(item.get("freshness_status", "")),
+                "trust_tier": str(item.get("trust_tier", "")),
+                "content_hash_ref": str(item.get("content_hash_ref", "")),
+                "content_body_included": False,
+            }
+        )
+    return panel_items
+
+
+def _raw_search_receipt(
+    command: CommandEnvelope,
+    events: list[CommandEvent],
+) -> tuple[Mapping[str, Any] | None, CommandEvent | None, str]:
+    raw_payload_receipt = command.redacted_payload.get("search_receipt")
+    if isinstance(raw_payload_receipt, Mapping):
+        return (
+            raw_payload_receipt,
+            None,
+            str(command.redacted_payload.get("search_receipt_hash", "")),
+        )
+    for event in reversed(events):
+        raw_detail = event.detail if isinstance(event.detail, Mapping) else {}
+        raw_detail_receipt = raw_detail.get("search_receipt")
+        if isinstance(raw_detail_receipt, Mapping):
+            return (
+                raw_detail_receipt,
+                event,
+                str(raw_detail.get("search_receipt_hash", "")),
+            )
+        raw_execution = raw_detail.get("execution_result")
+        if isinstance(raw_execution, Mapping):
+            raw_execution_output = raw_execution.get("output")
+            if isinstance(raw_execution_output, Mapping):
+                raw_execution_receipt = raw_execution_output.get("search_receipt")
+                if isinstance(raw_execution_receipt, Mapping):
+                    return (
+                        raw_execution_receipt,
+                        event,
+                        str(raw_execution_output.get("search_receipt_hash", "")),
+                    )
+    return None, None, ""
 
 
 def _event_receipt(event: CommandEvent) -> dict[str, Any]:
