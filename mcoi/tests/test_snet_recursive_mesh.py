@@ -859,6 +859,8 @@ def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
         mesh.ingest_answer(question_id, "Seed", evidence_refs=TupleSubclass(("evidence:1",)))
     with pytest.raises(ValueError, match="evidence_refs"):
         mesh.ingest_answer(question_id, "Seed", evidence_refs=(TextSubclass("evidence:1"),))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=(" evidence:1",))
     answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
 
     assert mesh.answers == {answer.answer_id: answer}
@@ -895,6 +897,8 @@ def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
 
     with pytest.raises(ValueError, match="metadata_refs"):
         SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs="metadata:1")
+    with pytest.raises(ValueError, match="metadata_refs"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs=(" metadata:1",))
     with pytest.raises(ValueError, match="evidence_refs"):
         SNetAnswer(
             answer_id="answer:1",
@@ -903,6 +907,15 @@ def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
             ascii_folded_answer="seed",
             confidence=0.5,
             evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            evidence_refs=(" evidence:1",),
         )
     with pytest.raises(ValueError, match="evidence_refs"):
         SNetMetadata(

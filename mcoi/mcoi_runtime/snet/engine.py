@@ -694,7 +694,7 @@ def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, 
     if type(values) is not tuple:
         raise ValueError(f"{field_name} must be a tuple of non-empty strings")
     for index, value in enumerate(values):
-        _require_text(value, f"{field_name}[{index}]")
+        _require_id_text(value, f"{field_name}[{index}]")
     return values
 
 

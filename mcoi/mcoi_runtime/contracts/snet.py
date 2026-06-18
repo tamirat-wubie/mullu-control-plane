@@ -129,7 +129,7 @@ def _freeze_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
     if not isinstance(frozen, tuple):
         raise ValueError(f"{field_name} must be an array")
     for index, value in enumerate(frozen):
-        _require_text(value, f"{field_name}[{index}]")
+        _require_exact_text(value, f"{field_name}[{index}]")
     return frozen
 
 
@@ -190,6 +190,12 @@ def _require_text(value: object, field_name: str) -> str:
     if type(value) is not str:
         raise ValueError(f"{field_name} must be a non-empty string")
     return require_non_empty_text(value, field_name)
+
+
+def _require_exact_text(value: object, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty string")
+    return value
 
 
 def _require_optional_text(value: object, field_name: str) -> str:
