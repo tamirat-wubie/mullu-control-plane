@@ -3,8 +3,13 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: external writes require approval; policy mutation remains forbidden.
 assistant_id: founder.default
+kind: founder
 owner_scope: organization_owned
 tenant_scope: organization_tenant
+role: founder_assistant
+skill_ids:
+  - skill.founder.briefing
+  - skill.founder.follow_up
 allowed_capabilities:
   - email.draft
   - calendar.read

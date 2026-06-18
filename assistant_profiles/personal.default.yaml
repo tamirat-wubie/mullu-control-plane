@@ -3,8 +3,13 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: external writes require approval; memory admits verified preferences only.
 assistant_id: personal.default
+kind: personal
 owner_scope: single_owner
 tenant_scope: personal_tenant
+role: personal_assistant
+skill_ids:
+  - skill.personal.inbox_triage
+  - skill.personal.meeting_scheduling
 allowed_capabilities:
   - email.read
   - email.search

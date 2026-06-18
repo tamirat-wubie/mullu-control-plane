@@ -3,8 +3,13 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: delegated external writes require approval and evidence receipts.
 assistant_id: executive_ops.default
+kind: executive_ops
 owner_scope: organization_owned
 tenant_scope: organization_tenant
+role: executive_ops_assistant
+skill_ids:
+  - skill.executive_ops.briefing
+  - skill.executive_ops.decision_log
 allowed_capabilities:
   - email.draft
   - calendar.read

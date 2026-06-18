@@ -3,8 +3,14 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: payment requires approval, reconciliation, and signed evidence.
 assistant_id: finance_ops.default
+kind: finance_ops
 owner_scope: organization_owned
 tenant_scope: enterprise_tenant
+role: finance_ops_assistant
+skill_ids:
+  - skill.finance_ops.invoice_intake
+  - skill.finance_ops.approval_packet
+  - skill.finance_ops.reconciliation
 allowed_capabilities:
   - invoice.read
   - invoice.extract

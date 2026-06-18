@@ -55,6 +55,26 @@ def test_assistant_profile_registry_detects_allowed_capability_drift(tmp_path) -
     assert all("payment.execute.with_approval" not in error or "drift" in error for error in result.errors)
 
 
+def test_assistant_profile_registry_detects_identity_and_skill_drift(tmp_path) -> None:
+    _copy_profiles(tmp_path)
+    team_path = tmp_path / "team_ops.default.yaml"
+    team_text = team_path.read_text(encoding="utf-8")
+    team_path.write_text(
+        team_text.replace("kind: team_ops\n", "kind: founder\n").replace(
+            "  - skill.team_ops.owner_assignment\n", ""
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_assistant_profile_registry(profile_dir=tmp_path)
+
+    assert result.valid is False
+    assert result.profile_count == 6
+    assert any("team_ops.default: kind drift" in error for error in result.errors)
+    assert any("team_ops.default: skill_ids drift" in error for error in result.errors)
+    assert not any("allowed_capabilities drift" in error for error in result.errors)
+
+
 def test_assistant_profile_registry_detects_forbidden_floor_drift(tmp_path) -> None:
     _copy_profiles(tmp_path)
     team_path = tmp_path / "team_ops.default.yaml"
