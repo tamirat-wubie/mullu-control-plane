@@ -193,6 +193,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 163. Chaos rehearsal execution reports are public contracts when they bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime resilience or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live chaos execution, staging targets, production targets, runtime disruption, network fault injection, service restarts, data corruption, event-chain mutation, connector calls, secret access, filesystem writes, rollback execution, raw runtime log retention, raw secret retention, terminal closure, and success claims.
 164. Universal symbol kernel records are public contracts when they bind platform objects into symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority-denial, and evidence-reference fields while denying connector access, filesystem writes, runtime dispatch, state mutation, terminal closure, product readiness, customer readiness, public SaaS readiness, and success claims.
 165. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
+166. Personal-assistant foundation closure packets are public contracts when they bind the checked-in foundation evidence, readiness index, coherence ledger, authority coverage, capsule alignment, policy matrix, and runtime boundary receipts into digest-only replay evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, customer-readiness claims, live Nested Mind activation, and terminal-closure authority.
 ## Verification
 
 Run:
@@ -204,7 +205,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 348 schemas
+protocol manifest ok: 349 schemas
 ```
 
 STATUS:
