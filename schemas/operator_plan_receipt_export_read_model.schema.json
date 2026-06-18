@@ -16,6 +16,9 @@
     "missing_step_command_ids",
     "receipt_group_count",
     "receipt_count",
+    "receipt_type_counts",
+    "receipt_status_counts",
+    "evidence_ref_count",
     "step_receipt_groups",
     "raw_message_exposed",
     "execution_allowed",
@@ -74,6 +77,16 @@
       "type": "integer",
       "minimum": 0
     },
+    "receipt_type_counts": {
+      "$ref": "#/$defs/counts_by_key"
+    },
+    "receipt_status_counts": {
+      "$ref": "#/$defs/counts_by_key"
+    },
+    "evidence_ref_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "step_receipt_groups": {
       "type": "array",
       "items": {
@@ -98,6 +111,13 @@
     }
   },
   "$defs": {
+    "counts_by_key": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
     "plan_evidence_bundle": {
       "type": "object",
       "additionalProperties": false,

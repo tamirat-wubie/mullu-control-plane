@@ -1423,12 +1423,21 @@ class TestWebChatWebhook:
         assert receipt_export["step_command_count"] == 2
         assert receipt_export["receipt_group_count"] == 2
         assert receipt_export["receipt_count"] >= 2
+        assert sum(receipt_export["receipt_type_counts"].values()) == receipt_export[
+            "receipt_count"
+        ]
+        assert sum(receipt_export["receipt_status_counts"].values()) == receipt_export[
+            "receipt_count"
+        ]
+        assert receipt_export["receipt_type_counts"]["plan_step_receipt"] == 2
+        assert receipt_export["evidence_ref_count"] >= receipt_export["receipt_count"]
         assert receipt_export["missing_step_command_ids"] == []
         assert receipt_export["raw_message_exposed"] is False
         assert receipt_export["execution_allowed"] is False
         assert receipt_export["write_allowed"] is False
         assert receipt_export_html_resp.status_code == 200
         assert "Mullu Plan Receipt Export" in receipt_export_html_resp.text
+        assert "Evidence Refs" in receipt_export_html_resp.text
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
 

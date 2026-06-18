@@ -842,6 +842,16 @@ def build_operator_plan_receipt_export_read_model(
                 continue
             step_receipt_groups.append(_command_receipt_group(command_ledger, command))
     receipt_count = sum(int(group.get("receipt_count", 0)) for group in step_receipt_groups)
+    receipt_type_counts = _receipt_export_field_counts(
+        step_receipt_groups,
+        field_name="receipt_type",
+        missing_value="unknown_receipt_type",
+    )
+    receipt_status_counts = _receipt_export_field_counts(
+        step_receipt_groups,
+        field_name="status",
+        missing_value="unknown_status",
+    )
     return {
         "schema_ref": PLAN_RECEIPT_EXPORT_SCHEMA_REF,
         "plan_id": normalized_plan_id,
@@ -853,6 +863,9 @@ def build_operator_plan_receipt_export_read_model(
         "missing_step_command_ids": missing_step_command_ids,
         "receipt_group_count": len(step_receipt_groups),
         "receipt_count": receipt_count,
+        "receipt_type_counts": receipt_type_counts,
+        "receipt_status_counts": receipt_status_counts,
+        "evidence_ref_count": _receipt_export_evidence_ref_count(step_receipt_groups),
         "step_receipt_groups": step_receipt_groups,
         "raw_message_exposed": False,
         "execution_allowed": False,
@@ -870,6 +883,10 @@ def render_operator_plan_receipt_export_html(read_model: Mapping[str, Any]) -> s
         empty_label="No step command receipts exported",
     )
     plan_id = str(read_model.get("plan_id", "")).strip()
+    receipt_type_counts = read_model.get("receipt_type_counts")
+    receipt_type_count = (
+        len(receipt_type_counts) if isinstance(receipt_type_counts, Mapping) else 0
+    )
     metrics = (
         ("Plan", plan_id),
         ("Status", read_model.get("status", "")),
@@ -877,6 +894,8 @@ def render_operator_plan_receipt_export_html(read_model: Mapping[str, Any]) -> s
         ("Step Commands", read_model.get("step_command_count", 0)),
         ("Receipt Groups", read_model.get("receipt_group_count", 0)),
         ("Receipts", read_model.get("receipt_count", 0)),
+        ("Receipt Types", receipt_type_count),
+        ("Evidence Refs", read_model.get("evidence_ref_count", 0)),
         ("Raw Exposed", read_model.get("raw_message_exposed", False)),
     )
     href = _plan_receipt_export_href(plan_id) if plan_id else "/operator/plan-review"
@@ -1991,6 +2010,28 @@ def _receipt_types(receipts: list[dict[str, Any]]) -> list[str]:
         ordered.append(receipt_type)
         seen.add(receipt_type)
     return ordered
+
+
+def _receipt_export_field_counts(
+    receipt_groups: list[dict[str, Any]],
+    *,
+    field_name: str,
+    missing_value: str,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for group in receipt_groups:
+        for receipt in _mapping_list(group.get("receipts")):
+            value = str(receipt.get(field_name, "")).strip() or missing_value
+            counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _receipt_export_evidence_ref_count(receipt_groups: list[dict[str, Any]]) -> int:
+    count = 0
+    for group in receipt_groups:
+        receipts = [dict(receipt) for receipt in _mapping_list(group.get("receipts"))]
+        count += _evidence_ref_count(receipts)
+    return count
 
 
 def _receipt_matches_filters(
