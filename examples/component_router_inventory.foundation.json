@@ -789,11 +789,11 @@
       ],
       "component_lane": "governance_core",
       "declared_route_count": 1,
-      "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
+      "notes": "Component symbol read model is a read-only UniversalSymbol projection; route family classification does not grant execution authority.",
       "sample_routes": [
-        "/api/v1/components/simulate"
+        "/api/v1/components/symbols"
       ],
-      "surface_id": "component_request_simulator"
+      "surface_id": "component_symbol_read_model"
     },
     {
       "binding_level": "selected_component_bound",
@@ -816,9 +816,9 @@
       "declared_route_count": 1,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
-        "/api/v1/components/symbols"
+        "/api/v1/components/simulate"
       ],
-      "surface_id": "component_symbol_read_model"
+      "surface_id": "component_request_simulator"
     },
     {
       "binding_level": "platform_family_classified",
