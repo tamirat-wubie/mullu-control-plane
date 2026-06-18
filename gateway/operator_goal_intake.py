@@ -302,6 +302,9 @@ def _preview_panel(read_model: Mapping[str, Any], preview: Mapping[str, Any]) ->
     budget = preview.get("budget")
     if not isinstance(budget, Mapping):
         budget = {}
+    approval_strength = preview.get("approval_strength")
+    if not isinstance(approval_strength, Mapping):
+        approval_strength = {}
     steps = _mapping_list(preview.get("steps"))
     tools = _mapping_list(preview.get("tools"))
     metrics = (
@@ -310,6 +313,12 @@ def _preview_panel(read_model: Mapping[str, Any], preview: Mapping[str, Any]) ->
         ("Risk", preview.get("risk_tier", "")),
         ("Steps", preview.get("step_count", 0)),
         ("Approval Required", preview.get("approval_required", False)),
+        ("Approval Policy", approval_strength.get("policy_ref", "")),
+        ("Required Strength", approval_strength.get("required_strength", "")),
+        (
+            "Cross-Channel Binding",
+            approval_strength.get("cross_channel_binding_required", False),
+        ),
         ("Execution Allowed", preview.get("execution_allowed", False)),
         ("Budget Gate", budget.get("budget_gate", "")),
         ("Budget Required", budget.get("budget_required", False)),

@@ -247,6 +247,21 @@ def test_plan_preview_redacts_goal_and_params_and_matches_schema() -> None:
         "enterprise.notification_send",
     ]
     assert payload["steps"][1]["depends_on"] == ["step-1"]
+    assert payload["approval_strength"] == {
+        "policy_ref": "channel_approval_strength_policy.foundation",
+        "risk_tier": "medium",
+        "approval_required": True,
+        "required_strength": "request_bound",
+        "request_channel": "operator_goal_intake",
+        "approval_surface": "operator_goal_intake",
+        "cross_channel_binding_required": False,
+        "required_controls": [
+            "preview_id_binding_required",
+            "request_id_binding_required",
+            "actor_approval_authority_required",
+        ],
+        "execution_allowed": False,
+    }
     assert payload["budget"] == {
         "budget_required": True,
         "budget_gate": "budget_reserved",

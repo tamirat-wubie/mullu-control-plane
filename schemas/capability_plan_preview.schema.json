@@ -15,6 +15,7 @@
     "risk_tier",
     "approval_required",
     "evidence_required",
+    "approval_strength",
     "budget",
     "tools",
     "execution_allowed",
@@ -102,6 +103,60 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "approval_strength": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_ref",
+        "risk_tier",
+        "approval_required",
+        "required_strength",
+        "request_channel",
+        "approval_surface",
+        "cross_channel_binding_required",
+        "required_controls",
+        "execution_allowed"
+      ],
+      "properties": {
+        "policy_ref": {
+          "type": "string",
+          "const": "channel_approval_strength_policy.foundation"
+        },
+        "risk_tier": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "required_strength": {
+          "type": "string",
+          "enum": ["contextual", "request_bound", "operator_bound"]
+        },
+        "request_channel": {
+          "type": "string",
+          "const": "operator_goal_intake"
+        },
+        "approval_surface": {
+          "type": "string",
+          "const": "operator_goal_intake"
+        },
+        "cross_channel_binding_required": {
+          "type": "boolean"
+        },
+        "required_controls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "execution_allowed": {
+          "type": "boolean",
+          "const": false
+        }
       }
     },
     "budget": {

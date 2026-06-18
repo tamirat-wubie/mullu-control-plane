@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
+from gateway.channel_approval_strength import ApprovalRisk, required_approval_strength
 from gateway.command_spine import (
     CapabilityPassport,
     canonical_hash,
@@ -28,6 +29,7 @@ from gateway.intent_resolver import CapabilityIntentResolver
 
 
 _RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
+_APPROVAL_STRENGTH_POLICY_REF = "channel_approval_strength_policy.foundation"
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +92,7 @@ class CapabilityPlanPreview:
     risk_tier: str
     approval_required: bool
     evidence_required: tuple[str, ...]
+    approval_strength: dict[str, Any]
     budget: dict[str, Any]
     tools: tuple[dict[str, Any], ...]
     execution_allowed: bool
@@ -110,6 +113,7 @@ class CapabilityPlanPreview:
             "risk_tier": self.risk_tier,
             "approval_required": self.approval_required,
             "evidence_required": list(self.evidence_required),
+            "approval_strength": dict(self.approval_strength),
             "budget": dict(self.budget),
             "tools": [dict(tool) for tool in self.tools],
             "execution_allowed": self.execution_allowed,
@@ -277,6 +281,7 @@ def preview_for_plan(
     )
     goal_hash = canonical_hash({"goal": plan.goal})
     step_contracts = _preview_step_contracts(plan, capability_passport_loader)
+    approval_strength = _preview_approval_strength(plan.risk_tier, plan.approval_required)
     budget = _preview_budget(step_contracts)
     tools = _preview_tools(step_contracts)
     preview_payload = {
@@ -285,6 +290,7 @@ def preview_for_plan(
         "steps": [step.to_dict() for step in steps],
         "risk_tier": plan.risk_tier,
         "approval_required": plan.approval_required,
+        "approval_strength": approval_strength,
         "budget": budget,
         "tools": list(tools),
         "created_at": created_at,
@@ -300,6 +306,7 @@ def preview_for_plan(
         risk_tier=plan.risk_tier,
         approval_required=plan.approval_required,
         evidence_required=tuple(plan.evidence_required),
+        approval_strength=approval_strength,
         budget=budget,
         tools=tools,
         execution_allowed=False,
@@ -459,6 +466,36 @@ def _preview_budget(step_contracts: tuple[dict[str, Any], ...]) -> dict[str, Any
         "required_by_steps": list(budget_step_ids),
         "not_required_by_steps": list(not_required_step_ids),
         "execution_spend_allowed": False,
+    }
+
+
+def _preview_approval_strength(
+    risk_tier: str,
+    approval_required: bool,
+) -> dict[str, Any]:
+    normalized_risk = risk_tier if risk_tier in _RISK_ORDER else "high"
+    required_strength = required_approval_strength(ApprovalRisk(normalized_risk)).value
+    required_controls: list[str] = []
+    if approval_required:
+        required_controls.extend(
+            (
+                "preview_id_binding_required",
+                "request_id_binding_required",
+                "actor_approval_authority_required",
+            )
+        )
+    if required_strength == "operator_bound":
+        required_controls.append("operator_bound_approval_required")
+    return {
+        "policy_ref": _APPROVAL_STRENGTH_POLICY_REF,
+        "risk_tier": normalized_risk,
+        "approval_required": approval_required,
+        "required_strength": required_strength,
+        "request_channel": "operator_goal_intake",
+        "approval_surface": "operator_goal_intake",
+        "cross_channel_binding_required": False,
+        "required_controls": required_controls,
+        "execution_allowed": False,
     }
 
 

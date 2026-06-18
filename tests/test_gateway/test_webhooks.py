@@ -5158,6 +5158,9 @@ class TestGatewayStatus:
         assert "enterprise.notification_send" in preview_resp.text
         assert "external_webhook" in preview_resp.text
         assert "Budget Required" in preview_resp.text
+        assert "Approval Policy" in preview_resp.text
+        assert "channel_approval_strength_policy.foundation" in preview_resp.text
+        assert "request_bound" in preview_resp.text
         assert "Execution Allowed" in preview_resp.text
         assert "/operator/goal-intake/approve" in preview_resp.text
         assert "/operator/goal-intake/deny" in preview_resp.text
