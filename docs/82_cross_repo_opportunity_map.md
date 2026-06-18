@@ -39,6 +39,8 @@ The control plane already absorbed several high-fit ideas:
 | Research source disagreement preservation | `ResearchSourceConflictMap` | Implemented |
 | Capture policy and trusted reality evidence packet | `TrustedCaptureEvidencePacket` | Implemented |
 | SCCML trace adapter boundary | `SccmlTraceAdapterWitness` | Implemented |
+| Chaos rehearsal dry-run evidence | `ChaosRehearsalExecutionReport` | Implemented |
+| Invariant fuzz execution evidence | `InvariantFuzzExecutionReport` | Implemented |
 
 The next borrowed work should therefore avoid duplicating these surfaces and instead close adjacent gaps.
 
@@ -48,7 +50,7 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
 | --- | --- | --- | --- | --- |
 | 1 | `external/nested-mind-platform` v25 | Connector orchestration and action-promotion gate | The control plane has connector descriptors and UAO, but still needs a promotion gate that proves a connector action moved from plan-only to admissible authority without bypassing receipts. | Add `ConnectorActionPromotionGate` schema, example, validator, proof-matrix row, and docs. Keep `promotion_allowed=false` until all live evidence exists. |
 | 2 | `external/nested-mind-platform` v17-v20 | Readiness gate, waiver proposal, waiver certificate, waiver application | Release, deployment, and runtime promotion already use readiness claims; waiver handling needs a typed review queue instead of scattered accepted-risk notes. | Add a `ReadinessWaiverReviewPacket` contract with operator approvals, expiry, compensating controls, and no deployment authority. |
-| 3 | `external/nested-mind-platform` v18-v19 | Chaos rehearsal and invariant fuzz execution reports | Control-plane validators prove static contracts well, but runtime resilience claims need rehearsal evidence before production exposure. | Add dry-run `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport` contracts that record scenario refs, expected invariant, result, and rollback obligations. |
+| 3 | `external/nested-mind-platform` v18-v19 | Chaos rehearsal and invariant fuzz execution reports | Control-plane validators prove static contracts well, but runtime resilience claims need rehearsal evidence before production exposure. | Implemented as dry-run `ChaosRehearsalExecutionReport` and `InvariantFuzzExecutionReport`; future live use remains blocked pending staging boundary, rollback, incident, and operator approval witnesses. |
 | 4 | `external/nested-mind-platform` v14-v16 | SQLite-backed job receipt and distributed lease execution ledger | Scheduler-worker proof threads now exist, but there is no operator read model summarizing lease, worker, failure, and runtime receipt chain status. | Add `WorkerReceiptLedgerReadModel` that projects existing receipts without executing jobs or reading a live database. |
 | 5 | `maf/rust` | MAF receipt parity boundary | The Rust workspace is organized into kernel, capability, event, governance, orchestration, ops, learning, and truth-kernel crates, but Python control-plane claims need an explicit parity witness before runtime binding. | Add `MafReceiptParityWitness` contract that maps Python schemas to Rust crate surfaces and records gaps. No PyO3, subprocess, or CLI authority. |
 | 6 | `msic-sdk`, `tatoken-kernel`, `tarc-core` | Mfidel substrate conformance witness | Mfidel atomicity is a hard invariant, but SDK/kernel drift can still occur across TypeScript, Python, and Rust implementations. | Add `MfidelSubstrateConformanceReceipt` with substrate digest, row/column bounds, no-normalization proof refs, and cross-runtime fixture refs. |
@@ -73,9 +75,9 @@ The next borrowed work should therefore avoid duplicating these surfaces and ins
    - Highest leverage because it closes the gap between connector descriptors, UAO, and future live action execution.
    - Must remain plan-only in Foundation Mode.
 
-2. `ChaosRehearsalExecutionReport`
-   - Records dry-run resilience evidence before any production chaos or invariant-fuzz claim.
-   - Should remain scenario-only with rollback obligations and no runtime disruption authority.
+2. `MafReceiptParityWitness`
+   - Records Python schema to Rust crate receipt-surface parity before any runtime binding claim.
+   - Should remain digest-only with subprocess, PyO3, CLI execution, and external effect authority denied.
 
 ## 6. Project Discipline Mesh Findings
 

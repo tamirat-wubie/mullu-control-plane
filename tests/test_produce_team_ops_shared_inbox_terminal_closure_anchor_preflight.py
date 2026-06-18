@@ -6,7 +6,7 @@ Governance scope: TeamOps terminal closure anchor readiness, artifact
 projection, operator authority, secret-presence checks, and no-effect metadata.
 Dependencies: scripts.produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.
 Invariants:
-  - Ready preflight binds a signed TeamOps terminal closure evidence bundle.
+  - Ready preflight binds a signed TeamOps terminal closure evidence bundle and provider witness.
   - Missing operator authority or anchor secret blocks readiness.
   - Preflight never serializes secret values or claims provider effects.
 """
@@ -60,9 +60,24 @@ def test_team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle(tmp_pat
     assert preflight.ready is True
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["proof_state"] == "Pass"
-    assert payload["artifact_count"] >= 4
-    assert {"command", "execution_receipt", "verification_result", "terminal_certificate"}.issubset(
+    assert payload["provider_observation_receipt_id"] == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert payload["provider_observation_receipt_valid"] is True
+    assert payload["artifact_count"] >= 5
+    assert {
+        "command",
+        "execution_receipt",
+        "provider_observation",
+        "verification_result",
+        "terminal_certificate",
+    }.issubset(
         {artifact["artifact_type"] for artifact in payload["artifacts"] if artifact["required"]}
+    )
+    assert any(
+        artifact["artifact_type"] == "provider_observation"
+        and artifact["artifact_id"] == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+        for artifact in payload["artifacts"]
     )
     assert payload["metadata"]["anchor_receipt_created"] is False
     assert payload["metadata"]["remote_submit_executed"] is False

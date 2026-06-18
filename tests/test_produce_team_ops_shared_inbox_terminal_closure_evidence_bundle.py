@@ -85,8 +85,21 @@ def test_team_ops_terminal_closure_evidence_bundle_signs_ready_certificate(tmp_p
     assert bundle["external_anchor_status"] == "not_requested"
     assert bundle["external_anchor_ref"] == ""
     assert bundle["metadata"]["team_ops_terminal_closure_bundle"] is True
+    assert (
+        bundle["metadata"]["provider_observation_receipt_id"]
+        == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert (
+        bundle["metadata"]["provider_observation_receipt_ref"]
+        == ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    )
+    assert bundle["metadata"]["provider_observation_receipt_valid"] is True
     assert bundle["metadata"]["provider_call_performed_by_producer"] is False
     assert bundle["metadata"]["production_ready_claimed"] is False
+    assert (
+        "proof://teamops/provider-observation/teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+        in bundle["evidence_refs"]
+    )
     assert all(ref.startswith("proof://") for ref in bundle["evidence_refs"])
     assert len(bundle["evidence_refs"]) >= 9
     assert SIGNING_SECRET not in json.dumps(bundle, sort_keys=True)
@@ -154,6 +167,7 @@ def test_team_ops_terminal_closure_evidence_bundle_cli_writes_bundle(tmp_path: P
     assert exit_code == 0
     assert file_payload["bundle_id"] == stdout_payload["bundle_id"]
     assert file_payload["signature"].startswith("hmac-sha256:")
+    assert file_payload["metadata"]["provider_observation_receipt_valid"] is True
     assert file_payload["metadata"]["external_anchor_requested_by_producer"] is False
     assert captured.err == ""
 

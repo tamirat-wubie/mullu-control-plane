@@ -7356,6 +7356,126 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "chaos_rehearsal_execution_report",
+            [
+                "ChaosRehearsalExecutionReport",
+                "validate_chaos_rehearsal_execution_report",
+                "chaos_rehearsal_execution_report.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/chaos_rehearsal_execution_report.schema.json",
+                "examples/chaos_rehearsal_execution_report.foundation.json",
+                "scripts/validate_chaos_rehearsal_execution_report.py",
+                "tests/test_validate_chaos_rehearsal_execution_report.py",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/91_chaos_rehearsal_execution_report_contract.md",
+            ],
+            "Chaos rehearsal execution reports bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime resilience or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+            [
+                "chaos_rehearsal_execution_report_schema_valid",
+                "chaos_rehearsal_execution_report_blocks_runtime_disruption",
+                "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs",
+                "chaos_rehearsal_execution_report_rejects_raw_runtime_retention",
+                "chaos_rehearsal_execution_report_rejects_result_count_drift",
+                "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift",
+                "chaos_rehearsal_execution_report_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "chaos_rehearsal_execution_report_schema_valid": [
+                    "chaos_rehearsal_execution_report_passes"
+                ],
+                "chaos_rehearsal_execution_report_blocks_runtime_disruption": [
+                    "chaos_rehearsal_execution_report_passes",
+                    "chaos_rehearsal_execution_report_rejects_authority_drift",
+                    "chaos_rehearsal_execution_report_rejects_live_scope_drift",
+                ],
+                "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs": [
+                    "chaos_rehearsal_execution_report_rejects_missing_scenario_evidence_and_rollback_refs"
+                ],
+                "chaos_rehearsal_execution_report_rejects_raw_runtime_retention": [
+                    "chaos_rehearsal_execution_report_rejects_raw_runtime_log_retention"
+                ],
+                "chaos_rehearsal_execution_report_rejects_result_count_drift": [
+                    "chaos_rehearsal_execution_report_rejects_result_and_summary_count_drift"
+                ],
+                "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift": [
+                    "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+                ],
+                "chaos_rehearsal_execution_report_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_chaos_rehearsal_execution_report"
+                ],
+            },
+        ),
+        _surface(
+            "invariant_fuzz_execution_report",
+            [
+                "InvariantFuzzExecutionReport",
+                "validate_invariant_fuzz_execution_report",
+                "invariant_fuzz_execution_report.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/invariant_fuzz_execution_report.schema.json",
+                "examples/invariant_fuzz_execution_report.foundation.json",
+                "scripts/validate_invariant_fuzz_execution_report.py",
+                "tests/test_validate_invariant_fuzz_execution_report.py",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/92_invariant_fuzz_execution_report_contract.md",
+            ],
+            "Invariant fuzz execution reports bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime-hardening or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+            [
+                "invariant_fuzz_execution_report_schema_valid",
+                "invariant_fuzz_execution_report_blocks_canonical_mutation",
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles",
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention",
+                "invariant_fuzz_execution_report_rejects_result_count_drift",
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift",
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "invariant_fuzz_execution_report_schema_valid": [
+                    "invariant_fuzz_execution_report_passes"
+                ],
+                "invariant_fuzz_execution_report_blocks_canonical_mutation": [
+                    "invariant_fuzz_execution_report_passes",
+                    "invariant_fuzz_execution_report_rejects_authority_drift",
+                    "invariant_fuzz_execution_report_rejects_live_scope_drift",
+                ],
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles": [
+                    "invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention": [
+                    "invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_result_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+                ],
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+                ],
+            },
+        ),
+        _surface(
             "research_source_conflict_map",
             [
                 "ResearchSourceConflictMap",
@@ -11582,6 +11702,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_sccml_trace_adapter_witness_contract",
             "surfaces": ["sccml_trace_adapter_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_chaos_rehearsal_execution_report_contract",
+            "surfaces": ["chaos_rehearsal_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_invariant_fuzz_execution_report_contract",
+            "surfaces": ["invariant_fuzz_execution_report"],
             "status": "closed",
         },
         {

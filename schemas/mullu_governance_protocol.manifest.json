@@ -47,6 +47,24 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-task-receipt-emitter-dry-run",
+      "path": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-task-receipt-emitter-dry-run:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-github-pr-admission-preflight",
+      "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-admission-preflight:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-github-pr-operator-approval-request",
+      "path": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "component-registry",
       "path": "schemas/component_registry.schema.json",
       "urn": "urn:mullusi:schema:component-registry:1",
@@ -681,6 +699,18 @@
       "path": "schemas/sccml_trace_adapter_witness.schema.json",
       "urn": "urn:mullusi:schema:sccml-trace-adapter-witness:1",
       "surface": "kernel"
+    },
+    {
+      "schema_id": "chaos-rehearsal-execution-report",
+      "path": "schemas/chaos_rehearsal_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
+      "surface": "resilience"
+    },
+    {
+      "schema_id": "invariant-fuzz-execution-report",
+      "path": "schemas/invariant_fuzz_execution_report.schema.json",
+      "urn": "urn:mullusi:schema:invariant-fuzz-execution-report:1",
+      "surface": "resilience"
     },
     {
       "schema_id": "research-source-conflict-map",
@@ -1631,6 +1661,12 @@
       "surface": "construct"
     },
     {
+      "schema_id": "universal-symbol",
+      "path": "schemas/universal_symbol.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",
@@ -1916,6 +1952,24 @@
       "schema_id": "personal-assistant-authority-coverage-receipt",
       "path": "schemas/personal_assistant_authority_coverage_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-authority-coverage-receipt:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-capsule-alignment-receipt",
+      "path": "schemas/personal_assistant_capsule_alignment_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-capsule-alignment-receipt:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-policy-matrix-receipt",
+      "path": "schemas/personal_assistant_policy_matrix_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-policy-matrix-receipt:1",
+      "surface": "assistant"
+    },
+    {
+      "schema_id": "personal-assistant-runtime-boundary-receipt",
+      "path": "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-runtime-boundary-receipt:1",
       "surface": "assistant"
     },
     {

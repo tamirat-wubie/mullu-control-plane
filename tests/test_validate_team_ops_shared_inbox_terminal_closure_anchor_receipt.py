@@ -7,7 +7,7 @@ signature verification, and drift rejection.
 Dependencies: scripts.validate_team_ops_shared_inbox_terminal_closure_anchor_receipt.
 Invariants:
   - Validation accepts only ready local pending anchor receipts.
-  - Validation rejects signature drift, effect claims, and source drift.
+  - Validation rejects signature drift, effect claims, source drift, and missing provider artifacts.
   - Validation emits a bounded receipt for CLI use.
 """
 
@@ -57,7 +57,11 @@ def test_team_ops_terminal_closure_anchor_receipt_validation_accepts_ready_recei
     assert validation.ready is True
     assert validation.errors == ()
     assert validation.anchor_receipt_id.startswith("trust-anchor-receipt-")
-    assert validation.artifact_count >= 4
+    assert validation.artifact_count >= 5
+    assert validation.provider_observation_receipt_id == (
+        "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert validation.provider_observation_receipt_valid is True
     assert validation.next_action.startswith("operator may run")
 
 
@@ -108,6 +112,31 @@ def test_team_ops_terminal_closure_anchor_receipt_validation_rejects_artifact_dr
     assert "artifacts must match deterministic source-bundle projection" in validation.errors
     assert "artifacts must match TeamOps anchor preflight" in validation.errors
     assert "trust-ledger anchor receipt must verify: artifact_root_hash_mismatch" in validation.errors
+
+
+def test_team_ops_terminal_closure_anchor_receipt_validation_rejects_provider_identity_drift(
+    tmp_path: Path,
+) -> None:
+    bundle_path, certificate_path, review_path, preflight_path, receipt_path = _write_ready_receipt(tmp_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["provider_observation_receipt_id"] = "teamops-shared-inbox-provider-observation-receipt-bbbbbbbbbbbbbbbb"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_terminal_closure_anchor_receipt(
+        receipt_path=receipt_path,
+        preflight_path=preflight_path,
+        bundle_path=bundle_path,
+        certificate_path=certificate_path,
+        source_review_packet_path=review_path,
+        bundle_signing_secret=SIGNING_SECRET,
+        anchor_signing_secret=ANCHOR_SECRET,
+        require_ready=True,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "provider_observation_receipt_id must match TeamOps anchor preflight" in validation.errors
+    assert "provider_observation_receipt_id must match source TeamOps evidence bundle metadata" in validation.errors
 
 
 def test_team_ops_terminal_closure_anchor_receipt_validation_rejects_effect_claim(

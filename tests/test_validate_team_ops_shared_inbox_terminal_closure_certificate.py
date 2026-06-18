@@ -47,6 +47,11 @@ def test_team_ops_terminal_closure_certificate_validator_accepts_ready_certifica
     assert validation.disposition == "committed"
     assert validation.certificate_id == "teamops-shared-inbox-terminal-closure-certificate-aaaaaaaaaaaaaaaa"
     assert validation.source_review_packet_id == "teamops-shared-inbox-terminal-closure-review-packet-aaaaaaaaaaaaaaaa"
+    assert (
+        validation.provider_observation_receipt_id
+        == "teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa"
+    )
+    assert validation.provider_observation_receipt_valid is True
     assert validation.evidence_ref_count >= 9
     assert validation.next_action == "bind TeamOps terminal closure certificate into signed evidence bundle"
 
@@ -140,6 +145,39 @@ def test_team_ops_terminal_closure_certificate_validator_rejects_production_clai
     assert validation.valid is False
     assert validation.ready is False
     assert "metadata.production_ready_claimed must be false" in validation.errors
+
+
+def test_team_ops_terminal_closure_certificate_validator_rejects_missing_provider_witness(tmp_path: Path) -> None:
+    review_path = tmp_path / "team_ops_shared_inbox_terminal_closure_review_packet.json"
+    certificate_path = tmp_path / "team_ops_shared_inbox_terminal_closure_certificate.json"
+    review_path.write_text(json.dumps(_ready_review_packet()), encoding="utf-8")
+    certificate = _ready_certificate()
+    certificate["metadata"]["provider_observation_receipt_id"] = ""
+    certificate["metadata"]["provider_observation_receipt_ref"] = ""
+    certificate["metadata"]["provider_observation_receipt_valid"] = False
+    certificate["graph_refs"] = [
+        ref for ref in certificate["graph_refs"] if not str(ref).startswith("provider_observation:")
+    ]
+    certificate["evidence_refs"] = [
+        ref
+        for ref in certificate["evidence_refs"]
+        if ref != ".change_assurance/team_ops_shared_inbox_provider_observation_receipt.json"
+    ]
+    certificate_path.write_text(json.dumps(certificate), encoding="utf-8")
+
+    validation = validate_team_ops_shared_inbox_terminal_closure_certificate(
+        certificate_path=certificate_path,
+        source_review_packet_path=review_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert "metadata.provider_observation_receipt_id must bind provider observation receipt" in validation.errors
+    assert "metadata.provider_observation_receipt_ref must be non-empty" in validation.errors
+    assert "metadata.provider_observation_receipt_valid must be true" in validation.errors
+    assert "graph_refs must include provider observation receipt ref" in validation.errors
+    assert "evidence_refs must include provider observation receipt ref" in validation.errors
 
 
 def test_team_ops_terminal_closure_certificate_validator_rejects_secret_marker(tmp_path: Path) -> None:
@@ -253,6 +291,7 @@ def _ready_certificate() -> dict[str, object]:
             "review_packet:teamops-shared-inbox-terminal-closure-review-packet-aaaaaaaaaaaaaaaa",
             "send_execution:send-execution:aaaaaaaaaaaaaaaa",
             "dispatch_receipt:dispatch-receipt:aaaaaaaaaaaaaaaa",
+            "provider_observation:teamops-shared-inbox-provider-observation-receipt-aaaaaaaaaaaaaaaa",
             "provider_message:provider-message:aaaaaaaaaaaaaaaa",
             "first_observation:sent-observation:first",
             "second_observation:sent-observation:second",

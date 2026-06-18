@@ -10,6 +10,7 @@ Dependencies: gateway.trust_ledger, schemas/trust_ledger_bundle.schema.json,
 and scripts.validate_team_ops_shared_inbox_terminal_closure_certificate.
 Invariants:
   - Only ready TeamOps terminal closure certificates can produce bundles.
+  - Provider-observation receipt identity is preserved from the certificate.
   - Bundle evidence refs use the canonical proof:// scheme.
   - The signing secret is required but never serialized.
   - The bundle does not request external anchoring or claim production readiness.
@@ -80,6 +81,7 @@ def produce_team_ops_shared_inbox_terminal_closure_evidence_bundle(
         raise RuntimeError("TeamOps terminal closure certificate not ready for evidence bundle signing")
     certificate = _load_json_object(certificate_path, "TeamOps terminal closure certificate")
     _assert_redacted(certificate)
+    certificate_metadata = certificate.get("metadata", {}) if isinstance(certificate.get("metadata"), dict) else {}
     certificate_hash = _stable_hash(certificate)
     draft = TrustLedgerBundleDraft(
         tenant_id=tenant_id,
@@ -98,8 +100,13 @@ def produce_team_ops_shared_inbox_terminal_closure_evidence_bundle(
             "source_certificate_path": _artifact_ref(certificate_path),
             "source_review_packet_path": _artifact_ref(source_review_packet_path),
             "source_certificate_hash": certificate_hash,
-            "source_review_packet_id": str(certificate.get("metadata", {}).get("source_review_packet_id", "")),
-            "source_review_packet_hash": str(certificate.get("metadata", {}).get("source_review_packet_hash", "")),
+            "source_review_packet_id": str(certificate_metadata.get("source_review_packet_id", "")),
+            "source_review_packet_hash": str(certificate_metadata.get("source_review_packet_hash", "")),
+            "provider_observation_receipt_ref": str(certificate_metadata.get("provider_observation_receipt_ref", "")),
+            "provider_observation_receipt_id": str(certificate_metadata.get("provider_observation_receipt_id", "")),
+            "provider_observation_receipt_valid": (
+                certificate_metadata.get("provider_observation_receipt_valid") is True
+            ),
             "bundle_schema_id": SCHEMA_ID,
             "external_anchor_requested_by_producer": False,
             "external_message_sent_by_producer": False,
@@ -144,6 +151,7 @@ def _bundle_evidence_refs(certificate: Mapping[str, Any]) -> list[str]:
         _proof_ref("effect-reconciliation", str(certificate.get("effect_reconciliation_id", ""))),
         _proof_ref("terminal-review", str(metadata.get("source_review_packet_id", ""))),
         _proof_ref("sent-message-observation", str(metadata.get("source_sent_message_observation_receipt_id", ""))),
+        _proof_ref("provider-observation", str(metadata.get("provider_observation_receipt_id", ""))),
     ]
     for ref in certificate.get("evidence_refs", ()):
         if isinstance(ref, str) and ref.strip():

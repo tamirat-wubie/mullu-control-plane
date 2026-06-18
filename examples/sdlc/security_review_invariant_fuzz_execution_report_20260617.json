@@ -1,0 +1,101 @@
+{
+  "security_review_id": "SEC-invariant-fuzz-execution-report-20260617",
+  "change_id": "invariant-fuzz-execution-report-20260617",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Invariant fuzz evidence can accidentally become live runtime fuzzing if deterministic case-bank evidence, staging or production target refs, canonical state mutation authority, runtime lawbook migration, rollback execution, and terminal closure are conflated. The main risks are touching a live runtime target, mutating canonical state, leaking a secret probe through public projection, retaining raw case payloads or secrets, calling a connector during validation, bypassing UAO, and claiming runtime-hardening closure without rollback or incident handoff evidence. The mitigation is a dry-run-only schema and validator that reject live target drift, canonical mutation authority, projection leak drift, raw retention, missing oracle refs, and count drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "live runtime execution, staging or production targeting, canonical mutation, event-chain mutation, runtime lawbook migration, rollback execution, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "live runtime target refs remain denied by none:// dry-run target scope",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_live_scope_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "projection and redaction checks confirm raw case payloads and raw secret material remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Foundation Mode, dry-run-only mode, strict baseline, and projection redaction remain enforced",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_invariant_fuzz_execution_report.py"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms UAO, LifeMeaningJudgment, EffectAssurance, SimulationReceipt, WorkerFailureReceipt, and SDLC recovery refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms case-bank, oracle, result, and summary counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_invariant_fuzz_execution_report.py::test_invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms the proof coverage matrix includes the InvariantFuzzExecutionReport surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_invariant_fuzz_execution_report_blocks_canonical_mutation"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "invariant-fuzz-live-runtime-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode report blocks live runtime execution, staging or production targeting, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, writes, rollback execution, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/invariant_fuzz_execution_report.schema.json",
+        "scripts/validate_invariant_fuzz_execution_report.py",
+        "tests/test_validate_invariant_fuzz_execution_report.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "invariant-fuzz-projection-secret-leak",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode report requires projection leak checking, public projection checked status, zero projection leaks, case-bank digest refs, result-bank digest refs, and raw case payload and raw secret retention denial.",
+      "evidence_refs": [
+        "examples/invariant_fuzz_execution_report.foundation.json",
+        "tests/test_validate_invariant_fuzz_execution_report.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep InvariantFuzzExecutionReport validation non-live and deterministic",
+    "require deterministic seed refs, mutation-class refs, oracle refs, expected accept counts, expected reject counts, and projection probe counts",
+    "require case-bank and result-bank digest refs instead of raw case payloads",
+    "deny staging and production targets in Foundation Mode",
+    "deny canonical mutation, event-chain mutation, runtime lawbook migration, connector calls, writes, rollback execution, terminal closure, and success claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/invariant_fuzz_execution_report.schema.json",
+    "examples/invariant_fuzz_execution_report.foundation.json",
+    "scripts/validate_invariant_fuzz_execution_report.py",
+    "tests/test_validate_invariant_fuzz_execution_report.py",
+    "receipt://sdlc/invariant-fuzz-execution-report/security"
+  ],
+  "uao_ref": "uao://sdlc/invariant-fuzz-execution-report/security",
+  "causal_decision_trace_ref": "trace://sdlc/invariant-fuzz-execution-report/security",
+  "receipt_ref": "receipt://sdlc/invariant-fuzz-execution-report/security"
+}

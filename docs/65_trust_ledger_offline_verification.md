@@ -62,6 +62,11 @@ verification_result
 terminal_certificate
 ```
 
+Domain-specific closure chains may add stricter required artifact classes. TeamOps
+terminal closure anchors require `provider_observation` in addition to the base
+four classes so the provider-observation receipt identity remains part of the
+artifact root.
+
 Optional artifact classes may include:
 
 ```text
