@@ -34,6 +34,7 @@ from gateway.channel_approval_strength import (
 )
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
 from gateway.dedup import MessageDeduplicator
+from gateway.denial_response import DenialResponseKind, compose_policy_denial_response
 from gateway.memory_constitution import (
     GovernedMemoryStore,
     InMemoryGovernedMemoryStore,
@@ -1131,17 +1132,23 @@ class GatewayRouter:
         )
         if not authority.allowed:
             self._record_error("approval_context_denied")
+            denial = compose_policy_denial_response(
+                DenialResponseKind.APPROVAL_CONTEXT_DENIED,
+                request_id=request_id,
+                required_controls=tuple(authority.required_roles),
+            )
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
-                body="You are not allowed to resolve this approval request.",
+                body=denial.body,
                 governed=True,
                 metadata={
                     "error": "approval_context_denied",
                     "authority_reason": authority.reason,
                     "required_roles": authority.required_roles,
                     "resolver_roles": authority.resolver_roles,
+                    **denial.metadata,
                 },
             )
         strength = self._evaluate_approval_strength(
@@ -1153,17 +1160,23 @@ class GatewayRouter:
         strength_metadata = self._approval_strength_metadata(strength)
         if strength.decision == ApprovalStrengthDecision.BLOCK:
             self._record_error("approval_strength_denied")
+            denial = compose_policy_denial_response(
+                DenialResponseKind.APPROVAL_STRENGTH_DENIED,
+                request_id=request_id,
+                required_controls=strength.required_controls,
+            )
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
-                body="This approval response does not satisfy channel approval-strength policy.",
+                body=denial.body,
                 governed=True,
                 metadata={
                     "error": "approval_strength_denied",
                     "authority_reason": "approval_strength_insufficient",
                     "request_id": request_id,
                     **strength_metadata,
+                    **denial.metadata,
                 },
             )
         result = self._approval.resolve(request_id, approved=approved, resolved_by=mapping.identity_id)
@@ -1262,13 +1275,14 @@ class GatewayRouter:
         mapping = self.resolve_tenant(message.channel, message.sender_id)
         if mapping is None:
             self._record_error("tenant_not_found")
+            denial = compose_policy_denial_response(DenialResponseKind.TENANT_NOT_FOUND)
             resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
-                body="I don't recognize your account. Please register first.",
+                body=denial.body,
                 governed=True,
-                metadata={"error": "tenant_not_found"},
+                metadata={"error": "tenant_not_found", **denial.metadata},
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
             return self._observe_gateway_response(
@@ -1373,15 +1387,17 @@ class GatewayRouter:
             if not str(exc).startswith("capability fabric admission rejected:"):
                 raise
             self._record_error("capability_admission_rejected")
+            denial = compose_policy_denial_response(DenialResponseKind.CAPABILITY_ADMISSION_REJECTED)
             resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
-                body="This command requires capability review before execution.",
+                body=denial.body,
                 governed=True,
                 metadata={
                     "error": "capability_admission_rejected",
                     "reason": str(exc),
+                    **denial.metadata,
                 },
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)

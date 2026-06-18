@@ -967,6 +967,8 @@ class TestMessageRouting:
         response = router.handle_message(msg)
         assert "don't recognize" in response.body
         assert response.metadata.get("error") == "tenant_not_found"
+        assert response.metadata["denial_template_id"] == "policy_denial_response.tenant_not_found.v1"
+        assert response.metadata["denial_redacted"] is True
         assert router.summary()["error_reasons"] == {"tenant_not_found": 1}
 
     def test_suspended_tenant_returns_denial(self):
@@ -1140,6 +1142,8 @@ class TestChannelAdapterIntegration:
 
         assert denied.metadata["error"] == "approval_context_denied"
         assert denied.metadata["authority_reason"] == "resolver_lacks_approval_authority"
+        assert denied.metadata["denial_template_id"] == "policy_denial_response.approval_context_denied.v1"
+        assert denied.metadata["denial_internal_reason_exposed"] is False
         assert "not allowed" in denied.body
         assert router.pending_approvals == 1
 
@@ -1223,6 +1227,8 @@ class TestChannelAdapterIntegration:
         assert blocked.metadata["error"] == "approval_strength_denied"
         assert blocked.metadata["approval_strength_decision"] == "block"
         assert "operator_session_missing" in blocked.metadata["approval_strength_reasons"]
+        assert blocked.metadata["denial_template_id"] == "policy_denial_response.approval_strength_denied.v1"
+        assert blocked.metadata["denial_required_controls"] == ("operator_bound_approval_required",)
         assert router.pending_approvals == 1
         assert platform.sessions_opened == 0
 
@@ -1323,6 +1329,8 @@ class TestChannelAdapterIntegration:
 
         assert denied.metadata["error"] == "approval_context_denied"
         assert denied.metadata["authority_reason"] == "self_approval_denied"
+        assert denied.metadata["denial_template_id"] == "policy_denial_response.approval_context_denied.v1"
+        assert denied.metadata["denial_redacted"] is True
         assert router.pending_approvals == 1
 
     def test_high_risk_command_without_effect_prediction_is_denied(self):
