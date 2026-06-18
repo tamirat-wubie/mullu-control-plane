@@ -33,6 +33,7 @@ REPORT_SCHEMA_PATH = Path("schemas/trust_ledger_anchor_verification_report.schem
 
 def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> None:
     paths = _write_export(tmp_path)
+    receipt = json.loads(paths["receipt"].read_text(encoding="utf-8"))
 
     report = verify_anchor_receipt_files(
         bundle_path=paths["bundle"],
@@ -50,7 +51,10 @@ def test_verify_anchor_receipt_files_accepts_valid_export(tmp_path: Path) -> Non
     assert report["bundle_id"].startswith("trust-bundle-")
     assert report["command_id"] == "command-1"
     assert report["terminal_certificate_id"] == "terminal-closure-1"
-    assert report["artifact_count"] == 7
+    assert report["artifact_count"] == 8
+    assert report["artifact_root_hash"] == receipt["artifact_root_hash"]
+    assert report["required_artifact_types"] == receipt["required_artifact_types"]
+    assert "provider_observation" in report["required_artifact_types"]
     assert report["package_present"] is True
     assert report["package_valid"] is True
     assert report["package_id"].startswith("trust-export-")
@@ -78,6 +82,8 @@ def test_verify_anchor_receipt_files_detects_tampered_artifact_root(tmp_path: Pa
     assert report["bundle_id"].startswith("trust-bundle-")
     assert report["anchor_receipt_id"].startswith("trust-anchor-receipt-")
     assert report["signature_key_id"] == ""
+    assert len(report["artifact_root_hash"]) == 64
+    assert "provider_observation" in report["required_artifact_types"]
     assert report["package_present"] is True
     assert report["package_valid"] is False
     assert report["package_id"].startswith("trust-export-")
@@ -219,7 +225,9 @@ def test_verify_anchor_receipt_cli_reports_valid_export(tmp_path: Path, capsys: 
     assert exit_code == 0
     assert output["valid"] is True
     assert output["reason"] == "anchor_verified"
-    assert output["artifact_count"] == 7
+    assert output["artifact_count"] == 8
+    assert len(output["artifact_root_hash"]) == 64
+    assert "provider_observation" in output["required_artifact_types"]
     assert output["schema_errors"] == []
     assert output["package_present"] is True
     assert output["package_valid"] is True
@@ -238,6 +246,8 @@ def test_verify_anchor_receipt_report_contract_allows_missing_secret_report() ->
     assert report["valid"] is False
     assert report["reason"] == "signing_secret_required"
     assert report["schema_valid"] is False
+    assert report["artifact_root_hash"] == ""
+    assert report["required_artifact_types"] == []
     assert report["package_present"] is False
     _assert_report_schema(report)
 
@@ -315,6 +325,12 @@ def _artifacts() -> tuple[TrustLedgerEvidenceArtifact, ...]:
             artifact_id="execution-1",
             artifact_hash=_hash("execution-1"),
             evidence_ref="proof://execution-1",
+        ),
+        TrustLedgerEvidenceArtifact(
+            artifact_type="provider_observation",
+            artifact_id="provider-observation-1",
+            artifact_hash=_hash("provider-observation-1"),
+            evidence_ref="proof://provider-observation-1",
         ),
         TrustLedgerEvidenceArtifact(
             artifact_type="verification_result",

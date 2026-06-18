@@ -75,6 +75,7 @@ def verify_anchor_receipt_files(
 
     bundle_payload = bundle_raw["payload"]
     receipt_payload = receipt_raw["payload"]
+    receipt_report_fields = _receipt_report_fields(receipt_payload)
     bundle_errors = _validate_schema_instance(_load_schema(BUNDLE_SCHEMA_PATH), bundle_payload)
     receipt_errors = _validate_schema_instance(_load_schema(ANCHOR_RECEIPT_SCHEMA_PATH), receipt_payload)
     artifact_errors = _validate_schema_instance(_load_schema(ARTIFACTS_SCHEMA_PATH), artifacts_raw["payload"])
@@ -96,6 +97,7 @@ def verify_anchor_receipt_files(
             package_valid=False,
             package_id=_package_id(package_raw["payload"]) if package_raw is not None else "",
             package_hash=_package_hash(package_raw["payload"]) if package_raw is not None else "",
+            **receipt_report_fields,
         )
     if package_raw is not None:
         package_verification = _verify_package_payload(
@@ -119,6 +121,7 @@ def verify_anchor_receipt_files(
                 package_valid=False,
                 package_id=_package_id(package_raw["payload"]),
                 package_hash=_package_hash(package_raw["payload"]),
+                **receipt_report_fields,
             )
 
     try:
@@ -133,6 +136,7 @@ def verify_anchor_receipt_files(
             anchor_receipt_id=str(receipt_payload.get("anchor_receipt_id", "")),
             schema_valid=True,
             schema_errors=[],
+            **receipt_report_fields,
         )
 
     verification = TrustLedger().verify_anchor_receipt(
@@ -154,6 +158,8 @@ def verify_anchor_receipt_files(
         command_id=bundle.command_id,
         terminal_certificate_id=bundle.terminal_certificate_id,
         artifact_count=len(artifacts),
+        artifact_root_hash=receipt.artifact_root_hash,
+        required_artifact_types=list(receipt.required_artifact_types),
         package_present=package_raw is not None,
         package_valid=package_raw is not None,
         package_id=_package_id(package_raw["payload"]) if package_raw is not None else "",
@@ -314,6 +320,20 @@ def _package_hash(payload: dict[str, Any]) -> str:
     return str(payload.get("package_hash", ""))
 
 
+def _receipt_report_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    artifact_count = payload.get("artifact_count", 0)
+    if not isinstance(artifact_count, int):
+        artifact_count = 0
+    required_types = payload.get("required_artifact_types", [])
+    if not isinstance(required_types, list):
+        required_types = []
+    return {
+        "artifact_root_hash": str(payload.get("artifact_root_hash", "")),
+        "artifact_count": artifact_count,
+        "required_artifact_types": [str(value) for value in required_types],
+    }
+
+
 def _package_hash_from_payload(payload: dict[str, Any]) -> str:
     hashed_payload = dict(payload)
     hashed_payload["package_id"] = ""
@@ -340,11 +360,15 @@ def _report(
     command_id: str = "",
     terminal_certificate_id: str = "",
     artifact_count: int = 0,
+    artifact_root_hash: str = "",
+    required_artifact_types: list[str] | None = None,
     package_present: bool = False,
     package_valid: bool = False,
     package_id: str = "",
     package_hash: str = "",
 ) -> dict[str, Any]:
+    if required_artifact_types is None:
+        required_artifact_types = []
     return {
         "valid": valid,
         "reason": reason,
@@ -358,6 +382,8 @@ def _report(
         "command_id": command_id,
         "terminal_certificate_id": terminal_certificate_id,
         "artifact_count": artifact_count,
+        "artifact_root_hash": artifact_root_hash,
+        "required_artifact_types": required_artifact_types,
         "package_present": package_present,
         "package_valid": package_valid,
         "package_id": package_id,
