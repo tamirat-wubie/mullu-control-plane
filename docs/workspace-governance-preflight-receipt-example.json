@@ -1,5 +1,5 @@
 {
-  "check_count": 220,
+  "check_count": 221,
   "checks": [
     {
       "args": [
@@ -286,6 +286,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR CI GATE BEFORE READY FOR REVIEW WITNESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_effect_reconciliation_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR EFFECT RECONCILIATION WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
