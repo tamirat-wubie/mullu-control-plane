@@ -71,6 +71,33 @@ def test_projected_read_only_contract_preserves_core_refs() -> None:
     assert projection["repositories"][0]["revocation_state"] == "not_revoked"
 
 
+def test_projected_open_pr_contract_preserves_approval_request_binding() -> None:
+    source_path = next(path for path in DEFAULT_EXAMPLES if path.name.endswith("open_pr_awaiting_approval.json"))
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+
+    projection = project_contract_to_read_model(source, source_path.as_posix())
+
+    approval = projection["approvals"][0]
+    source_gate = source["approval_gates"][0]
+    assert approval["approval_request_id"] == source_gate["approval_request_id"]
+    assert approval["approval_request_ref"] == source_gate["approval_request_ref"]
+    assert approval["gateway_approval_ref"] == source_gate["gateway_approval_ref"]
+    assert approval["requested_evidence_ref"] == "approval://openpr-required"
+    assert approval["decision_required"] == "operator_response_required"
+    assert approval["response_record_required"] is True
+    assert approval["response_record_collected"] is False
+    assert approval["approval_collected"] is False
+    assert approval["authority_granted"] is False
+    assert approval["permits_external_effect"] is False
+    approval_binding = next(
+        binding
+        for binding in projection["durable_entity_bindings"]["entity_bindings"]
+        if binding["entity_kind"] == "ApprovalRequest"
+    )
+    assert approval_binding["primary_key"] == "approval_request_id"
+    assert "gateway_approval_ref" in approval_binding["owner_ref_fields"]
+
+
 def test_read_model_projection_rejects_source_write_authority(tmp_path: Path) -> None:
     payload = _default_payload("agentic_service_harness.branch_write_awaiting_approval.json")
     payload["repository_connections"][0]["write_authority_enabled"] = True

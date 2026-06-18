@@ -106,6 +106,31 @@ def test_agentic_service_harness_contract_rejects_open_pr_external_effect_gate(
     assert validation.scenario_count == len(EXPECTED_SCENARIOS)
 
 
+def test_agentic_service_harness_contract_rejects_approval_request_binding_gap(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload("agentic_service_harness.open_pr_awaiting_approval.json")
+    gate = payload["approval_gates"][0]
+    gate["approval_request_ref"] = ""
+    gate["requested_evidence_ref"] = "approval://missing"
+    gate["response_record_collected"] = True
+    gate["authority_granted"] = True
+    example_paths = _replace_default_example(
+        tmp_path,
+        "agentic_service_harness.open_pr_awaiting_approval.json",
+        payload,
+    )
+
+    validation = validate_agentic_service_harness_contract(example_paths=example_paths)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "approval_request_ref must be a non-empty ref" in serialized_errors
+    assert "requested_evidence_ref must appear in evidence_refs" in serialized_errors
+    assert "response_record_collected must remain false" in serialized_errors
+    assert "authority_granted must remain false" in serialized_errors
+
+
 def test_agentic_service_harness_contract_rejects_repository_authority_gap(
     tmp_path: Path,
 ) -> None:

@@ -10,7 +10,8 @@ Invariants:
   - The map contains the required readiness sections and scale.
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
-  - The first next PR remains the ApprovalRequest projection binding.
+  - ApprovalRequest remains closed as a read-only gateway binding surface.
+  - The first next PR remains the dry-run AgentRunReceipt emitter.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -51,9 +52,9 @@ REQUIRED_STATUSES = ("READY", "PARTIAL", "MISSING")
 REQUIRED_READY_SYMBOLS = (
     "RepositoryConnection",
     "AgentRun",
+    "ApprovalRequest",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
-    "ApprovalRequest",
     "Receipt",
     "WorkspaceSandbox",
     "EvidenceBundle",
@@ -87,6 +88,14 @@ REQUIRED_AGENT_RUN_TERMS = (
     "no branch creation",
     "no pull-request creation",
     "no external-effect authority",
+)
+REQUIRED_APPROVAL_REQUEST_TERMS = (
+    "approval request id/ref",
+    "gateway approval ref",
+    "requested evidence ref",
+    "response-record requirement",
+    "no collected approval",
+    "no granted authority",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -147,10 +156,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         errors,
     )
     _require_all(map_text, REQUIRED_AGENT_RUN_TERMS, "agent_run_term", errors)
+    _require_all(map_text, REQUIRED_APPROVAL_REQUEST_TERMS, "approval_request_term", errors)
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
-    _validate_approval_first(map_text, errors)
+    _validate_approval_request_ready(map_text, errors)
+    _validate_receipt_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
 
     return ReadinessMapValidation(
@@ -202,19 +213,28 @@ def _validate_agent_run_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: AgentRun lifecycle read model")
 
 
-def _validate_approval_first(map_text: str, errors: list[str]) -> None:
+def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| ApprovalRequest \| READY \| .+ \| None\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if ready_row is None:
+        errors.append("missing ready row: ApprovalRequest projection binding")
+
+
+def _validate_receipt_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(approval\): bind approval request projection`$",
+        r"^1\.\s+`harness\(receipts\): add dry-run run receipt emitter`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: ApprovalRequest projection binding")
+        errors.append("missing first next PR: dry-run run receipt emitter")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(approval): bind approval request projection",
         "harness(receipts): add dry-run run receipt emitter",
         "harness(sandbox): bind temporary branch workspace preflight",
         "harness(github): add read-only repo task intake",

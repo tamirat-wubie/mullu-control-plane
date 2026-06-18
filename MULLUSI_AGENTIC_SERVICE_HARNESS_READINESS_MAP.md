@@ -70,7 +70,7 @@ Open PRs after closure pass: none.
 | Project | READY | Harness schema defines projects with tenant, repositories, runs, receipts, and loop status refs. | None. |
 | RepositoryConnection | READY | Harness contract, read-model schema, fixture projection, durable entity binding, validators, and tests require durable GitHub App installation ref/state, provider repository ref, repository id/name through owner/name and slug, read permission scopes, redacted credential bindings, revocation state/evidence, last verification timestamp, default branch, no secret serialization, false write authority, and read-only projection. | None. |
 | AgentRun | READY | Harness contract, read-model schema, projection, validators, and tests define lifecycle state, created and updated timestamps, transition receipt refs, terminal-state flag, and read-only query ref while preserving no adapter execution, no branch creation, no pull-request creation, and no external-effect authority. | None. |
-| ApprovalRequest | PARTIAL | Gateway approval primitives and harness approval gates exist, but the harness does not own a durable approval request binding. | Add a harness ApprovalRequest binding that maps ApprovalGate to gateway approvals without mutation routes beyond governed request creation. |
+| ApprovalRequest | READY | Harness approval gates now bind explicit approval request id/ref, gateway approval ref, requested evidence ref, response-record requirement, no collected approval, and no granted authority. | None. |
 | Receipt | PARTIAL | Many receipt schemas exist and harness receipts are modeled, but durable harness receipt-store append remains witness-bound. | Add a harness Receipt projection and append preflight PR with append disabled until approval. |
 | LoopStatus | PARTIAL | Loop refs and read models exist; no first-class harness LoopStatus projection is closed. | Add a small LoopStatus projection PR bound to holistic loop read-model output. |
 
@@ -148,7 +148,7 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
 | evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
-| approval screen | MISSING | Approval gates exist; no harness approval UI. | Add ApprovalRequest read model before screen work. |
+| approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
 | loop/readiness dashboard | PARTIAL | Loop read models and readiness docs exist; no dashboard build is authorized. | Add read-only dashboard data contract after run and receipt read models. |
 
 ## 9. Explicit Non-Goals For The First Harness Phase - READY
@@ -166,11 +166,10 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(approval): bind approval request projection`
-2. `harness(receipts): add dry-run run receipt emitter`
-3. `harness(sandbox): bind temporary branch workspace preflight`
-4. `harness(github): add read-only repo task intake`
-5. `harness(ui-contract): add dashboard data contract`
+1. `harness(receipts): add dry-run run receipt emitter`
+2. `harness(sandbox): bind temporary branch workspace preflight`
+3. `harness(github): add read-only repo task intake`
+4. `harness(ui-contract): add dashboard data contract`
 
 ## Governance Decision
 
@@ -185,5 +184,5 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 STATUS:
   Completeness: 100%
   Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; no open PRs before this readiness-map branch
-  Open issues: ApprovalRequest, Receipt, EvidenceBundle, WorkspaceSandbox, and UI data contracts remain partial or missing
-  Next action: start the smallest next PR sequence with ApprovalRequest projection binding
+  Open issues: Receipt, EvidenceBundle, WorkspaceSandbox, and UI data contracts remain partial or missing
+  Next action: start the smallest next PR sequence with dry-run AgentRunReceipt emitter
