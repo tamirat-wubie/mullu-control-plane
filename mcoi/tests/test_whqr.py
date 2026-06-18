@@ -408,6 +408,34 @@ def test_nested_metadata_keys_must_remain_text_for_canonical_identity() -> None:
         )
 
 
+def test_canonical_serialization_rejects_tampered_non_text_mapping_keys() -> None:
+    document_metadata_tampered = WHQRDocument(
+        root=WHQRNode(role=WHRole.WHAT, target="vendor_record"),
+        metadata={"tenant": "foundation"},
+    )
+    root_metadata_tampered = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="vendor_record",
+            metadata={"details": {"tenant": "foundation"}},
+        )
+    )
+
+    object.__setattr__(document_metadata_tampered, "metadata", MappingProxyType({1: "numeric-key"}))
+    object.__setattr__(
+        root_metadata_tampered.root,
+        "metadata",
+        MappingProxyType({"details": MappingProxyType({("compound", "key"): "tuple-key"})}),
+    )
+
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        document_metadata_tampered.canonical_json()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        document_metadata_tampered.canonical_hash()
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        root_metadata_tampered.canonical_json()
+
+
 def test_contract_validation_and_metadata_fail_closed() -> None:
     with pytest.raises(ValueError, match="non-empty string"):
         WHQRNode(role=WHRole.WHO, target="")
