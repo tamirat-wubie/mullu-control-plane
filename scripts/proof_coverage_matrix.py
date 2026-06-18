@@ -2282,8 +2282,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/personal-assistant/skills",
                 "/api/v1/personal-assistant/requests/preview",
                 "/api/v1/personal-assistant/approval-queue",
-                "/api/v1/personal-assistant/approval-proposals/preview",
                 "/api/v1/personal-assistant/approval-queue/preview",
+                "/api/v1/personal-assistant/approval-proposals/preview",
                 "/api/v1/personal-assistant/memory-observations",
                 "/api/v1/personal-assistant/memory-observations/preview",
                 "/api/v1/personal-assistant/memory-observations/review/preview",
@@ -2360,7 +2360,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_personal_assistant_math_projection.py",
                 "scripts/validate_personal_assistant_planning_projection.py",
             ],
-            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval proposal, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
@@ -2374,6 +2374,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "personal_assistant_approval_queue_read_model_public_safe",
                 "personal_assistant_approval_queue_decision_deferred",
                 "personal_assistant_approval_decision_public_safe",
+                "personal_assistant_approval_proposal_preview_no_effect",
                 "personal_assistant_read_only_projection_public_safe",
                 "personal_assistant_draft_projection_public_safe",
                 "personal_assistant_memory_observation_read_model_public_safe",
@@ -2436,6 +2437,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "approval_decision_validator_rejects_missing_decision_state",
                     "approval_decision_validator_rejects_raw_payload_and_secret",
                     "gateway_personal_assistant_approval_queue_expired_blocks_execution",
+                ],
+                "personal_assistant_approval_proposal_preview_no_effect": [
+                    "gateway_personal_assistant_approval_proposal_preview_does_not_enqueue",
+                    "gateway_personal_assistant_approval_proposal_rejects_non_approval_request",
+                    "gateway_personal_assistant_approval_proposal_rejects_extra_private_connector_fields",
                 ],
                 "personal_assistant_read_only_projection_public_safe": [
                     "personal_assistant_read_only_projection_fixture_validates",
