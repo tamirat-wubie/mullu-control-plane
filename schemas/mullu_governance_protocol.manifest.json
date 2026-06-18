@@ -713,6 +713,12 @@
       "surface": "resilience"
     },
     {
+      "schema_id": "maf-receipt-parity-witness",
+      "path": "schemas/maf_receipt_parity_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-receipt-parity-witness:1",
+      "surface": "maf"
+    },
+    {
       "schema_id": "research-source-conflict-map",
       "path": "schemas/research_source_conflict_map.schema.json",
       "urn": "urn:mullusi:schema:research-source-conflict-map:1",

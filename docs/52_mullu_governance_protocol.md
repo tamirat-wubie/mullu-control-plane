@@ -194,6 +194,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 164. Universal symbol kernel records are public contracts when they bind platform objects into symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority-denial, and evidence-reference fields while denying connector access, filesystem writes, runtime dispatch, state mutation, terminal closure, product readiness, customer readiness, public SaaS readiness, and success claims.
 165. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
 166. Invariant fuzz execution reports are public contracts when they bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, mutation-free rejection counts, projection probe counts, public projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime-hardening or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live runtime execution, staging targets, production targets, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, secret access, filesystem writes, rollback execution, raw case payload retention, raw secret retention, terminal closure, and success claims.
+167. MAF receipt parity witnesses are public contracts when they bind Python receipt schema refs, Rust MAF crate manifest refs, Rust crate entry refs, canonical source digests, parity mappings, open gap refs, UAO refs, LifeMeaningJudgment refs, receipt refs, and authority-denial flags before any Python-to-Rust runtime binding claim can be reconsidered while denying PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, external connector calls, network calls, secret access, filesystem writes, runtime dispatch, canonical state mutation, terminal closure, and success claims.
 ## Verification
 
 Run:
@@ -205,7 +206,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 353 schemas
+protocol manifest ok: 354 schemas
 ```
 
 STATUS:
