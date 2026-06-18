@@ -2157,6 +2157,12 @@
       "path": "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-registration-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-runtime-receipt-schema-binding-activation-witness",
+      "path": "schemas/read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-activation-witness:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [
