@@ -129,7 +129,7 @@ class SNetRecursiveMesh:
         context = _require_text(context, "context")
         parent_question_id = _optional_text(parent_question_id, "parent_question_id")
         if parent_question_id:
-            self._require_question(parent_question_id)
+            self._require_parent_question_scope(symbol, self._require_question(parent_question_id))
         tick_id = _stable_id("snet-tick", symbol_id, perspective, context, str(symbol.depth))
         if symbol.depth >= self.budget.max_depth:
             return SNetTickResult(
@@ -508,6 +508,18 @@ class SNetRecursiveMesh:
                 resolution_state=state,
                 evidence_refs=tuple(dict.fromkeys(existing_record.evidence_refs + new_record.evidence_refs)),
             )
+
+    def _require_parent_question_scope(self, symbol: SNetSymbol, parent_question: SNetQuestion) -> None:
+        if parent_question.target_symbol_id == symbol.symbol_id:
+            return
+        if not symbol.created_from_metadata_id:
+            raise ValueError("SNet parent_question_id must belong to the symbol causal scope")
+        try:
+            source_metadata = self.metadata[symbol.created_from_metadata_id]
+        except KeyError as exc:
+            raise ValueError("SNet parent_question_id must belong to the symbol causal scope") from exc
+        if source_metadata.question_id != parent_question.question_id:
+            raise ValueError("SNet parent_question_id must belong to the symbol causal scope")
 
     def _update_symbol(self, symbol: SNetSymbol) -> None:
         self.symbols[symbol.symbol_id] = symbol
