@@ -293,6 +293,7 @@ def build_personal_assistant_console_read_model(
     task_items: Sequence[Mapping[str, Any]] = (),
     receipts: Sequence[Mapping[str, Any]] = (),
     teamops_plans: Sequence[Mapping[str, Any]] = (),
+    approval_proposals: Sequence[Mapping[str, Any]] = (),
 ) -> dict[str, Any]:
     """Build the personal-assistant console read model.
 
@@ -322,9 +323,11 @@ def build_personal_assistant_console_read_model(
     task_rows = _panel_items(task_items, "task_items")
     receipt_rows = _panel_items(receipts, "receipts")
     teamops_rows = _panel_items(teamops_plans, "teamops_plans")
+    proposal_rows, proposal_blockers = _approval_proposal_rows(approval_proposals)
+    approval_model = _approval_model_with_proposals(approval_model, proposal_rows)
     lane_status = _build_lane_status()
     assurance = _build_foundation_assurance(
-        approval_blockers=approval_blockers,
+        approval_blockers=(*approval_blockers, *proposal_blockers),
         memory_blockers=memory_blockers,
         teamops_rows=teamops_rows,
         lane_status=lane_status,
@@ -465,6 +468,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
   {_panel_table("Recent Requests", _mapping_value(payload, "chat").get("recent_requests", ()), ("request_id", "summary", "status"))}
   {_panel_table("Task List", _mapping_value(payload, "tasks").get("items", ()), ("task_id", "summary", "status"))}
   {_panel_table("Approval Queue", approvals.get("records", ()), ("approval_id", "approval_state", "risk_level"))}
+  {_panel_table("Approval Proposals", approvals.get("proposals", ()), ("plan_id", "risk_level", "approval_matrix_ref"))}
   {_panel_table("Receipts", receipts.get("items", ()), ("receipt_id", "skill_id", "decision"))}
   {_panel_table("Skill Status", skills.get("skills", ()), ("skill_id", "mode", "risk_level"))}
   {_panel_table("Memory Candidates", memory.get("candidates", ()), ("memory_observation_id", "memory_type", "confidence"))}
@@ -587,6 +591,7 @@ def _build_foundation_assurance(
         "checked_controls": [
             "approval_queue_no_execution",
             "approval_decision_is_not_execution",
+            "approval_proposal_is_not_execution",
             "memory_candidate_only",
             "nested_mind_staging_only",
             "teamops_no_live_probe",
@@ -601,6 +606,38 @@ def _build_foundation_assurance(
             else "continue foundation-stage assistant hardening without enabling live execution"
         ),
     }
+
+
+def _approval_proposal_rows(
+    approval_proposals: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    rows = _panel_items(approval_proposals, "approval_proposals")
+    blockers: list[str] = []
+    for index, row in enumerate(rows):
+        if row.get("execution_allowed") is not False:
+            blockers.append(f"approval_proposals[{index}].execution_allowed")
+        if row.get("approval_is_execution") is not False:
+            blockers.append(f"approval_proposals[{index}].approval_is_execution")
+        row["execution_allowed"] = False
+        row["approval_is_execution"] = False
+    return rows, sorted(set(blockers))
+
+
+def _approval_model_with_proposals(
+    approval_model: Mapping[str, Any],
+    proposal_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    model = dict(approval_model)
+    proposal_ids: list[str] = []
+    for proposal in proposal_rows:
+        plan_id = proposal.get("plan_id")
+        if isinstance(plan_id, str) and plan_id:
+            proposal_ids.append(plan_id)
+    model["proposal_count"] = len(proposal_rows)
+    model["proposal_ids"] = sorted(set(proposal_ids))
+    model["proposal_execution_allowed"] = False
+    model["proposals"] = [dict(proposal) for proposal in proposal_rows]
+    return model
 
 
 def _build_lane_status() -> dict[str, Any]:
