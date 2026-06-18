@@ -17,6 +17,7 @@ Invariants:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, is_dataclass
 from hashlib import sha256
 from html import escape
@@ -33,6 +34,7 @@ APPROVAL_HISTORY_SCHEMA_REF = "urn:mullusi:schema:operator-approval-history-read
 PLAN_REVIEW_SCHEMA_REF = "urn:mullusi:schema:operator-plan-review-read-model:1"
 BUDGET_REPORT_SCHEMA_REF = "urn:mullusi:schema:operator-budget-report-read-model:1"
 PLAN_RECEIPT_EXPORT_SCHEMA_REF = "urn:mullusi:schema:operator-plan-receipt-export-read-model:1"
+PLAN_RECEIPT_BUNDLE_SCHEMA_REF = "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
 CURRENT_TASK_SCHEMA_REF = "urn:mullusi:schema:current-task-read-model:1"
 
 _MAX_SCAN_LIMIT = 1000
@@ -267,6 +269,16 @@ _PLAN_RECEIPT_EXPORT_COLUMNS = (
     "receipt_types",
     "latest_event_hash",
     "receipt_href",
+)
+_PLAN_RECEIPT_BUNDLE_COLUMNS = (
+    "plan_id",
+    "status",
+    "evidence_bundle_available",
+    "step_command_count",
+    "receipt_group_count",
+    "receipt_count",
+    "evidence_ref_count",
+    "receipt_export_href",
 )
 
 
@@ -963,6 +975,131 @@ def render_operator_plan_receipt_export_html(read_model: Mapping[str, Any]) -> s
             (_plan_review_detail_href(plan_id), "plan review detail"),
             ("/operator/plan-review", "plan review"),
             ("/operator/receipts", "receipt viewer"),
+        ),
+    )
+
+
+def build_operator_plan_receipt_bundle_read_model(
+    *,
+    plan_ledger: Any,
+    command_ledger: Any,
+    preview_store: Any | None = None,
+    tenant_budget_reporter: Any | None = None,
+    tenant_id: str = "",
+    status: str = "",
+    budget_gate: str = "",
+    search: str = "",
+    limit: int = 100,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Build a read-only cross-plan receipt export bundle for Plan Review."""
+    bounded_limit = _bounded_limit(limit)
+    bounded_offset = _bounded_offset(offset)
+    plan_review = build_operator_plan_review_read_model(
+        plan_ledger,
+        preview_store=preview_store,
+        tenant_budget_reporter=tenant_budget_reporter,
+        tenant_id=tenant_id,
+        status=status,
+        budget_gate=budget_gate,
+        search=search,
+        limit=bounded_limit,
+        offset=bounded_offset,
+    )
+    plan_ids = _unique_plan_ids(_mapping_list(plan_review.get("plans")))
+    plan_exports = [
+        build_operator_plan_receipt_export_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            plan_id=plan_id,
+        )
+        for plan_id in plan_ids
+    ]
+    summaries = [_plan_receipt_bundle_summary(item) for item in plan_exports]
+    return {
+        "schema_ref": PLAN_RECEIPT_BUNDLE_SCHEMA_REF,
+        "tenant_id_filter": str(tenant_id),
+        "status_filter": str(status).strip(),
+        "budget_gate_filter": str(budget_gate).strip(),
+        "search_filter": str(search).strip()[:_MAX_SEARCH_FILTER_LENGTH],
+        "limit": bounded_limit,
+        "offset": bounded_offset,
+        "next_offset": plan_review.get("next_offset"),
+        "total": plan_review.get("total", 0),
+        "count": len(plan_exports),
+        "plan_review": plan_review,
+        "plan_export_count": len(plan_exports),
+        "certified_export_count": sum(
+            1 for item in plan_exports if item.get("status") == "certified"
+        ),
+        "evidence_bundle_count": sum(
+            1 for item in plan_exports if item.get("evidence_bundle_available") is True
+        ),
+        "step_command_count": sum(
+            int(item.get("step_command_count", 0)) for item in plan_exports
+        ),
+        "receipt_group_count": sum(
+            int(item.get("receipt_group_count", 0)) for item in plan_exports
+        ),
+        "receipt_count": sum(int(item.get("receipt_count", 0)) for item in plan_exports),
+        "evidence_ref_count": sum(
+            int(item.get("evidence_ref_count", 0)) for item in plan_exports
+        ),
+        "missing_step_command_ids": sorted(
+            {
+                command_id
+                for item in plan_exports
+                for command_id in _text_tuple(item.get("missing_step_command_ids"))
+            }
+        ),
+        "receipt_type_counts": _merge_count_maps(
+            item.get("receipt_type_counts") for item in plan_exports
+        ),
+        "receipt_status_counts": _merge_count_maps(
+            item.get("receipt_status_counts") for item in plan_exports
+        ),
+        "plan_export_summaries": summaries,
+        "plan_exports": plan_exports,
+        "raw_message_exposed": False,
+        "execution_allowed": False,
+        "write_allowed": False,
+        "governed": True,
+    }
+
+
+def render_operator_plan_receipt_bundle_html(read_model: Mapping[str, Any]) -> str:
+    """Render a cross-plan Plan Review receipt bundle as bounded operator HTML."""
+    summaries = _mapping_list(read_model.get("plan_export_summaries"))
+    rows = _html_rows(
+        summaries,
+        _PLAN_RECEIPT_BUNDLE_COLUMNS,
+        empty_label="No plan receipt exports bundled",
+    )
+    metrics = (
+        ("Visible Plans", read_model.get("count", 0)),
+        ("Total Plans", read_model.get("total", 0)),
+        ("Certified", read_model.get("certified_export_count", 0)),
+        ("Bundles", read_model.get("evidence_bundle_count", 0)),
+        ("Receipt Groups", read_model.get("receipt_group_count", 0)),
+        ("Receipts", read_model.get("receipt_count", 0)),
+        ("Evidence Refs", read_model.get("evidence_ref_count", 0)),
+        ("Raw Exposed", read_model.get("raw_message_exposed", False)),
+    )
+    query = _plan_receipt_bundle_filter_query(read_model)
+    return _operator_table_html(
+        title="Mullu Plan Receipt Bundle",
+        description="Read-only cross-plan Plan Review receipt export bundle.",
+        json_href="/operator/plan-review/receipts/read-model"
+        + (f"?{query}" if query else ""),
+        columns=_PLAN_RECEIPT_BUNDLE_COLUMNS,
+        rows=rows,
+        metrics=metrics,
+        nav_links=(
+            ("/operator/plan-review", "plan review"),
+            ("/operator/receipts", "receipt viewer"),
+            ("/operator/current-task", "current task"),
         ),
     )
 
@@ -2232,6 +2369,48 @@ def _receipt_export_evidence_ref_count(receipt_groups: list[dict[str, Any]]) -> 
         receipts = [dict(receipt) for receipt in _mapping_list(group.get("receipts"))]
         count += _evidence_ref_count(receipts)
     return count
+
+
+def _unique_plan_ids(rows: list[Mapping[str, Any]]) -> list[str]:
+    plan_ids: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        plan_id = str(row.get("plan_id", "")).strip()
+        if not plan_id or plan_id in seen:
+            continue
+        plan_ids.append(plan_id)
+        seen.add(plan_id)
+    return plan_ids
+
+
+def _plan_receipt_bundle_summary(export: Mapping[str, Any]) -> dict[str, Any]:
+    plan_id = str(export.get("plan_id", "")).strip()
+    return {
+        "plan_id": plan_id,
+        "status": str(export.get("status", "")),
+        "evidence_bundle_available": bool(export.get("evidence_bundle_available", False)),
+        "step_command_count": int(export.get("step_command_count", 0)),
+        "receipt_group_count": int(export.get("receipt_group_count", 0)),
+        "receipt_count": int(export.get("receipt_count", 0)),
+        "evidence_ref_count": int(export.get("evidence_ref_count", 0)),
+        "missing_step_command_count": len(_text_tuple(export.get("missing_step_command_ids"))),
+        "receipt_export_href": _plan_receipt_export_href(plan_id),
+    }
+
+
+def _merge_count_maps(values: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    if not isinstance(values, Iterable):
+        return counts
+    for value in values:
+        if not isinstance(value, Mapping):
+            continue
+        for key, raw_count in value.items():
+            normalized_key = str(key).strip()
+            if not normalized_key:
+                continue
+            counts[normalized_key] = counts.get(normalized_key, 0) + int(raw_count or 0)
+    return dict(sorted(counts.items()))
 
 
 def _receipt_matches_filters(
@@ -3633,6 +3812,18 @@ def _plan_review_filter_query(read_model: Mapping[str, Any]) -> str:
     query = {
         "tenant_id": str(read_model.get("tenant_id_filter", "")).strip(),
         "plan_id": str(read_model.get("plan_id_filter", "")).strip(),
+        "status": str(read_model.get("status_filter", "")).strip(),
+        "budget_gate": str(read_model.get("budget_gate_filter", "")).strip(),
+        "search": str(read_model.get("search_filter", "")).strip(),
+        "limit": str(read_model.get("limit", "")).strip(),
+        "offset": str(read_model.get("offset", "")).strip(),
+    }
+    return urlencode({key: value for key, value in query.items() if value})
+
+
+def _plan_receipt_bundle_filter_query(read_model: Mapping[str, Any]) -> str:
+    query = {
+        "tenant_id": str(read_model.get("tenant_id_filter", "")).strip(),
         "status": str(read_model.get("status_filter", "")).strip(),
         "budget_gate": str(read_model.get("budget_gate_filter", "")).strip(),
         "search": str(read_model.get("search_filter", "")).strip(),

@@ -83,6 +83,9 @@ OPERATOR_BUDGET_REPORT_READ_MODEL_SCHEMA = (
 OPERATOR_PLAN_RECEIPT_EXPORT_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "operator_plan_receipt_export_read_model.schema.json"
 )
+OPERATOR_PLAN_RECEIPT_BUNDLE_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_plan_receipt_bundle_read_model.schema.json"
+)
 CURRENT_TASK_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "current_task_read_model.schema.json"
 )
@@ -1362,6 +1365,12 @@ class TestWebChatWebhook:
         receipt_export_html_resp = client.get(
             f"/operator/plan-review/{plan_id}/receipts"
         )
+        receipt_bundle_resp = client.get(
+            "/operator/plan-review/receipts/read-model?tenant_id=t1"
+        )
+        receipt_bundle_html_resp = client.get(
+            "/operator/plan-review/receipts?tenant_id=t1"
+        )
         missing_resp = client.get("/capability-plans/missing-plan/closure")
 
         assert msg_resp.status_code == 200
@@ -1438,6 +1447,35 @@ class TestWebChatWebhook:
         assert receipt_export_html_resp.status_code == 200
         assert "Mullu Plan Receipt Export" in receipt_export_html_resp.text
         assert "Evidence Refs" in receipt_export_html_resp.text
+        assert receipt_bundle_resp.status_code == 200
+        receipt_bundle = receipt_bundle_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_RECEIPT_BUNDLE_READ_MODEL_SCHEMA),
+            receipt_bundle,
+        ) == []
+        assert receipt_bundle["schema_ref"] == (
+            "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+        )
+        assert receipt_bundle["plan_export_count"] >= 1
+        assert receipt_bundle["certified_export_count"] >= 1
+        assert receipt_bundle["evidence_bundle_count"] >= 1
+        assert receipt_bundle["receipt_count"] >= receipt_export["receipt_count"]
+        assert receipt_bundle["receipt_group_count"] >= receipt_export[
+            "receipt_group_count"
+        ]
+        assert receipt_bundle["evidence_ref_count"] >= receipt_export[
+            "evidence_ref_count"
+        ]
+        assert receipt_bundle["receipt_type_counts"]["plan_step_receipt"] >= 2
+        assert receipt_bundle["plan_export_summaries"][0]["receipt_export_href"].endswith(
+            "/receipts"
+        )
+        assert receipt_bundle["raw_message_exposed"] is False
+        assert receipt_bundle["execution_allowed"] is False
+        assert receipt_bundle["write_allowed"] is False
+        assert receipt_bundle_html_resp.status_code == 200
+        assert "Mullu Plan Receipt Bundle" in receipt_bundle_html_resp.text
+        assert "secret" not in json.dumps(receipt_bundle, sort_keys=True).lower()
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
 

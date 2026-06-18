@@ -154,12 +154,14 @@ from gateway.operator_receipt_viewer import (
     build_operator_budget_report_read_model,
     build_operator_approval_history_read_model,
     build_operator_plan_receipt_export_read_model,
+    build_operator_plan_receipt_bundle_read_model,
     build_operator_plan_review_read_model,
     build_operator_receipt_viewer_read_model,
     render_current_task_html,
     render_operator_budget_report_html,
     render_operator_approval_detail_html,
     render_operator_plan_receipt_export_html,
+    render_operator_plan_receipt_bundle_html,
     render_operator_approval_history_html,
     render_operator_plan_review_detail_html,
     render_operator_plan_review_html,
@@ -4440,6 +4442,65 @@ def create_gateway_app(
             tenant_id=tenant_id,
         )
         return HTMLResponse(render_operator_budget_report_html(read_model))
+
+    @app.get("/operator/plan-review/receipts/read-model")
+    def operator_plan_receipt_bundle_read_model(
+        request: Request,
+        tenant_id: str = "",
+        status: str = "",
+        budget_gate: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_plan_review_filters(
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+        )
+        return build_operator_plan_receipt_bundle_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/plan-review/receipts", response_class=HTMLResponse)
+    def operator_plan_receipt_bundle_console(
+        request: Request,
+        tenant_id: str = "",
+        status: str = "",
+        budget_gate: str = "",
+        search: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        _validate_operator_plan_review_filters(
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+        )
+        read_model = build_operator_plan_receipt_bundle_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            status=status,
+            budget_gate=budget_gate,
+            search=search,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(render_operator_plan_receipt_bundle_html(read_model))
 
     @app.get("/operator/plan-review/{plan_id}/receipts/read-model")
     def operator_plan_receipt_export_read_model(
