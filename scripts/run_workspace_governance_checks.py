@@ -890,6 +890,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         ),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
         CheckCommand(
+            "simple_assistant_ui_boundary",
+            (python_executable, "scripts/validate_simple_assistant_ui_boundary.py"),
+        ),
+        CheckCommand(
             "logic_governance_application",
             (python_executable, "scripts/validate_logic_governance_application.py"),
         ),

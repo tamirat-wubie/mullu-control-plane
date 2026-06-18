@@ -38,6 +38,7 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
     assert "component_harness_read_model" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_request_simulator" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_autopsy" in components["governance_core"]["route_binding"]["proof_surface_ids"]
+    assert "universal_symbol_operator_read_models" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert components["governance_core"]["lifecycle_receipt"]["proof_state"] == "Pass"
     assert components["governance_core"]["authority_witness"]["proof_state"] == "Pass"
     assert components["nested_mind_bridge"]["proof_binding"]["state"] == "awaiting_binding"

@@ -1,0 +1,156 @@
+{
+  "boundary_id": "simple_assistant_ui_boundary_foundation_001",
+  "schema_ref": "urn:mullusi:schema:simple-assistant-ui-boundary:1",
+  "generated_at": "2026-06-18T00:00:00+00:00",
+  "governed": true,
+  "foundation_only": true,
+  "principle": "Heavy governance inside. Simple experience outside.",
+  "visibility_levels": [
+    {
+      "level": 1,
+      "audience": "normal_user",
+      "visible": [
+        "simple status",
+        "approval prompt",
+        "blocked reason",
+        "result label"
+      ],
+      "hidden_by_default": [
+        "proof internals",
+        "schema internals",
+        "operator internals",
+        "witness internals"
+      ]
+    },
+    {
+      "level": 2,
+      "audience": "power_user_operator",
+      "visible": [
+        "receipt references",
+        "blocked reasons",
+        "component path",
+        "audit detail link"
+      ],
+      "hidden_by_default": [
+        "raw secrets",
+        "private connector payloads"
+      ]
+    },
+    {
+      "level": 3,
+      "audience": "auditor_developer",
+      "visible": [
+        "schemas",
+        "witnesses",
+        "governance traces",
+        "validation commands"
+      ],
+      "hidden_by_default": [
+        "secret values"
+      ]
+    }
+  ],
+  "normal_user_allowed_statuses": [
+    "Ready",
+    "Needs approval",
+    "Blocked for safety",
+    "Draft created",
+    "Sent after approval",
+    "Evidence saved"
+  ],
+  "normal_user_allowed_actions": [
+    "Approve",
+    "Reject",
+    "Edit draft",
+    "Cancel",
+    "View audit details"
+  ],
+  "normal_user_forbidden_terms": [
+    "proof matrix",
+    "WHQR",
+    "component lifecycle state",
+    "receipt schema",
+    "protocol manifest count",
+    "operator evidence boundary",
+    "temporal retention certificate hash"
+  ],
+  "normal_user_projection_fields": [
+    "title",
+    "status_label",
+    "risk_label",
+    "approval_required",
+    "result_label",
+    "evidence_label",
+    "audit_details_available"
+  ],
+  "normal_user_examples": [
+    {
+      "action_family": "email",
+      "title": "Draft ready.",
+      "status_label": "Needs approval",
+      "risk_label": "external message",
+      "approval_required": true,
+      "result_label": "Draft created",
+      "evidence_label": "Evidence saved",
+      "audit_details_available": true,
+      "buttons": [
+        "Approve",
+        "Edit draft",
+        "Cancel",
+        "View audit details"
+      ]
+    },
+    {
+      "action_family": "connector_action",
+      "title": "Action blocked.",
+      "status_label": "Blocked for safety",
+      "risk_label": "external account change",
+      "approval_required": true,
+      "result_label": "Blocked for safety",
+      "evidence_label": "Evidence saved",
+      "audit_details_available": true,
+      "buttons": [
+        "Cancel",
+        "View audit details"
+      ]
+    }
+  ],
+  "audit_details": {
+    "default_visibility": "hidden",
+    "normal_user_default_hidden": true,
+    "operator_access_allowed": true,
+    "auditor_developer_access_allowed": true,
+    "detail_link_label": "View audit details"
+  },
+  "effect_boundary": {
+    "projection_only": true,
+    "execution_authority_granted": false,
+    "connector_mutation_allowed": false,
+    "external_send_allowed": false,
+    "system_of_record_write_allowed": false,
+    "proof_details_hidden_by_default": true,
+    "operator_details_hidden_by_default": true
+  },
+  "assurance": {
+    "assurance_id": "simple_assistant_ui_boundary_assurance",
+    "outcome": "SolvedVerified",
+    "normal_user_complexity_leak_detected": false,
+    "authority_drift_detected": false,
+    "checked_controls": [
+      "normal_user_status_allowlist",
+      "normal_user_forbidden_term_scan",
+      "audit_details_hidden_by_default",
+      "no_execution_authority"
+    ],
+    "next_action": "Bind frontend assistant surfaces to this projection before exposing governed actions."
+  },
+  "validation_commands": [
+    "python scripts/validate_simple_assistant_ui_boundary.py",
+    "python -m pytest tests/test_validate_simple_assistant_ui_boundary.py -q"
+  ],
+  "metadata": {
+    "source_principle": "users_approve_outcomes_mullu_handles_proof_auditors_inspect_proof_developers_maintain_proof",
+    "normal_user_copy_contract": "simple_status_only",
+    "operator_audit_contract": "details_available_by_explicit_visibility_level"
+  }
+}
