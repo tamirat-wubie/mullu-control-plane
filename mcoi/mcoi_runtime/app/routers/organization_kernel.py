@@ -1331,6 +1331,8 @@ def _proof_explorer_ref_list(value: object) -> str:
 def _closure_drift_action_table_row(item: dict[str, object]) -> dict[str, object]:
     runbook = item.get("runbook")
     runbook = runbook if isinstance(runbook, dict) else {}
+    runbook_binding = item.get("runbook_binding")
+    runbook_binding = runbook_binding if isinstance(runbook_binding, dict) else {}
     return {
         "terminal_disposition": item.get("terminal_disposition", ""),
         "action_kind": item.get("action_kind", ""),
@@ -1338,6 +1340,9 @@ def _closure_drift_action_table_row(item: dict[str, object]) -> dict[str, object
         "runbook_id": runbook.get("runbook_id", ""),
         "stage_count": runbook.get("stage_count", 0),
         "topology_valid": runbook.get("topology_valid", False),
+        "binding_terminal_stage_id": runbook_binding.get("terminal_stage_id", ""),
+        "binding_valid": runbook_binding.get("binding_valid", ""),
+        "binding_evidence": _text_list(runbook_binding.get("terminal_verification_evidence", [])),
         "terminal_condition": runbook.get("terminal_condition", ""),
         "required_evidence_types": _text_list(item.get("required_evidence_types", [])),
         "missing_evidence_types": _text_list(item.get("missing_evidence_types", [])),
@@ -1461,7 +1466,7 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Departments", ("department_id", "steps", "allowed", "blocked", "missing_evidence", "evidence_refs"), department_rows)}
     {_proof_explorer_table("Evidence", ("requirement_id", "present", "evidence_refs", "step_ids"), evidence_rows)}
     {_proof_explorer_table("Closure", ("field", "value"), closure_rows)}
-    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "binding_terminal_stage_id", "binding_valid", "binding_evidence", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
     {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
   </main>
 </body>
@@ -2485,7 +2490,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
     {_proof_explorer_table("Closure Drift Remediations", ("remediation_id", "terminal_disposition", "drift_evidence_refs", "evidence_refs", "created_at"), remediation_rows)}
-    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
+    {_proof_explorer_table("Closure Drift Actions", ("terminal_disposition", "action_kind", "ready", "runbook_id", "stage_count", "topology_valid", "binding_terminal_stage_id", "binding_valid", "binding_evidence", "terminal_condition", "required_evidence_types", "missing_evidence_types", "authority_refs", "endpoint"), closure_drift_action_rows)}
   </main>
 </body>
 </html>
