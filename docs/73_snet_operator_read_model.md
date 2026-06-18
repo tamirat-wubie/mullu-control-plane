@@ -23,6 +23,9 @@ Invariants:
 | `SNetRecursiveMesh` | Local in-memory proof engine | No external effects |
 | `build_snet_operator_read_model` | Bounded operator projection | Read-only |
 | `SNetMeshReceipt` | Deterministic receipt over mesh counts and digest | Non-terminal evidence |
+| `episode_replay` | Deterministic local replay descriptor for operator audit | Replay/audit only |
+| `receipt_reconstruction` | Mesh-digest-to-receipt reconstruction summary | Read-only |
+| `audit_explanation` | Bounded explanation of what SNet can and cannot prove | Read-only |
 | `schemas/snet_operator_read_model.schema.json` | Operator projection schema | Validation only |
 | `examples/snet_operator_read_model.json` | Saved bounded read-model example | Non-terminal evidence |
 | `scripts/validate_snet_operator_read_model.py` | Schema, sample, and no-authority validator | Read-only |
@@ -49,6 +52,10 @@ Invariants:
 | `contradiction_count` | Number of recorded contradiction records. |
 | `settlement_counts` | Distribution across SNet settlement states. |
 | `evidence_refs` | Receipt evidence references, including the mesh digest witness. |
+| `episode_replay` | Replay mode, source refs, expected receipt, and denied live authorities. |
+| `receipt_reconstruction` | Deterministic receipt reconstruction without raw answers or metadata. |
+| `audit_explanation` | Operator-facing explanation of replay/audit scope and denied authorities. |
+| `blocked_authorities` | Explicit list of SNet live execution, connector, filesystem, autonomous routing, and terminal closure authorities that remain blocked. |
 
 The read model must not expose:
 
@@ -60,6 +67,7 @@ connector authority
 route authority
 filesystem authority
 terminal closure authority
+autonomous action routing authority
 ```
 
 ## Verification Commands

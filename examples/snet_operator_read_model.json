@@ -1,8 +1,43 @@
 {
   "answer_count": 2,
+  "audit_explanation": {
+    "autonomous_action_routing_denied": true,
+    "connector_authority_denied": true,
+    "explanation_mode": "bounded_operator_summary",
+    "filesystem_authority_denied": true,
+    "live_execution_authority_denied": true,
+    "receipt_id": "snet-mesh-5901e9d896d8137f",
+    "summary": "SNet replay reconstructs read-only mesh evidence and receipts for operator audit; it does not execute connectors, write files, route actions, or grant terminal closure.",
+    "terminal_closure_denied": true
+  },
+  "blocked_authorities": [
+    "snet_live_execution_authority",
+    "snet_connector_authority",
+    "snet_filesystem_authority",
+    "snet_autonomous_action_routing",
+    "terminal_closure_authority"
+  ],
   "connector_authority_granted": false,
   "contradiction_count": 0,
   "enabled": true,
+  "episode_replay": {
+    "audit_explanation_allowed": true,
+    "autonomous_action_routing_granted": false,
+    "connector_authority_granted": false,
+    "expected_mesh_digest": "sha256:5a55feb919893a95acc188a1acd101d234601cee7267e49a488e57640a9f1f41",
+    "expected_receipt_id": "snet-mesh-5901e9d896d8137f",
+    "filesystem_authority_granted": false,
+    "live_execution_authority_granted": false,
+    "mode": "deterministic_local",
+    "operator_read_model_only": true,
+    "receipt_reconstruction_allowed": true,
+    "source_refs": [
+      "schemas/snet_episode.schema.json",
+      "scripts/validate_snet_episode_replay.py",
+      "examples/snet_episode_seed_dependency.json"
+    ],
+    "surface": "snet_episode_replay"
+  },
   "execution_authority_granted": false,
   "filesystem_authority_granted": false,
   "metadata_count": 2,
@@ -50,6 +85,24 @@
     "symbol_count": 3,
     "terminal_closure_required": true,
     "unknown_count": 12
+  },
+  "receipt_reconstruction": {
+    "deterministic": true,
+    "evidence_refs": [
+      "snet:mesh_digest:sha256:5a55feb919893a95acc188a1acd101d234601cee7267e49a488e57640a9f1f41",
+      "snet:symbols:3",
+      "snet:questions:14",
+      "snet:metadata:2",
+      "snet:relations:2",
+      "snet:unknowns:12",
+      "snet:contradictions:0"
+    ],
+    "mesh_digest": "sha256:5a55feb919893a95acc188a1acd101d234601cee7267e49a488e57640a9f1f41",
+    "raw_answers_required": false,
+    "raw_metadata_required": false,
+    "receipt_id": "snet-mesh-5901e9d896d8137f",
+    "reconstruction_mode": "receipt_from_bounded_mesh_digest",
+    "terminal_closure_granted": false
   },
   "relation_count": 2,
   "route_authority_granted": false,

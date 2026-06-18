@@ -30,6 +30,13 @@ def test_snet_operator_read_model_contract_passes() -> None:
     assert sample_read_model["connector_authority_granted"] is False
     assert sample_read_model["route_authority_granted"] is False
     assert sample_read_model["filesystem_authority_granted"] is False
+    assert sample_read_model["episode_replay"]["surface"] == "snet_episode_replay"
+    assert sample_read_model["episode_replay"]["mode"] == "deterministic_local"
+    assert sample_read_model["episode_replay"]["live_execution_authority_granted"] is False
+    assert sample_read_model["receipt_reconstruction"]["deterministic"] is True
+    assert sample_read_model["receipt_reconstruction"]["receipt_id"] == sample_read_model["receipt"]["receipt_id"]
+    assert sample_read_model["audit_explanation"]["terminal_closure_denied"] is True
+    assert "snet_live_execution_authority" in sample_read_model["blocked_authorities"]
     assert validator.validate_read_model(sample_read_model, schema) == []
 
 
@@ -50,6 +57,10 @@ def test_snet_operator_read_model_rejects_raw_and_authority_mutations() -> None:
     raw_field_read_model["answers"] = ["Water"]
     for field_name, read_model in authority_read_models.items():
         read_model[field_name] = True
+    nested_authority_read_model = validator.build_sample_read_model()
+    nested_authority_read_model["episode_replay"]["connector_authority_granted"] = True
+    receipt_drift_read_model = validator.build_sample_read_model()
+    receipt_drift_read_model["receipt_reconstruction"]["receipt_id"] = "snet-mesh-0000000000000000"
 
     raw_errors = validator.validate_read_model(raw_read_model, schema)
     raw_field_errors = validator.validate_read_model(raw_field_read_model, schema)
@@ -57,10 +68,14 @@ def test_snet_operator_read_model_rejects_raw_and_authority_mutations() -> None:
         field_name: validator.validate_read_model(read_model, schema)
         for field_name, read_model in authority_read_models.items()
     }
+    nested_authority_errors = validator.validate_read_model(nested_authority_read_model, schema)
+    receipt_drift_errors = validator.validate_read_model(receipt_drift_read_model, schema)
 
     assert any("raw_answers_exposed" in error for error in raw_errors)
     assert any("answers" in error for error in raw_field_errors)
     assert all(any(field_name in error for error in errors) for field_name, errors in authority_errors.items())
+    assert any("episode_replay.connector_authority_granted" in error for error in nested_authority_errors)
+    assert any("receipt_reconstruction.receipt_id" in error for error in receipt_drift_errors)
     assert raw_read_model["receipt"]["receipt_is_not_terminal_closure"] is True
 
 

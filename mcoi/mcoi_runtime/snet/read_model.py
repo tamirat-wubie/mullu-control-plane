@@ -53,6 +53,10 @@ def build_snet_operator_read_model(
         "connector_authority_granted": False,
         "route_authority_granted": False,
         "filesystem_authority_granted": False,
+        "episode_replay": _episode_replay_summary(receipt),
+        "receipt_reconstruction": _receipt_reconstruction_summary(receipt),
+        "audit_explanation": _audit_explanation(receipt),
+        "blocked_authorities": _blocked_authorities(),
         "symbol_count": receipt.symbol_count,
         "question_count": receipt.question_count,
         "answer_count": receipt.answer_count,
@@ -118,6 +122,67 @@ def create_snet_mesh_receipt(mesh: SNetRecursiveMesh) -> SNetMeshReceipt:
             f"snet:contradictions:{len(mesh.contradictions)}",
         ),
     )
+
+
+def _episode_replay_summary(receipt: SNetMeshReceipt) -> dict[str, Any]:
+    return {
+        "surface": "snet_episode_replay",
+        "mode": "deterministic_local",
+        "operator_read_model_only": True,
+        "receipt_reconstruction_allowed": True,
+        "audit_explanation_allowed": True,
+        "live_execution_authority_granted": False,
+        "connector_authority_granted": False,
+        "filesystem_authority_granted": False,
+        "autonomous_action_routing_granted": False,
+        "source_refs": [
+            "schemas/snet_episode.schema.json",
+            "scripts/validate_snet_episode_replay.py",
+            "examples/snet_episode_seed_dependency.json",
+        ],
+        "expected_receipt_id": receipt.receipt_id,
+        "expected_mesh_digest": receipt.mesh_digest,
+    }
+
+
+def _receipt_reconstruction_summary(receipt: SNetMeshReceipt) -> dict[str, Any]:
+    return {
+        "reconstruction_mode": "receipt_from_bounded_mesh_digest",
+        "deterministic": True,
+        "receipt_id": receipt.receipt_id,
+        "mesh_digest": receipt.mesh_digest,
+        "evidence_refs": list(receipt.evidence_refs),
+        "raw_answers_required": False,
+        "raw_metadata_required": False,
+        "terminal_closure_granted": False,
+    }
+
+
+def _audit_explanation(receipt: SNetMeshReceipt) -> dict[str, Any]:
+    return {
+        "explanation_mode": "bounded_operator_summary",
+        "summary": (
+            "SNet replay reconstructs read-only mesh evidence and receipts for "
+            "operator audit; it does not execute connectors, write files, route "
+            "actions, or grant terminal closure."
+        ),
+        "receipt_id": receipt.receipt_id,
+        "live_execution_authority_denied": True,
+        "connector_authority_denied": True,
+        "filesystem_authority_denied": True,
+        "autonomous_action_routing_denied": True,
+        "terminal_closure_denied": True,
+    }
+
+
+def _blocked_authorities() -> list[str]:
+    return [
+        "snet_live_execution_authority",
+        "snet_connector_authority",
+        "snet_filesystem_authority",
+        "snet_autonomous_action_routing",
+        "terminal_closure_authority",
+    ]
 
 
 def _mesh_digest(mesh: SNetRecursiveMesh, settlement_counts: dict[str, int]) -> str:

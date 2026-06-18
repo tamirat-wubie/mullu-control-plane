@@ -14,6 +14,10 @@
     "connector_authority_granted",
     "route_authority_granted",
     "filesystem_authority_granted",
+    "episode_replay",
+    "receipt_reconstruction",
+    "audit_explanation",
+    "blocked_authorities",
     "symbol_count",
     "question_count",
     "answer_count",
@@ -58,6 +62,30 @@
     "filesystem_authority_granted": {
       "type": "boolean",
       "const": false
+    },
+    "episode_replay": {
+      "$ref": "#/$defs/episode_replay"
+    },
+    "receipt_reconstruction": {
+      "$ref": "#/$defs/receipt_reconstruction"
+    },
+    "audit_explanation": {
+      "$ref": "#/$defs/audit_explanation"
+    },
+    "blocked_authorities": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "snet_live_execution_authority",
+          "snet_connector_authority",
+          "snet_filesystem_authority",
+          "snet_autonomous_action_routing",
+          "terminal_closure_authority"
+        ]
+      }
     },
     "symbol_count": {
       "$ref": "#/$defs/non_negative_integer"
@@ -113,6 +141,168 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "episode_replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface",
+        "mode",
+        "operator_read_model_only",
+        "receipt_reconstruction_allowed",
+        "audit_explanation_allowed",
+        "live_execution_authority_granted",
+        "connector_authority_granted",
+        "filesystem_authority_granted",
+        "autonomous_action_routing_granted",
+        "source_refs",
+        "expected_receipt_id",
+        "expected_mesh_digest"
+      ],
+      "properties": {
+        "surface": {
+          "type": "string",
+          "const": "snet_episode_replay"
+        },
+        "mode": {
+          "type": "string",
+          "const": "deterministic_local"
+        },
+        "operator_read_model_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "receipt_reconstruction_allowed": {
+          "type": "boolean",
+          "const": true
+        },
+        "audit_explanation_allowed": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_execution_authority_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "connector_authority_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "filesystem_authority_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "autonomous_action_routing_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "expected_receipt_id": {
+          "type": "string",
+          "pattern": "^snet-mesh-[0-9a-f]{16}$"
+        },
+        "expected_mesh_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "receipt_reconstruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reconstruction_mode",
+        "deterministic",
+        "receipt_id",
+        "mesh_digest",
+        "evidence_refs",
+        "raw_answers_required",
+        "raw_metadata_required",
+        "terminal_closure_granted"
+      ],
+      "properties": {
+        "reconstruction_mode": {
+          "type": "string",
+          "const": "receipt_from_bounded_mesh_digest"
+        },
+        "deterministic": {
+          "type": "boolean",
+          "const": true
+        },
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^snet-mesh-[0-9a-f]{16}$"
+        },
+        "mesh_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "raw_answers_required": {
+          "type": "boolean",
+          "const": false
+        },
+        "raw_metadata_required": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_granted": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "audit_explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "explanation_mode",
+        "summary",
+        "receipt_id",
+        "live_execution_authority_denied",
+        "connector_authority_denied",
+        "filesystem_authority_denied",
+        "autonomous_action_routing_denied",
+        "terminal_closure_denied"
+      ],
+      "properties": {
+        "explanation_mode": {
+          "type": "string",
+          "const": "bounded_operator_summary"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^snet-mesh-[0-9a-f]{16}$"
+        },
+        "live_execution_authority_denied": {
+          "type": "boolean",
+          "const": true
+        },
+        "connector_authority_denied": {
+          "type": "boolean",
+          "const": true
+        },
+        "filesystem_authority_denied": {
+          "type": "boolean",
+          "const": true
+        },
+        "autonomous_action_routing_denied": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure_denied": {
+          "type": "boolean",
+          "const": true
+        }
       }
     },
     "settlement_counts": {

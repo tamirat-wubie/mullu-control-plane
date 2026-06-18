@@ -48,6 +48,10 @@ REQUIRED_READ_MODEL_FIELDS = (
     "connector_authority_granted",
     "route_authority_granted",
     "filesystem_authority_granted",
+    "episode_replay",
+    "receipt_reconstruction",
+    "audit_explanation",
+    "blocked_authorities",
     "symbol_count",
     "question_count",
     "answer_count",
@@ -89,6 +93,13 @@ COUNT_FIELDS = (
     "unknown_count",
     "contradiction_count",
 )
+BLOCKED_AUTHORITIES = {
+    "snet_live_execution_authority",
+    "snet_connector_authority",
+    "snet_filesystem_authority",
+    "snet_autonomous_action_routing",
+    "terminal_closure_authority",
+}
 
 
 class SNetOperatorReadModelContractError(ValueError):
@@ -193,6 +204,7 @@ def validate_read_model(read_model: Any, schema: dict[str, Any] | None = None) -
                 errors.append(f"{field_name} must match receipt")
         if read_model["settlement_counts"] != receipt.get("settlement_counts"):
             errors.append("settlement_counts must match receipt")
+        errors.extend(_validate_replay_audit_sections(read_model, receipt))
 
     selected_symbols = read_model.get("selected_symbols")
     if isinstance(selected_symbols, list):
@@ -216,6 +228,58 @@ def validate_read_model(read_model: Any, schema: dict[str, Any] | None = None) -
     for raw_key in ("answers", "raw_answers", "metadata_values", "raw_metadata_values"):
         if raw_key in read_model:
             errors.append(f"read model exposes raw field: {raw_key}")
+    return errors
+
+
+def _validate_replay_audit_sections(read_model: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    episode_replay = read_model.get("episode_replay")
+    receipt_reconstruction = read_model.get("receipt_reconstruction")
+    audit_explanation = read_model.get("audit_explanation")
+    blocked_authorities = read_model.get("blocked_authorities")
+    if not isinstance(episode_replay, dict):
+        errors.append("episode_replay must be an object")
+    else:
+        for field_name in (
+            "live_execution_authority_granted",
+            "connector_authority_granted",
+            "filesystem_authority_granted",
+            "autonomous_action_routing_granted",
+        ):
+            if episode_replay.get(field_name) is not False:
+                errors.append(f"episode_replay.{field_name} must be false")
+        if episode_replay.get("expected_receipt_id") != receipt.get("receipt_id"):
+            errors.append("episode_replay.expected_receipt_id must match receipt")
+        if episode_replay.get("expected_mesh_digest") != receipt.get("mesh_digest"):
+            errors.append("episode_replay.expected_mesh_digest must match receipt")
+    if not isinstance(receipt_reconstruction, dict):
+        errors.append("receipt_reconstruction must be an object")
+    else:
+        if receipt_reconstruction.get("receipt_id") != receipt.get("receipt_id"):
+            errors.append("receipt_reconstruction.receipt_id must match receipt")
+        if receipt_reconstruction.get("mesh_digest") != receipt.get("mesh_digest"):
+            errors.append("receipt_reconstruction.mesh_digest must match receipt")
+        for field_name in ("raw_answers_required", "raw_metadata_required", "terminal_closure_granted"):
+            if receipt_reconstruction.get(field_name) is not False:
+                errors.append(f"receipt_reconstruction.{field_name} must be false")
+    if not isinstance(audit_explanation, dict):
+        errors.append("audit_explanation must be an object")
+    else:
+        if audit_explanation.get("receipt_id") != receipt.get("receipt_id"):
+            errors.append("audit_explanation.receipt_id must match receipt")
+        for field_name in (
+            "live_execution_authority_denied",
+            "connector_authority_denied",
+            "filesystem_authority_denied",
+            "autonomous_action_routing_denied",
+            "terminal_closure_denied",
+        ):
+            if audit_explanation.get(field_name) is not True:
+                errors.append(f"audit_explanation.{field_name} must be true")
+    if not isinstance(blocked_authorities, list):
+        errors.append("blocked_authorities must be a list")
+    elif set(blocked_authorities) != BLOCKED_AUTHORITIES:
+        errors.append("blocked_authorities must match SNet audit-only authority denials")
     return errors
 
 
