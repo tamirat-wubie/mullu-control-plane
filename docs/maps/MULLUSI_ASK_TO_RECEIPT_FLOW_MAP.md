@@ -316,7 +316,7 @@ The flow gives the product a clear first-time user path without forcing the user
 Fracture delta:
 
 ```text
-The flow exposes remaining gaps in clarification expansion, source-level search evidence, approval-strength drilldowns, channel-native approval-strength enforcement, and external-channel hardening.
+The flow exposes remaining gaps in clarification expansion, source-level search evidence, channel-native approval-strength enforcement, approval-strength admin controls, and external-channel hardening.
 ```
 
 Refinement:

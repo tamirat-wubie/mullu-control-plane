@@ -2067,6 +2067,68 @@ class TestApprovalWebhook:
         )
         assert app.state.router.pending_approvals == 1
 
+    def test_approval_callback_strength_appears_in_operator_history(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="operator",
+                tenant_id="t1",
+                identity_id="operator-1",
+                approval_authority=True,
+                metadata={"operator_session_present": True},
+            )
+        )
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        approve_resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "operator",
+                }
+            ),
+        )
+        history_resp = client.get(
+            f"/operator/approvals/read-model?tenant_id=t1&request_id={request_id}"
+        )
+        detail_resp = client.get(f"/operator/approvals/{request_id}?tenant_id=t1")
+
+        assert approve_resp.status_code == 200
+        assert history_resp.status_code == 200
+        history_data = history_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_APPROVAL_HISTORY_READ_MODEL_SCHEMA),
+            history_data,
+        ) == []
+        approval = history_data["approvals"][0]
+        assert approval["approval_strength_policy"] == (
+            "channel_approval_strength_policy.foundation"
+        )
+        assert approval["approval_strength_decision"] == "allow"
+        assert approval["approval_strength"] == "operator_bound"
+        assert approval["required_approval_strength"] == "operator_bound"
+        assert approval["approval_strength_required_controls"] == []
+        assert detail_resp.status_code == 200
+        assert "operator_bound" in detail_resp.text
+        assert "channel_approval_strength_policy.foundation" in detail_resp.text
+
     def test_approval_callback_requires_resolver_identity(self):
         app = create_gateway_app(platform=StubPlatform())
         app.state.router.register_tenant_mapping(
