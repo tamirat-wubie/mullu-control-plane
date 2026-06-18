@@ -9019,6 +9019,9 @@
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
+        "learning_binding_rejects_non_decision_evidence_refs": [
+          "learning_admission_binding_rejects_non_decision_evidence"
+        ],
         "terminal_closure_rejects_unadmitted_certificate_evidence_ref": [
           "case_close_rejects_unadmitted_terminal_certificate_evidence"
         ]
@@ -9085,6 +9088,7 @@
         "case_proof_timeline_reports_open_case_without_closure",
         "case_proof_timeline_reports_closure_certificate_and_learning",
         "learning_binding_requires_admission_evidence_refs",
+        "learning_binding_rejects_non_decision_evidence_refs",
         "learning_binding_requires_closed_case_and_admission_decision",
         "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
         "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -15290,8 +15294,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1937,
-    "runtime_witness_count": 1937,
+    "exact_test_anchor_count": 1938,
+    "runtime_witness_count": 1938,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21704,6 +21708,13 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_learning_binding_rejects_non_decision_evidence_refs",
+              "mcoi/tests/test_organization_kernel.py::test_learning_admission_binding_rejects_non_decision_evidence"
+            ],
+            "witness": "learning_binding_rejects_non_decision_evidence_refs"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_orgos_kernel.py::test_learning_binding_requires_closed_case_and_admission_decision"
             ],
             "witness": "learning_binding_requires_closed_case_and_admission_decision"
@@ -21775,8 +21786,8 @@
             "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 73,
-        "runtime_witness_count": 73,
+        "exact_test_anchor_count": 74,
+        "runtime_witness_count": 74,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
