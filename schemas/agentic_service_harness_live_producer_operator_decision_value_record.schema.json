@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-record:1",
+  "title": "Agentic Service Harness Live Producer Operator Decision Value Record",
+  "description": "Explicit operator approval or rejection value record that satisfies only the operator approval witness and grants no live producer authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_record_path_ref",
+    "source_record_path_status",
+    "operator_input_ref",
+    "decision_kind",
+    "normalized_decision_value",
+    "raw_input_serialized",
+    "operator_value_record_created",
+    "actual_operator_decision_value_present",
+    "operator_approval_witness_satisfied",
+    "operator_rejection_recorded",
+    "approval_status",
+    "remaining_live_witnesses_status",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "live_producer_implemented",
+    "terminal_closure",
+    "scope",
+    "remaining_witnesses",
+    "record_controls",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "const": "agentic-service-harness-live-producer-operator-decision-value-record"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_record_path_ref": { "$ref": "#/$defs/evidence_ref" },
+    "source_record_path_status": {
+      "type": "string",
+      "const": "ready_blocked_awaiting_explicit_operator_value"
+    },
+    "operator_input_ref": { "$ref": "#/$defs/evidence_ref" },
+    "decision_kind": {
+      "type": "string",
+      "const": "explicit_operator_approval"
+    },
+    "normalized_decision_value": { "type": "string", "const": "approve" },
+    "raw_input_serialized": { "type": "boolean", "const": false },
+    "operator_value_record_created": { "type": "boolean", "const": true },
+    "actual_operator_decision_value_present": { "type": "boolean", "const": true },
+    "operator_approval_witness_satisfied": { "type": "boolean", "const": true },
+    "operator_rejection_recorded": { "type": "boolean", "const": false },
+    "approval_status": { "type": "string", "const": "Satisfied" },
+    "remaining_live_witnesses_status": { "type": "string", "const": "AwaitingEvidence" },
+    "authority_granted": { "type": "boolean", "const": false },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "live_producer_implemented": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/remaining_witness" },
+      "uniqueItems": true
+    },
+    "record_controls": { "$ref": "#/$defs/record_controls" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "organization_id", "project_id", "repository_connection_id", "read_only"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["witness_kind", "status", "blocks_live_producer"],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": ["effect_receipt", "external_adapter_evidence", "secret_handoff", "rollback_proof"]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_producer": { "type": "boolean", "const": true }
+      }
+    },
+    "record_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepts_generic_continuation",
+        "accepts_template_packet",
+        "stores_raw_operator_input",
+        "stores_secret_values",
+        "admits_mutation_route",
+        "grants_live_authority",
+        "requires_remaining_witnesses"
+      ],
+      "properties": {
+        "accepts_generic_continuation": { "type": "boolean", "const": false },
+        "accepts_template_packet": { "type": "boolean", "const": false },
+        "stores_raw_operator_input": { "type": "boolean", "const": false },
+        "stores_secret_values": { "type": "boolean", "const": false },
+        "admits_mutation_route": { "type": "boolean", "const": false },
+        "grants_live_authority": { "type": "boolean", "const": false },
+        "requires_remaining_witnesses": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "network_policy"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

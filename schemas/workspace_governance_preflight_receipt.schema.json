@@ -137,6 +137,7 @@
             "agentic_service_harness_live_producer_operator_decision_value_template",
             "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
             "agentic_service_harness_live_producer_operator_decision_value_record_path",
+            "agentic_service_harness_live_producer_operator_decision_value_record",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",

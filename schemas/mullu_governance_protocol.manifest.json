@@ -371,6 +371,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-value-record",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_value_record.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-value-record:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
