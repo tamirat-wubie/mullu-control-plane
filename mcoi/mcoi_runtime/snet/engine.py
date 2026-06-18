@@ -225,6 +225,11 @@ class SNetRecursiveMesh:
             validation_state=validation_state,
             evidence_refs=evidence_ref_values,
         )
+        existing_answer = self.answers.get(answer.answer_id)
+        if existing_answer is not None:
+            if existing_answer != answer:
+                raise ValueError("SNet duplicate answer_id cannot change answer evidence")
+            return existing_answer
         self.answers[answer.answer_id] = answer
         return answer
 

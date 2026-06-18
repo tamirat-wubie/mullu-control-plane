@@ -866,6 +866,27 @@ def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
     assert mesh.metadata == {}
 
 
+def test_duplicate_answer_id_rejects_evidence_ref_drift_without_overwrite() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+    original_answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
+    before_answers = dict(mesh.answers)
+
+    duplicate_answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
+
+    assert duplicate_answer is original_answer
+    assert mesh.answers == before_answers
+
+    with pytest.raises(ValueError, match="duplicate answer_id cannot change answer evidence"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:2",))
+
+    assert mesh.answers == before_answers
+    assert mesh.answers[original_answer.answer_id].evidence_refs == ("evidence:1",)
+    assert mesh.metadata == {}
+
+
 def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
