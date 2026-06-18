@@ -87,15 +87,17 @@ class SNetRecursiveMesh:
         symbol_type_text = _require_text(symbol_type, "symbol_type")
         sense_id_text = _optional_text(sense_id, "sense_id")
         definition_text = _optional_text(definition, "definition")
+        ontology_status_value = _require_ontology_status(ontology_status)
         parent_context_text = _optional_text(parent_context, "parent_context")
         created_from_metadata_id_text = _optional_text(created_from_metadata_id, "created_from_metadata_id")
+        depth_value = _require_depth(depth)
         if created_from_metadata_id_text:
             self._require_metadata_symbol_provenance(
                 created_from_metadata_id_text,
                 label_text,
                 symbol_type_text,
                 parent_context_text,
-                depth,
+                depth_value,
             )
         identity_key = (
             _ascii_lower_stripped(label_text),
@@ -114,10 +116,10 @@ class SNetRecursiveMesh:
             symbol_type=symbol_type_text,
             sense_id=sense_id_text,
             definition=definition_text,
-            ontology_status=ontology_status,
+            ontology_status=ontology_status_value,
             parent_context=parent_context_text,
             created_from_metadata_id=created_from_metadata_id_text,
-            depth=depth,
+            depth=depth_value,
         )
         self.symbols[symbol.symbol_id] = symbol
         self._symbol_identity_index[identity_key] = symbol.symbol_id
@@ -661,6 +663,20 @@ def _optional_text(value: str, field_name: str) -> str:
     if value == "":
         return ""
     return _require_text(value, field_name)
+
+
+def _require_ontology_status(ontology_status: SNetOntologyStatus) -> SNetOntologyStatus:
+    if not isinstance(ontology_status, SNetOntologyStatus):
+        raise ValueError("ontology_status must be a SNetOntologyStatus")
+    return ontology_status
+
+
+def _require_depth(depth: int) -> int:
+    if type(depth) is not int:
+        raise ValueError("depth must be an integer")
+    if depth < 0:
+        raise ValueError("depth must be non-negative")
+    return depth
 
 
 def _require_id_text(value: str, field_name: str) -> str:
