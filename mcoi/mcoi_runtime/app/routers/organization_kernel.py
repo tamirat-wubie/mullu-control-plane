@@ -2058,6 +2058,41 @@ def _closure_drift_runbook_projection(disposition: TerminalClosureDisposition) -
     }
 
 
+def _closure_drift_runbook_binding_projection(disposition: TerminalClosureDisposition) -> dict[str, object] | None:
+    runbook = _closure_drift_runbook_projection(disposition)
+    if runbook is None:
+        return None
+    stages = [
+        stage for stage in runbook.get("stages", [])
+        if isinstance(stage, dict)
+    ]
+    terminal_stages = [
+        stage for stage in stages
+        if "closure_drift_remediation" in _runbook_string_tuple(stage.get("output_keys", ()))
+    ]
+    terminal_stage = terminal_stages[-1] if terminal_stages else {}
+    terminal_evidence = list(_runbook_string_tuple(terminal_stage.get("verification_evidence", ())))
+    validation_errors: list[str] = []
+    if runbook.get("topology_valid") is not True:
+        validation_errors.append("runbook_topology_invalid")
+    if not terminal_stage:
+        validation_errors.append("missing_append_remediation_binding_stage")
+    elif terminal_stage.get("stage_type") != "skill_execution":
+        validation_errors.append("append_remediation_binding_stage_must_execute_skill")
+    if "closure_drift_remediation_bound" not in terminal_evidence:
+        validation_errors.append("missing_closure_drift_remediation_bound_evidence")
+    return {
+        "runbook_id": runbook["runbook_id"],
+        "terminal_stage_id": terminal_stage.get("stage_id", ""),
+        "terminal_condition": runbook["terminal_condition"],
+        "terminal_verification_evidence": terminal_evidence,
+        "stage_count": runbook["stage_count"],
+        "topology_valid": runbook["topology_valid"],
+        "binding_valid": not validation_errors,
+        "validation_errors": validation_errors,
+    }
+
+
 def _case_evidence_by_ref(kernel: OrganizationKernel, case_id: str) -> dict[str, CaseEvidence]:
     state = kernel.snapshot_state()
     return {
@@ -2145,6 +2180,7 @@ def _case_closure_drift_remediation_action_projection(
             actions.append({
                 **readiness,
                 "runbook": _closure_drift_runbook_projection(disposition),
+                "runbook_binding": _closure_drift_runbook_binding_projection(disposition),
                 "action_id": stable_identifier(
                     "closure-drift-remediation-action",
                     {
@@ -5553,6 +5589,14 @@ def execute_case_closure_drift_remediation_action(
         evidence_refs=req.evidence_refs,
         authority_ref=req.authority_ref,
     )
+    runbook_binding = _closure_drift_runbook_binding_projection(disposition)
+    if isinstance(runbook_binding, dict) and runbook_binding.get("binding_valid") is not True:
+        detail = _error_detail(
+            "closure drift remediation runbook binding invalid",
+            "closure_drift_runbook_binding_invalid",
+        )
+        detail["validation_errors"] = runbook_binding.get("validation_errors", [])
+        raise HTTPException(400, detail=detail)
     if not readiness["ready"]:
         detail = _error_detail(
             "closure drift remediation policy unmet",
@@ -5576,6 +5620,8 @@ def execute_case_closure_drift_remediation_action(
         "policy_action_kind": policy["action_kind"],
         "policy_required_evidence_types": list(policy["required_evidence_types"]),
     }
+    if runbook_binding is not None:
+        metadata["runbook_binding"] = runbook_binding
     try:
         binding = kernel.bind_closure_drift_remediation(
             ClosureDriftRemediationBinding(
@@ -5602,6 +5648,7 @@ def execute_case_closure_drift_remediation_action(
             "action_id": req.action_id,
             "terminal_disposition": disposition.value,
             "policy": readiness,
+            "runbook_binding": runbook_binding,
         },
         "closure_drift_remediation": _body(binding),
         "governed": True,

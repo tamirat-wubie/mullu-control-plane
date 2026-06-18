@@ -2549,6 +2549,16 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
     assert compensated_runbook["stages"][-1]["verification_evidence"] == [
         "closure_drift_remediation_bound",
     ]
+    assert before_by_disposition["compensated"]["runbook_binding"] == {
+        "runbook_id": "runbook:closure-drift-compensation",
+        "terminal_stage_id": "append_remediation_binding",
+        "terminal_condition": "append closure drift remediation with terminal_disposition=compensated",
+        "terminal_verification_evidence": ["closure_drift_remediation_bound"],
+        "stage_count": 5,
+        "topology_valid": True,
+        "binding_valid": True,
+        "validation_errors": [],
+    }
     assert accepted_risk_runbook["runbook_id"] == "runbook:closure-drift-accepted-risk"
     assert accepted_risk_runbook["stage_count"] == 5
     assert accepted_risk_runbook["topology_valid"] is True
@@ -2556,6 +2566,11 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
     assert accepted_risk_runbook["terminal_condition"] == (
         "append closure drift remediation with terminal_disposition=accepted_risk"
     )
+    assert before_by_disposition["accepted_risk"]["runbook_binding"]["binding_valid"] is True
+    assert before_by_disposition["accepted_risk"]["runbook_binding"]["terminal_stage_id"] == (
+        "append_remediation_binding"
+    )
+    assert before_by_disposition["requires_review"]["runbook_binding"] is None
     assert before_by_disposition["requires_review"]["authority_refs"] == [
         "approval:security-dual-control",
     ]
@@ -2677,6 +2692,100 @@ def test_closure_packet_drift_operator_action_binds_review_remediation(tmp_path:
     assert certificate.json()["terminal_status"] == "closed_drift_review_required"
     assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediated"] is True
     assert "closure_packet_drift_remediated" in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert "closure_drift_remediation_bound" in {item["event_type"] for item in events.json()["events"]}
+
+
+def test_closure_packet_drift_operator_action_binds_compensation_runbook_remediation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    compensation_receipt = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:compensation_receipt",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+            "metadata": {"evidence_type": "compensation_receipt"},
+        },
+    )
+    compensation_reconciliation = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:compensation_effect_reconciliation",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+            "metadata": {"evidence_type": "compensation_effect_reconciliation"},
+        },
+    )
+    refreshed_gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions",
+        json={
+            "action_id": "action:closure-drift-compensation",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "terminal_disposition": "compensated",
+            "authority_ref": "approval:security-dual-control",
+            "evidence_refs": [
+                "evidence:compensation_receipt",
+                "evidence:compensation_effect_reconciliation",
+            ],
+        },
+    )
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    events = client.get("/api/v1/cases/case.launch_gateway_pilot/events")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert compensation_receipt.status_code == 200
+    assert compensation_reconciliation.status_code == 200
+    assert refreshed_gate.status_code == 200
+    assert response.status_code == 200
+    runbook_binding = response.json()["action"]["runbook_binding"]
+    assert runbook_binding["runbook_id"] == "runbook:closure-drift-compensation"
+    assert runbook_binding["terminal_stage_id"] == "append_remediation_binding"
+    assert runbook_binding["terminal_verification_evidence"] == ["closure_drift_remediation_bound"]
+    assert runbook_binding["binding_valid"] is True
+    remediation = response.json()["closure_drift_remediation"]
+    assert remediation["terminal_disposition"] == "compensated"
+    assert remediation["metadata"]["operator_action_id"] == "action:closure-drift-compensation"
+    assert remediation["metadata"]["runbook_binding"] == runbook_binding
+    assert certificate.json()["terminal_status"] == "closed_drift_compensated"
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediated"] is True
     assert "closure_drift_remediation_bound" in {item["event_type"] for item in events.json()["events"]}
 
 
