@@ -2183,7 +2183,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "protocol manifest ok: 365 schemas\n",
+      "stdout": "protocol manifest ok: 373 schemas\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
