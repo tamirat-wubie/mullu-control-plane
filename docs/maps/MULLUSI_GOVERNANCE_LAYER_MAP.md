@@ -32,8 +32,8 @@ Receipts prove.
 | --- | --- | --- | --- | --- | --- |
 | Policy Engine | allow, deny, constrain, or require approval | InterpretedRequest, plan, actor, tenant | PolicyReceipt | implemented / partial | Map user-friendly denial explanations. |
 | Budget Gate | decide whether search, LLM, worker, or execution cost is allowed | estimate, tenant budget, task class | BudgetReceipt | implemented | Plan Review exposes redacted preview, witness, explicit `capability_cost_model` estimates, and optional tenant budget-report evidence with read-only drilldowns. |
-| Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Bind `ChannelApprovalStrengthResult` into channel adapters. |
-| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Record approval-strength policy decisions in approval receipts. |
+| Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Bind `ChannelApprovalStrengthResult` into channel-native adapters and cross-channel handoff receipts. |
+| Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Surface HTTP approval callback strength witnesses in approval receipts and operator drilldowns. |
 | Command Ledger | hold command state and idempotency | approved command | ledger record | implemented / partial | Add richer Current Task filters after worker path selection. |
 | Plan Builder | create actionable plan preview | action intent and slots | CapabilityPlanPreview | implemented / partial | Budget/tool display is exposed in preview and Plan Review with explicit plan-cost estimate sources and optional tenant budget-report overlays. |
 | Plan Ledger | retain plan versions and changes | plan, correction, approval | plan trace | partial | Record re-plan on scope change. |

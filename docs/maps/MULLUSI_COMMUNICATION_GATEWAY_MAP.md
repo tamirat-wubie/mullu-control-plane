@@ -28,7 +28,7 @@ Tenant identity must not be inferred from free-form message text.
 | Message Normalizer | produce canonical message fields | channel event | `GatewayMessage` | implemented / partial | Add product-facing receipt field map. |
 | Message Receipt Writer | record inbound message trace | raw message hash, channel IDs | MessageReceipt | partial | Ensure each channel writes the same core receipt fields. |
 | Deduplicator | block duplicate webhook or replay | channel message ID, idempotency key | duplicate or accepted decision | implemented / partial | Add cross-channel replay cases. |
-| Identity Resolver | bind sender to actor | session, webhook identity, API key | actor identity | implemented / partial | Use `channel_approval_strength_policy.foundation` when resolving external-channel approvals. |
+| Identity Resolver | bind sender to actor | session, webhook identity, API key | actor identity | implemented / partial | Extend `channel_approval_strength_policy.foundation` from HTTP approval callbacks to channel-native approvals and cross-channel handoffs. |
 | Tenant Resolver | bind actor to tenant | actor identity, workspace mapping | tenant identity | implemented / partial | Deny missing or ambiguous tenant mapping. |
 | Conversation Context Store | bind thread and follow-up context | conversation ID, request ID | context snapshot | partial / unknown | Map expiration and scope rules. |
 | Response Composer | format safe channel response | final receipt or blocker | channel-specific response | implemented / partial | Keep external channel formatting bounded by approval and receipt state. |

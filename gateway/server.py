@@ -1972,13 +1972,8 @@ def create_gateway_app(
         )
         if result is None:
             raise HTTPException(404, detail="Request not found or already resolved")
-        if result.metadata.get("error") == "approval_context_denied":
-            raise HTTPException(403, detail={
-                "error": "approval_context_denied",
-                "authority_reason": result.metadata.get("authority_reason", ""),
-                "required_roles": list(result.metadata.get("required_roles", ())),
-                "resolver_roles": list(result.metadata.get("resolver_roles", ())),
-            })
+        if result.metadata.get("error") in {"approval_context_denied", "approval_strength_denied"}:
+            raise HTTPException(403, detail=result.metadata)
         return JSONResponse({
             "status": "resolved",
             "body": result.body,
