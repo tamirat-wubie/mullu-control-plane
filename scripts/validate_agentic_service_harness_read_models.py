@@ -100,6 +100,15 @@ HIGH_RISK_ACTIONS = (
     "secret_mutation",
     "destructive_operation",
 )
+VALID_LIFECYCLE_STATES = {
+    "queued",
+    "running",
+    "awaiting_approval",
+    "completed",
+    "blocked",
+    "cancelled",
+}
+TERMINAL_LIFECYCLE_STATES = {"completed", "blocked", "cancelled"}
 ALLOWED_SECRET_KEYS = {
     "can_mutate_secrets",
     "contains_secret_values",
@@ -203,6 +212,7 @@ def _validate_read_model_semantics(
     _validate_projection_scope(example, errors, label)
     _validate_reference_integrity(example, errors, label)
     _validate_repository_connections(example, errors, label)
+    _validate_agent_runs(example, errors, label)
     _validate_workspace_allocations(example, errors, label)
     _validate_durable_entity_bindings(example, errors, label)
     _validate_complete_high_risk_actions(example, errors, label)
@@ -361,6 +371,39 @@ def _validate_repository_connections(
             errors.append(f"{repository_label} permission_scopes must be a non-empty list")
         elif any(str(scope).endswith("_write") for scope in permission_scopes):
             errors.append(f"{repository_label} permission_scopes must not include write scopes")
+
+
+def _validate_agent_runs(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    runs = example.get("runs")
+    if not isinstance(runs, list) or not runs:
+        errors.append(f"{label}: runs must be a non-empty list")
+        return
+    for run in _objects(runs):
+        run_label = f"{label}: run {run.get('run_id')}"
+        lifecycle_state = run.get("lifecycle_state")
+        terminal_state = run.get("terminal_state")
+        if lifecycle_state not in VALID_LIFECYCLE_STATES:
+            errors.append(f"{run_label} lifecycle_state is invalid")
+        for timestamp_name in ("created_at", "lifecycle_updated_at"):
+            if not isinstance(run.get(timestamp_name), str) or not run.get(timestamp_name):
+                errors.append(f"{run_label} {timestamp_name} must be a non-empty timestamp")
+        transition_receipt_refs = run.get("transition_receipt_refs")
+        if not isinstance(transition_receipt_refs, list) or not transition_receipt_refs:
+            errors.append(f"{run_label} transition_receipt_refs must be a non-empty list")
+        if not isinstance(run.get("read_only_query_ref"), str) or not run.get("read_only_query_ref"):
+            errors.append(f"{run_label} read_only_query_ref must be a non-empty ref")
+        if run.get("status") == "awaiting_approval" and lifecycle_state != "awaiting_approval":
+            errors.append(f"{run_label} awaiting approval status must match lifecycle_state")
+        if run.get("status") == "blocked" and lifecycle_state != "blocked":
+            errors.append(f"{run_label} blocked status must match lifecycle_state")
+        if lifecycle_state in TERMINAL_LIFECYCLE_STATES and terminal_state is not True:
+            errors.append(f"{run_label} terminal lifecycle state must set terminal_state true")
+        if lifecycle_state not in TERMINAL_LIFECYCLE_STATES and terminal_state is not False:
+            errors.append(f"{run_label} non-terminal lifecycle state must set terminal_state false")
 
 
 def _validate_workspace_allocations(

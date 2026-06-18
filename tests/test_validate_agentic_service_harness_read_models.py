@@ -55,6 +55,13 @@ def test_agentic_service_harness_read_models_accept_default_example() -> None:
     assert allocation["workspace_created"] is False
     assert allocation["commands_executed"] is False
     assert allocation["files_written"] is False
+    run = payload["runs"][0]
+    assert run["lifecycle_state"] == "completed"
+    assert run["terminal_state"] is True
+    assert run["transition_receipt_refs"] == [
+        "receipt://agent-run/run-read-model-foundation/lifecycle/completed"
+    ]
+    assert run["read_only_query_ref"] == "agent-run://run-read-model-foundation/read-only-query"
     repository = payload["repositories"][0]
     assert repository["provider_repository_ref"] == "github-repository://tamirat-wubie/mullu-control-plane"
     assert repository["installation_state"] == "presence_only"
@@ -129,6 +136,26 @@ def test_agentic_service_harness_read_models_reject_repository_authority_gap(
     assert "write_authority_enabled must remain false" in serialized_errors
     assert "permission_scopes must not include write scopes" in serialized_errors
     assert "revocation_evidence_ref must be a non-empty ref" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_lifecycle_gap(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    run = payload["runs"][0]
+    run["lifecycle_state"] = "awaiting_approval"
+    run["terminal_state"] = True
+    run["transition_receipt_refs"] = []
+    run["read_only_query_ref"] = ""
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "non-terminal lifecycle state must set terminal_state false" in serialized_errors
+    assert "transition_receipt_refs must be a non-empty list" in serialized_errors
+    assert "read_only_query_ref must be a non-empty ref" in serialized_errors
 
 
 def test_agentic_service_harness_read_models_reject_secret_like_payload(
