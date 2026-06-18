@@ -24,6 +24,7 @@
         "component_autopsy",
         "component_harness_read_model",
         "component_request_simulator",
+        "component_symbol_read_model",
         "gateway_approval_resolution",
         "gateway_capability_fabric",
         "gateway_webhook_ingress"
@@ -37,6 +38,8 @@
         "mcoi/mcoi_runtime/app/component_autopsy.py",
         "mcoi/mcoi_runtime/app/component_read_model.py",
         "mcoi/mcoi_runtime/app/component_request_simulator.py",
+        "mcoi/mcoi_runtime/app/symbol_operator_read_models.py",
+        "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
         "mcoi/mcoi_runtime/app/routers/components.py",
         "schemas/component_autopsy.schema.json",
         "examples/component_autopsy.nested_mind_bridge.json",
@@ -51,6 +54,7 @@
         "component_autopsy_explains_missing_evidence",
         "component_read_model_route_is_read_only",
         "component_request_simulator_route_is_preview_only",
+        "component_symbol_route_is_read_only",
         "command_lifecycle_events_are_hash_linked"
       ],
       "required_surface_ids": [
