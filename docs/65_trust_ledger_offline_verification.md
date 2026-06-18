@@ -51,7 +51,7 @@ Invariants:
 | `anchor_receipt.json` | `trust_ledger_anchor_receipt.schema.json` | Signed external anchor receipt |
 | `artifacts.json` | `trust_ledger_evidence_artifacts.schema.json` | Typed evidence artifact list used to recompute the artifact root |
 | `package.json` | `trust_ledger_export_package.schema.json` | Portable manifest binding expected file names, content hashes, bundle id, receipt id, and artifact root |
-| `submission_receipt.json` | `trust_ledger_anchor_submission_receipt.schema.json` | Signed operator submission receipt after package verification |
+| `submission_receipt.json` | `trust_ledger_anchor_submission_receipt.schema.json` | Signed operator submission receipt after package verification, including the anchor receipt required artifact classes |
 
 Required artifact classes for external anchoring:
 
@@ -288,12 +288,15 @@ hash.
 The remote POST is not attempted unless the preflight receipt validates against
 `trust_ledger_remote_submission_preflight.schema.json`, reports
 `outcome=SolvedVerified`, and matches the final operator id, authority ref,
-remote URL, timeout, ledger sequence, previous ledger hash, and projected remote
-payload hash. The submitter also recomputes the canonical preflight receipt id
-and rejects receipt-id drift before any remote or ledger effect. The canonical
-preflight receipt id hash-binds the full anchor-verification report and
-submission-ledger replay state, so tampered readiness evidence cannot keep the
-same receipt identity.
+remote URL, timeout, ledger sequence, previous ledger hash, required artifact
+classes, and projected remote payload hash. The submitter also recomputes the
+canonical preflight receipt id and rejects receipt-id drift before any remote or
+ledger effect. The canonical preflight receipt id hash-binds the full
+anchor-verification report, required artifact classes, and submission-ledger
+replay state, so tampered readiness evidence cannot keep the same receipt
+identity. The signed submission receipt repeats the required artifact classes;
+TeamOps submissions therefore retain `provider_observation` after export
+verification and before any external anchor submission.
 
 Pass condition:
 
@@ -332,6 +335,6 @@ Submission fail-closed reasons include:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: schema-gated bundle replay, schema-gated anchor replay, typed artifact root replay, terminal closure remains final closure authority
+  Invariants verified: schema-gated bundle replay, schema-gated anchor replay, typed artifact root replay, remote submission required artifact replay, terminal closure remains final closure authority
   Open issues: none
   Next action: use this runbook during trust-ledger export audits and release evidence review
