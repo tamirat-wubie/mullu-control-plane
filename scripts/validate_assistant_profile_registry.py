@@ -39,8 +39,10 @@ DEFAULT_PROFILE_DIR = REPO_ROOT / "assistant_profiles"
 
 SCALAR_PROFILE_FIELDS = (
     "assistant_id",
+    "kind",
     "owner_scope",
     "tenant_scope",
+    "role",
     "memory_policy",
     "approval_policy",
     "budget_policy",
@@ -48,6 +50,7 @@ SCALAR_PROFILE_FIELDS = (
     "data_retention_policy",
 )
 LIST_PROFILE_FIELDS = (
+    "skill_ids",
     "allowed_capabilities",
     "forbidden_capabilities",
     "evidence_required",
@@ -222,7 +225,7 @@ def _validate_runtime_parity(
                 errors.append(
                     f"{assistant_id}: {field} drift registry={registry.get(field)!r} runtime={runtime.get(field)!r}"
                 )
-        for field in ("allowed_capabilities", "evidence_required", "escalation_path"):
+        for field in ("skill_ids", "allowed_capabilities", "evidence_required", "escalation_path"):
             registry_values = tuple(registry.get(field, ()))
             runtime_values = tuple(runtime.get(field, ()))
             if registry_values != runtime_values:

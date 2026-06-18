@@ -3,8 +3,13 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: administrative actions route through approval and audit evidence.
 assistant_id: corporate_admin.default
+kind: corporate_admin
 owner_scope: organization_owned
 tenant_scope: organization_tenant
+role: corporate_admin_assistant
+skill_ids:
+  - skill.corporate_admin.access_review
+  - skill.corporate_admin.audit_export
 allowed_capabilities:
   - directory.read
   - approval.request

@@ -3,8 +3,13 @@
 # Dependencies: mcoi_runtime.assistant_kernel.identity built-in profile contract.
 # Invariants: shared sends require approval; ownership and evidence remain explicit.
 assistant_id: team_ops.default
+kind: team_ops
 owner_scope: organization_owned
 tenant_scope: organization_tenant
+role: team_ops_assistant
+skill_ids:
+  - skill.team_ops.shared_inbox_triage
+  - skill.team_ops.owner_assignment
 allowed_capabilities:
   - messaging.thread.read
   - email.read
