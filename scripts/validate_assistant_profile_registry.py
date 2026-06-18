@@ -8,6 +8,7 @@ Dependencies: assistant_profiles/*.default.yaml and mcoi_runtime.assistant_kerne
 Invariants:
   - Every built-in assistant profile has exactly one registry file.
   - Registry files cannot silently drift from runtime policy fields.
+  - Profile skill identifiers stay inside the profile-kind namespace.
   - Runtime profiles preserve the protected forbidden-capability floor.
   - Registry validation is read-only and deterministic.
 """
@@ -203,6 +204,7 @@ def _validate_profile_payload(path: Path, payload: dict[str, Any], errors: list[
     for field in LIST_PROFILE_FIELDS:
         if field in payload and not _is_non_empty_text_list(payload[field]):
             errors.append(f"{label}: {field} must contain non-empty text entries")
+    _validate_skill_namespace(label, payload, errors)
 
 
 def _validate_runtime_parity(
@@ -242,6 +244,19 @@ def _validate_runtime_parity(
 
 def _apply_protected_forbidden_capability_floor(capabilities: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(dict.fromkeys((*capabilities, *tuple(sorted(PROTECTED_FORBIDDEN_CAPABILITIES)))))
+
+
+def _validate_skill_namespace(label: str, payload: dict[str, Any], errors: list[str]) -> None:
+    kind = payload.get("kind")
+    skill_ids = payload.get("skill_ids")
+    if not isinstance(kind, str) or not isinstance(skill_ids, list):
+        return
+    namespace = f"skill.{kind}."
+    mismatches = sorted(
+        skill_id for skill_id in skill_ids if isinstance(skill_id, str) and not skill_id.startswith(namespace)
+    )
+    if mismatches:
+        errors.append(f"{label}: skill_ids outside kind namespace {mismatches}")
 
 
 def _is_non_empty_text(value: Any) -> bool:

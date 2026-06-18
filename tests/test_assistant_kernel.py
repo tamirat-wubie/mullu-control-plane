@@ -58,6 +58,7 @@ from mcoi_runtime.assistant_kernel.goals import (
     TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
 )
 from mcoi_runtime.assistant_kernel.identity import PROTECTED_FORBIDDEN_CAPABILITIES
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -202,7 +203,7 @@ def test_assistant_profile_applies_protected_forbidden_capability_floor() -> Non
         owner_scope="single_owner",
         tenant_scope="personal_tenant",
         role="floor_test",
-        skill_ids=("skill.floor.review",),
+        skill_ids=("skill.personal.floor_review",),
         allowed_capabilities=("email.read",),
         forbidden_capabilities=(),
         memory_policy="bounded_memory",
@@ -218,6 +219,35 @@ def test_assistant_profile_applies_protected_forbidden_capability_floor() -> Non
     assert "email.read" in profile.allowed_capabilities
     assert set(PROTECTED_FORBIDDEN_CAPABILITIES).isdisjoint(profile.allowed_capabilities)
     assert set(profile.allowed_capabilities).isdisjoint(profile.forbidden_capabilities)
+
+
+def test_assistant_profile_rejects_cross_kind_skill_namespace() -> None:
+    try:
+        AssistantProfile(
+            assistant_id="profile.cross-kind-skill",
+            kind="team_ops",
+            owner_scope="organization_owned",
+            tenant_scope="organization_tenant",
+            role="team_ops_assistant",
+            skill_ids=("skill.finance_ops.invoice_intake",),
+            allowed_capabilities=("email.read",),
+            forbidden_capabilities=("payment.execute",),
+            memory_policy="tenant_scoped_admitted_facts_only",
+            approval_policy="role_bound_external_write_approval",
+            budget_policy="tenant_budget_gate",
+            external_send_policy="approval_required",
+            data_retention_policy="tenant_retention_policy",
+            evidence_required=("approval_receipt",),
+            escalation_path=("team_lead",),
+        )
+    except RuntimeCoreInvariantError as exc:
+        message = str(exc)
+    else:  # pragma: no cover - cross-kind skills must fail closed.
+        raise AssertionError("cross-kind skill namespace was accepted")
+
+    assert "skill_ids must stay within assistant kind namespace" in message
+    assert "capability scope conflict" not in message
+    assert "assistant kind is not admitted" not in message
 
 
 def test_assistant_profiles_read_model_bounded() -> None:
