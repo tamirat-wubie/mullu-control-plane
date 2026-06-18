@@ -14,6 +14,7 @@
   "handoff_ref": "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
   "binding_ref": "examples/read_only_worker_binding.foundation.json",
   "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+  "active_lease_admission_witness_ref": "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json",
   "rehearsal_receipt_ref": "examples/read_only_worker_rehearsal_receipt.foundation.json",
   "selected_worker_path": "read_only_repo_inspection",
   "tenant_id": "tenant_local_foundation",
@@ -55,6 +56,7 @@
     "source_emitter_registration_witness_ref": "examples/read_only_worker_runtime_receipt_emitter_registration_witness.foundation.json",
     "source_schema_binding_witness_ref": "examples/read_only_worker_runtime_receipt_schema_binding_witness.foundation.json",
     "source_emission_admission_witness_ref": "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+    "source_active_lease_admission_witness_ref": "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json",
     "target_runtime_dispatch_admission_ref": "candidate://runtime-dispatch/admission/read-only-repo-inspection",
     "dispatch_admission_profile": "LOCAL_READ_ONLY_REPO_INSPECTION_RUNTIME_DISPATCH_ADMISSION",
     "required_source_receipt_refs": [
@@ -72,6 +74,7 @@
       "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
       "examples/read_only_worker_binding.foundation.json",
       "examples/read_only_worker_lease_preflight.foundation.json",
+      "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json",
       "examples/read_only_worker_rehearsal_receipt.foundation.json"
     ],
     "required_activation_input_refs": [
@@ -90,6 +93,7 @@
       "evidence://tenant-actor-boundary",
       "evidence://receipt-store-write-path-witness",
       "evidence://active-temporal-lease-window",
+      "evidence://runtime-active-lease-admission-witness",
       "evidence://uao-effect-admission",
       "evidence://phi-gov-dispatch-authorization",
       "evidence://worker-failure-receipt-on-error",
@@ -178,6 +182,7 @@
       "evidence://schema-registry-write-boundary/read-only-repo-inspection",
       "evidence://receipt-store-write-path-witness",
       "evidence://active-temporal-lease-window",
+      "evidence://runtime-active-lease-admission-witness",
       "evidence://uao-effect-admission",
       "evidence://phi-gov-dispatch-authorization",
       "evidence://effect-reconciliation-passed"
@@ -198,6 +203,7 @@
       "blocked://runtime-receipt-schema-registry/write-not-authorized",
       "blocked://receipt-store/write-path-not-registered",
       "blocked://temporal-lease/not-active",
+      "blocked://runtime-active-lease/admission-witness-missing",
       "blocked://phi-gov/dispatch-not-authorized",
       "blocked://effect-reconciliation/not-proven"
     ],
@@ -218,6 +224,7 @@
     "read_only_worker_runtime_receipt_handoff_schema": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
     "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
     "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "read_only_worker_runtime_active_lease_admission_witness_schema": "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json",
     "read_only_worker_rehearsal_receipt_schema": "schemas/read_only_worker_rehearsal_receipt.schema.json",
     "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
     "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
@@ -227,16 +234,16 @@
     "read_only_worker_runtime_receipt_store_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json"
   },
   "contract_summary": {
-    "source_receipt_ref_count": 15,
-    "activation_input_ref_count": 19,
+    "source_receipt_ref_count": 16,
+    "activation_input_ref_count": 20,
     "activation_obligation_count": 11,
     "validation_ref_count": 9,
     "activation_true_check_count": 21,
     "activation_denied_check_count": 11,
-    "remaining_denied_until_ref_count": 17,
-    "blocked_reason_ref_count": 17,
-    "receipt_ref_count": 19,
-    "evidence_ref_count": 47
+    "remaining_denied_until_ref_count": 18,
+    "blocked_reason_ref_count": 18,
+    "receipt_ref_count": 20,
+    "evidence_ref_count": 51
   },
   "governance_refs": [
     "policy://foundation-mode/no-live-worker-dispatch",
@@ -258,6 +265,10 @@
     "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json",
+    "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_active_lease_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_active_lease_admission_witness.py",
     "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json",
     "examples/read_only_worker_runtime_receipt_emitter_registration_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_emitter_registration_witness.py",

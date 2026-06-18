@@ -22,6 +22,7 @@
     "handoff_ref",
     "binding_ref",
     "lease_preflight_ref",
+    "active_lease_admission_witness_ref",
     "rehearsal_receipt_ref",
     "selected_worker_path",
     "tenant_id",
@@ -90,6 +91,10 @@
     "lease_preflight_ref": {
       "type": "string",
       "const": "examples/read_only_worker_lease_preflight.foundation.json"
+    },
+    "active_lease_admission_witness_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json"
     },
     "rehearsal_receipt_ref": {
       "type": "string",
@@ -307,6 +312,7 @@
         "source_store_write_path_witness_ref",
         "source_store_activation_witness_ref",
         "source_emission_admission_witness_ref",
+        "source_active_lease_admission_witness_ref",
         "target_runtime_dispatch_admission_ref",
         "dispatch_admission_profile",
         "required_source_receipt_refs",
@@ -378,6 +384,10 @@
         "source_emission_admission_witness_ref": {
           "type": "string",
           "const": "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json"
+        },
+        "source_active_lease_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json"
         }
       }
     },
@@ -623,6 +633,7 @@
         "read_only_worker_runtime_receipt_handoff_schema",
         "read_only_worker_binding_schema",
         "read_only_worker_lease_preflight_schema",
+        "read_only_worker_runtime_active_lease_admission_witness_schema",
         "read_only_worker_rehearsal_receipt_schema",
         "temporal_lease_window_receipt_schema",
         "worker_failure_receipt_schema",
@@ -678,6 +689,10 @@
           "type": "string",
           "const": "schemas/read_only_worker_lease_preflight.schema.json"
         },
+        "read_only_worker_runtime_active_lease_admission_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json"
+        },
         "read_only_worker_rehearsal_receipt_schema": {
           "type": "string",
           "const": "schemas/read_only_worker_rehearsal_receipt.schema.json"
@@ -726,7 +741,7 @@
       "properties": {
         "source_receipt_ref_count": {
           "type": "integer",
-          "minimum": 14
+          "minimum": 16
         },
         "activation_input_ref_count": {
           "type": "integer",
@@ -758,7 +773,7 @@
         },
         "receipt_ref_count": {
           "type": "integer",
-          "const": 19
+          "const": 20
         },
         "evidence_ref_count": {
           "type": "integer",
