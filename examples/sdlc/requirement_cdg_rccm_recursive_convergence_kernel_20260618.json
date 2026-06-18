@@ -1,0 +1,66 @@
+{
+  "requirement_id": "sdlc_req_cdg_rccm_recursive_convergence_kernel_20260618",
+  "request_id": "cdg_rccm_recursive_convergence_kernel_20260618",
+  "problem_statement": "The platform needs a deterministic recursive convergence runtime in which a blocked component continuation can request exact nested or neighboring component projections, suspend without blocking independent work, resume after dependency certification, reconcile affected boundaries, invalidate stale causal consumers, and certify only the active required closure.",
+  "success_criteria": [
+    "component contracts, dependency requests, continuation frames, certificates, outcomes, and audit events are immutable and deterministic",
+    "containment and dependency topologies remain separate and containment cycles are rejected",
+    "only the continuation blocked by an unresolved dependency is suspended",
+    "providers are activated recursively and consumers resume only after the requested projection reaches the declared settlement level",
+    "projection certificates bind epoch, state, rules, inputs, assumptions, evidence, and dependency-certificate lineage",
+    "changed projections invalidate stale certificates and reactivate only causally affected frames",
+    "semantic feedback cycles use declared bounded convergence while other cycle classes fail closed",
+    "root certification requires quiescence and current certificates across the active required closure",
+    "external effects remain behind closure, authority, idempotency, verification, and recovery gates",
+    "SNet parent certification waits for required promoted-child certificates",
+    "the Foundation component contract validates against a closed repository-local schema",
+    "focused runtime and contract tests cover recursion, invalidation, cycles, recovery, effects, and evidence boundaries"
+  ],
+  "non_goals": [
+    "no public runtime route registration",
+    "no connector authority",
+    "no deployment or production readiness claim",
+    "no replacement of Universal Action Orchestration",
+    "no claim that arbitrary component rule systems always converge",
+    "no direct external effect from component step functions"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "all loops require declared convergence or exhaustion behavior",
+    "no component may self-certify",
+    "no hidden dependency read may support a certified result",
+    "no stale certificate may be consumed",
+    "rules and evidence epochs may not be silently mixed",
+    "physical-world claims require physically observed evidence",
+    "Mfidel text and symbol atomicity remain preserved by any future adapter"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "mcoi/mcoi_runtime/convergence",
+    "mcoi/tests/test_recursive_convergence_kernel.py",
+    "mcoi/tests/test_cdg_rccm_component_contract.py",
+    "schemas/cdg_rccm_component_contract.schema.json",
+    "examples/cdg_rccm_component_contract.foundation.json",
+    "scripts/validate_cdg_rccm_component_contract.py",
+    "docs/CDG_RCCM_RECURSIVE_CONVERGENCE_KERNEL.md",
+    "examples/sdlc/requirement_cdg_rccm_recursive_convergence_kernel_20260618.json",
+    "examples/sdlc/design_cdg_rccm_recursive_convergence_kernel_20260618.json"
+  ],
+  "acceptance_tests": [
+    "python -m pytest mcoi/tests/test_recursive_convergence_kernel.py mcoi/tests/test_cdg_rccm_component_contract.py -q",
+    "python scripts/validate_cdg_rccm_component_contract.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-cdg-rccm-20260618.json"
+  ],
+  "evidence_required": [
+    "focused recursive convergence runtime test receipt",
+    "component contract schema validation receipt",
+    "SDLC requirement and design validation receipt",
+    "workspace governance preflight receipt",
+    "pull request CI receipt before merge",
+    "separate authority evidence before any route, connector, or external-effect activation"
+  ],
+  "uao_ref": "uao://sdlc/requirement/cdg-rccm-recursive-convergence-kernel/20260618",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/cdg-rccm-recursive-convergence-kernel/20260618",
+  "receipt_ref": "receipt://sdlc/requirement/cdg-rccm-recursive-convergence-kernel/20260618"
+}
