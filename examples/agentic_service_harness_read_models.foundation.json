@@ -85,6 +85,9 @@
       "sandbox_id": "sandbox-read-only-foundation",
       "mode": "read_only",
       "status": "ready_read_only",
+      "lifecycle_state": "completed",
+      "created_at": "2026-06-11T22:00:00Z",
+      "lifecycle_updated_at": "2026-06-11T22:00:30Z",
       "approval_gate_ids": [
         "approval-not-required-read-only"
       ],
@@ -93,6 +96,11 @@
       "result_summary_id": "summary-read-model-foundation",
       "risk_level": "low",
       "blocked_actions": [],
+      "transition_receipt_refs": [
+        "receipt://agent-run/run-read-model-foundation/lifecycle/completed"
+      ],
+      "terminal_state": true,
+      "read_only_query_ref": "agent-run://run-read-model-foundation/read-only-query",
       "read_only": true,
       "executes_adapter": false,
       "creates_branch": false,

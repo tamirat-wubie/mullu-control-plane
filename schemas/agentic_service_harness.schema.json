@@ -679,12 +679,16 @@
         "sandbox_id",
         "mode",
         "status",
+        "lifecycle_state",
+        "lifecycle_updated_at",
         "selected_agent_ref",
         "approval_gate_ids",
         "receipt_id",
         "evidence_bundle_id",
         "result_summary_id",
         "blocked_actions",
+        "transition_receipt_refs",
+        "terminal_state",
         "created_at"
       ],
       "properties": {
@@ -705,6 +709,13 @@
         },
         "status": {
           "$ref": "#/$defs/run_status"
+        },
+        "lifecycle_state": {
+          "$ref": "#/$defs/run_lifecycle_state"
+        },
+        "lifecycle_updated_at": {
+          "type": "string",
+          "format": "date-time"
         },
         "selected_agent_ref": {
           "$ref": "#/$defs/evidence_ref"
@@ -729,6 +740,12 @@
           "items": {
             "$ref": "#/$defs/blocked_high_risk_action"
           }
+        },
+        "transition_receipt_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "terminal_state": {
+          "type": "boolean"
         },
         "created_at": {
           "type": "string",
@@ -1203,6 +1220,17 @@
         "ready_dry_run",
         "awaiting_approval",
         "blocked"
+      ]
+    },
+    "run_lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "awaiting_approval",
+        "completed",
+        "blocked",
+        "cancelled"
       ]
     },
     "risk_level": {

@@ -9,7 +9,8 @@ Dependencies: MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md.
 Invariants:
   - The map contains the required readiness sections and scale.
   - RepositoryConnection remains closed as a read-only READY surface.
-  - The first next PR remains the AgentRun lifecycle read model.
+  - AgentRun remains closed as a read-only lifecycle READY surface.
+  - The first next PR remains the ApprovalRequest projection binding.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -49,9 +50,9 @@ REQUIRED_SECTIONS = (
 REQUIRED_STATUSES = ("READY", "PARTIAL", "MISSING")
 REQUIRED_READY_SYMBOLS = (
     "RepositoryConnection",
+    "AgentRun",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
-    "AgentRun",
     "ApprovalRequest",
     "Receipt",
     "WorkspaceSandbox",
@@ -75,6 +76,17 @@ REQUIRED_REPOSITORY_CONNECTION_TERMS = (
     "revocation state",
     "default branch",
     "no secret serialization",
+)
+REQUIRED_AGENT_RUN_TERMS = (
+    "lifecycle state",
+    "created and updated timestamps",
+    "transition receipt refs",
+    "terminal-state flag",
+    "read-only query ref",
+    "no adapter execution",
+    "no branch creation",
+    "no pull-request creation",
+    "no external-effect authority",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -134,9 +146,11 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "repository_connection_term",
         errors,
     )
+    _require_all(map_text, REQUIRED_AGENT_RUN_TERMS, "agent_run_term", errors)
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
-    _validate_agent_run_first(map_text, errors)
+    _validate_agent_run_ready(map_text, errors)
+    _validate_approval_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
 
     return ReadinessMapValidation(
@@ -178,19 +192,28 @@ def _validate_repository_connection_ready(map_text: str, errors: list[str]) -> N
         errors.append("missing ready row: RepositoryConnection read model")
 
 
-def _validate_agent_run_first(map_text: str, errors: list[str]) -> None:
+def _validate_agent_run_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| AgentRun \| READY \| .+ \| None\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if ready_row is None:
+        errors.append("missing ready row: AgentRun lifecycle read model")
+
+
+def _validate_approval_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(agent-run\): add lifecycle read model`$",
+        r"^1\.\s+`harness\(approval\): bind approval request projection`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: AgentRun lifecycle read model")
+        errors.append("missing first next PR: ApprovalRequest projection binding")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(agent-run): add lifecycle read model",
         "harness(approval): bind approval request projection",
         "harness(receipts): add dry-run run receipt emitter",
         "harness(sandbox): bind temporary branch workspace preflight",

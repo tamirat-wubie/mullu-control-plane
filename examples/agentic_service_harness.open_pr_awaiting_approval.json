@@ -25,6 +25,8 @@
       "blocked_actions": [],
       "created_at": "2026-06-11T22:15:00Z",
       "evidence_bundle_id": "bundle.openpr",
+      "lifecycle_state": "awaiting_approval",
+      "lifecycle_updated_at": "2026-06-11T22:15:30Z",
       "mode": "open_pr",
       "receipt_id": "receipt.openpr",
       "result_summary_id": "summary.openpr",
@@ -32,7 +34,11 @@
       "sandbox_id": "sandbox.openpr",
       "selected_agent_ref": "agent://codex-style-symbolic-operator",
       "status": "awaiting_approval",
+      "terminal_state": false,
       "task_id": "task.openpr"
+      ,"transition_receipt_refs": [
+        "receipt://agent-run/run.openpr/lifecycle/awaiting-approval"
+      ]
     }
   ],
   "agent_tasks": [
