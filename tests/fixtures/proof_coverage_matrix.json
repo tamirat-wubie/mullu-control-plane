@@ -1494,11 +1494,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 278,
+      "proven": 279,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 438,
+    "route_count": 439,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2759,6 +2759,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/partitions",
         "surface_id": "tenant_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/approval-proposals/preview",
+        "surface_id": "assistant_kernel_planning"
       },
       {
         "coverage_state": "proven",
@@ -5967,7 +5972,7 @@
         "scripts/validate_personal_assistant_math_projection.py",
         "scripts/validate_personal_assistant_planning_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -5976,6 +5981,7 @@
         "/api/v1/personal-assistant/requests/preview",
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
+        "/api/v1/personal-assistant/approval-proposals/preview",
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",
         "/api/v1/personal-assistant/memory-observations/review/preview",
@@ -6013,6 +6019,11 @@
           "approval_decision_validator_rejects_missing_decision_state",
           "approval_decision_validator_rejects_raw_payload_and_secret",
           "gateway_personal_assistant_approval_queue_expired_blocks_execution"
+        ],
+        "personal_assistant_approval_proposal_preview_no_effect": [
+          "gateway_personal_assistant_approval_proposal_preview_does_not_enqueue",
+          "gateway_personal_assistant_approval_proposal_rejects_non_approval_request",
+          "gateway_personal_assistant_approval_proposal_rejects_extra_private_connector_fields"
         ],
         "personal_assistant_approval_queue_decision_deferred": [
           "approved_decision_links_evidence_and_still_defers_execution",
@@ -6148,6 +6159,7 @@
         "personal_assistant_approval_queue_read_model_public_safe",
         "personal_assistant_approval_queue_decision_deferred",
         "personal_assistant_approval_decision_public_safe",
+        "personal_assistant_approval_proposal_preview_no_effect",
         "personal_assistant_read_only_projection_public_safe",
         "personal_assistant_draft_projection_public_safe",
         "personal_assistant_memory_observation_read_model_public_safe",
@@ -15206,8 +15218,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1929,
-    "runtime_witness_count": 1929,
+    "exact_test_anchor_count": 1930,
+    "runtime_witness_count": 1930,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17716,6 +17728,14 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_proposal_preview_does_not_enqueue",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_proposal_rejects_non_approval_request",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_proposal_rejects_extra_private_connector_fields"
+            ],
+            "witness": "personal_assistant_approval_proposal_preview_no_effect"
+          },
+          {
+            "anchors": [
               "tests/test_validate_personal_assistant_read_only_projection.py::test_personal_assistant_read_only_projection_fixture_validates",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_runtime_read_only_projection_blocks_all_effect_boundaries",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_read_only_projection_validator_rejects_execution_authority",
@@ -17840,8 +17860,8 @@
             "witness": "personal_assistant_planning_schedule_no_effect"
           }
         ],
-        "exact_test_anchor_count": 22,
-        "runtime_witness_count": 22,
+        "exact_test_anchor_count": 23,
+        "runtime_witness_count": 23,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
