@@ -22,6 +22,7 @@ from mcoi_runtime.contracts.snet import (
     SNetInquiryBudget,
     SNetMeshReceipt,
     SNetMetadata,
+    SNetOntologyStatus,
     SNetQuestion,
     SNetRelation,
     SNetSettlementState,
@@ -473,6 +474,48 @@ def test_runtime_id_lookups_reject_shape_drift_before_mutation() -> None:
     assert after_state == before_state
     assert mesh.answers == {answer.answer_id: answer}
     assert mesh.metadata == {metadata.metadata_id: metadata}
+
+
+def test_duplicate_symbol_revalidates_non_identity_fields_before_index_return() -> None:
+    class IntSubclass(int):
+        pass
+
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol(
+        "Seed",
+        symbol_type="physical_biological_object",
+        ontology_status=SNetOntologyStatus.PHYSICAL_REAL,
+        depth=0,
+    )
+    before_symbol_ids = set(mesh.symbols)
+    before_identity_index = dict(mesh._symbol_identity_index)
+
+    invalid_symbol_specs = (
+        {"ontology_status": SNetOntologyStatus.PHYSICAL_REAL, "depth": -1, "match": "depth"},
+        {"ontology_status": SNetOntologyStatus.PHYSICAL_REAL, "depth": False, "match": "depth"},
+        {"ontology_status": SNetOntologyStatus.PHYSICAL_REAL, "depth": IntSubclass(0), "match": "depth"},
+        {"ontology_status": "physical_real", "depth": 0, "match": "ontology_status"},
+    )
+
+    for invalid_spec in invalid_symbol_specs:
+        with pytest.raises(ValueError, match=invalid_spec["match"]):
+            mesh.add_symbol(
+                "Seed",
+                symbol_type="physical_biological_object",
+                ontology_status=invalid_spec["ontology_status"],
+                depth=invalid_spec["depth"],
+            )
+
+    duplicate = mesh.add_symbol(
+        "Seed",
+        symbol_type="physical_biological_object",
+        ontology_status=SNetOntologyStatus.PHYSICAL_REAL,
+        depth=0,
+    )
+
+    assert duplicate.symbol_id == seed.symbol_id
+    assert set(mesh.symbols) == before_symbol_ids
+    assert mesh._symbol_identity_index == before_identity_index
 
 
 def test_extract_metadata_rejects_answer_question_mismatch_before_mutation() -> None:
