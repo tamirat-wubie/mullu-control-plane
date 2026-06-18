@@ -522,6 +522,54 @@ def test_parent_question_id_must_exist_before_wh_tick_mutation() -> None:
     assert parent_question_id in mesh.questions
 
 
+def test_parent_question_id_must_match_symbol_causal_scope() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    unrelated_root = mesh.add_symbol("Unrelated root", symbol_type="physical_biological_object")
+    seed_tick = mesh.generate_wh_tick(seed.symbol_id, perspective="seed")
+    parent_question_id = seed_tick.generated_question_ids[0]
+    before_question_count = len(mesh.questions)
+    before_unrelated_root = mesh.symbols[unrelated_root.symbol_id]
+
+    with pytest.raises(ValueError, match="parent_question_id must belong"):
+        mesh.generate_wh_tick(
+            unrelated_root.symbol_id,
+            perspective="unrelated",
+            parent_question_id=parent_question_id,
+        )
+
+    assert len(mesh.questions) == before_question_count
+    assert mesh.symbols[unrelated_root.symbol_id] == before_unrelated_root
+    assert mesh.symbols[unrelated_root.symbol_id].inquiry_history == ()
+
+    depends_on_question_id = next(
+        question_id
+        for question_id in seed_tick.generated_question_ids
+        if mesh.questions[question_id].wh_type is SNetWHType.DEPENDS_ON
+    )
+    answer = mesh.ingest_answer(
+        depends_on_question_id,
+        "Water",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    metadata = mesh.extract_metadata(depends_on_question_id, answer.answer_id)
+    promoted_child = mesh.promote_metadata(metadata.metadata_id)
+
+    assert promoted_child is not None
+    assert promoted_child.created_from_metadata_id == metadata.metadata_id
+
+    child_tick = mesh.generate_wh_tick(
+        promoted_child.symbol_id,
+        perspective="promoted-child",
+        parent_question_id=depends_on_question_id,
+    )
+
+    assert child_tick.status is SNetTickStatus.RAN
+    assert mesh.questions[child_tick.generated_question_ids[0]].parent_question_id == depends_on_question_id
+    assert mesh.metadata[promoted_child.created_from_metadata_id].question_id == depends_on_question_id
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
