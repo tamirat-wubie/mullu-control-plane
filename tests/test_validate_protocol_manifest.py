@@ -1802,6 +1802,23 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_dispatch_admission_w
     assert witness_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_active_runtime_lease_admission_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-active-runtime-lease-admission-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert (
+        witness_entry["path"]
+        == "schemas/read_only_worker_active_runtime_lease_admission_witness.schema.json"
+    )
+    assert (
+        witness_entry["urn"]
+        == "urn:mullusi:schema:read-only-worker-active-runtime-lease-admission-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
