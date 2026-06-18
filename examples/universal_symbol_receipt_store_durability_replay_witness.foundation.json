@@ -109,7 +109,6 @@
     "terminal_closure_not_allowed"
   ],
   "next_actions": [
-    "define_receipt_store_recovery_plan",
     "define_runtime_authority_witnesses"
   ],
   "evidence_refs": [
@@ -137,7 +136,10 @@
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
-    "tests/test_proof_coverage_matrix.py"
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
   ],
   "contract_summary": {
     "durability_replay_requirement_count": 8,
@@ -145,6 +147,6 @@
     "durability_replay_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 25
+    "evidence_ref_count": 28
   }
 }

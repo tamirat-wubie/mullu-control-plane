@@ -42,6 +42,24 @@ from scripts.validate_universal_symbol_receipt_store_operator_approval_witness i
     UniversalSymbolReceiptStoreOperatorApprovalWitnessError,
     validate_universal_symbol_receipt_store_operator_approval_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_operator_identity_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH,
+    UniversalSymbolReceiptStoreOperatorIdentityWitnessError,
+    validate_universal_symbol_receipt_store_operator_identity_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_operator_approval_decision_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH,
+    UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError,
+    validate_universal_symbol_receipt_store_operator_approval_decision_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_reapproval_revocation_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH,
+    UniversalSymbolReceiptStoreReapprovalRevocationWitnessError,
+    validate_universal_symbol_receipt_store_reapproval_revocation_witness,
+)
 from scripts.validate_universal_symbol_receipt_store_tenant_scope_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_TENANT_SCOPE_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_TENANT_SCOPE_WITNESS_PATH,
@@ -71,6 +89,12 @@ from scripts.validate_universal_symbol_receipt_store_durability_replay_witness i
     DEFAULT_WITNESS_PATH as DEFAULT_DURABILITY_REPLAY_WITNESS_PATH,
     UniversalSymbolReceiptStoreDurabilityReplayWitnessError,
     validate_universal_symbol_receipt_store_durability_replay_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_recovery_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_RECOVERY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_RECOVERY_WITNESS_PATH,
+    UniversalSymbolReceiptStoreRecoveryWitnessError,
+    validate_universal_symbol_receipt_store_recovery_witness,
 )
 from scripts.validate_universal_symbol_receipt_store_write_path_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_SCHEMA_PATH,
@@ -115,7 +139,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 59
+    assert report["evidence_ref_count"] == 71
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
@@ -146,7 +170,7 @@ def test_foundation_universal_symbol_receipt_store_authority_witness_validates()
     assert report["authority_denial_count"] == 10
     assert report["authority_requirement_count"] == 7
     assert report["append_precondition_count"] == 7
-    assert report["evidence_ref_count"] == 30
+    assert report["evidence_ref_count"] == 33
 
 
 def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
@@ -156,7 +180,7 @@ def test_foundation_universal_symbol_append_audit_witness_validates() -> None:
     assert report["append_audit_decision"] == "blocked_pending_writer_registration_and_replay_evidence"
     assert report["authority_denial_count"] == 10
     assert report["audit_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 29
+    assert report["evidence_ref_count"] == 32
 
 
 def test_foundation_universal_symbol_receipt_store_writer_registration_witness_validates() -> None:
@@ -166,7 +190,7 @@ def test_foundation_universal_symbol_receipt_store_writer_registration_witness_v
     assert report["writer_registration_decision"] == "blocked_pending_write_path_and_operator_authority"
     assert report["authority_denial_count"] == 10
     assert report["writer_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 28
+    assert report["evidence_ref_count"] == 31
 
 
 def test_foundation_universal_symbol_receipt_store_writer_identity_witness_validates() -> None:
@@ -189,7 +213,46 @@ def test_foundation_universal_symbol_receipt_store_operator_approval_witness_val
     )
     assert report["authority_denial_count"] == 11
     assert report["approval_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 26
+    assert report["evidence_ref_count"] == 32
+
+
+def test_foundation_universal_symbol_receipt_store_operator_identity_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_operator_identity_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["operator_identity_decision"]
+        == "blocked_pending_live_identity_binding_tenant_scope_and_audit_evidence"
+    )
+    assert report["authority_denial_count"] == 13
+    assert report["identity_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 13
+
+
+def test_foundation_universal_symbol_receipt_store_operator_approval_decision_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_operator_approval_decision_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["approval_decision"]
+        == "blocked_pending_live_operator_identity_scope_reapproval_and_audit_evidence"
+    )
+    assert report["authority_denial_count"] == 12
+    assert report["decision_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 16
+
+
+def test_foundation_universal_symbol_receipt_store_reapproval_revocation_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_reapproval_revocation_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["reapproval_revocation_decision"]
+        == "blocked_pending_approval_decision_grant_expiry_revocation_replacement_and_audit_evidence"
+    )
+    assert report["authority_denial_count"] == 13
+    assert report["lifecycle_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 16
 
 
 def test_foundation_universal_symbol_receipt_store_tenant_scope_witness_validates() -> None:
@@ -202,7 +265,7 @@ def test_foundation_universal_symbol_receipt_store_tenant_scope_witness_validate
     )
     assert report["authority_denial_count"] == 12
     assert report["tenant_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 25
+    assert report["evidence_ref_count"] == 28
 
 
 def test_foundation_universal_symbol_receipt_store_writer_duty_scope_witness_validates() -> None:
@@ -215,7 +278,7 @@ def test_foundation_universal_symbol_receipt_store_writer_duty_scope_witness_val
     )
     assert report["authority_denial_count"] == 13
     assert report["duty_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 27
+    assert report["evidence_ref_count"] == 30
 
 
 def test_foundation_universal_symbol_receipt_store_path_confinement_witness_validates() -> None:
@@ -228,7 +291,7 @@ def test_foundation_universal_symbol_receipt_store_path_confinement_witness_vali
     )
     assert report["authority_denial_count"] == 11
     assert report["confinement_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 25
+    assert report["evidence_ref_count"] == 28
 
 
 def test_foundation_universal_symbol_receipt_store_write_path_idempotency_witness_validates() -> None:
@@ -241,7 +304,7 @@ def test_foundation_universal_symbol_receipt_store_write_path_idempotency_witnes
     )
     assert report["authority_denial_count"] == 11
     assert report["idempotency_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 26
+    assert report["evidence_ref_count"] == 29
 
 
 def test_foundation_universal_symbol_receipt_store_durability_replay_witness_validates() -> None:
@@ -254,7 +317,20 @@ def test_foundation_universal_symbol_receipt_store_durability_replay_witness_val
     )
     assert report["authority_denial_count"] == 11
     assert report["durability_replay_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 25
+    assert report["evidence_ref_count"] == 28
+
+
+def test_foundation_universal_symbol_receipt_store_recovery_witness_validates() -> None:
+    report = validate_universal_symbol_receipt_store_recovery_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["recovery_decision"]
+        == "blocked_pending_recovery_plan_snapshot_rollback_compensation_and_audit_evidence"
+    )
+    assert report["authority_denial_count"] == 13
+    assert report["recovery_requirement_count"] == 8
+    assert report["evidence_ref_count"] == 27
 
 
 def test_foundation_universal_symbol_receipt_store_path_custody_witness_validates() -> None:
@@ -264,7 +340,7 @@ def test_foundation_universal_symbol_receipt_store_path_custody_witness_validate
     assert report["path_custody_decision"] == "blocked_pending_confinement_idempotency_replay_and_recovery_evidence"
     assert report["authority_denial_count"] == 10
     assert report["custody_requirement_count"] == 8
-    assert report["evidence_ref_count"] == 33
+    assert report["evidence_ref_count"] == 36
 
 
 def test_foundation_universal_symbol_receipt_store_write_path_witness_validates() -> None:
@@ -274,7 +350,7 @@ def test_foundation_universal_symbol_receipt_store_write_path_witness_validates(
     assert report["write_path_decision"] == "blocked_pending_writer_registration_replay_and_operator_authority"
     assert report["authority_denial_count"] == 10
     assert report["write_path_requirement_count"] == 10
-    assert report["evidence_ref_count"] == 36
+    assert report["evidence_ref_count"] == 39
 
 
 def test_rejects_connector_authority_drift(tmp_path: Path) -> None:
@@ -765,6 +841,189 @@ def test_operator_approval_witness_rejects_evidence_ref_count_drift(tmp_path: Pa
         )
 
 
+def test_operator_identity_witness_rejects_identity_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["operator_identity_witness_is_not_identity_authority"] = False
+    changed["authority_denials"]["receipt_store_operator_identity_bound"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorIdentityWitnessError, match="identity authority"):
+        validate_universal_symbol_receipt_store_operator_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_operator_identity_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_requirements"] = changed["identity_requirements"][1:]
+    changed["contract_summary"]["identity_requirement_count"] = len(changed["identity_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorIdentityWitnessError, match="live-operator-subject"):
+        validate_universal_symbol_receipt_store_operator_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_operator_identity_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorIdentityWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_operator_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_operator_identity_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["identity_constraints"]["session_authentication_required"] = False
+    with pytest.raises(
+        UniversalSymbolReceiptStoreOperatorIdentityWitnessError,
+        match="session_authentication_required",
+    ):
+        validate_universal_symbol_receipt_store_operator_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_operator_identity_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_IDENTITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorIdentityWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_operator_identity_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_IDENTITY_SCHEMA_PATH,
+        )
+
+
+def test_operator_approval_decision_witness_rejects_decision_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["approval_decision_witness_is_not_decision_authority"] = False
+    changed["authority_denials"]["receipt_store_approval_decision_recorded"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError, match="decision authority"):
+        validate_universal_symbol_receipt_store_operator_approval_decision_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+        )
+
+
+def test_operator_approval_decision_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["decision_requirements"] = changed["decision_requirements"][1:]
+    changed["contract_summary"]["decision_requirement_count"] = len(changed["decision_requirements"])
+    with pytest.raises(
+        UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError,
+        match="operator-identity-witness",
+    ):
+        validate_universal_symbol_receipt_store_operator_approval_decision_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+        )
+
+
+def test_operator_approval_decision_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["decision_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_operator_approval_decision_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+        )
+
+
+def test_operator_approval_decision_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["decision_constraints"]["explicit_decision_value_required"] = False
+    with pytest.raises(
+        UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError,
+        match="explicit_decision_value_required",
+    ):
+        validate_universal_symbol_receipt_store_operator_approval_decision_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+        )
+
+
+def test_operator_approval_decision_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_OPERATOR_APPROVAL_DECISION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(
+        UniversalSymbolReceiptStoreOperatorApprovalDecisionWitnessError,
+        match="evidence_ref_count drift",
+    ):
+        validate_universal_symbol_receipt_store_operator_approval_decision_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_OPERATOR_APPROVAL_DECISION_SCHEMA_PATH,
+        )
+
+
+def test_reapproval_revocation_witness_rejects_lifecycle_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["reapproval_revocation_witness_is_not_lifecycle_authority"] = False
+    changed["authority_denials"]["receipt_store_revocation_recorded"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreReapprovalRevocationWitnessError, match="lifecycle authority"):
+        validate_universal_symbol_receipt_store_reapproval_revocation_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+        )
+
+
+def test_reapproval_revocation_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lifecycle_requirements"] = changed["lifecycle_requirements"][1:]
+    changed["contract_summary"]["lifecycle_requirement_count"] = len(changed["lifecycle_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreReapprovalRevocationWitnessError, match="approval-decision-witness"):
+        validate_universal_symbol_receipt_store_reapproval_revocation_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+        )
+
+
+def test_reapproval_revocation_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lifecycle_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreReapprovalRevocationWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_reapproval_revocation_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+        )
+
+
+def test_reapproval_revocation_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lifecycle_constraints"]["reapproval_window_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreReapprovalRevocationWitnessError, match="reapproval_window_required"):
+        validate_universal_symbol_receipt_store_reapproval_revocation_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+        )
+
+
+def test_reapproval_revocation_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_REAPPROVAL_REVOCATION_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreReapprovalRevocationWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_reapproval_revocation_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_REAPPROVAL_REVOCATION_SCHEMA_PATH,
+        )
+
+
 def test_tenant_scope_witness_rejects_tenant_authority_drift(tmp_path: Path) -> None:
     witness = json.loads(DEFAULT_TENANT_SCOPE_WITNESS_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(witness)
@@ -1058,6 +1317,63 @@ def test_durability_replay_witness_rejects_evidence_ref_count_drift(tmp_path: Pa
         validate_universal_symbol_receipt_store_durability_replay_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
+        )
+
+
+def test_recovery_witness_rejects_execution_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RECOVERY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["recovery_witness_is_not_execution_authority"] = False
+    changed["authority_denials"]["recovery_execution_performed"] = True
+    with pytest.raises(UniversalSymbolReceiptStoreRecoveryWitnessError, match="execution authority"):
+        validate_universal_symbol_receipt_store_recovery_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RECOVERY_SCHEMA_PATH,
+        )
+
+
+def test_recovery_witness_rejects_missing_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RECOVERY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["recovery_requirements"] = changed["recovery_requirements"][1:]
+    changed["contract_summary"]["recovery_requirement_count"] = len(changed["recovery_requirements"])
+    with pytest.raises(UniversalSymbolReceiptStoreRecoveryWitnessError, match="recovery-plan"):
+        validate_universal_symbol_receipt_store_recovery_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RECOVERY_SCHEMA_PATH,
+        )
+
+
+def test_recovery_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RECOVERY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["recovery_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolReceiptStoreRecoveryWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_receipt_store_recovery_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RECOVERY_SCHEMA_PATH,
+        )
+
+
+def test_recovery_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RECOVERY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["recovery_constraints"]["rollback_plan_required"] = False
+    with pytest.raises(UniversalSymbolReceiptStoreRecoveryWitnessError, match="rollback_plan_required"):
+        validate_universal_symbol_receipt_store_recovery_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RECOVERY_SCHEMA_PATH,
+        )
+
+
+def test_recovery_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RECOVERY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolReceiptStoreRecoveryWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_receipt_store_recovery_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RECOVERY_SCHEMA_PATH,
         )
 
 

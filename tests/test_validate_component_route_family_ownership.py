@@ -44,7 +44,7 @@ def test_component_route_family_ownership_schema_valid_and_write(tmp_path: Path)
 
     assert validation.ok is True
     assert validation.route_family_count == 78
-    assert validation.declared_route_count == 440
+    assert validation.declared_route_count == 445
     assert validation.selected_component_bound_count == 12
     assert validation.promotion_blocked_count == 66
     assert validation.proof_binding_gap_count == 64

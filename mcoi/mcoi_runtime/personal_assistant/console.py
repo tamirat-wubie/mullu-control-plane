@@ -53,9 +53,16 @@ _ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "connector_payload_projection",
         "chat_log_projection",
         "body_projection",
+        "message_body_read_performed",
         "raw_private_payload_storage_allowed",
         "secret_value_storage_allowed",
     }
+)
+_ALLOWED_POLICY_FIELD_SUFFIXES = (
+    "_allowed",
+    "_performed",
+    "_serialized",
+    "_disclosed",
 )
 _BLOCKED_ACTIONS = (
     "send_email",
@@ -177,7 +184,12 @@ _FOUNDATION_LANES = (
         "display_name": "Draft-Only Assistant",
         "stage": "projection_only",
         "state": "SolvedVerified",
-        "route_refs": [],
+        "route_refs": [
+            "/api/v1/personal-assistant/drafts",
+            "/api/v1/personal-assistant/drafts/email/preview",
+            "/api/v1/personal-assistant/drafts/calendar/preview",
+            "/api/v1/personal-assistant/drafts/task/preview",
+        ],
         "schema_refs": ["schemas/personal_assistant_draft_projection.schema.json"],
         "validator_refs": [
             "scripts/validate_personal_assistant_draft_projection.py",
@@ -285,6 +297,7 @@ _MEMORY_FALSE_CONTROLS = (
 )
 _MEMORY_METADATA_FALSE_CONTROLS = _MEMORY_FALSE_CONTROLS
 _READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
+GOVERNED_TEAM_ASSISTANT_PILOT_ROUTE = "/api/v1/personal-assistant/pilot/read-model"
 
 
 def build_personal_assistant_console_read_model(
@@ -521,6 +534,225 @@ def build_personal_assistant_readiness_demo(
         else {},
         "assurance": dict(payload.get("assurance", {})) if isinstance(payload.get("assurance"), Mapping) else {},
         "next_action": "continue read-only demo hardening before approval-gated execution",
+    }
+
+
+def build_governed_team_assistant_pilot_read_model(
+    *,
+    generated_at: str,
+    console_payload: Mapping[str, Any] | None = None,
+    readiness_payload: Mapping[str, Any] | None = None,
+    draft_payload: Mapping[str, Any] | None = None,
+    teamops_live_probe_payload: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the governed Team Assistant Pilot package read model.
+
+    Input contract: callers pass a timestamp and may pass already-built
+    no-effect assistant projections.
+    Output contract: returns a JSON-ready pilot package binding the controlled
+    demo stages to routes, receipts, approvals, and blocked actions.
+    Error contract: raises PersonalAssistantInvariantError for malformed
+    timestamps, private payload drift, or secret-like values.
+    """
+
+    timestamp = _require_text(generated_at, "generated_at")
+    console_model = (
+        dict(console_payload)
+        if isinstance(console_payload, Mapping)
+        else build_personal_assistant_console_read_model(generated_at=timestamp)
+    )
+    readiness_model = (
+        dict(readiness_payload)
+        if isinstance(readiness_payload, Mapping)
+        else build_personal_assistant_readiness_demo(
+            generated_at=timestamp,
+            console_payload=console_model,
+        )
+    )
+    draft_model = dict(draft_payload) if isinstance(draft_payload, Mapping) else {}
+    live_probe_model = (
+        dict(teamops_live_probe_payload)
+        if isinstance(teamops_live_probe_payload, Mapping)
+        else {}
+    )
+    _scan_private_or_secret_payload(console_model, path="console_payload")
+    _scan_private_or_secret_payload(readiness_model, path="readiness_payload")
+    _scan_private_or_secret_payload(draft_model, path="draft_payload")
+
+    console_lanes = _mapping_value(console_model, "lane_status")
+    readiness_boundary = _mapping_value(readiness_model, "effect_boundary")
+    draft_boundary = (
+        _mapping_value(draft_model, "effect_boundary")
+        if draft_model
+        else {
+            "draft_preparation_allowed": True,
+            "execution_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "connector_mutation_allowed": False,
+        }
+    )
+    live_probe_boundary = (
+        _mapping_value(live_probe_model, "effect_boundary")
+        if live_probe_model
+        else {
+            "external_provider_call_performed": False,
+            "mailbox_read_performed": False,
+            "provider_mutation_performed": False,
+        }
+    )
+    _scan_private_or_secret_payload(
+        {
+            "status": live_probe_model.get("status", "readiness_probe_available"),
+            "solver_outcome": live_probe_model.get("solver_outcome", "AwaitingEvidence"),
+            "effect_boundary": dict(live_probe_boundary),
+        },
+        path="teamops_live_probe_summary",
+    )
+    stages = [
+        {
+            "stage_id": "teamops_terminal_closure",
+            "display_name": "TeamOps Terminal Evidence Closure",
+            "status": "closed",
+            "solver_outcome": "SolvedVerified",
+            "receipt_required": True,
+            "source_ref": "pull_request:#1741",
+            "route_refs": ["/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"],
+            "authority": "evidence_bundle_only",
+        },
+        {
+            "stage_id": "personal_assistant_readiness_demo",
+            "display_name": "Personal Assistant Read-Only Demo",
+            "status": readiness_model.get("status", "foundation_read_only"),
+            "solver_outcome": readiness_model.get("solver_outcome", "SolvedVerified"),
+            "receipt_required": True,
+            "source_ref": "/api/v1/console/personal-assistant/readiness",
+            "route_refs": ["/api/v1/console/personal-assistant/readiness"],
+            "authority": "read_only_projection",
+        },
+        {
+            "stage_id": "approval_queue_v0",
+            "display_name": "Approval Queue v0",
+            "status": "available",
+            "solver_outcome": "SolvedVerified",
+            "receipt_required": True,
+            "source_ref": "/api/v1/personal-assistant/approval-queue",
+            "route_refs": [
+                "/api/v1/personal-assistant/approval-queue",
+                "/api/v1/personal-assistant/approval-queue/preview",
+            ],
+            "authority": "approval_record_projection",
+        },
+        {
+            "stage_id": "teamops_gmail_live_probe",
+            "display_name": "TeamOps Gmail Live Probe Readiness",
+            "status": live_probe_model.get("status", "readiness_probe_available"),
+            "solver_outcome": live_probe_model.get("solver_outcome", "AwaitingEvidence"),
+            "receipt_required": True,
+            "source_ref": "/api/v1/personal-assistant/teamops/gmail/live-probe/readiness",
+            "route_refs": ["/api/v1/personal-assistant/teamops/gmail/live-probe/readiness"],
+            "authority": "readiness_probe_only",
+        },
+        {
+            "stage_id": "draft_only_assistant",
+            "display_name": "Draft-Only Assistant",
+            "status": draft_model.get("status", "draft_only_available"),
+            "solver_outcome": draft_model.get("solver_outcome", "SolvedVerified"),
+            "receipt_required": True,
+            "source_ref": "/api/v1/personal-assistant/drafts",
+            "route_refs": [
+                "/api/v1/personal-assistant/drafts",
+                "/api/v1/personal-assistant/drafts/email/preview",
+                "/api/v1/personal-assistant/drafts/calendar/preview",
+                "/api/v1/personal-assistant/drafts/task/preview",
+            ],
+            "authority": "draft_projection_only",
+        },
+    ]
+    blocked_actions = sorted(
+        set(readiness_model.get("blocked_actions", ()))
+        | {
+            "live_gmail_send",
+            "live_gmail_draft",
+            "read_full_mailbox",
+            "mailbox_mutation",
+            "calendar_write",
+            "task_write",
+            "connector_mutation",
+            "customer_onboarding",
+            "public_saas_launch",
+            "payment_billing",
+            "multi_tenant_production_accounts",
+            "snet_live_execution_authority",
+        }
+    )
+    return {
+        "pilot_id": "governed_team_assistant_pilot",
+        "display_name": "Governed Team Assistant Pilot",
+        "status": "controlled_demo_productization",
+        "solver_outcome": "SolvedVerified",
+        "generated_at": timestamp,
+        "governed": True,
+        "framing": {
+            "product": "Mullu governed assistant control plane",
+            "claim": (
+                "proves allowed tasks, evidence, approvals, actions taken, "
+                "and actions not taken"
+            ),
+            "execution_posture": "read_only_and_draft_only_until_explicit_approval_receipt",
+        },
+        "pilot_stages": stages,
+        "stage_count": len(stages),
+        "lane_status": {
+            "source_ref": "/api/v1/console/personal-assistant",
+            "lane_count": console_lanes.get("lane_count", 0),
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+        "effect_boundary": {
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "mailbox_read_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "memory_write_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+            "deployment_mutation_allowed": False,
+            "public_readiness_claim_allowed": False,
+            "customer_onboarding_allowed": False,
+            "payment_billing_allowed": False,
+            "multi_tenant_production_allowed": False,
+            "snet_live_execution_authority_allowed": False,
+        },
+        "stage_boundaries": {
+            "readiness_demo": dict(readiness_boundary),
+            "draft_only_assistant": dict(draft_boundary),
+            "teamops_gmail_live_probe": dict(live_probe_boundary),
+        },
+        "blocked_actions": blocked_actions,
+        "required_approvals": {
+            "approval_queue_v0_required_before_live_effect": True,
+            "approval_is_execution": False,
+            "send_or_write_requires_explicit_approval_and_receipt": True,
+        },
+        "receipt_requirements": {
+            "stage_receipts_required": True,
+            "actions_not_taken_must_be_recorded": True,
+            "terminal_closure_ref": "pull_request:#1741",
+            "receipt_refs": list(readiness_model.get("receipt_refs", ()))
+            if isinstance(readiness_model.get("receipt_refs"), list)
+            else [],
+        },
+        "next_actions": [
+            "operator_review_pilot_read_model",
+            "keep_live_actions_blocked",
+            "only_promote_send_or_write_after_explicit_approval_receipt_gate",
+        ],
     }
 
 
@@ -916,6 +1148,10 @@ def _scan_private_or_secret_payload(value: Any, *, path: str) -> None:
             lowered = key.lower()
             if (
                 lowered not in _ALLOWED_POLICY_FIELD_NAMES
+                and not (
+                    isinstance(child, bool)
+                    and any(lowered.endswith(suffix) for suffix in _ALLOWED_POLICY_FIELD_SUFFIXES)
+                )
                 and any(fragment in lowered for fragment in _RAW_PRIVATE_FIELD_FRAGMENTS)
             ):
                 raise PersonalAssistantInvariantError(f"{path}.{key}: raw private field is not allowed")

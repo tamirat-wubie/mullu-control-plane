@@ -130,8 +130,7 @@
   "next_actions": [
     "define_universal_symbol_append_audit_witness",
     "define_receipt_store_writer_registration_witness",
-    "define_receipt_store_write_path_witness",
-    "define_receipt_store_recovery_plan"
+    "define_receipt_store_write_path_witness"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
@@ -163,7 +162,10 @@
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
-    "tests/test_proof_coverage_matrix.py"
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
   ],
   "contract_summary": {
     "authority_requirement_count": 7,
@@ -171,6 +173,6 @@
     "append_precondition_count": 7,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 30
+    "evidence_ref_count": 33
   }
 }

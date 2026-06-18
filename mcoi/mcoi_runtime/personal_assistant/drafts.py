@@ -24,6 +24,10 @@ from .skill_registry import PersonalAssistantSkillRegistry, load_default_skill_r
 EMAIL_RESPONSE_DRAFT_SKILL_ID = "email.response.draft"
 CALENDAR_EVENT_DRAFT_SKILL_ID = "calendar.event.draft"
 TASK_CREATE_DRAFT_SKILL_ID = "task.create_draft"
+DRAFT_ASSISTANT_READ_MODEL_ROUTE = "/api/v1/personal-assistant/drafts"
+EMAIL_DRAFT_PREVIEW_ROUTE = "/api/v1/personal-assistant/drafts/email/preview"
+CALENDAR_DRAFT_PREVIEW_ROUTE = "/api/v1/personal-assistant/drafts/calendar/preview"
+TASK_DRAFT_PREVIEW_ROUTE = "/api/v1/personal-assistant/drafts/task/preview"
 
 _EMAIL_DRAFT_ALLOWED_FIELDS = frozenset(
     {
@@ -101,6 +105,90 @@ _TASK_ACTIONS_NOT_TAKEN = (
     "external_submission_not_performed",
     "connector_state_not_mutated",
 )
+
+
+def build_draft_assistant_read_model(*, generated_at: str) -> dict[str, Any]:
+    """Return the draft-only assistant route and authority read model.
+
+    Input contract: caller supplies a non-empty generation timestamp. Output
+    contract: JSON-safe read model for draft-only routes. Error contract:
+    raises PersonalAssistantInvariantError for malformed timestamps.
+    """
+
+    timestamp = _require_text(generated_at, "generated_at")
+    return {
+        "read_model_id": "personal_assistant_draft_only_read_model",
+        "generated_at": timestamp,
+        "governed": True,
+        "status": "draft_only_available",
+        "solver_outcome": "SolvedVerified",
+        "routes": {
+            "read_model": DRAFT_ASSISTANT_READ_MODEL_ROUTE,
+            "email_preview": EMAIL_DRAFT_PREVIEW_ROUTE,
+            "calendar_preview": CALENDAR_DRAFT_PREVIEW_ROUTE,
+            "task_preview": TASK_DRAFT_PREVIEW_ROUTE,
+        },
+        "draft_skills": [
+            {
+                "skill_id": EMAIL_RESPONSE_DRAFT_SKILL_ID,
+                "draft_type": "email_response",
+                "connector_required": "gmail",
+                "approval_required_before_effect": True,
+            },
+            {
+                "skill_id": CALENDAR_EVENT_DRAFT_SKILL_ID,
+                "draft_type": "calendar_event",
+                "connector_required": "google_calendar",
+                "approval_required_before_effect": True,
+            },
+            {
+                "skill_id": TASK_CREATE_DRAFT_SKILL_ID,
+                "draft_type": "task",
+                "connector_required": "",
+                "approval_required_before_effect": True,
+            },
+        ],
+        "effect_boundary": {
+            "draft_preparation_allowed": True,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "memory_write_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+            "deployment_mutation_allowed": False,
+            "public_readiness_claim_allowed": False,
+        },
+        "private_payload_policy": {
+            "input_source": "operator_supplied_redacted_projection",
+            "raw_private_payload_serialized": False,
+            "secret_values_serialized": False,
+            "connector_payload_projection": "redacted_summary_or_none",
+            "body_projection": "operator_visible_draft",
+        },
+        "blocked_actions": [
+            "send_email",
+            "forward_email",
+            "archive_email",
+            "delete_email",
+            "create_calendar_event",
+            "move_calendar_event",
+            "cancel_calendar_event",
+            "invite_people",
+            "write_task",
+            "write_memory",
+            "mutate_connector_state",
+            "write_system_of_record",
+            "serialize_raw_private_payload",
+            "serialize_secret_values",
+        ],
+        "receipt_required": True,
+        "approval_queue_required_before_effect": True,
+        "next_action": "bind approved draft actions through approval queue before any send, invite, or system write",
+    }
 
 
 @dataclass(frozen=True, slots=True)

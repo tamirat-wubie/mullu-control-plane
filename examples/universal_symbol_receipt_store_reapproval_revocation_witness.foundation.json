@@ -1,0 +1,145 @@
+{
+  "witness_id": "universal-symbol-receipt-store-reapproval-revocation-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-reapproval-revocation",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "reapproval_revocation_decision": "blocked_pending_approval_decision_grant_expiry_revocation_replacement_and_audit_evidence",
+  "reapproval_revocation_witness_is_not_lifecycle_authority": true,
+  "lifecycle_requirements": [
+    {
+      "requirement_id": "requirement://approval-decision-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval-decision://universal-symbol/receipt-store/lifecycle",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-approval-decision-witness-missing"
+    },
+    {
+      "requirement_id": "requirement://active-grant-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "grant://universal-symbol/receipt-store/active-approval",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-active-grant-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://reapproval-window",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/receipt-store/reapproval-window",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-reapproval-window-missing"
+    },
+    {
+      "requirement_id": "requirement://expiry-evidence",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "expiry://universal-symbol/receipt-store/approval-grant",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-expiry-evidence-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-request",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revocation://universal-symbol/receipt-store/request",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-revocation-request-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-effect-boundary",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "effect-boundary://universal-symbol/receipt-store/revocation",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-revocation-effect-boundary-missing"
+    },
+    {
+      "requirement_id": "requirement://replacement-decision-path",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval-decision://universal-symbol/receipt-store/replacement",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-replacement-decision-path-missing"
+    },
+    {
+      "requirement_id": "requirement://lifecycle-audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "audit://universal-symbol/receipt-store/lifecycle",
+      "current_decision": "lifecycle_change_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_reapproval_recorded": false,
+    "receipt_store_revocation_recorded": false,
+    "receipt_store_approval_decision_recorded": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "replacement_decision_recorded": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "lifecycle_constraints": {
+    "approval_decision_witness_required": true,
+    "active_grant_identity_required": true,
+    "reapproval_window_required": true,
+    "expiry_evidence_required": true,
+    "revocation_request_required": true,
+    "revocation_effect_boundary_required": true,
+    "replacement_decision_path_required": true,
+    "lifecycle_audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_approval_decision_blocks_lifecycle_change": true,
+    "missing_active_grant_blocks_lifecycle_change": true,
+    "missing_reapproval_window_blocks_lifecycle_change": true,
+    "missing_revocation_boundary_blocks_lifecycle_change": true,
+    "unknown_hard_constraint_blocks_lifecycle_change": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "approval_decision_witness_missing",
+    "active_grant_identity_missing",
+    "reapproval_window_missing",
+    "expiry_evidence_missing",
+    "revocation_request_missing",
+    "revocation_effect_boundary_missing",
+    "replacement_decision_path_missing",
+    "lifecycle_audit_receipt_missing",
+    "receipt_store_lifecycle_recording_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_reapproval_window_receipt",
+    "define_revocation_request_receipt",
+    "bind_replacement_decision_path",
+    "define_lifecycle_audit_receipt"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "lifecycle_requirement_count": 8,
+    "authority_denial_count": 13,
+    "lifecycle_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 16
+  }
+}

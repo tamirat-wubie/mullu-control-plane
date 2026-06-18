@@ -1,5 +1,5 @@
 {
-  "check_count": 230,
+  "check_count": 234,
   "checks": [
     {
       "args": [
@@ -2177,6 +2177,45 @@
     {
       "args": [
         "python",
+        "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_operator_identity_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_operator_approval_decision_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_reapproval_revocation_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py"
       ],
       "name": "universal_symbol_receipt_store_tenant_scope_witness",
@@ -2232,6 +2271,19 @@
         "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"
       ],
       "name": "universal_symbol_receipt_store_durability_replay_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
+      ],
+      "name": "universal_symbol_receipt_store_recovery_witness",
       "passed": true,
       "return_code": 0,
       "stderr": "",

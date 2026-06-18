@@ -51,6 +51,14 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert payload["lane_status"]["live_connector_execution_allowed"] is False
     assert payload["lane_status"]["customer_readiness_claim_allowed"] is False
     assert payload["lane_status"]["nested_mind_live_activation_allowed"] is False
+    draft_lane = payload["lane_status"]["lanes"][5]
+    assert draft_lane["lane_id"] == "draft_projection"
+    assert draft_lane["route_refs"] == [
+        "/api/v1/personal-assistant/drafts",
+        "/api/v1/personal-assistant/drafts/email/preview",
+        "/api/v1/personal-assistant/drafts/calendar/preview",
+        "/api/v1/personal-assistant/drafts/task/preview",
+    ]
     assert payload["lane_status"]["lanes"][-1]["lane_id"] == "operator_console"
     assert payload["lane_status"]["lanes"][-1]["route_refs"] == [
         "/api/v1/console/personal-assistant",

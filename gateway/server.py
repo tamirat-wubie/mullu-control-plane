@@ -73,11 +73,19 @@ from mcoi_runtime.personal_assistant import (
     PersonalAssistantApprovalQueue,
     PersonalAssistantMemoryObservationLedger,
     RequestInterface,
+    CalendarEventDraftInput,
+    EmailDraftInput,
+    TaskDraftInput,
     build_clarification_requests,
+    build_draft_assistant_read_model,
+    build_governed_team_assistant_pilot_read_model,
     build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
     build_personal_assistant_readiness_demo,
     build_teamops_gmail_live_probe_readiness,
+    draft_calendar_event,
+    draft_email_response,
+    draft_task,
     interpret_user_request,
     load_default_skill_registry,
     plan_github_codex_review,
@@ -367,6 +375,89 @@ class GatewayPersonalAssistantTeamOpsPreviewRequest(BaseModel):
     repository: str = "tamirat-wubie/mullu-control-plane"
 
 
+class GatewayPersonalAssistantEmailDraftInput(BaseModel):
+    """Redacted email draft source projection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    message_ref: str
+    recipient_label: str
+    sender_label: str
+    subject_digest: str
+    thread_summary_digest: str
+    response_goal: str
+    tone: str = "clear"
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantEmailDraftPreviewRequest(BaseModel):
+    """Stateless email draft preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Draft a response to this email."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantEmailDraftInput
+
+
+class GatewayPersonalAssistantCalendarDraftInput(BaseModel):
+    """Redacted calendar event draft source projection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    meeting_goal: str
+    title_digest: str
+    proposed_window: str
+    duration_minutes: int
+    attendee_labels: list[str] = Field(default_factory=list)
+    location_label: str = ""
+    agenda_digest: str = ""
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantCalendarDraftPreviewRequest(BaseModel):
+    """Stateless calendar draft preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Draft a calendar event for today."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantCalendarDraftInput
+
+
+class GatewayPersonalAssistantTaskDraftInput(BaseModel):
+    """Task draft source projection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    task_goal: str
+    source_ref: str
+    title_digest: str
+    priority: str
+    due_hint: str = ""
+    acceptance_digest: str = ""
+    constraints: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantTaskDraftPreviewRequest(BaseModel):
+    """Stateless task draft preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Create a task draft for reviewing the release notes."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    draft_input: GatewayPersonalAssistantTaskDraftInput
+
+
 class GatewayPersonalAssistantGitHubCodexPreviewRequest(BaseModel):
     """Stateless GitHub/Codex review preview request."""
 
@@ -541,6 +632,33 @@ def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_c
     if bool(plan.get("requires_approval")):
         return "AwaitingEvidence"
     return "SolvedVerified"
+
+
+def _draft_preview_response(projection: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a public-safe draft preview response without execution authority."""
+
+    receipt = projection.get("receipt")
+    draft = projection.get("draft")
+    return {
+        "governed": True,
+        "draft_projection": dict(projection),
+        "draft": dict(draft) if isinstance(draft, Mapping) else {},
+        "receipt": dict(receipt) if isinstance(receipt, Mapping) else {},
+        "effect_boundary": {
+            "draft_preparation_allowed": True,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "mailbox_mutation_allowed": False,
+            "external_send_allowed": False,
+            "calendar_write_allowed": False,
+            "task_write_allowed": False,
+            "memory_write_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+        },
+        "approval_required_before_effect": True,
+        "execution_allowed": False,
+    }
 
 
 def _personal_assistant_approval_queue_v0_projection(
@@ -2094,6 +2212,28 @@ def create_gateway_app(
             console_payload=build_personal_assistant_console_read_model(generated_at=generated_at),
         )
 
+    @app.get("/api/v1/personal-assistant/pilot/read-model")
+    def personal_assistant_pilot_read_model():
+        generated_at = _clock()
+        console_payload = build_personal_assistant_console_read_model(generated_at=generated_at)
+        readiness_payload = build_personal_assistant_readiness_demo(
+            generated_at=generated_at,
+            console_payload=console_payload,
+        )
+        return build_governed_team_assistant_pilot_read_model(
+            generated_at=generated_at,
+            console_payload=console_payload,
+            readiness_payload=readiness_payload,
+            draft_payload=build_draft_assistant_read_model(generated_at=generated_at),
+            teamops_live_probe_payload=build_teamops_gmail_live_probe_readiness(
+                generated_at=generated_at,
+            ),
+        )
+
+    @app.get("/api/v1/personal-assistant/drafts")
+    def personal_assistant_drafts_read_model():
+        return build_draft_assistant_read_model(generated_at=_clock())
+
     @app.post("/api/v1/personal-assistant/requests/preview")
     def preview_personal_assistant_request(req: GatewayPersonalAssistantPreviewRequest):
         try:
@@ -2239,6 +2379,113 @@ def create_gateway_app(
             "governed": True,
             "execution_allowed": False,
         }
+
+    @app.post("/api/v1/personal-assistant/drafts/email/preview")
+    def preview_personal_assistant_email_draft(req: GatewayPersonalAssistantEmailDraftPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                "draft-email-preview",
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_email_response(
+                intent,
+                EmailDraftInput.from_mapping(_pydantic_payload(req.draft_input)),
+                generated_at=now,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant email draft preview",
+                    "error_code": "invalid_personal_assistant_email_draft_preview",
+                    "governed": True,
+                    "execution_allowed": False,
+                    "external_send_allowed": False,
+                    "mailbox_mutation_allowed": False,
+                },
+            ) from exc
+        return _draft_preview_response(projection.as_dict())
+
+    @app.post("/api/v1/personal-assistant/drafts/calendar/preview")
+    def preview_personal_assistant_calendar_draft(req: GatewayPersonalAssistantCalendarDraftPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                "draft-calendar-preview",
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_calendar_event(
+                intent,
+                CalendarEventDraftInput.from_mapping(_pydantic_payload(req.draft_input)),
+                generated_at=now,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant calendar draft preview",
+                    "error_code": "invalid_personal_assistant_calendar_draft_preview",
+                    "governed": True,
+                    "execution_allowed": False,
+                    "calendar_write_allowed": False,
+                    "external_send_allowed": False,
+                    "connector_mutation_allowed": False,
+                },
+            ) from exc
+        return _draft_preview_response(projection.as_dict())
+
+    @app.post("/api/v1/personal-assistant/drafts/task/preview")
+    def preview_personal_assistant_task_draft(req: GatewayPersonalAssistantTaskDraftPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                "draft-task-preview",
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = draft_task(
+                intent,
+                TaskDraftInput.from_mapping(_pydantic_payload(req.draft_input)),
+                generated_at=now,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant task draft preview",
+                    "error_code": "invalid_personal_assistant_task_draft_preview",
+                    "governed": True,
+                    "execution_allowed": False,
+                    "task_write_allowed": False,
+                    "memory_write_allowed": False,
+                    "system_of_record_write_allowed": False,
+                },
+            ) from exc
+        return _draft_preview_response(projection.as_dict())
 
     @app.get("/api/v1/personal-assistant/memory-observations")
     def personal_assistant_memory_observations_read_model():

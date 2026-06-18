@@ -1,0 +1,142 @@
+{
+  "witness_id": "universal-symbol-receipt-store-operator-identity-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-operator-identity",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "operator_identity_decision": "blocked_pending_live_identity_binding_tenant_scope_and_audit_evidence",
+  "operator_identity_witness_is_not_identity_authority": true,
+  "identity_requirements": [
+    {
+      "requirement_id": "requirement://live-operator-subject",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "identity://universal-symbol/operator/live-subject",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-live-subject-missing"
+    },
+    {
+      "requirement_id": "requirement://trusted-control-studio-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "studio://universal-symbol/operator/trusted-control-studio",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-control-studio-binding-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-scope-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "tenant-scope://universal-symbol/operator/identity",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-tenant-scope-missing"
+    },
+    {
+      "requirement_id": "requirement://actor-proof",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "actor://universal-symbol/operator/proof",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-actor-proof-missing"
+    },
+    {
+      "requirement_id": "requirement://session-authentication",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "session://universal-symbol/operator/authentication",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-session-authentication-missing"
+    },
+    {
+      "requirement_id": "requirement://freshness-window",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/operator/identity-freshness",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-freshness-window-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-path",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revoke://universal-symbol/operator/identity",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-revocation-path-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/operator-identity-audit",
+      "current_decision": "operator_identity_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_operator_identity_bound": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_approval_decision_recorded": false,
+    "receipt_store_writer_identity_registered": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "identity_constraints": {
+    "live_operator_subject_required": true,
+    "trusted_control_studio_binding_required": true,
+    "tenant_scope_binding_required": true,
+    "actor_proof_required": true,
+    "session_authentication_required": true,
+    "freshness_window_required": true,
+    "revocation_path_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_live_operator_subject_blocks_identity": true,
+    "missing_control_studio_binding_blocks_identity": true,
+    "missing_tenant_scope_blocks_identity": true,
+    "missing_session_authentication_blocks_identity": true,
+    "unknown_hard_constraint_blocks_identity": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "live_operator_subject_missing",
+    "trusted_control_studio_binding_missing",
+    "tenant_scope_binding_missing",
+    "actor_proof_missing",
+    "session_authentication_missing",
+    "freshness_window_missing",
+    "revocation_path_missing",
+    "audit_receipt_missing",
+    "receipt_store_operator_identity_binding_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_live_operator_subject_evidence",
+    "bind_trusted_control_studio_evidence",
+    "collect_tenant_scope_identity_evidence",
+    "define_identity_revocation_receipt"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "identity_requirement_count": 8,
+    "authority_denial_count": 13,
+    "identity_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 13
+  }
+}

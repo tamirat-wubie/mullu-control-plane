@@ -44,7 +44,7 @@ def test_component_read_model_schema_valid(tmp_path: Path) -> None:
     assert validation.component_count == 10
     assert validation.bound_route_count == 32
     assert validation.route_family_classification_count == 78
-    assert validation.classified_declared_route_count == 440
+    assert validation.classified_declared_route_count == 445
     assert validation.proof_bound_count == 9
     assert written_payload["errors"] == []
     assert written_payload["ok"] is True
@@ -62,7 +62,7 @@ def test_component_read_model_example_matches_runtime_projection() -> None:
     assert example["summary"]["lifecycle_receipt_count"] == 10
     assert example["summary"]["authority_witness_count"] == 10
     assert example["summary"]["route_family_classification_count"] == 78
-    assert example["summary"]["classified_declared_route_count"] == 440
+    assert example["summary"]["classified_declared_route_count"] == 445
     assert example["components"][0]["lifecycle_receipt"]["proof_state"] == "Pass"
     assert example["components"][0]["authority_witness"]["proof_state"] == "Pass"
 

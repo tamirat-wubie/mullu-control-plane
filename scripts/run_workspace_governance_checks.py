@@ -899,6 +899,21 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_operator_identity_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_approval_decision_witness",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_reapproval_revocation_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_tenant_scope_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py"),
         ),
@@ -917,6 +932,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "universal_symbol_receipt_store_durability_replay_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_recovery_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"),
         ),
         CheckCommand(
             "universal_symbol_receipt_store_writer_identity_witness",

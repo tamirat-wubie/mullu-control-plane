@@ -1715,6 +1715,24 @@
       "surface": "symbol"
     },
     {
+      "schema_id": "universal-symbol-receipt-store-operator-identity-witness",
+      "path": "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-operator-identity-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-operator-approval-decision-witness",
+      "path": "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-operator-approval-decision-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-reapproval-revocation-witness",
+      "path": "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-reapproval-revocation-witness:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "universal-symbol-receipt-store-tenant-scope-witness",
       "path": "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-tenant-scope-witness:1",
@@ -1766,6 +1784,12 @@
       "schema_id": "universal-symbol-receipt-store-durability-replay-witness",
       "path": "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-recovery-witness",
+      "path": "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-recovery-witness:1",
       "surface": "symbol"
     },
     {

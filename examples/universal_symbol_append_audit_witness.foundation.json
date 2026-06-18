@@ -112,8 +112,7 @@
     "define_receipt_store_writer_registration_witness",
     "define_receipt_store_write_path_witness",
     "define_append_idempotency_witness",
-    "define_durability_replay_witness",
-    "define_receipt_store_recovery_plan"
+    "define_durability_replay_witness"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_append_audit_witness.schema.json",
@@ -144,7 +143,10 @@
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
-    "tests/test_proof_coverage_matrix.py"
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
   ],
   "contract_summary": {
     "audit_requirement_count": 8,
@@ -152,6 +154,6 @@
     "candidate_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 11,
-    "evidence_ref_count": 29
+    "evidence_ref_count": 32
   }
 }

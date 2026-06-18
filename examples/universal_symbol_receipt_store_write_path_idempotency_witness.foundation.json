@@ -109,7 +109,7 @@
     "terminal_closure_not_allowed"
   ],
   "next_actions": [
-    "define_receipt_store_recovery_plan"
+    "define_live_operator_identity_witness"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
@@ -137,7 +137,10 @@
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
-    "tests/test_proof_coverage_matrix.py"
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
   ],
   "contract_summary": {
     "idempotency_requirement_count": 8,
@@ -145,6 +148,6 @@
     "idempotency_constraint_count": 8,
     "rejection_check_count": 6,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 26
+    "evidence_ref_count": 29
   }
 }

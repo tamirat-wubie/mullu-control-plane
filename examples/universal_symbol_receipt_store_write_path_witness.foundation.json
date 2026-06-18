@@ -129,8 +129,7 @@
     "define_writer_identity_witness",
     "define_write_path_custody_witness",
     "define_write_path_idempotency_witness",
-    "define_durability_replay_witness",
-    "define_receipt_store_recovery_plan"
+    "define_durability_replay_witness"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
@@ -168,7 +167,10 @@
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
-    "tests/test_proof_coverage_matrix.py"
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
   ],
   "contract_summary": {
     "write_path_requirement_count": 10,
@@ -176,6 +178,6 @@
     "write_path_constraint_count": 10,
     "rejection_check_count": 6,
     "blocked_reason_count": 12,
-    "evidence_ref_count": 36
+    "evidence_ref_count": 39
   }
 }

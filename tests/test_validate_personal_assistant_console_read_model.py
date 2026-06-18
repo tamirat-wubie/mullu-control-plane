@@ -60,6 +60,13 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
     assert lane_status["execution_allowed"] is False
     assert lane_status["live_connector_execution_allowed"] is False
     assert lane_status["customer_readiness_claim_allowed"] is False
+    assert lane_status["lanes"][5]["lane_id"] == "draft_projection"
+    assert lane_status["lanes"][5]["route_refs"] == [
+        "/api/v1/personal-assistant/drafts",
+        "/api/v1/personal-assistant/drafts/email/preview",
+        "/api/v1/personal-assistant/drafts/calendar/preview",
+        "/api/v1/personal-assistant/drafts/task/preview",
+    ]
     assert lane_status["lanes"][-1]["lane_id"] == "operator_console"
     assert lane_status["lanes"][-1]["route_refs"] == [
         "/api/v1/console/personal-assistant",

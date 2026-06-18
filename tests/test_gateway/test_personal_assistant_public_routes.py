@@ -141,6 +141,46 @@ def test_gateway_personal_assistant_readiness_demo_is_read_only() -> None:
     assert payload["effect_boundary"]["external_send_allowed"] is False
 
 
+def test_gateway_personal_assistant_pilot_read_model_packages_controlled_demo() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/personal-assistant/pilot/read-model")
+    post_response = client.post("/api/v1/personal-assistant/pilot/read-model", json={})
+    payload = response.json()
+    stage_ids = [stage["stage_id"] for stage in payload["pilot_stages"]]
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert payload["pilot_id"] == "governed_team_assistant_pilot"
+    assert payload["status"] == "controlled_demo_productization"
+    assert payload["solver_outcome"] == "SolvedVerified"
+    assert payload["governed"] is True
+    assert payload["stage_count"] == 5
+    assert stage_ids == [
+        "teamops_terminal_closure",
+        "personal_assistant_readiness_demo",
+        "approval_queue_v0",
+        "teamops_gmail_live_probe",
+        "draft_only_assistant",
+    ]
+    assert all(stage["receipt_required"] is True for stage in payload["pilot_stages"])
+    assert payload["required_approvals"]["approval_queue_v0_required_before_live_effect"] is True
+    assert payload["required_approvals"]["approval_is_execution"] is False
+    assert payload["effect_boundary"]["execution_allowed"] is False
+    assert payload["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_mutation_allowed"] is False
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert payload["effect_boundary"]["task_write_allowed"] is False
+    assert payload["effect_boundary"]["public_readiness_claim_allowed"] is False
+    assert payload["effect_boundary"]["snet_live_execution_authority_allowed"] is False
+    assert payload["stage_boundaries"]["draft_only_assistant"]["draft_preparation_allowed"] is True
+    assert payload["stage_boundaries"]["draft_only_assistant"]["external_send_allowed"] is False
+    assert payload["stage_boundaries"]["teamops_gmail_live_probe"]["external_provider_call_performed"] is False
+    assert "live_gmail_send" in payload["blocked_actions"]
+    assert "snet_live_execution_authority" in payload["blocked_actions"]
+
+
 def test_gateway_personal_assistant_preview_blocks_effects_and_emits_receipt() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -610,6 +650,120 @@ def test_gateway_personal_assistant_teamops_preview_rejects_raw_payload() -> Non
     assert response.status_code == 400
     assert "private mailbox body" not in serialized
     assert "teamops_handoff_plan_prepared" not in serialized
+
+
+def test_gateway_personal_assistant_drafts_read_model_is_no_effect() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/personal-assistant/drafts")
+    post_response = client.post("/api/v1/personal-assistant/drafts", json={})
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert payload["status"] == "draft_only_available"
+    assert payload["effect_boundary"]["draft_preparation_allowed"] is True
+    assert payload["effect_boundary"]["execution_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert payload["effect_boundary"]["task_write_allowed"] is False
+    assert payload["approval_queue_required_before_effect"] is True
+
+
+def test_gateway_personal_assistant_email_draft_preview_prepares_without_send() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/email/preview",
+        json={
+            "request_id": "pa_request_gateway_email_draft_001",
+            "submitted_at": "2026-06-18T13:00:00+00:00",
+            "generated_at": "2026-06-18T13:01:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "draft_input": _email_draft_input(),
+        },
+    )
+    payload = response.json()
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["draft_projection"]["skill_id"] == "email.response.draft"
+    assert payload["draft"]["approval_required_before_send"] is True
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["mailbox_mutation_allowed"] is False
+    assert "email_not_sent" in receipt["actions_not_taken"]
+    assert receipt["metadata"]["external_write_allowed"] is False
+
+
+def test_gateway_personal_assistant_calendar_draft_preview_prepares_without_write() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/calendar/preview",
+        json={
+            "request_id": "pa_request_gateway_calendar_draft_001",
+            "submitted_at": "2026-06-18T13:05:00+00:00",
+            "generated_at": "2026-06-18T13:06:00+00:00",
+            "connector_refs": [_calendar_connector_ref()],
+            "draft_input": _calendar_draft_input(),
+        },
+    )
+    payload = response.json()
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["draft_projection"]["skill_id"] == "calendar.event.draft"
+    assert payload["draft"]["approval_required_before_create_or_invite"] is True
+    assert payload["effect_boundary"]["calendar_write_allowed"] is False
+    assert "calendar_event_not_created" in receipt["actions_not_taken"]
+    assert "people_not_invited" in receipt["actions_not_taken"]
+    assert receipt["metadata"]["connector_mutation_allowed"] is False
+
+
+def test_gateway_personal_assistant_task_draft_preview_prepares_without_task_write() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/task/preview",
+        json={
+            "request_id": "pa_request_gateway_task_draft_001",
+            "submitted_at": "2026-06-18T13:10:00+00:00",
+            "generated_at": "2026-06-18T13:11:00+00:00",
+            "draft_input": _task_draft_input(),
+        },
+    )
+    payload = response.json()
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["draft_projection"]["skill_id"] == "task.create_draft"
+    assert payload["draft"]["approval_required_before_task_write"] is True
+    assert payload["effect_boundary"]["task_write_allowed"] is False
+    assert payload["effect_boundary"]["memory_write_allowed"] is False
+    assert "task_not_written" in receipt["actions_not_taken"]
+    assert receipt["connectors_used"] == []
+
+
+def test_gateway_personal_assistant_email_draft_preview_rejects_raw_payload() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    draft_input = _email_draft_input() | {"raw_message_body": "private mailbox body"}
+
+    response = client.post(
+        "/api/v1/personal-assistant/drafts/email/preview",
+        json={
+            "request_id": "pa_request_gateway_email_draft_raw_001",
+            "submitted_at": "2026-06-18T13:12:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "draft_input": draft_input,
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code in {400, 422}
+    assert "private mailbox body" not in serialized
+    assert "email_response_draft_prepared" not in serialized
 
 
 def test_gateway_personal_assistant_teamops_gmail_live_probe_readiness_is_no_effect(monkeypatch) -> None:  # type: ignore[no-untyped-def]
@@ -1146,6 +1300,16 @@ def _gmail_connector_ref() -> dict[str, object]:
     }
 
 
+def _calendar_connector_ref() -> dict[str, object]:
+    return {
+        "connector_id": "connector:google-calendar:operator",
+        "connector_name": "google_calendar",
+        "proof_state": "Pass",
+        "private_data_allowed": True,
+        "scopes": ["calendar.readonly"],
+    }
+
+
 def _github_connector_ref() -> dict[str, object]:
     return {
         "connector_id": "connector:github:operator",
@@ -1153,4 +1317,42 @@ def _github_connector_ref() -> dict[str, object]:
         "proof_state": "Pass",
         "private_data_allowed": True,
         "scopes": ["repo.read"],
+    }
+
+
+def _email_draft_input() -> dict[str, object]:
+    return {
+        "message_ref": "msg:gateway-email-draft",
+        "recipient_label": "operator-visible recipient",
+        "sender_label": "operator",
+        "subject_digest": "project update digest",
+        "thread_summary_digest": "redacted thread summary",
+        "response_goal": "I can review the packet today and send comments tomorrow.",
+        "tone": "direct",
+        "constraints": ["do not promise deployment"],
+    }
+
+
+def _calendar_draft_input() -> dict[str, object]:
+    return {
+        "meeting_goal": "Review the handoff packet.",
+        "title_digest": "handoff review digest",
+        "proposed_window": "2026-06-18 afternoon",
+        "duration_minutes": 30,
+        "attendee_labels": ["operator-visible teammate"],
+        "location_label": "video call label",
+        "agenda_digest": "review blockers and next action",
+        "constraints": ["do not invite before approval"],
+    }
+
+
+def _task_draft_input() -> dict[str, object]:
+    return {
+        "task_goal": "Review release notes before the next closure step.",
+        "source_ref": "conversation:release-notes",
+        "title_digest": "review release notes digest",
+        "priority": "medium",
+        "due_hint": "next working session",
+        "acceptance_digest": "notes reviewed and blockers recorded",
+        "constraints": ["do not write task state before approval"],
     }

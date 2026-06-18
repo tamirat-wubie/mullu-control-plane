@@ -1176,7 +1176,12 @@
         "display_name": "Draft-Only Assistant",
         "stage": "projection_only",
         "state": "SolvedVerified",
-        "route_refs": [],
+        "route_refs": [
+          "/api/v1/personal-assistant/drafts",
+          "/api/v1/personal-assistant/drafts/email/preview",
+          "/api/v1/personal-assistant/drafts/calendar/preview",
+          "/api/v1/personal-assistant/drafts/task/preview"
+        ],
         "schema_refs": [
           "schemas/personal_assistant_draft_projection.schema.json"
         ],
