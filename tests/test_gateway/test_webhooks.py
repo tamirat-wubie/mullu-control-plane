@@ -4907,8 +4907,26 @@ class TestGatewayStatus:
         blocked_resp = client.get(
             "/operator/current-task/read-model?tenant_id=t1&status=blocked"
         )
+        evidence_filter_resp = client.get(
+            "/operator/current-task/read-model"
+            "?tenant_id=t1&response_evidence_state=terminal_certificate_missing"
+        )
+        waiting_filter_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&waiting_for=operator_approval"
+        )
+        filtered_html_resp = client.get(
+            "/operator/current-task"
+            "?tenant_id=t1&response_evidence_state=terminal_certificate_missing"
+        )
         invalid_resp = client.get(
             "/operator/current-task/read-model?tenant_id=t1&status=unknown"
+        )
+        invalid_evidence_resp = client.get(
+            "/operator/current-task/read-model"
+            "?tenant_id=t1&response_evidence_state=unknown"
+        )
+        invalid_waiting_resp = client.get(
+            "/operator/current-task/read-model?tenant_id=t1&waiting_for=unknown"
         )
 
         assert resp.status_code == 200
@@ -4989,14 +5007,43 @@ class TestGatewayStatus:
         assert data["status_counts"]["waiting_for_approval"] >= 1
         assert data["status_counts"]["blocked"] >= 1
         assert data["status_counts"]["completed"] >= 2
+        assert data["response_evidence_state_counts"]["approval_pending"] >= 1
+        assert (
+            data["response_evidence_state_counts"]["terminal_certificate_missing"]
+            >= 1
+        )
+        assert data["waiting_for_counts"]["operator_approval"] >= 1
         assert "waiting raw body" not in json.dumps(data, sort_keys=True)
         assert "blocked raw body" not in json.dumps(data, sort_keys=True)
         assert "awaiting evidence raw body" not in json.dumps(data, sort_keys=True)
         assert blocked_resp.status_code == 200
         assert blocked_resp.json()["count"] == 1
         assert blocked_resp.json()["tasks"][0]["command_id"] == blocked.command_id
+        assert evidence_filter_resp.status_code == 200
+        assert evidence_filter_resp.json()["response_evidence_state_filter"] == (
+            "terminal_certificate_missing"
+        )
+        assert evidence_filter_resp.json()["count"] == 1
+        assert evidence_filter_resp.json()["tasks"][0]["command_id"] == (
+            awaiting_evidence.command_id
+        )
+        assert waiting_filter_resp.status_code == 200
+        assert waiting_filter_resp.json()["waiting_for_filter"] == "operator_approval"
+        assert waiting_filter_resp.json()["count"] == 1
+        assert waiting_filter_resp.json()["tasks"][0]["command_id"] == waiting.command_id
+        assert filtered_html_resp.status_code == 200
+        assert (
+            "/operator/current-task/read-model?tenant_id=t1"
+            "&amp;response_evidence_state=terminal_certificate_missing"
+        ) in filtered_html_resp.text
         assert invalid_resp.status_code == 400
         assert "status must be one of" in invalid_resp.json()["detail"]
+        assert invalid_evidence_resp.status_code == 400
+        assert "response_evidence_state must be one of" in invalid_evidence_resp.json()[
+            "detail"
+        ]
+        assert invalid_waiting_resp.status_code == 400
+        assert "waiting_for must be one of" in invalid_waiting_resp.json()["detail"]
 
     def test_operator_receipt_and_current_task_consoles_render_bounded_tables(
         self, gateway_app, client

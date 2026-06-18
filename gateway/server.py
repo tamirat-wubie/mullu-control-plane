@@ -166,6 +166,8 @@ from gateway.operator_receipt_viewer import (
     render_operator_receipt_detail_html,
     render_operator_receipt_viewer_html,
     valid_approval_statuses,
+    valid_current_task_response_evidence_states,
+    valid_current_task_waiting_for_filters,
     valid_plan_budget_gates,
     valid_plan_review_statuses,
     valid_receipt_types,
@@ -4718,6 +4720,8 @@ def create_gateway_app(
         request: Request,
         tenant_id: str = "",
         status: str = "",
+        response_evidence_state: str = "",
+        waiting_for: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -4729,10 +4733,33 @@ def create_gateway_app(
                 detail="status must be one of: "
                 + ", ".join(valid_task_statuses()),
             )
+        normalized_response_evidence_state = response_evidence_state.strip()
+        if (
+            normalized_response_evidence_state
+            and normalized_response_evidence_state
+            not in valid_current_task_response_evidence_states()
+        ):
+            raise HTTPException(
+                400,
+                detail="response_evidence_state must be one of: "
+                + ", ".join(valid_current_task_response_evidence_states()),
+            )
+        normalized_waiting_for = waiting_for.strip()
+        if (
+            normalized_waiting_for
+            and normalized_waiting_for not in valid_current_task_waiting_for_filters()
+        ):
+            raise HTTPException(
+                400,
+                detail="waiting_for must be one of: "
+                + ", ".join(valid_current_task_waiting_for_filters()),
+            )
         return build_current_task_read_model(
             command_ledger,
             tenant_id=tenant_id,
             status=normalized_status,
+            response_evidence_state=normalized_response_evidence_state,
+            waiting_for=normalized_waiting_for,
             limit=limit,
             offset=offset,
         )
@@ -4742,6 +4769,8 @@ def create_gateway_app(
         request: Request,
         tenant_id: str = "",
         status: str = "",
+        response_evidence_state: str = "",
+        waiting_for: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -4753,10 +4782,33 @@ def create_gateway_app(
                 detail="status must be one of: "
                 + ", ".join(valid_task_statuses()),
             )
+        normalized_response_evidence_state = response_evidence_state.strip()
+        if (
+            normalized_response_evidence_state
+            and normalized_response_evidence_state
+            not in valid_current_task_response_evidence_states()
+        ):
+            raise HTTPException(
+                400,
+                detail="response_evidence_state must be one of: "
+                + ", ".join(valid_current_task_response_evidence_states()),
+            )
+        normalized_waiting_for = waiting_for.strip()
+        if (
+            normalized_waiting_for
+            and normalized_waiting_for not in valid_current_task_waiting_for_filters()
+        ):
+            raise HTTPException(
+                400,
+                detail="waiting_for must be one of: "
+                + ", ".join(valid_current_task_waiting_for_filters()),
+            )
         read_model = build_current_task_read_model(
             command_ledger,
             tenant_id=tenant_id,
             status=normalized_status,
+            response_evidence_state=normalized_response_evidence_state,
+            waiting_for=normalized_waiting_for,
             limit=limit,
             offset=offset,
         )

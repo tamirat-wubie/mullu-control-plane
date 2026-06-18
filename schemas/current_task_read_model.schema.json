@@ -9,6 +9,8 @@
     "schema_ref",
     "tenant_id_filter",
     "status_filter",
+    "response_evidence_state_filter",
+    "waiting_for_filter",
     "limit",
     "offset",
     "next_offset",
@@ -16,6 +18,8 @@
     "count",
     "current_task_id",
     "status_counts",
+    "response_evidence_state_counts",
+    "waiting_for_counts",
     "tasks",
     "raw_message_exposed",
     "execution_allowed",
@@ -40,6 +44,18 @@
         "completed"
       ]
     },
+    "response_evidence_state_filter": {
+      "anyOf": [
+        {"type": "string", "const": ""},
+        {"$ref": "#/$defs/response_evidence_state"}
+      ]
+    },
+    "waiting_for_filter": {
+      "anyOf": [
+        {"type": "string", "const": ""},
+        {"$ref": "#/$defs/waiting_for"}
+      ]
+    },
     "limit": {"type": "integer", "minimum": 1, "maximum": 500},
     "offset": {"type": "integer", "minimum": 0},
     "next_offset": {
@@ -52,6 +68,10 @@
     "count": {"type": "integer", "minimum": 0},
     "current_task_id": {"type": "string"},
     "status_counts": {"$ref": "#/$defs/status_counts"},
+    "response_evidence_state_counts": {
+      "$ref": "#/$defs/response_evidence_state_counts"
+    },
+    "waiting_for_counts": {"$ref": "#/$defs/waiting_for_counts"},
     "tasks": {
       "type": "array",
       "items": {"$ref": "#/$defs/task"}
@@ -80,6 +100,48 @@
         "requires_review": {"type": "integer", "minimum": 0},
         "blocked": {"type": "integer", "minimum": 0},
         "completed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "response_evidence_state_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "received",
+        "execution_in_progress",
+        "approval_pending",
+        "operator_review_required",
+        "blocked_with_receipt",
+        "blocked_receipt_required",
+        "terminal_certificate_missing",
+        "terminal_verified"
+      ],
+      "properties": {
+        "received": {"type": "integer", "minimum": 0},
+        "execution_in_progress": {"type": "integer", "minimum": 0},
+        "approval_pending": {"type": "integer", "minimum": 0},
+        "operator_review_required": {"type": "integer", "minimum": 0},
+        "blocked_with_receipt": {"type": "integer", "minimum": 0},
+        "blocked_receipt_required": {"type": "integer", "minimum": 0},
+        "terminal_certificate_missing": {"type": "integer", "minimum": 0},
+        "terminal_verified": {"type": "integer", "minimum": 0}
+      }
+    },
+    "waiting_for_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "",
+        "approval_chain",
+        "operator_approval",
+        "effect_approval",
+        "operator_review"
+      ],
+      "properties": {
+        "": {"type": "integer", "minimum": 0},
+        "approval_chain": {"type": "integer", "minimum": 0},
+        "operator_approval": {"type": "integer", "minimum": 0},
+        "effect_approval": {"type": "integer", "minimum": 0},
+        "operator_review": {"type": "integer", "minimum": 0}
       }
     },
     "task": {
@@ -177,7 +239,12 @@
         },
         "task_terminal": {"type": "boolean"},
         "task_blocked": {"type": "boolean"},
-        "waiting_for": {"type": "string"},
+        "waiting_for": {
+          "anyOf": [
+            {"type": "string", "const": ""},
+            {"$ref": "#/$defs/waiting_for"}
+          ]
+        },
         "next_action": {
           "type": "string",
           "enum": [
@@ -231,6 +298,15 @@
         "blocked_receipt_required",
         "terminal_certificate_missing",
         "terminal_verified"
+      ]
+    },
+    "waiting_for": {
+      "type": "string",
+      "enum": [
+        "approval_chain",
+        "operator_approval",
+        "effect_approval",
+        "operator_review"
       ]
     }
   }

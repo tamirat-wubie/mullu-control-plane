@@ -172,6 +172,12 @@ _RESPONSE_EVIDENCE_STATES = (
     "terminal_certificate_missing",
     "terminal_verified",
 )
+_WAITING_FOR_FILTERS = (
+    "approval_chain",
+    "operator_approval",
+    "effect_approval",
+    "operator_review",
+)
 _APPROVAL_STATUSES = ("pending", "approved", "denied", "expired", "unknown")
 _PLAN_REVIEW_STATUSES = (
     "preview_ready",
@@ -264,6 +270,16 @@ _PLAN_RECEIPT_EXPORT_COLUMNS = (
 def valid_task_statuses() -> tuple[str, ...]:
     """Return accepted current-task status filter values."""
     return _TASK_STATUSES
+
+
+def valid_current_task_response_evidence_states() -> tuple[str, ...]:
+    """Return accepted current-task response evidence filter values."""
+    return _RESPONSE_EVIDENCE_STATES
+
+
+def valid_current_task_waiting_for_filters() -> tuple[str, ...]:
+    """Return accepted current-task waiting-for filter values."""
+    return _WAITING_FOR_FILTERS
 
 
 def valid_receipt_types() -> tuple[str, ...]:
@@ -395,11 +411,15 @@ def build_current_task_read_model(
     *,
     tenant_id: str = "",
     status: str = "",
+    response_evidence_state: str = "",
+    waiting_for: str = "",
     limit: int = 100,
     offset: int = 0,
 ) -> dict[str, Any]:
     """Build a bounded current-task state read model for operator review."""
     normalized_status = status.strip()
+    normalized_response_evidence_state = response_evidence_state.strip()
+    normalized_waiting_for = waiting_for.strip()
     bounded_limit = _bounded_limit(limit)
     bounded_offset = _bounded_offset(offset)
     commands = _filtered_commands(
@@ -409,8 +429,13 @@ def build_current_task_read_model(
         limit=bounded_limit,
         offset=bounded_offset,
         pre_filter=lambda command: (
-            not normalized_status
-            or _command_task_status(command_ledger, command) == normalized_status
+            _current_task_matches_filters(
+                command_ledger,
+                command,
+                status=normalized_status,
+                response_evidence_state=normalized_response_evidence_state,
+                waiting_for=normalized_waiting_for,
+            )
         ),
     )
     tasks = [
@@ -418,6 +443,10 @@ def build_current_task_read_model(
         for command in commands["page"]
     ]
     status_counts = _task_status_counts(command_ledger, commands["all"])
+    all_task_rows = [
+        _current_task_row(command_ledger, command)
+        for command in commands["all"]
+    ]
     current_task_id = next(
         (
             task["command_id"]
@@ -430,6 +459,8 @@ def build_current_task_read_model(
         "schema_ref": CURRENT_TASK_SCHEMA_REF,
         "tenant_id_filter": tenant_id,
         "status_filter": normalized_status,
+        "response_evidence_state_filter": normalized_response_evidence_state,
+        "waiting_for_filter": normalized_waiting_for,
         "limit": bounded_limit,
         "offset": bounded_offset,
         "next_offset": commands["next_offset"],
@@ -437,6 +468,17 @@ def build_current_task_read_model(
         "count": len(tasks),
         "current_task_id": current_task_id,
         "status_counts": status_counts,
+        "response_evidence_state_counts": _current_task_field_counts(
+            all_task_rows,
+            field_name="response_evidence_state",
+            accepted_values=_RESPONSE_EVIDENCE_STATES,
+        ),
+        "waiting_for_counts": _current_task_field_counts(
+            all_task_rows,
+            field_name="waiting_for",
+            accepted_values=_WAITING_FOR_FILTERS,
+            include_empty=True,
+        ),
         "tasks": tasks,
         "raw_message_exposed": False,
         "execution_allowed": False,
@@ -1004,6 +1046,12 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
     status_counts = read_model.get("status_counts")
     if not isinstance(status_counts, Mapping):
         status_counts = {}
+    response_evidence_state_counts = read_model.get("response_evidence_state_counts")
+    if not isinstance(response_evidence_state_counts, Mapping):
+        response_evidence_state_counts = {}
+    waiting_for_counts = read_model.get("waiting_for_counts")
+    if not isinstance(waiting_for_counts, Mapping):
+        waiting_for_counts = {}
     metrics = (
         ("Visible", read_model.get("count", 0)),
         ("Total", read_model.get("total", 0)),
@@ -1011,6 +1059,12 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
         ("Active", status_counts.get("active", 0)),
         ("Waiting", status_counts.get("waiting_for_approval", 0)),
         ("Blocked", status_counts.get("blocked", 0)),
+        ("Approval Pending", response_evidence_state_counts.get("approval_pending", 0)),
+        (
+            "Terminal Missing",
+            response_evidence_state_counts.get("terminal_certificate_missing", 0),
+        ),
+        ("Operator Approval", waiting_for_counts.get("operator_approval", 0)),
     )
     action_html = _operator_action_status_html(
         str(read_model.get("operator_action_status", ""))
@@ -1018,7 +1072,7 @@ def render_current_task_html(read_model: Mapping[str, Any]) -> str:
     return _operator_table_html(
         title="Mullu Current Task State",
         description="Read-only command task states and next governed operator actions.",
-        json_href="/operator/current-task/read-model",
+        json_href=_current_task_read_model_href(read_model),
         columns=columns,
         rows=rows,
         metrics=metrics,
@@ -1071,6 +1125,46 @@ def _command_matches(command: Any, *, tenant_id: str) -> bool:
     return isinstance(command, CommandEnvelope) and (
         not tenant_id or command.tenant_id == tenant_id
     )
+
+
+def _current_task_matches_filters(
+    command_ledger: Any,
+    command: CommandEnvelope,
+    *,
+    status: str,
+    response_evidence_state: str,
+    waiting_for: str,
+) -> bool:
+    if status and _command_task_status(command_ledger, command) != status:
+        return False
+    if not response_evidence_state and not waiting_for:
+        return True
+    row = _current_task_row(command_ledger, command)
+    if (
+        response_evidence_state
+        and row.get("response_evidence_state") != response_evidence_state
+    ):
+        return False
+    if waiting_for and row.get("waiting_for") != waiting_for:
+        return False
+    return True
+
+
+def _current_task_field_counts(
+    rows: list[Mapping[str, Any]],
+    *,
+    field_name: str,
+    accepted_values: tuple[str, ...],
+    include_empty: bool = False,
+) -> dict[str, int]:
+    counts = {value: 0 for value in accepted_values}
+    if include_empty:
+        counts[""] = 0
+    for row in rows:
+        value = str(row.get(field_name, "")).strip()
+        if value in counts:
+            counts[value] += 1
+    return counts
 
 
 def _filtered_command_receipt_group(
@@ -3303,6 +3397,24 @@ def _current_task_href(tenant_id: str, status: str = "") -> str:
         }
     )
     return "/operator/current-task" + (f"?{query}" if query else "")
+
+
+def _current_task_read_model_href(read_model: Mapping[str, Any]) -> str:
+    query = urlencode(
+        {
+            key: value
+            for key, value in {
+                "tenant_id": str(read_model.get("tenant_id_filter", "")).strip(),
+                "status": str(read_model.get("status_filter", "")).strip(),
+                "response_evidence_state": str(
+                    read_model.get("response_evidence_state_filter", "")
+                ).strip(),
+                "waiting_for": str(read_model.get("waiting_for_filter", "")).strip(),
+            }.items()
+            if value
+        }
+    )
+    return "/operator/current-task/read-model" + (f"?{query}" if query else "")
 
 
 def _plan_review_detail_href(plan_id: str, tenant_id: str = "") -> str:
