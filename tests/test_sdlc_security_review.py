@@ -496,6 +496,24 @@ def test_maf_receipt_parity_witness_security_review_passes_strict() -> None:
     assert review["receipt_ref"] in review["security_receipts"]
 
 
+def test_maf_abi_cli_contract_witness_security_review_passes_strict() -> None:
+    review_path = Path("examples/sdlc/security_review_maf_abi_cli_contract_witness_20260618.json")
+    review = validate_sdlc_artifact.load_json_object(review_path, "maf ABI CLI security review")
+
+    errors = validator.validate_contract(review_path, strict=True)
+
+    assert errors == []
+    assert "auth" in review["impact_categories"]
+    assert "external_api" in review["impact_categories"]
+    assert "secrets" in review["impact_categories"]
+    assert "policy" in review["impact_categories"]
+    assert "receipts" in review["impact_categories"]
+    assert "audit" in review["impact_categories"]
+    assert review["release_blocked"] is False
+    assert review["residual_risk"] == "low"
+    assert review["receipt_ref"] in review["security_receipts"]
+
+
 def test_security_review_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 

@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:maf-abi-cli-contract-witness:1",
+  "title": "MAF ABI CLI Contract Witness",
+  "description": "Foundation Mode witness that records the static MAF CLI/ABI contract boundary while denying subprocess, CLI execution, PyO3, Rust execution, and runtime binding authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "witness_version",
+    "generated_at",
+    "solver_outcome",
+    "abi_scope",
+    "cli_artifacts",
+    "command_contracts",
+    "authority_boundary",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "minLength": 1},
+    "witness_version": {"const": "maf_abi_cli_contract_witness.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "solver_outcome": {"const": "AwaitingEvidence"},
+    "abi_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "foundation_mode",
+        "contract_mode",
+        "cli_scaffold_only",
+        "runtime_binding_claimed",
+        "command_behavior_claimed",
+        "subprocess_effect_boundary_closed",
+        "parity_witness_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref",
+        "required_future_witnesses"
+      ],
+      "properties": {
+        "source_family": {"const": "maf/rust"},
+        "foundation_mode": {"type": "boolean"},
+        "contract_mode": {"const": "scaffold_only_static_cli_contract"},
+        "cli_scaffold_only": {"type": "boolean"},
+        "runtime_binding_claimed": {"type": "boolean"},
+        "command_behavior_claimed": {"type": "boolean"},
+        "subprocess_effect_boundary_closed": {"type": "boolean"},
+        "parity_witness_ref": {"const": "witness://maf/receipt-parity"},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1},
+        "required_future_witnesses": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "cli_artifacts": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/cli_artifact"}
+    },
+    "command_contracts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/command_contract"}
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_contract_read_allowed",
+        "cli_execution_allowed",
+        "subprocess_execution_allowed",
+        "pyo3_binding_allowed",
+        "rust_crate_execution_allowed",
+        "python_imports_rust_allowed",
+        "external_connector_call_allowed",
+        "network_call_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "runtime_dispatch_allowed",
+        "canonical_state_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "static_contract_read_allowed": {"type": "boolean"},
+        "cli_execution_allowed": {"type": "boolean"},
+        "subprocess_execution_allowed": {"type": "boolean"},
+        "pyo3_binding_allowed": {"type": "boolean"},
+        "rust_crate_execution_allowed": {"type": "boolean"},
+        "python_imports_rust_allowed": {"type": "boolean"},
+        "external_connector_call_allowed": {"type": "boolean"},
+        "network_call_allowed": {"type": "boolean"},
+        "secret_access_allowed": {"type": "boolean"},
+        "filesystem_write_allowed": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"type": "boolean"},
+        "canonical_state_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maf_abi_cli_contract_witness_schema",
+        "maf_abi_cli_contract_witness_example",
+        "maf_abi_cli_contract_witness_validator",
+        "maf_abi_cli_contract_witness_tests",
+        "maf_receipt_parity_witness_schema",
+        "maf_receipt_parity_witness_example",
+        "maf_boundary_doc",
+        "maf_receipt_coverage_doc",
+        "rust_workspace_manifest",
+        "rust_cli_manifest",
+        "rust_cli_entry",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema",
+        "worker_failure_receipt_schema"
+      ],
+      "properties": {
+        "maf_abi_cli_contract_witness_schema": {"type": "string", "minLength": 1},
+        "maf_abi_cli_contract_witness_example": {"type": "string", "minLength": 1},
+        "maf_abi_cli_contract_witness_validator": {"type": "string", "minLength": 1},
+        "maf_abi_cli_contract_witness_tests": {"type": "string", "minLength": 1},
+        "maf_receipt_parity_witness_schema": {"type": "string", "minLength": 1},
+        "maf_receipt_parity_witness_example": {"type": "string", "minLength": 1},
+        "maf_boundary_doc": {"type": "string", "minLength": 1},
+        "maf_receipt_coverage_doc": {"type": "string", "minLength": 1},
+        "rust_workspace_manifest": {"type": "string", "minLength": 1},
+        "rust_cli_manifest": {"type": "string", "minLength": 1},
+        "rust_cli_entry": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1},
+        "worker_failure_receipt_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cli_artifact_count",
+        "command_contract_count",
+        "authority_denial_count",
+        "awaiting_gap_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "cli_artifact_count": {"type": "integer", "minimum": 0},
+        "command_contract_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "awaiting_gap_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"}
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cli_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_ref",
+        "artifact_digest_sha256",
+        "artifact_role",
+        "execution_authority_denied"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "artifact_digest_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_role": {"type": "string", "enum": ["workspace_manifest", "cli_manifest", "cli_entry", "parity_witness", "boundary_doc"]},
+        "execution_authority_denied": {"type": "boolean"}
+      }
+    },
+    "command_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "command_name",
+        "availability_status",
+        "input_contract_ref",
+        "output_contract_ref",
+        "execution_allowed",
+        "gap_refs"
+      ],
+      "properties": {
+        "command_id": {"type": "string", "minLength": 1},
+        "command_name": {"type": "string", "minLength": 1},
+        "availability_status": {"const": "AwaitingEvidence"},
+        "input_contract_ref": {"type": "string", "minLength": 1},
+        "output_contract_ref": {"type": "string", "minLength": 1},
+        "execution_allowed": {"type": "boolean"},
+        "gap_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    }
+  }
+}

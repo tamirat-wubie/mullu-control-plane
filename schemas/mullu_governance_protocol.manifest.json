@@ -713,6 +713,12 @@
       "surface": "maf"
     },
     {
+      "schema_id": "maf-abi-cli-contract-witness",
+      "path": "schemas/maf_abi_cli_contract_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-abi-cli-contract-witness:1",
+      "surface": "maf"
+    },
+    {
       "schema_id": "world-substrate-replay-witness",
       "path": "schemas/world_substrate_replay_witness.schema.json",
       "urn": "urn:mullusi:schema:world-substrate-replay-witness:1",
