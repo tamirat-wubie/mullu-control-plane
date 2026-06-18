@@ -81,6 +81,11 @@ class TestApprovalInRouter:
         callback_resp = router.handle_approval_callback(request_id, approved=True)
         assert callback_resp is not None
         assert "approved" in callback_resp.body
+        assert callback_resp.metadata["approval_strength_decision"] == "allow"
+        assert callback_resp.metadata["approval_strength"] == "operator_bound"
+        assert callback_resp.metadata["approval_strength_policy"] == (
+            "channel_approval_strength_policy.foundation"
+        )
         assert router.pending_approvals == 0
 
     def test_approval_callback_deny(self):
@@ -94,6 +99,8 @@ class TestApprovalInRouter:
         request_id = resp.metadata["request_id"]
         callback_resp = router.handle_approval_callback(request_id, approved=False)
         assert "denied" in callback_resp.body
+        assert callback_resp.metadata["approval_strength_decision"] == "allow"
+        assert callback_resp.metadata["approval_strength"] == "operator_bound"
 
     def test_approval_callback_unknown_request(self):
         router = GatewayRouter(platform=StubPlatform())

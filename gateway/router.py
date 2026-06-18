@@ -1525,6 +1525,24 @@ class GatewayRouter:
         result = self._approval.resolve(request_id, approved=approved, resolved_by=resolved_by)
         if result is None:
             return None
+        trusted_resolver = TenantMapping(
+            channel="operator_console",
+            sender_id=resolved_by,
+            tenant_id=result.tenant_id,
+            identity_id=resolved_by,
+            approval_authority=True,
+            metadata={"channel_binding_present": True, "operator_session_present": True},
+        )
+        strength = self._evaluate_approval_strength(
+            result,
+            request_id=request_id,
+            resolver=trusted_resolver,
+            approval_metadata={
+                "channel_binding_present": True,
+                "operator_session_present": True,
+            },
+        )
+        strength_metadata = self._approval_strength_metadata(strength)
         if result.command_id:
             chain = self._authority_obligation_mesh.approval_chain_for(result.command_id)
             chain = self._authority_obligation_mesh.record_approval(
@@ -1539,6 +1557,7 @@ class GatewayRouter:
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
+                detail=strength_metadata,
             )
             if result.status == ApprovalStatus.APPROVED:
                 command = self._commands.get(result.command_id)
@@ -1553,18 +1572,24 @@ class GatewayRouter:
                         and result.resolved_by != command.actor_id
                     )
                     if not single_non_self_resolver:
-                        return self._approval_chain_pending_response(
-                            request_id,
-                            result,
-                            chain,
-                            recipient_id=result.identity_id,
+                        return self._with_approval_strength_metadata(
+                            self._approval_chain_pending_response(
+                                request_id,
+                                result,
+                                chain,
+                                recipient_id=result.identity_id,
+                            ),
+                            strength_metadata,
                         )
                 if command is not None:
                     if self._defer_approved_execution:
-                        return self._approval_queued_response(
-                            request_id,
-                            result,
-                            recipient_id=result.identity_id,
+                        return self._with_approval_strength_metadata(
+                            self._approval_queued_response(
+                                request_id,
+                                result,
+                                recipient_id=result.identity_id,
+                            ),
+                            strength_metadata,
                         )
                     response = self._execute_command(command, recipient_id=result.identity_id)
                     return GatewayResponse(
@@ -1579,9 +1604,13 @@ class GatewayRouter:
                             "status": "approved",
                             "request_id": request_id,
                             "command_id": result.command_id,
+                            **strength_metadata,
                         },
                     )
-        return self._approval_response(request_id, result)
+        return self._with_approval_strength_metadata(
+            self._approval_response(request_id, result),
+            strength_metadata,
+        )
 
     def handle_external_approval_callback(
         self,
