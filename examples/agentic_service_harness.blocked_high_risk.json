@@ -69,13 +69,22 @@
   "approval_gates": [
     {
       "action_class": "blocked_high_risk",
+      "approval_collected": false,
       "approval_required": true,
+      "approval_request_id": "approval-request.highrisk",
+      "approval_request_ref": "approval-request://harness/gate.highrisk",
       "approver_role_required": "admin",
+      "authority_granted": false,
+      "decision_required": "operator_response_required",
       "evidence_refs": [
         "policy://blocked-high-risk-default"
       ],
       "gate_id": "gate.highrisk",
+      "gateway_approval_ref": "gateway-approval://operator/high-risk-blocked",
       "permits_external_effect": false,
+      "requested_evidence_ref": "policy://blocked-high-risk-default",
+      "response_record_collected": false,
+      "response_record_required": true,
       "risk_level": "critical",
       "run_id": "run.highrisk",
       "self_approval_allowed": false,

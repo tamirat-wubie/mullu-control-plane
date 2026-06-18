@@ -109,6 +109,7 @@ VALID_LIFECYCLE_STATES = {
     "cancelled",
 }
 TERMINAL_LIFECYCLE_STATES = {"completed", "blocked", "cancelled"}
+VALID_APPROVAL_DECISIONS = {"none", "operator_response_required"}
 ALLOWED_SECRET_KEYS = {
     "can_mutate_secrets",
     "contains_secret_values",
@@ -213,6 +214,7 @@ def _validate_read_model_semantics(
     _validate_reference_integrity(example, errors, label)
     _validate_repository_connections(example, errors, label)
     _validate_agent_runs(example, errors, label)
+    _validate_approval_requests(example, errors, label)
     _validate_workspace_allocations(example, errors, label)
     _validate_durable_entity_bindings(example, errors, label)
     _validate_complete_high_risk_actions(example, errors, label)
@@ -406,6 +408,87 @@ def _validate_agent_runs(
             errors.append(f"{run_label} non-terminal lifecycle state must set terminal_state false")
 
 
+def _validate_approval_requests(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    approvals = example.get("approvals")
+    if not isinstance(approvals, list):
+        errors.append(f"{label}: approvals must be a list")
+        return
+    if not approvals:
+        return
+
+    runs_by_id = {
+        str(run.get("run_id")): run
+        for run in _objects(example.get("runs"))
+    }
+    observed_request_ids: list[str] = []
+    observed_request_refs: list[str] = []
+    for approval in _objects(approvals):
+        approval_label = f"{label}: approval {approval.get('gate_id')}"
+        approval_required = approval.get("approval_required")
+        decision_required = approval.get("decision_required")
+        response_record_required = approval.get("response_record_required")
+        requested_evidence_ref = approval.get("requested_evidence_ref")
+        evidence_refs = approval.get("evidence_refs")
+        run = runs_by_id.get(str(approval.get("run_id")))
+
+        for ref_name in (
+            "approval_request_id",
+            "approval_request_ref",
+            "gateway_approval_ref",
+            "requested_evidence_ref",
+        ):
+            if not isinstance(approval.get(ref_name), str) or not approval.get(ref_name):
+                errors.append(f"{approval_label} {ref_name} must be a non-empty ref")
+        if isinstance(approval.get("approval_request_id"), str):
+            observed_request_ids.append(approval["approval_request_id"])
+        if isinstance(approval.get("approval_request_ref"), str):
+            observed_request_refs.append(approval["approval_request_ref"])
+        if decision_required not in VALID_APPROVAL_DECISIONS:
+            errors.append(f"{approval_label} decision_required is invalid")
+        if approval.get("response_record_collected") is not False:
+            errors.append(f"{approval_label} response_record_collected must remain false")
+        if approval.get("approval_collected") is not False:
+            errors.append(f"{approval_label} approval_collected must remain false")
+        if approval.get("authority_granted") is not False:
+            errors.append(f"{approval_label} authority_granted must remain false")
+        if approval.get("self_approval_allowed") is not False:
+            errors.append(f"{approval_label} self_approval_allowed must remain false")
+        if approval.get("permits_external_effect") is not False:
+            errors.append(f"{approval_label} permits_external_effect must remain false")
+        if approval.get("read_only") is not True:
+            errors.append(f"{approval_label} read_only must be true")
+        if not isinstance(evidence_refs, list) or requested_evidence_ref not in evidence_refs:
+            errors.append(f"{approval_label} requested_evidence_ref must appear in evidence_refs")
+
+        if approval_required is True:
+            if decision_required != "operator_response_required":
+                errors.append(f"{approval_label} approval_required must require operator response")
+            if response_record_required is not True:
+                errors.append(f"{approval_label} approval_required must require a response record")
+            if approval.get("status") not in {"pending", "denied", "blocked"}:
+                errors.append(f"{approval_label} approval_required status must remain pending, denied, or blocked")
+            if run and run.get("status") == "awaiting_approval" and run.get("lifecycle_state") != "awaiting_approval":
+                errors.append(f"{approval_label} awaiting run must keep awaiting_approval lifecycle")
+        elif approval_required is False:
+            if decision_required != "none":
+                errors.append(f"{approval_label} non-required approval must set decision_required none")
+            if response_record_required is not False:
+                errors.append(f"{approval_label} non-required approval must not require a response record")
+            if approval.get("status") != "not_required":
+                errors.append(f"{approval_label} non-required approval status must be not_required")
+        else:
+            errors.append(f"{approval_label} approval_required must be boolean")
+
+    if len(observed_request_ids) != len(set(observed_request_ids)):
+        errors.append(f"{label}: approvals require unique approval_request_id values")
+    if len(observed_request_refs) != len(set(observed_request_refs)):
+        errors.append(f"{label}: approvals require unique approval_request_ref values")
+
+
 def _validate_workspace_allocations(
     example: dict[str, Any],
     errors: list[str],
@@ -489,6 +572,17 @@ def _validate_durable_entity_bindings(
             errors.append(f"{item_label} mutation_route must remain false")
         if item.get("secret_values_serialized") is not False:
             errors.append(f"{item_label} secret_values_serialized must remain false")
+        if entity_kind == "ApprovalRequest":
+            if item.get("primary_key") != "approval_request_id":
+                errors.append(f"{item_label} primary_key must be approval_request_id")
+            for required_owner_ref in (
+                "gate_id",
+                "approval_request_ref",
+                "gateway_approval_ref",
+                "requested_evidence_ref",
+            ):
+                if required_owner_ref not in item.get("owner_ref_fields", ()):
+                    errors.append(f"{item_label} owner_ref_fields missing {required_owner_ref}")
         owner_ref_fields = item.get("owner_ref_fields")
         if not isinstance(owner_ref_fields, list) or not owner_ref_fields:
             errors.append(f"{item_label} owner_ref_fields must be a non-empty list")

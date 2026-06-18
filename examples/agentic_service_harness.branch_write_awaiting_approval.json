@@ -34,8 +34,8 @@
       "selected_agent_ref": "agent://codex-style-symbolic-operator",
       "status": "awaiting_approval",
       "terminal_state": false,
-      "task_id": "task.branchwrite"
-      ,"transition_receipt_refs": [
+      "task_id": "task.branchwrite",
+      "transition_receipt_refs": [
         "receipt://agent-run/run.branchwrite/lifecycle/awaiting-approval"
       ]
     }
@@ -65,13 +65,22 @@
   "approval_gates": [
     {
       "action_class": "write_to_branch",
+      "approval_collected": false,
       "approval_required": true,
+      "approval_request_id": "approval-request.branchwrite",
+      "approval_request_ref": "approval-request://harness/gate.branchwrite",
       "approver_role_required": "approver",
+      "authority_granted": false,
+      "decision_required": "operator_response_required",
       "evidence_refs": [
         "approval://branchwrite-required"
       ],
       "gate_id": "gate.branchwrite",
+      "gateway_approval_ref": "gateway-approval://operator/branch-write",
       "permits_external_effect": false,
+      "requested_evidence_ref": "approval://branchwrite-required",
+      "response_record_collected": false,
+      "response_record_required": true,
       "risk_level": "medium",
       "run_id": "run.branchwrite",
       "self_approval_allowed": false,

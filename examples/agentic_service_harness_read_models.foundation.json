@@ -111,12 +111,21 @@
   "approvals": [
     {
       "gate_id": "approval-not-required-read-only",
+      "approval_request_id": "approval-request.not-required-read-only",
+      "approval_request_ref": "approval-request://harness/approval-not-required-read-only",
+      "gateway_approval_ref": "gateway-approval://none/read-only-not-required",
       "run_id": "run-read-model-foundation",
       "action_class": "read_only",
       "risk_level": "low",
       "status": "not_required",
       "approver_role_required": "viewer",
       "approval_required": false,
+      "decision_required": "none",
+      "requested_evidence_ref": "policy://harness/read-only-action",
+      "response_record_required": false,
+      "response_record_collected": false,
+      "approval_collected": false,
+      "authority_granted": false,
       "self_approval_allowed": false,
       "permits_external_effect": false,
       "evidence_refs": [
@@ -369,10 +378,14 @@
         "entity_kind": "ApprovalRequest",
         "record_kind": "approval",
         "collection_ref": "read-model://approvals",
-        "primary_key": "gate_id",
+        "primary_key": "approval_request_id",
         "tenant_key": "run_id",
         "owner_ref_fields": [
+          "gate_id",
           "run_id",
+          "approval_request_ref",
+          "gateway_approval_ref",
+          "requested_evidence_ref",
           "evidence_refs"
         ],
         "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/approval_gate",
