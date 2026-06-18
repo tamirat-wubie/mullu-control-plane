@@ -618,7 +618,10 @@ class ClosureDriftRemediationBinding(ContractRecord):
         object.__setattr__(
             self,
             "superseded_evidence_refs",
-            _freeze_text_array(self.superseded_evidence_refs, "superseded_evidence_refs"),
+            _freeze_text_array(
+                require_non_empty_tuple(self.superseded_evidence_refs, "superseded_evidence_refs"),
+                "superseded_evidence_refs",
+            ),
         )
         object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
