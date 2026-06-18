@@ -6,6 +6,7 @@ Test contract: tests/test_assistant_kernel.py.
 Invariants:
   - Every assistant profile has explicit owner and tenant scope.
   - Skills describe procedure; capabilities grant executable authority.
+  - Profile skill identifiers stay inside the profile-kind namespace.
   - Allowed and forbidden capabilities are disjoint after protected denials.
   - Evidence requirements and escalation paths are never implicit.
 """
@@ -92,6 +93,7 @@ class AssistantProfile:
             raise RuntimeCoreInvariantError("tenant_scope is not admitted")
         object.__setattr__(self, "role", ensure_non_empty_text("role", self.role))
         skill_ids = _normalize_text_tuple(self.skill_ids, "skill_ids")
+        _validate_skill_namespace(self.kind, skill_ids)
         allowed = _normalize_text_tuple(self.allowed_capabilities, "allowed_capabilities")
         forbidden = _apply_protected_forbidden_capability_floor(self.forbidden_capabilities)
         if set(allowed).intersection(forbidden):
@@ -401,6 +403,12 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str
     if not normalized:
         raise RuntimeCoreInvariantError(f"{field_name} must contain at least one item")
     return normalized
+
+
+def _validate_skill_namespace(kind: str, skill_ids: tuple[str, ...]) -> None:
+    namespace = f"skill.{kind}."
+    if any(not skill_id.startswith(namespace) for skill_id in skill_ids):
+        raise RuntimeCoreInvariantError("skill_ids must stay within assistant kind namespace")
 
 
 def _apply_protected_forbidden_capability_floor(capabilities: tuple[str, ...]) -> tuple[str, ...]:
