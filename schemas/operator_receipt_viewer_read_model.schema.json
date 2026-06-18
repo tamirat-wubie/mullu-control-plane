@@ -137,6 +137,7 @@
       "enum": [
         "interpretation_receipt",
         "search_decision_receipt",
+        "search_receipt",
         "plan_step_receipt",
         "approval_receipt",
         "denial_receipt",

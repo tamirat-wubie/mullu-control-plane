@@ -130,6 +130,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     }
     repository_governance_phase = [
         "protocol_manifest",
+        "simple_assistant_ui_boundary",
         "logic_governance_application",
         "life_meaning_governance",
         "phi_gps_v3_platform_spec",
@@ -530,6 +531,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_funding_team_boundary", "foundation_funding_team_obligation_rehearsal_boundary")
     assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
+    assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
     assert_ordered("code_change_physics_packet", "search_decision_receipt")
     assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 

@@ -1925,6 +1925,12 @@
       "surface": "assistant"
     },
     {
+      "schema_id": "simple-assistant-ui-boundary",
+      "path": "schemas/simple_assistant_ui_boundary.schema.json",
+      "urn": "urn:mullusi:schema:simple-assistant-ui-boundary:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "personal-assistant-draft-projection",
       "path": "schemas/personal_assistant_draft_projection.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-draft-projection:1",
