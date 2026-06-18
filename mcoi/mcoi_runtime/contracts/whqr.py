@@ -10,13 +10,16 @@ from dataclasses import dataclass, field, fields, is_dataclass
 from enum import StrEnum
 from math import isfinite
 from types import MappingProxyType
-from typing import Any, Mapping, Sequence, TypeAlias
+from typing import Any, Mapping, Sequence, TypeAlias, TypeVar
 import hashlib
 import json
 
 
 WHQR_VERSION = "0.1.0"
-SEMANTICS_HASH = "sha256:whqr-v0.1.0-split-gates-side-effect-free"
+SEMANTICS_HASH = (
+    "sha256:a11656674c84e7dde0a0351af3805e2362429c570a97f256ff6ffded1698dc88"
+)
+_EnumT = TypeVar("_EnumT", bound=StrEnum)
 
 
 class WHRole(StrEnum):
@@ -123,9 +126,17 @@ ADVERB_THRESHOLDS: Mapping[Adverb, tuple[float, float]] = {
 
 
 def _require_text(value: str, name: str) -> str:
-    if not isinstance(value, str) or value == "":
-        raise ValueError(f"{name} must be a non-empty string")
+    if not isinstance(value, str) or value == "" or value.strip() == "":
+        raise ValueError(f"{name} must be a non-empty string and must not be blank")
     return value
+
+
+def _is_sha256_digest_ref(value: str) -> bool:
+    prefix = "sha256:"
+    if not value.startswith(prefix):
+        return False
+    digest = value.removeprefix(prefix)
+    return len(digest) == 64 and all(char in "0123456789abcdef" for char in digest)
 
 
 def _freeze_metadata(metadata: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -156,6 +167,163 @@ def _freeze_metadata_value(value: Any) -> Any:
 def _require_whqr_expr(value: Any, name: str) -> None:
     if not isinstance(value, (WHQRNode, LogicalExpr, ConnectorExpr)):
         raise ValueError(f"{name} must be a WHQR expression")
+
+
+def _require_optional_text(value: Any, name: str) -> None:
+    if value is not None:
+        _require_text(value, name)
+
+
+def _require_metadata_tree(metadata: Any, name: str) -> None:
+    if not isinstance(metadata, Mapping):
+        raise ValueError(f"{name} metadata must be a mapping")
+    for key, value in metadata.items():
+        _require_text(key, "metadata key")
+        _require_metadata_value_tree(value, name)
+
+
+def _require_metadata_value_tree(value: Any, name: str) -> None:
+    if isinstance(value, Mapping):
+        _require_metadata_tree(value, name)
+        return
+    if isinstance(value, tuple):
+        for item in value:
+            _require_metadata_value_tree(item, name)
+        return
+    if isinstance(value, list):
+        raise ValueError(f"{name} metadata value must be immutable")
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not isfinite(value):
+            raise ValueError(f"{name} metadata value must be a finite number")
+        return
+    raise ValueError(f"{name} metadata value must be canonical JSON-compatible")
+
+
+def _require_whqr_expr_tree(value: Any, name: str) -> None:
+    _require_whqr_expr(value, name)
+    if isinstance(value, WHQRNode):
+        if not isinstance(value.role, WHRole):
+            raise ValueError(f"{name}.role must be a WHRole value")
+        _require_text(value.target, f"{name}.target")
+        _require_optional_text(value.node_id, f"{name}.node_id")
+        _require_optional_text(value.scope, f"{name}.scope")
+        if value.modality is not None and not isinstance(value.modality, Adverb):
+            raise ValueError(f"{name}.modality must be an Adverb value")
+        _require_optional_text(value.expected_type, f"{name}.expected_type")
+        if value.quantifier is not None and not isinstance(value.quantifier, Quantifier):
+            raise ValueError(f"{name}.quantifier must be a Quantifier value")
+        _require_optional_text(value.entity_ref, f"{name}.entity_ref")
+        _require_optional_text(value.evidence_ref, f"{name}.evidence_ref")
+        _require_metadata_tree(value.metadata, name)
+        return
+    if isinstance(value, LogicalExpr):
+        if not isinstance(value.op, LogicalOp):
+            raise ValueError(f"{name}.op must be a LogicalOp value")
+        if not isinstance(value.args, tuple):
+            raise ValueError(f"{name}.args must be an immutable tuple")
+        if not value.args:
+            raise ValueError(f"{name}.args must contain at least one WHQR expression")
+        if value.op == LogicalOp.NOT and len(value.args) != 1:
+            raise ValueError(f"{name}.not requires exactly one WHQR expression")
+        if value.op != LogicalOp.NOT and len(value.args) < 2:
+            raise ValueError(f"{name}.logical operators except not require at least two WHQR expressions")
+        for index, arg in enumerate(value.args):
+            _require_whqr_expr_tree(arg, f"{name}.args[{index}]")
+        return
+    if not isinstance(value.connector, Connector):
+        raise ValueError(f"{name}.connector must be a Connector value")
+    _require_whqr_expr_tree(value.left, f"{name}.left")
+    _require_whqr_expr_tree(value.right, f"{name}.right")
+
+
+def _require_mapping_payload(value: Any, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a mapping")
+    return value
+
+
+def _require_allowed_keys(value: Mapping[str, Any], name: str, allowed: set[str]) -> None:
+    unknown = sorted(str(key) for key in value.keys() if key not in allowed)
+    if unknown:
+        raise ValueError(f"{name} contains unknown fields: {','.join(unknown)}")
+
+
+def _enum_from_payload(enum_type: type[_EnumT], value: Any, name: str) -> _EnumT:
+    text = _require_text(value, name)
+    try:
+        return enum_type(text)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a known {enum_type.__name__} value") from exc
+
+
+def _optional_enum_from_payload(enum_type: type[_EnumT], value: Any, name: str) -> _EnumT | None:
+    if value is None:
+        return None
+    return _enum_from_payload(enum_type, value, name)
+
+
+def _optional_text_from_payload(value: Any, name: str) -> str | None:
+    if value is None:
+        return None
+    return _require_text(value, name)
+
+
+def _metadata_from_payload(value: Any | None, name: str) -> Mapping[str, Any]:
+    if value is None:
+        return {}
+    return _require_mapping_payload(value, name)
+
+
+def _expr_from_payload(value: Any, name: str) -> WHQRExpr:
+    payload = _require_mapping_payload(value, name)
+    if "role" in payload:
+        _require_allowed_keys(
+            payload,
+            name,
+            {
+                "role",
+                "target",
+                "node_id",
+                "scope",
+                "modality",
+                "expected_type",
+                "quantifier",
+                "entity_ref",
+                "evidence_ref",
+                "metadata",
+            },
+        )
+        return WHQRNode(
+            role=_enum_from_payload(WHRole, payload.get("role"), f"{name}.role"),
+            target=_require_text(payload.get("target"), f"{name}.target"),
+            node_id=_optional_text_from_payload(payload.get("node_id"), f"{name}.node_id"),
+            scope=_optional_text_from_payload(payload.get("scope"), f"{name}.scope"),
+            modality=_optional_enum_from_payload(Adverb, payload.get("modality"), f"{name}.modality"),
+            expected_type=_optional_text_from_payload(payload.get("expected_type"), f"{name}.expected_type"),
+            quantifier=_optional_enum_from_payload(Quantifier, payload.get("quantifier"), f"{name}.quantifier"),
+            entity_ref=_optional_text_from_payload(payload.get("entity_ref"), f"{name}.entity_ref"),
+            evidence_ref=_optional_text_from_payload(payload.get("evidence_ref"), f"{name}.evidence_ref"),
+            metadata=_metadata_from_payload(payload.get("metadata"), f"{name}.metadata"),
+        )
+    if "op" in payload:
+        _require_allowed_keys(payload, name, {"op", "args"})
+        args_payload = payload.get("args")
+        if not isinstance(args_payload, list):
+            raise ValueError(f"{name}.args must be a list")
+        return LogicalExpr(
+            op=_enum_from_payload(LogicalOp, payload.get("op"), f"{name}.op"),
+            args=tuple(_expr_from_payload(arg, f"{name}.args[{index}]") for index, arg in enumerate(args_payload)),
+        )
+    if "connector" in payload:
+        _require_allowed_keys(payload, name, {"connector", "left", "right"})
+        return ConnectorExpr(
+            connector=_enum_from_payload(Connector, payload.get("connector"), f"{name}.connector"),
+            left=_expr_from_payload(payload.get("left"), f"{name}.left"),
+            right=_expr_from_payload(payload.get("right"), f"{name}.right"),
+        )
+    raise ValueError(f"{name} must declare a WHQR expression kind")
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,23 +438,58 @@ class WHQRDocument:
         source_ref: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> None:
+        if root is not None and expr is not None:
+            raise ValueError("root and expr cannot both be provided")
         value = root if root is not None else expr
         if not isinstance(value, (WHQRNode, LogicalExpr, ConnectorExpr)):
             raise ValueError("root must be a WHQR expression")
         object.__setattr__(self, "root", value)
         object.__setattr__(self, "whqr_version", _require_text(whqr_version, "whqr_version"))
         object.__setattr__(self, "semantics_hash", _require_text(semantics_hash, "semantics_hash"))
-        if not semantics_hash.startswith("sha256:"):
-            raise ValueError("semantics_hash must start with sha256:")
+        if not _is_sha256_digest_ref(semantics_hash):
+            raise ValueError("semantics_hash must be sha256:<64 lowercase hex>")
+        if (whqr_version, semantics_hash) != (WHQR_VERSION, SEMANTICS_HASH):
+            raise ValueError("whqr_version and semantics_hash must match the canonical WHQR semantics")
         if source_ref is not None:
             object.__setattr__(self, "source_ref", _require_text(source_ref, "source_ref"))
         else:
             object.__setattr__(self, "source_ref", None)
-        object.__setattr__(self, "metadata", _freeze_metadata(metadata or {}))
+        object.__setattr__(self, "metadata", _freeze_metadata({} if metadata is None else metadata))
 
     @property
     def expr(self) -> WHQRExpr:
         return self.root
+
+    @classmethod
+    def from_canonical_json(
+        cls,
+        payload: str,
+        *,
+        expected_canonical_hash: str | None = None,
+    ) -> WHQRDocument:
+        text = _require_text(payload, "payload")
+        try:
+            document_payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError("WHQR canonical JSON payload must be valid JSON") from exc
+        document_map = _require_mapping_payload(document_payload, "payload")
+        _require_allowed_keys(
+            document_map,
+            "payload",
+            {"root", "whqr_version", "semantics_hash", "source_ref", "metadata"},
+        )
+        document = cls(
+            root=_expr_from_payload(document_map.get("root"), "payload.root"),
+            whqr_version=_require_text(document_map.get("whqr_version"), "payload.whqr_version"),
+            semantics_hash=_require_text(document_map.get("semantics_hash"), "payload.semantics_hash"),
+            source_ref=_optional_text_from_payload(document_map.get("source_ref"), "payload.source_ref"),
+            metadata=_metadata_from_payload(document_map.get("metadata"), "payload.metadata"),
+        )
+        canonical_payload = document.canonical_json()
+        if canonical_payload != text:
+            raise ValueError("WHQR replay payload must match deterministic canonical JSON")
+        document.verify_semantics(expected_canonical_hash=expected_canonical_hash)
+        return document
 
     def canonical_json(self) -> str:
         try:
@@ -301,6 +504,21 @@ class WHQRDocument:
 
     def canonical_hash(self) -> str:
         return "sha256:" + hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
+
+    def verify_semantics(self, *, expected_canonical_hash: str | None = None) -> str:
+        if self.whqr_version != WHQR_VERSION:
+            raise ValueError("WHQR replay semantic version mismatch")
+        if self.semantics_hash != SEMANTICS_HASH:
+            raise ValueError("WHQR replay semantics hash mismatch")
+        _require_whqr_expr_tree(self.root, "root")
+        canonical_hash = self.canonical_hash()
+        if expected_canonical_hash is not None:
+            expected = _require_text(expected_canonical_hash, "expected_canonical_hash")
+            if not _is_sha256_digest_ref(expected):
+                raise ValueError("expected_canonical_hash must be sha256:<64 lowercase hex>")
+            if canonical_hash != expected:
+                raise ValueError("WHQR replay canonical hash mismatch")
+        return canonical_hash
 
 
 def _canonical(value: Any) -> Any:

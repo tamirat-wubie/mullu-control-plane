@@ -1,0 +1,75 @@
+{
+  "requirement_id": "sdlc_req_runtime_receipt_emitter_dry_run_20260614",
+  "request_id": "platform_runtime_receipt_emitter_dry_run_20260614",
+  "problem_statement": "The selected read-only worker path now has a runtime receipt handoff, but the next evidence item named by that handoff lacks a schema-backed dry-run receipt that proves the future emitter envelope and keeps dispatch blocked.",
+  "success_criteria": [
+    "ReadOnlyWorkerRuntimeReceiptEmitterDryRun validates against a public JSON schema and Foundation Mode example",
+    "the dry-run binds the handoff, binding, lease preflight, rehearsal receipt, and console projection evidence",
+    "runtime runner registration remains denied",
+    "dispatch endpoint registration remains denied",
+    "runtime receipt emitter registration remains denied",
+    "runtime receipt schema binding remains denied",
+    "runtime receipt emission remains simulated only",
+    "future dispatch admission remains blocked until runner registration, runtime emitter registration, active temporal lease, UAO admission, and Phi_gov authorization exist",
+    "focused tests reject authority drift, source-ref drift, result drift, admission drift, receipt-ref drift, count drift, and terminal-closure drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no worker runtime registration",
+    "no dispatch endpoint",
+    "no runtime receipt emitter registration",
+    "no runtime receipt schema binding",
+    "no persisted runtime receipt store",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "runtime runner registration remains denied",
+    "runtime receipt emitter registration remains denied",
+    "runtime receipt schema binding remains denied",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "future runtime admission must still require temporal lease evidence, UAO, Phi_gov, recovery evidence, and verification",
+    "WorkerFailureReceipt remains mandatory for failed or partial dispatch evidence",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_receipt_emitter_dry_run_20260614.json",
+    "examples/sdlc/design_runtime_receipt_emitter_dry_run_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_receipt_emitter_dry_run.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emitter_dry_run.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-runtime-receipt-emitter-dry-run-20260614.json"
+  ],
+  "evidence_required": [
+    "runtime receipt emitter dry-run validator receipt",
+    "focused pytest receipt for dry-run behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/runtime-receipt-emitter-dry-run/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/runtime-receipt-emitter-dry-run/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/runtime-receipt-emitter-dry-run/20260614"
+}

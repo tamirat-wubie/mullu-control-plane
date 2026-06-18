@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:chaos-rehearsal-execution-report:1",
+  "title": "Chaos Rehearsal Execution Report",
+  "description": "Foundation Mode report contract for plan-only or deterministic dry-run chaos rehearsal evidence without runtime disruption, staging or production targeting, external effects, raw log retention, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "report_version",
+    "generated_at",
+    "rehearsal_scope",
+    "execution_mode",
+    "scenario_plan",
+    "execution_results",
+    "authority_boundary",
+    "safety_guards",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "report_version": {"const": "chaos_rehearsal_execution_report.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "rehearsal_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_family",
+        "borrowed_concept",
+        "foundation_mode",
+        "tenant_scope",
+        "uao_ref",
+        "life_meaning_judgment_ref"
+      ],
+      "properties": {
+        "source_family": {"const": "external/nested-mind-platform"},
+        "borrowed_concept": {"const": "chaos-rehearsal-dry-run"},
+        "foundation_mode": {"type": "boolean"},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "execution_mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "dry_run_only",
+        "plan_only_allowed",
+        "production_target_allowed",
+        "staging_target_allowed",
+        "destructive_injection_allowed",
+        "runtime_target_ref"
+      ],
+      "properties": {
+        "mode": {"type": "string", "enum": ["plan_only", "deterministic_dry_run"]},
+        "dry_run_only": {"type": "boolean"},
+        "plan_only_allowed": {"type": "boolean"},
+        "production_target_allowed": {"type": "boolean"},
+        "staging_target_allowed": {"type": "boolean"},
+        "destructive_injection_allowed": {"type": "boolean"},
+        "runtime_target_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "scenario_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_hash_ref",
+        "scenario_refs",
+        "invariant_refs",
+        "injection_point_refs",
+        "expected_containment_refs",
+        "expected_signal_refs",
+        "required_evidence_refs",
+        "rollback_guard_refs"
+      ],
+      "properties": {
+        "plan_hash_ref": {"type": "string", "minLength": 1},
+        "scenario_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "invariant_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "injection_point_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "expected_containment_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "expected_signal_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "required_evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "rollback_guard_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "execution_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_state",
+        "scenarios_declared_count",
+        "scenarios_executed_count",
+        "scenarios_passed_count",
+        "unexpected_accept_count",
+        "unexpected_reject_count",
+        "containment_verified",
+        "result_bank_hash_ref"
+      ],
+      "properties": {
+        "result_state": {
+          "type": "string",
+          "enum": ["REHEARSAL_RECORDED", "REHEARSAL_BLOCKED", "REHEARSAL_INVALIDATED"]
+        },
+        "scenarios_declared_count": {"type": "integer", "minimum": 1},
+        "scenarios_executed_count": {"type": "integer", "minimum": 0},
+        "scenarios_passed_count": {"type": "integer", "minimum": 0},
+        "unexpected_accept_count": {"type": "integer", "minimum": 0},
+        "unexpected_reject_count": {"type": "integer", "minimum": 0},
+        "containment_verified": {"type": "boolean"},
+        "result_bank_hash_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_chaos_execution_performed",
+        "production_target_touched",
+        "staging_cluster_touched",
+        "runtime_disruption_performed",
+        "network_fault_injected",
+        "service_restart_performed",
+        "data_corruption_performed",
+        "event_chain_mutation_performed",
+        "external_connector_called",
+        "secret_access_performed",
+        "filesystem_write_performed",
+        "rollback_executed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_chaos_execution_performed": {"type": "boolean"},
+        "production_target_touched": {"type": "boolean"},
+        "staging_cluster_touched": {"type": "boolean"},
+        "runtime_disruption_performed": {"type": "boolean"},
+        "network_fault_injected": {"type": "boolean"},
+        "service_restart_performed": {"type": "boolean"},
+        "data_corruption_performed": {"type": "boolean"},
+        "event_chain_mutation_performed": {"type": "boolean"},
+        "external_connector_called": {"type": "boolean"},
+        "secret_access_performed": {"type": "boolean"},
+        "filesystem_write_performed": {"type": "boolean"},
+        "rollback_executed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "safety_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_hashes_required",
+        "required_evidence_declared",
+        "rollback_obligations_declared",
+        "containment_expected",
+        "raw_runtime_logs_retained",
+        "raw_secret_material_retained",
+        "operator_review_required",
+        "incident_handoff_required_if_live"
+      ],
+      "properties": {
+        "scenario_hashes_required": {"type": "boolean"},
+        "required_evidence_declared": {"type": "boolean"},
+        "rollback_obligations_declared": {"type": "boolean"},
+        "containment_expected": {"type": "boolean"},
+        "raw_runtime_logs_retained": {"type": "boolean"},
+        "raw_secret_material_retained": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "incident_handoff_required_if_live": {"type": "boolean"}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chaos_rehearsal_execution_report_schema",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema",
+        "effect_assurance_schema",
+        "simulation_receipt_schema",
+        "worker_failure_receipt_schema",
+        "sdlc_recovery_handoff_receipt_schema"
+      ],
+      "properties": {
+        "chaos_rehearsal_execution_report_schema": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1},
+        "effect_assurance_schema": {"type": "string", "minLength": 1},
+        "simulation_receipt_schema": {"type": "string", "minLength": 1},
+        "worker_failure_receipt_schema": {"type": "string", "minLength": 1},
+        "sdlc_recovery_handoff_receipt_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_only",
+        "runtime_disruption_denied",
+        "scenario_ref_count",
+        "invariant_ref_count",
+        "injection_point_ref_count",
+        "required_evidence_ref_count",
+        "rollback_guard_ref_count",
+        "authority_denial_count",
+        "safety_guard_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "dry_run_only": {"type": "boolean"},
+        "runtime_disruption_denied": {"type": "boolean"},
+        "scenario_ref_count": {"type": "integer", "minimum": 0},
+        "invariant_ref_count": {"type": "integer", "minimum": 0},
+        "injection_point_ref_count": {"type": "integer", "minimum": 0},
+        "required_evidence_ref_count": {"type": "integer", "minimum": 0},
+        "rollback_guard_ref_count": {"type": "integer", "minimum": 0},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "safety_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

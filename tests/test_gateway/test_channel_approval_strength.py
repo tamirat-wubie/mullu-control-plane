@@ -62,6 +62,12 @@ def test_bound_same_channel_medium_approval_is_allowed() -> None:
     assert result.reasons == ()
 
 
+def test_synthetic_test_channel_is_trusted_control() -> None:
+    assert channel_trust("test") == ChannelTrust.TRUSTED_CONTROL
+    assert channel_trust(" TEST ") == ChannelTrust.TRUSTED_CONTROL
+    assert channel_trust("unknown") == ChannelTrust.UNTRUSTED
+
+
 def test_cross_channel_approval_requires_binding_witness() -> None:
     result = evaluate_channel_approval_strength(
         ChannelApprovalStrengthRequest(

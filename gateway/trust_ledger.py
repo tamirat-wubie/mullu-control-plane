@@ -28,6 +28,7 @@ EVIDENCE_ARTIFACT_TYPES = (
     "command",
     "approval",
     "execution_receipt",
+    "provider_observation",
     "verification_result",
     "effect_reconciliation",
     "terminal_certificate",

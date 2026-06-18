@@ -27,60 +27,75 @@
       "type": "string",
       "const": "urn:mullusi:schema:operator-plan-receipt-export-read-model:1"
     },
-    "plan_id": {"type": "string", "pattern": "^plan-[a-f0-9]{16}$"},
+    "plan_id": {
+      "type": "string",
+      "pattern": "^plan-[a-f0-9]{16}$"
+    },
     "status": {
       "type": "string",
-      "enum": ["certified", "awaiting_certificate", "not_found"]
+      "enum": [
+        "certified",
+        "awaiting_certificate",
+        "not_found"
+      ]
     },
     "plan_review": {
-      "type": "object",
-      "additionalProperties": true,
-      "required": [
-        "schema_ref",
-        "plan_id_filter",
-        "count",
-        "plans",
-        "raw_message_exposed",
-        "execution_allowed",
-        "write_allowed",
-        "governed"
-      ],
-      "properties": {
-        "schema_ref": {
-          "type": "string",
-          "const": "urn:mullusi:schema:operator-plan-review-read-model:1"
-        },
-        "plan_id_filter": {"type": "string"},
-        "count": {"type": "integer", "minimum": 0},
-        "plans": {"type": "array"},
-        "raw_message_exposed": {"type": "boolean", "const": false},
-        "execution_allowed": {"type": "boolean", "const": false},
-        "write_allowed": {"type": "boolean", "const": false},
-        "governed": {"type": "boolean", "const": true}
-      }
+      "$ref": "#/$defs/plan_review_read_model"
     },
     "plan_evidence_bundle": {
       "anyOf": [
-        {"type": "null"},
-        {"$ref": "#/$defs/plan_evidence_bundle"}
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/plan_evidence_bundle"
+        }
       ]
     },
-    "evidence_bundle_available": {"type": "boolean"},
-    "step_command_count": {"type": "integer", "minimum": 0},
+    "evidence_bundle_available": {
+      "type": "boolean"
+    },
+    "step_command_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "missing_step_command_ids": {
       "type": "array",
-      "items": {"type": "string", "minLength": 1}
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
-    "receipt_group_count": {"type": "integer", "minimum": 0},
-    "receipt_count": {"type": "integer", "minimum": 0},
+    "receipt_group_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receipt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "step_receipt_groups": {
       "type": "array",
-      "items": {"$ref": "#/$defs/receipt_group"}
+      "items": {
+        "$ref": "#/$defs/receipt_group"
+      }
     },
-    "raw_message_exposed": {"type": "boolean", "const": false},
-    "execution_allowed": {"type": "boolean", "const": false},
-    "write_allowed": {"type": "boolean", "const": false},
-    "governed": {"type": "boolean", "const": true}
+    "raw_message_exposed": {
+      "type": "boolean",
+      "const": false
+    },
+    "execution_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "write_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    }
   },
   "$defs": {
     "plan_evidence_bundle": {
@@ -102,34 +117,71 @@
         "exported_at"
       ],
       "properties": {
-        "bundle_id": {"type": "string", "pattern": "^plan-evidence-bundle-[a-f0-9]{16}$"},
-        "bundle_hash": {"type": "string", "minLength": 32},
-        "plan_id": {"type": "string", "pattern": "^plan-[a-f0-9]{16}$"},
-        "certificate_id": {"type": "string", "minLength": 1},
-        "disposition": {"type": "string", "minLength": 1},
-        "step_count": {"type": "integer", "minimum": 0},
+        "bundle_id": {
+          "type": "string",
+          "pattern": "^plan-evidence-bundle-[a-f0-9]{16}$"
+        },
+        "bundle_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^plan-[a-f0-9]{16}$"
+        },
+        "certificate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "disposition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "step_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "step_command_ids": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "step_terminal_certificate_ids": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
-        "plan_evidence_hash": {"type": "string", "minLength": 32},
+        "plan_evidence_hash": {
+          "type": "string",
+          "minLength": 32
+        },
         "witness_ids": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "recovery_attempt_ids": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string"
+          }
         },
         "evidence_refs": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
-        "exported_at": {"type": "string"}
+        "exported_at": {
+          "type": "string"
+        }
       }
     },
     "receipt_group": {
@@ -153,26 +205,502 @@
         "receipts"
       ],
       "properties": {
-        "command_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string"},
-        "actor_id": {"type": "string"},
-        "source": {"type": "string"},
-        "intent": {"type": "string"},
-        "command_state": {"type": "string"},
-        "task_status": {"type": "string"},
-        "payload_hash": {"type": "string"},
-        "trace_id": {"type": "string"},
-        "created_at": {"type": "string"},
-        "latest_event_hash": {"type": "string"},
-        "event_count": {"type": "integer", "minimum": 0},
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "actor_id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "command_state": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "payload_hash": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "latest_event_hash": {
+          "type": "string"
+        },
+        "event_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "receipt_types": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
-        "receipt_count": {"type": "integer", "minimum": 0},
+        "receipt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "receipts": {
           "type": "array",
-          "items": {"type": "object", "additionalProperties": true}
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "plan_review_read_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_ref",
+        "tenant_id_filter",
+        "plan_id_filter",
+        "status_filter",
+        "budget_gate_filter",
+        "search_filter",
+        "limit",
+        "offset",
+        "next_offset",
+        "total",
+        "count",
+        "status_counts",
+        "budget_gate_counts",
+        "plans",
+        "raw_message_exposed",
+        "execution_allowed",
+        "write_allowed",
+        "governed"
+      ],
+      "properties": {
+        "schema_ref": {
+          "type": "string",
+          "const": "urn:mullusi:schema:operator-plan-review-read-model:1"
+        },
+        "tenant_id_filter": {
+          "type": "string"
+        },
+        "plan_id_filter": {
+          "type": "string"
+        },
+        "status_filter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/plan_review_status"
+            },
+            {
+              "type": "string",
+              "const": ""
+            }
+          ]
+        },
+        "budget_gate_filter": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/budget_gate"
+            },
+            {
+              "type": "string",
+              "const": ""
+            }
+          ]
+        },
+        "search_filter": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "next_offset": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status_counts": {
+          "$ref": "#/$defs/status_counts"
+        },
+        "budget_gate_counts": {
+          "$ref": "#/$defs/budget_gate_counts"
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/plan_review_row"
+          }
+        },
+        "raw_message_exposed": {
+          "type": "boolean",
+          "const": false
+        },
+        "execution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "write_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "governed": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "plan_review_status": {
+      "type": "string",
+      "enum": [
+        "preview_ready",
+        "handoff_submitted",
+        "denied",
+        "blocked",
+        "certified",
+        "failed",
+        "recovered",
+        "recovery_rejected",
+        "recovery_pending"
+      ]
+    },
+    "budget_gate": {
+      "type": "string",
+      "enum": [
+        "budget_reserved",
+        "not_required",
+        "not_recorded"
+      ]
+    },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preview_ready",
+        "handoff_submitted",
+        "denied",
+        "blocked",
+        "certified",
+        "failed",
+        "recovered",
+        "recovery_rejected",
+        "recovery_pending"
+      ],
+      "properties": {
+        "preview_ready": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "handoff_submitted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denied": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "certified": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovery_rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovery_pending": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "budget_gate_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget_reserved",
+        "not_required",
+        "not_recorded"
+      ],
+      "properties": {
+        "budget_reserved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_required": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_recorded": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "plan_review_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "review_type",
+        "plan_id",
+        "preview_id",
+        "tenant_id",
+        "identity_id",
+        "status",
+        "risk_tier",
+        "approval_required",
+        "step_count",
+        "goal_hash",
+        "evidence_required",
+        "evidence_required_count",
+        "budget_required",
+        "budget_gate",
+        "estimate_state",
+        "estimate_source",
+        "estimated_cost_units",
+        "used_cost_units",
+        "used_cost_source",
+        "limit_cost_units",
+        "remaining_cost_units",
+        "budget_report_href",
+        "currency",
+        "required_by_steps",
+        "not_required_by_steps",
+        "execution_spend_allowed",
+        "budget_evidence_state",
+        "tools_count",
+        "certificate_id",
+        "witness_id",
+        "attempt_id",
+        "recovery_action",
+        "recovery_reason",
+        "latest_at",
+        "review_href",
+        "receipt_export_href",
+        "closure_href"
+      ],
+      "properties": {
+        "review_id": {
+          "type": "string"
+        },
+        "review_type": {
+          "type": "string",
+          "enum": [
+            "preview",
+            "certificate",
+            "failed_witness",
+            "recovery_attempt"
+          ]
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^plan-[a-f0-9]{16}$"
+        },
+        "preview_id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "identity_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/plan_review_status"
+        },
+        "risk_tier": {
+          "type": "string"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "step_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "goal_hash": {
+          "type": "string"
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "budget_required": {
+          "type": "boolean"
+        },
+        "budget_gate": {
+          "$ref": "#/$defs/budget_gate"
+        },
+        "estimate_state": {
+          "type": "string",
+          "enum": [
+            "estimated",
+            "partial",
+            "not_calculated",
+            "not_required",
+            "not_recorded"
+          ]
+        },
+        "estimate_source": {
+          "type": "string",
+          "enum": [
+            "runtime_budget_gate_required",
+            "capability_passport",
+            "capability_cost_model",
+            "not_recorded"
+          ]
+        },
+        "estimated_cost_units": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "used_cost_units": {
+          "type": "number",
+          "minimum": 0
+        },
+        "used_cost_source": {
+          "type": "string",
+          "enum": [
+            "preview_execution_not_started",
+            "tenant_budget_report",
+            "tenant_budget_report_error",
+            "not_recorded"
+          ]
+        },
+        "limit_cost_units": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "remaining_cost_units": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "budget_report_href": {
+          "type": "string",
+          "pattern": "^(/operator/plan-review/budget/.*)?$"
+        },
+        "currency": {
+          "type": "string",
+          "const": "cost_units"
+        },
+        "required_by_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_required_by_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "execution_spend_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "budget_evidence_state": {
+          "type": "string",
+          "enum": [
+            "preview_budget",
+            "witness_plan_snapshot",
+            "certificate_metadata_only",
+            "tenant_budget_report",
+            "tenant_budget_report_error",
+            "not_recorded"
+          ]
+        },
+        "tools_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "certificate_id": {
+          "type": "string"
+        },
+        "witness_id": {
+          "type": "string"
+        },
+        "attempt_id": {
+          "type": "string"
+        },
+        "recovery_action": {
+          "type": "string"
+        },
+        "recovery_reason": {
+          "type": "string"
+        },
+        "latest_at": {
+          "type": "string"
+        },
+        "review_href": {
+          "type": "string",
+          "pattern": "^/operator/plan-review/"
+        },
+        "receipt_export_href": {
+          "type": "string",
+          "pattern": "^(/operator/plan-review/.*/receipts)?$"
+        },
+        "closure_href": {
+          "type": "string",
+          "pattern": "^(/capability-plans/.*/closure)?$"
         }
       }
     }

@@ -43,14 +43,14 @@ def _result(status_code: int, payload: dict[str, object]) -> HttpProbeResult:
     )
 
 
-def _getter(url: str) -> HttpProbeResult:
-    if url.endswith("/v1/health"):
+def _getter(method: str, url: str) -> HttpProbeResult:
+    if method == "GET" and url.endswith("/v1/health"):
         return _result(200, {"status": "ok", "service": "mullusi-govern-cloud-staging"})
-    if url.endswith("/v1/version"):
+    if method == "GET" and url.endswith("/v1/version"):
         return _result(200, {"api": "2026.05.v1", "evaluator": "govern-evaluator.v1"})
-    if url.endswith("/v1/govern/evaluate"):
+    if method == "POST" and url.endswith("/v1/govern/evaluate"):
         return _result(404, {"detail": "Not Found"})
-    raise AssertionError(f"unexpected url: {url}")
+    raise AssertionError(f"unexpected request: {method} {url}")
 
 
 def test_monitor_receipt_passes_for_expected_public_routes_and_blocked_evaluate() -> None:
@@ -62,15 +62,16 @@ def test_monitor_receipt_passes_for_expected_public_routes_and_blocked_evaluate(
     assert receipt["summary"]["public_read_routes_verified"] is True
     assert receipt["summary"]["blocked_route_guard_verified"] is True
     assert receipt["raw_secret_values_included"] is False
+    assert [item["method"] for item in receipt["route_observations"]] == ["GET", "GET", "POST"]
     assert all(item["error"] == "" for item in receipt["route_observations"])
     assert _validate_schema_instance(_load_schema(SCHEMA), receipt) == []
 
 
 def test_monitor_receipt_fails_when_evaluate_route_becomes_public() -> None:
-    def widened_getter(url: str) -> HttpProbeResult:
-        if url.endswith("/v1/govern/evaluate"):
+    def widened_getter(method: str, url: str) -> HttpProbeResult:
+        if method == "POST" and url.endswith("/v1/govern/evaluate"):
             return _result(200, {"status": "ok"})
-        return _getter(url)
+        return _getter(method, url)
 
     receipt = collect_govern_cloud_public_route_monitor(http_getter=widened_getter, now_utc=OBSERVED_AT)
     evaluate = [item for item in receipt["route_observations"] if item["route_id"] == "blocked_evaluate"][0]
@@ -80,15 +81,16 @@ def test_monitor_receipt_fails_when_evaluate_route_becomes_public() -> None:
     assert receipt["summary"]["failed_route_count"] == 1
     assert receipt["remediation"]["decision"] == "rollback_public_proxy"
     assert evaluate["observed_status_code"] == 200
+    assert evaluate["method"] == "POST"
     assert evaluate["passed"] is False
     assert evaluate["error"] == "unexpected_status_code"
 
 
 def test_monitor_receipt_fails_when_health_contract_drifts() -> None:
-    def degraded_getter(url: str) -> HttpProbeResult:
-        if url.endswith("/v1/health"):
+    def degraded_getter(method: str, url: str) -> HttpProbeResult:
+        if method == "GET" and url.endswith("/v1/health"):
             return _result(200, {"status": "degraded", "service": "mullusi-govern-cloud-staging"})
-        return _getter(url)
+        return _getter(method, url)
 
     receipt = collect_govern_cloud_public_route_monitor(http_getter=degraded_getter, now_utc=OBSERVED_AT)
     health = [item for item in receipt["route_observations"] if item["route_id"] == "health"][0]

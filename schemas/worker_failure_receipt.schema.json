@@ -2,134 +2,171 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:worker-failure-receipt:1",
   "title": "Worker Failure Receipt",
+  "description": "Post-dispatch worker receipt contract for failures, timeouts, partial effects, rollback obligations, recovery obligations, and non-terminal closure guards.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_ref",
     "receipt_id",
-    "worker_receipt_id",
+    "receipt_version",
+    "worker_dispatch_ref",
     "request_id",
-    "command_id",
+    "tenant_id",
+    "actor_id",
+    "worker_id",
     "capability",
     "operation",
-    "tenant_id",
+    "command_id",
     "lease_id",
-    "failure_state",
-    "reason",
-    "partial_completion",
-    "attempted_units",
-    "completed_units",
-    "recovery_action",
-    "recovery_ref",
-    "evidence_refs",
-    "terminal_closure_required",
-    "receipt_is_not_terminal_closure",
-    "generated_at",
-    "source_receipt_hash",
-    "failure_hash"
+    "created_at",
+    "solver_outcome",
+    "receipt_state",
+    "failure_class",
+    "effect_status",
+    "rollback_required",
+    "recovery_required",
+    "failure_summary",
+    "completed_step_refs",
+    "failed_step_refs",
+    "partial_effect_refs",
+    "rollback_action_refs",
+    "recovery_action_refs",
+    "blocked_reason_refs",
+    "governance_guards",
+    "receipt_envelope",
+    "evidence_refs"
   ],
   "properties": {
-    "schema_ref": {
-      "const": "urn:mullusi:schema:worker-failure-receipt:1"
-    },
-    "receipt_id": {
+    "receipt_id": { "type": "string", "pattern": "^worker-failure-receipt-[a-z0-9-]+$" },
+    "receipt_version": { "type": "string", "const": "worker_failure_receipt.v1" },
+    "worker_dispatch_ref": { "type": "string", "pattern": "^receipt://worker-dispatch/.+$" },
+    "request_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "worker_id": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "operation": { "type": "string", "minLength": 1 },
+    "command_id": { "type": "string", "minLength": 1 },
+    "lease_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
       "type": "string",
-      "minLength": 1
+      "enum": ["AwaitingEvidence", "SafeHalt", "GovernanceBlocked", "SolvedUnverified"]
     },
-    "worker_receipt_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "request_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "command_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "capability": {
-      "type": "string",
-      "minLength": 1
-    },
-    "operation": {
-      "type": "string",
-      "minLength": 1
-    },
-    "tenant_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "lease_id": {
-      "type": "string"
-    },
-    "failure_state": {
+    "receipt_state": {
       "type": "string",
       "enum": [
-        "rejected_before_handler",
-        "failed_during_handler",
-        "failed_after_handler",
-        "partial_completion",
-        "unknown_failure"
+        "FAILED_BEFORE_EXECUTION",
+        "PARTIAL_EXECUTION_RECORDED",
+        "TIMEOUT_WITH_UNKNOWN_EFFECT",
+        "ROLLBACK_REQUIRED",
+        "RECOVERY_REQUIRED",
+        "SAFE_HALT_RECORDED"
       ]
     },
-    "reason": {
-      "type": "string",
-      "minLength": 1
-    },
-    "partial_completion": {
-      "type": "boolean"
-    },
-    "attempted_units": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "completed_units": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "recovery_action": {
+    "failure_class": {
       "type": "string",
       "enum": [
-        "retry_same_lease",
-        "retry_new_lease",
-        "operator_review",
-        "safe_halt",
-        "no_retry"
+        "timeout",
+        "worker_error",
+        "policy_denial",
+        "tenant_scope_failure",
+        "budget_blocked",
+        "dependency_unavailable",
+        "partial_effect_unknown",
+        "rollback_failed",
+        "recovery_required",
+        "safety_floor"
       ]
     },
-    "recovery_ref": {
+    "effect_status": {
       "type": "string",
-      "minLength": 1
+      "enum": [
+        "no_effect_confirmed",
+        "partial_effect_recorded",
+        "effect_unknown",
+        "rollback_pending",
+        "recovery_pending"
+      ]
     },
-    "evidence_refs": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
+    "rollback_required": { "type": "boolean" },
+    "recovery_required": { "type": "boolean" },
+    "failure_summary": { "$ref": "#/$defs/failure_summary" },
+    "completed_step_refs": { "$ref": "#/$defs/string_array" },
+    "failed_step_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "partial_effect_refs": { "$ref": "#/$defs/string_array" },
+    "rollback_action_refs": { "$ref": "#/$defs/string_array" },
+    "recovery_action_refs": { "$ref": "#/$defs/string_array" },
+    "blocked_reason_refs": { "$ref": "#/$defs/string_array" },
+    "governance_guards": { "$ref": "#/$defs/governance_guards" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "failure_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed_step_count",
+        "failed_step_count",
+        "partial_effect_count",
+        "rollback_action_count",
+        "recovery_action_count",
+        "blocked_reason_count",
+        "raw_output_included",
+        "raw_secret_material_included"
+      ],
+      "properties": {
+        "completed_step_count": { "type": "integer", "minimum": 0 },
+        "failed_step_count": { "type": "integer", "minimum": 1 },
+        "partial_effect_count": { "type": "integer", "minimum": 0 },
+        "rollback_action_count": { "type": "integer", "minimum": 0 },
+        "recovery_action_count": { "type": "integer", "minimum": 0 },
+        "blocked_reason_count": { "type": "integer", "minimum": 0 },
+        "raw_output_included": { "type": "boolean", "const": false },
+        "raw_secret_material_included": { "type": "boolean", "const": false }
       }
     },
-    "terminal_closure_required": {
-      "const": true
-    },
-    "receipt_is_not_terminal_closure": {
-      "const": true
-    },
-    "generated_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "source_receipt_hash": {
-      "type": "string",
-      "minLength": 1
-    },
-    "failure_hash": {
-      "type": "string",
-      "minLength": 1
-    },
-    "metadata": {
+    "governance_guards": {
       "type": "object",
-      "additionalProperties": true
+      "additionalProperties": false,
+      "required": [
+        "terminal_closure",
+        "success_claim_allowed",
+        "execution_authority_renewal_allowed",
+        "raw_secret_material_included",
+        "mfidel_atomicity_preserved",
+        "partial_or_unknown_effect_requires_recovery"
+      ],
+      "properties": {
+        "terminal_closure": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "execution_authority_renewal_allowed": { "type": "boolean", "const": false },
+        "raw_secret_material_included": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true },
+        "partial_or_unknown_effect_requires_recovery": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
     }
   }
 }

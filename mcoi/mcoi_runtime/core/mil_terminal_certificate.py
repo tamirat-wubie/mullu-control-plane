@@ -11,6 +11,7 @@ from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureCertificate
 from mcoi_runtime.contracts.verification import VerificationCheck, VerificationResult, VerificationStatus
+from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.core.governed_dispatcher import GovernedDispatchResult
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
@@ -31,10 +32,11 @@ def certify_mil_dispatch_result(program:MILProgram, dispatch_result:GovernedDisp
     execution=dispatch_result.execution_result
     verification=_verification(program, execution, dispatch_result)
     reconciliation=_reconciliation(program, execution, verification, case_id)
+    whqr_metadata=_whqr_replay_metadata(program)
     if execution.status is ExecutionOutcome.SUCCEEDED:
-        certificate=certifier.certify_committed(execution_result=execution, verification_result=verification, reconciliation=reconciliation, evidence_refs=_evidence_refs(verification), graph_refs=(f"mil:{program.program_id}", f"goal:{program.goal_id}"))
+        certificate=certifier.certify_committed(execution_result=execution, verification_result=verification, reconciliation=reconciliation, evidence_refs=_evidence_refs(verification), graph_refs=(f"mil:{program.program_id}", f"goal:{program.goal_id}"), metadata=whqr_metadata)
     else:
-        certificate=certifier.certify_requires_review(execution_result=execution, verification_result=verification, reconciliation=reconciliation, case_id=case_id or f"case:{program.program_id}", evidence_refs=_evidence_refs(verification), graph_refs=(f"mil:{program.program_id}", f"goal:{program.goal_id}"))
+        certificate=certifier.certify_requires_review(execution_result=execution, verification_result=verification, reconciliation=reconciliation, case_id=case_id or f"case:{program.program_id}", evidence_refs=_evidence_refs(verification), graph_refs=(f"mil:{program.program_id}", f"goal:{program.goal_id}"), metadata=whqr_metadata)
     return MILTerminalCertificateBundle(program, execution, verification, reconciliation, certificate)
 
 def _verification(program:MILProgram, execution:ExecutionResult, dispatch_result:GovernedDispatchResult)->VerificationResult:
@@ -53,3 +55,30 @@ def _evidence_refs(verification:VerificationResult)->tuple[str,...]:
     if not refs:
         raise RuntimeCoreInvariantError("MIL terminal closure requires evidence references")
     return refs
+
+def _whqr_replay_metadata(program:MILProgram)->dict[str,object]:
+    metadata=program.whqr_decision.metadata
+    canonical_json=metadata.get("whqr_canonical_json")
+    canonical_hash=metadata.get("whqr_canonical_hash")
+    semantics_hash=metadata.get("whqr_semantics_hash")
+    version=metadata.get("whqr_version")
+    if canonical_json is None and canonical_hash is None and semantics_hash is None and version is None:
+        return {}
+    if not isinstance(canonical_json,str) or not canonical_json:
+        raise RuntimeCoreInvariantError("MIL terminal certificate requires WHQR canonical replay document")
+    if not isinstance(canonical_hash,str) or not canonical_hash:
+        raise RuntimeCoreInvariantError("MIL terminal certificate requires WHQR canonical hash")
+    try:
+        document=WHQRDocument.from_canonical_json(canonical_json, expected_canonical_hash=canonical_hash)
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError("MIL terminal certificate WHQR replay document is invalid") from exc
+    if semantics_hash is not None and semantics_hash != document.semantics_hash:
+        raise RuntimeCoreInvariantError("MIL terminal certificate WHQR semantics hash mismatch")
+    if version is not None and version != document.whqr_version:
+        raise RuntimeCoreInvariantError("MIL terminal certificate WHQR version mismatch")
+    return {
+        "whqr_canonical_json": canonical_json,
+        "whqr_canonical_hash": canonical_hash,
+        "whqr_semantics_hash": document.semantics_hash,
+        "whqr_version": document.whqr_version,
+    }

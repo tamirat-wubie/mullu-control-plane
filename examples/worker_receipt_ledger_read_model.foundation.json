@@ -1,0 +1,176 @@
+{
+  "read_model_id": "worker-receipt-ledger-read-model-foundation",
+  "read_model_version": "worker_receipt_ledger_read_model.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "source_scope": {
+    "tenant_id": "tenant-foundation",
+    "projection_mode": "FOUNDATION_FIXTURE_PROJECTION",
+    "source_receipt_store_ref": null,
+    "source_receipt_store_live_read_performed": false,
+    "fixture_projection": true,
+    "bounded_entry_limit": 10,
+    "raw_payload_policy": "DIGEST_AND_REF_ONLY"
+  },
+  "receipt_chains": [
+    {
+      "chain_id": "worker-chain-read-only-repo-inspection",
+      "job_id": "job-read-only-repo-inspection-foundation",
+      "worker_id": "worker_local_read_only_repo_inspection",
+      "tenant_id": "tenant-foundation",
+      "chain_status": "blocked_awaiting_evidence",
+      "source_receipt_refs": [
+        "examples/read_only_worker_binding.foundation.json",
+        "examples/read_only_worker_runtime_receipt_handoff.foundation.json",
+        "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json",
+        "examples/read_only_worker_runtime_receipt_candidate.foundation.json"
+      ],
+      "receipt_kinds": [
+        "read_only_worker_binding",
+        "scheduler_worker_runtime_receipt_handoff",
+        "scheduler_worker_runtime_receipt_emitter_dry_run",
+        "read_only_worker_runtime_receipt_candidate"
+      ],
+      "latest_solver_outcome": "AwaitingEvidence",
+      "effect_status": "no_effect_confirmed",
+      "rollback_required": false,
+      "recovery_required": false,
+      "blocked_reason_refs": [
+        "blocked://worker-runtime/schema-binding-missing",
+        "blocked://worker-runtime/live-runner-missing"
+      ],
+      "recovery_obligation_refs": [],
+      "operator_visible_summary": "Read-only worker receipt chain is visible as fixture evidence only; runtime dispatch and receipt emission remain blocked.",
+      "governance_guards": {
+        "terminal_closure_allowed": false,
+        "success_claim_allowed": false,
+        "raw_payload_included": false,
+        "raw_secret_material_included": false,
+        "live_dispatch_allowed": false,
+        "mfidel_atomicity_preserved": true
+      }
+    },
+    {
+      "chain_id": "worker-chain-failure-recovery-boundary",
+      "job_id": "job-worker-failure-foundation",
+      "worker_id": "worker_failure_projection",
+      "tenant_id": "tenant-foundation",
+      "chain_status": "recovery_required",
+      "source_receipt_refs": [
+        "schemas/worker_failure_receipt.schema.json",
+        "docs/79_worker_failure_receipt_contract.md"
+      ],
+      "receipt_kinds": [
+        "worker_failure_receipt"
+      ],
+      "latest_solver_outcome": "AwaitingEvidence",
+      "effect_status": "recovery_pending",
+      "rollback_required": true,
+      "recovery_required": true,
+      "blocked_reason_refs": [
+        "blocked://worker-failure/recovery-evidence-required",
+        "blocked://worker-failure/effect-reconciliation-required"
+      ],
+      "recovery_obligation_refs": [
+        "recovery://worker-failure/effect-reconciliation",
+        "recovery://worker-failure/operator-review"
+      ],
+      "operator_visible_summary": "Failure receipts remain non-terminal and require recovery/effect reconciliation before any closure claim.",
+      "governance_guards": {
+        "terminal_closure_allowed": false,
+        "success_claim_allowed": false,
+        "raw_payload_included": false,
+        "raw_secret_material_included": false,
+        "live_dispatch_allowed": false,
+        "mfidel_atomicity_preserved": true
+      }
+    },
+    {
+      "chain_id": "worker-chain-connector-promotion-boundary",
+      "job_id": "job-connector-promotion-foundation",
+      "worker_id": "connector_action_promotion_gate",
+      "tenant_id": "tenant-foundation",
+      "chain_status": "blocked_awaiting_evidence",
+      "source_receipt_refs": [
+        "examples/connector_action_promotion_gate.foundation.json",
+        "integration/contracts_compat/fixtures/connector_result.json"
+      ],
+      "receipt_kinds": [
+        "connector_action_promotion_gate"
+      ],
+      "latest_solver_outcome": "AwaitingEvidence",
+      "effect_status": "no_effect_confirmed",
+      "rollback_required": false,
+      "recovery_required": false,
+      "blocked_reason_refs": [
+        "blocked://connector-action/worker-execution-receipt-missing",
+        "blocked://connector-action/rollback-recovery-receipt-missing"
+      ],
+      "recovery_obligation_refs": [],
+      "operator_visible_summary": "Connector promotion is visible in the same operator ledger but cannot invoke connectors or claim success.",
+      "governance_guards": {
+        "terminal_closure_allowed": false,
+        "success_claim_allowed": false,
+        "raw_payload_included": false,
+        "raw_secret_material_included": false,
+        "live_dispatch_allowed": false,
+        "mfidel_atomicity_preserved": true
+      }
+    }
+  ],
+  "status_summary": {
+    "chain_count": 3,
+    "ready_chain_count": 0,
+    "blocked_chain_count": 2,
+    "failure_chain_count": 0,
+    "recovery_required_count": 1,
+    "terminal_closure_allowed_count": 0,
+    "success_claim_allowed_count": 0,
+    "raw_payload_included_count": 0,
+    "raw_secret_material_included_count": 0
+  },
+  "authority_denials": {
+    "live_receipt_store_read_allowed": false,
+    "worker_dispatch_allowed": false,
+    "runtime_receipt_emission_allowed": false,
+    "connector_call_allowed": false,
+    "external_write_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "raw_payload_included": false,
+    "raw_secret_material_included": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "receipt_refs": {
+    "worker_receipt_ledger_read_model_schema": "schemas/worker_receipt_ledger_read_model.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "distributed_lease_claim_receipt_schema": "schemas/distributed_lease_claim_receipt.schema.json",
+    "distributed_lease_execution_receipt_schema": "schemas/distributed_lease_execution_receipt.schema.json",
+    "scheduler_worker_runtime_receipt_handoff_schema": "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+    "scheduler_worker_runtime_receipt_emitter_dry_run_schema": "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+    "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
+    "read_only_worker_runtime_receipt_candidate_schema": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+    "connector_action_promotion_gate_schema": "schemas/connector_action_promotion_gate.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json"
+  },
+  "contract_summary": {
+    "receipt_chain_count": 3,
+    "receipt_ref_count": 10,
+    "evidence_ref_count": 9,
+    "blocked_reason_ref_count": 6,
+    "recovery_obligation_ref_count": 2
+  },
+  "evidence_refs": [
+    "schemas/worker_receipt_ledger_read_model.schema.json",
+    "examples/worker_receipt_ledger_read_model.foundation.json",
+    "scripts/validate_worker_receipt_ledger_read_model.py",
+    "tests/test_validate_worker_receipt_ledger_read_model.py",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+    "schemas/connector_action_promotion_gate.schema.json",
+    "docs/79_worker_failure_receipt_contract.md",
+    "docs/84_worker_receipt_ledger_read_model_contract.md"
+  ]
+}

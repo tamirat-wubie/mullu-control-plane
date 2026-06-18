@@ -245,11 +245,6 @@ execution.
 | Component Bundles | Groups components into foundation/demo/read-only product lanes while retaining blocked-action gates. | Added as static bundle inventory consumed by the preview compiler. No live router is added. |
 | Component Router | Routes operator requests only through allowed components. | Not added in PR 1. |
 | Read Model | Exposes component posture through `GET /api/v1/components/read-model`. | Added as a read-only schema, example, route, validator, and tests. |
-| Component Autopsy | Explains one component's blockers, evidence, missing evidence, forbidden actions, and next transition previews. | Added as a GET-only schema, example, route, validator, and tests. |
-| Request Simulator | Predicts component path, blocked actions, approvals, receipts, and missing evidence for an operator request. | Added as a preview-only POST route, schema, example, validator, and tests. |
-| Product Bundle Compiler | Compiles static bundle registry entries into preview readiness reports using read model and simulator evidence. | Added as a preview-only schema, example, runtime module, validator, and tests. |
-| Component Graph | Projects dependencies, request-path edges, bundle memberships, and blocked paths into one read-only relationship graph. | Added as a non-executing schema, example, runtime module, validator, and tests. |
-| Dead-Component Detector | Classifies active governed, watched, blocked-governed, and dead-candidate components from graph/read-model evidence. | Added as a non-executing schema, example, runtime module, validator, and tests. |
 | Proof Binding | Bridges registry entries and router inventory proof declarations to proof coverage matrix rows and runtime witnesses. | Added as a read-only schema, example, validator, and tests. |
 
 ## Registry Contract
@@ -778,13 +773,13 @@ The registry also declares three non-executing bundles:
 | `symbolic_reasoning_read_only` | Groups SNet and InceptaDive shadow for advisory reasoning. | Route execution, connector call, filesystem write, runtime mutation, external send, and terminal closure blocked. |
 | `worker_runtime_foundation` | Groups worker runtime and capability workers for inventory and evidence tracking. | Live dispatch, autonomous execution, provider write, filesystem write, runtime mutation, and terminal closure blocked. |
 
-The router inventory currently binds 30 declared routes across the selected
+The router inventory currently binds 28 declared routes across the selected
 component-owned families: governance core, agentic service harness,
 InceptaDive shadow, Personal Assistant, TeamOps shared inbox, and capability
 workers. SNet, Gmail account binding, worker runtime, and Nested Mind are
 explicitly recorded as `no_declared_route` for foundation posture.
 
-The proof binding currently binds nine proof-bound components to 14 proof
+The proof binding currently binds nine proof-bound components to 12 proof
 coverage surfaces. `nested_mind_bridge` remains `awaiting_binding`, with no
 receipt claim and no live memory topology activation.
 
@@ -1189,7 +1184,7 @@ Proof binding validation follows this deterministic sequence:
 Read-model validation follows this deterministic sequence:
 
 1. Load `schemas/component_read_model.schema.json` and `examples/component_read_model.foundation.json`.
-2. Rebuild the projection from registry, router inventory, proof binding, and lifecycle receipt sources.
+2. Rebuild the projection from registry, router inventory, and proof binding sources.
 3. Validate the example against the read-model schema.
 4. Reject example drift from the runtime projection.
 5. Reject live execution, connector send, or terminal-closure authority claims.
@@ -1408,7 +1403,7 @@ The current harness boundary does not:
 
 The router inventory refinement does not:
 
-1. Bind all 424 proof-relevant declared routes to final product components.
+1. Bind all 422 proof-relevant declared routes to final product components.
 2. Create a runtime component router.
 3. Promote `no_declared_route` components to mounted route posture.
 4. Treat the 76 route-family classifications as execution, product readiness, or terminal closure.

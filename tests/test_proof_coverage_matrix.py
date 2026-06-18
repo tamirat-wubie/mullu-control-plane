@@ -159,9 +159,9 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 22
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 18
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -183,7 +183,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 43
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 115
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -262,7 +262,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 24
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 28
     assert surfaces["component_autopsy"]["unanchored_witness_count"] == 0
     assert surfaces["component_autopsy"]["exact_test_anchor_count"] == 5
     assert surfaces["component_request_simulator"]["unanchored_witness_count"] == 0
@@ -466,7 +466,23 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_credential_expiry"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_credential_expiry"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_retention_window"]["unanchored_witness_count"] == 0
-    assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 11
+    assert surfaces["temporal_retention_window"]["exact_test_anchor_count"] == 12
+    assert surfaces["github_check_run_write_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_check_run_write_receipts"]["exact_test_anchor_count"] == 8
+    assert surfaces["github_app_token_exchange_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_app_token_exchange_receipts"]["exact_test_anchor_count"] == 8
+    assert surfaces["github_action_execution_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_action_execution_receipts"]["exact_test_anchor_count"] == 9
+    assert surfaces["github_branch_protection_reconcile_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["github_branch_protection_reconcile_receipts"]["exact_test_anchor_count"] == 10
+    assert surfaces["distributed_lease_claim_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["distributed_lease_claim_receipts"]["exact_test_anchor_count"] == 14
+    assert surfaces["distributed_lease_adapter_registry_receipts"]["unanchored_witness_count"] == 0
+    assert surfaces["distributed_lease_adapter_registry_receipts"]["exact_test_anchor_count"] == 8
+    assert surfaces["oidc_jwks_refresh_evidence"]["unanchored_witness_count"] == 0
+    assert surfaces["oidc_jwks_refresh_evidence"]["exact_test_anchor_count"] == 6
+    assert surfaces["trusted_identity_header_boundary"]["unanchored_witness_count"] == 0
+    assert surfaces["trusted_identity_header_boundary"]["exact_test_anchor_count"] == 7
     assert surfaces["temporal_sla"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_sla"]["exact_test_anchor_count"] == 10
     assert surfaces["temporal_resolution"]["unanchored_witness_count"] == 0
@@ -1730,6 +1746,27 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/history"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
+    assert classified_routes["/api/v1/personal-assistant/skills"]["surface_id"] == "assistant_kernel_planning"
+    assert (
+        classified_routes["/api/v1/personal-assistant/requests/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/approval-queue/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
+    assert (
+        classified_routes["/api/v1/personal-assistant/memory-observations/preview"]["surface_id"]
+        == "assistant_kernel_planning"
+    )
     assert classified_routes["/api/v1/tool-permissions"]["surface_id"] == "tool_permission_registry"
     assert classified_routes["/api/v1/tool-permissions/evaluate"]["surface_id"] == "tool_permission_registry"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
@@ -1754,6 +1791,14 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
+    assert (
+        classified_routes["/api/v1/console/personal-assistant"]["surface_id"]
+        == "operator_console_read_models"
+    )
+    assert (
+        classified_routes["/api/v1/console/personal-assistant/view"]["surface_id"]
+        == "operator_console_read_models"
+    )
     assert classified_routes["/api/v1/console/spatial-map"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map/view"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
@@ -2481,14 +2526,18 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
+    assert "terminal_closure_exposes_whqr_replay_ref" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
     assert "command_interpretation_receipt_read_model_schema_valid" in witnesses
     assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "command_interpretation_receipt_replays_from_command_store" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "universal_action_proof_exposes_whqr_replay_ref" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
+    assert "universal_action_orchestration_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
+    assert "operator_universal_action_read_model_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capability_admission_audits_filter_status" in witnesses
     assert "command_capability_admission_read_model_reports_accepted_witness" in witnesses
@@ -3762,6 +3811,67 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
 
 
+def test_oidc_jwks_refresh_evidence_surface_binds_trust_chain_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    refresh_surface = surfaces["oidc_jwks_refresh_evidence"]
+    refresh_witness_surface = witness_surfaces["oidc_jwks_refresh_evidence"]
+    witnesses = set(refresh_surface["runtime_witnesses"])
+
+    assert refresh_surface["coverage_state"] == "witnessed"
+    assert refresh_surface["request_proof"] == "request_proof"
+    assert refresh_surface["action_proof"] == "action_proof"
+    assert "assess_oidc_jwks_refresh_evidence" in refresh_surface["representative_paths"]
+    assert "gateway/tenant_identity.py" in refresh_surface["evidence_files"]
+    assert "docs/54_authority_directory_sync.md" in refresh_surface["evidence_files"]
+    assert "tests/test_gateway/test_tenant_identity.py" in refresh_surface["evidence_files"]
+    assert "fresh_https_jwks_receipt_accepted" in witnesses
+    assert "stale_cache_and_missing_refs_blocked" in witnesses
+    assert "insecure_discovery_and_redirects_blocked" in witnesses
+    assert "invalid_hashes_and_algorithms_blocked" in witnesses
+    assert "non_boolean_boundary_flags_rejected" in witnesses
+    assert "jwks_refresh_supports_trusted_header_admission" in witnesses
+    assert refresh_witness_surface["exact_test_anchor_count"] == 6
+    assert refresh_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_oidc_jwks_refresh_evidence_contract"]["status"] == "closed"
+
+
+def test_trusted_identity_header_boundary_surface_blocks_header_spoofing() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    header_surface = surfaces["trusted_identity_header_boundary"]
+    header_witness_surface = witness_surfaces["trusted_identity_header_boundary"]
+    witnesses = set(header_surface["runtime_witnesses"])
+
+    assert header_surface["coverage_state"] == "witnessed"
+    assert header_surface["request_proof"] == "request_proof"
+    assert header_surface["action_proof"] == "action_proof"
+    assert "assess_trusted_identity_header_boundary" in header_surface["representative_paths"]
+    assert "gateway/tenant_identity.py" in header_surface["evidence_files"]
+    assert "docs/54_authority_directory_sync.md" in header_surface["evidence_files"]
+    assert "tests/test_gateway/test_tenant_identity.py" in header_surface["evidence_files"]
+    assert "trusted_headers_disabled_by_default" in witnesses
+    assert "complete_oidc_gateway_evidence_accepted" in witnesses
+    assert "complete_mtls_gateway_evidence_accepted" in witnesses
+    assert "missing_gateway_evidence_blocked" in witnesses
+    assert "malformed_evidence_refs_rejected" in witnesses
+    assert "non_boolean_gateway_evidence_rejected" in witnesses
+    assert "jwks_refresh_assessment_binds_trusted_header_path" in witnesses
+    assert header_witness_surface["exact_test_anchor_count"] == 7
+    assert header_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_trusted_identity_header_boundary_contract"]["status"] == "closed"
+
+
 def test_claim_verification_surface_gates_execution_admission() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -3861,6 +3971,152 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "tests/test_validate_team_ops_shared_inbox_live_probe_operator_input_request.py" in connector_surface[
         "evidence_files"
     ]
+    assert "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py" in connector_surface["evidence_files"]
+    assert "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/mint_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_mint_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_certificate.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.schema.json" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
@@ -3904,7 +4160,79 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "team_ops_shared_inbox_probe_input_request_blocks_effect_drift" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_redacts_secret_markers" in witnesses
     assert "team_ops_shared_inbox_probe_input_request_writes_validation_receipt" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 43
+    assert "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_requires_observation_evidence" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_probe_receipt_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_blocks_without_live_probe" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_requires_redacted_observation" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_accepts_assignment_plan" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_observation_routing_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_blocks_without_routing" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_requires_request_evidence" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_accepts_pending_obligation" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_approval_queue_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_blocks_without_queue" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_requires_decision_evidence" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_accepts_operator_decisions" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_approval_decision_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_blocks_without_decision" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_requires_preparation_evidence" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_accepts_approved_packet" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_execution_blocks_without_preparation" in witnesses
+    assert "team_ops_shared_inbox_send_execution_requires_execution_evidence" in witnesses
+    assert "team_ops_shared_inbox_send_execution_accepts_provider_receipt" in witnesses
+    assert "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim" in witnesses
+    assert "team_ops_shared_inbox_send_execution_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_send_execution_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_blocks_without_execution" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_requires_observation_replay" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_missing_secret" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_signs_ready_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_verifies_hmac" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_binds_source_certificate" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_raw_secret_or_production_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_accepts_ready_preflight" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_missing_or_unready_inputs" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_binds_preflight_bundle_and_artifacts" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_verifies_anchor_signature" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_effect_or_raw_claim" in witnesses
+    assert "team_ops_shared_inbox_terminal_closure_anchor_receipt_writes_receipt_and_validation_receipts" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 115
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
@@ -3918,6 +4246,38 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert closure_actions["publish_team_ops_shared_inbox_live_probe_operator_input_request_contract"][
         "status"
     ] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_live_probe_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_observation_routing_receipt_contract"][
+        "status"
+    ] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_approval_queue_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_approval_decision_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_send_preparation_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_send_execution_receipt_contract"]["status"] == "closed"
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_sent_message_observation_receipt_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_review_packet_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_certificate_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_evidence_bundle_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_anchor_preflight_contract"]["status"]
+        == "closed"
+    )
+    assert (
+        closure_actions["publish_team_ops_shared_inbox_terminal_closure_anchor_receipt_contract"]["status"]
+        == "closed"
+    )
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
@@ -4250,10 +4610,11 @@ def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> Non
     assert "snet_episode_malformed_answer_bindings_report_errors" in witnesses
     assert "snet_episode_non_json_replay_inputs_report_errors" in witnesses
     assert "snet_episode_malformed_expected_receipt_report_errors" in witnesses
+    assert "snet_episode_malformed_root_reports_errors" in witnesses
     assert "snet_episode_saved_file_validation" in witnesses
     assert "committed_snet_episode_example_replays_to_expected_receipt" in witnesses
     assert "read-only SNet mesh evidence" in replay_surface["notes"]
-    assert replay_integrity["exact_test_anchor_count"] == 10
+    assert replay_integrity["exact_test_anchor_count"] == 11
     assert replay_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
 
@@ -4309,9 +4670,9 @@ def test_snet_operator_read_model_surface_binds_no_authority_projection() -> Non
     assert "snet_operator_doc_names_blocked_authorities" in witnesses
     assert "snet_operator_doc_lists_verification_commands" in witnesses
     assert "start_here_links_snet_operator_doc" in witnesses
-    assert "denied execution, connector, route, filesystem" in read_model_surface["notes"]
-    assert "AwaitingEvidence runtime-integration gate" in read_model_surface["notes"]
-    assert read_model_integrity["exact_test_anchor_count"] == 20
+    assert "denied execution, connector, filesystem, gateway" in read_model_surface["notes"]
+    assert "terminal-closure authority" in read_model_surface["notes"]
+    assert read_model_integrity["exact_test_anchor_count"] == 25
     assert read_model_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_operator_read_model_contract"]["status"] == "closed"
 
@@ -4840,6 +5201,314 @@ def test_connector_self_healing_surface_emits_bounded_recovery_receipts() -> Non
     assert healing_witness_surface["exact_test_anchor_count"] == 6
     assert healing_witness_surface["unanchored_witness_count"] == 0
     assert closure_actions["publish_connector_self_healing_receipt_contract"]["status"] == "closed"
+
+
+def test_connector_action_promotion_gate_blocks_live_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    gate_surface = surfaces["connector_action_promotion_gate"]
+    gate_witness_surface = witness_surfaces["connector_action_promotion_gate"]
+    witnesses = set(gate_surface["runtime_witnesses"])
+
+    assert gate_surface["coverage_state"] == "witnessed"
+    assert gate_surface["request_proof"] == "request_proof"
+    assert gate_surface["action_proof"] == "action_proof"
+    assert "ConnectorActionPromotionGate" in gate_surface["representative_paths"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in gate_surface["evidence_files"]
+    assert "examples/connector_action_promotion_gate.foundation.json" in gate_surface["evidence_files"]
+    assert "scripts/validate_connector_action_promotion_gate.py" in gate_surface["evidence_files"]
+    assert "tests/test_validate_connector_action_promotion_gate.py" in gate_surface["evidence_files"]
+    assert "connector_action_promotion_gate_schema_valid" in witnesses
+    assert "connector_action_promotion_gate_blocks_live_calls" in witnesses
+    assert "connector_action_promotion_gate_binds_source_fixtures" in witnesses
+    assert "connector_action_promotion_gate_rejects_authority_drift" in witnesses
+    assert gate_witness_surface["exact_test_anchor_count"] == 6
+    assert gate_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_connector_action_promotion_gate_contract"]["status"] == "closed"
+
+
+def test_readiness_waiver_review_packet_blocks_readiness_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    packet_surface = surfaces["readiness_waiver_review_packet"]
+    packet_witness_surface = witness_surfaces["readiness_waiver_review_packet"]
+    witnesses = set(packet_surface["runtime_witnesses"])
+
+    assert packet_surface["coverage_state"] == "witnessed"
+    assert packet_surface["request_proof"] == "request_proof"
+    assert packet_surface["action_proof"] == "action_proof"
+    assert "ReadinessWaiverReviewPacket" in packet_surface["representative_paths"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in packet_surface["evidence_files"]
+    assert "examples/readiness_waiver_review_packet.foundation.json" in packet_surface["evidence_files"]
+    assert "scripts/validate_readiness_waiver_review_packet.py" in packet_surface["evidence_files"]
+    assert "tests/test_validate_readiness_waiver_review_packet.py" in packet_surface["evidence_files"]
+    assert "readiness_waiver_review_packet_schema_valid" in witnesses
+    assert "readiness_waiver_review_packet_blocks_readiness_authority" in witnesses
+    assert "readiness_waiver_review_packet_requires_evidence_refs" in witnesses
+    assert "readiness_waiver_review_packet_rejects_expiry_drift" in witnesses
+    assert packet_witness_surface["exact_test_anchor_count"] == 6
+    assert packet_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_readiness_waiver_review_packet_contract"]["status"] == "closed"
+
+
+def test_browser_observation_receipt_blocks_browser_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    browser_surface = surfaces["browser_observation_receipt"]
+    browser_witness_surface = witness_surfaces["browser_observation_receipt"]
+    witnesses = set(browser_surface["runtime_witnesses"])
+
+    assert browser_surface["coverage_state"] == "witnessed"
+    assert browser_surface["request_proof"] == "request_proof"
+    assert browser_surface["action_proof"] == "action_proof"
+    assert browser_surface["audit"] == "audit_chain"
+    assert "schemas/browser_observation_receipt.schema.json" in browser_surface["evidence_files"]
+    assert "examples/browser_observation_receipt.foundation.json" in browser_surface["evidence_files"]
+    assert "scripts/validate_browser_observation_receipt.py" in browser_surface["evidence_files"]
+    assert "tests/test_validate_browser_observation_receipt.py" in browser_surface["evidence_files"]
+    assert "browser_observation_receipt_schema_valid" in witnesses
+    assert "browser_observation_receipt_blocks_browser_authority" in witnesses
+    assert "browser_observation_receipt_requires_digest_refs" in witnesses
+    assert "browser_observation_receipt_rejects_raw_storage" in witnesses
+    assert browser_witness_surface["exact_test_anchor_count"] == 5
+    assert browser_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_browser_observation_receipt_contract"]["status"] == "closed"
+
+
+def test_trusted_capture_evidence_packet_blocks_capture_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    capture_surface = surfaces["trusted_capture_evidence_packet"]
+    capture_witness_surface = witness_surfaces["trusted_capture_evidence_packet"]
+    witnesses = set(capture_surface["runtime_witnesses"])
+
+    assert capture_surface["coverage_state"] == "witnessed"
+    assert capture_surface["request_proof"] == "request_proof"
+    assert capture_surface["action_proof"] == "action_proof"
+    assert capture_surface["audit"] == "audit_chain"
+    assert "TrustedCaptureEvidencePacket" in capture_surface["representative_paths"]
+    assert "schemas/trusted_capture_evidence_packet.schema.json" in capture_surface["evidence_files"]
+    assert "examples/trusted_capture_evidence_packet.foundation.json" in capture_surface["evidence_files"]
+    assert "scripts/validate_trusted_capture_evidence_packet.py" in capture_surface["evidence_files"]
+    assert "tests/test_validate_trusted_capture_evidence_packet.py" in capture_surface["evidence_files"]
+    assert "trusted_capture_evidence_packet_schema_valid" in witnesses
+    assert "trusted_capture_evidence_packet_blocks_capture_authority" in witnesses
+    assert "trusted_capture_evidence_packet_requires_digest_refs" in witnesses
+    assert "trusted_capture_evidence_packet_rejects_raw_media_retention" in witnesses
+    assert "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "trusted_capture_evidence_packet_sdlc_artifacts_valid" in witnesses
+    assert capture_witness_surface["exact_test_anchor_count"] == 6
+    assert capture_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_trusted_capture_evidence_packet_contract"]["status"] == "closed"
+
+
+def test_sccml_trace_adapter_witness_blocks_kernel_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    sccml_surface = surfaces["sccml_trace_adapter_witness"]
+    sccml_witness_surface = witness_surfaces["sccml_trace_adapter_witness"]
+    witnesses = set(sccml_surface["runtime_witnesses"])
+
+    assert sccml_surface["coverage_state"] == "witnessed"
+    assert sccml_surface["request_proof"] == "request_proof"
+    assert sccml_surface["action_proof"] == "action_proof"
+    assert sccml_surface["audit"] == "audit_chain"
+    assert "SccmlTraceAdapterWitness" in sccml_surface["representative_paths"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in sccml_surface["evidence_files"]
+    assert "examples/sccml_trace_adapter_witness.foundation.json" in sccml_surface["evidence_files"]
+    assert "scripts/validate_sccml_trace_adapter_witness.py" in sccml_surface["evidence_files"]
+    assert "tests/test_validate_sccml_trace_adapter_witness.py" in sccml_surface["evidence_files"]
+    assert "sccml_trace_adapter_witness_schema_valid" in witnesses
+    assert "sccml_trace_adapter_witness_blocks_kernel_authority" in witnesses
+    assert "sccml_trace_adapter_witness_requires_digest_refs" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_unsupported_op_silence" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_raw_trace_retention" in witnesses
+    assert "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "sccml_trace_adapter_witness_sdlc_artifacts_valid" in witnesses
+    assert sccml_witness_surface["exact_test_anchor_count"] == 7
+    assert sccml_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_sccml_trace_adapter_witness_contract"]["status"] == "closed"
+
+
+def test_chaos_rehearsal_execution_report_blocks_runtime_disruption() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    chaos_surface = surfaces["chaos_rehearsal_execution_report"]
+    chaos_witness_surface = witness_surfaces["chaos_rehearsal_execution_report"]
+    witnesses = set(chaos_surface["runtime_witnesses"])
+
+    assert chaos_surface["coverage_state"] == "witnessed"
+    assert chaos_surface["request_proof"] == "request_proof"
+    assert chaos_surface["action_proof"] == "action_proof"
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in chaos_surface["evidence_files"]
+    assert "examples/chaos_rehearsal_execution_report.foundation.json" in chaos_surface["evidence_files"]
+    assert "scripts/validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "tests/test_validate_chaos_rehearsal_execution_report.py" in chaos_surface["evidence_files"]
+    assert "chaos_rehearsal_execution_report_schema_valid" in witnesses
+    assert "chaos_rehearsal_execution_report_blocks_runtime_disruption" in witnesses
+    assert "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_raw_runtime_retention" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_result_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "chaos_rehearsal_execution_report_sdlc_artifacts_valid" in witnesses
+    assert chaos_witness_surface["exact_test_anchor_count"] == 7
+    assert chaos_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_chaos_rehearsal_execution_report_contract"]["status"] == "closed"
+
+
+def test_invariant_fuzz_execution_report_blocks_canonical_mutation() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    fuzz_surface = surfaces["invariant_fuzz_execution_report"]
+    fuzz_witness_surface = witness_surfaces["invariant_fuzz_execution_report"]
+    witnesses = set(fuzz_surface["runtime_witnesses"])
+
+    assert fuzz_surface["coverage_state"] == "witnessed"
+    assert fuzz_surface["request_proof"] == "request_proof"
+    assert fuzz_surface["action_proof"] == "action_proof"
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in fuzz_surface["evidence_files"]
+    assert "examples/invariant_fuzz_execution_report.foundation.json" in fuzz_surface["evidence_files"]
+    assert "scripts/validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "tests/test_validate_invariant_fuzz_execution_report.py" in fuzz_surface["evidence_files"]
+    assert "invariant_fuzz_execution_report_schema_valid" in witnesses
+    assert "invariant_fuzz_execution_report_blocks_canonical_mutation" in witnesses
+    assert "invariant_fuzz_execution_report_requires_case_bank_and_oracles" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_projection_and_raw_retention" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_result_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift" in witnesses
+    assert "invariant_fuzz_execution_report_sdlc_artifacts_valid" in witnesses
+    assert fuzz_witness_surface["exact_test_anchor_count"] == 7
+    assert fuzz_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_invariant_fuzz_execution_report_contract"]["status"] == "closed"
+
+
+def test_research_source_conflict_map_preserves_source_disagreement() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    conflict_surface = surfaces["research_source_conflict_map"]
+    conflict_witness_surface = witness_surfaces["research_source_conflict_map"]
+    witnesses = set(conflict_surface["runtime_witnesses"])
+
+    assert conflict_surface["coverage_state"] == "witnessed"
+    assert conflict_surface["request_proof"] == "request_proof"
+    assert conflict_surface["action_proof"] == "action_proof"
+    assert conflict_surface["audit"] == "audit_chain"
+    assert "ResearchSourceConflictMap" in conflict_surface["representative_paths"]
+    assert "schemas/research_source_conflict_map.schema.json" in conflict_surface["evidence_files"]
+    assert "examples/research_source_conflict_map.foundation.json" in conflict_surface["evidence_files"]
+    assert "scripts/validate_research_source_conflict_map.py" in conflict_surface["evidence_files"]
+    assert "tests/test_validate_research_source_conflict_map.py" in conflict_surface["evidence_files"]
+    assert "research_source_conflict_map_schema_valid" in witnesses
+    assert "research_source_conflict_map_blocks_live_research_authority" in witnesses
+    assert "research_source_conflict_map_requires_citation_bound_conflicts" in witnesses
+    assert "research_source_conflict_map_rejects_raw_body_retention" in witnesses
+    assert "research_source_conflict_map_rejects_sensing_authority_drift" in witnesses
+    assert conflict_witness_surface["exact_test_anchor_count"] == 6
+    assert conflict_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_research_source_conflict_map_contract"]["status"] == "closed"
+
+
+def test_worker_receipt_ledger_read_model_blocks_live_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    ledger_surface = surfaces["worker_receipt_ledger_read_model"]
+    ledger_witness_surface = witness_surfaces["worker_receipt_ledger_read_model"]
+    witnesses = set(ledger_surface["runtime_witnesses"])
+
+    assert ledger_surface["coverage_state"] == "witnessed"
+    assert ledger_surface["request_proof"] == "read_model"
+    assert ledger_surface["action_proof"] == "read_model"
+    assert "WorkerReceiptLedgerReadModel" in ledger_surface["representative_paths"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in ledger_surface["evidence_files"]
+    assert "examples/worker_receipt_ledger_read_model.foundation.json" in ledger_surface["evidence_files"]
+    assert "scripts/validate_worker_receipt_ledger_read_model.py" in ledger_surface["evidence_files"]
+    assert "tests/test_validate_worker_receipt_ledger_read_model.py" in ledger_surface["evidence_files"]
+    assert "worker_receipt_ledger_read_model_schema_valid" in witnesses
+    assert "worker_receipt_ledger_read_model_blocks_live_authority" in witnesses
+    assert "worker_receipt_ledger_read_model_rejects_summary_drift" in witnesses
+    assert "worker_receipt_ledger_read_model_rejects_missing_refs" in witnesses
+    assert ledger_witness_surface["exact_test_anchor_count"] == 6
+    assert ledger_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_worker_receipt_ledger_read_model_contract"]["status"] == "closed"
+
+
+def test_mfidel_substrate_conformance_receipt_preserves_atomicity() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    mfidel_surface = surfaces["mfidel_substrate_conformance_receipt"]
+    mfidel_witness_surface = witness_surfaces["mfidel_substrate_conformance_receipt"]
+    witnesses = set(mfidel_surface["runtime_witnesses"])
+
+    assert mfidel_surface["coverage_state"] == "witnessed"
+    assert mfidel_surface["request_proof"] == "audit_chain"
+    assert mfidel_surface["action_proof"] == "audit_chain"
+    assert "MfidelSubstrateConformanceReceipt" in mfidel_surface["representative_paths"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in mfidel_surface["evidence_files"]
+    assert "examples/mfidel_substrate_conformance_receipt.foundation.json" in mfidel_surface["evidence_files"]
+    assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in mfidel_surface["evidence_files"]
+    assert "tests/test_validate_mfidel_substrate_conformance_receipt.py" in mfidel_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/substrate/mfidel/grid.py" in mfidel_surface["evidence_files"]
+    assert "mfidel_substrate_conformance_receipt_schema_valid" in witnesses
+    assert "mfidel_substrate_conformance_receipt_preserves_atomicity" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_guard_drift" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_digest_drift" in witnesses
+    assert "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift" in witnesses
+    assert mfidel_witness_surface["exact_test_anchor_count"] == 7
+    assert mfidel_witness_surface["unanchored_witness_count"] == 0
+    assert closure_actions["publish_mfidel_substrate_conformance_receipt_contract"]["status"] == "closed"
 
 
 def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
@@ -5640,8 +6309,181 @@ def test_temporal_retention_window_surface_rechecks_data_lifecycle_timing() -> N
     assert "retention_policy_ref_required" in witnesses
     assert "subject_evidence_refs_required" in witnesses
     assert "high_risk_source_receipts_bound" in witnesses
+    assert "retention_approval_and_backup_guard_bound" in witnesses
     assert "temporal_retention_window_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_retention_window_receipt_contract"]["status"] == "closed"
+
+
+def test_github_check_run_write_receipt_surface_binds_external_write_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    check_surface = surfaces["github_check_run_write_receipts"]
+    witnesses = set(check_surface["runtime_witnesses"])
+
+    assert check_surface["coverage_state"] == "witnessed"
+    assert check_surface["request_proof"] == "request_proof"
+    assert check_surface["action_proof"] == "action_proof"
+    assert "GitHubCheckRunWriter.evaluate" in check_surface["representative_paths"]
+    assert "GitHubCheckRunWriteRequest" in check_surface["representative_paths"]
+    assert "GitHubCheckRunWriteReceipt" in check_surface["representative_paths"]
+    assert "gateway/github_check_run_writer.py" in check_surface["evidence_files"]
+    assert "schemas/github_check_run_write_receipt.schema.json" in check_surface["evidence_files"]
+    assert "tests/test_gateway/test_github_check_run_writer.py" in check_surface["evidence_files"]
+    assert "check_run_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_write_check_run" in witnesses
+    assert "dry_run_rejects_response_evidence" in witnesses
+    assert "write_approved_requires_github_app_execution_receipt" in witnesses
+    assert "write_approved_binds_external_execution_receipt" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "completed_status_requires_conclusion" in witnesses
+    assert "github_check_run_write_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_check_run_write_receipt_contract"]["status"] == "closed"
+
+
+def test_github_app_token_exchange_receipt_surface_binds_external_exchange_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    exchange_surface = surfaces["github_app_token_exchange_receipts"]
+    witnesses = set(exchange_surface["runtime_witnesses"])
+
+    assert exchange_surface["coverage_state"] == "witnessed"
+    assert exchange_surface["request_proof"] == "request_proof"
+    assert exchange_surface["action_proof"] == "action_proof"
+    assert "GitHubAppTokenExchange.evaluate" in exchange_surface["representative_paths"]
+    assert "GitHubAppTokenExchangeRequest" in exchange_surface["representative_paths"]
+    assert "GitHubAppTokenExchangeReceipt" in exchange_surface["representative_paths"]
+    assert "gateway/github_app_token_exchange.py" in exchange_surface["evidence_files"]
+    assert "schemas/github_app_token_exchange_receipt.schema.json" in exchange_surface["evidence_files"]
+    assert "tests/test_gateway/test_github_app_token_exchange.py" in exchange_surface["evidence_files"]
+    assert "token_exchange_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_exchange_token" in witnesses
+    assert "dry_run_rejects_token_response_evidence" in witnesses
+    assert "exchange_approved_requires_external_receipt" in witnesses
+    assert "exchange_approved_binds_external_receipt" in witnesses
+    assert "secret_token_absence_verified" in witnesses
+    assert "token_ttl_bounds_enforced" in witnesses
+    assert "github_app_token_exchange_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_app_token_exchange_receipt_contract"]["status"] == "closed"
+
+
+def test_github_action_execution_receipt_surface_binds_external_action_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    action_surface = surfaces["github_action_execution_receipts"]
+    witnesses = set(action_surface["runtime_witnesses"])
+
+    assert action_surface["coverage_state"] == "witnessed"
+    assert action_surface["request_proof"] == "request_proof"
+    assert action_surface["action_proof"] == "action_proof"
+    assert "GitHubActionExecution.evaluate" in action_surface["representative_paths"]
+    assert "GitHubActionExecutionRequest" in action_surface["representative_paths"]
+    assert "GitHubActionExecutionReceipt" in action_surface["representative_paths"]
+    assert "gateway/github_action_execution.py" in action_surface["evidence_files"]
+    assert "schemas/github_action_execution_receipt.schema.json" in action_surface["evidence_files"]
+    assert "tests/test_gateway/test_github_action_execution.py" in action_surface["evidence_files"]
+    assert "github_action_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_execute_github_action" in witnesses
+    assert "dry_run_rejects_execution_response_evidence" in witnesses
+    assert "execute_approved_requires_token_and_external_receipts" in witnesses
+    assert "execute_approved_binds_external_execution_receipt" in witnesses
+    assert "token_plan_repository_mismatch_blocks_execution" in witnesses
+    assert "secret_token_absence_verified" in witnesses
+    assert "branch_protection_reconcile_action_is_endpoint_bound" in witnesses
+    assert "github_action_execution_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_action_execution_receipt_contract"]["status"] == "closed"
+
+
+def test_github_branch_protection_reconcile_receipt_surface_binds_drift_and_apply_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    reconcile_surface = surfaces["github_branch_protection_reconcile_receipts"]
+    witnesses = set(reconcile_surface["runtime_witnesses"])
+
+    assert reconcile_surface["coverage_state"] == "witnessed"
+    assert reconcile_surface["request_proof"] == "request_proof"
+    assert reconcile_surface["action_proof"] == "action_proof"
+    assert "BranchProtectionReconciler.evaluate" in reconcile_surface["representative_paths"]
+    assert "BranchProtectionReconcileRequest" in reconcile_surface["representative_paths"]
+    assert "BranchProtectionReconcileReceipt" in reconcile_surface["representative_paths"]
+    assert "gateway/branch_protection_reconcile.py" in reconcile_surface["evidence_files"]
+    assert "schemas/github_branch_protection_reconcile_receipt.schema.json" in reconcile_surface["evidence_files"]
+    assert "tests/test_gateway/test_branch_protection_reconcile.py" in reconcile_surface["evidence_files"]
+    assert "branch_protection_policy_payload_is_hash_bound" in witnesses
+    assert "observed_compliance_emits_noop_receipt" in witnesses
+    assert "observed_drift_emits_reconcile_actions" in witnesses
+    assert "missing_observed_state_is_explicit" in witnesses
+    assert "dry_run_rejects_apply_response_evidence" in witnesses
+    assert "apply_approved_requires_external_receipts" in witnesses
+    assert "apply_approved_binds_external_action_receipt" in witnesses
+    assert "noop_apply_blocks_external_mutation" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "github_branch_protection_reconcile_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_github_branch_protection_reconcile_receipt_contract"]["status"] == "closed"
+
+
+def test_distributed_lease_claim_receipt_surface_binds_backend_claim_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lease_surface = surfaces["distributed_lease_claim_receipts"]
+    witnesses = set(lease_surface["runtime_witnesses"])
+
+    assert lease_surface["coverage_state"] == "witnessed"
+    assert lease_surface["request_proof"] == "request_proof"
+    assert lease_surface["action_proof"] == "action_proof"
+    assert "DistributedLeaseClaimPlanner.evaluate" in lease_surface["representative_paths"]
+    assert "DistributedLeaseClaimBoundaryRequest" in lease_surface["representative_paths"]
+    assert "DistributedLeaseClaimReceipt" in lease_surface["representative_paths"]
+    assert "gateway/distributed_lease_boundary.py" in lease_surface["evidence_files"]
+    assert "schemas/distributed_lease_claim_receipt.schema.json" in lease_surface["evidence_files"]
+    assert "tests/test_gateway/test_distributed_lease_boundary.py" in lease_surface["evidence_files"]
+    assert "distributed_lease_policy_and_request_hash_bound" in witnesses
+    assert "backend_operation_payload_is_hash_bound" in witnesses
+    assert "plan_only_does_not_claim_lease" in witnesses
+    assert "dry_run_rejects_claim_response_evidence" in witnesses
+    assert "claim_approved_requires_external_receipts" in witnesses
+    assert "claim_approved_binds_adapter_receipt" in witnesses
+    assert "claim_approved_allows_unfenced_policy_without_token" in witnesses
+    assert "claim_approved_classifies_conflict_response" in witnesses
+    assert "claim_approved_classifies_deferred_response" in witnesses
+    assert "claim_approved_classifies_rejected_response" in witnesses
+    assert "observed_payload_mismatch_blocks_claim" in witnesses
+    assert "expired_or_unfenced_claim_blocks_dispatch" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "distributed_lease_claim_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_distributed_lease_claim_receipt_contract"]["status"] == "closed"
+
+
+def test_distributed_lease_adapter_registry_surface_binds_backend_capability() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lease_surface = surfaces["distributed_lease_adapter_registry_receipts"]
+    witnesses = set(lease_surface["runtime_witnesses"])
+
+    assert lease_surface["coverage_state"] == "witnessed"
+    assert lease_surface["request_proof"] == "request_proof"
+    assert lease_surface["action_proof"] == "action_proof"
+    assert "DistributedLeaseAdapterRegistryEvaluator.evaluate" in lease_surface["representative_paths"]
+    assert "DistributedLeaseAdapterRegistry" in lease_surface["representative_paths"]
+    assert "DistributedLeaseAdapterRegistryReceipt" in lease_surface["representative_paths"]
+    assert "gateway/distributed_lease_adapters.py" in lease_surface["evidence_files"]
+    assert "gateway/distributed_lease_boundary.py" in lease_surface["evidence_files"]
+    assert "schemas/distributed_lease_adapter_registry_receipt.schema.json" in lease_surface["evidence_files"]
+    assert "tests/test_gateway/test_distributed_lease_adapters.py" in lease_surface["evidence_files"]
+    assert "adapter_registry_default_inventory_hash_bound" in witnesses
+    assert "adapter_registry_delegates_external_gateway_without_local_execution" in witnesses
+    assert "adapter_registry_blocks_native_adapter_without_production_readiness" in witnesses
+    assert "adapter_registry_blocks_fencing_required_backend_without_token_support" in witnesses
+    assert "adapter_registry_blocks_claim_receipt_violations" in witnesses
+    assert "adapter_registry_binds_claim_approved_external_gateway_receipt" in witnesses
+    assert "adapter_registry_rejects_secret_values" in witnesses
+    assert "distributed_lease_adapter_registry_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_distributed_lease_adapter_registry_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_rate_limit_window_surface_rechecks_token_windows() -> None:

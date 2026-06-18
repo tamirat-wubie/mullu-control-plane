@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-provider-observation-receipt:1",
+  "title": "TeamOps Shared Inbox Provider Observation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "workflow_id",
+    "source_operator_input_request_ref",
+    "source_authority_id",
+    "operator_input_request_valid",
+    "operator_input_probe_allowed",
+    "status",
+    "solver_outcome",
+    "proof_state",
+    "checked_at",
+    "connector_id",
+    "provider_operation",
+    "query_hash",
+    "max_message_count",
+    "observed_message_count",
+    "provider_receipt_ref",
+    "provider_response_digest",
+    "redacted_response_digest",
+    "provider_call_observed_by_operator",
+    "provider_call_performed_by_producer",
+    "external_mailbox_write_performed",
+    "external_message_sent",
+    "provider_mutation_performed",
+    "raw_provider_payload_serialized",
+    "no_secret_values_serialized",
+    "read_only_observation_bound",
+    "blocked_until",
+    "recovery_actions",
+    "validation_commands"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "team_ops.shared_inbox_triage"
+    },
+    "source_operator_input_request_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_authority_id": {
+      "type": "string"
+    },
+    "operator_input_request_valid": {
+      "type": "boolean"
+    },
+    "operator_input_probe_allowed": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["blocked", "failed", "passed"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "GovernanceBlocked", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Fail", "Pass"]
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "connector_id": {
+      "type": "string",
+      "enum": ["", "gmail", "microsoft_graph", "slack", "teams"]
+    },
+    "provider_operation": {
+      "type": "string",
+      "enum": ["", "email.search", "messaging.thread.search"]
+    },
+    "query_hash": {
+      "$ref": "#/$defs/sha256_hex"
+    },
+    "max_message_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "observed_message_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 50
+    },
+    "provider_receipt_ref": {
+      "type": "string"
+    },
+    "provider_response_digest": {
+      "type": "string"
+    },
+    "redacted_response_digest": {
+      "type": "string"
+    },
+    "provider_call_observed_by_operator": {
+      "type": "boolean"
+    },
+    "provider_call_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_message_sent": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_provider_payload_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only_observation_bound": {
+      "type": "boolean"
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "operator_input_request_valid": {
+            "const": true
+          },
+          "operator_input_probe_allowed": {
+            "const": true
+          },
+          "solver_outcome": {
+            "const": "SolvedVerified"
+          },
+          "proof_state": {
+            "const": "Pass"
+          },
+          "connector_id": {
+            "enum": ["gmail", "microsoft_graph", "slack", "teams"]
+          },
+          "provider_operation": {
+            "enum": ["email.search", "messaging.thread.search"]
+          },
+          "provider_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_response_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "redacted_response_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "provider_call_observed_by_operator": {
+            "const": true
+          },
+          "read_only_observation_bound": {
+            "const": true
+          },
+          "blocked_until": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

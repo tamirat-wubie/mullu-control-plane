@@ -37,6 +37,7 @@ UniversalActionOrchestration :=
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
 | `closure.reconciliation_ref` | Reconciliation stage output retained in the closure receipt boundary. |
 | `closure.memory_ref` | Admitted memory update reference retained in the closure receipt boundary, or null when no memory update is admitted. |
+| `closure.whqr_replay_binding` | Compact WHQR semantic replay binding retained when the terminal certificate carries verified WHQR replay metadata. |
 | `memory_update.constitution` | Governed memory constitution binding source refs, owner, scope, confidence, sensitivity, expiry, allowed uses, forbidden uses, evidence refs, verification time, and mutation history. |
 
 The runtime export path is:
@@ -47,8 +48,11 @@ UniversalActionRequest + UniversalActionResult -> build_universal_action_orchest
 
 The export is pure and does not dispatch work. It materializes the already-issued kernel certificates, receipts, closure state, memory decision, and lineage delta into the same schema validated for static examples.
 Command-ledger dispatch persists this record under `universal_action_orchestration`, and the gateway exposes it through `/commands/{command_id}/universal-action-orchestration` as a read-only replay surface.
-The replay surface fails closed unless the persisted command event came from a universal action kernel dispatch or block event and the embedded UAO v1 record preserves the expected command identity, event identity, decision, receipt, closure, and no-private-reasoning shape.
-Operator read-model summaries must expose the replay-validated `reconciliation_ref` and `memory_ref` alongside `closure_state`; summaries may omit execution detail, but they must not reduce closure to status-only evidence.
+Command terminal-closure read models expose the available `whqr_replay_binding` and derived `whqr_replay_ref` at the top level when the terminal certificate carries verified WHQR replay metadata.
+Command universal-action proof read models expose the same available `whqr_replay_binding` and derived `whqr_replay_ref` at the top level so audit navigation does not require unpacking the nested proof payload.
+Command universal-action orchestration read models expose the same derived `whqr_replay_ref` from `closure.whqr_replay_binding.replay_ref` so orchestration replay, proof replay, and terminal closure use one operator navigation contract.
+The replay surface fails closed unless the persisted command event came from a universal action kernel dispatch or block event and the embedded UAO v1 record preserves the expected command identity, event identity, decision, receipt, closure, WHQR replay binding, and no-private-reasoning shape.
+Operator read-model summaries must expose the replay-validated `reconciliation_ref`, `memory_ref`, available `whqr_replay_binding`, and derived `whqr_replay_ref` alongside `closure_state`; summaries may omit execution detail, but they must not reduce closure to status-only evidence.
 The workspace governance witness must retain UAO doctrine, fixtures, schemas, validators, receipt evidence, bypass detection, and replay tests so preflight can detect removal of the UAO law surface before repository closure.
 
 ## Algorithm
@@ -76,7 +80,7 @@ The validator applies these rules deterministically:
 19. Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.
 20. Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.
 21. Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.
-22. Every closure receipt must bind closure state to reconciliation and memory references before exposure.
+22. Every closure receipt must bind closure state to reconciliation, memory, and available WHQR replay references before exposure.
 23. Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.
 24. Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.
 25. Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.
@@ -99,6 +103,12 @@ empty(claim.evidence_refs) -> claim_id in claim_ledger.unverified_claim_ids
 memory_update.status = recorded -> non_empty(memory_update.constitution.evidence_refs)
 memory_update.learning_allowed = true -> "learning" in memory_update.constitution.allowed_uses
 intersection(allowed_uses, forbidden_uses) != empty -> reject
+terminal_certificate.metadata.whqr_canonical_hash present -> closure.whqr_replay_binding.replay_ref binds that hash
+closure.whqr_replay_binding.replay_ref present -> replay_ref starts with whqr://replay/sha256: and includes a 64-character lowercase hex digest suffix
+closure.whqr_replay_binding.canonical_hash present -> canonical_hash starts with sha256: and includes a 64-character lowercase hex digest suffix
+closure.whqr_replay_binding.semantics_hash present -> semantics_hash starts with sha256: and includes a 64-character lowercase hex digest suffix
+closure.whqr_replay_binding.version present -> version uses major.minor.patch without leading-zero numeric identifiers
+closure.whqr_replay_binding present -> reject fields outside replay_ref, canonical_hash, semantics_hash, version
 decision.execution_allowed -> fracture_report.status = passed
 decision.execution_allowed -> empty(fracture_report.blocking_check_ids)
 stage_order(fracture) < stage_order(execution)

@@ -1,0 +1,62 @@
+{
+  "requirement_id": "sdlc_req_worker_failure_receipt_contract_20260614",
+  "request_id": "platform_worker_failure_receipt_contract_20260614",
+  "problem_statement": "The gap register identifies worker partial execution recovery as incomplete. Without a schema-backed worker failure receipt, the platform cannot distinguish no-effect failures, partial effects, unknown effects, rollback-required states, and recovery-required states before terminal closure.",
+  "success_criteria": [
+    "WorkerFailureReceipt validates against the public JSON schema and a Foundation Mode example",
+    "WorkerFailureReceipt blocks terminal closure and success claims after worker failure",
+    "partial or unknown worker effects require recovery evidence or explicit blocker refs",
+    "rollback-required states require rollback action refs",
+    "raw worker output and raw secrets are rejected from the receipt",
+    "focused tests cover valid, malformed, guard-drift, count-drift, missing-failure, recovery, rollback, safe-halt, CLI, and SDLC artifact cases"
+  ],
+  "non_goals": [
+    "no live worker registration",
+    "no worker dispatch implementation",
+    "no retry scheduler implementation",
+    "no incident runtime implementation",
+    "no terminal closure certificate",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "WorkerFailureReceipt is a post-dispatch failure contract, not a live worker runtime",
+    "failed_step_refs must be explicit",
+    "partial or unknown effects must not become success claims",
+    "rollback-required states must preserve rollback refs",
+    "raw output and raw secret material must not be serialized into the receipt",
+    "effect-bearing follow-on retry or rollback still requires UAO, Phi_gov, life-meaning judgment where applicable, approval where required, recovery evidence, and verification",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/worker_failure_receipt.schema.json",
+    "examples/worker_failure_receipt.foundation.json",
+    "scripts/validate_worker_failure_receipt.py",
+    "tests/test_validate_worker_failure_receipt.py",
+    "docs/79_worker_failure_receipt_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_worker_failure_receipt_contract_20260614.json",
+    "examples/sdlc/design_worker_failure_receipt_contract_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_worker_failure_receipt.py",
+    "python -m pytest tests/test_validate_worker_failure_receipt.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-worker-failure-receipt-contract-20260614.json"
+  ],
+  "evidence_required": [
+    "WorkerFailureReceipt validation receipt",
+    "focused pytest receipt for validator behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/worker-failure-receipt-contract/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/worker-failure-receipt-contract/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/worker-failure-receipt-contract/20260614"
+}

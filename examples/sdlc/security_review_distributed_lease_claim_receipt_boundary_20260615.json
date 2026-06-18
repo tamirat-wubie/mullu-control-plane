@@ -1,0 +1,91 @@
+{
+  "security_review_id": "sdlc_security_distributed_lease_claim_receipt_boundary_20260615",
+  "change_id": "sdlc_req_distributed_lease_claim_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Distributed scheduler lease claims can admit worker execution authority if a backend grant is trusted without binding the scheduled job payload and worker identity. The main risks are unapproved lease claim admission, claiming one payload and executing another, accepting stale or expired lease grants, missing fencing tokens when policy requires fencing, overclaiming dry-run proof as live lease acquisition, accepting forged adapter response evidence, collapsing observed backend conflict, retry, or rejection evidence into not_observed, leaking raw tokens or private keys through metadata, and bypassing downstream temporal lease-window admission. The mitigation is to keep the planner non-live, hash the policy, request payload, operation payload, and plan, require readiness evidence refs for every mode, forbid claim evidence in plan-only and dry-run modes, require approval plus adapter claim receipt plus 2xx response plus response hash plus observed payload hash match plus future lease expiry plus fencing token when policy requires fencing before claim-approved admission, classify observed non-2xx adapter responses as conflict, deferred, or rejected while blocking admission, block oversized lease windows, and preserve temporal lease-window receipts as the downstream dispatch gate.",
+  "required_checks": [
+    {
+      "category": "external_api",
+      "check": "plan-only and dry-run check proving the planner performs no lease backend API call, authenticates no request, stores no raw secret, and rejects live claim evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_dry_run_rejects_claim_response_evidence"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving claim-approved mode requires adapter claim receipt evidence before admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_claim_approved_requires_external_receipts"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving backend kind, scheduled job, worker, request hash, operation hash, and plan hash are bound into deterministic receipt evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_plan_is_hash_bound_and_non_live"
+    },
+    {
+      "category": "audit",
+      "check": "adapter outcome classification check proving observed non-2xx claim-approved responses are classified as conflict, deferred, or rejected instead of not_observed",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_claim_classifies_conflict_response"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving raw token-shaped metadata blocks receipt admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_claim_rejects_secret_value_disclosure"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving non-claim modes reject approval, adapter receipt, response status, response hash, observed payload hash, lease expiry, and fencing token evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_dry_run_rejects_claim_response_evidence"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id, actor id, command id, scheduled job id, worker id, and backend service id are carried in the receipt boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_plan_is_hash_bound_and_non_live"
+    },
+    {
+      "category": "auth",
+      "check": "auth boundary check proving claim-approved mode requires approval and adapter receipt evidence before external claim admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_distributed_lease_boundary.py::test_distributed_lease_claim_approved_requires_external_receipts"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public distributed lease claim receipt schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep DistributedLeaseClaimPlanner non-live and deterministic",
+    "require readiness evidence refs for all distributed lease claim receipts",
+    "forbid claim response evidence in plan-only and dry-run modes",
+    "require approval, adapter claim receipt, 2xx response, response hash, observed payload hash match, future lease expiry, and fencing token when policy requires fencing for claim-approved mode",
+    "classify observed non-2xx adapter responses into conflict, deferred, or rejected outcomes while blocking claim admission",
+    "block oversized lease windows and disabled receipt policy",
+    "preserve temporal lease-window receipts as the downstream dispatch admission gate",
+    "block raw token, JWT, and private-key shaped material before receipt admission",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid backend calls, request authentication, scheduler mutation, worker dispatch, deployment, or production claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/distributed-lease-claim-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/distributed-lease-claim-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/distributed-lease-claim-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/distributed-lease-claim-receipt-boundary/20260615"
+}

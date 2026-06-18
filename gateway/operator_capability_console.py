@@ -81,6 +81,7 @@ def build_operator_capability_read_model(
         "domain_counts": _counts(capabilities, "domain"),
         "risk_counts": _counts(capabilities, "risk_level"),
         "maturity_counts": _counts(capabilities, "maturity_level"),
+        "maturity_label_counts": _counts(capabilities, "maturity_label"),
         "production_ready_count": sum(1 for item in capabilities if item.get("production_ready") is True),
         "autonomy_ready_count": sum(1 for item in capabilities if item.get("autonomy_ready") is True),
         "approval_required_count": sum(1 for item in capabilities if item.get("requires_approval") is True),
@@ -103,6 +104,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
         f"<td>{escape(str(item.get('domain', '')))}</td>"
         f"<td>{escape(str(item.get('risk_level', '')))}</td>"
         f"<td>{escape(str(item.get('maturity_level', '')))}</td>"
+        f"<td>{escape(str(item.get('maturity_label', '')))}</td>"
         f"<td>{_bool_cell(item.get('production_ready'))}</td>"
         f"<td>{_bool_cell(item.get('requires_approval'))}</td>"
         f"<td>{_bool_cell(item.get('requires_sandbox'))}</td>"
@@ -175,7 +177,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
   <section>
     <h2>Governed Capability Records</h2>
     <table>
-      <thead><tr><th>Capability</th><th>Domain</th><th>Risk</th><th>Maturity</th><th>Production</th><th>Approval</th><th>Sandbox</th><th>Allowed Tools</th></tr></thead>
+      <thead><tr><th>Capability</th><th>Domain</th><th>Risk</th><th>Maturity</th><th>Label</th><th>Production</th><th>Approval</th><th>Sandbox</th><th>Allowed Tools</th></tr></thead>
       <tbody>{capability_rows}</tbody>
     </table>
   </section>

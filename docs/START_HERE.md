@@ -622,6 +622,8 @@ concept. Common entry points:
   recorded and can be replayed.
 - [74_truth_kernel_plane.md](74_truth_kernel_plane.md) -- the named internal
   MAF Core truth-state kernel boundary.
+- [75_problem_star_compilation_receipt.md](75_problem_star_compilation_receipt.md)
+  -- the read-only receipt proving ProblemStar compilation before solver routing.
 - Full architecture index: every `NN_*.md` file in this folder is one subsystem.
 
 For "where does responsibility start and stop" pictures inside this checkout,

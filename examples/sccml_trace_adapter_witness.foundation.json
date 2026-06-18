@@ -1,0 +1,82 @@
+{
+  "witness_id": "sccml-trace-adapter-witness-foundation-20260616",
+  "witness_version": "sccml_trace_adapter_witness.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "trace_scope": {
+    "source_kernel_family": "symbolic-causal-chain-machine-language",
+    "adapter_mode": "witness_only_operator_supplied_refs",
+    "tenant_scope": "foundation-local-only",
+    "instruction_trace_ref": "hash://sha256/sccml-instruction-trace-redacted",
+    "pre_state_hash_ref": "hash://sha256/sccml-pre-state-redacted",
+    "post_state_hash_ref": "hash://sha256/sccml-post-state-redacted",
+    "proof_ref": "hash://sha256/sccml-proof-redacted",
+    "unsupported_op_gap_ref": "hash://sha256/sccml-unsupported-op-gap-redacted",
+    "uao_ref": "uao://sccml-trace-adapter/foundation/witness-only",
+    "life_meaning_judgment_ref": "schemas/life_meaning_judgment.schema.json"
+  },
+  "trace_artifacts": {
+    "instruction_trace_digest_ref": "hash://sha256/sccml-instruction-trace-digest-redacted",
+    "pre_state_digest_ref": "hash://sha256/sccml-pre-state-digest-redacted",
+    "post_state_digest_ref": "hash://sha256/sccml-post-state-digest-redacted",
+    "proof_digest_ref": "hash://sha256/sccml-proof-digest-redacted",
+    "unsupported_ops_digest_ref": "hash://sha256/sccml-unsupported-ops-digest-redacted",
+    "adapter_manifest_ref": "hash://sha256/sccml-adapter-manifest-redacted"
+  },
+  "authority_boundary": {
+    "live_kernel_execution_performed": false,
+    "subprocess_execution_performed": false,
+    "external_repo_read_performed": false,
+    "instruction_replay_performed": false,
+    "state_mutation_performed": false,
+    "proof_committed": false,
+    "governance_proof_accepted": false,
+    "unsupported_op_ignored": false,
+    "connector_call_performed": false,
+    "external_write_performed": false,
+    "file_write_performed": false,
+    "raw_trace_stored": false,
+    "raw_state_stored": false,
+    "raw_secret_value_stored": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "trace_integrity_guard": {
+    "digest_refs_required": true,
+    "state_hashes_required": true,
+    "unsupported_ops_declared": true,
+    "raw_trace_retained": false,
+    "raw_state_retained": false,
+    "private_payload_redacted": true,
+    "operator_review_required": true,
+    "adapter_gap_review_required": true,
+    "retention_policy_ref": "retention://sccml-trace-adapter/digest-only"
+  },
+  "receipt_refs": {
+    "sccml_trace_adapter_witness_schema": "schemas/sccml_trace_adapter_witness.schema.json",
+    "kernel_proof_schema": "schemas/kernel_proof.schema.json",
+    "trace_entry_schema": "schemas/trace_entry.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "witness_only": true,
+    "kernel_authority_denied": true,
+    "unsupported_ops_gap_declared": true,
+    "authority_denial_count": 16,
+    "integrity_guard_count": 9,
+    "receipt_ref_count": 5,
+    "evidence_ref_count": 10
+  },
+  "evidence_refs": [
+    "schemas/sccml_trace_adapter_witness.schema.json",
+    "examples/sccml_trace_adapter_witness.foundation.json",
+    "scripts/validate_sccml_trace_adapter_witness.py",
+    "tests/test_validate_sccml_trace_adapter_witness.py",
+    "docs/90_sccml_trace_adapter_witness_contract.md",
+    "schemas/kernel_proof.schema.json",
+    "schemas/trace_entry.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "docs/82_cross_repo_opportunity_map.md"
+  ]
+}

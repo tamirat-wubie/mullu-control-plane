@@ -1,0 +1,497 @@
+{
+  "assurance": {
+    "assurance_id": "personal_assistant_planning_projection_no_effect_assurance",
+    "authority_drift_detected": false,
+    "blocking_reasons": [
+      "blocked_projection_awaiting_evidence"
+    ],
+    "checked_controls": [
+      "planning_projection_is_preview_only",
+      "no_calendar_write",
+      "no_task_write",
+      "no_invite",
+      "no_message_send",
+      "no_system_write",
+      "no_connector_mutation",
+      "no_money_movement",
+      "no_external_submission",
+      "no_public_post",
+      "no_deployment",
+      "no_memory_write",
+      "no_secret_value_serialization"
+    ],
+    "foundation_only": true,
+    "next_action": "review schedule preview before creating events or tasks",
+    "outcome": "AwaitingEvidence",
+    "ready_for_calendar_write": false,
+    "ready_for_customer_readiness_claim": false,
+    "ready_for_deployment": false,
+    "ready_for_external_submission": false,
+    "ready_for_invite": false,
+    "ready_for_message_send": false,
+    "ready_for_money_movement": false,
+    "ready_for_paid_action": false,
+    "ready_for_public_posting": false,
+    "ready_for_system_write": false,
+    "ready_for_task_write": false
+  },
+  "connectors_used": [],
+  "effect_boundary": {
+    "calendar_write_allowed": false,
+    "connector_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "deployment_allowed": false,
+    "execution_allowed": false,
+    "external_submission_allowed": false,
+    "invite_allowed": false,
+    "live_connector_execution_allowed": false,
+    "memory_write_allowed": false,
+    "message_person_allowed": false,
+    "money_movement_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "paid_subscription_allowed": false,
+    "planning_projection_records_allowed": true,
+    "public_post_allowed": false,
+    "public_readiness_claim_allowed": false,
+    "system_of_record_write_allowed": false,
+    "task_write_allowed": false
+  },
+  "generated_at": "2026-06-16T04:05:00+00:00",
+  "governed": true,
+  "metadata": {
+    "calendar_write_allowed": false,
+    "deployment_allowed": false,
+    "external_submission_allowed": false,
+    "foundation_only": true,
+    "live_connector_execution_allowed": false,
+    "projection_contract": "schedule_planning_preview_only",
+    "public_post_allowed": false,
+    "runtime_boundary": "planning_projection_does_not_write_calendar_tasks_or_records",
+    "system_of_record_write_allowed": false,
+    "task_write_allowed": false
+  },
+  "private_payload_policy": {
+    "body_projection": "none",
+    "connector_payload_projection": "no_connector_payload",
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false
+  },
+  "projection_count": 2,
+  "projection_ids": [
+    "pa_planning_projection_item_blocked_001",
+    "pa_planning_projection_item_ready_001"
+  ],
+  "projection_set_id": "pa_planning_projection_foundation_001",
+  "projections": [
+    {
+      "plan": {
+        "answer_claim_authority": "awaiting_operator_schedule_values",
+        "assignment_plan": [],
+        "assumptions": [
+          "operator has not supplied windows or work items"
+        ],
+        "calendar_write_allowed": false,
+        "capacity_summary": [],
+        "connector_mutation_allowed": false,
+        "constraints": [
+          "preview only"
+        ],
+        "customer_readiness_claim_allowed": false,
+        "deployment_allowed": false,
+        "effect_boundary": "schedule_planning_preview_only_no_external_effect",
+        "evidence_gate": {
+          "blocking_reasons": [
+            "time_windows_missing",
+            "work_items_missing",
+            "evidence_refs_missing"
+          ],
+          "calendar_event_cancelled": false,
+          "calendar_event_created": false,
+          "calendar_event_moved": false,
+          "connector_state_mutated": false,
+          "deployment_started": false,
+          "evidence_refs": [],
+          "external_submission_sent": false,
+          "invite_sent": false,
+          "operator_supplied_schedule_complete": false,
+          "payment_moved": false,
+          "person_messaged": false,
+          "public_post_created": false,
+          "system_of_record_written": false,
+          "task_system_mutated": false,
+          "task_written": false
+        },
+        "execution_allowed": false,
+        "external_submission_allowed": false,
+        "invite_allowed": false,
+        "live_connector_execution_allowed": false,
+        "memory_write_allowed": false,
+        "message_person_allowed": false,
+        "money_movement_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "next_actions": [
+          "time_windows_missing",
+          "work_items_missing",
+          "evidence_refs_missing"
+        ],
+        "objective": "Build a schedule plan from missing operator values.",
+        "paid_subscription_allowed": false,
+        "plan_type": "planning_schedule_foundation",
+        "planning_decision": "preview_only",
+        "planning_summary": "Planning objective 'Build a schedule plan from missing operator values.' is awaiting operator-supplied work items.",
+        "public_post_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "requested_result": "assign work items to available windows and identify blockers",
+        "system_of_record_write_allowed": false,
+        "task_write_allowed": false,
+        "time_windows": [],
+        "work_items": []
+      },
+      "plan_type": "planning_schedule_foundation",
+      "projection_id": "pa_planning_projection_item_blocked_001",
+      "receipt": {
+        "actions_not_taken": [
+          "calendar_event_not_created",
+          "calendar_event_not_moved",
+          "calendar_event_not_cancelled",
+          "invite_not_sent",
+          "task_not_written",
+          "task_system_not_mutated",
+          "person_not_messaged",
+          "system_of_record_not_written",
+          "connector_state_not_mutated",
+          "external_submission_not_sent",
+          "public_post_not_created",
+          "payment_not_moved",
+          "paid_subscription_not_changed",
+          "deployment_not_started",
+          "memory_not_written",
+          "nested_mind_not_activated",
+          "secret_values_not_serialized",
+          "raw_private_payload_not_serialized"
+        ],
+        "actions_taken": [
+          "schedule_plan_created",
+          "capacity_projection_recorded",
+          "assignment_preview_created",
+          "receipt_created"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "blocked",
+        "evidence_refs": [
+          "proof://personal-assistant/request/planning_projection_blocked_001",
+          "proof://personal-assistant/planning/planning_projection_blocked_001"
+        ],
+        "inputs_used": [
+          "objective",
+          "operator_supplied_time_windows",
+          "operator_supplied_work_items",
+          "assumptions",
+          "constraints"
+        ],
+        "memory_observation_refs": [],
+        "metadata": {
+          "answer_claim_authority": "awaiting_operator_schedule_values",
+          "blocking_reasons": [
+            "time_windows_missing",
+            "work_items_missing",
+            "evidence_refs_missing"
+          ],
+          "calendar_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "customer_readiness_claim_allowed": false,
+          "deployment_allowed": false,
+          "external_submission_allowed": false,
+          "invite_allowed": false,
+          "live_connector_execution_allowed": false,
+          "memory_write_allowed": false,
+          "message_person_allowed": false,
+          "money_movement_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "planning_decision": "preview_only",
+          "planning_execution_boundary": "preview_only",
+          "public_post_allowed": false,
+          "public_readiness_claim_allowed": false,
+          "system_of_record_write_allowed": false,
+          "task_write_allowed": false
+        },
+        "mode": "preview",
+        "outcome": "AwaitingEvidence",
+        "private_payload_policy": {
+          "body_projection": "none",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_planning_projection_blocked_001_planning_optimize_schedule",
+        "redactions": [
+          "private_schedule_values_operator_supplied",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/planning/planning_projection_blocked_001"
+        ],
+        "request_id": "pa_request_planning_projection_blocked_001",
+        "risk_level": "P2",
+        "skill_id": "planning.optimize_schedule",
+        "timestamp": "2026-06-16T04:05:00+00:00"
+      },
+      "request_id": "pa_request_planning_projection_blocked_001",
+      "skill_id": "planning.optimize_schedule"
+    },
+    {
+      "plan": {
+        "answer_claim_authority": "operator_supplied_schedule_values_only",
+        "assignment_plan": [
+          {
+            "estimated_minutes": "60",
+            "item_ref": "memo",
+            "reason": "assigned",
+            "status": "assigned",
+            "title": "Write launch memo",
+            "window_ref": "morning"
+          },
+          {
+            "estimated_minutes": "45",
+            "item_ref": "receipts",
+            "reason": "assigned",
+            "status": "assigned",
+            "title": "Review receipts",
+            "window_ref": "morning"
+          },
+          {
+            "estimated_minutes": "30",
+            "item_ref": "followups",
+            "reason": "assigned",
+            "status": "assigned",
+            "title": "Triage followups",
+            "window_ref": "afternoon"
+          }
+        ],
+        "assumptions": [
+          "all values are operator-supplied planning estimates"
+        ],
+        "calendar_write_allowed": false,
+        "capacity_summary": [
+          {
+            "assigned_minutes": "105",
+            "capacity_minutes": "120",
+            "label": "Morning focus",
+            "remaining_minutes": "15",
+            "status": "within_capacity",
+            "window_ref": "morning"
+          },
+          {
+            "assigned_minutes": "30",
+            "capacity_minutes": "90",
+            "label": "Afternoon review",
+            "remaining_minutes": "60",
+            "status": "within_capacity",
+            "window_ref": "afternoon"
+          }
+        ],
+        "connector_mutation_allowed": false,
+        "constraints": [
+          "do not create calendar events",
+          "do not write tasks"
+        ],
+        "customer_readiness_claim_allowed": false,
+        "deployment_allowed": false,
+        "effect_boundary": "schedule_planning_preview_only_no_external_effect",
+        "evidence_gate": {
+          "blocking_reasons": [],
+          "calendar_event_cancelled": false,
+          "calendar_event_created": false,
+          "calendar_event_moved": false,
+          "connector_state_mutated": false,
+          "deployment_started": false,
+          "evidence_refs": [
+            "proof://personal-assistant/planning/operator-values"
+          ],
+          "external_submission_sent": false,
+          "invite_sent": false,
+          "operator_supplied_schedule_complete": true,
+          "payment_moved": false,
+          "person_messaged": false,
+          "public_post_created": false,
+          "system_of_record_written": false,
+          "task_system_mutated": false,
+          "task_written": false
+        },
+        "execution_allowed": false,
+        "external_submission_allowed": false,
+        "invite_allowed": false,
+        "live_connector_execution_allowed": false,
+        "memory_write_allowed": false,
+        "message_person_allowed": false,
+        "money_movement_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "next_actions": [
+          "operator may review the schedule preview before creating events or tasks"
+        ],
+        "objective": "Plan the operator work day from supplied windows and tasks.",
+        "paid_subscription_allowed": false,
+        "plan_type": "planning_schedule_foundation",
+        "planning_decision": "preview_only",
+        "planning_summary": "Schedule preview for 'Plan the operator work day from supplied windows and tasks.' assigns 3 item(s), blocks 0 item(s), and leaves 75 minute(s) of operator-supplied capacity.",
+        "public_post_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "requested_result": "assign work items to available windows and identify blockers",
+        "system_of_record_write_allowed": false,
+        "task_write_allowed": false,
+        "time_windows": [
+          {
+            "capacity_minutes": 120,
+            "end": "2026-06-16T11:00:00-04:00",
+            "label": "Morning focus",
+            "notes": "planning estimate",
+            "source_ref": "operator_supplied",
+            "start": "2026-06-16T09:00:00-04:00",
+            "window_ref": "morning"
+          },
+          {
+            "capacity_minutes": 90,
+            "end": "2026-06-16T14:30:00-04:00",
+            "label": "Afternoon review",
+            "notes": "planning estimate",
+            "source_ref": "operator_supplied",
+            "start": "2026-06-16T13:00:00-04:00",
+            "window_ref": "afternoon"
+          }
+        ],
+        "work_items": [
+          {
+            "due": "2026-06-16T12:00:00-04:00",
+            "earliest_start": "",
+            "estimated_minutes": 60,
+            "item_ref": "memo",
+            "notes": "planning estimate",
+            "priority": 1,
+            "required_window_ref": "",
+            "source_ref": "operator_supplied",
+            "title": "Write launch memo"
+          },
+          {
+            "due": "2026-06-16T15:00:00-04:00",
+            "earliest_start": "",
+            "estimated_minutes": 45,
+            "item_ref": "receipts",
+            "notes": "planning estimate",
+            "priority": 2,
+            "required_window_ref": "",
+            "source_ref": "operator_supplied",
+            "title": "Review receipts"
+          },
+          {
+            "due": "2026-06-16T17:00:00-04:00",
+            "earliest_start": "",
+            "estimated_minutes": 30,
+            "item_ref": "followups",
+            "notes": "planning estimate",
+            "priority": 3,
+            "required_window_ref": "",
+            "source_ref": "operator_supplied",
+            "title": "Triage followups"
+          }
+        ]
+      },
+      "plan_type": "planning_schedule_foundation",
+      "projection_id": "pa_planning_projection_item_ready_001",
+      "receipt": {
+        "actions_not_taken": [
+          "calendar_event_not_created",
+          "calendar_event_not_moved",
+          "calendar_event_not_cancelled",
+          "invite_not_sent",
+          "task_not_written",
+          "task_system_not_mutated",
+          "person_not_messaged",
+          "system_of_record_not_written",
+          "connector_state_not_mutated",
+          "external_submission_not_sent",
+          "public_post_not_created",
+          "payment_not_moved",
+          "paid_subscription_not_changed",
+          "deployment_not_started",
+          "memory_not_written",
+          "nested_mind_not_activated",
+          "secret_values_not_serialized",
+          "raw_private_payload_not_serialized"
+        ],
+        "actions_taken": [
+          "schedule_plan_created",
+          "capacity_projection_recorded",
+          "assignment_preview_created",
+          "receipt_created"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "allowed",
+        "evidence_refs": [
+          "proof://personal-assistant/request/planning_projection_ready_001",
+          "proof://personal-assistant/planning/operator-values",
+          "proof://personal-assistant/planning/planning_projection_ready_001"
+        ],
+        "inputs_used": [
+          "objective",
+          "operator_supplied_time_windows",
+          "operator_supplied_work_items",
+          "assumptions",
+          "constraints"
+        ],
+        "memory_observation_refs": [],
+        "metadata": {
+          "answer_claim_authority": "operator_supplied_schedule_values_only",
+          "blocking_reasons": [],
+          "calendar_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "customer_readiness_claim_allowed": false,
+          "deployment_allowed": false,
+          "external_submission_allowed": false,
+          "invite_allowed": false,
+          "live_connector_execution_allowed": false,
+          "memory_write_allowed": false,
+          "message_person_allowed": false,
+          "money_movement_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "planning_decision": "preview_only",
+          "planning_execution_boundary": "preview_only",
+          "public_post_allowed": false,
+          "public_readiness_claim_allowed": false,
+          "system_of_record_write_allowed": false,
+          "task_write_allowed": false
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "none",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_planning_projection_ready_001_planning_optimize_schedule",
+        "redactions": [
+          "private_schedule_values_operator_supplied",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/planning/planning_projection_ready_001"
+        ],
+        "request_id": "pa_request_planning_projection_ready_001",
+        "risk_level": "P2",
+        "skill_id": "planning.optimize_schedule",
+        "timestamp": "2026-06-16T04:05:00+00:00"
+      },
+      "request_id": "pa_request_planning_projection_ready_001",
+      "skill_id": "planning.optimize_schedule"
+    }
+  ],
+  "receipt_ids": [
+    "pa_receipt_planning_projection_blocked_001_planning_optimize_schedule",
+    "pa_receipt_planning_projection_ready_001_planning_optimize_schedule"
+  ],
+  "source_projection": "operator_supplied_schedule_values"
+}

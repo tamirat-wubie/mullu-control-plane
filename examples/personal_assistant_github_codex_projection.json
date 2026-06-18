@@ -1,0 +1,316 @@
+{
+  "projection_set_id": "pa_github_codex_projection_foundation_001",
+  "generated_at": "2026-06-15T18:05:00+00:00",
+  "governed": true,
+  "source_projection": "operator_supplied_github_codex_evidence",
+  "projection_count": 2,
+  "projection_ids": [
+    "pa_github_codex_projection_item_blocked_001",
+    "pa_github_codex_projection_item_ready_001"
+  ],
+  "receipt_ids": [
+    "pa_receipt_github_codex_projection_blocked_001_github_pr_summarize",
+    "pa_receipt_github_codex_projection_ready_001_github_pr_summarize"
+  ],
+  "connectors_used": [
+    "github"
+  ],
+  "projections": [
+    {
+      "projection_id": "pa_github_codex_projection_item_blocked_001",
+      "request_id": "pa_request_github_codex_projection_blocked_001",
+      "skill_id": "github.pr.summarize",
+      "plan_type": "github_codex_review_foundation",
+      "plan": {
+        "plan_type": "github_codex_review_foundation",
+        "repository_ref": "tamirat-wubie/mullu-control-plane",
+        "pull_request_ref": "",
+        "change_summary": "Operator asked for a PR review but did not provide changed-file or evidence refs.",
+        "changed_files": [],
+        "risk_notes": [
+          "evidence set incomplete"
+        ],
+        "blocking_questions": [
+          "changed_files_missing"
+        ],
+        "review_decision": "review_only",
+        "merge_recommendation": "do_not_merge_from_projection",
+        "codex_instruction": "Repository: tamirat-wubie/mullu-control-plane. Pull request: no pull-request ref supplied. Goal: prepare the next safe Codex instruction. Change summary: Operator asked for a PR review but did not provide changed-file or evidence refs.. Files: operator-supplied file list is missing. Risks: evidence set incomplete. Open questions: changed_files_missing. Stay in preview/review mode; do not push, merge, open issues, submit reviews, deploy, serialize secrets, or claim customer readiness.",
+        "evidence_gate": {
+          "operator_supplied_evidence_complete": false,
+          "evidence_refs": [],
+          "blocking_reasons": [
+            "changed_files_missing",
+            "evidence_refs_missing",
+            "changed_files_missing"
+          ],
+          "github_call_performed": false,
+          "repository_write_performed": false,
+          "review_submission_performed": false,
+          "deployment_performed": false
+        },
+        "next_actions": [
+          "changed_files_missing",
+          "evidence_refs_missing",
+          "changed_files_missing"
+        ],
+        "effect_boundary": "github_codex_review_no_repository_effect",
+        "execution_allowed": false,
+        "github_call_allowed": false,
+        "repository_mutation_allowed": false,
+        "pull_request_mutation_allowed": false,
+        "deployment_allowed": false
+      },
+      "receipt": {
+        "receipt_id": "pa_receipt_github_codex_projection_blocked_001_github_pr_summarize",
+        "request_id": "pa_request_github_codex_projection_blocked_001",
+        "skill_id": "github.pr.summarize",
+        "mode": "preview",
+        "risk_level": "P1",
+        "inputs_used": [
+          "operator_supplied_change_summary",
+          "changed_files",
+          "evidence_refs"
+        ],
+        "connectors_used": [
+          "github"
+        ],
+        "decision": "blocked",
+        "approval_required": false,
+        "approval_ref": "",
+        "actions_taken": [
+          "github_codex_review_plan_prepared",
+          "codex_instruction_drafted",
+          "receipt_created"
+        ],
+        "actions_not_taken": [
+          "github_not_called",
+          "pull_request_not_opened",
+          "pull_request_not_merged",
+          "branch_not_pushed",
+          "issue_not_created",
+          "review_not_submitted",
+          "deployment_not_started",
+          "repository_not_mutated",
+          "secret_values_not_serialized",
+          "raw_diff_not_serialized"
+        ],
+        "redactions": [
+          "secret_values_not_serialized",
+          "raw_diff_not_serialized",
+          "connector_payload_not_serialized"
+        ],
+        "private_payload_policy": {
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false,
+          "connector_payload_projection": "ref_only",
+          "body_projection": "redacted_summary"
+        },
+        "timestamp": "2026-06-15T18:05:00+00:00",
+        "evidence_refs": [
+          "proof://personal-assistant/request/github_codex_projection_blocked_001",
+          "proof://personal-assistant/github-codex/github_codex_projection_blocked_001"
+        ],
+        "memory_observation_refs": [],
+        "replay_refs": [
+          "replay://personal-assistant/github-codex/github_codex_projection_blocked_001"
+        ],
+        "outcome": "AwaitingEvidence",
+        "metadata": {
+          "review_decision": "review_only",
+          "merge_recommendation": "do_not_merge_from_projection",
+          "blocking_reasons": [
+            "changed_files_missing",
+            "evidence_refs_missing",
+            "changed_files_missing"
+          ],
+          "live_connector_execution_allowed": false,
+          "github_call_performed": false,
+          "repository_mutation_allowed": false,
+          "pull_request_mutation_allowed": false,
+          "external_write_allowed": false,
+          "deployment_mutation_allowed": false,
+          "system_of_record_write_allowed": false
+        }
+      }
+    },
+    {
+      "projection_id": "pa_github_codex_projection_item_ready_001",
+      "request_id": "pa_request_github_codex_projection_ready_001",
+      "skill_id": "github.pr.summarize",
+      "plan_type": "github_codex_review_foundation",
+      "plan": {
+        "plan_type": "github_codex_review_foundation",
+        "repository_ref": "tamirat-wubie/mullu-control-plane",
+        "pull_request_ref": "PR-1771",
+        "change_summary": "Adds a no-effect TeamOps shared-inbox preview route and projection schema.",
+        "changed_files": [
+          "gateway/server.py",
+          "schemas/personal_assistant_teamops_projection.schema.json",
+          "scripts/validate_personal_assistant_teamops_projection.py",
+          "tests/test_validate_personal_assistant_teamops_projection.py"
+        ],
+        "risk_notes": [
+          "public route must deny provider calls",
+          "receipts must record actions not taken"
+        ],
+        "blocking_questions": [],
+        "review_decision": "review_only",
+        "merge_recommendation": "do_not_merge_from_projection",
+        "codex_instruction": "Repository: tamirat-wubie/mullu-control-plane. Pull request: PR-1771. Goal: prepare the next safe Codex instruction. Change summary: Adds a no-effect TeamOps shared-inbox preview route and projection schema.. Files: gateway/server.py, schemas/personal_assistant_teamops_projection.schema.json, scripts/validate_personal_assistant_teamops_projection.py, tests/test_validate_personal_assistant_teamops_projection.py. Risks: public route must deny provider calls; receipts must record actions not taken. Open questions: no blocking questions supplied. Stay in preview/review mode; do not push, merge, open issues, submit reviews, deploy, serialize secrets, or claim customer readiness.",
+        "evidence_gate": {
+          "operator_supplied_evidence_complete": true,
+          "evidence_refs": [
+            "proof://github/pr/1771",
+            "proof://ci/main/5d50c928376c2493015567b9dc6b7ea1e902778e"
+          ],
+          "blocking_reasons": [],
+          "github_call_performed": false,
+          "repository_write_performed": false,
+          "review_submission_performed": false,
+          "deployment_performed": false
+        },
+        "next_actions": [
+          "operator may send the drafted Codex instruction in a separate tool context"
+        ],
+        "effect_boundary": "github_codex_review_no_repository_effect",
+        "execution_allowed": false,
+        "github_call_allowed": false,
+        "repository_mutation_allowed": false,
+        "pull_request_mutation_allowed": false,
+        "deployment_allowed": false
+      },
+      "receipt": {
+        "receipt_id": "pa_receipt_github_codex_projection_ready_001_github_pr_summarize",
+        "request_id": "pa_request_github_codex_projection_ready_001",
+        "skill_id": "github.pr.summarize",
+        "mode": "preview",
+        "risk_level": "P1",
+        "inputs_used": [
+          "operator_supplied_change_summary",
+          "changed_files",
+          "evidence_refs"
+        ],
+        "connectors_used": [
+          "github"
+        ],
+        "decision": "allowed",
+        "approval_required": false,
+        "approval_ref": "",
+        "actions_taken": [
+          "github_codex_review_plan_prepared",
+          "codex_instruction_drafted",
+          "receipt_created"
+        ],
+        "actions_not_taken": [
+          "github_not_called",
+          "pull_request_not_opened",
+          "pull_request_not_merged",
+          "branch_not_pushed",
+          "issue_not_created",
+          "review_not_submitted",
+          "deployment_not_started",
+          "repository_not_mutated",
+          "secret_values_not_serialized",
+          "raw_diff_not_serialized"
+        ],
+        "redactions": [
+          "secret_values_not_serialized",
+          "raw_diff_not_serialized",
+          "connector_payload_not_serialized"
+        ],
+        "private_payload_policy": {
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false,
+          "connector_payload_projection": "ref_only",
+          "body_projection": "redacted_summary"
+        },
+        "timestamp": "2026-06-15T18:05:00+00:00",
+        "evidence_refs": [
+          "proof://personal-assistant/request/github_codex_projection_ready_001",
+          "proof://github/pr/1771",
+          "proof://ci/main/5d50c928376c2493015567b9dc6b7ea1e902778e",
+          "proof://personal-assistant/github-codex/github_codex_projection_ready_001"
+        ],
+        "memory_observation_refs": [],
+        "replay_refs": [
+          "replay://personal-assistant/github-codex/github_codex_projection_ready_001"
+        ],
+        "outcome": "SolvedVerified",
+        "metadata": {
+          "review_decision": "review_only",
+          "merge_recommendation": "do_not_merge_from_projection",
+          "blocking_reasons": [],
+          "live_connector_execution_allowed": false,
+          "github_call_performed": false,
+          "repository_mutation_allowed": false,
+          "pull_request_mutation_allowed": false,
+          "external_write_allowed": false,
+          "deployment_mutation_allowed": false,
+          "system_of_record_write_allowed": false
+        }
+      }
+    }
+  ],
+  "effect_boundary": {
+    "github_codex_review_records_allowed": true,
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "github_call_allowed": false,
+    "repository_read_allowed": false,
+    "repository_mutation_allowed": false,
+    "pull_request_mutation_allowed": false,
+    "branch_push_allowed": false,
+    "issue_creation_allowed": false,
+    "review_submission_allowed": false,
+    "deployment_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
+    "public_readiness_claim_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false
+  },
+  "private_payload_policy": {
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false,
+    "connector_payload_projection": "ref_only",
+    "raw_diff_projection": "forbidden",
+    "body_projection": "redacted_summary"
+  },
+  "assurance": {
+    "assurance_id": "personal_assistant_github_codex_projection_no_effect_assurance",
+    "outcome": "AwaitingEvidence",
+    "foundation_only": true,
+    "ready_for_live_connector_execution": false,
+    "ready_for_repository_mutation": false,
+    "ready_for_merge_claim": false,
+    "ready_for_customer_readiness_claim": false,
+    "authority_drift_detected": false,
+    "checked_controls": [
+      "github_codex_projection_is_not_github_call",
+      "no_repository_read",
+      "no_repository_mutation",
+      "no_pull_request_mutation",
+      "no_branch_push",
+      "no_issue_creation",
+      "no_review_submission",
+      "no_deployment",
+      "no_secret_value_serialization",
+      "no_raw_diff_serialization"
+    ],
+    "blocking_reasons": [
+      "blocked_projection_awaiting_evidence"
+    ],
+    "next_action": "send the drafted Codex instruction separately only after operator review"
+  },
+  "metadata": {
+    "foundation_only": true,
+    "projection_contract": "github_codex_review_evidence_only",
+    "runtime_boundary": "github_codex_projection_does_not_call_github",
+    "live_connector_execution_allowed": false,
+    "github_call_allowed": false,
+    "repository_mutation_allowed": false,
+    "pull_request_mutation_allowed": false,
+    "deployment_mutation_allowed": false,
+    "system_of_record_write_allowed": false
+  }
+}

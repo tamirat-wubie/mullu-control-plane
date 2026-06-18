@@ -21,7 +21,9 @@ import urllib.request
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from pydantic import BaseModel, ConfigDict, Field
 from mcoi_runtime.governance.audit.decision_log import (
     GovernanceDecisionLog,
     GuardDecisionDetail,
@@ -54,6 +56,36 @@ from mcoi_runtime.app.governed_execution import (
 from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureCertificate,
     TerminalClosureDisposition,
+)
+from mcoi_runtime.personal_assistant import (
+    ApprovalDecision,
+    ApprovalProposedAction,
+    ApprovalScope,
+    MemoryConfidence,
+    MemoryObservationSource,
+    MemoryObservationType,
+    MemoryRetentionPolicy,
+    MemoryReviewDecision,
+    MemoryScope,
+    MemorySensitivity,
+    NestedMindStatus,
+    PersonalAssistantInvariantError,
+    PersonalAssistantApprovalQueue,
+    PersonalAssistantMemoryObservationLedger,
+    RequestInterface,
+    build_clarification_requests,
+    build_personal_assistant_console_read_model,
+    build_personal_assistant_preview_plan,
+    interpret_user_request,
+    load_default_skill_registry,
+    plan_github_codex_review,
+    plan_math_reasoning,
+    plan_research_source_compare,
+    plan_schedule_optimization,
+    plan_teamops_shared_inbox,
+    prepare_memory_observation,
+    render_personal_assistant_console_html,
+    review_memory_observation_candidate,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -189,6 +221,277 @@ REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
 )
 
 
+def _redacted_request_validation_detail(exc: RequestValidationError) -> list[dict[str, Any]]:
+    """Return validation errors without echoing rejected request values."""
+    details: list[dict[str, Any]] = []
+    for error in exc.errors():
+        details.append(
+            {
+                "type": str(error.get("type", "validation_error")),
+                "loc": list(error.get("loc", ())),
+                "msg": str(error.get("msg", "request validation failed")),
+            }
+        )
+    return details
+
+
+class GatewayPersonalAssistantConnectorRef(BaseModel):
+    """Connector proof reference accepted by the gateway preview boundary."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    connector_id: str
+    connector_name: str
+    proof_state: str
+    private_data_allowed: bool
+    scopes: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantPreviewRequest(BaseModel):
+    """Preview-only personal-assistant request admitted by the public gateway."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str
+    request_id: str = ""
+    submitted_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    thread_id: str = "thread-personal-assistant-gateway-preview"
+    requested_from_id: str = "operator"
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantApprovalAction(BaseModel):
+    """One proposed personal-assistant action for approval queue preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    action_id: str
+    skill_id: str
+    risk_level: str
+    effect_boundary: str
+    summary: str
+
+
+class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
+    """Stateless approval queue preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str
+    plan_id: str
+    approver_ref: str = "operator:gateway"
+    approval_scope: str = ApprovalScope.PER_ACTION.value
+    proposed_actions: list[GatewayPersonalAssistantApprovalAction]
+    forbidden_without_approval: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    created_at: str = ""
+    approval_id: str = ""
+    decision: str = ""
+    reason_codes: list[str] = Field(default_factory=list)
+    decided_at: str = ""
+    decision_evidence_ref: str = ""
+    revision_request: str = ""
+
+
+class GatewayPersonalAssistantMemorySource(BaseModel):
+    """Evidence source for one memory observation preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_type: str
+    source_ref: str
+    observed_at: str
+
+
+class GatewayPersonalAssistantMemoryPreviewRequest(BaseModel):
+    """Stateless memory observation preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str
+    memory_observation_id: str
+    memory_type: str = MemoryObservationType.PREFERENCE.value
+    claim: str
+    source: GatewayPersonalAssistantMemorySource
+    confidence: str = MemoryConfidence.MEDIUM.value
+    scope: str = MemoryScope.ASSISTANT_WORKFLOW.value
+    mutable: bool = True
+    receipt_id: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    observed_at: str = ""
+    sensitivity: str = MemorySensitivity.INTERNAL.value
+    retention_policy: str = MemoryRetentionPolicy.OPERATOR_REVIEW.value
+    nested_mind_status: str = NestedMindStatus.STAGING_ONLY.value
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class GatewayPersonalAssistantMemoryReviewPreviewRequest(BaseModel):
+    """Stateless memory review preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidate: GatewayPersonalAssistantMemoryPreviewRequest
+    review_id: str
+    decision: str = MemoryReviewDecision.KEPT_FOR_OPERATOR_REVIEW.value
+    reviewer_ref: str = "operator:gateway"
+    reason_codes: list[str] = Field(default_factory=list)
+    reviewed_at: str = ""
+    review_evidence_ref: str = ""
+    revision_request: str = ""
+    deferred_until: str = ""
+    expires_at: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class GatewayPersonalAssistantTeamOpsPreviewRequest(BaseModel):
+    """Stateless TeamOps shared-inbox plan preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Prepare a TeamOps shared inbox handoff."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    environment: dict[str, str] = Field(default_factory=dict)
+    github_secret_names: list[str] = Field(default_factory=list)
+    operator_approval_ref: str = ""
+    repository: str = "tamirat-wubie/mullu-control-plane"
+
+
+class GatewayPersonalAssistantGitHubCodexPreviewRequest(BaseModel):
+    """Stateless GitHub/Codex review preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Review this GitHub pull request and draft the next Codex instruction."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    repository_ref: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_ref: str = ""
+    change_summary: str
+    changed_files: list[str] = Field(default_factory=list)
+    risk_notes: list[str] = Field(default_factory=list)
+    blocking_questions: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_instruction_goal: str = "prepare the next safe Codex instruction"
+
+
+class GatewayPersonalAssistantResearchSourceSummary(BaseModel):
+    """Bounded public-source metadata for research preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_ref: str
+    title: str
+    publisher: str
+    published_at: str = ""
+    summary: str
+    trust_tier: str = "operator_supplied"
+    citation_ref: str
+
+
+class GatewayPersonalAssistantResearchPreviewRequest(BaseModel):
+    """Stateless research source-compare preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Research this topic, compare sources, and prepare citations."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    research_question: str
+    source_summaries: list[GatewayPersonalAssistantResearchSourceSummary] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+    freshness_notes: list[str] = Field(default_factory=list)
+    conflict_notes: list[str] = Field(default_factory=list)
+    blocking_questions: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_synthesis_goal: str = "prepare a source comparison with citations"
+
+
+class GatewayPersonalAssistantMathKnownValue(BaseModel):
+    """Bounded operator-supplied numeric value for math preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    scenario_ref: str
+    value: float | int | str
+    unit: str
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantMathPreviewRequest(BaseModel):
+    """Stateless math reasoning preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Compare two monthly cost scenarios, check units, and explain assumptions."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    problem_statement: str
+    known_values: list[GatewayPersonalAssistantMathKnownValue] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_result: str = "compare scenarios, check units, and explain assumptions"
+
+
+class GatewayPersonalAssistantPlanningWindow(BaseModel):
+    """Bounded operator-supplied time window for schedule planning preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    window_ref: str
+    label: str
+    start: str
+    end: str
+    capacity_minutes: int
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantPlanningWorkItem(BaseModel):
+    """Bounded operator-supplied work item for schedule planning preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    item_ref: str
+    title: str
+    estimated_minutes: int
+    priority: int = 3
+    earliest_start: str = ""
+    due: str = ""
+    required_window_ref: str = ""
+    source_ref: str = "operator_supplied"
+    notes: str = ""
+
+
+class GatewayPersonalAssistantPlanningPreviewRequest(BaseModel):
+    """Stateless schedule planning preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Optimize schedule with operator supplied windows and work items."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    objective: str
+    time_windows: list[GatewayPersonalAssistantPlanningWindow] = Field(default_factory=list)
+    work_items: list[GatewayPersonalAssistantPlanningWorkItem] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    requested_result: str = "assign work items to available windows and identify blockers"
+
+
 def _explicit_dev_or_test_env(raw_env: str) -> bool:
     """Whether the authority dev/test bypass is permitted for this MULLU_ENV.
 
@@ -201,6 +504,107 @@ def _explicit_dev_or_test_env(raw_env: str) -> bool:
     production must opt into dev mode, not fall into it.
     """
     return raw_env.strip().lower() in {"local_dev", "test"}
+
+
+def _gateway_personal_assistant_request_id(user_request: str, submitted_at: str, interface: str) -> str:
+    """Return a stable gateway request id for preview-only assistant planning."""
+    return "pa_request_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-request",
+            "user_request": user_request,
+            "submitted_at": submitted_at,
+            "interface": interface,
+        }
+    )[:32]
+
+
+def _gateway_personal_assistant_plan_id(request_id: str) -> str:
+    """Return a stable gateway plan id for a preview request id."""
+    return "pa_plan_" + canonical_hash(
+        {
+            "namespace": "gateway-personal-assistant-plan",
+            "request_id": request_id,
+        }
+    )[:32]
+
+
+def _gateway_personal_assistant_outcome(plan: Mapping[str, Any], clarification_complete: bool) -> str:
+    """Map preview-only plan state to the Mullusi solver outcome taxonomy."""
+    if not clarification_complete:
+        return "AwaitingEvidence"
+    if bool(plan.get("requires_approval")):
+        return "AwaitingEvidence"
+    return "SolvedVerified"
+
+
+def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
+    """Return a stable dict across Pydantic major versions."""
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
+
+
+def _valid_whqr_semver(version: str) -> bool:
+    parts = version.split(".")
+    return len(parts) == 3 and all(_valid_semver_core_identifier(part) for part in parts)
+
+
+def _valid_semver_core_identifier(value: str) -> bool:
+    if not value.isascii() or not value.isdecimal():
+        return False
+    return value == "0" or not value.startswith("0")
+
+
+def _valid_sha256_digest_ref(value: str) -> bool:
+    prefix = "sha256:"
+    return value.startswith(prefix) and _valid_sha256_hex_suffix(value, prefix)
+
+
+def _valid_whqr_replay_ref(value: str) -> bool:
+    prefix = "whqr://replay/sha256:"
+    return value.startswith(prefix) and _valid_sha256_hex_suffix(value, prefix)
+
+
+def _valid_sha256_hex_suffix(value: str, prefix: str) -> bool:
+    suffix = value[len(prefix):]
+    return len(suffix) == 64 and all(char in "0123456789abcdef" for char in suffix)
+
+
+_WHQR_REPLAY_BINDING_FIELDS = frozenset(
+    {"replay_ref", "canonical_hash", "semantics_hash", "version"}
+)
+
+
+def _validated_whqr_replay_binding(source: Any) -> dict[str, str]:
+    if not isinstance(source, Mapping):
+        return {}
+    if set(source) != _WHQR_REPLAY_BINDING_FIELDS:
+        return {}
+    replay_ref = source.get("replay_ref")
+    canonical_hash = source.get("canonical_hash")
+    semantics_hash = source.get("semantics_hash")
+    version = source.get("version")
+    if not (
+        isinstance(replay_ref, str)
+        and isinstance(canonical_hash, str)
+        and isinstance(semantics_hash, str)
+        and isinstance(version, str)
+    ):
+        return {}
+    if not (
+        _valid_sha256_digest_ref(canonical_hash)
+        and _valid_sha256_digest_ref(semantics_hash)
+        and _valid_whqr_replay_ref(replay_ref)
+        and replay_ref == f"whqr://replay/{canonical_hash}"
+        and _valid_whqr_semver(version)
+    ):
+        return {}
+    return {
+        "replay_ref": replay_ref,
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    }
 
 
 def create_gateway_app(
@@ -990,6 +1394,20 @@ def create_gateway_app(
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
 
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_exception_handler(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": _redacted_request_validation_detail(exc),
+                "governed": True,
+                "error_code": "request_validation_failed",
+            },
+        )
+
     # G10.1 — install entry-point receipt middleware. Closes the
     # gap documented in docs/MAF_RECEIPT_COVERAGE.md §"Routes NOT
     # covered". Every webhook/authority POST now produces a
@@ -1578,6 +1996,596 @@ def create_gateway_app(
         return build_agentic_service_harness_status_projection(
             read_model_source=agentic_service_harness_read_model_source,
         )
+
+    @app.get("/api/v1/personal-assistant/skills")
+    def personal_assistant_skill_read_model():
+        registry = load_default_skill_registry()
+        return {
+            "registry": registry.read_model(),
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "governed": True,
+        }
+
+    @app.get("/api/v1/console/personal-assistant")
+    def personal_assistant_console_read_model():
+        return build_personal_assistant_console_read_model(generated_at=_clock())
+
+    @app.get("/api/v1/console/personal-assistant/view", response_class=HTMLResponse)
+    def personal_assistant_console_view():
+        return HTMLResponse(
+            render_personal_assistant_console_html(
+                build_personal_assistant_console_read_model(generated_at=_clock())
+            )
+        )
+
+    @app.post("/api/v1/personal-assistant/requests/preview")
+    def preview_personal_assistant_request(req: GatewayPersonalAssistantPreviewRequest):
+        try:
+            now = req.submitted_at or _clock()
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                now,
+                req.interface,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=now,
+                interface=req.interface,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            clarification_bundle = build_clarification_requests(
+                intent,
+                thread_id=req.thread_id,
+                requested_from_id=req.requested_from_id,
+                requested_at=now,
+            )
+            envelope = build_personal_assistant_preview_plan(
+                intent,
+                plan_id=_gateway_personal_assistant_plan_id(request_id),
+                created_at=now,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant preview",
+                    "error_code": "invalid_personal_assistant_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        response: dict[str, Any] = {
+            **envelope.as_dict(),
+            "clarification_bundle": {
+                "request_id": clarification_bundle.request_id,
+                "clarifications": [
+                    clarification.to_json_dict()
+                    for clarification in clarification_bundle.clarifications
+                ],
+                "clarification_count": len(clarification_bundle.clarifications),
+            },
+            "outcome": _gateway_personal_assistant_outcome(
+                envelope.plan,
+                clarification_bundle.empty,
+            ),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+            },
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=now,
+                recent_requests=(
+                    {
+                        "request_id": envelope.request["request_id"],
+                        "summary": envelope.request["user_goal"],
+                        "status": envelope.plan["mode"],
+                    },
+                ),
+                receipts=(envelope.receipt,),
+            )
+        return response
+
+    @app.get("/api/v1/personal-assistant/approval-queue")
+    def personal_assistant_approval_queue_read_model():
+        read_model = PersonalAssistantApprovalQueue().read_model()
+        return {
+            "approval_queue": read_model,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/approval-queue/preview")
+    def preview_personal_assistant_approval_queue(req: GatewayPersonalAssistantApprovalPreviewRequest):
+        try:
+            now = req.created_at or _clock()
+            queue = PersonalAssistantApprovalQueue()
+            record = queue.enqueue(
+                request_id=req.request_id,
+                plan_id=req.plan_id,
+                approver_ref=req.approver_ref,
+                approval_scope=req.approval_scope,
+                proposed_actions=tuple(
+                    ApprovalProposedAction.from_mapping(_pydantic_payload(action))
+                    for action in req.proposed_actions
+                ),
+                forbidden_without_approval=tuple(req.forbidden_without_approval),
+                evidence_refs=tuple(req.evidence_refs),
+                created_at=now,
+                approval_id=req.approval_id or None,
+            )
+            if req.decision:
+                decision = ApprovalDecision.coerce(req.decision)
+                record = queue.record_decision(
+                    record.approval_id,
+                    decision=decision,
+                    reason_codes=tuple(req.reason_codes) or (f"operator_{decision.value}_preview",),
+                    decided_at=req.decided_at or now,
+                    decision_evidence_ref=req.decision_evidence_ref,
+                    revision_request=req.revision_request,
+                )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant approval queue preview",
+                    "error_code": "invalid_personal_assistant_approval_queue_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "approval": record.as_dict(),
+            "approval_queue": queue.read_model(),
+            "receipt": dict(record.latest_receipt),
+            "outcome": str(record.latest_receipt.get("outcome", "AwaitingEvidence")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.get("/api/v1/personal-assistant/memory-observations")
+    def personal_assistant_memory_observations_read_model():
+        read_model = PersonalAssistantMemoryObservationLedger().read_model()
+        return {
+            "memory_read_model": read_model,
+            "execution_allowed": False,
+            "live_memory_write_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+            "governed": True,
+        }
+
+    @app.post("/api/v1/personal-assistant/memory-observations/preview")
+    def preview_personal_assistant_memory_observation(req: GatewayPersonalAssistantMemoryPreviewRequest):
+        try:
+            now = req.observed_at or _clock()
+            candidate = prepare_memory_observation(
+                request_id=req.request_id,
+                memory_observation_id=req.memory_observation_id,
+                memory_type=req.memory_type,
+                claim=req.claim,
+                source=MemoryObservationSource.from_mapping(_pydantic_payload(req.source)),
+                confidence=req.confidence,
+                scope=req.scope,
+                mutable=req.mutable,
+                receipt_id=req.receipt_id,
+                evidence_refs=tuple(req.evidence_refs),
+                observed_at=now,
+                sensitivity=req.sensitivity,
+                retention_policy=req.retention_policy,
+                nested_mind_status=req.nested_mind_status,
+                metadata=req.metadata,
+            )
+            ledger = PersonalAssistantMemoryObservationLedger()
+            ledger.append(candidate)
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant memory observation preview",
+                    "error_code": "invalid_personal_assistant_memory_observation_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "memory_observation": candidate.as_dict(),
+            "memory_read_model": ledger.read_model(),
+            "receipt": dict(candidate.receipt),
+            "outcome": str(candidate.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/memory-observations/review/preview")
+    def preview_personal_assistant_memory_review(req: GatewayPersonalAssistantMemoryReviewPreviewRequest):
+        try:
+            now = req.reviewed_at or _clock()
+            candidate_request = req.candidate
+            candidate_observed_at = candidate_request.observed_at or now
+            candidate = prepare_memory_observation(
+                request_id=candidate_request.request_id,
+                memory_observation_id=candidate_request.memory_observation_id,
+                memory_type=candidate_request.memory_type,
+                claim=candidate_request.claim,
+                source=MemoryObservationSource.from_mapping(_pydantic_payload(candidate_request.source)),
+                confidence=candidate_request.confidence,
+                scope=candidate_request.scope,
+                mutable=candidate_request.mutable,
+                receipt_id=candidate_request.receipt_id,
+                evidence_refs=tuple(candidate_request.evidence_refs),
+                observed_at=candidate_observed_at,
+                sensitivity=candidate_request.sensitivity,
+                retention_policy=candidate_request.retention_policy,
+                nested_mind_status=candidate_request.nested_mind_status,
+                metadata=candidate_request.metadata,
+            )
+            decision = MemoryReviewDecision.coerce(req.decision)
+            review = review_memory_observation_candidate(
+                candidate=candidate,
+                review_id=req.review_id,
+                decision=decision,
+                reviewer_ref=req.reviewer_ref,
+                reason_codes=tuple(req.reason_codes) or (f"operator_{decision.value}_preview",),
+                reviewed_at=now,
+                review_evidence_ref=req.review_evidence_ref,
+                revision_request=req.revision_request,
+                deferred_until=req.deferred_until,
+                expires_at=req.expires_at,
+                metadata=req.metadata,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant memory review preview",
+                    "error_code": "invalid_personal_assistant_memory_review_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "memory_review": review.as_dict(),
+            "receipt": dict(review.receipt),
+            "outcome": str(review.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_memory_write_allowed": False,
+                "memory_admission_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/teamops/shared-inbox/plan/preview")
+    def preview_personal_assistant_teamops_shared_inbox(req: GatewayPersonalAssistantTeamOpsPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = plan_teamops_shared_inbox(
+                intent,
+                generated_at=now,
+                environment=req.environment,
+                github_secret_names=set(req.github_secret_names),
+                operator_approval_ref=req.operator_approval_ref,
+                repository=req.repository,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant TeamOps shared inbox preview",
+                    "error_code": "invalid_personal_assistant_teamops_shared_inbox_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "teamops_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "live_probe_execution_allowed": False,
+                "mailbox_read_allowed": False,
+                "mailbox_mutation_allowed": False,
+                "draft_creation_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/github-codex/review/preview")
+    def preview_personal_assistant_github_codex_review(req: GatewayPersonalAssistantGitHubCodexPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = plan_github_codex_review(
+                intent,
+                generated_at=now,
+                repository_ref=req.repository_ref,
+                pull_request_ref=req.pull_request_ref,
+                change_summary=req.change_summary,
+                changed_files=tuple(req.changed_files),
+                risk_notes=tuple(req.risk_notes),
+                blocking_questions=tuple(req.blocking_questions),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_instruction_goal=req.requested_instruction_goal,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant GitHub/Codex review preview",
+                    "error_code": "invalid_personal_assistant_github_codex_review_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_codex_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/research/source-compare/preview")
+    def preview_personal_assistant_research_source_compare(req: GatewayPersonalAssistantResearchPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_research_source_compare(
+                intent,
+                generated_at=now,
+                research_question=req.research_question,
+                source_summaries=tuple(_pydantic_payload(source) for source in req.source_summaries),
+                citation_refs=tuple(req.citation_refs),
+                freshness_notes=tuple(req.freshness_notes),
+                conflict_notes=tuple(req.conflict_notes),
+                blocking_questions=tuple(req.blocking_questions),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_synthesis_goal=req.requested_synthesis_goal,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant research source-compare preview",
+                    "error_code": "invalid_personal_assistant_research_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "research_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "web_search_allowed": False,
+                "web_search_performed": False,
+                "source_contact_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "paid_subscription_allowed": False,
+                "system_of_record_write_allowed": False,
+                "memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/math/reasoning/preview")
+    def preview_personal_assistant_math_reasoning(req: GatewayPersonalAssistantMathPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_math_reasoning(
+                intent,
+                generated_at=now,
+                problem_statement=req.problem_statement,
+                known_values=tuple(_pydantic_payload(value) for value in req.known_values),
+                assumptions=tuple(req.assumptions),
+                constraints=tuple(req.constraints),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_result=req.requested_result,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant math reasoning preview",
+                    "error_code": "invalid_personal_assistant_math_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "math_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "money_movement_allowed": False,
+                "paid_subscription_allowed": False,
+                "system_of_record_write_allowed": False,
+                "connector_mutation_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "deployment_allowed": False,
+                "memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/planning/schedule/preview")
+    def preview_personal_assistant_schedule_planning(req: GatewayPersonalAssistantPlanningPreviewRequest):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+            )
+            projection = plan_schedule_optimization(
+                intent,
+                generated_at=now,
+                objective=req.objective,
+                time_windows=tuple(_pydantic_payload(window) for window in req.time_windows),
+                work_items=tuple(_pydantic_payload(item) for item in req.work_items),
+                assumptions=tuple(req.assumptions),
+                constraints=tuple(req.constraints),
+                evidence_refs=tuple(req.evidence_refs),
+                requested_result=req.requested_result,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant schedule planning preview",
+                    "error_code": "invalid_personal_assistant_planning_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "planning_projection": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "SolvedVerified")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "calendar_write_allowed": False,
+                "task_write_allowed": False,
+                "invite_allowed": False,
+                "message_person_allowed": False,
+                "system_of_record_write_allowed": False,
+                "connector_mutation_allowed": False,
+                "external_submission_allowed": False,
+                "public_post_allowed": False,
+                "money_movement_allowed": False,
+                "paid_subscription_allowed": False,
+                "deployment_allowed": False,
+                "memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
 
     @app.get("/gateway/witness")
     def gateway_witness():
@@ -3189,9 +4197,15 @@ def create_gateway_app(
             for event in command_ledger.events_for(command_id)
         ]
         certificate_payload = asdict(certificate)
+        whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+            certificate_payload
+        )
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "terminal_certificate": certificate,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
             "proof_coverage_witnesses": _closure_proof_coverage_witnesses(
                 terminal_certificate=certificate_payload,
                 events=events,
@@ -3207,12 +4221,19 @@ def create_gateway_app(
                 raise HTTPException(404, detail="command not found")
             raise HTTPException(404, detail="universal action proof not found")
         proof_payload = asdict(proof)
+        whqr_replay_binding = _validated_whqr_replay_binding(
+            proof_payload.get("whqr_replay_binding")
+        )
+        proof_payload["whqr_replay_binding"] = whqr_replay_binding
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
         return {
             "command_id": command_id,
             "universal_action_proof": proof_payload,
             "event_count": len(proof.event_hashes),
             "state_sequence": list(proof.state_sequence),
             "proof_hash": proof.proof_hash,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
         }
 
     @app.get("/commands/{command_id}/universal-action-orchestration")
@@ -3229,14 +4250,28 @@ def create_gateway_app(
             closure.get("reconciliation_ref") if isinstance(closure, Mapping) else None
         )
         memory_ref = closure.get("memory_ref") if isinstance(closure, Mapping) else None
+        whqr_replay_binding = (
+            closure.get("whqr_replay_binding")
+            if isinstance(closure, Mapping)
+            else None
+        )
+        whqr_replay_binding = _validated_whqr_replay_binding(whqr_replay_binding)
+        whqr_replay_ref = str(whqr_replay_binding.get("replay_ref", ""))
+        record_payload = dict(record)
+        if isinstance(closure, Mapping):
+            closure_payload = dict(closure)
+            closure_payload["whqr_replay_binding"] = whqr_replay_binding
+            record_payload["closure"] = closure_payload
         return {
             "command_id": command_id,
-            "universal_action_orchestration": record,
+            "universal_action_orchestration": record_payload,
             "orchestration_id": record.get("orchestration_id", ""),
             "decision_status": decision_status,
             "closure_state": record.get("closure_state", ""),
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
+            "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
         }
 
     def _operator_universal_actions_payload(
@@ -3267,6 +4302,11 @@ def create_gateway_app(
             payload["intent"] = command.intent
             payload["command_state"] = command.state.value
             payload["created_at"] = command.created_at
+            whqr_replay_binding = _validated_whqr_replay_binding(
+                payload.get("whqr_replay_binding")
+            )
+            payload["whqr_replay_binding"] = whqr_replay_binding
+            payload["whqr_replay_ref"] = str(whqr_replay_binding.get("replay_ref", ""))
             proofs.append(payload)
         page, page_meta = _read_model_page(
             tuple(proofs),
@@ -5231,6 +6271,7 @@ def _universal_actions_console_html(read_model: Mapping[str, Any]) -> str:
         "closure_state",
         "reconciliation_ref",
         "memory_ref",
+        "whqr_replay_ref",
         "proof_hash",
         "terminal_certificate_id",
         "learning_status",
@@ -5342,7 +6383,47 @@ def _closure_proof_coverage_witnesses(
             "witness_type": "response_evidence_closure",
             "witness_ref": response_evidence_closure_id,
         })
+    whqr_replay_binding = _whqr_replay_binding_from_terminal_certificate_payload(
+        terminal_certificate
+    )
+    if whqr_replay_binding:
+        witnesses.append({
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "terminal_closure_exposes_whqr_replay_ref",
+            "witness_type": "whqr_replay_binding",
+            "witness_ref": whqr_replay_binding["replay_ref"],
+            "canonical_hash": whqr_replay_binding["canonical_hash"],
+            "semantics_hash": whqr_replay_binding["semantics_hash"],
+            "version": whqr_replay_binding["version"],
+        })
     return witnesses
+
+
+def _whqr_replay_binding_from_terminal_certificate_payload(
+    terminal_certificate: Mapping[str, Any],
+) -> dict[str, str]:
+    """Project verified WHQR terminal metadata into a replay binding."""
+    metadata = terminal_certificate.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return {}
+    canonical_hash = metadata.get("whqr_canonical_hash")
+    semantics_hash = metadata.get("whqr_semantics_hash")
+    version = metadata.get("whqr_version")
+    if not (
+        isinstance(canonical_hash, str)
+        and canonical_hash
+        and isinstance(semantics_hash, str)
+        and semantics_hash
+        and isinstance(version, str)
+        and version
+    ):
+        return {}
+    return _validated_whqr_replay_binding({
+        "replay_ref": f"whqr://replay/{canonical_hash}",
+        "canonical_hash": canonical_hash,
+        "semantics_hash": semantics_hash,
+        "version": version,
+    })
 
 
 def _gateway_request_receipt(

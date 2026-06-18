@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.validate_agentic_service_harness_read_models import (  # noqa: E402
     DEFAULT_EXAMPLES,
+    EXPECTED_DURABLE_ENTITY_KINDS,
     EXPECTED_COLLECTIONS,
     main,
     validate_agentic_service_harness_read_models,
@@ -43,6 +44,17 @@ def test_agentic_service_harness_read_models_accept_default_example() -> None:
     assert validation.example_paths == (
         "examples/agentic_service_harness_read_models.foundation.json",
     )
+    payload = _default_payload()
+    observed_entity_kinds = {
+        binding["entity_kind"]
+        for binding in payload["durable_entity_bindings"]["entity_bindings"]
+    }
+    assert observed_entity_kinds == set(EXPECTED_DURABLE_ENTITY_KINDS)
+    allocation = payload["workspace_allocations"][0]
+    assert allocation["sandbox_id"] == payload["runs"][0]["sandbox_id"]
+    assert allocation["workspace_created"] is False
+    assert allocation["commands_executed"] is False
+    assert allocation["files_written"] is False
 
 
 def test_agentic_service_harness_read_models_reject_mutation_flag(
@@ -118,6 +130,58 @@ def test_agentic_service_harness_read_models_reject_terminal_closure_claim(
     assert validation.ok is False
     assert "terminal_closure" in serialized_errors
     assert "must be false" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_missing_durable_binding(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["durable_entity_bindings"]["entity_bindings"] = [
+        binding
+        for binding in payload["durable_entity_bindings"]["entity_bindings"]
+        if binding["entity_kind"] != "ApprovalRequest"
+    ]
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "durable entity bindings missing" in serialized_errors
+    assert "ApprovalRequest" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_enabled_durable_append(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["durable_entity_bindings"]["append_enabled"] = True
+    payload["durable_entity_bindings"]["entity_bindings"][0]["append_enabled"] = True
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "durable_entity_bindings.append_enabled" in serialized_errors
+    assert "durable entity binding User append_enabled" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_workspace_allocation_effect(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    payload["workspace_allocations"][0]["workspace_created"] = True
+    payload["workspace_allocations"][0]["commands_executed"] = True
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "workspace_created" in serialized_errors
+    assert "commands_executed" in serialized_errors
+    assert "must remain false" in serialized_errors
 
 
 def test_agentic_service_harness_read_models_writer_and_cli_honor_strict(

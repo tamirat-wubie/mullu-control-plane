@@ -16,6 +16,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import replace
 from hashlib import sha256
 from math import isfinite
+from types import MappingProxyType
 
 from mcoi_runtime.contracts.snet import (
     SNetAnswer,
@@ -59,7 +60,7 @@ class SNetRecursiveMesh:
     """In-memory local proof engine for recursive WH-driven symbolization."""
 
     def __init__(self, budget: SNetInquiryBudget | None = None) -> None:
-        self.budget = budget or SNetInquiryBudget()
+        self.budget = _require_budget(budget)
         self.symbols: dict[str, SNetSymbol] = {}
         self.questions: dict[str, SNetQuestion] = {}
         self.answers: dict[str, SNetAnswer] = {}
@@ -508,24 +509,28 @@ class SNetRecursiveMesh:
         self.symbols[symbol.symbol_id] = symbol
 
     def _require_symbol(self, symbol_id: str) -> SNetSymbol:
+        symbol_id = _require_id_text(symbol_id, "symbol_id")
         try:
             return self.symbols[symbol_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet symbol_id: {symbol_id}") from exc
 
     def _require_question(self, question_id: str) -> SNetQuestion:
+        question_id = _require_id_text(question_id, "question_id")
         try:
             return self.questions[question_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet question_id: {question_id}") from exc
 
     def _require_answer(self, answer_id: str) -> SNetAnswer:
+        answer_id = _require_id_text(answer_id, "answer_id")
         try:
             return self.answers[answer_id]
         except KeyError as exc:
             raise KeyError(f"unknown SNet answer_id: {answer_id}") from exc
 
     def _require_metadata(self, metadata_id: str) -> SNetMetadata:
+        metadata_id = _require_id_text(metadata_id, "metadata_id")
         try:
             return self.metadata[metadata_id]
         except KeyError as exc:
@@ -575,36 +580,53 @@ def map_wh_to_facet(wh_type: SNetWHType) -> str:
 
 
 def _coerce_answer_map(answer_map: Mapping[str | SNetWHType, str]) -> dict[SNetWHType, str]:
-    if not isinstance(answer_map, Mapping):
+    if type(answer_map) not in (dict, MappingProxyType):
         raise ValueError("SNet answer_map must be a mapping")
     answer_lookup: dict[SNetWHType, str] = {}
-    for raw_key, answer_text in answer_map.items():
-        try:
-            wh_type = raw_key if isinstance(raw_key, SNetWHType) else SNetWHType(str(raw_key))
-        except ValueError as exc:
-            raise ValueError(f"unknown SNet WH answer key: {raw_key!r}") from exc
+    try:
+        answer_items = tuple(answer_map.items())
+    except Exception as exc:
+        raise ValueError("SNet answer_map must be a mapping") from exc
+    for raw_key, answer_text in answer_items:
+        if isinstance(raw_key, SNetWHType):
+            wh_type = raw_key
+        elif type(raw_key) is str:
+            try:
+                wh_type = SNetWHType(raw_key)
+            except ValueError as exc:
+                raise ValueError(f"unknown SNet WH answer key: {raw_key!r}") from exc
+        else:
+            raise ValueError("SNet WH answer key must be a string or SNetWHType")
         if wh_type in answer_lookup:
             raise ValueError(f"duplicate SNet WH answer key: {wh_type.value}")
-        if not isinstance(answer_text, str) or not answer_text.strip():
+        if type(answer_text) is not str or not answer_text.strip():
             raise ValueError(f"SNet answer for {wh_type.value} must be a non-empty string")
         answer_lookup[wh_type] = answer_text
     return answer_lookup
 
 
 def _require_text(value: str, field_name: str) -> str:
-    if not isinstance(value, str) or not value.strip():
+    if type(value) is not str or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value.strip()
 
 
 def _optional_text(value: str, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be a non-empty string")
     if value == "":
         return ""
     return _require_text(value, field_name)
 
 
+def _require_id_text(value: str, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty string")
+    return value
+
+
 def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
-    if not isinstance(values, tuple):
+    if type(values) is not tuple:
         raise ValueError(f"{field_name} must be a tuple of non-empty strings")
     for index, value in enumerate(values):
         _require_text(value, f"{field_name}[{index}]")
@@ -612,7 +634,7 @@ def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, 
 
 
 def _require_confidence(confidence: float) -> float:
-    if not isinstance(confidence, (int, float)) or isinstance(confidence, bool):
+    if type(confidence) not in (int, float):
         raise ValueError("SNet confidence must be a finite number in [0.0, 1.0]")
     confidence_value = float(confidence)
     if not isfinite(confidence_value) or not 0.0 <= confidence_value <= 1.0:
@@ -624,6 +646,14 @@ def _require_validation_state(validation_state: SNetValidationState) -> SNetVali
     if not isinstance(validation_state, SNetValidationState):
         raise ValueError("validation_state must be a SNetValidationState")
     return validation_state
+
+
+def _require_budget(budget: SNetInquiryBudget | None) -> SNetInquiryBudget:
+    if budget is None:
+        return SNetInquiryBudget()
+    if type(budget) is not SNetInquiryBudget:
+        raise ValueError("SNet budget must be a SNetInquiryBudget")
+    return budget
 
 
 def _classify_metadata_difference(
@@ -666,7 +696,7 @@ def _stable_id(prefix: str, *parts: str) -> str:
 
 def _ascii_lower_stripped(value: str) -> str:
     """Lowercase ASCII only so non-Latin symbols remain atomic codepoints."""
-    if not isinstance(value, str):
+    if type(value) is not str:
         raise ValueError("SNet text value must be a string")
     stripped = value.strip()
     return "".join(chr(ord(char) + 32) if "A" <= char <= "Z" else char for char in stripped)

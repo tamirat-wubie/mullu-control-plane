@@ -37,9 +37,10 @@ def test_personal_assistant_skill_registry_accepts_foundation_fixture() -> None:
     result = validate_personal_assistant_skill_registry()
 
     assert result.valid is True
-    assert result.skill_count == 13
+    assert result.skill_count == 15
     assert "email.inbox.summarize" in result.skill_ids
     assert "math.reasoning.plan" in result.skill_ids
+    assert "planning.optimize_schedule" in result.skill_ids
     assert "task.create_draft" in result.skill_ids
     assert "email.send.with_approval" in result.skill_ids
     assert "deployment.publish.review" in result.skill_ids
@@ -57,7 +58,7 @@ def test_read_only_skills_cannot_declare_mutation_authority(tmp_path: Path) -> N
     result = validate_personal_assistant_skill_registry(registry_path=registry_path)
 
     assert result.valid is False
-    assert result.skill_count == 13
+    assert result.skill_count == 15
     assert any("read-only skill allows mutating actions" in error for error in result.errors)
     assert any("external_write_allowed=true" in error for error in result.errors)
 
@@ -99,6 +100,27 @@ def test_math_skills_remain_planning_only_and_non_mutating(tmp_path: Path) -> No
     assert any("math skill must be planning_only or read_only" in error for error in result.errors)
 
 
+def test_planning_skills_remain_preview_only_and_non_mutating(tmp_path: Path) -> None:
+    registry = _load_json(REGISTRY_PATH)
+    planning_skill = _skill_by_id(registry, "planning.optimize_schedule")
+    planning_skill["mode"] = "approval_required"
+    planning_skill["connectors"] = ["google_calendar"]
+    planning_skill["private_connector_required"] = True
+    planning_skill["allowed_actions"].append("create_event")
+    planning_skill["effect_boundary"]["system_of_record_write_allowed"] = True
+    registry_path = tmp_path / "registry.json"
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+
+    result = validate_personal_assistant_skill_registry(registry_path=registry_path)
+
+    assert result.valid is False
+    assert any("planning skill cannot require connectors" in error for error in result.errors)
+    assert any("planning skill cannot require private connectors" in error for error in result.errors)
+    assert any("planning skill allows unsafe actions" in error for error in result.errors)
+    assert any("planning skill sets system_of_record_write_allowed=true" in error for error in result.errors)
+    assert any("planning skill must be planning_only or read_only" in error for error in result.errors)
+
+
 def test_p4_p5_skills_require_explicit_approval(tmp_path: Path) -> None:
     registry = _load_json(REGISTRY_PATH)
     _skill_by_id(registry, "email.send.with_approval")["requires_approval"] = False
@@ -121,7 +143,7 @@ def test_personal_assistant_capability_pack_and_capsule_are_schema_valid() -> No
     capsule = _load_json(CAPSULE_PATH)
     capability_ids = tuple(entry["capability_id"] for entry in pack["capabilities"])
 
-    assert len(capability_ids) == 5
+    assert len(capability_ids) == 12
     assert all(_validate_schema_instance(registry_schema, entry) == [] for entry in pack["capabilities"])
     assert _validate_schema_instance(capsule_schema, capsule) == []
     assert tuple(capsule["capability_refs"]) == capability_ids

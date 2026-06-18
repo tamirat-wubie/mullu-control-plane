@@ -1,0 +1,83 @@
+{
+  "requirement_id": "sdlc_req_runtime_receipt_store_write_path_witness_20260616",
+  "request_id": "platform_runtime_receipt_store_write_path_witness_20260616",
+  "problem_statement": "The selected read-only worker path has a runtime receipt candidate and schema-binding witness, but the next evidence boundary needs a schema-backed receipt-store write-path witness proving future append-only, idempotent, digest-only store obligations while keeping live runtime authority blocked.",
+  "success_criteria": [
+    "ReadOnlyWorkerRuntimeReceiptStoreWritePathWitness validates against a public JSON schema and Foundation Mode example",
+    "the witness binds the schema-binding witness, runtime receipt candidate, runner binding witness, emitter dry-run, handoff, binding, lease preflight, and rehearsal evidence",
+    "receipt-store writer registration remains unperformed",
+    "receipt-store write-path registration remains unperformed",
+    "receipt-store append remains unperformed",
+    "runtime receipt emission remains unperformed",
+    "runtime runner registration remains unperformed",
+    "dispatch endpoint registration remains unperformed",
+    "runtime dispatch remains denied",
+    "the future write path requires append-only storage, idempotency, tenant and actor refs, output digest only, WorkerFailureReceipt on error, effect reconciliation, UAO, Phi_gov, temporal lease evidence, and durability replay evidence",
+    "focused tests reject authority drift, contract drift, missing refs, write-path evaluation drift, admission drift, receipt-ref drift, count drift, and terminal-closure drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no runtime runner registration",
+    "no dispatch endpoint registration",
+    "no runtime receipt emitter registration",
+    "no runtime receipt schema binding",
+    "no receipt-store writer registration",
+    "no receipt-store append",
+    "no runtime receipt emission",
+    "no persisted runtime receipt store",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "receipt-store writer registration remains unperformed",
+    "receipt-store write-path registration remains unperformed",
+    "receipt-store append remains unperformed",
+    "runtime receipt emission remains unperformed",
+    "runtime runner registration remains unperformed",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "future runtime admission must still require temporal lease evidence, UAO, Phi_gov, recovery evidence, live receipt-store registration evidence, and verification",
+    "WorkerFailureReceipt remains mandatory for failed or partial append evidence",
+    "raw output retention remains denied and only output digests may be carried",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_runtime_receipt_store_write_path_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_receipt_store_write_path_witness_20260616.json",
+    "examples/sdlc/design_runtime_receipt_store_write_path_witness_20260616.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_receipt_store_write_path_witness.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-runtime-receipt-store-write-path-witness-20260616.json"
+  ],
+  "evidence_required": [
+    "runtime receipt-store write-path witness validator receipt",
+    "focused pytest receipt for write-path witness behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/runtime-receipt-store-write-path-witness/20260616",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/runtime-receipt-store-write-path-witness/20260616",
+  "receipt_ref": "receipt://sdlc/requirement/runtime-receipt-store-write-path-witness/20260616"
+}

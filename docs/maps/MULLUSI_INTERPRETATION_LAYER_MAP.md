@@ -79,10 +79,14 @@ InterpretationReceipt {
 ClarificationRequest {
   clarification_id
   request_id
+  tenant_id
+  actor_id
+  channel
+  conversation_id
   raw_message_hash
   missing_fields
   reason
-  max_questions
+  max_questions = 1
   safe_default
   question
   created_at
@@ -185,6 +189,7 @@ Rules:
 
 ```text
 Ask the fewest required questions.
+For the public Foundation Mode contract, ask exactly one focused question.
 Never ask for details not needed for the next safe step.
 Use read-only diagnosis as the default only when tenant, policy, and budget allow it.
 Do not infer missing authority from conversational phrasing.

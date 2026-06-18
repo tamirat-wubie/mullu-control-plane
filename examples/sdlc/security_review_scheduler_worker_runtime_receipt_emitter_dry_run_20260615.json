@@ -1,0 +1,83 @@
+{
+  "security_review_id": "sdlc_security_scheduler_worker_runtime_receipt_emitter_dry_run_20260615",
+  "change_id": "sdlc_req_scheduler_worker_runtime_receipt_emitter_dry_run_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Scheduler-worker runtime receipt emitter dry-runs can accidentally imply live emitter registration or worker invocation when source scheduler and distributed lease receipts are present. The main risks are admitting runtime dispatch without UAO and Phi_gov evidence, emitting a runtime receipt before schema binding, skipping WorkerFailureReceipt on partial failure, treating worker mesh dispatch receipt projection as actual dispatch, retaining raw output or secrets, calling live lease or adapter backends from validation, and claiming terminal closure without effect reconciliation. The mitigation is a non-live dry-run schema and validator that bind the scheduler-worker handoff, require runtime gates and witnesses, deny registration and dispatch authority, require failure receipt obligations, reject raw output and secret material, preserve no-terminal-closure flags, and retain a receipt envelope.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "auth boundary check proving scheduler dispatch, runtime dispatch, worker invocation, and registration authority remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "non-live execution check proving backend calls, network, filesystem writes, connector calls, runtime receipt emission, and worker mesh dispatch receipt emission remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_result_and_admission_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving scheduler-worker handoff, scheduler receipt, distributed lease execution receipt, worker mesh, worker failure, and UAO refs are required",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_missing_required_refs"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving receipt refs and contract summary counts cannot drift silently",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving secret access and raw output or raw secret material remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_result_and_admission_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving terminal closure remains blocked until runtime receipt and effect reconciliation evidence exist",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_emitter_dry_run_rejects_result_and_admission_drift"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id and actor id are carried in the dry-run record",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py::test_scheduler_worker_runtime_receipt_emitter_dry_run_passes"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public scheduler worker runtime receipt emitter dry-run schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep SchedulerWorkerRuntimeReceiptEmitterDryRun validation non-live and deterministic",
+    "bind SchedulerWorkerRuntimeReceiptHandoff, temporal scheduler, distributed lease execution, worker mesh, worker failure, and UAO refs before future worker invocation",
+    "require WorkerFailureReceipt for every failed or partial worker dispatch",
+    "deny scheduler dispatch, runtime registration, runtime dispatch, worker invocation, backend calls, external network, filesystem writes, connector calls, terminal closure, and success claims",
+    "deny runtime receipt emission and worker mesh dispatch receipt emission in the dry-run result",
+    "block terminal closure until runtime receipt and effect reconciliation evidence exist",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid deployment or production readiness claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/scheduler-worker-runtime-receipt-emitter-dry-run/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/scheduler-worker-runtime-receipt-emitter-dry-run/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/scheduler-worker-runtime-receipt-emitter-dry-run/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/scheduler-worker-runtime-receipt-emitter-dry-run/20260615"
+}

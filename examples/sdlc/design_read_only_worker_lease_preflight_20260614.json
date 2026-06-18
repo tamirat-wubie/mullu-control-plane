@@ -1,0 +1,69 @@
+{
+  "design_id": "sdlc_design_read_only_worker_lease_preflight_20260614",
+  "requirement_id": "sdlc_req_read_only_worker_lease_preflight_20260614",
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerLeasePreflight contract, Foundation Mode example, validator, documentation updates, manifest registration, and focused tests that bind read_only_repo_inspection to temporal lease evidence while keeping runtime dispatch denied.",
+  "affected_modules": [
+    "schemas/read_only_worker_lease_preflight.schema.json",
+    "examples/read_only_worker_lease_preflight.foundation.json",
+    "scripts/validate_read_only_worker_lease_preflight.py",
+    "tests/test_validate_read_only_worker_lease_preflight.py",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    ".github/workflows/ci.yml",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    "examples/sdlc/requirement_read_only_worker_lease_preflight_20260614.json",
+    "examples/sdlc/design_read_only_worker_lease_preflight_20260614.json"
+  ],
+  "data_model_changes": [
+    "add ReadOnlyWorkerLeasePreflight with binding_ref, selected_worker_path, authority_scope, lease_contract, dispatch_gate, receipt_refs, contract_summary, governance_refs, and evidence_refs",
+    "add a Foundation Mode example that requires temporal lease evidence, fencing token, positive sequence, TrustedClock, worker mesh receipt refs, and worker failure receipt refs while denying dispatch"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/read_only_worker_lease_preflight.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_read_only_worker_lease_preflight.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the ReadOnlyWorkerLeasePreflight schema, example, validator, focused tests, docs updates, manifest entry, gap-register updates, SDLC artifacts, and CI test target, then rerun schema validation, protocol manifest validation, SDLC validation, and workspace governance preflight before claiming rollback closure.",
+  "migration_plan": "No runtime or data migration is required. This is a lease preflight contract only; live worker dispatch and receipt emission remain unregistered by this change.",
+  "test_plan": [
+    "python scripts/validate_read_only_worker_lease_preflight.py",
+    "python -m pytest tests/test_validate_read_only_worker_lease_preflight.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python -m pytest tests/test_root_test_coverage.py::test_ungated_root_tests_match_waiver_baseline -q",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-read-only-worker-lease-preflight-20260614.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-read-only-worker-lease-preflight-20260614.json"
+  ],
+  "uao_ref": "uao://sdlc/design/read-only-worker-lease-preflight/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/design/read-only-worker-lease-preflight/20260614",
+  "receipt_ref": "receipt://sdlc/design/read-only-worker-lease-preflight/20260614"
+}

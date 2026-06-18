@@ -142,7 +142,7 @@ class EmailDraftInput:
             thread_summary_digest=_require_text(payload.get("thread_summary_digest"), "thread_summary_digest"),
             response_goal=_require_text(payload.get("response_goal"), "response_goal"),
             tone=_require_text(payload.get("tone", "clear"), "tone"),
-            constraints=tuple(payload.get("constraints", ())),
+            constraints=_text_tuple(payload.get("constraints", ()), "constraints", allow_empty=True),
         )
 
 
@@ -183,10 +183,10 @@ class CalendarEventDraftInput:
             title_digest=_require_text(payload.get("title_digest"), "title_digest"),
             proposed_window=_require_text(payload.get("proposed_window"), "proposed_window"),
             duration_minutes=_require_positive_int(payload.get("duration_minutes"), "duration_minutes"),
-            attendee_labels=tuple(payload.get("attendee_labels", ())),
+            attendee_labels=_text_tuple(payload.get("attendee_labels", ()), "attendee_labels", allow_empty=True),
             location_label=_require_text(payload.get("location_label", ""), "location_label", allow_empty=True),
             agenda_digest=_require_text(payload.get("agenda_digest", ""), "agenda_digest", allow_empty=True),
-            constraints=tuple(payload.get("constraints", ())),
+            constraints=_text_tuple(payload.get("constraints", ()), "constraints", allow_empty=True),
         )
 
 
@@ -226,7 +226,7 @@ class TaskDraftInput:
             priority=_require_text(payload.get("priority"), "priority"),
             due_hint=_require_text(payload.get("due_hint", ""), "due_hint", allow_empty=True),
             acceptance_digest=_require_text(payload.get("acceptance_digest", ""), "acceptance_digest", allow_empty=True),
-            constraints=tuple(payload.get("constraints", ())),
+            constraints=_text_tuple(payload.get("constraints", ()), "constraints", allow_empty=True),
         )
 
 

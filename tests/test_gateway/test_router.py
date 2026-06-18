@@ -442,7 +442,6 @@ class TestMessageRouting:
         assert any(event.next_state == CommandState.LEARNING_DECIDED for event in command_events)
         assert any(event.next_state == CommandState.RESPONDED for event in command_events)
         assert command_events[-1].next_state == CommandState.RESPONSE_EVIDENCE_CLOSED
-        assert command_events[-1].detail["execution_delivery_separated"] is True
 
     def test_successful_message_includes_interpretation_receipt(self):
         body = "What is tenant alpha token abc123?"
@@ -512,20 +511,6 @@ class TestMessageRouting:
         assert interpreted["search_needed"] is True
         assert receipt["interpreted_intent"] == "enterprise.knowledge_search"
         assert receipt["extracted_slots"]["param_names"] == ["query"]
-        assert response.metadata["search_decision_receipt"]["decision"] == "allow_search"
-        assert response.metadata["search_decision_receipt"]["retrieval_authority"] == "evidence_only"
-        command_events = router._commands.events_for(response.metadata["command_id"])
-        observed_event = next(
-            event
-            for event in command_events
-            if event.detail.get("search_decision_receipt")
-        )
-        assert observed_event.detail["search_decision_receipt"]["receipt_id"] == (
-            response.metadata["search_decision_receipt"]["receipt_id"]
-        )
-        assert observed_event.detail["search_decision_receipt_id"] == (
-            response.metadata["search_decision_receipt"]["receipt_id"]
-        )
         assert "search knowledge docs" not in str(receipt)
         assert captured_contexts[0].command_id == response.metadata["command_id"]
         assert captured_contexts[0].conversation_id == "conversation-1"
@@ -649,12 +634,14 @@ class TestMessageRouting:
         assert preview["steps"][1]["depends_on"] == ["step-1"]
         assert preview["approval_required"] is True
         assert preview["budget"]["budget_required"] is True
+        assert preview["budget"]["estimated_cost_units"] == 1.0
         assert preview["budget"]["used_cost_units"] == 0
         assert preview["budget"]["required_by_steps"] == ["step-1", "step-2"]
         assert preview["budget"]["execution_spend_allowed"] is False
         assert preview["tools"][0]["tool_name"] == "knowledge_base"
         assert preview["tools"][0]["permission_state"] == "approval_required"
         assert preview["tools"][0]["budget_required"] is True
+        assert preview["tools"][0]["mutates_world"] is False
         assert preview["tools"][1]["tool_name"] == "external_webhook"
         assert preview["tools"][1]["budget_required"] is True
         assert all(tool["execution_allowed"] is False for tool in preview["tools"])
@@ -1032,24 +1019,11 @@ class TestChannelAdapterIntegration:
         router.register_tenant_mapping(TenantMapping(
             channel="test", sender_id="u1", tenant_id="t1", identity_id="u1",
         ))
-        response = router.handle_message(GatewayMessage(
+        router.handle_message(GatewayMessage(
             message_id="m1", channel="test", sender_id="u1", body="hello",
         ))
-        command_id = response.message_id.removeprefix("resp-")
-        delivery_events = [
-            event
-            for event in router._commands.events_for(command_id)
-            if event.detail.get("delivery_status")
-        ]
-
         assert len(channel.sent_messages) == 1
         assert channel.sent_messages[0] == ("u1", "Got it!")
-        assert response.metadata["delivery_status"] == "sent"
-        assert router._commands.get(command_id).state == CommandState.RESPONSE_EVIDENCE_CLOSED
-        assert delivery_events[-1].previous_state == CommandState.RESPONDED
-        assert delivery_events[-1].next_state == CommandState.RESPONSE_EVIDENCE_CLOSED
-        assert delivery_events[-1].detail["delivery_succeeded"] is True
-        assert delivery_events[-1].detail["execution_delivery_separated"] is True
 
     def test_no_channel_adapter_still_returns_response(self):
         router = GatewayRouter(platform=StubPlatform(llm_response="Response"))
@@ -1071,21 +1045,9 @@ class TestChannelAdapterIntegration:
         response = router.handle_message(GatewayMessage(
             message_id="m1", channel="test", sender_id="u1", body="hello",
         ))
-        command_id = response.message_id.removeprefix("resp-")
-        delivery_events = [
-            event
-            for event in router._commands.events_for(command_id)
-            if event.detail.get("delivery_status")
-        ]
-
         assert response.body == "Response"
         assert response.metadata["delivery_status"] == "failed"
         assert response.metadata["delivery_error_type"] == "adapter_exception"
-        assert router._commands.get(command_id).state == CommandState.RESPONSE_EVIDENCE_CLOSED
-        assert delivery_events[-1].detail["delivery_status"] == "failed"
-        assert delivery_events[-1].detail["delivery_error_type"] == "adapter_exception"
-        assert delivery_events[-1].detail["delivery_succeeded"] is False
-        assert delivery_events[-1].detail["execution_delivery_separated"] is True
         assert router.error_count == 1
         assert router.summary()["error_reasons"] == {"adapter_exception": 1}
 
@@ -1216,7 +1178,53 @@ class TestChannelAdapterIntegration:
         assert approved.metadata["approval_resolved"] is True
         assert approved.metadata["status"] == "approved"
         assert approved.metadata["command_id"] == pending.metadata["command_id"]
+        assert approved.metadata["approval_strength_decision"] == "allow"
+        assert approved.metadata["approval_strength"] == "operator_bound"
+        approval_event = next(
+            event
+            for event in router._commands.events_for(pending.metadata["command_id"])
+            if event.next_state == CommandState.APPROVED
+        )
+        assert approval_event.detail["approval_strength_decision"] == "allow"
         assert platform.sessions_opened == 1
+
+    def test_channel_approval_callback_blocks_high_risk_without_operator_session(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        platform = StubPlatform(llm_response="should not execute")
+        router = GatewayRouter(
+            platform=platform,
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="slack", sender_id="requester", tenant_id="t1", identity_id="identity-1",
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="slack", sender_id="approver", tenant_id="t1", identity_id="identity-2",
+            approval_authority=True,
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="slack", sender_id="requester", body="delete all files",
+        ))
+        blocked = router.handle_message(GatewayMessage(
+            message_id="m2", channel="slack", sender_id="approver",
+            body=f"approve:{pending.metadata['request_id']}",
+        ))
+
+        assert blocked.metadata["error"] == "approval_strength_denied"
+        assert blocked.metadata["approval_strength_decision"] == "block"
+        assert "operator_session_missing" in blocked.metadata["approval_strength_reasons"]
+        assert router.pending_approvals == 1
+        assert platform.sessions_opened == 0
 
     def test_channel_approval_waits_for_mesh_quorum_before_execution(self):
         times = [

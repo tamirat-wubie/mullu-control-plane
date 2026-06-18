@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:github-branch-protection-reconcile-receipt:1",
+  "title": "GitHub Branch Protection Reconcile Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "mode",
+    "status",
+    "repository_owner",
+    "repository_name",
+    "branch_name",
+    "endpoint",
+    "method",
+    "policy",
+    "policy_hash",
+    "observed_state",
+    "missing_required_checks",
+    "extra_required_checks",
+    "drift",
+    "required_actions",
+    "request_payload",
+    "request_payload_hash",
+    "plan_hash",
+    "approval_ref",
+    "token_exchange_receipt_ref",
+    "action_execution_receipt_ref",
+    "response_status_code",
+    "response_payload_hash",
+    "blocked_reasons",
+    "required_controls",
+    "evidence_refs",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "external_apply_admitted",
+    "network_call_performed",
+    "request_authentication_performed",
+    "raw_token_stored",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^github-branch-protection-reconcile-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "mode": {
+      "type": "string",
+      "enum": ["plan_only", "dry_run", "apply_approved"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["noop", "planned", "dry_run_accepted", "apply_receipt_bound", "blocked"]
+    },
+    "repository_owner": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "repository_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "branch_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "endpoint": {
+      "type": "string",
+      "pattern": "^/repos/[^/]+/[^/]+/branches/[^/]+/protection$"
+    },
+    "method": {"type": "string", "const": "PUT"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "repository_owner",
+        "repository_name",
+        "branch_name",
+        "required_status_checks",
+        "enforce_admins",
+        "require_linear_history",
+        "require_conversation_resolution",
+        "require_signed_commits",
+        "require_status_checks",
+        "review_policy"
+      ],
+      "properties": {
+        "policy_id": {"type": "string", "minLength": 1},
+        "repository_owner": {"type": "string", "minLength": 1},
+        "repository_name": {"type": "string", "minLength": 1},
+        "branch_name": {"type": "string", "minLength": 1},
+        "required_status_checks": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "enforce_admins": {"type": "boolean"},
+        "require_linear_history": {"type": "boolean"},
+        "require_conversation_resolution": {"type": "boolean"},
+        "require_signed_commits": {"type": "boolean"},
+        "require_status_checks": {"type": "boolean"},
+        "review_policy": {"$ref": "#/$defs/review_policy"}
+      }
+    },
+    "policy_hash": {"$ref": "#/$defs/sha256_hex"},
+    "observed_state": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required_status_checks",
+            "enforce_admins",
+            "required_approving_review_count",
+            "require_code_owner_reviews",
+            "require_conversation_resolution",
+            "require_linear_history"
+          ],
+          "properties": {
+            "required_status_checks": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            },
+            "enforce_admins": {"type": "boolean"},
+            "required_approving_review_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "require_code_owner_reviews": {"type": "boolean"},
+            "require_conversation_resolution": {"type": "boolean"},
+            "require_linear_history": {"type": "boolean"}
+          }
+        },
+        {"type": "null"}
+      ]
+    },
+    "missing_required_checks": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "extra_required_checks": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "drift": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "request_payload": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "request_payload_hash": {"$ref": "#/$defs/sha256_hex"},
+    "plan_hash": {"$ref": "#/$defs/sha256_hex"},
+    "approval_ref": {"type": "string"},
+    "token_exchange_receipt_ref": {"type": "string"},
+    "action_execution_receipt_ref": {"type": "string"},
+    "response_status_code": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 599
+    },
+    "response_payload_hash": {
+      "type": "string",
+      "pattern": "^$|^sha256:[0-9a-f]{64}$"
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:github-branch-protection-reconcile-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "external_apply_admitted": {"type": "boolean"},
+    "network_call_performed": {"type": "boolean", "const": false},
+    "request_authentication_performed": {"type": "boolean", "const": false},
+    "raw_token_stored": {"type": "boolean", "const": false},
+    "receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "github_api_not_called",
+        "request_authentication_not_performed",
+        "raw_token_not_stored",
+        "external_apply_admitted",
+        "policy_hash_bound",
+        "payload_hash_bound",
+        "plan_hash_bound",
+        "observed_state_present",
+        "drift_detected",
+        "secret_absence_verified"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "github_api_not_called": {"type": "boolean", "const": true},
+        "request_authentication_not_performed": {"type": "boolean", "const": true},
+        "raw_token_not_stored": {"type": "boolean", "const": true},
+        "external_apply_admitted": {"type": "boolean"},
+        "policy_hash_bound": {"type": "boolean", "const": true},
+        "payload_hash_bound": {"type": "boolean", "const": true},
+        "plan_hash_bound": {"type": "boolean", "const": true},
+        "observed_state_present": {"type": "boolean"},
+        "drift_detected": {"type": "boolean"},
+        "secret_absence_verified": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "review_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_approving_review_count",
+        "require_code_owner_reviews",
+        "dismiss_stale_reviews",
+        "require_last_push_approval"
+      ],
+      "properties": {
+        "required_approving_review_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "require_code_owner_reviews": {"type": "boolean"},
+        "dismiss_stale_reviews": {"type": "boolean"},
+        "require_last_push_approval": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "external_apply_admitted": {"const": false},
+          "metadata": {
+            "properties": {
+              "external_apply_admitted": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "noop"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "plan_only"},
+          "drift": {"maxItems": 0},
+          "external_apply_admitted": {"const": false},
+          "approval_ref": {"maxLength": 0},
+          "token_exchange_receipt_ref": {"maxLength": 0},
+          "action_execution_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "planned"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "plan_only"},
+          "external_apply_admitted": {"const": false},
+          "approval_ref": {"maxLength": 0},
+          "token_exchange_receipt_ref": {"maxLength": 0},
+          "action_execution_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "dry_run_accepted"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "dry_run"},
+          "external_apply_admitted": {"const": false},
+          "approval_ref": {"maxLength": 0},
+          "token_exchange_receipt_ref": {"maxLength": 0},
+          "action_execution_receipt_ref": {"maxLength": 0},
+          "response_status_code": {"const": 0},
+          "response_payload_hash": {"maxLength": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "apply_receipt_bound"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "mode": {"const": "apply_approved"},
+          "approval_ref": {"minLength": 1},
+          "token_exchange_receipt_ref": {"minLength": 1},
+          "action_execution_receipt_ref": {"minLength": 1},
+          "response_status_code": {"minimum": 200, "maximum": 299},
+          "response_payload_hash": {"pattern": "^sha256:[0-9a-f]{64}$"},
+          "blocked_reasons": {"maxItems": 0},
+          "external_apply_admitted": {"const": true},
+          "metadata": {
+            "properties": {
+              "external_apply_admitted": {"const": true},
+              "secret_absence_verified": {"const": true}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

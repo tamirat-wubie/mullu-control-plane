@@ -26,6 +26,7 @@ capability_execution_allowed(action, capability, environment) <=>
 | `owner` | accountable operator or team |
 | `risk_class` | maximum risk profile |
 | `maturity_level` | C0-C7 certification level |
+| `maturity_label` | derived operator label: Specified, Implemented, or Verified |
 | `allowed_environments` | local, ci, staging, pilot, production |
 | `input_schema` | admitted input contract |
 | `output_schema` | returned result contract |
@@ -51,6 +52,16 @@ capability_execution_allowed(action, capability, environment) <=>
 | `C5` | live write receipt exists with approval | pilot write with approval |
 | `C6` | production certified | production bounded execution |
 | `C7` | autonomy certified | autonomy under policy and risk limits |
+
+## Read-model labels
+
+`maturity_label` is a read-model projection over `maturity_level`, not a second authority source.
+
+| Label | Levels | Meaning |
+| --- | --- | --- |
+| `Specified` | C0-C2 | contract, policy, or mock-evaluation evidence exists but no sandbox implementation closure is present |
+| `Implemented` | C3-C5 | sandbox or live implementation evidence exists, but production readiness is not closed |
+| `Verified` | C6-C7 | production-ready or autonomy-ready evidence gates are closed |
 
 ## Required level matrix
 

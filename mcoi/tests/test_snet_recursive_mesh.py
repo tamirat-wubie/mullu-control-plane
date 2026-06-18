@@ -12,15 +12,23 @@ Invariants:
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 
 import pytest
 
 from mcoi_runtime.contracts.snet import (
+    SNetAnswer,
     SNetContradictionState,
     SNetInquiryBudget,
     SNetMeshReceipt,
+    SNetMetadata,
+    SNetQuestion,
+    SNetRelation,
     SNetSettlementState,
+    SNetSymbol,
     SNetTickStatus,
+    SNetTickResult,
+    SNetUnknown,
     SNetValidationState,
     SNetWHType,
     WH_TYPES,
@@ -230,49 +238,106 @@ def test_mesh_receipt_changes_for_different_same_count_mesh_state() -> None:
 
 
 def test_budget_rejects_zero_question_and_zero_unknown_threshold() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     with pytest.raises(ValueError, match="max_questions_per_symbol"):
         SNetInquiryBudget(max_questions_per_symbol=0)
     with pytest.raises(ValueError, match="finite SNet WH spine"):
         SNetInquiryBudget(max_questions_per_symbol=len(WH_TYPES) + 1)
     with pytest.raises(ValueError, match="unknown_gravity_threshold"):
         SNetInquiryBudget(unknown_gravity_threshold=0)
+    with pytest.raises(ValueError, match="max_depth"):
+        SNetInquiryBudget(max_depth=IntSubclass(1))
+    with pytest.raises(ValueError, match="promotion_threshold"):
+        SNetInquiryBudget(promotion_threshold=FloatSubclass(0.5))
     assert SNetInquiryBudget(max_questions_per_symbol=1, unknown_gravity_threshold=1).max_questions_per_symbol == 1
+    assert SNetInquiryBudget(max_depth=1, promotion_threshold=0.5).promotion_threshold == 0.5
 
 
-def test_answer_map_rejects_duplicate_and_empty_wh_answers() -> None:
+def test_mesh_constructor_rejects_budget_shape_drift() -> None:
+    class BudgetSubclass(SNetInquiryBudget):
+        pass
+
+    exact_budget = SNetInquiryBudget(max_depth=1)
+    default_mesh = SNetRecursiveMesh(None)
+    exact_mesh = SNetRecursiveMesh(exact_budget)
+
+    assert default_mesh.budget == SNetInquiryBudget()
+    assert exact_mesh.budget is exact_budget
+    assert exact_mesh.budget.max_depth == 1
+
+    for invalid_budget in (0, False, object(), {"max_depth": 1}, BudgetSubclass(max_depth=1)):
+        with pytest.raises(ValueError, match="SNet budget"):
+            SNetRecursiveMesh(invalid_budget)  # type: ignore[arg-type]
+
+
+def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
 
-    class DuplicateAnswerMap(Mapping):
+    class DictSubclass(dict):
+        pass
+
+    class CustomAnswerMap(Mapping):
         def __getitem__(self, key):
-            if key is SNetWHType.WHAT:
-                return "Seed object"
-            if key == "what":
-                return "Duplicate seed object"
+            if key is SNetWHType.DEPENDS_ON:
+                return "Water"
             raise KeyError(key)
 
         def __iter__(self):
-            return iter((SNetWHType.WHAT, "what"))
+            return iter((SNetWHType.DEPENDS_ON,))
 
         def __len__(self):
-            return 2
+            return 1
 
         def items(self):
-            return ((SNetWHType.WHAT, "Seed object"), ("what", "Duplicate seed object"))
+            return ((SNetWHType.DEPENDS_ON, "Water"),)
 
-    with pytest.raises(ValueError, match="duplicate SNet WH answer key"):
-        mesh.run_tick_with_answers(seed.symbol_id, DuplicateAnswerMap())
+    class RaisingItems(dict):
+        def items(self):
+            raise RuntimeError("items leak")
+
+    class TextSubclass(str):
+        pass
+
+    for invalid_answer_map in (
+        DictSubclass({SNetWHType.DEPENDS_ON: "Water"}),
+        CustomAnswerMap(),
+        RaisingItems({SNetWHType.DEPENDS_ON: "Water"}),
+        MappingProxyType(RaisingItems({SNetWHType.DEPENDS_ON: "Water"})),
+    ):
+        with pytest.raises(ValueError, match="answer_map must be a mapping"):
+            mesh.run_tick_with_answers(seed.symbol_id, invalid_answer_map)
 
     second_mesh = SNetRecursiveMesh()
     second_seed = second_mesh.add_symbol("Second seed", symbol_type="physical_biological_object")
     with pytest.raises(ValueError, match="must be a non-empty string"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "   "})
+    with pytest.raises(ValueError, match="WH answer key"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {TextSubclass("what"): "Seed"})
+    with pytest.raises(ValueError, match="must be a non-empty string"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: TextSubclass("Seed")})
+
+    valid_mesh = SNetRecursiveMesh()
+    valid_seed = valid_mesh.add_symbol("Valid seed", symbol_type="physical_biological_object")
+    valid_tick = valid_mesh.run_tick_with_answers(
+        valid_seed.symbol_id,
+        MappingProxyType({SNetWHType.DEPENDS_ON: "Water"}),
+    )
+
     assert mesh.answers == {}
     assert mesh.questions == {}
     assert mesh.metadata == {}
     assert second_mesh.answers == {}
     assert second_mesh.questions == {}
     assert second_mesh.metadata == {}
+    assert len(valid_tick.answer_ids) == 1
+    assert len(valid_mesh.answers) == 1
+    assert len(valid_mesh.metadata) == 1
 
 
 def test_run_tick_rejects_invalid_confidence_and_state_before_mutation() -> None:
@@ -297,6 +362,15 @@ def test_run_tick_rejects_invalid_confidence_and_state_before_mutation() -> None
 
 
 def test_direct_answer_and_score_validation_fail_closed() -> None:
+    class TextSubclass(str):
+        pass
+
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     tick = mesh.generate_wh_tick(seed.symbol_id)
@@ -304,6 +378,8 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
 
     with pytest.raises(ValueError, match="raw_answer"):
         mesh.ingest_answer(question_id, "   ")
+    with pytest.raises(ValueError, match="raw_answer"):
+        mesh.ingest_answer(question_id, TextSubclass("Seed"))
     with pytest.raises(ValueError, match="validation_state"):
         mesh.ingest_answer(question_id, "Seed", validation_state="supported")
     with pytest.raises(ValueError, match="SNet confidence"):
@@ -313,10 +389,90 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
             confidence=float("nan"),
             validation_state=SNetValidationState.SUPPORTED,
         )
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.ingest_answer(question_id, "Seed", confidence=IntSubclass(1))
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.ingest_answer(question_id, "Seed", confidence=FloatSubclass(0.5))
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value="seed",
+            confidence=IntSubclass(1),
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="facet"):
+        mesh.score_metadata(
+            facet=TextSubclass("identity"),
+            ascii_folded_value="seed",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="ascii_folded_value"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value=TextSubclass("seed"),
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
 
     assert mesh.answers == {}
     assert mesh.metadata == {}
     assert mesh.questions[question_id].question_id == question_id
+
+
+def test_runtime_id_lookups_reject_shape_drift_before_mutation() -> None:
+    class TextSubclass(str):
+        pass
+
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+    answer = mesh.ingest_answer(
+        question_id,
+        "Seed",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    metadata = mesh.extract_metadata(question_id, answer.answer_id)
+    before_state = (
+        len(mesh.questions),
+        len(mesh.answers),
+        len(mesh.metadata),
+        len(mesh.relations),
+        mesh.symbols[seed.symbol_id].settlement_state,
+    )
+
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(TextSubclass(seed.symbol_id))
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.generate_wh_tick(f" {seed.symbol_id}")
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.ingest_answer(TextSubclass(question_id), "Seed")
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.ingest_answer(1, "Seed")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="question_id"):
+        mesh.extract_metadata(TextSubclass(question_id), answer.answer_id)
+    with pytest.raises(ValueError, match="answer_id"):
+        mesh.extract_metadata(question_id, TextSubclass(answer.answer_id))
+    with pytest.raises(ValueError, match="metadata_id"):
+        mesh.promote_metadata(TextSubclass(metadata.metadata_id))
+    with pytest.raises(ValueError, match="symbol_id"):
+        mesh.settle_symbol(TextSubclass(seed.symbol_id))
+
+    after_state = (
+        len(mesh.questions),
+        len(mesh.answers),
+        len(mesh.metadata),
+        len(mesh.relations),
+        mesh.symbols[seed.symbol_id].settlement_state,
+    )
+
+    assert after_state == before_state
+    assert mesh.answers == {answer.answer_id: answer}
+    assert mesh.metadata == {metadata.metadata_id: metadata}
 
 
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
@@ -350,11 +506,30 @@ def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
 
 
 def test_direct_text_inputs_fail_with_explicit_errors() -> None:
+    class TextSubclass(str):
+        pass
+
+    class AlwaysEqualToEmpty:
+        def __eq__(self, other: object) -> bool:
+            raise AssertionError("optional text validation must not compare before type validation")
+
+    class RaisingEquality:
+        def __eq__(self, other: object) -> bool:
+            raise RuntimeError("comparison leak")
+
     mesh = SNetRecursiveMesh()
     with pytest.raises(ValueError, match="label"):
         mesh.add_symbol(123)
+    with pytest.raises(ValueError, match="label"):
+        mesh.add_symbol(TextSubclass("Seed"))
+    with pytest.raises(ValueError, match="label"):
+        mesh.add_symbol(SNetWHType.WHAT)
     with pytest.raises(ValueError, match="sense_id"):
         mesh.add_symbol("Seed", sense_id=0)
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=AlwaysEqualToEmpty())
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=RaisingEquality())
     with pytest.raises(ValueError, match="created_from_metadata_id"):
         mesh.add_symbol("Seed", created_from_metadata_id=None)
     assert mesh.symbols == {}
@@ -366,8 +541,12 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
         mesh.generate_wh_tick(seed.symbol_id, perspective="")
     with pytest.raises(ValueError, match="context"):
         mesh.generate_wh_tick(seed.symbol_id, context=123)
+    with pytest.raises(ValueError, match="context"):
+        mesh.generate_wh_tick(seed.symbol_id, context=TextSubclass("general"))
     with pytest.raises(ValueError, match="parent_question_id"):
         mesh.generate_wh_tick(seed.symbol_id, parent_question_id=0)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        mesh.generate_wh_tick(seed.symbol_id, parent_question_id=RaisingEquality())
     with pytest.raises(ValueError, match="facet"):
         mesh.score_metadata(
             facet="",
@@ -388,7 +567,67 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
     assert mesh.answers == {}
 
 
+def test_direct_snet_contracts_reject_numeric_shape_drift() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
+    with pytest.raises(ValueError, match="depth"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", depth=IntSubclass(1))
+    with pytest.raises(ValueError, match="confidence"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=FloatSubclass(0.5),
+        )
+    with pytest.raises(ValueError, match="promotion_score"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            promotion_score=FloatSubclass(0.5),
+        )
+    with pytest.raises(ValueError, match="importance_score"):
+        SNetUnknown(
+            unknown_id="unknown:1",
+            symbol_id="symbol:1",
+            missing_facet="identity",
+            question_id="question:1",
+            importance_score=FloatSubclass(0.5),
+            blocking_reason="answer_missing",
+        )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", depth=1)
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed",
+        ascii_folded_answer="seed",
+        confidence=0.5,
+    )
+
+    assert valid_symbol.depth == 1
+    assert valid_answer.confidence == 0.5
+
+
 def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
+    class TextSubclass(str):
+        pass
+
+    class TupleSubclass(tuple):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     tick = mesh.generate_wh_tick(seed.symbol_id)
@@ -398,11 +637,452 @@ def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
         mesh.ingest_answer(question_id, "Seed", evidence_refs="evidence:1")
     with pytest.raises(ValueError, match="evidence_refs"):
         mesh.ingest_answer(question_id, "Seed", evidence_refs=("",))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=TupleSubclass(("evidence:1",)))
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=(TextSubclass("evidence:1"),))
     answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
 
     assert mesh.answers == {answer.answer_id: answer}
     assert answer.evidence_refs == ("evidence:1",)
     assert mesh.metadata == {}
+
+
+def test_direct_snet_contracts_reject_string_sequence_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="metadata_refs"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs="metadata:1")
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type="upstream_dependency",
+            target_symbol_id="symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general",
+            evidence_refs="evidence:1",
+        )
+    with pytest.raises(ValueError, match="generated_question_ids"):
+        SNetTickResult(
+            tick_id="tick:1",
+            symbol_id="symbol:1",
+            status=SNetTickStatus.RAN,
+            generated_question_ids="question:1",
+        )
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetMeshReceipt(**{**receipt_payload, "evidence_refs": "snet:mesh_digest:sha256:" + "a" * 64})
+
+    assert receipt_payload["evidence_refs"]
+    assert SNetSymbol(symbol_id="symbol:2", label="Seed", metadata_refs=["metadata:1"]).metadata_refs == (
+        "metadata:1",
+    )
+    assert (
+        SNetTickResult(
+            tick_id="tick:2",
+            symbol_id="symbol:2",
+            status=SNetTickStatus.RAN,
+            generated_question_ids=["question:1"],
+        ).generated_question_ids
+        == ("question:1",)
+    )
+
+
+def test_direct_snet_contracts_reject_sequence_subclass_drift() -> None:
+    class ListSubclass(list):
+        pass
+
+    class TupleSubclass(tuple):
+        pass
+
+    class RaisingList(list):
+        def __iter__(self):
+            raise RuntimeError("iteration leak")
+
+    for invalid_refs in (
+        ListSubclass(["metadata:1"]),
+        TupleSubclass(("metadata:1",)),
+        RaisingList(["metadata:1"]),
+    ):
+        with pytest.raises(ValueError, match="metadata_refs"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", metadata_refs=invalid_refs)
+
+    for invalid_refs in (
+        ListSubclass(["evidence:1"]),
+        TupleSubclass(("evidence:1",)),
+        RaisingList(["evidence:1"]),
+    ):
+        with pytest.raises(ValueError, match="evidence_refs"):
+            SNetAnswer(
+                answer_id="answer:1",
+                question_id="question:1",
+                raw_answer="Seed",
+                ascii_folded_answer="seed",
+                confidence=0.5,
+                evidence_refs=invalid_refs,
+            )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", metadata_refs=["metadata:1"])
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed",
+        ascii_folded_answer="seed",
+        confidence=0.5,
+        evidence_refs=["evidence:1"],
+    )
+
+    assert valid_symbol.metadata_refs == ("metadata:1",)
+    assert valid_answer.evidence_refs == ("evidence:1",)
+    assert valid_answer.raw_answer == "Seed"
+
+
+def test_direct_snet_contracts_reject_map_key_shape_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+    enum_keyed_settlement_counts = dict(receipt_payload["settlement_counts"])
+    active_count = enum_keyed_settlement_counts.pop("active")
+    enum_keyed_settlement_counts[SNetSettlementState.ACTIVE] = active_count
+
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={1: "numeric key"})
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={SNetWHType.WHAT: "enum key"},
+        )
+    with pytest.raises(ValueError, match="settlement_counts.key"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": enum_keyed_settlement_counts})
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"source": "test"})
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_symbol.metadata["source"] == "test"
+    assert set(valid_receipt.settlement_counts) == {state.value for state in SNetSettlementState}
+    assert valid_receipt.symbol_count == receipt_payload["symbol_count"]
+
+
+def test_direct_snet_contracts_reject_metadata_map_subclass_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    class DictSubclass(dict):
+        pass
+
+    class MappingSubclass(Mapping):
+        def __getitem__(self, key):
+            if key == "source":
+                return "test"
+            raise KeyError(key)
+
+        def __iter__(self):
+            return iter(("source",))
+
+        def __len__(self):
+            return 1
+
+        def items(self):
+            return (("source", "test"),)
+
+    class RaisingItems(dict):
+        def items(self):
+            raise RuntimeError("items leak")
+
+    class ListSubclass(list):
+        pass
+
+    for invalid_metadata in (
+        DictSubclass({"source": "test"}),
+        MappingSubclass(),
+        RaisingItems({"source": "test"}),
+        MappingProxyType(RaisingItems({"source": "test"})),
+    ):
+        with pytest.raises(ValueError, match="metadata"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", metadata=invalid_metadata)
+        with pytest.raises(ValueError, match="metadata"):
+            SNetAnswer(
+                answer_id="answer:1",
+                question_id="question:1",
+                raw_answer="Seed",
+                ascii_folded_answer="seed",
+                confidence=0.5,
+                metadata=invalid_metadata,
+            )
+
+    with pytest.raises(ValueError, match="metadata.outer"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"outer": DictSubclass({"inner": "ok"})})
+    with pytest.raises(ValueError, match="metadata.items"):
+        SNetSymbol(symbol_id="symbol:3", label="Seed", metadata={"items": ListSubclass(["ok"])})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": DictSubclass(receipt_payload["settlement_counts"])})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:4",
+        label="Seed",
+        metadata={"outer": {"inner": "ok"}, "items": ["ok"]},
+    )
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_symbol.metadata["outer"]["inner"] == "ok"
+    assert valid_symbol.metadata["items"] == ("ok",)
+    assert valid_receipt.settlement_counts["active"] == receipt_payload["settlement_counts"]["active"]
+
+
+def test_mesh_receipt_rejects_settlement_counts_map_boundary_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    class DuplicateSettlementCounts(Mapping):
+        def __getitem__(self, key):
+            return receipt_payload["settlement_counts"][key]
+
+        def __iter__(self):
+            keys = tuple(receipt_payload["settlement_counts"]) + ("active",)
+            return iter(keys)
+
+        def __len__(self):
+            return len(receipt_payload["settlement_counts"]) + 1
+
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": None})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": []})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": "active"})
+    with pytest.raises(ValueError, match="settlement_counts must be a mapping"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": DuplicateSettlementCounts()})
+
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_receipt.settlement_counts["active"] == receipt_payload["settlement_counts"]["active"]
+    assert sum(valid_receipt.settlement_counts.values()) == valid_receipt.symbol_count
+    assert set(valid_receipt.settlement_counts) == {state.value for state in SNetSettlementState}
+
+
+def test_direct_snet_contracts_reject_nested_metadata_key_shape_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.outer.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"outer": {1: "numeric nested key"}})
+    with pytest.raises(ValueError, match="metadata.outer.key"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"outer": {SNetWHType.WHAT: "enum nested key"}},
+        )
+    with pytest.raises(ValueError, match=r"metadata.items\[0\].key"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"items": [{1: "numeric list key"}]})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:3",
+        label="Seed",
+        metadata={"outer": {"inner": "ok"}, "items": [{"key": "value"}]},
+    )
+
+    assert valid_symbol.metadata["outer"]["inner"] == "ok"
+    assert valid_symbol.metadata["items"][0]["key"] == "value"
+    assert tuple(valid_symbol.metadata) == ("items", "outer")
+
+
+def test_direct_snet_contracts_reject_non_json_metadata_value_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.tags"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"tags": {"b", "a"}})
+    with pytest.raises(ValueError, match="metadata.tags"):
+        SNetSymbol(symbol_id="symbol:2", label="Seed", metadata={"tags": frozenset(("b", "a"))})
+    with pytest.raises(ValueError, match="metadata.wh"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"wh": SNetWHType.WHAT},
+        )
+    with pytest.raises(ValueError, match="metadata.opaque"):
+        SNetSymbol(symbol_id="symbol:3", label="Seed", metadata={"opaque": object()})
+    with pytest.raises(ValueError, match="metadata.score"):
+        SNetSymbol(symbol_id="symbol:4", label="Seed", metadata={"score": float("nan")})
+    with pytest.raises(ValueError, match=r"metadata.items\[0\]"):
+        SNetSymbol(symbol_id="symbol:5", label="Seed", metadata={"items": [b"bytes"]})
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:6",
+        label="Seed",
+        metadata={"flags": [True, None, 3, 0.5, "ok"], "nested": {"score": 1}},
+    )
+    valid_metadata = valid_symbol.to_json_dict()["metadata"]
+
+    assert valid_symbol.metadata["flags"] == (True, None, 3, 0.5, "ok")
+    assert valid_metadata["flags"] == [True, None, 3, 0.5, "ok"]
+    assert valid_metadata["nested"]["score"] == 1
+    assert "\"metadata\":{\"flags\":[true,null,3,0.5,\"ok\"],\"nested\":{\"score\":1}}" in valid_symbol.to_json()
+
+
+def test_direct_snet_contracts_reject_text_shape_drift() -> None:
+    with pytest.raises(ValueError, match="label"):
+        SNetSymbol(symbol_id="symbol:1", label=SNetWHType.WHAT)
+    with pytest.raises(ValueError, match="sense_id"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", sense_id=None)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="identity",
+            parent_question_id=None,
+        )
+    with pytest.raises(ValueError, match="raw_answer"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer=SNetWHType.WHAT,
+            ascii_folded_answer="what",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="promoted_symbol_id"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+            promoted_symbol_id=None,
+        )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", sense_id="", parent_context="")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        parent_question_id="",
+    )
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed",
+        context="general",
+        perspective="general",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+        promoted_symbol_id="",
+    )
+
+    assert valid_symbol.sense_id == ""
+    assert valid_question.parent_question_id == ""
+    assert valid_metadata.promoted_symbol_id == ""
+
+
+def test_direct_snet_contracts_reject_optional_text_comparison_drift() -> None:
+    class AlwaysEqualToEmpty:
+        def __eq__(self, other: object) -> bool:
+            return True
+
+    class RaisingEquality:
+        def __eq__(self, other: object) -> bool:
+            raise RuntimeError("comparison leak")
+
+    for invalid_value in (AlwaysEqualToEmpty(), RaisingEquality()):
+        with pytest.raises(ValueError, match="sense_id"):
+            SNetSymbol(symbol_id="symbol:1", label="Seed", sense_id=invalid_value)
+        with pytest.raises(ValueError, match="parent_question_id"):
+            SNetQuestion(
+                question_id="question:1",
+                target_symbol_id="symbol:1",
+                wh_type=SNetWHType.WHAT,
+                text="What is Seed?",
+                facet="identity",
+                parent_question_id=invalid_value,
+            )
+        with pytest.raises(ValueError, match="promoted_symbol_id"):
+            SNetMetadata(
+                metadata_id="metadata:1",
+                parent_symbol_id="symbol:1",
+                question_id="question:1",
+                answer_id="answer:1",
+                facet="identity",
+                value="Seed",
+                context="general",
+                perspective="general",
+                confidence=0.5,
+                validation_state=SNetValidationState.SUPPORTED,
+                promoted_symbol_id=invalid_value,
+            )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", sense_id="")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        parent_question_id="",
+    )
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed",
+        context="general",
+        perspective="general",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+        promoted_symbol_id="",
+    )
+
+    assert valid_symbol.sense_id == ""
+    assert valid_question.parent_question_id == ""
+    assert valid_metadata.promoted_symbol_id == ""
 
 
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
@@ -475,7 +1155,33 @@ def test_mesh_receipt_rejects_authority_and_settlement_drift() -> None:
     assert sum(receipt_payload["settlement_counts"].values()) == receipt_payload["symbol_count"]
 
 
+def test_mesh_receipt_rejects_boolean_flag_shape_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="terminal closure required flag"):
+        SNetMeshReceipt(**{**receipt_payload, "terminal_closure_required": 1})
+    with pytest.raises(ValueError, match="raw answers exposed flag"):
+        SNetMeshReceipt(**{**receipt_payload, "raw_answers_exposed": 0})
+    with pytest.raises(ValueError, match="connector authority flag"):
+        SNetMeshReceipt(**{**receipt_payload, "connector_authority_granted": ""})
+
+    valid_receipt = SNetMeshReceipt(**receipt_payload)
+
+    assert valid_receipt.terminal_closure_required is True
+    assert valid_receipt.raw_answers_exposed is False
+    assert valid_receipt.connector_authority_granted is False
+
+
 def test_mesh_receipt_rejects_direct_contract_drift() -> None:
+    class IntSubclass(int):
+        pass
+
+    class FloatSubclass(float):
+        pass
+
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
     mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
@@ -491,4 +1197,18 @@ def test_mesh_receipt_rejects_direct_contract_drift() -> None:
         SNetMeshReceipt(**{**receipt_payload, "mesh_digest": "sha256:nothex"})
     with pytest.raises(ValueError, match="evidence_refs"):
         SNetMeshReceipt(**{**receipt_payload, "evidence_refs": []})
+    with pytest.raises(ValueError, match="symbol_count"):
+        SNetMeshReceipt(**{**receipt_payload, "symbol_count": IntSubclass(receipt_payload["symbol_count"])})
+    with pytest.raises(ValueError, match="promotion_threshold"):
+        SNetMeshReceipt(**{**receipt_payload, "promotion_threshold": FloatSubclass(receipt_payload["promotion_threshold"])})
+    with pytest.raises(ValueError, match="settlement_counts.value"):
+        SNetMeshReceipt(
+            **{
+                **receipt_payload,
+                "settlement_counts": {
+                    **receipt_payload["settlement_counts"],
+                    "active": IntSubclass(receipt_payload["settlement_counts"]["active"]),
+                },
+            }
+        )
     assert receipt_payload["mesh_digest"].startswith("sha256:")

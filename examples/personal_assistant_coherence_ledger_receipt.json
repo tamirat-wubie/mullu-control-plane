@@ -1,0 +1,525 @@
+{
+  "receipt_id": "personal-assistant-coherence-ledger-b9c82f54f879d24d",
+  "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
+  "generated_at": "2026-06-16T14:57:54Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "source_receipts": [
+    {
+      "source_id": "personal_assistant_readiness_index",
+      "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
+      "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closed": true,
+      "no_effect_boundary_verified": true
+    }
+  ],
+  "coherence_summary": {
+    "coherence_ledger_closed": true,
+    "readiness_index_closed": true,
+    "lane_count": 12,
+    "dependency_edge_count": 59,
+    "blocked_authority_count": 8,
+    "next_action_count": 12,
+    "all_lanes_bound_to_sources": true,
+    "all_edges_no_effect": true,
+    "no_effect_boundary_verified": true,
+    "production_ready": false,
+    "customer_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "lane_ledger_records": [
+    {
+      "ledger_record_id": "pa-coherence-lane-request_intake_whqr",
+      "lane_id": "request_intake_whqr",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/requests/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_request.schema.json",
+        "schemas/personal_assistant_plan.schema.json",
+        "schemas/personal_assistant_receipt.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_receipt.py",
+        "tests/test_personal_assistant_intake.py"
+      ],
+      "dependency_edge_count": 6,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-skill_registry",
+      "lane_id": "skill_registry",
+      "stage": "runtime_read_model",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/skills"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_skill.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_skill_registry.py",
+        "tests/test_personal_assistant_skill_registry.py",
+        "tests/test_personal_assistant_runtime_skill_registry.py"
+      ],
+      "dependency_edge_count": 5,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-approval_queue",
+      "lane_id": "approval_queue",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/approval-queue",
+        "/api/v1/personal-assistant/approval-queue/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_approval.schema.json",
+        "schemas/personal_assistant_approval_queue.schema.json",
+        "schemas/personal_assistant_approval_decision.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_approval_queue.py",
+        "scripts/validate_personal_assistant_approval_decision.py",
+        "tests/test_personal_assistant_approval_queue.py"
+      ],
+      "dependency_edge_count": 8,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-memory_observation",
+      "lane_id": "memory_observation",
+      "stage": "candidate_only",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/memory-observations",
+        "/api/v1/personal-assistant/memory-observations/preview",
+        "/api/v1/personal-assistant/memory-observations/review/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_memory_observation.schema.json",
+        "schemas/personal_assistant_memory_review.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_memory_observation.py",
+        "scripts/validate_personal_assistant_memory_review.py",
+        "tests/test_personal_assistant_memory_runtime.py"
+      ],
+      "dependency_edge_count": 8,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-read_only_projection",
+      "lane_id": "read_only_projection",
+      "stage": "projection_only",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [],
+      "schema_refs": [
+        "schemas/personal_assistant_read_only_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_read_only_projection.py",
+        "tests/test_validate_personal_assistant_read_only_projection.py"
+      ],
+      "dependency_edge_count": 3,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-draft_projection",
+      "lane_id": "draft_projection",
+      "stage": "projection_only",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [],
+      "schema_refs": [
+        "schemas/personal_assistant_draft_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_draft_projection.py",
+        "tests/test_validate_personal_assistant_draft_projection.py"
+      ],
+      "dependency_edge_count": 3,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-teamops_shared_inbox",
+      "lane_id": "teamops_shared_inbox",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_teamops_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_teamops_projection.py",
+        "tests/test_validate_personal_assistant_teamops_projection.py"
+      ],
+      "dependency_edge_count": 4,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-github_codex_review",
+      "lane_id": "github_codex_review",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/github-codex/review/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_github_codex_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_github_codex_projection.py",
+        "tests/test_validate_personal_assistant_github_codex_projection.py"
+      ],
+      "dependency_edge_count": 4,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-research_source_compare",
+      "lane_id": "research_source_compare",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/research/source-compare/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_research_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_research_projection.py",
+        "tests/test_validate_personal_assistant_research_projection.py"
+      ],
+      "dependency_edge_count": 4,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-math_reasoning",
+      "lane_id": "math_reasoning",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/math/reasoning/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_math_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_math_projection.py",
+        "tests/test_validate_personal_assistant_math_projection.py"
+      ],
+      "dependency_edge_count": 4,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-schedule_planning",
+      "lane_id": "schedule_planning",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/personal-assistant/planning/schedule/preview"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_planning_projection.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_planning_projection.py",
+        "tests/test_validate_personal_assistant_planning_projection.py"
+      ],
+      "dependency_edge_count": 4,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    },
+    {
+      "ledger_record_id": "pa-coherence-lane-operator_console",
+      "lane_id": "operator_console",
+      "stage": "read_model",
+      "state": "SolvedVerified",
+      "source_receipt_ids": [
+        "personal-assistant-readiness-index-32ab1b89855642f5"
+      ],
+      "route_refs": [
+        "/api/v1/console/personal-assistant",
+        "/api/v1/console/personal-assistant/view"
+      ],
+      "schema_refs": [
+        "schemas/personal_assistant_console_read_model.schema.json"
+      ],
+      "validator_refs": [
+        "scripts/validate_personal_assistant_console_read_model.py",
+        "tests/test_validate_personal_assistant_console_read_model.py",
+        "tests/test_personal_assistant_console.py"
+      ],
+      "dependency_edge_count": 6,
+      "blocked_authority_refs": [
+        "live_execution_blocked",
+        "connector_mutation_blocked",
+        "external_communication_blocked",
+        "deployment_mutation_blocked",
+        "customer_readiness_claim_blocked",
+        "nested_mind_live_activation_blocked",
+        "secret_serialization_blocked",
+        "raw_private_payload_serialization_blocked"
+      ],
+      "foundation_only": true,
+      "receipt_required": true,
+      "no_effect_boundary_verified": true,
+      "next_allowed_action": "continue_foundation_hardening_only"
+    }
+  ],
+  "authority_block_records": [
+    {
+      "authority_id": "live_execution_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Live execution remains blocked until operator-approved runtime evidence exists."
+    },
+    {
+      "authority_id": "connector_mutation_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Connector mutation remains blocked without approval, receipt, and recovery evidence."
+    },
+    {
+      "authority_id": "external_communication_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "External communication remains blocked without explicit approval."
+    },
+    {
+      "authority_id": "deployment_mutation_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Deployment mutation remains blocked in Foundation Mode."
+    },
+    {
+      "authority_id": "customer_readiness_claim_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Customer-readiness claims remain blocked without named readiness witnesses."
+    },
+    {
+      "authority_id": "nested_mind_live_activation_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Live Nested Mind activation remains blocked until staging evidence and topology decision exist."
+    },
+    {
+      "authority_id": "secret_serialization_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Secret values must not be serialized into assistant receipts."
+    },
+    {
+      "authority_id": "raw_private_payload_serialization_blocked",
+      "blocked": true,
+      "source": "personal_assistant_readiness_index",
+      "reason": "Raw private connector payloads must not be serialized into assistant receipts."
+    }
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "production_ready_claim_allowed": false,
+    "secret_values_serialized": false,
+    "raw_private_payloads_serialized": false
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-coherence-ledger-2026-06-16",
+        "reason": "Recorded Personal Assistant coherence ledger while preserving no-effect authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

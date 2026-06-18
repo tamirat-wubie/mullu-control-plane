@@ -100,6 +100,95 @@ def test_assistant_profiles_read_model_exposes_finance_ops_profile() -> None:
     assert team_profile["external_send_policy"] == "approval_required"
 
 
+def test_personal_assistant_skill_read_model_is_deployed_read_only() -> None:
+    client = _client()
+
+    response = client.get("/api/v1/personal-assistant/skills")
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["governed"] is True
+    assert body["execution_allowed"] is False
+    assert body["live_connector_execution_allowed"] is False
+    assert body["registry"]["skill_count"] >= 14
+    assert "personal_assistant.clarification.request" in body["registry"]["skill_ids"]
+
+
+def test_personal_assistant_preview_compiles_inbox_request_without_execution() -> None:
+    client = _client()
+
+    response = client.post(
+        "/api/v1/personal-assistant/requests/preview",
+        json={
+            "user_request": "Check important inbox items and prepare response drafts only.",
+            "request_id": "pa_request_router_inbox_001",
+            "submitted_at": "2026-05-13T10:00:00+00:00",
+            "connector_refs": [
+                {
+                    "connector_id": "connector:gmail:operator",
+                    "connector_name": "gmail",
+                    "proof_state": "Pass",
+                    "private_data_allowed": True,
+                    "scopes": ["gmail.readonly"],
+                }
+            ],
+            "include_console_read_model": True,
+        },
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["governed"] is True
+    assert body["request"]["execution_mode"] == "read_and_draft_only"
+    assert body["plan"]["execution_allowed"] is False
+    assert body["receipt"]["decision"] == "allowed"
+    assert body["receipt"]["private_payload_policy"]["secret_values_serialized"] is False
+    assert body["clarification_bundle"]["clarification_count"] == 0
+    assert body["effect_boundary"]["external_send_allowed"] is False
+    assert body["console_read_model"]["effect_boundary"]["execution_allowed"] is False
+
+
+def test_personal_assistant_preview_blocks_unknown_request_with_whqr_step() -> None:
+    client = _client()
+
+    response = client.post(
+        "/api/v1/personal-assistant/requests/preview",
+        json={
+            "user_request": "Handle this for me.",
+            "request_id": "pa_request_router_unknown_001",
+            "submitted_at": "2026-05-13T10:00:00+00:00",
+        },
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["outcome"] == "AwaitingEvidence"
+    assert body["request"]["execution_mode"] == "blocked"
+    assert body["clarification_bundle"]["clarification_count"] == 1
+    assert body["plan"]["steps"][0]["skill_id"] == "personal_assistant.clarification.request"
+    assert body["receipt"]["decision"] == "blocked"
+    assert "plan_execution_blocked_until_clarification" in body["receipt"]["actions_not_taken"]
+
+
+def test_personal_assistant_preview_fails_closed_on_invalid_request() -> None:
+    client = _client()
+
+    response = client.post(
+        "/api/v1/personal-assistant/requests/preview",
+        json={
+            "user_request": "",
+            "request_id": "pa_request_router_invalid_001",
+            "submitted_at": "2026-05-13T10:00:00+00:00",
+        },
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 400
+    assert detail["error"] == "invalid personal assistant preview"
+    assert detail["error_code"] == "invalid_personal_assistant_preview"
+    assert detail["governed"] is True
+
+
 def test_finance_ops_plan_blocks_without_active_payment_consent() -> None:
     client = _client()
 
@@ -246,8 +335,10 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     deps.set("metrics", MetricsStub())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/assistant/profiles" in paths
     assert "/api/v1/assistant/finance-ops/plans" in paths
     assert "/api/v1/assistant/team-ops/plans" in paths
+    assert "/api/v1/personal-assistant/skills" in paths
+    assert "/api/v1/personal-assistant/requests/preview" in paths

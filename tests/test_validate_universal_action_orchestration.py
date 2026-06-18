@@ -53,6 +53,11 @@ DEFERRED_STALE_EVIDENCE_PATH = (
 SIMULATED_LOW_RISK_READONLY_PATH = (
     WORKSPACE_ROOT / "examples" / "uao" / "simulated_low_risk_readonly.json"
 )
+WHQR_CANONICAL_HASH = "sha256:" + ("a" * 64)
+WHQR_OTHER_CANONICAL_HASH = "sha256:" + ("b" * 64)
+WHQR_SEMANTICS_HASH = "sha256:" + ("c" * 64)
+WHQR_REPLAY_REF = f"whqr://replay/{WHQR_CANONICAL_HASH}"
+WHQR_OTHER_REPLAY_REF = f"whqr://replay/{WHQR_OTHER_CANONICAL_HASH}"
 
 
 def _load_validator_module():
@@ -122,6 +127,32 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("reconciliation_ref", schema["$defs"]["closure"]["required"])
         self.assertIn("memory_ref", schema["$defs"]["closure"]["required"])
         self.assertIn("constitution", schema["$defs"]["memory_update"]["required"])
+        whqr_replay_binding = schema["$defs"]["whqr_replay_binding"]
+        self.assertFalse(whqr_replay_binding["additionalProperties"])
+        self.assertEqual(
+            {"replay_ref", "canonical_hash", "semantics_hash", "version"},
+            set(whqr_replay_binding["required"]),
+        )
+        self.assertEqual(
+            {"replay_ref", "canonical_hash", "semantics_hash", "version"},
+            set(whqr_replay_binding["properties"]),
+        )
+        self.assertEqual(
+            "^whqr://replay/sha256:[0-9a-f]{64}$",
+            whqr_replay_binding["properties"]["replay_ref"]["pattern"],
+        )
+        self.assertEqual(
+            "^sha256:[0-9a-f]{64}$",
+            whqr_replay_binding["properties"]["semantics_hash"]["pattern"],
+        )
+        self.assertEqual(
+            "^sha256:[0-9a-f]{64}$",
+            whqr_replay_binding["properties"]["canonical_hash"]["pattern"],
+        )
+        self.assertEqual(
+            "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+            whqr_replay_binding["properties"]["version"]["pattern"],
+        )
 
     def test_recommended_v1_examples_are_non_executing_shapes(self) -> None:
         fixture_paths = (
@@ -312,6 +343,332 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn(
             "memory_update.constitution.evidence_refs must contain at least 1 item(s)",
             errors,
+        )
+
+    def test_whqr_replay_binding_rejects_mismatched_replay_ref(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_OTHER_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must bind canonical_hash",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            WHQR_OTHER_REPLAY_REF,
+            invalid_record["closure"]["whqr_replay_binding"]["replay_ref"],
+        )
+
+    def test_whqr_replay_binding_rejects_unsupported_fields(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "0.1.0",
+            "authority_override": "not-permitted",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding contains unsupported field(s): authority_override",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "not-permitted",
+            invalid_record["closure"]["whqr_replay_binding"]["authority_override"],
+        )
+
+    def test_whqr_replay_binding_rejects_unhashed_semantics_ref(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": "expected-semantics",
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.semantics_hash must start with sha256:",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "expected-semantics",
+            invalid_record["closure"]["whqr_replay_binding"]["semantics_hash"],
+        )
+
+    def test_whqr_replay_binding_rejects_unhashed_canonical_ref(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/expected-canonical-hash",
+            "canonical_hash": "expected-canonical-hash",
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.canonical_hash must start with sha256:",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "expected-canonical-hash",
+            invalid_record["closure"]["whqr_replay_binding"]["canonical_hash"],
+        )
+
+    def test_whqr_replay_binding_rejects_empty_digest_refs(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:",
+            "canonical_hash": "sha256:",
+            "semantics_hash": "sha256:",
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 4)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "sha256:",
+            invalid_record["closure"]["whqr_replay_binding"]["canonical_hash"],
+        )
+
+    def test_whqr_replay_binding_rejects_whitespace_digest_refs(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:   ",
+            "canonical_hash": "sha256:   ",
+            "semantics_hash": "sha256:\t",
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 4)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "sha256:\t",
+            invalid_record["closure"]["whqr_replay_binding"]["semantics_hash"],
+        )
+
+    def test_whqr_replay_binding_rejects_nonhex_digest_refs(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/sha256:" + ("g" * 64),
+            "canonical_hash": "sha256:" + ("g" * 64),
+            "semantics_hash": "sha256:" + ("A" * 64),
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 3)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.canonical_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.semantics_hash must include a 64-character lowercase hex sha256 digest",
+            errors,
+        )
+
+    def test_whqr_replay_binding_rejects_unhashed_replay_ref(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/expected-canonical-hash",
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "0.1.0",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 3)
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must start with whqr://replay/sha256:",
+            errors,
+        )
+        self.assertIn(
+            "closure.whqr_replay_binding.replay_ref must bind canonical_hash",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "whqr://replay/expected-canonical-hash",
+            invalid_record["closure"]["whqr_replay_binding"]["replay_ref"],
+        )
+
+    def test_whqr_replay_binding_rejects_non_semver_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "draft",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "draft",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
+        )
+
+    def test_whqr_replay_binding_rejects_leading_zero_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "01.002.0003",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "01.002.0003",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
+        )
+
+    def test_whqr_replay_binding_rejects_non_ascii_decimal_version(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": WHQR_REPLAY_REF,
+            "canonical_hash": WHQR_CANONICAL_HASH,
+            "semantics_hash": WHQR_SEMANTICS_HASH,
+            "version": "\u0661.2.3",
+        }
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "closure.whqr_replay_binding.version must use major.minor.patch",
+            errors,
+        )
+        self.assertEqual(
+            "\u0661.2.3",
+            invalid_record["closure"]["whqr_replay_binding"]["version"],
+        )
+
+    def test_whqr_replay_binding_rejects_non_object_binding(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["closure"]["whqr_replay_binding"] = (
+            "whqr://replay/not-a-binding-object"
+        )
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "closure.whqr_replay_binding must be null or an object",
+            errors,
+        )
+        self.assertNotIn(
+            "closure receipt confirms must bind closure state, reconciliation_ref, memory_ref, and whqr_replay_binding",
+            errors,
+        )
+        self.assertEqual(
+            "whqr://replay/not-a-binding-object",
+            invalid_record["closure"]["whqr_replay_binding"],
         )
 
     def test_memory_constitution_rejects_allowed_forbidden_use_overlap(self) -> None:

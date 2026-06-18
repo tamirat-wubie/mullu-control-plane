@@ -1,0 +1,77 @@
+{
+  "requirement_id": "sdlc_req_runtime_receipt_candidate_20260615",
+  "request_id": "platform_runtime_receipt_candidate_20260615",
+  "problem_statement": "The selected read-only worker path has a dry-run emitter envelope and runner-binding witness, but it lacks a schema-backed candidate for the future runtime receipt envelope that records required UAO, Phi_gov, temporal lease, failure receipt, and effect reconciliation refs while keeping live runtime authority blocked.",
+  "success_criteria": [
+    "ReadOnlyWorkerRuntimeReceiptCandidate validates against a public JSON schema and Foundation Mode example",
+    "the candidate binds the runner binding witness, emitter dry-run, handoff, binding, lease preflight, and rehearsal evidence",
+    "runtime receipt schema binding remains unperformed",
+    "runtime receipt emission remains unperformed",
+    "runtime runner registration remains unperformed",
+    "dispatch endpoint registration remains unperformed",
+    "runtime dispatch remains denied",
+    "the future runtime receipt envelope requires UAO, Phi_gov, causal trace, temporal lease, runner registration witness, schema binding witness, failure receipt, effect reconciliation, and receipt store refs",
+    "focused tests reject authority drift, contract drift, missing refs, execution drift, failure-policy drift, admission drift, receipt-ref drift, count drift, and terminal-closure drift"
+  ],
+  "non_goals": [
+    "no live worker dispatch",
+    "no runtime runner registration",
+    "no dispatch endpoint registration",
+    "no runtime receipt emitter registration",
+    "no runtime receipt schema binding",
+    "no runtime receipt emission",
+    "no persisted runtime receipt store",
+    "no external connector call",
+    "no filesystem mutation",
+    "no terminal closure claim",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "runtime receipt schema binding remains unperformed",
+    "runtime receipt emission remains unperformed",
+    "runtime runner registration remains unperformed",
+    "read_only_repo_inspection remains dispatch-blocked",
+    "future runtime admission must still require temporal lease evidence, UAO, Phi_gov, recovery evidence, and verification",
+    "WorkerFailureReceipt remains mandatory for failed or partial dispatch evidence",
+    "raw output retention remains denied and only output digests may be carried",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+    "examples/read_only_worker_runtime_receipt_candidate.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_candidate.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_candidate.py",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_runtime_receipt_candidate_20260615.json",
+    "examples/sdlc/design_runtime_receipt_candidate_20260615.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_receipt_candidate.py",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_receipt_candidate.py -q",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-runtime-receipt-candidate-20260615.json"
+  ],
+  "evidence_required": [
+    "runtime receipt candidate validator receipt",
+    "focused pytest receipt for candidate behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/runtime-receipt-candidate/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/runtime-receipt-candidate/20260615",
+  "receipt_ref": "receipt://sdlc/requirement/runtime-receipt-candidate/20260615"
+}

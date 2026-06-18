@@ -63,15 +63,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
     gateway_witnesses = [
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
+        "terminal_closure_exposes_whqr_replay_ref",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
         "command_interpretation_receipt_read_model_schema_valid",
         "command_interpretation_receipt_requires_operator_authority",
         "command_interpretation_receipt_replays_from_command_store",
         "universal_action_proof_replays_from_command_events",
+        "universal_action_proof_exposes_whqr_replay_ref",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
+        "universal_action_orchestration_exposes_whqr_replay_ref",
         "operator_universal_action_read_model_filters_command_proofs",
+        "operator_universal_action_read_model_exposes_whqr_replay_ref",
         "operator_universal_action_console_renders_replay_state",
         "operator_receipt_viewer_groups_bounded_receipts",
         "operator_receipt_viewer_schema_valid",
@@ -124,7 +128,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt and operator receipt/task read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt and operator receipt/task read models, terminal closure with WHQR replay refs, universal action proof replay, orchestration, and operator replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -138,6 +142,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             runtime_witness_anchor_aliases={
                 "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
                 "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
+                "terminal_closure_exposes_whqr_replay_ref": ["command_closure_read_model"],
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
                 "command_interpretation_receipt_read_model_bounds_raw_message": [
                     "command_interpretation_receipt_read_model_bounds_raw_message",
@@ -154,6 +159,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "universal_action_proof_replays_from_command_events": [
                     "command_universal_action_proof_read_model",
                 ],
+                "universal_action_proof_exposes_whqr_replay_ref": [
+                    "command_universal_action_proof_read_model",
+                ],
                 "universal_action_runtime_record_exports_contract_shape": [
                     "universal_action_result_exports_valid_allowed_uao_record",
                     "universal_action_result_exports_valid_blocked_uao_record",
@@ -163,7 +171,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "universal_command_orchestration_record_replays_blocked_events",
                     "command_universal_action_orchestration_read_model",
                 ],
+                "universal_action_orchestration_exposes_whqr_replay_ref": [
+                    "command_universal_action_orchestration_read_model",
+                ],
                 "operator_universal_action_read_model_filters_command_proofs": [
+                    "operator_universal_actions_read_model_filters_proofs",
+                ],
+                "operator_universal_action_read_model_exposes_whqr_replay_ref": [
                     "operator_universal_actions_read_model_filters_proofs",
                 ],
                 "operator_universal_action_console_renders_replay_state": [
@@ -2217,6 +2231,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/assistant/profiles",
                 "/api/v1/assistant/finance-ops/plans",
                 "/api/v1/assistant/team-ops/plans",
+                "/api/v1/personal-assistant/skills",
+                "/api/v1/personal-assistant/requests/preview",
+                "/api/v1/personal-assistant/approval-queue",
+                "/api/v1/personal-assistant/approval-queue/preview",
+                "/api/v1/personal-assistant/memory-observations",
+                "/api/v1/personal-assistant/memory-observations/preview",
+                "/api/v1/personal-assistant/memory-observations/review/preview",
+                "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
+                "/api/v1/personal-assistant/github-codex/review/preview",
+                "/api/v1/personal-assistant/research/source-compare/preview",
+                "/api/v1/personal-assistant/math/reasoning/preview",
+                "/api/v1/personal-assistant/planning/schedule/preview",
             ],
             "request_proof",
             "action_proof",
@@ -2226,16 +2252,89 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/assistant.py",
                 "mcoi/mcoi_runtime/assistant_kernel/planner.py",
                 "mcoi/mcoi_runtime/assistant_kernel/identity.py",
+                "mcoi/mcoi_runtime/personal_assistant/planner.py",
+                "mcoi/mcoi_runtime/personal_assistant/approval.py",
+                "mcoi/mcoi_runtime/personal_assistant/memory.py",
+                "mcoi/mcoi_runtime/personal_assistant/teamops.py",
+                "mcoi/mcoi_runtime/personal_assistant/github_codex.py",
+                "mcoi/mcoi_runtime/personal_assistant/research.py",
+                "mcoi/mcoi_runtime/personal_assistant/planning.py",
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
+                "tests/test_gateway/test_personal_assistant_public_routes.py",
+                "tests/test_personal_assistant_approval_queue.py",
+                "tests/test_validate_personal_assistant_approval_decision.py",
+                "tests/test_personal_assistant_memory.py",
+                "tests/test_personal_assistant_memory_runtime.py",
+                "tests/test_validate_personal_assistant_memory_review.py",
+                "tests/test_personal_assistant_teamops.py",
+                "tests/test_personal_assistant_planner.py",
+                "tests/test_validate_personal_assistant_read_only_projection.py",
+                "tests/test_validate_personal_assistant_draft_projection.py",
+                "tests/test_validate_personal_assistant_teamops_projection.py",
+                "tests/test_validate_personal_assistant_github_codex_projection.py",
+                "tests/test_validate_personal_assistant_research_projection.py",
+                "tests/test_validate_personal_assistant_math_projection.py",
+                "tests/test_validate_personal_assistant_planning_projection.py",
+                "schemas/personal_assistant_approval_queue.schema.json",
+                "schemas/personal_assistant_approval_decision.schema.json",
+                "schemas/personal_assistant_read_only_projection.schema.json",
+                "schemas/personal_assistant_draft_projection.schema.json",
+                "schemas/personal_assistant_memory_observation.schema.json",
+                "schemas/personal_assistant_memory_read_model.schema.json",
+                "schemas/personal_assistant_memory_review.schema.json",
+                "schemas/personal_assistant_teamops_projection.schema.json",
+                "schemas/personal_assistant_github_codex_projection.schema.json",
+                "schemas/personal_assistant_research_projection.schema.json",
+                "schemas/personal_assistant_math_projection.schema.json",
+                "schemas/personal_assistant_planning_projection.schema.json",
+                "examples/personal_assistant_approval_queue_read_model.json",
+                "examples/personal_assistant_approval_decision_evidence.json",
+                "examples/personal_assistant_read_only_projection.json",
+                "examples/personal_assistant_draft_projection.json",
+                "examples/personal_assistant_memory_read_model.json",
+                "examples/personal_assistant_memory_review_evidence.json",
+                "examples/personal_assistant_teamops_projection.json",
+                "examples/personal_assistant_github_codex_projection.json",
+                "examples/personal_assistant_research_projection.json",
+                "examples/personal_assistant_math_projection.json",
+                "examples/personal_assistant_planning_projection.json",
+                "scripts/validate_personal_assistant_approval_queue.py",
+                "scripts/validate_personal_assistant_approval_decision.py",
+                "scripts/validate_personal_assistant_read_only_projection.py",
+                "scripts/validate_personal_assistant_draft_projection.py",
+                "scripts/validate_personal_assistant_memory_observation.py",
+                "scripts/validate_personal_assistant_memory_review.py",
+                "scripts/validate_personal_assistant_teamops_projection.py",
+                "scripts/validate_personal_assistant_github_codex_projection.py",
+                "scripts/validate_personal_assistant_research_projection.py",
+                "scripts/validate_personal_assistant_math_projection.py",
+                "scripts/validate_personal_assistant_planning_projection.py",
             ],
-            "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
                 "finance_ops_plan_projects_operator_queue",
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
+                "personal_assistant_skill_read_model_deployed_read_only",
+                "personal_assistant_preview_compiles_without_execution",
+                "personal_assistant_preview_blocks_with_whqr_step",
+                "personal_assistant_preview_errors_sanitized",
+                "personal_assistant_approval_queue_read_model_public_safe",
+                "personal_assistant_approval_queue_decision_deferred",
+                "personal_assistant_approval_decision_public_safe",
+                "personal_assistant_read_only_projection_public_safe",
+                "personal_assistant_draft_projection_public_safe",
+                "personal_assistant_memory_observation_read_model_public_safe",
+                "personal_assistant_memory_observation_preview_candidate_only",
+                "personal_assistant_memory_observation_review_no_effect",
+                "personal_assistant_teamops_shared_inbox_plan_no_effect",
+                "personal_assistant_github_codex_review_no_effect",
+                "personal_assistant_research_source_compare_no_effect",
+                "personal_assistant_math_reasoning_no_effect",
+                "personal_assistant_planning_schedule_no_effect",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -2253,6 +2352,137 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "assistant_plan_errors_sanitized": [
                     "finance_ops_plan_error_detail_is_bounded",
+                ],
+                "personal_assistant_skill_read_model_deployed_read_only": [
+                    "personal_assistant_skill_read_model_is_deployed_read_only",
+                ],
+                "personal_assistant_preview_compiles_without_execution": [
+                    "personal_assistant_preview_compiles_inbox_request_without_execution",
+                    "preview_planner_emits_schema_valid_inbox_plan_and_receipt",
+                ],
+                "personal_assistant_preview_blocks_with_whqr_step": [
+                    "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
+                    "preview_planner_blocks_unknown_request_with_clarification_skill",
+                ],
+                "personal_assistant_preview_errors_sanitized": [
+                    "personal_assistant_preview_fails_closed_on_invalid_request",
+                ],
+                "personal_assistant_approval_queue_read_model_public_safe": [
+                    "approval_queue_read_model_matches_schema_and_denies_execution",
+                    "personal_assistant_approval_queue_read_model_is_public_safe",
+                    "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
+                    "gateway_personal_assistant_approval_queue_preview_records_pending_packet",
+                ],
+                "personal_assistant_approval_queue_decision_deferred": [
+                    "approved_decision_links_evidence_and_still_defers_execution",
+                    "gateway_personal_assistant_approval_queue_approved_still_defers_execution",
+                ],
+                "personal_assistant_approval_decision_public_safe": [
+                    "personal_assistant_approval_decision_fixture_validates",
+                    "runtime_approval_decision_blocks_effect_boundaries",
+                    "approval_queue_expired_decision_records_receipt_without_execution",
+                    "approval_queue_read_model_counts_expired_decisions",
+                    "approval_decision_validator_rejects_execution_authority",
+                    "approval_decision_validator_rejects_receipt_drift",
+                    "approval_decision_validator_rejects_missing_decision_state",
+                    "approval_decision_validator_rejects_raw_payload_and_secret",
+                    "gateway_personal_assistant_approval_queue_expired_blocks_execution",
+                ],
+                "personal_assistant_read_only_projection_public_safe": [
+                    "personal_assistant_read_only_projection_fixture_validates",
+                    "runtime_read_only_projection_blocks_all_effect_boundaries",
+                    "read_only_projection_validator_rejects_execution_authority",
+                    "read_only_projection_validator_rejects_receipt_drift",
+                    "read_only_projection_validator_rejects_raw_payload_and_secret",
+                ],
+                "personal_assistant_draft_projection_public_safe": [
+                    "personal_assistant_draft_projection_fixture_validates",
+                    "runtime_draft_projection_blocks_effect_boundaries",
+                    "draft_projection_validator_rejects_execution_authority",
+                    "draft_projection_validator_rejects_approval_boundary_drift",
+                    "draft_projection_validator_rejects_receipt_drift",
+                    "draft_projection_validator_rejects_raw_payload_and_secret",
+                ],
+                "personal_assistant_memory_observation_read_model_public_safe": [
+                    "personal_assistant_memory_read_model_validator_accepts_example",
+                    "memory_observation_ledger_indexes_candidates_without_live_memory_write",
+                    "gateway_personal_assistant_memory_read_model_is_empty_and_safe",
+                ],
+                "personal_assistant_memory_observation_preview_candidate_only": [
+                    "prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
+                    "personal_assistant_memory_read_model_validator_rejects_live_write_claim",
+                    "gateway_personal_assistant_memory_preview_prepares_candidate_without_write",
+                    "gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation",
+                ],
+                "personal_assistant_memory_observation_review_no_effect": [
+                    "personal_assistant_memory_review_fixture_validates",
+                    "runtime_memory_review_blocks_effect_boundaries",
+                    "memory_review_runtime_requires_decision_specific_bindings",
+                    "memory_review_validator_rejects_memory_write_authority",
+                    "memory_review_validator_rejects_receipt_drift",
+                    "memory_review_validator_rejects_missing_decision_state",
+                    "memory_review_validator_rejects_raw_payload_and_secret",
+                    "gateway_personal_assistant_memory_review_preview_records_no_effect_review",
+                    "gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
+                    "gateway_personal_assistant_memory_review_preview_rejects_raw_payload",
+                ],
+                "personal_assistant_teamops_shared_inbox_plan_no_effect": [
+                    "personal_assistant_teamops_projection_fixture_validates",
+                    "runtime_teamops_projection_blocks_effect_boundaries",
+                    "teamops_projection_validator_rejects_live_execution_authority",
+                    "teamops_projection_validator_rejects_receipt_drift",
+                    "teamops_projection_validator_rejects_raw_payload_and_secret",
+                    "teamops_shared_inbox_plan_emits_blocked_handoff_without_provider_call",
+                    "teamops_shared_inbox_plan_accepts_ready_evidence_but_does_not_execute_probe",
+                    "gateway_personal_assistant_teamops_preview_plans_without_provider_call",
+                    "gateway_personal_assistant_teamops_preview_rejects_missing_connector_proof",
+                    "gateway_personal_assistant_teamops_preview_rejects_raw_payload",
+                ],
+                "personal_assistant_github_codex_review_no_effect": [
+                    "personal_assistant_github_codex_projection_fixture_validates",
+                    "runtime_github_codex_projection_blocks_effect_boundaries",
+                    "github_codex_projection_validator_rejects_live_execution_authority",
+                    "github_codex_projection_validator_rejects_receipt_drift",
+                    "github_codex_projection_validator_rejects_raw_diff_and_secret",
+                    "github_codex_projection_requires_ready_and_blocked_items",
+                    "gateway_personal_assistant_github_codex_preview_reviews_without_github_call",
+                    "gateway_personal_assistant_github_codex_preview_rejects_missing_connector_proof",
+                    "gateway_personal_assistant_github_codex_preview_rejects_secret_like_summary",
+                ],
+                "personal_assistant_research_source_compare_no_effect": [
+                    "personal_assistant_research_projection_fixture_validates",
+                    "runtime_research_projection_blocks_effect_boundaries",
+                    "research_projection_validator_rejects_live_execution_authority",
+                    "research_projection_validator_rejects_receipt_drift",
+                    "research_projection_validator_rejects_raw_body_and_secret",
+                    "research_projection_validator_requires_ready_and_blocked_items",
+                    "gateway_personal_assistant_research_preview_compares_without_web_search",
+                    "gateway_personal_assistant_research_preview_rejects_non_research_intent",
+                    "gateway_personal_assistant_research_preview_rejects_raw_source_body",
+                ],
+                "personal_assistant_math_reasoning_no_effect": [
+                    "personal_assistant_math_projection_fixture_validates",
+                    "runtime_math_projection_blocks_effect_boundaries",
+                    "math_projection_validator_rejects_money_or_write_authority",
+                    "math_projection_validator_rejects_receipt_drift",
+                    "math_projection_validator_rejects_raw_private_and_secret",
+                    "math_projection_validator_requires_ready_and_blocked_items",
+                    "math_projection_runtime_rejects_secret_like_value",
+                    "gateway_personal_assistant_math_preview_compares_without_effects",
+                    "gateway_personal_assistant_math_preview_rejects_non_math_intent",
+                    "gateway_personal_assistant_math_preview_rejects_raw_private_value",
+                ],
+                "personal_assistant_planning_schedule_no_effect": [
+                    "personal_assistant_planning_projection_fixture_validates",
+                    "runtime_planning_projection_blocks_effect_boundaries_and_assigns_capacity",
+                    "planning_projection_validator_rejects_calendar_or_task_authority",
+                    "planning_projection_validator_rejects_receipt_drift",
+                    "planning_projection_validator_rejects_raw_private_and_secret",
+                    "planning_projection_validator_requires_ready_and_blocked_items",
+                    "planning_projection_runtime_rejects_secret_like_value",
+                    "gateway_personal_assistant_planning_preview_assigns_without_effects",
+                    "gateway_personal_assistant_planning_preview_rejects_non_planning_intent",
+                    "gateway_personal_assistant_planning_preview_rejects_raw_private_item",
                 ],
             },
         ),
@@ -2823,8 +3053,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_operator_console.py",
                 "mcoi/tests/test_console.py",
                 "mcoi/tests/test_inceptadive_shadow_routes.py",
+                "tests/test_personal_assistant_console.py",
+                "tests/test_validate_personal_assistant_console_read_model.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, personal-assistant lane-status, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
@@ -2837,10 +3069,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_fails_closed_without_store_path",
                 "console_personal_assistant_panel_read_model",
                 "console_personal_assistant_html_view_renders_read_only_panel",
+                "console_personal_assistant_lane_status_public_safe",
                 "full_console_includes_spatial_map_read_model",
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
                 "console_whqr_clarifications_return_bounded_read_model",
+                "console_personal_assistant_panel_read_model",
+                "console_personal_assistant_html_view_renders_read_only_panel",
             ],
             runtime_witness_anchor_aliases={
                 "console_home_returns_governed_runtime_vitals": ["console_home"],
@@ -2869,6 +3104,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "console_personal_assistant_html_view_renders_read_only_panel": [
                     "console_personal_assistant_html_view_renders_read_only_panel",
+                ],
+                "console_personal_assistant_lane_status_public_safe": [
+                    "console_read_model_exposes_read_only_foundation_sections",
+                    "personal_assistant_console_fixture_binds_rehearsal_receipt_viewer",
+                    "personal_assistant_console_validator_rejects_lane_authority_drift",
+                    "personal_assistant_console_read_model_fixture_validates",
                 ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",
@@ -4768,6 +5009,108 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "oidc_jwks_refresh_evidence",
+            [
+                "OidcJwksRefreshEvidence",
+                "OidcJwksRefreshAssessment",
+                "assess_oidc_jwks_refresh_evidence",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/tenant_identity.py",
+                "docs/54_authority_directory_sync.md",
+                "examples/sdlc/requirement_oidc_jwks_refresh_evidence_20260615.json",
+                "examples/sdlc/design_oidc_jwks_refresh_evidence_20260615.json",
+                "examples/sdlc/security_review_oidc_jwks_refresh_evidence_20260615.json",
+                "tests/test_gateway/test_tenant_identity.py",
+            ],
+            "OIDC/JWKS refresh evidence is a proof-only trust-chain witness that accepts only HTTPS, issuer-pinned, audience-bound, JWKS-backed, hash-retained, fresh-cache receipts and never authenticates requests or fetches network metadata.",
+            [
+                "fresh_https_jwks_receipt_accepted",
+                "stale_cache_and_missing_refs_blocked",
+                "insecure_discovery_and_redirects_blocked",
+                "invalid_hashes_and_algorithms_blocked",
+                "non_boolean_boundary_flags_rejected",
+                "jwks_refresh_supports_trusted_header_admission",
+            ],
+            runtime_witness_anchor_aliases={
+                "fresh_https_jwks_receipt_accepted": [
+                    "oidc_jwks_refresh_evidence_accepts_fresh_https_receipt",
+                ],
+                "stale_cache_and_missing_refs_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_stale_cache_and_missing_refs",
+                ],
+                "insecure_discovery_and_redirects_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_insecure_discovery_and_redirects",
+                ],
+                "invalid_hashes_and_algorithms_blocked": [
+                    "oidc_jwks_refresh_evidence_blocks_invalid_hashes_and_algorithms",
+                ],
+                "non_boolean_boundary_flags_rejected": [
+                    "oidc_jwks_refresh_evidence_rejects_non_boolean_boundary_flags",
+                ],
+                "jwks_refresh_supports_trusted_header_admission": [
+                    "trusted_identity_headers_accept_oidc_refresh_assessment_evidence",
+                ],
+            },
+        ),
+        _surface(
+            "trusted_identity_header_boundary",
+            [
+                "TrustedIdentityGatewayEvidence",
+                "TrustedIdentityHeaderBoundaryAssessment",
+                "assess_trusted_identity_header_boundary",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/tenant_identity.py",
+                "docs/54_authority_directory_sync.md",
+                "examples/sdlc/requirement_trusted_identity_header_boundary_20260615.json",
+                "examples/sdlc/design_trusted_identity_header_boundary_20260615.json",
+                "examples/sdlc/security_review_trusted_identity_header_boundary_20260615.json",
+                "tests/test_gateway/test_tenant_identity.py",
+            ],
+            "Trusted identity headers remain disabled by default and are accepted only when an upstream gateway proves client-header stripping, verified injection, OIDC/JWKS or mTLS verification, rollback or bypass protection, and retained evidence refs.",
+            [
+                "trusted_headers_disabled_by_default",
+                "complete_oidc_gateway_evidence_accepted",
+                "complete_mtls_gateway_evidence_accepted",
+                "missing_gateway_evidence_blocked",
+                "malformed_evidence_refs_rejected",
+                "non_boolean_gateway_evidence_rejected",
+                "jwks_refresh_assessment_binds_trusted_header_path",
+            ],
+            runtime_witness_anchor_aliases={
+                "trusted_headers_disabled_by_default": [
+                    "trusted_identity_headers_disabled_by_default",
+                ],
+                "complete_oidc_gateway_evidence_accepted": [
+                    "trusted_identity_headers_accept_complete_oidc_gateway_evidence",
+                ],
+                "complete_mtls_gateway_evidence_accepted": [
+                    "trusted_identity_headers_accept_complete_mtls_gateway_evidence",
+                ],
+                "missing_gateway_evidence_blocked": [
+                    "trusted_identity_headers_block_missing_gateway_evidence",
+                ],
+                "malformed_evidence_refs_rejected": [
+                    "trusted_identity_headers_reject_malformed_evidence_refs",
+                ],
+                "non_boolean_gateway_evidence_rejected": [
+                    "trusted_identity_headers_reject_non_boolean_evidence",
+                ],
+                "jwks_refresh_assessment_binds_trusted_header_path": [
+                    "trusted_identity_headers_accept_oidc_refresh_assessment_evidence",
+                ],
+            },
+        ),
+        _surface(
             "orgos_case_governance_lifecycle",
             [
                 "/api/v1/orgs",
@@ -5949,8 +6292,66 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
                 "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py",
                 "tests/test_validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
+                "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py",
+                "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_observation_routing_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_observation_routing_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py",
+                "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_approval_queue_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_approval_queue_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_approval_queue_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_approval_queue_receipt.py",
+                "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_approval_decision_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_approval_decision_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_approval_decision_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_approval_decision_receipt.py",
+                "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py",
+                "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_send_execution_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_send_execution_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py",
+                "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_sent_message_observation_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_sent_message_observation_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py",
+                "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json",
+                "scripts/produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
+                "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
+                "scripts/mint_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "tests/test_mint_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_certificate.py",
+                "scripts/produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
+                "tests/test_produce_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_evidence_bundle.py",
+                "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json",
+                "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+                "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_preflight.py",
+                "schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_terminal_closure_anchor_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_terminal_closure_anchor_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_terminal_closure_anchor_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_terminal_closure_anchor_receipt.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, and operator-input readiness behind handoff readiness and separate approval evidence.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, terminal closure review packets, TeamOps terminal closure certificates, signed TeamOps terminal closure evidence bundles, no-effect terminal anchor preflights, and pending local terminal anchor receipt wrappers behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, source-review binding, trust-ledger proof refs, HMAC verification, anchor artifact projection, operator authority, anchor-secret presence, ready-preflight binding, pending anchor receipt signatures, and no local provider-mutation or remote anchor-submission requirements.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -5995,6 +6396,78 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_input_request_blocks_effect_drift",
                 "team_ops_shared_inbox_probe_input_request_redacts_secret_markers",
                 "team_ops_shared_inbox_probe_input_request_writes_validation_receipt",
+                "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input",
+                "team_ops_shared_inbox_probe_receipt_requires_observation_evidence",
+                "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation",
+                "team_ops_shared_inbox_probe_receipt_blocks_effect_drift",
+                "team_ops_shared_inbox_probe_receipt_redacts_secret_markers",
+                "team_ops_shared_inbox_probe_receipt_writes_validation_receipt",
+                "team_ops_shared_inbox_observation_routing_blocks_without_live_probe",
+                "team_ops_shared_inbox_observation_routing_requires_redacted_observation",
+                "team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
+                "team_ops_shared_inbox_observation_routing_blocks_effect_drift",
+                "team_ops_shared_inbox_observation_routing_redacts_secret_markers",
+                "team_ops_shared_inbox_observation_routing_writes_validation_receipt",
+                "team_ops_shared_inbox_approval_queue_blocks_without_routing",
+                "team_ops_shared_inbox_approval_queue_requires_request_evidence",
+                "team_ops_shared_inbox_approval_queue_accepts_pending_obligation",
+                "team_ops_shared_inbox_approval_queue_blocks_effect_drift",
+                "team_ops_shared_inbox_approval_queue_redacts_secret_markers",
+                "team_ops_shared_inbox_approval_queue_writes_validation_receipt",
+                "team_ops_shared_inbox_approval_decision_blocks_without_queue",
+                "team_ops_shared_inbox_approval_decision_requires_decision_evidence",
+                "team_ops_shared_inbox_approval_decision_accepts_operator_decisions",
+                "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift",
+                "team_ops_shared_inbox_approval_decision_redacts_secret_markers",
+                "team_ops_shared_inbox_approval_decision_writes_validation_receipt",
+                "team_ops_shared_inbox_send_preparation_blocks_without_decision",
+                "team_ops_shared_inbox_send_preparation_requires_preparation_evidence",
+                "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
+                "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift",
+                "team_ops_shared_inbox_send_preparation_redacts_secret_markers",
+                "team_ops_shared_inbox_send_preparation_writes_validation_receipt",
+                "team_ops_shared_inbox_send_execution_blocks_without_preparation",
+                "team_ops_shared_inbox_send_execution_requires_execution_evidence",
+                "team_ops_shared_inbox_send_execution_accepts_provider_receipt",
+                "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim",
+                "team_ops_shared_inbox_send_execution_redacts_secret_markers",
+                "team_ops_shared_inbox_send_execution_writes_validation_receipt",
+                "team_ops_shared_inbox_sent_message_observation_blocks_without_execution",
+                "team_ops_shared_inbox_sent_message_observation_requires_observation_replay",
+                "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure",
+                "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim",
+                "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers",
+                "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt",
+                "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation",
+                "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet",
+                "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet",
+                "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim",
+                "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers",
+                "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt",
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review",
+                "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate",
+                "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet",
+                "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate",
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim",
+                "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_missing_secret",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_signs_ready_certificate",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_verifies_hmac",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_binds_source_certificate",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_raw_secret_or_production_claim",
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim",
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_accepts_ready_preflight",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_missing_or_unready_inputs",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_binds_preflight_bundle_and_artifacts",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_verifies_anchor_signature",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_effect_or_raw_claim",
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_writes_receipt_and_validation_receipts",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -6172,6 +6645,329 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_input_request_writes_validation_receipt": [
                     "team_ops_live_probe_operator_input_request_cli_writes_report",
                     "team_ops_live_probe_operator_input_request_validation_cli_writes_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_blocks_without_operator_input": [
+                    "team_ops_shared_inbox_live_probe_receipt_blocks_without_operator_input_ready",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_requires_observation_evidence": [
+                    "team_ops_shared_inbox_live_probe_receipt_requires_observation_evidence",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation": [
+                    "team_ops_shared_inbox_live_probe_receipt_accepts_read_only_observation",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_probe_receipt_blocks_effect_drift": [
+                    "team_ops_shared_inbox_live_probe_receipt_blocks_count_over_authority",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_count_over_authority",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_raw_query_field",
+                ],
+                "team_ops_shared_inbox_probe_receipt_redacts_secret_markers": [
+                    "team_ops_shared_inbox_live_probe_receipt_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_probe_receipt_writes_validation_receipt": [
+                    "team_ops_shared_inbox_live_probe_receipt_cli_writes_report",
+                    "team_ops_shared_inbox_live_probe_receipt_validation_cli_writes_receipt",
+                ],
+                "team_ops_shared_inbox_observation_routing_blocks_without_live_probe": [
+                    "team_ops_shared_inbox_observation_routing_blocks_without_live_probe_ready",
+                    "team_ops_shared_inbox_observation_routing_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_observation_routing_requires_redacted_observation": [
+                    "team_ops_shared_inbox_observation_routing_requires_redacted_observation",
+                    "team_ops_shared_inbox_observation_routing_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_observation_routing_accepts_assignment_plan": [
+                    "team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
+                    "team_ops_shared_inbox_observation_routing_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_observation_routing_blocks_effect_drift": [
+                    "team_ops_shared_inbox_observation_routing_blocks_unknown_classification",
+                    "team_ops_shared_inbox_observation_routing_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_observation_routing_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_observation_routing_validation_rejects_unknown_classification",
+                    "team_ops_shared_inbox_observation_routing_validation_rejects_missing_owner",
+                ],
+                "team_ops_shared_inbox_observation_routing_redacts_secret_markers": [
+                    "team_ops_shared_inbox_observation_routing_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_observation_routing_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_observation_routing_writes_validation_receipt": [
+                    "team_ops_shared_inbox_observation_routing_cli_writes_report",
+                    "team_ops_shared_inbox_observation_routing_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_observation_routing_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_approval_queue_blocks_without_routing": [
+                    "team_ops_shared_inbox_approval_queue_blocks_without_routing_ready",
+                    "team_ops_shared_inbox_approval_queue_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_approval_queue_requires_request_evidence": [
+                    "team_ops_shared_inbox_approval_queue_requires_request_evidence",
+                    "team_ops_shared_inbox_approval_queue_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_approval_queue_accepts_pending_obligation": [
+                    "team_ops_shared_inbox_approval_queue_accepts_pending_obligation",
+                    "team_ops_shared_inbox_approval_queue_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_approval_queue_blocks_effect_drift": [
+                    "team_ops_shared_inbox_approval_queue_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_approval_queue_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_approval_queue_validation_rejects_missing_request",
+                    "team_ops_shared_inbox_approval_queue_validation_rejects_approval_decision_claim",
+                ],
+                "team_ops_shared_inbox_approval_queue_redacts_secret_markers": [
+                    "team_ops_shared_inbox_approval_queue_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_approval_queue_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_approval_queue_writes_validation_receipt": [
+                    "team_ops_shared_inbox_approval_queue_cli_writes_report",
+                    "team_ops_shared_inbox_approval_queue_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_approval_queue_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_approval_decision_blocks_without_queue": [
+                    "team_ops_shared_inbox_approval_decision_blocks_without_queue_ready",
+                    "team_ops_shared_inbox_approval_decision_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_approval_decision_requires_decision_evidence": [
+                    "team_ops_shared_inbox_approval_decision_requires_decision_evidence",
+                    "team_ops_shared_inbox_approval_decision_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_approval_decision_accepts_operator_decisions": [
+                    "team_ops_shared_inbox_approval_decision_accepts_approved_decision",
+                    "team_ops_shared_inbox_approval_decision_accepts_denied_no_send",
+                    "team_ops_shared_inbox_approval_decision_validation_accepts_approved_receipt",
+                    "team_ops_shared_inbox_approval_decision_validation_accepts_denied_receipt",
+                ],
+                "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift": [
+                    "team_ops_shared_inbox_approval_decision_blocks_role_mismatch",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_missing_evidence",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_role_mismatch",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_bad_authorization",
+                ],
+                "team_ops_shared_inbox_approval_decision_redacts_secret_markers": [
+                    "team_ops_shared_inbox_approval_decision_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_approval_decision_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_approval_decision_writes_validation_receipt": [
+                    "team_ops_shared_inbox_approval_decision_cli_writes_report",
+                    "team_ops_shared_inbox_approval_decision_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_approval_decision_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_send_preparation_blocks_without_decision": [
+                    "team_ops_shared_inbox_send_preparation_blocks_without_decision_ready",
+                    "team_ops_shared_inbox_send_preparation_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_send_preparation_requires_preparation_evidence": [
+                    "team_ops_shared_inbox_send_preparation_requires_preparation_evidence",
+                    "team_ops_shared_inbox_send_preparation_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_send_preparation_accepts_approved_packet": [
+                    "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
+                    "team_ops_shared_inbox_send_preparation_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift": [
+                    "team_ops_shared_inbox_send_preparation_blocks_denied_decision",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_denied_decision",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_missing_preparation",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_bad_hash",
+                ],
+                "team_ops_shared_inbox_send_preparation_redacts_secret_markers": [
+                    "team_ops_shared_inbox_send_preparation_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_send_preparation_writes_validation_receipt": [
+                    "team_ops_shared_inbox_send_preparation_cli_writes_report",
+                    "team_ops_shared_inbox_send_preparation_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_send_preparation_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_send_execution_blocks_without_preparation": [
+                    "team_ops_shared_inbox_send_execution_blocks_without_preparation_ready",
+                    "team_ops_shared_inbox_send_execution_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_send_execution_requires_execution_evidence": [
+                    "team_ops_shared_inbox_send_execution_requires_execution_evidence",
+                    "team_ops_shared_inbox_send_execution_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_send_execution_accepts_provider_receipt": [
+                    "team_ops_shared_inbox_send_execution_accepts_provider_receipt",
+                    "team_ops_shared_inbox_send_execution_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim": [
+                    "team_ops_shared_inbox_send_execution_blocks_preparation_drift",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_unready_preparation",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_local_provider_claim",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_missing_execution",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_bad_hash",
+                ],
+                "team_ops_shared_inbox_send_execution_redacts_secret_markers": [
+                    "team_ops_shared_inbox_send_execution_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_send_execution_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_send_execution_writes_validation_receipt": [
+                    "team_ops_shared_inbox_send_execution_cli_writes_report",
+                    "team_ops_shared_inbox_send_execution_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_send_execution_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_blocks_without_execution": [
+                    "team_ops_sent_message_observation_blocks_without_send_execution_ready",
+                    "team_ops_sent_message_observation_validator_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_requires_observation_replay": [
+                    "team_ops_sent_message_observation_requires_observation_and_replay_evidence",
+                    "team_ops_sent_message_observation_validator_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure": [
+                    "team_ops_sent_message_observation_accepts_two_observations_and_replay",
+                    "team_ops_sent_message_observation_validator_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim": [
+                    "team_ops_sent_message_observation_blocks_hash_mismatch",
+                    "team_ops_sent_message_observation_validator_rejects_local_provider_claim",
+                    "team_ops_sent_message_observation_validator_rejects_raw_provider_field",
+                    "team_ops_sent_message_observation_validator_rejects_missing_replay",
+                    "team_ops_sent_message_observation_validator_rejects_bad_replay_hash",
+                    "team_ops_sent_message_observation_validator_rejects_hash_mismatch",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers": [
+                    "team_ops_sent_message_observation_rejects_secret_marker_ref",
+                    "team_ops_sent_message_observation_validator_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt": [
+                    "team_ops_sent_message_observation_cli_writes_report",
+                    "team_ops_sent_message_observation_validator_cli_writes_validation",
+                    "team_ops_sent_message_observation_validator_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation": [
+                    "team_ops_terminal_closure_review_blocks_without_observation_ready",
+                    "team_ops_terminal_closure_review_validator_accepts_blocked_packet",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet": [
+                    "team_ops_terminal_closure_review_validator_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet": [
+                    "team_ops_terminal_closure_review_accepts_ready_observation",
+                    "team_ops_terminal_closure_review_validator_accepts_ready_packet",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim": [
+                    "team_ops_terminal_closure_review_validator_rejects_certificate_mint_claim",
+                    "team_ops_terminal_closure_review_validator_rejects_raw_provider_field",
+                    "team_ops_terminal_closure_review_validator_rejects_bad_review_hash",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers": [
+                    "team_ops_terminal_closure_review_rejects_secret_marker_ref",
+                    "team_ops_terminal_closure_review_validator_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt": [
+                    "team_ops_terminal_closure_review_cli_writes_packet",
+                    "team_ops_terminal_closure_review_validator_cli_writes_validation",
+                    "team_ops_terminal_closure_review_validator_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_without_ready_review": [
+                    "team_ops_terminal_closure_certificate_blocks_unready_review",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_mints_schema_valid_certificate": [
+                    "team_ops_terminal_closure_certificate_mints_ready_review",
+                    "team_ops_terminal_closure_certificate_validator_accepts_ready_certificate",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_binds_source_review_packet": [
+                    "team_ops_terminal_closure_certificate_validator_accepts_ready_certificate",
+                    "team_ops_terminal_closure_certificate_validator_rejects_review_hash_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_rejects_generic_or_drifted_certificate": [
+                    "team_ops_terminal_closure_certificate_validator_rejects_generic_certificate",
+                    "team_ops_terminal_closure_certificate_validator_rejects_review_hash_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_blocks_raw_secret_or_production_claim": [
+                    "team_ops_terminal_closure_certificate_rejects_secret_marker_review",
+                    "team_ops_terminal_closure_certificate_validator_rejects_raw_field",
+                    "team_ops_terminal_closure_certificate_validator_rejects_production_claim",
+                    "team_ops_terminal_closure_certificate_validator_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_terminal_closure_certificate_writes_certificate_and_validation_receipts": [
+                    "team_ops_terminal_closure_certificate_cli_writes_certificate",
+                    "team_ops_terminal_closure_certificate_validator_cli_writes_validation",
+                    "team_ops_terminal_closure_certificate_validator_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_missing_secret": [
+                    "team_ops_terminal_closure_evidence_bundle_blocks_missing_secret",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_signs_ready_certificate": [
+                    "team_ops_terminal_closure_evidence_bundle_signs_ready_certificate",
+                    "team_ops_terminal_closure_evidence_bundle_validator_accepts_ready_bundle",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_verifies_hmac": [
+                    "team_ops_terminal_closure_evidence_bundle_validator_accepts_ready_bundle",
+                    "team_ops_terminal_closure_evidence_bundle_validator_rejects_wrong_secret",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_binds_source_certificate": [
+                    "team_ops_terminal_closure_evidence_bundle_signs_ready_certificate",
+                    "team_ops_terminal_closure_evidence_bundle_validator_rejects_certificate_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_blocks_raw_secret_or_production_claim": [
+                    "team_ops_terminal_closure_evidence_bundle_rejects_unready_certificate",
+                    "team_ops_terminal_closure_evidence_bundle_validator_rejects_raw_field",
+                    "team_ops_terminal_closure_evidence_bundle_validator_rejects_production_claim",
+                    "team_ops_terminal_closure_evidence_bundle_validator_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_terminal_closure_evidence_bundle_writes_bundle_and_validation_receipts": [
+                    "team_ops_terminal_closure_evidence_bundle_cli_writes_bundle",
+                    "team_ops_terminal_closure_evidence_bundle_validator_cli_writes_validation",
+                    "team_ops_terminal_closure_evidence_bundle_validator_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_accepts_ready_bundle": [
+                    "team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+                    "team_ops_terminal_closure_anchor_preflight_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_missing_authority_or_secret": [
+                    "team_ops_terminal_closure_anchor_preflight_blocks_missing_anchor_secret",
+                    "team_ops_terminal_closure_anchor_preflight_blocks_missing_authority",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_projects_anchor_artifacts": [
+                    "team_ops_terminal_closure_anchor_preflight_accepts_ready_bundle",
+                    "team_ops_terminal_closure_anchor_preflight_validation_rejects_artifact_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_invalid_bundle_or_target": [
+                    "team_ops_terminal_closure_anchor_preflight_blocks_invalid_target",
+                    "team_ops_terminal_closure_anchor_preflight_validation_rejects_wrong_bundle_secret",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_blocks_effect_or_raw_claim": [
+                    "team_ops_terminal_closure_anchor_preflight_validation_rejects_effect_claim",
+                    "team_ops_terminal_closure_anchor_preflight_validation_rejects_raw_field",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_preflight_writes_preflight_and_validation_receipts": [
+                    "team_ops_terminal_closure_anchor_preflight_cli_writes_blocked_receipt",
+                    "team_ops_terminal_closure_anchor_preflight_validation_cli_writes_receipt",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_accepts_ready_preflight": [
+                    "team_ops_terminal_closure_anchor_receipt_accepts_ready_preflight",
+                    "team_ops_terminal_closure_anchor_receipt_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_missing_or_unready_inputs": [
+                    "team_ops_terminal_closure_anchor_receipt_blocks_missing_anchor_secret",
+                    "team_ops_terminal_closure_anchor_receipt_blocks_not_ready_preflight",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_binds_preflight_bundle_and_artifacts": [
+                    "team_ops_terminal_closure_anchor_receipt_accepts_ready_preflight",
+                    "team_ops_terminal_closure_anchor_receipt_validation_rejects_artifact_drift",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_verifies_anchor_signature": [
+                    "team_ops_terminal_closure_anchor_receipt_validation_accepts_ready_receipt",
+                    "team_ops_terminal_closure_anchor_receipt_validation_rejects_wrong_anchor_secret",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_blocks_effect_or_raw_claim": [
+                    "team_ops_terminal_closure_anchor_receipt_validation_rejects_effect_claim",
+                ],
+                "team_ops_shared_inbox_terminal_closure_anchor_receipt_writes_receipt_and_validation_receipts": [
+                    "team_ops_terminal_closure_anchor_receipt_cli_writes_ready_receipt",
+                    "team_ops_terminal_closure_anchor_receipt_validation_cli_writes_receipt",
                 ],
             },
         ),
@@ -6361,6 +7157,560 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "connector_self_healing_schema_valid": [
                     "connector_self_healing_receipt_schema_validates"
+                ],
+            },
+        ),
+        _surface(
+            "connector_action_promotion_gate",
+            [
+                "ConnectorActionPromotionGate",
+                "validate_connector_action_promotion_gate",
+                "connector_action_promotion_gate.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/connector_action_promotion_gate.schema.json",
+                "examples/connector_action_promotion_gate.foundation.json",
+                "scripts/validate_connector_action_promotion_gate.py",
+                "tests/test_validate_connector_action_promotion_gate.py",
+                "schemas/connector_descriptor.schema.json",
+                "schemas/connector_result.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "docs/83_connector_action_promotion_gate_contract.md",
+            ],
+            "Connector action promotion gates bind connector descriptor/result evidence, UAO refs, Phi_gov authorization state, approval state, secret-access receipt state, connector-worker execution receipt state, rollback evidence, and blocked reason refs before any connector action can leave plan-only status.",
+            [
+                "connector_action_promotion_gate_schema_valid",
+                "connector_action_promotion_gate_blocks_live_calls",
+                "connector_action_promotion_gate_binds_source_fixtures",
+                "connector_action_promotion_gate_rejects_authority_drift",
+                "connector_action_promotion_gate_rejects_missing_refs",
+                "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "connector_action_promotion_gate_schema_valid": [
+                    "connector_action_promotion_gate_passes"
+                ],
+                "connector_action_promotion_gate_blocks_live_calls": [
+                    "connector_action_promotion_gate_passes",
+                    "connector_action_promotion_gate_rejects_authority_drift",
+                ],
+                "connector_action_promotion_gate_binds_source_fixtures": [
+                    "connector_action_promotion_gate_passes",
+                    "connector_action_promotion_gate_rejects_source_mismatch",
+                ],
+                "connector_action_promotion_gate_rejects_authority_drift": [
+                    "connector_action_promotion_gate_rejects_authority_drift"
+                ],
+                "connector_action_promotion_gate_rejects_missing_refs": [
+                    "connector_action_promotion_gate_rejects_missing_refs"
+                ],
+                "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift": [
+                    "connector_action_promotion_gate_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "readiness_waiver_review_packet",
+            [
+                "ReadinessWaiverReviewPacket",
+                "validate_readiness_waiver_review_packet",
+                "readiness_waiver_review_packet.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/readiness_waiver_review_packet.schema.json",
+                "examples/readiness_waiver_review_packet.foundation.json",
+                "scripts/validate_readiness_waiver_review_packet.py",
+                "tests/test_validate_readiness_waiver_review_packet.py",
+                "schemas/sdlc_release_candidate.schema.json",
+                "schemas/sdlc_deployment_candidate.schema.json",
+                "schemas/temporal_accepted_risk_expiry_receipt.schema.json",
+                "docs/86_readiness_waiver_review_packet_contract.md",
+            ],
+            "Readiness waiver review packets bind readiness evidence, target artifact refs, UAO refs, Phi_gov authorization state, approval state, security review state, rollback evidence, accepted-risk status, expiry policy, compensating controls, required evidence refs, and blocked reason refs before any waiver can be reviewed.",
+            [
+                "readiness_waiver_review_packet_schema_valid",
+                "readiness_waiver_review_packet_blocks_readiness_authority",
+                "readiness_waiver_review_packet_requires_evidence_refs",
+                "readiness_waiver_review_packet_rejects_expiry_drift",
+                "readiness_waiver_review_packet_rejects_compensating_control_drift",
+                "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "readiness_waiver_review_packet_schema_valid": [
+                    "readiness_waiver_review_packet_passes"
+                ],
+                "readiness_waiver_review_packet_blocks_readiness_authority": [
+                    "readiness_waiver_review_packet_passes",
+                    "readiness_waiver_review_packet_rejects_authority_drift",
+                ],
+                "readiness_waiver_review_packet_requires_evidence_refs": [
+                    "readiness_waiver_review_packet_rejects_missing_refs"
+                ],
+                "readiness_waiver_review_packet_rejects_expiry_drift": [
+                    "readiness_waiver_review_packet_rejects_expiry_drift"
+                ],
+                "readiness_waiver_review_packet_rejects_compensating_control_drift": [
+                    "readiness_waiver_review_packet_rejects_compensating_control_drift"
+                ],
+                "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift": [
+                    "readiness_waiver_review_packet_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "browser_observation_receipt",
+            [
+                "BrowserObservationReceipt",
+                "validate_browser_observation_receipt",
+                "browser_observation_receipt.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/browser_observation_receipt.schema.json",
+                "examples/browser_observation_receipt.foundation.json",
+                "scripts/validate_browser_observation_receipt.py",
+                "tests/test_validate_browser_observation_receipt.py",
+                "schemas/capture_policy_decision_ledger.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/87_browser_observation_receipt_contract.md",
+            ],
+            "Browser observation receipts bind hash-only URL evidence, DOM digest refs, screenshot digest refs, consent scope, capture policy refs, evidence classification refs, UAO refs, privacy guards, and authority-denial flags before browser inspection can become operator evidence.",
+            [
+                "browser_observation_receipt_schema_valid",
+                "browser_observation_receipt_blocks_browser_authority",
+                "browser_observation_receipt_requires_digest_refs",
+                "browser_observation_receipt_rejects_raw_storage",
+                "browser_observation_receipt_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "browser_observation_receipt_schema_valid": [
+                    "browser_observation_receipt_passes"
+                ],
+                "browser_observation_receipt_blocks_browser_authority": [
+                    "browser_observation_receipt_passes",
+                    "browser_observation_receipt_rejects_authority_drift",
+                ],
+                "browser_observation_receipt_requires_digest_refs": [
+                    "browser_observation_receipt_passes",
+                    "browser_observation_receipt_rejects_raw_url_and_digest_drift",
+                ],
+                "browser_observation_receipt_rejects_raw_storage": [
+                    "browser_observation_receipt_rejects_raw_storage_drift"
+                ],
+                "browser_observation_receipt_rejects_receipt_ref_and_count_drift": [
+                    "browser_observation_receipt_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "trusted_capture_evidence_packet",
+            [
+                "TrustedCaptureEvidencePacket",
+                "validate_trusted_capture_evidence_packet",
+                "trusted_capture_evidence_packet.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/trusted_capture_evidence_packet.schema.json",
+                "examples/trusted_capture_evidence_packet.foundation.json",
+                "scripts/validate_trusted_capture_evidence_packet.py",
+                "tests/test_validate_trusted_capture_evidence_packet.py",
+                "schemas/capture_policy_decision_ledger.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/browser_observation_receipt.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/89_trusted_capture_evidence_packet_contract.md",
+            ],
+            "Trusted capture evidence packets bind source-surface hash evidence, capture policy refs, evidence classification refs, browser observation refs, UAO refs, LifeMeaningJudgment refs, digest-only capture artifact refs, privacy guards, and authority-denial flags before capture evidence can become operator evidence.",
+            [
+                "trusted_capture_evidence_packet_schema_valid",
+                "trusted_capture_evidence_packet_blocks_capture_authority",
+                "trusted_capture_evidence_packet_requires_digest_refs",
+                "trusted_capture_evidence_packet_rejects_raw_media_retention",
+                "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift",
+                "trusted_capture_evidence_packet_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "trusted_capture_evidence_packet_schema_valid": [
+                    "trusted_capture_evidence_packet_passes"
+                ],
+                "trusted_capture_evidence_packet_blocks_capture_authority": [
+                    "trusted_capture_evidence_packet_passes",
+                    "trusted_capture_evidence_packet_rejects_authority_drift",
+                ],
+                "trusted_capture_evidence_packet_requires_digest_refs": [
+                    "trusted_capture_evidence_packet_passes",
+                    "trusted_capture_evidence_packet_rejects_digest_and_scope_drift",
+                ],
+                "trusted_capture_evidence_packet_rejects_raw_media_retention": [
+                    "trusted_capture_evidence_packet_rejects_raw_media_retention"
+                ],
+                "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift": [
+                    "trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+                ],
+                "trusted_capture_evidence_packet_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_trusted_capture_evidence_packet"
+                ],
+            },
+        ),
+        _surface(
+            "sccml_trace_adapter_witness",
+            [
+                "SccmlTraceAdapterWitness",
+                "validate_sccml_trace_adapter_witness",
+                "sccml_trace_adapter_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/sccml_trace_adapter_witness.schema.json",
+                "examples/sccml_trace_adapter_witness.foundation.json",
+                "scripts/validate_sccml_trace_adapter_witness.py",
+                "tests/test_validate_sccml_trace_adapter_witness.py",
+                "schemas/kernel_proof.schema.json",
+                "schemas/trace_entry.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/90_sccml_trace_adapter_witness_contract.md",
+            ],
+            "SCCML trace adapter witnesses bind instruction-trace digest refs, pre-state and post-state hash refs, proof digest refs, unsupported-operation gap refs, KernelProof refs, TraceEntry refs, UAO refs, LifeMeaningJudgment refs, integrity guards, and authority-denial flags before SCCML traces can become governance proof.",
+            [
+                "sccml_trace_adapter_witness_schema_valid",
+                "sccml_trace_adapter_witness_blocks_kernel_authority",
+                "sccml_trace_adapter_witness_requires_digest_refs",
+                "sccml_trace_adapter_witness_rejects_unsupported_op_silence",
+                "sccml_trace_adapter_witness_rejects_raw_trace_retention",
+                "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift",
+                "sccml_trace_adapter_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "sccml_trace_adapter_witness_schema_valid": [
+                    "sccml_trace_adapter_witness_passes"
+                ],
+                "sccml_trace_adapter_witness_blocks_kernel_authority": [
+                    "sccml_trace_adapter_witness_passes",
+                    "sccml_trace_adapter_witness_rejects_authority_drift",
+                ],
+                "sccml_trace_adapter_witness_requires_digest_refs": [
+                    "sccml_trace_adapter_witness_passes",
+                    "sccml_trace_adapter_witness_rejects_digest_and_scope_drift",
+                ],
+                "sccml_trace_adapter_witness_rejects_unsupported_op_silence": [
+                    "sccml_trace_adapter_witness_rejects_unsupported_op_silence"
+                ],
+                "sccml_trace_adapter_witness_rejects_raw_trace_retention": [
+                    "sccml_trace_adapter_witness_rejects_raw_trace_and_state_retention"
+                ],
+                "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift": [
+                    "sccml_trace_adapter_witness_rejects_receipt_ref_and_count_drift"
+                ],
+                "sccml_trace_adapter_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_sccml_trace_adapter_witness"
+                ],
+            },
+        ),
+        _surface(
+            "chaos_rehearsal_execution_report",
+            [
+                "ChaosRehearsalExecutionReport",
+                "validate_chaos_rehearsal_execution_report",
+                "chaos_rehearsal_execution_report.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/chaos_rehearsal_execution_report.schema.json",
+                "examples/chaos_rehearsal_execution_report.foundation.json",
+                "scripts/validate_chaos_rehearsal_execution_report.py",
+                "tests/test_validate_chaos_rehearsal_execution_report.py",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/91_chaos_rehearsal_execution_report_contract.md",
+            ],
+            "Chaos rehearsal execution reports bind scenario refs, invariant refs, injection-point refs, expected containment refs, expected signal refs, required evidence refs, rollback guard refs, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime resilience or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+            [
+                "chaos_rehearsal_execution_report_schema_valid",
+                "chaos_rehearsal_execution_report_blocks_runtime_disruption",
+                "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs",
+                "chaos_rehearsal_execution_report_rejects_raw_runtime_retention",
+                "chaos_rehearsal_execution_report_rejects_result_count_drift",
+                "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift",
+                "chaos_rehearsal_execution_report_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "chaos_rehearsal_execution_report_schema_valid": [
+                    "chaos_rehearsal_execution_report_passes"
+                ],
+                "chaos_rehearsal_execution_report_blocks_runtime_disruption": [
+                    "chaos_rehearsal_execution_report_passes",
+                    "chaos_rehearsal_execution_report_rejects_authority_drift",
+                    "chaos_rehearsal_execution_report_rejects_live_scope_drift",
+                ],
+                "chaos_rehearsal_execution_report_requires_scenario_and_rollback_refs": [
+                    "chaos_rehearsal_execution_report_rejects_missing_scenario_evidence_and_rollback_refs"
+                ],
+                "chaos_rehearsal_execution_report_rejects_raw_runtime_retention": [
+                    "chaos_rehearsal_execution_report_rejects_raw_runtime_log_retention"
+                ],
+                "chaos_rehearsal_execution_report_rejects_result_count_drift": [
+                    "chaos_rehearsal_execution_report_rejects_result_and_summary_count_drift"
+                ],
+                "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift": [
+                    "chaos_rehearsal_execution_report_rejects_receipt_ref_and_count_drift"
+                ],
+                "chaos_rehearsal_execution_report_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_chaos_rehearsal_execution_report"
+                ],
+            },
+        ),
+        _surface(
+            "invariant_fuzz_execution_report",
+            [
+                "InvariantFuzzExecutionReport",
+                "validate_invariant_fuzz_execution_report",
+                "invariant_fuzz_execution_report.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/invariant_fuzz_execution_report.schema.json",
+                "examples/invariant_fuzz_execution_report.foundation.json",
+                "scripts/validate_invariant_fuzz_execution_report.py",
+                "tests/test_validate_invariant_fuzz_execution_report.py",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "schemas/effect_assurance.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/sdlc_recovery_handoff_receipt.schema.json",
+                "docs/92_invariant_fuzz_execution_report_contract.md",
+            ],
+            "Invariant fuzz execution reports bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, projection probe counts, projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, safety guards, and authority-denial flags before runtime-hardening or invariant-fuzz claims can affect staging, production, or canonical runtime state.",
+            [
+                "invariant_fuzz_execution_report_schema_valid",
+                "invariant_fuzz_execution_report_blocks_canonical_mutation",
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles",
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention",
+                "invariant_fuzz_execution_report_rejects_result_count_drift",
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift",
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "invariant_fuzz_execution_report_schema_valid": [
+                    "invariant_fuzz_execution_report_passes"
+                ],
+                "invariant_fuzz_execution_report_blocks_canonical_mutation": [
+                    "invariant_fuzz_execution_report_passes",
+                    "invariant_fuzz_execution_report_rejects_authority_drift",
+                    "invariant_fuzz_execution_report_rejects_live_scope_drift",
+                ],
+                "invariant_fuzz_execution_report_requires_case_bank_and_oracles": [
+                    "invariant_fuzz_execution_report_rejects_case_bank_and_oracle_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_projection_and_raw_retention": [
+                    "invariant_fuzz_execution_report_rejects_projection_and_raw_retention_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_result_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_result_and_summary_count_drift"
+                ],
+                "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift": [
+                    "invariant_fuzz_execution_report_rejects_receipt_ref_and_count_drift"
+                ],
+                "invariant_fuzz_execution_report_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_invariant_fuzz_execution_report"
+                ],
+            },
+        ),
+        _surface(
+            "research_source_conflict_map",
+            [
+                "ResearchSourceConflictMap",
+                "validate_research_source_conflict_map",
+                "research_source_conflict_map.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/research_source_conflict_map.schema.json",
+                "examples/research_source_conflict_map.foundation.json",
+                "scripts/validate_research_source_conflict_map.py",
+                "tests/test_validate_research_source_conflict_map.py",
+                "schemas/search_decision.schema.json",
+                "schemas/search_receipt.schema.json",
+                "schemas/evidence_classification_manifest.schema.json",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/88_research_source_conflict_map_contract.md",
+            ],
+            "Research source conflict maps preserve citation-backed source disagreements, contradiction class, freshness impact, follow-up sensing needs, retention guards, and authority-denial flags before research synthesis or retrieval expansion can be considered.",
+            [
+                "research_source_conflict_map_schema_valid",
+                "research_source_conflict_map_blocks_live_research_authority",
+                "research_source_conflict_map_requires_citation_bound_conflicts",
+                "research_source_conflict_map_rejects_raw_body_retention",
+                "research_source_conflict_map_rejects_sensing_authority_drift",
+                "research_source_conflict_map_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "research_source_conflict_map_schema_valid": [
+                    "research_source_conflict_map_passes"
+                ],
+                "research_source_conflict_map_blocks_live_research_authority": [
+                    "research_source_conflict_map_passes",
+                    "research_source_conflict_map_rejects_authority_drift",
+                ],
+                "research_source_conflict_map_requires_citation_bound_conflicts": [
+                    "research_source_conflict_map_passes",
+                    "research_source_conflict_map_rejects_conflict_citation_drift",
+                ],
+                "research_source_conflict_map_rejects_raw_body_retention": [
+                    "research_source_conflict_map_rejects_raw_body_and_digest_drift"
+                ],
+                "research_source_conflict_map_rejects_sensing_authority_drift": [
+                    "research_source_conflict_map_rejects_follow_up_sensing_drift"
+                ],
+                "research_source_conflict_map_rejects_receipt_ref_and_count_drift": [
+                    "research_source_conflict_map_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "worker_receipt_ledger_read_model",
+            [
+                "WorkerReceiptLedgerReadModel",
+                "validate_worker_receipt_ledger_read_model",
+                "worker_receipt_ledger_read_model.v1",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/worker_receipt_ledger_read_model.schema.json",
+                "examples/worker_receipt_ledger_read_model.foundation.json",
+                "scripts/validate_worker_receipt_ledger_read_model.py",
+                "tests/test_validate_worker_receipt_ledger_read_model.py",
+                "schemas/worker_failure_receipt.schema.json",
+                "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
+                "schemas/connector_action_promotion_gate.schema.json",
+                "docs/84_worker_receipt_ledger_read_model_contract.md",
+                "schemas/universal_action_orchestration.schema.json",
+            ],
+            "Worker receipt ledger read models project scheduler, lease, read-only worker, runtime receipt, failure, and connector-promotion refs into bounded operator chain summaries while denying live receipt-store reads, worker dispatch, runtime receipt emission, connector calls, writes, terminal closure, and success claims.",
+            [
+                "worker_receipt_ledger_read_model_schema_valid",
+                "worker_receipt_ledger_read_model_blocks_live_authority",
+                "worker_receipt_ledger_read_model_rejects_chain_guard_drift",
+                "worker_receipt_ledger_read_model_rejects_summary_drift",
+                "worker_receipt_ledger_read_model_rejects_missing_refs",
+                "worker_receipt_ledger_read_model_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "worker_receipt_ledger_read_model_schema_valid": [
+                    "worker_receipt_ledger_read_model_passes"
+                ],
+                "worker_receipt_ledger_read_model_blocks_live_authority": [
+                    "worker_receipt_ledger_read_model_passes",
+                    "worker_receipt_ledger_read_model_rejects_live_authority",
+                ],
+                "worker_receipt_ledger_read_model_rejects_chain_guard_drift": [
+                    "worker_receipt_ledger_read_model_rejects_chain_guard_drift"
+                ],
+                "worker_receipt_ledger_read_model_rejects_summary_drift": [
+                    "worker_receipt_ledger_read_model_rejects_summary_drift"
+                ],
+                "worker_receipt_ledger_read_model_rejects_missing_refs": [
+                    "worker_receipt_ledger_read_model_rejects_missing_refs"
+                ],
+                "worker_receipt_ledger_read_model_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_worker_receipt_ledger_read_model"
+                ],
+            },
+        ),
+        _surface(
+            "mfidel_substrate_conformance_receipt",
+            [
+                "MfidelSubstrateConformanceReceipt",
+                "validate_mfidel_substrate_conformance_receipt",
+                "mfidel_substrate_conformance_receipt.v1",
+            ],
+            "audit_chain",
+            "audit_chain",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/mfidel_substrate_conformance_receipt.schema.json",
+                "examples/mfidel_substrate_conformance_receipt.foundation.json",
+                "scripts/validate_mfidel_substrate_conformance_receipt.py",
+                "tests/test_validate_mfidel_substrate_conformance_receipt.py",
+                "mcoi/mcoi_runtime/substrate/mfidel/grid.py",
+                "mcoi/mcoi_runtime/core/mfidel_matrix.py",
+                "mcoi/mcoi_runtime/contracts/mfidel.py",
+                "mcoi/tests/test_mfidel_atomicity.py",
+                "mcoi/tests/test_mfidel_matrix.py",
+                "docs/85_mfidel_substrate_conformance_receipt_contract.md",
+            ],
+            "Mfidel substrate conformance receipts bind local Python substrate digests, grid bounds, exact-preservation witnesses, no-normalization proof refs, and TypeScript/Rust SDK/kernel evidence gaps while denying Unicode normalization, fidel decomposition, live runtime import authority, cross-runtime closure, and terminal closure.",
+            [
+                "mfidel_substrate_conformance_receipt_schema_valid",
+                "mfidel_substrate_conformance_receipt_preserves_atomicity",
+                "mfidel_substrate_conformance_receipt_rejects_guard_drift",
+                "mfidel_substrate_conformance_receipt_rejects_digest_drift",
+                "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift",
+                "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift",
+                "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "mfidel_substrate_conformance_receipt_schema_valid": [
+                    "mfidel_substrate_conformance_receipt_passes"
+                ],
+                "mfidel_substrate_conformance_receipt_preserves_atomicity": [
+                    "mfidel_substrate_conformance_receipt_passes",
+                    "mfidel_substrate_conformance_receipt_rejects_decomposed_like_input",
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_guard_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_atomicity_guard_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_digest_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_digest_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_exact_preservation_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift": [
+                    "mfidel_substrate_conformance_receipt_rejects_cross_runtime_gap_drift"
+                ],
+                "mfidel_substrate_conformance_receipt_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_mfidel_substrate_conformance_receipt"
                 ],
             },
         ),
@@ -7581,7 +8931,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/temporal_retention_window_receipt.schema.json",
                 "tests/test_gateway/test_temporal_retention_window.py",
             ],
-            "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, and overdue timing before deletion, archive, anonymization, or retention review.",
+            "Temporal retention window rechecks data lifecycle actions for retention_until, delete_after, legal hold, tenant scope, owner, retention policy refs, evidence refs, source data decisions, retention approval, backup guard evidence, and overdue timing before deletion, archive, anonymization, or retention review.",
             [
                 "runtime_clock_owns_retention_timing",
                 "delete_before_delete_after_defers_action",
@@ -7592,6 +8942,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "retention_policy_ref_required",
                 "subject_evidence_refs_required",
                 "high_risk_source_receipts_bound",
+                "retention_approval_and_backup_guard_bound",
                 "temporal_retention_window_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
@@ -7626,6 +8977,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "retention_window_allows_archive_after_retention_until",
                     "retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources",
                 ],
+                "retention_approval_and_backup_guard_bound": [
+                    "retention_window_allows_delete_at_due_boundary",
+                    "retention_window_blocks_due_delete_without_retention_approval",
+                ],
                 "temporal_retention_window_receipt_schema_valid": [
                     "retention_window_allows_delete_at_due_boundary",
                     "retention_window_marks_low_risk_action_not_required",
@@ -7633,6 +8988,538 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "receipt_not_terminal_closure": [
                     "retention_window_marks_low_risk_action_not_required",
                     "retention_window_allows_delete_at_due_boundary",
+                ],
+            },
+        ),
+        _surface(
+            "github_check_run_write_receipts",
+            [
+                "GitHubCheckRunWriter.evaluate",
+                "GitHubCheckRunWriteRequest",
+                "GitHubCheckRunWriteReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/github_check_run_writer.py",
+                "schemas/github_check_run_write_receipt.schema.json",
+                "tests/test_gateway/test_github_check_run_writer.py",
+            ],
+            "GitHub check-run write receipts build hash-bound Checks API payloads, preserve plan-only and dry-run no-write modes, and require approval, installation, external execution, response id, and response hash evidence before a write-approved external check-run claim is admitted.",
+            [
+                "check_run_payload_is_hash_bound",
+                "plan_only_does_not_write_check_run",
+                "dry_run_rejects_response_evidence",
+                "write_approved_requires_github_app_execution_receipt",
+                "write_approved_binds_external_execution_receipt",
+                "secret_value_absence_verified",
+                "completed_status_requires_conclusion",
+                "github_check_run_write_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "check_run_payload_is_hash_bound": [
+                    "github_check_run_plan_only_builds_hash_bound_payload"
+                ],
+                "plan_only_does_not_write_check_run": [
+                    "github_check_run_plan_only_builds_hash_bound_payload"
+                ],
+                "dry_run_rejects_response_evidence": [
+                    "github_check_run_dry_run_rejects_response_evidence"
+                ],
+                "write_approved_requires_github_app_execution_receipt": [
+                    "github_check_run_write_approved_requires_github_app_execution_receipt"
+                ],
+                "write_approved_binds_external_execution_receipt": [
+                    "github_check_run_write_approved_binds_external_execution_receipt"
+                ],
+                "secret_value_absence_verified": [
+                    "github_check_run_rejects_secret_value_disclosure"
+                ],
+                "completed_status_requires_conclusion": [
+                    "github_check_run_completed_status_requires_conclusion"
+                ],
+                "github_check_run_write_receipt_schema_valid": [
+                    "github_check_run_plan_only_builds_hash_bound_payload",
+                    "github_check_run_write_approved_binds_external_execution_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "github_app_token_exchange_receipts",
+            [
+                "GitHubAppTokenExchange.evaluate",
+                "GitHubAppTokenExchangeRequest",
+                "GitHubAppTokenExchangeReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/github_app_token_exchange.py",
+                "schemas/github_app_token_exchange_receipt.schema.json",
+                "tests/test_gateway/test_github_app_token_exchange.py",
+            ],
+            "GitHub App token-exchange receipts build hash-bound installation-token request payloads, preserve plan-only and dry-run no-exchange modes, and require approval, external exchange execution, 2xx response, token fingerprint, token expiry, and response hash evidence before an exchange-approved token claim is admitted.",
+            [
+                "token_exchange_payload_is_hash_bound",
+                "plan_only_does_not_exchange_token",
+                "dry_run_rejects_token_response_evidence",
+                "exchange_approved_requires_external_receipt",
+                "exchange_approved_binds_external_receipt",
+                "secret_token_absence_verified",
+                "token_ttl_bounds_enforced",
+                "github_app_token_exchange_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "token_exchange_payload_is_hash_bound": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+                ],
+                "plan_only_does_not_exchange_token": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload"
+                ],
+                "dry_run_rejects_token_response_evidence": [
+                    "github_app_token_exchange_dry_run_rejects_response_evidence"
+                ],
+                "exchange_approved_requires_external_receipt": [
+                    "github_app_token_exchange_approved_requires_external_receipt"
+                ],
+                "exchange_approved_binds_external_receipt": [
+                    "github_app_token_exchange_approved_binds_external_receipt"
+                ],
+                "secret_token_absence_verified": [
+                    "github_app_token_exchange_rejects_raw_token_disclosure"
+                ],
+                "token_ttl_bounds_enforced": [
+                    "github_app_token_exchange_rejects_invalid_ttl_before_planning"
+                ],
+                "github_app_token_exchange_receipt_schema_valid": [
+                    "github_app_token_exchange_plan_only_builds_hash_bound_payload",
+                    "github_app_token_exchange_approved_binds_external_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "github_action_execution_receipts",
+            [
+                "GitHubActionExecution.evaluate",
+                "GitHubActionExecutionRequest",
+                "GitHubActionExecutionReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/github_action_execution.py",
+                "schemas/github_action_execution_receipt.schema.json",
+                "tests/test_gateway/test_github_action_execution.py",
+            ],
+            "GitHub action execution receipts bind GitHub REST action payloads to token-plan repository identity, preserve plan-only and dry-run no-execution modes, and require approval, token-exchange receipt, external execution receipt, 2xx response, and response hash evidence before an execute-approved external action claim is admitted.",
+            [
+                "github_action_payload_is_hash_bound",
+                "plan_only_does_not_execute_github_action",
+                "dry_run_rejects_execution_response_evidence",
+                "execute_approved_requires_token_and_external_receipts",
+                "execute_approved_binds_external_execution_receipt",
+                "token_plan_repository_mismatch_blocks_execution",
+                "secret_token_absence_verified",
+                "branch_protection_reconcile_action_is_endpoint_bound",
+                "github_action_execution_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "github_action_payload_is_hash_bound": [
+                    "github_action_execution_plan_only_builds_hash_bound_payload"
+                ],
+                "plan_only_does_not_execute_github_action": [
+                    "github_action_execution_plan_only_builds_hash_bound_payload"
+                ],
+                "dry_run_rejects_execution_response_evidence": [
+                    "github_action_execution_dry_run_rejects_execution_evidence"
+                ],
+                "execute_approved_requires_token_and_external_receipts": [
+                    "github_action_execute_approved_requires_token_and_external_receipts"
+                ],
+                "execute_approved_binds_external_execution_receipt": [
+                    "github_action_execute_approved_binds_external_execution_receipt"
+                ],
+                "token_plan_repository_mismatch_blocks_execution": [
+                    "github_action_execution_blocks_token_plan_repository_mismatch"
+                ],
+                "secret_token_absence_verified": [
+                    "github_action_execution_rejects_secret_value_disclosure"
+                ],
+                "branch_protection_reconcile_action_is_endpoint_bound": [
+                    "branch_protection_reconcile_action_is_endpoint_bound"
+                ],
+                "github_action_execution_receipt_schema_valid": [
+                    "github_action_execution_plan_only_builds_hash_bound_payload",
+                    "github_action_execute_approved_binds_external_execution_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "github_branch_protection_reconcile_receipts",
+            [
+                "BranchProtectionReconciler.evaluate",
+                "BranchProtectionReconcileRequest",
+                "BranchProtectionReconcileReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/branch_protection_reconcile.py",
+                "schemas/github_branch_protection_reconcile_receipt.schema.json",
+                "tests/test_gateway/test_branch_protection_reconcile.py",
+            ],
+            "GitHub branch-protection reconcile receipts compare desired branch policy to observed protection state, bind the protected-branch REST payload and plan hash, preserve plan-only and dry-run no-apply modes, and require approval, token-exchange receipt, action-execution receipt, 2xx response, and response hash evidence before an apply-approved external reconcile claim is admitted.",
+            [
+                "branch_protection_policy_payload_is_hash_bound",
+                "observed_compliance_emits_noop_receipt",
+                "observed_drift_emits_reconcile_actions",
+                "missing_observed_state_is_explicit",
+                "dry_run_rejects_apply_response_evidence",
+                "apply_approved_requires_external_receipts",
+                "apply_approved_binds_external_action_receipt",
+                "noop_apply_blocks_external_mutation",
+                "secret_value_absence_verified",
+                "github_branch_protection_reconcile_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "branch_protection_policy_payload_is_hash_bound": [
+                    "branch_protection_reconcile_noop_is_hash_bound",
+                    "branch_protection_payload_uses_checks_objects",
+                ],
+                "observed_compliance_emits_noop_receipt": [
+                    "branch_protection_reconcile_noop_is_hash_bound"
+                ],
+                "observed_drift_emits_reconcile_actions": [
+                    "branch_protection_reconcile_plan_reports_observed_drift"
+                ],
+                "missing_observed_state_is_explicit": [
+                    "branch_protection_reconcile_plan_marks_missing_observed_state"
+                ],
+                "dry_run_rejects_apply_response_evidence": [
+                    "branch_protection_reconcile_dry_run_rejects_apply_evidence"
+                ],
+                "apply_approved_requires_external_receipts": [
+                    "branch_protection_apply_approved_requires_external_receipts"
+                ],
+                "apply_approved_binds_external_action_receipt": [
+                    "branch_protection_apply_approved_binds_external_action_receipt"
+                ],
+                "noop_apply_blocks_external_mutation": [
+                    "branch_protection_apply_approved_blocks_noop_apply"
+                ],
+                "secret_value_absence_verified": [
+                    "branch_protection_reconcile_rejects_secret_value_disclosure"
+                ],
+                "github_branch_protection_reconcile_receipt_schema_valid": [
+                    "branch_protection_reconcile_noop_is_hash_bound",
+                    "branch_protection_apply_approved_binds_external_action_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "distributed_lease_claim_receipts",
+            [
+                "DistributedLeaseClaimPlanner.evaluate",
+                "DistributedLeaseClaimBoundaryRequest",
+                "DistributedLeaseClaimReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_claim_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_boundary.py",
+            ],
+            "Distributed lease claim receipts bind scheduler job identity, worker identity, backend kind, request payload hash, operation payload hash, plan hash, lease expiry, fencing token, adapter claim receipt refs, response evidence, no-secret serialization, and no-local-lease-service-call flags before any distributed scheduler lease claim is admitted.",
+            [
+                "distributed_lease_policy_and_request_hash_bound",
+                "backend_operation_payload_is_hash_bound",
+                "plan_only_does_not_claim_lease",
+                "dry_run_rejects_claim_response_evidence",
+                "claim_approved_requires_external_receipts",
+                "claim_approved_binds_adapter_receipt",
+                "claim_approved_allows_unfenced_policy_without_token",
+                "claim_approved_classifies_conflict_response",
+                "claim_approved_classifies_deferred_response",
+                "claim_approved_classifies_rejected_response",
+                "observed_payload_mismatch_blocks_claim",
+                "expired_or_unfenced_claim_blocks_dispatch",
+                "secret_value_absence_verified",
+                "distributed_lease_claim_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "distributed_lease_policy_and_request_hash_bound": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live"
+                ],
+                "backend_operation_payload_is_hash_bound": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live",
+                    "distributed_lease_external_gateway_operation_is_endpoint_bound",
+                ],
+                "plan_only_does_not_claim_lease": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live"
+                ],
+                "dry_run_rejects_claim_response_evidence": [
+                    "distributed_lease_dry_run_rejects_claim_response_evidence"
+                ],
+                "claim_approved_requires_external_receipts": [
+                    "distributed_lease_claim_approved_requires_external_receipts"
+                ],
+                "claim_approved_binds_adapter_receipt": [
+                    "distributed_lease_claim_approved_binds_adapter_receipt"
+                ],
+                "claim_approved_allows_unfenced_policy_without_token": [
+                    "distributed_lease_claim_allows_unfenced_policy_without_token"
+                ],
+                "claim_approved_classifies_conflict_response": [
+                    "distributed_lease_claim_classifies_conflict_response"
+                ],
+                "claim_approved_classifies_deferred_response": [
+                    "distributed_lease_claim_classifies_deferred_response"
+                ],
+                "claim_approved_classifies_rejected_response": [
+                    "distributed_lease_claim_classifies_rejected_response"
+                ],
+                "observed_payload_mismatch_blocks_claim": [
+                    "distributed_lease_claim_blocks_observed_payload_mismatch"
+                ],
+                "expired_or_unfenced_claim_blocks_dispatch": [
+                    "distributed_lease_claim_blocks_expired_or_unfenced_grant"
+                ],
+                "secret_value_absence_verified": [
+                    "distributed_lease_claim_rejects_secret_value_disclosure"
+                ],
+                "distributed_lease_claim_receipt_schema_valid": [
+                    "distributed_lease_plan_is_hash_bound_and_non_live",
+                    "distributed_lease_claim_approved_binds_adapter_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "distributed_lease_adapter_registry_receipts",
+            [
+                "DistributedLeaseAdapterRegistryEvaluator.evaluate",
+                "DistributedLeaseAdapterRegistry",
+                "DistributedLeaseAdapterRegistryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_adapters.py",
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_adapter_registry_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_adapters.py",
+            ],
+            "Distributed lease adapter registry receipts bind backend capability, adapter mode, production readiness, fencing-token support, compare-and-swap support, registry hash, capability hash, and distributed lease claim receipt hash before any adapter claim can be treated as ready, delegated, or blocked.",
+            [
+                "adapter_registry_default_inventory_hash_bound",
+                "adapter_registry_delegates_external_gateway_without_local_execution",
+                "adapter_registry_blocks_native_adapter_without_production_readiness",
+                "adapter_registry_blocks_fencing_required_backend_without_token_support",
+                "adapter_registry_blocks_claim_receipt_violations",
+                "adapter_registry_binds_claim_approved_external_gateway_receipt",
+                "adapter_registry_rejects_secret_values",
+                "distributed_lease_adapter_registry_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "adapter_registry_default_inventory_hash_bound": [
+                    "adapter_registry_default_inventory_is_hash_bound"
+                ],
+                "adapter_registry_delegates_external_gateway_without_local_execution": [
+                    "adapter_registry_delegates_external_gateway_without_local_execution"
+                ],
+                "adapter_registry_blocks_native_adapter_without_production_readiness": [
+                    "adapter_registry_blocks_native_adapter_without_production_readiness"
+                ],
+                "adapter_registry_blocks_fencing_required_backend_without_token_support": [
+                    "adapter_registry_blocks_fencing_required_backend_without_token_support"
+                ],
+                "adapter_registry_blocks_claim_receipt_violations": [
+                    "adapter_registry_blocks_claim_receipt_violations_before_capability_admission"
+                ],
+                "adapter_registry_binds_claim_approved_external_gateway_receipt": [
+                    "adapter_registry_binds_claim_approved_external_gateway_receipt"
+                ],
+                "adapter_registry_rejects_secret_values": [
+                    "adapter_registry_rejects_secret_values_in_capability_metadata"
+                ],
+                "distributed_lease_adapter_registry_receipt_schema_valid": [
+                    "adapter_registry_default_inventory_is_hash_bound",
+                    "adapter_registry_binds_claim_approved_external_gateway_receipt",
+                ],
+            },
+        ),
+        _surface(
+            "distributed_lease_execution_receipts",
+            [
+                "DistributedLeaseExecutionReceiptEvaluator.evaluate",
+                "DistributedLeaseExecutionPlan",
+                "DistributedLeaseExecutionReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/distributed_lease_execution.py",
+                "gateway/distributed_lease_adapters.py",
+                "gateway/distributed_lease_boundary.py",
+                "schemas/distributed_lease_execution_receipt.schema.json",
+                "tests/test_gateway/test_distributed_lease_execution.py",
+            ],
+            "Distributed lease execution receipts compose adapter registry and claim receipts into a hash-bound execution plan, then classify the boundary as ready, delegated, or blocked while proving no local lease service call, backend adapter call, scheduler mutation, worker dispatch, request authentication, or raw secret storage occurred.",
+            [
+                "execution_receipt_ready_for_sqlite_compare_and_swap",
+                "execution_receipt_delegates_external_gateway_without_http_call",
+                "execution_blocks_native_adapter_without_production_readiness",
+                "execution_blocks_claim_receipt_violations_before_dispatch",
+                "execution_binds_claim_approved_external_gateway_grant",
+                "execution_blocks_fencing_required_backend_without_token_support",
+                "execution_rejects_secret_value_disclosure",
+                "distributed_lease_execution_receipt_schema_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "execution_receipt_ready_for_sqlite_compare_and_swap": [
+                    "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call"
+                ],
+                "execution_receipt_delegates_external_gateway_without_http_call": [
+                    "execution_receipt_delegates_external_gateway_without_http_call"
+                ],
+                "execution_blocks_native_adapter_without_production_readiness": [
+                    "execution_blocks_native_adapter_without_production_readiness"
+                ],
+                "execution_blocks_claim_receipt_violations_before_dispatch": [
+                    "execution_blocks_claim_receipt_violations_before_dispatch"
+                ],
+                "execution_binds_claim_approved_external_gateway_grant": [
+                    "execution_binds_claim_approved_external_gateway_grant"
+                ],
+                "execution_blocks_fencing_required_backend_without_token_support": [
+                    "execution_blocks_fencing_required_backend_without_token_support"
+                ],
+                "execution_rejects_secret_value_disclosure": [
+                    "execution_rejects_secret_value_disclosure"
+                ],
+                "distributed_lease_execution_receipt_schema_valid": [
+                    "execution_receipt_ready_for_sqlite_compare_and_swap_without_live_call",
+                    "execution_binds_claim_approved_external_gateway_grant",
+                ],
+            },
+        ),
+        _surface(
+            "scheduler_worker_runtime_receipt_handoff",
+            [
+                "SchedulerWorkerRuntimeReceiptHandoff",
+                "validate_scheduler_worker_runtime_receipt_handoff",
+                "scheduler_worker_runtime_receipt_handoff.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/scheduler_worker_runtime_receipt_handoff.schema.json",
+                "examples/scheduler_worker_runtime_receipt_handoff.foundation.json",
+                "scripts/validate_scheduler_worker_runtime_receipt_handoff.py",
+                "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py",
+            ],
+            "Scheduler worker runtime receipt handoffs bind TemporalSchedulerReceipt and DistributedLeaseExecutionReceipt refs to future worker runtime receipt obligations while denying scheduler dispatch, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, terminal closure, and success claims.",
+            [
+                "scheduler_worker_runtime_handoff_schema_valid",
+                "scheduler_worker_runtime_handoff_blocks_live_dispatch",
+                "scheduler_worker_runtime_handoff_binds_scheduler_and_lease_receipts",
+                "scheduler_worker_runtime_handoff_rejects_authority_drift",
+                "scheduler_worker_runtime_handoff_rejects_missing_required_refs",
+                "scheduler_worker_runtime_handoff_rejects_admission_and_result_drift",
+                "scheduler_worker_runtime_handoff_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "scheduler_worker_runtime_handoff_schema_valid": [
+                    "scheduler_worker_runtime_receipt_handoff_passes"
+                ],
+                "scheduler_worker_runtime_handoff_blocks_live_dispatch": [
+                    "scheduler_worker_runtime_receipt_handoff_passes",
+                    "handoff_rejects_admission_and_result_drift",
+                ],
+                "scheduler_worker_runtime_handoff_binds_scheduler_and_lease_receipts": [
+                    "scheduler_worker_runtime_receipt_handoff_passes",
+                    "handoff_rejects_top_level_and_contract_drift",
+                ],
+                "scheduler_worker_runtime_handoff_rejects_authority_drift": [
+                    "handoff_rejects_authority_drift"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_missing_required_refs": [
+                    "handoff_rejects_missing_required_refs"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_admission_and_result_drift": [
+                    "handoff_rejects_admission_and_result_drift"
+                ],
+                "scheduler_worker_runtime_handoff_rejects_receipt_ref_and_count_drift": [
+                    "handoff_rejects_receipt_ref_and_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "scheduler_worker_runtime_receipt_emitter_dry_run",
+            [
+                "SchedulerWorkerRuntimeReceiptEmitterDryRun",
+                "validate_scheduler_worker_runtime_receipt_emitter_dry_run",
+                "scheduler_worker_runtime_receipt_emitter_dry_run.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json",
+                "examples/scheduler_worker_runtime_receipt_emitter_dry_run.foundation.json",
+                "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+                "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py",
+            ],
+            "Scheduler worker runtime receipt emitter dry-runs bind SchedulerWorkerRuntimeReceiptHandoff evidence into a simulated future runtime receipt emitter envelope while denying scheduler dispatch, runtime registration, runtime dispatch, worker invocation, backend calls, filesystem writes, connector authority, runtime receipt emission, worker mesh dispatch receipt emission, terminal closure, and success claims.",
+            [
+                "scheduler_worker_runtime_emitter_dry_run_schema_valid",
+                "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch",
+                "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift",
+                "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "scheduler_worker_runtime_emitter_dry_run_schema_valid": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_blocks_live_dispatch": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+                    "emitter_dry_run_rejects_result_and_admission_drift",
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_binds_handoff_receipts": [
+                    "scheduler_worker_runtime_receipt_emitter_dry_run_passes",
+                    "emitter_dry_run_rejects_top_level_and_contract_drift",
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_authority_drift": [
+                    "emitter_dry_run_rejects_authority_drift"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_missing_required_refs": [
+                    "emitter_dry_run_rejects_missing_required_refs"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_result_and_admission_drift": [
+                    "emitter_dry_run_rejects_result_and_admission_drift"
+                ],
+                "scheduler_worker_runtime_emitter_dry_run_rejects_receipt_ref_and_count_drift": [
+                    "emitter_dry_run_rejects_receipt_ref_and_count_drift"
                 ],
             },
         ),
@@ -8540,6 +10427,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "snet_operator_read_model",
             [
+                "/api/v1/snet/operator/read-model",
                 "build_snet_operator_read_model",
                 "scripts.validate_snet_operator_read_model.validate_contract",
                 "scripts.validate_snet_operator_read_model.validate_read_model",
@@ -8554,6 +10442,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/73_snet_operator_read_model.md",
                 "docs/START_HERE.md",
                 "mcoi/mcoi_runtime/contracts/snet.py",
+                "mcoi/mcoi_runtime/app/routers/snet.py",
                 "mcoi/mcoi_runtime/snet/engine.py",
                 "mcoi/mcoi_runtime/snet/read_model.py",
                 "schemas/snet_operator_read_model.schema.json",
@@ -8564,15 +10453,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_validate_snet_operator_read_model.py",
                 "tests/test_validate_snet_mesh_receipt.py",
                 "tests/test_snet_operator_read_model_doc.py",
+                "mcoi/tests/test_snet_router.py",
             ],
             (
-                "SNet operator read model projects bounded symbol summaries, "
-                "mesh receipt counts, settlement counts, raw-answer suppression, "
-                "raw-metadata suppression, and denied execution, connector, "
-                "route, filesystem, and terminal-closure authority. The operator "
-                "document preserves the AwaitingEvidence runtime-integration gate."
+                "SNet operator read model projects bounded symbol summaries through "
+                "a read-only MCOI route, mesh receipt counts, settlement counts, "
+                "raw-answer suppression, raw-metadata suppression, and denied "
+                "execution, connector, filesystem, gateway, mutation, and "
+                "terminal-closure authority."
             ),
             [
+                "snet_operator_read_model_exposes_bounded_no_authority_projection",
+                "snet_operator_read_model_zero_symbol_projection_is_valid",
+                "snet_operator_read_model_rejects_invalid_bound_without_server_error",
+                "snet_operator_read_model_has_no_mutation_companion",
+                "default_router_mounts_snet_operator_read_model",
                 "snet_operator_read_model_contract_passes",
                 "snet_operator_read_model_rejects_raw_and_authority_mutations",
                 "snet_operator_read_model_saved_file_validation",
@@ -8795,6 +10690,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "snet_episode_malformed_answer_bindings_report_errors",
                 "snet_episode_non_json_replay_inputs_report_errors",
                 "snet_episode_malformed_expected_receipt_report_errors",
+                "snet_episode_malformed_root_reports_errors",
                 "snet_episode_saved_file_validation",
                 "committed_snet_episode_example_replays_to_expected_receipt",
             ],
@@ -9677,6 +11573,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_oidc_jwks_refresh_evidence_contract",
+            "surfaces": ["oidc_jwks_refresh_evidence"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_trusted_identity_header_boundary_contract",
+            "surfaces": ["trusted_identity_header_boundary"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_runtime_reflex_engine_read_models",
             "surfaces": ["runtime_reflex_engine", "runtime_conformance_attestation"],
             "status": "closed",
@@ -9782,6 +11688,66 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_team_ops_shared_inbox_live_probe_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_observation_routing_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_approval_queue_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_approval_decision_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_send_preparation_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_send_execution_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_sent_message_observation_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_review_packet_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_certificate_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_evidence_bundle_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_anchor_preflight_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_terminal_closure_anchor_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_governed_scheduler_routes",
             "surfaces": ["governed_background_scheduler"],
             "status": "closed",
@@ -9794,6 +11760,56 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_connector_self_healing_receipt_contract",
             "surfaces": ["connector_self_healing"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_connector_action_promotion_gate_contract",
+            "surfaces": ["connector_action_promotion_gate"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_readiness_waiver_review_packet_contract",
+            "surfaces": ["readiness_waiver_review_packet"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_browser_observation_receipt_contract",
+            "surfaces": ["browser_observation_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_trusted_capture_evidence_packet_contract",
+            "surfaces": ["trusted_capture_evidence_packet"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_sccml_trace_adapter_witness_contract",
+            "surfaces": ["sccml_trace_adapter_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_chaos_rehearsal_execution_report_contract",
+            "surfaces": ["chaos_rehearsal_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_invariant_fuzz_execution_report_contract",
+            "surfaces": ["invariant_fuzz_execution_report"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_research_source_conflict_map_contract",
+            "surfaces": ["research_source_conflict_map"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_worker_receipt_ledger_read_model_contract",
+            "surfaces": ["worker_receipt_ledger_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_mfidel_substrate_conformance_receipt_contract",
+            "surfaces": ["mfidel_substrate_conformance_receipt"],
             "status": "closed",
         },
         {
@@ -9909,6 +11925,51 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_retention_window_receipt_contract",
             "surfaces": ["temporal_retention_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_check_run_write_receipt_contract",
+            "surfaces": ["github_check_run_write_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_app_token_exchange_receipt_contract",
+            "surfaces": ["github_app_token_exchange_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_action_execution_receipt_contract",
+            "surfaces": ["github_action_execution_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_github_branch_protection_reconcile_receipt_contract",
+            "surfaces": ["github_branch_protection_reconcile_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_claim_receipt_contract",
+            "surfaces": ["distributed_lease_claim_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_adapter_registry_receipt_contract",
+            "surfaces": ["distributed_lease_adapter_registry_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_distributed_lease_execution_receipt_contract",
+            "surfaces": ["distributed_lease_execution_receipts"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_scheduler_worker_runtime_receipt_handoff_contract",
+            "surfaces": ["scheduler_worker_runtime_receipt_handoff"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_scheduler_worker_runtime_receipt_emitter_dry_run_contract",
+            "surfaces": ["scheduler_worker_runtime_receipt_emitter_dry_run"],
             "status": "closed",
         },
         {

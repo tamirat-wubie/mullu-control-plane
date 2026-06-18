@@ -243,7 +243,466 @@ def test_snet_runtime_integration_gate_validates_as_design_decision() -> None:
     assert "mcoi/mcoi_runtime/snet/engine.py" in design_record["affected_modules"]
     assert "scripts/validate_snet_mesh_receipt.py" in design_record["validator_changes"]
     assert any("run_workspace_governance_checks.py" in item for item in design_record["test_plan"])
-    assert "Do not wire SNet into runtime routes" in design_record["architecture_summary"]
+    assert "Admit one bounded read-only MCOI route" in design_record["architecture_summary"]
+    assert "raw answer submission" in design_record["architecture_summary"]
+    assert "autonomous execution" in design_record["architecture_summary"]
+
+
+def test_capability_maturity_label_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_capability_maturity_labels_20260615.json")
+    design_path = Path("examples/sdlc/design_capability_maturity_labels_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "capability maturity label requirement")
+    design_record = validator.load_json_object(design_path, "capability maturity label design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "maturity_label" in design_record["architecture_summary"]
+    assert "schemas/capability_maturity.schema.json" in design_record["schema_changes"]
+    assert "tests/test_gateway/test_capability_maturity.py" in design_record["validator_changes"]
+    assert "Verified must be impossible below C6" in requirement_record["constraints"]
+
+
+def test_trusted_identity_header_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_trusted_identity_header_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_trusted_identity_header_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "trusted identity header boundary requirement")
+    design_record = validator.load_json_object(design_path, "trusted identity header boundary design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "TrustedIdentityGatewayEvidence" in design_record["architecture_summary"]
+    assert "gateway/tenant_identity.py" in requirement_record["affected_surfaces"]
+    assert "no live OIDC verifier implementation" in requirement_record["non_goals"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_oidc_jwks_refresh_evidence_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_oidc_jwks_refresh_evidence_20260615.json")
+    design_path = Path("examples/sdlc/design_oidc_jwks_refresh_evidence_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "OIDC JWKS refresh evidence requirement")
+    design_record = validator.load_json_object(design_path, "OIDC JWKS refresh evidence design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "OidcJwksRefreshEvidence" in design_record["architecture_summary"]
+    assert "gateway/tenant_identity.py" in requirement_record["affected_surfaces"]
+    assert "no JWKS network fetch implementation" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_tenant_identity.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_adapter_external_effect_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_adapter_external_effect_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_adapter_external_effect_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "adapter external effect requirement")
+    design_record = validator.load_json_object(design_path, "adapter external effect design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "AdapterExternalEffectEvidence" in design_record["architecture_summary"]
+    assert "gateway/adapter_worker_clients.py" in requirement_record["affected_surfaces"]
+    assert "no live Gmail draft or send authority claim" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_adapter_worker_clients.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_adapter_messaging_phone_dispatch_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_adapter_messaging_phone_dispatch_20260615.json")
+    design_path = Path("examples/sdlc/design_adapter_messaging_phone_dispatch_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "adapter messaging phone requirement")
+    design_record = validator.load_json_object(design_path, "adapter messaging phone design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "AdapterExternalEffectEvidence" in design_record["architecture_summary"]
+    assert "gateway/capability_dispatch.py" in requirement_record["affected_surfaces"]
+    assert "no live SMS send authority claim" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_adapter_worker_dispatch.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_github_check_run_write_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_github_check_run_write_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_github_check_run_write_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "GitHub check-run write requirement")
+    design_record = validator.load_json_object(design_path, "GitHub check-run write design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "GitHubCheckRunWriter" in design_record["architecture_summary"]
+    assert "gateway/github_check_run_writer.py" in requirement_record["affected_surfaces"]
+    assert "no live GitHub check-run creation" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_github_check_run_writer.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_github_app_token_exchange_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_github_app_token_exchange_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_github_app_token_exchange_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "GitHub App token exchange requirement")
+    design_record = validator.load_json_object(design_path, "GitHub App token exchange design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "GitHubAppTokenExchange" in design_record["architecture_summary"]
+    assert "gateway/github_app_token_exchange.py" in requirement_record["affected_surfaces"]
+    assert "no live GitHub App token minting" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_github_app_token_exchange.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_github_action_execution_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_github_action_execution_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_github_action_execution_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "GitHub action execution requirement")
+    design_record = validator.load_json_object(design_path, "GitHub action execution design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "GitHubActionExecution" in design_record["architecture_summary"]
+    assert "gateway/github_action_execution.py" in requirement_record["affected_surfaces"]
+    assert "no live GitHub API call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_github_action_execution.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_github_branch_protection_reconcile_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_github_branch_protection_reconcile_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_github_branch_protection_reconcile_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "GitHub branch-protection reconcile requirement")
+    design_record = validator.load_json_object(design_path, "GitHub branch-protection reconcile design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "BranchProtectionReconciler" in design_record["architecture_summary"]
+    assert "gateway/branch_protection_reconcile.py" in requirement_record["affected_surfaces"]
+    assert "no live GitHub API call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_branch_protection_reconcile.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_distributed_lease_claim_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_distributed_lease_claim_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_distributed_lease_claim_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "distributed lease claim requirement")
+    design_record = validator.load_json_object(design_path, "distributed lease claim design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "DistributedLeaseClaimPlanner" in design_record["architecture_summary"]
+    assert "gateway/distributed_lease_boundary.py" in requirement_record["affected_surfaces"]
+    assert "no live distributed lease backend call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_distributed_lease_boundary.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_distributed_lease_adapter_registry_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_distributed_lease_adapter_registry_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_distributed_lease_adapter_registry_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "distributed lease adapter registry requirement")
+    design_record = validator.load_json_object(design_path, "distributed lease adapter registry design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "DistributedLeaseAdapterRegistryEvaluator" in design_record["architecture_summary"]
+    assert "gateway/distributed_lease_adapters.py" in requirement_record["affected_surfaces"]
+    assert "no live distributed lease backend call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_distributed_lease_adapters.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_distributed_lease_execution_receipt_boundary_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_distributed_lease_execution_receipt_boundary_20260615.json")
+    design_path = Path("examples/sdlc/design_distributed_lease_execution_receipt_boundary_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "distributed lease execution requirement")
+    design_record = validator.load_json_object(design_path, "distributed lease execution design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "DistributedLeaseExecutionReceiptEvaluator" in design_record["architecture_summary"]
+    assert "gateway/distributed_lease_execution.py" in requirement_record["affected_surfaces"]
+    assert "no live distributed lease backend call" in requirement_record["non_goals"]
+    assert "tests/test_gateway/test_distributed_lease_execution.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_scheduler_worker_runtime_receipt_handoff_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_scheduler_worker_runtime_receipt_handoff_20260615.json")
+    design_path = Path("examples/sdlc/design_scheduler_worker_runtime_receipt_handoff_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "scheduler worker handoff requirement")
+    design_record = validator.load_json_object(design_path, "scheduler worker handoff design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "SchedulerWorkerRuntimeReceiptHandoff" in design_record["architecture_summary"]
+    assert "schemas/scheduler_worker_runtime_receipt_handoff.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/scheduler_worker_runtime_receipt_handoff.schema.json" in design_record["schema_changes"]
+    assert "no live worker dispatch" in requirement_record["non_goals"]
+    assert "scripts/validate_scheduler_worker_runtime_receipt_handoff.py" in design_record["validator_changes"]
+    assert "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_scheduler_worker_runtime_receipt_emitter_dry_run_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_scheduler_worker_runtime_receipt_emitter_dry_run_20260615.json")
+    design_path = Path("examples/sdlc/design_scheduler_worker_runtime_receipt_emitter_dry_run_20260615.json")
+    requirement_record = validator.load_json_object(requirement_path, "scheduler worker emitter dry-run requirement")
+    design_record = validator.load_json_object(design_path, "scheduler worker emitter dry-run design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "SchedulerWorkerRuntimeReceiptEmitterDryRun" in design_record["architecture_summary"]
+    assert "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/scheduler_worker_runtime_receipt_emitter_dry_run.schema.json" in design_record["schema_changes"]
+    assert "no live worker dispatch" in requirement_record["non_goals"]
+    assert "scripts/validate_scheduler_worker_runtime_receipt_emitter_dry_run.py" in design_record["validator_changes"]
+    assert "tests/test_validate_scheduler_worker_runtime_receipt_emitter_dry_run.py" in design_record["validator_changes"]
+    assert "scripts/validate_sdlc_security_review.py" in design_record["validator_changes"]
+
+
+def test_connector_action_promotion_gate_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_connector_action_promotion_gate_20260616.json")
+    design_path = Path("examples/sdlc/design_connector_action_promotion_gate_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "connector action promotion gate requirement")
+    design_record = validator.load_json_object(design_path, "connector action promotion gate design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "ConnectorActionPromotionGate" in design_record["architecture_summary"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/connector_action_promotion_gate.schema.json" in design_record["schema_changes"]
+    assert "no live connector invocation" in requirement_record["non_goals"]
+    assert "scripts/validate_connector_action_promotion_gate.py" in design_record["validator_changes"]
+    assert "tests/test_validate_connector_action_promotion_gate.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_readiness_waiver_review_packet_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_readiness_waiver_review_packet_20260616.json")
+    design_path = Path("examples/sdlc/design_readiness_waiver_review_packet_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "readiness waiver review packet requirement")
+    design_record = validator.load_json_object(design_path, "readiness waiver review packet design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "ReadinessWaiverReviewPacket" in design_record["architecture_summary"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/readiness_waiver_review_packet.schema.json" in design_record["schema_changes"]
+    assert "no deployment authority" in requirement_record["non_goals"]
+    assert "scripts/validate_readiness_waiver_review_packet.py" in design_record["validator_changes"]
+    assert "tests/test_validate_readiness_waiver_review_packet.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_browser_observation_receipt_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_browser_observation_receipt_20260616.json")
+    design_path = Path("examples/sdlc/design_browser_observation_receipt_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "browser observation receipt requirement")
+    design_record = validator.load_json_object(design_path, "browser observation receipt design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "BrowserObservationReceipt" in design_record["architecture_summary"]
+    assert "schemas/browser_observation_receipt.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/browser_observation_receipt.schema.json" in design_record["schema_changes"]
+    assert "no browser navigation authority" in requirement_record["non_goals"]
+    assert "scripts/validate_browser_observation_receipt.py" in design_record["validator_changes"]
+    assert "tests/test_validate_browser_observation_receipt.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_research_source_conflict_map_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_research_source_conflict_map_20260616.json")
+    design_path = Path("examples/sdlc/design_research_source_conflict_map_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "research source conflict map requirement")
+    design_record = validator.load_json_object(design_path, "research source conflict map design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "ResearchSourceConflictMap" in design_record["architecture_summary"]
+    assert "schemas/research_source_conflict_map.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/research_source_conflict_map.schema.json" in design_record["schema_changes"]
+    assert "no live web search" in requirement_record["non_goals"]
+    assert "scripts/validate_research_source_conflict_map.py" in design_record["validator_changes"]
+    assert "tests/test_validate_research_source_conflict_map.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_trusted_capture_evidence_packet_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_trusted_capture_evidence_packet_20260616.json")
+    design_path = Path("examples/sdlc/design_trusted_capture_evidence_packet_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "trusted capture evidence packet requirement")
+    design_record = validator.load_json_object(design_path, "trusted capture evidence packet design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "TrustedCaptureEvidencePacket" in design_record["architecture_summary"]
+    assert "schemas/trusted_capture_evidence_packet.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/trusted_capture_evidence_packet.schema.json" in design_record["schema_changes"]
+    assert "no live capture" in requirement_record["non_goals"]
+    assert "scripts/validate_trusted_capture_evidence_packet.py" in design_record["validator_changes"]
+    assert "tests/test_validate_trusted_capture_evidence_packet.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_sccml_trace_adapter_witness_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_sccml_trace_adapter_witness_20260616.json")
+    design_path = Path("examples/sdlc/design_sccml_trace_adapter_witness_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "sccml trace adapter witness requirement")
+    design_record = validator.load_json_object(design_path, "sccml trace adapter witness design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "SccmlTraceAdapterWitness" in design_record["architecture_summary"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/sccml_trace_adapter_witness.schema.json" in design_record["schema_changes"]
+    assert "no live kernel execution" in requirement_record["non_goals"]
+    assert "scripts/validate_sccml_trace_adapter_witness.py" in design_record["validator_changes"]
+    assert "tests/test_validate_sccml_trace_adapter_witness.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_chaos_rehearsal_execution_report_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_chaos_rehearsal_execution_report_20260616.json")
+    design_path = Path("examples/sdlc/design_chaos_rehearsal_execution_report_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "chaos rehearsal requirement")
+    design_record = validator.load_json_object(design_path, "chaos rehearsal design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "ChaosRehearsalExecutionReport" in design_record["architecture_summary"]
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/chaos_rehearsal_execution_report.schema.json" in design_record["schema_changes"]
+    assert "no live chaos execution" in requirement_record["non_goals"]
+    assert "scripts/validate_chaos_rehearsal_execution_report.py" in design_record["validator_changes"]
+    assert "tests/test_validate_chaos_rehearsal_execution_report.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_invariant_fuzz_execution_report_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_invariant_fuzz_execution_report_20260617.json")
+    design_path = Path("examples/sdlc/design_invariant_fuzz_execution_report_20260617.json")
+    requirement_record = validator.load_json_object(requirement_path, "invariant fuzz requirement")
+    design_record = validator.load_json_object(design_path, "invariant fuzz design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "InvariantFuzzExecutionReport" in design_record["architecture_summary"]
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/invariant_fuzz_execution_report.schema.json" in design_record["schema_changes"]
+    assert "no canonical runtime mutation" in requirement_record["non_goals"]
+    assert "scripts/validate_invariant_fuzz_execution_report.py" in design_record["validator_changes"]
+    assert "tests/test_validate_invariant_fuzz_execution_report.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
+
+
+def test_worker_receipt_ledger_read_model_sdlc_artifacts_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_worker_receipt_ledger_read_model_20260616.json")
+    design_path = Path("examples/sdlc/design_worker_receipt_ledger_read_model_20260616.json")
+    requirement_record = validator.load_json_object(requirement_path, "worker receipt ledger requirement")
+    design_record = validator.load_json_object(design_path, "worker receipt ledger design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement_record)
+    design_errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design_record["requirement_id"] == requirement_record["requirement_id"]
+    assert "WorkerReceiptLedgerReadModel" in design_record["architecture_summary"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in requirement_record["affected_surfaces"]
+    assert "schemas/worker_receipt_ledger_read_model.schema.json" in design_record["schema_changes"]
+    assert "no worker dispatch" in requirement_record["non_goals"]
+    assert "scripts/validate_worker_receipt_ledger_read_model.py" in design_record["validator_changes"]
+    assert "tests/test_validate_worker_receipt_ledger_read_model.py" in design_record["validator_changes"]
+    assert ".github/workflows/ci.yml" in design_record["validator_changes"]
 
 
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
@@ -414,3 +873,20 @@ def test_load_json_object_rejects_non_object_json(tmp_path: Path) -> None:
 
     assert payload_path.exists()
     assert payload_path.suffix == ".json"
+
+
+def test_mfidel_substrate_conformance_receipt_requirement_and_design_validate() -> None:
+    requirement_path = Path("examples/sdlc/requirement_mfidel_substrate_conformance_receipt_20260616.json")
+    design_path = Path("examples/sdlc/design_mfidel_substrate_conformance_receipt_20260616.json")
+    requirement = validator.load_json_object(requirement_path, "mfidel substrate requirement")
+    design = validator.load_json_object(design_path, "mfidel substrate design")
+
+    requirement_errors = validator.validate_artifact_record("requirement", requirement)
+    design_errors = validator.validate_artifact_record("design_decision", design)
+
+    assert requirement_errors == []
+    assert design_errors == []
+    assert design["requirement_id"] == requirement["requirement_id"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in requirement["affected_surfaces"]
+    assert "schemas/mfidel_substrate_conformance_receipt.schema.json" in design["schema_changes"]
+    assert "scripts/validate_mfidel_substrate_conformance_receipt.py" in design["validator_changes"]

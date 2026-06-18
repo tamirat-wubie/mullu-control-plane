@@ -18,7 +18,7 @@ import hmac
 from time import perf_counter
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
 from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus, RiskTier, _max_risk
 from gateway.authority import evaluate_approval_authority
@@ -1023,14 +1023,21 @@ class GatewayRouter:
         )
 
     @staticmethod
-    def _tenant_metadata_flag(mapping: TenantMapping, key: str) -> bool:
-        """Read a tenant metadata flag without treating missing values as authority."""
-        value = mapping.metadata.get(key)
+    def _metadata_flag(metadata: Mapping[str, Any] | None, key: str) -> bool:
+        """Read a metadata flag without treating missing values as authority."""
+        if metadata is None:
+            return False
+        value = metadata.get(key)
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
             return value.strip().lower() in {"1", "true", "yes", "present"}
         return bool(value)
+
+    @classmethod
+    def _tenant_metadata_flag(cls, mapping: TenantMapping, key: str) -> bool:
+        """Read a tenant metadata flag without treating missing values as authority."""
+        return cls._metadata_flag(mapping.metadata, key)
 
     def _evaluate_approval_strength(
         self,
@@ -1038,10 +1045,17 @@ class GatewayRouter:
         *,
         request_id: str,
         resolver: TenantMapping,
+        approval_metadata: Mapping[str, Any] | None = None,
     ) -> ChannelApprovalStrengthResult:
         """Evaluate channel approval-strength before resolving an approval."""
         risk_tier = _APPROVAL_RISK_BY_GATEWAY_RISK[request.risk_tier]
         same_channel = request.channel.strip().lower() == resolver.channel.strip().lower()
+        operator_session_present = resolver.channel in {"operator_console", "test"}
+        operator_session_present = (
+            operator_session_present
+            or self._tenant_metadata_flag(resolver, "operator_session_present")
+            or self._metadata_flag(approval_metadata, "operator_session_present")
+        )
         return evaluate_channel_approval_strength(
             ChannelApprovalStrengthRequest(
                 request_channel=request.channel,
@@ -1055,13 +1069,14 @@ class GatewayRouter:
                 approval_not_expired=request.status != ApprovalStatus.EXPIRED,
                 actor_has_approval_authority=resolver.approval_authority,
                 channel_binding_present=same_channel
-                or self._tenant_metadata_flag(resolver, "channel_binding_present"),
-                operator_session_present=resolver.channel == "operator_console"
-                or self._tenant_metadata_flag(resolver, "operator_session_present"),
+                or self._tenant_metadata_flag(resolver, "channel_binding_present")
+                or self._metadata_flag(approval_metadata, "channel_binding_present"),
+                operator_session_present=operator_session_present,
                 second_approval_present=self._tenant_metadata_flag(
                     resolver,
                     "second_approval_present",
-                ),
+                )
+                or self._metadata_flag(approval_metadata, "second_approval_present"),
             )
         )
 
@@ -1129,6 +1144,28 @@ class GatewayRouter:
                     "resolver_roles": authority.resolver_roles,
                 },
             )
+        strength = self._evaluate_approval_strength(
+            request,
+            request_id=request_id,
+            resolver=mapping,
+            approval_metadata=message.metadata,
+        )
+        strength_metadata = self._approval_strength_metadata(strength)
+        if strength.decision == ApprovalStrengthDecision.BLOCK:
+            self._record_error("approval_strength_denied")
+            return GatewayResponse(
+                message_id=self._gen_id("apr-resp", request_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="This approval response does not satisfy channel approval-strength policy.",
+                governed=True,
+                metadata={
+                    "error": "approval_strength_denied",
+                    "authority_reason": "approval_strength_insufficient",
+                    "request_id": request_id,
+                    **strength_metadata,
+                },
+            )
         result = self._approval.resolve(request_id, approved=approved, resolved_by=mapping.identity_id)
         if result is None:
             self._record_error("approval_not_found")
@@ -1153,25 +1190,32 @@ class GatewayRouter:
                 next_state,
                 approval_id=result.request_id,
                 risk_tier=result.risk_tier.value,
+                detail=strength_metadata,
             )
             if result.status == ApprovalStatus.APPROVED:
                 if chain is not None and chain.status not in {
                     ApprovalChainStatus.SATISFIED,
                     ApprovalChainStatus.NOT_REQUIRED,
                 }:
-                    return self._approval_chain_pending_response(
-                        request_id,
-                        result,
-                        chain,
-                        recipient_id=message.sender_id,
+                    return self._with_approval_strength_metadata(
+                        self._approval_chain_pending_response(
+                            request_id,
+                            result,
+                            chain,
+                            recipient_id=message.sender_id,
+                        ),
+                        strength_metadata,
                     )
                 command = self._commands.get(result.command_id)
                 if command is not None:
                     if self._defer_approved_execution:
-                        return self._approval_queued_response(
-                            request_id,
-                            result,
-                            recipient_id=message.sender_id,
+                        return self._with_approval_strength_metadata(
+                            self._approval_queued_response(
+                                request_id,
+                                result,
+                                recipient_id=message.sender_id,
+                            ),
+                            strength_metadata,
                         )
                     response = self._execute_command(command, recipient_id=message.sender_id)
                     return GatewayResponse(
@@ -1186,9 +1230,13 @@ class GatewayRouter:
                             "status": "approved",
                             "request_id": request_id,
                             "command_id": result.command_id,
+                            **strength_metadata,
                         },
                     )
-        return self._approval_response(request_id, result, recipient_id=message.sender_id)
+        return self._with_approval_strength_metadata(
+            self._approval_response(request_id, result, recipient_id=message.sender_id),
+            strength_metadata,
+        )
 
     def handle_message(self, message: GatewayMessage) -> GatewayResponse:
         """Process an inbound message through the full governance pipeline.

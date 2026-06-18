@@ -1,0 +1,76 @@
+{
+  "security_review_id": "sdlc_security_github_app_token_exchange_receipt_boundary_20260615",
+  "change_id": "sdlc_req_github_app_token_exchange_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "GitHub App installation-token exchange can grant repository-scoped write authority when a private key and app installation are used. The main risks are unapproved token minting, raw token or JWT disclosure, private-key handling inside the planner, forged response evidence, repository or installation spoofing, excessive token TTL, overbroad permissions, and overclaiming local proof as live GitHub token exchange. The mitigation is to keep the planner non-live, hash the request payload, require private-key fingerprints rather than keys, bound TTL, require explicit permissions, block secret-shaped material, require readiness evidence refs for all modes, forbid response evidence in plan-only and dry-run modes, and require operator approval plus external exchange receipt evidence before exchange-approved receipts admit a token exchange claim.",
+  "required_checks": [
+    {
+      "category": "external_api",
+      "check": "plan-only and dry-run check proving the planner performs no GitHub API call, loads no private key, creates no JWT, and stores no raw token",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving external token exchange evidence is required before exchange admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_approved_requires_external_receipt"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving repository, app id, installation id, requested permissions, TTL, and endpoint are bound into a deterministic request hash",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving raw token-shaped metadata blocks receipt admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_rejects_raw_token_disclosure"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving non-exchange modes reject approval, execution, token fingerprint, expiry, response status, and response hash evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_dry_run_rejects_response_evidence"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving repository owner, repository name, tenant id, actor id, command id, app id, and installation id are carried in the receipt boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_github_app_token_exchange.py::test_github_app_token_exchange_plan_only_builds_hash_bound_payload"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public GitHub App token-exchange receipt schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep GitHubAppTokenExchange non-live and deterministic",
+    "require readiness evidence refs for all token-exchange receipts",
+    "forbid response token evidence in plan-only and dry-run modes",
+    "require approval, external exchange receipt, 2xx response, token fingerprint, token expiry, and response payload hash for exchange-approved mode",
+    "block raw token, JWT, and private-key shaped material before receipt admission",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid private-key loading, JWT creation, raw token storage, GitHub API calls, branch protection mutation, or deployment claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/github-app-token-exchange-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/github-app-token-exchange-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/github-app-token-exchange-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/github-app-token-exchange-receipt-boundary/20260615"
+}

@@ -10,6 +10,7 @@ Invariants:
   - Worker URL and signing secret must be configured together.
   - Every response signature is verified before response parsing.
   - Every response must carry a receipt for the requested capability.
+  - External effect success requires dry-run proof or provider receipt evidence.
   - Blocked or failed worker results remain observable governed outcomes.
 """
 
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from collections.abc import Mapping
@@ -25,6 +27,97 @@ from typing import Any
 
 from gateway.capability_isolation import sign_capability_payload, verify_capability_signature
 from gateway.proxy_policy import assert_proxy_environment_allowed
+
+
+ADAPTER_EFFECT_PLAN_ONLY = "plan_only"
+ADAPTER_EFFECT_DRY_RUN = "dry_run"
+ADAPTER_EFFECT_LIVE_PROVIDER = "live_provider"
+ADAPTER_EFFECT_MODES = (
+    ADAPTER_EFFECT_PLAN_ONLY,
+    ADAPTER_EFFECT_DRY_RUN,
+    ADAPTER_EFFECT_LIVE_PROVIDER,
+)
+ADAPTER_EXTERNAL_WRITE_CAPABILITIES = frozenset(
+    {
+        "browser.submit",
+        "email.send",
+        "email.send.with_approval",
+        "calendar.schedule",
+        "calendar.reschedule",
+        "calendar.invite",
+        "messaging.sms.send.with_approval",
+        "messaging.chat.send.with_approval",
+        "phone.call.place.with_approval",
+        "phone.call.transfer.with_approval",
+        "phone.call.terminate",
+    }
+)
+ADAPTER_EFFECT_RECEIPT_FIELDS = frozenset(
+    {
+        "effect_mode",
+        "external_effect_claimed",
+        "external_write",
+        "external_send",
+        "external_call",
+        "provider_receipt_hash",
+        "provider_receipt_ref",
+        "idempotency_key",
+        "rollback_or_recovery_ref",
+        "replay_or_rollback_ref",
+        "forbidden_effects_observed",
+        "secret_values_disclosed",
+    }
+)
+SHA256_RECEIPT_REF_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+
+@dataclass(frozen=True, slots=True)
+class AdapterExternalEffectEvidence:
+    """Worker receipt evidence for dry-run or live-provider effect claims."""
+
+    request_id: str
+    tenant_id: str
+    capability_id: str
+    status: str
+    verification_status: str
+    effect_mode: str = ADAPTER_EFFECT_PLAN_ONLY
+    external_effect_claimed: bool = False
+    provider_receipt_hash: str = ""
+    provider_receipt_ref: str = ""
+    idempotency_key: str = ""
+    rollback_or_recovery_ref: str = ""
+    evidence_refs: tuple[str, ...] = ()
+    effect_boundary_declared: bool = False
+    approval_ref: str = ""
+    forbidden_effects_observed: bool = False
+    secret_values_disclosed: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class AdapterExternalEffectAssessment:
+    """Deterministic decision for adapter worker external-effect evidence."""
+
+    request_id: str
+    tenant_id: str
+    capability_id: str
+    status: str
+    verification_status: str
+    effect_mode: str
+    external_effect_claimed: bool
+    provider_receipt_hash: str
+    provider_receipt_ref: str
+    idempotency_key: str
+    rollback_or_recovery_ref: str
+    evidence_refs: tuple[str, ...]
+    effect_boundary_declared: bool
+    approval_ref: str
+    forbidden_effects_observed: bool
+    secret_values_disclosed: bool
+    execution_success_claim_allowed: bool
+    plan_only: bool
+    blocked_reasons: tuple[str, ...]
+    network_call_performed: bool = False
+    request_authentication_performed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -352,6 +445,20 @@ def _adapter_response_from_mapping(
     evidence_refs = receipt.get("evidence_refs")
     if not isinstance(evidence_refs, list | tuple) or not evidence_refs:
         raise RuntimeError(f"{adapter_id} worker receipt requires evidence refs")
+    if status.strip().lower() == "succeeded" and _receipt_requires_external_effect_boundary(
+        receipt,
+        expected_capability_id=expected_capability_id,
+    ):
+        try:
+            assessment = assess_adapter_external_effect_receipt(
+                receipt,
+                status=status,
+                adapter_id=adapter_id,
+            )
+        except ValueError as exc:
+            raise RuntimeError(f"{adapter_id} worker effect receipt invalid:{exc}") from exc
+        if assessment.blocked_reasons:
+            raise RuntimeError(f"{adapter_id} worker effect receipt invalid:{assessment.blocked_reasons[0]}")
     return AdapterWorkerResponse(
         request_id=request_id,
         status=status,
@@ -360,6 +467,263 @@ def _adapter_response_from_mapping(
         error=str(raw.get("error", "")),
         raw=dict(raw),
     )
+
+
+def assess_adapter_external_effect_evidence(
+    evidence: AdapterExternalEffectEvidence,
+) -> AdapterExternalEffectAssessment:
+    """Assess whether a worker receipt can claim dry-run or provider execution success."""
+    request_id = _require_text(evidence.request_id, "adapter effect request_id")
+    tenant_id = _require_text(evidence.tenant_id, "adapter effect tenant_id")
+    capability_id = _require_text(evidence.capability_id, "adapter effect capability_id")
+    status = _require_text(evidence.status, "adapter effect status").strip().lower()
+    verification_status = _require_text(
+        evidence.verification_status,
+        "adapter effect verification_status",
+    ).strip().lower()
+    effect_mode = _require_text(evidence.effect_mode, "adapter effect_mode").strip().lower()
+    if effect_mode not in ADAPTER_EFFECT_MODES:
+        raise ValueError("effect_mode_invalid")
+    if not isinstance(evidence.external_effect_claimed, bool):
+        raise ValueError("external_effect_claimed_invalid")
+    if not isinstance(evidence.effect_boundary_declared, bool):
+        raise ValueError("effect_boundary_declared_invalid")
+    if not isinstance(evidence.forbidden_effects_observed, bool):
+        raise ValueError("forbidden_effects_observed_invalid")
+    if not isinstance(evidence.secret_values_disclosed, bool):
+        raise ValueError("secret_values_disclosed_invalid")
+
+    provider_receipt_hash = _optional_receipt_text(
+        evidence.provider_receipt_hash,
+        "provider_receipt_hash",
+    )
+    provider_receipt_ref = _optional_receipt_text(
+        evidence.provider_receipt_ref,
+        "provider_receipt_ref",
+    )
+    idempotency_key = _optional_receipt_text(evidence.idempotency_key, "idempotency_key")
+    rollback_or_recovery_ref = _optional_receipt_text(
+        evidence.rollback_or_recovery_ref,
+        "rollback_or_recovery_ref",
+    )
+    approval_ref = _optional_receipt_text(evidence.approval_ref, "approval_ref")
+    evidence_refs = _normalize_evidence_refs(evidence.evidence_refs)
+
+    blocked_reasons: list[str] = []
+    external_write_capability = adapter_capability_requires_external_effect_evidence(capability_id)
+    if external_write_capability and not evidence.effect_boundary_declared:
+        blocked_reasons.append("external_effect_boundary_required")
+    if evidence.forbidden_effects_observed:
+        blocked_reasons.append("forbidden_effects_observed")
+    if evidence.secret_values_disclosed:
+        blocked_reasons.append("secret_values_disclosed")
+    if effect_mode == ADAPTER_EFFECT_PLAN_ONLY:
+        if evidence.external_effect_claimed:
+            blocked_reasons.append("plan_only_external_effect_claim_forbidden")
+        if external_write_capability and status == "succeeded":
+            blocked_reasons.append("external_effect_success_evidence_required")
+        execution_success_claim_allowed = False
+    elif effect_mode == ADAPTER_EFFECT_DRY_RUN:
+        _append_common_execution_blockers(
+            blocked_reasons,
+            status=status,
+            verification_status=verification_status,
+            evidence_refs=evidence_refs,
+            idempotency_key=idempotency_key,
+            rollback_or_recovery_ref=rollback_or_recovery_ref,
+        )
+        if evidence.external_effect_claimed:
+            blocked_reasons.append("dry_run_external_effect_claim_forbidden")
+        execution_success_claim_allowed = not blocked_reasons
+    else:
+        _append_common_execution_blockers(
+            blocked_reasons,
+            status=status,
+            verification_status=verification_status,
+            evidence_refs=evidence_refs,
+            idempotency_key=idempotency_key,
+            rollback_or_recovery_ref=rollback_or_recovery_ref,
+        )
+        if not evidence.external_effect_claimed:
+            blocked_reasons.append("external_effect_claim_required")
+        if not provider_receipt_hash:
+            blocked_reasons.append("provider_receipt_hash_required")
+        elif not SHA256_RECEIPT_REF_RE.fullmatch(provider_receipt_hash):
+            blocked_reasons.append("provider_receipt_hash_invalid")
+        if not provider_receipt_ref:
+            blocked_reasons.append("provider_receipt_ref_required")
+        if external_write_capability and not approval_ref:
+            blocked_reasons.append("approval_ref_required")
+        execution_success_claim_allowed = not blocked_reasons
+
+    return AdapterExternalEffectAssessment(
+        request_id=request_id,
+        tenant_id=tenant_id,
+        capability_id=capability_id,
+        status=status,
+        verification_status=verification_status,
+        effect_mode=effect_mode,
+        external_effect_claimed=evidence.external_effect_claimed,
+        provider_receipt_hash=provider_receipt_hash,
+        provider_receipt_ref=provider_receipt_ref,
+        idempotency_key=idempotency_key,
+        rollback_or_recovery_ref=rollback_or_recovery_ref,
+        evidence_refs=evidence_refs,
+        effect_boundary_declared=evidence.effect_boundary_declared,
+        approval_ref=approval_ref,
+        forbidden_effects_observed=evidence.forbidden_effects_observed,
+        secret_values_disclosed=evidence.secret_values_disclosed,
+        execution_success_claim_allowed=execution_success_claim_allowed,
+        plan_only=effect_mode == ADAPTER_EFFECT_PLAN_ONLY,
+        blocked_reasons=tuple(blocked_reasons),
+        network_call_performed=False,
+        request_authentication_performed=False,
+    )
+
+
+def adapter_capability_requires_external_effect_evidence(capability_id: str) -> bool:
+    """Return whether a capability must carry explicit external-effect evidence."""
+    return str(capability_id).strip() in ADAPTER_EXTERNAL_WRITE_CAPABILITIES
+
+
+def assess_adapter_external_effect_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    status: str,
+    adapter_id: str,
+) -> AdapterExternalEffectAssessment:
+    """Assess a worker receipt with inferred external-effect boundary fields."""
+    return assess_adapter_external_effect_evidence(
+        _adapter_external_effect_evidence_from_receipt(
+            receipt,
+            status=status,
+            adapter_id=adapter_id,
+        )
+    )
+
+
+def _append_common_execution_blockers(
+    blocked_reasons: list[str],
+    *,
+    status: str,
+    verification_status: str,
+    evidence_refs: tuple[str, ...],
+    idempotency_key: str,
+    rollback_or_recovery_ref: str,
+) -> None:
+    if status != "succeeded":
+        blocked_reasons.append("adapter_status_not_succeeded")
+    if verification_status != "passed":
+        blocked_reasons.append("adapter_receipt_verification_not_passed")
+    if not evidence_refs:
+        blocked_reasons.append("adapter_external_evidence_refs_required")
+    if not idempotency_key:
+        blocked_reasons.append("idempotency_key_required")
+    if not rollback_or_recovery_ref:
+        blocked_reasons.append("rollback_or_recovery_ref_required")
+
+
+def _adapter_external_effect_evidence_from_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    status: str,
+    adapter_id: str,
+) -> AdapterExternalEffectEvidence:
+    effect_boundary_declared = _receipt_declares_external_effect_boundary(receipt)
+    observed_external_effect = _receipt_observed_external_effect(receipt)
+    default_effect_mode = ADAPTER_EFFECT_LIVE_PROVIDER if observed_external_effect else ADAPTER_EFFECT_PLAN_ONLY
+    return AdapterExternalEffectEvidence(
+        request_id=_require_text(str(receipt.get("request_id", "")), f"{adapter_id} effect receipt request_id"),
+        tenant_id=_require_text(str(receipt.get("tenant_id", "")), f"{adapter_id} effect receipt tenant_id"),
+        capability_id=_require_text(
+            str(receipt.get("capability_id", "")),
+            f"{adapter_id} effect receipt capability_id",
+        ),
+        status=status,
+        verification_status=_require_text(
+            str(receipt.get("verification_status", "")),
+            f"{adapter_id} effect receipt verification_status",
+        ),
+        effect_mode=receipt.get("effect_mode", default_effect_mode),
+        external_effect_claimed=receipt.get("external_effect_claimed", observed_external_effect),
+        provider_receipt_hash=receipt.get("provider_receipt_hash", ""),
+        provider_receipt_ref=receipt.get("provider_receipt_ref", ""),
+        idempotency_key=receipt.get("idempotency_key", ""),
+        rollback_or_recovery_ref=_first_receipt_text(
+            receipt,
+            (
+                "rollback_or_recovery_ref",
+                "replay_or_rollback_ref",
+                "rollback_ref",
+                "rollback_plan_ref",
+                "recovery_ref",
+            ),
+        ),
+        evidence_refs=tuple(receipt.get("evidence_refs", ())),
+        effect_boundary_declared=effect_boundary_declared,
+        approval_ref=_first_receipt_text(receipt, ("approval_ref", "approval_id", "approval_receipt_ref")),
+        forbidden_effects_observed=receipt.get("forbidden_effects_observed", False),
+        secret_values_disclosed=receipt.get("secret_values_disclosed", False),
+    )
+
+
+def _receipt_requires_external_effect_boundary(
+    receipt: Mapping[str, Any],
+    *,
+    expected_capability_id: str,
+) -> bool:
+    return (
+        _receipt_declares_external_effect_boundary(receipt)
+        or adapter_capability_requires_external_effect_evidence(expected_capability_id)
+    )
+
+
+def _receipt_declares_external_effect_boundary(receipt: Mapping[str, Any]) -> bool:
+    return any(field_name in receipt for field_name in ADAPTER_EFFECT_RECEIPT_FIELDS)
+
+
+def _receipt_observed_external_effect(receipt: Mapping[str, Any]) -> bool:
+    return any(
+        _optional_receipt_bool(receipt.get(field_name, False), field_name)
+        for field_name in ("external_write", "external_send", "external_call")
+    )
+
+
+def _first_receipt_text(receipt: Mapping[str, Any], field_names: tuple[str, ...]) -> str:
+    for field_name in field_names:
+        if field_name not in receipt:
+            continue
+        value = _optional_receipt_text(receipt.get(field_name, ""), field_name)
+        if value:
+            return value
+    return ""
+
+
+def _optional_receipt_text(value: object, field_name: str) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name}_invalid")
+    return value.strip()
+
+
+def _optional_receipt_bool(value: object, field_name: str) -> bool:
+    if value is None:
+        return False
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name}_invalid")
+    return value
+
+
+def _normalize_evidence_refs(raw_evidence_refs: object) -> tuple[str, ...]:
+    if not isinstance(raw_evidence_refs, list | tuple):
+        raise ValueError("adapter_external_evidence_refs_invalid")
+    evidence_refs: list[str] = []
+    for evidence_ref in raw_evidence_refs:
+        if not isinstance(evidence_ref, str) or not evidence_ref.strip():
+            raise ValueError("adapter_external_evidence_refs_invalid")
+        evidence_refs.append(evidence_ref.strip())
+    return tuple(evidence_refs)
 
 
 def _require_text(value: str, field_name: str) -> str:

@@ -84,12 +84,43 @@ def test_protocol_manifest_is_valid() -> None:
         "universal-action-orchestration-validation-receipt"
     ]
     worker_mesh_entry = entries["worker-mesh"]
+    worker_failure_entry = entries["worker-failure-receipt"]
+    read_only_worker_entry = entries["read-only-worker-binding"]
+    read_only_worker_lease_preflight_entry = entries["read-only-worker-lease-preflight"]
+    read_only_worker_rehearsal_receipt_entry = entries["read-only-worker-rehearsal-receipt"]
+    read_only_worker_runtime_receipt_handoff_entry = entries["read-only-worker-runtime-receipt-handoff"]
+    read_only_worker_runtime_receipt_emitter_dry_run_entry = entries[
+        "read-only-worker-runtime-receipt-emitter-dry-run"
+    ]
+    read_only_worker_runtime_runner_binding_witness_entry = entries[
+        "read-only-worker-runtime-runner-binding-witness"
+    ]
+    read_only_worker_runtime_receipt_candidate_entry = entries[
+        "read-only-worker-runtime-receipt-candidate"
+    ]
+    read_only_worker_runtime_receipt_schema_binding_witness_entry = entries[
+        "read-only-worker-runtime-receipt-schema-binding-witness"
+    ]
+    read_only_worker_runtime_receipt_store_write_path_witness_entry = entries[
+        "read-only-worker-runtime-receipt-store-write-path-witness"
+    ]
+    read_only_worker_runtime_runner_registration_witness_entry = entries[
+        "read-only-worker-runtime-runner-registration-witness"
+    ]
+    read_only_worker_runtime_dispatch_endpoint_registration_witness_entry = entries[
+        "read-only-worker-runtime-dispatch-endpoint-registration-witness"
+    ]
+    read_only_worker_runtime_receipt_emitter_registration_witness_entry = entries[
+        "read-only-worker-runtime-receipt-emitter-registration-witness"
+    ]
     world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
     receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
     interpreted_request_entry = entries["interpreted-request"]
     interpretation_receipt_entry = entries["interpretation-receipt"]
     clarification_request_entry = entries["clarification-request"]
+    search_decision_entry = entries["search-decision"]
+    search_receipt_entry = entries["search-receipt"]
     capability_plan_preview_entry = entries["capability-plan-preview"]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
@@ -109,6 +140,12 @@ def test_protocol_manifest_is_valid() -> None:
     assert clarification_request_entry["path"] == "schemas/clarification_request.schema.json"
     assert clarification_request_entry["urn"] == "urn:mullusi:schema:clarification-request:1"
     assert clarification_request_entry["surface"] == "interpretation"
+    assert search_decision_entry["path"] == "schemas/search_decision.schema.json"
+    assert search_decision_entry["urn"] == "urn:mullusi:schema:search-decision:1"
+    assert search_decision_entry["surface"] == "search"
+    assert search_receipt_entry["path"] == "schemas/search_receipt.schema.json"
+    assert search_receipt_entry["urn"] == "urn:mullusi:schema:search-receipt:1"
+    assert search_receipt_entry["surface"] == "search"
     assert capability_plan_preview_entry["path"] == "schemas/capability_plan_preview.schema.json"
     assert capability_plan_preview_entry["urn"] == "urn:mullusi:schema:capability-plan-preview:1"
     assert capability_plan_preview_entry["surface"] == "planning"
@@ -293,6 +330,85 @@ def test_protocol_manifest_is_valid() -> None:
     assert worker_mesh_entry["path"] == "schemas/worker_mesh.schema.json"
     assert worker_mesh_entry["urn"] == "urn:mullusi:schema:worker-mesh:1"
     assert worker_mesh_entry["surface"] == "worker"
+    assert worker_failure_entry["path"] == "schemas/worker_failure_receipt.schema.json"
+    assert worker_failure_entry["urn"] == "urn:mullusi:schema:worker-failure-receipt:1"
+    assert worker_failure_entry["surface"] == "worker"
+    assert read_only_worker_entry["path"] == "schemas/read_only_worker_binding.schema.json"
+    assert read_only_worker_entry["urn"] == "urn:mullusi:schema:read-only-worker-binding:1"
+    assert read_only_worker_entry["surface"] == "worker"
+    assert read_only_worker_lease_preflight_entry["path"] == "schemas/read_only_worker_lease_preflight.schema.json"
+    assert read_only_worker_lease_preflight_entry["urn"] == "urn:mullusi:schema:read-only-worker-lease-preflight:1"
+    assert read_only_worker_lease_preflight_entry["surface"] == "worker"
+    assert read_only_worker_rehearsal_receipt_entry["path"] == (
+        "schemas/read_only_worker_rehearsal_receipt.schema.json"
+    )
+    assert read_only_worker_rehearsal_receipt_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1"
+    )
+    assert read_only_worker_rehearsal_receipt_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_handoff_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_handoff.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_handoff_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-handoff:1"
+    )
+    assert read_only_worker_runtime_receipt_handoff_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_emitter_dry_run_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_emitter_dry_run_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1"
+    )
+    assert read_only_worker_runtime_receipt_emitter_dry_run_entry["surface"] == "worker"
+    assert read_only_worker_runtime_runner_binding_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_runner_binding_witness.schema.json"
+    )
+    assert read_only_worker_runtime_runner_binding_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1"
+    )
+    assert read_only_worker_runtime_runner_binding_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_candidate_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_candidate.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_candidate_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-candidate:1"
+    )
+    assert read_only_worker_runtime_receipt_candidate_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_schema_binding_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_schema_binding_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-witness:1"
+    )
+    assert read_only_worker_runtime_receipt_schema_binding_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_store_write_path_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_store_write_path_witness.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_store_write_path_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-store-write-path-witness:1"
+    )
+    assert read_only_worker_runtime_receipt_store_write_path_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_runner_registration_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_runner_registration_witness.schema.json"
+    )
+    assert read_only_worker_runtime_runner_registration_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1"
+    )
+    assert read_only_worker_runtime_runner_registration_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_dispatch_endpoint_registration_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json"
+    )
+    assert read_only_worker_runtime_dispatch_endpoint_registration_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-dispatch-endpoint-registration-witness:1"
+    )
+    assert read_only_worker_runtime_dispatch_endpoint_registration_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_receipt_emitter_registration_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json"
+    )
+    assert read_only_worker_runtime_receipt_emitter_registration_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-registration-witness:1"
+    )
+    assert read_only_worker_runtime_receipt_emitter_registration_witness_entry["surface"] == "worker"
     assert world_state_entry["path"] == "schemas/world_state.schema.json"
     assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
     assert world_state_entry["surface"] == "world"

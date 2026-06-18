@@ -1,0 +1,82 @@
+{
+  "security_review_id": "sdlc_security_scheduler_worker_runtime_receipt_handoff_20260615",
+  "change_id": "sdlc_req_scheduler_worker_runtime_receipt_handoff_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Scheduler-to-worker handoff can accidentally grant worker authority when scheduler lease readiness, distributed lease execution readiness, runtime receipt emission, and worker invocation are conflated. The main risks are admitting scheduler dispatch without UAO and Phi_gov evidence, invoking a worker without a runtime receipt emitter, skipping WorkerFailureReceipt on partial failure, treating distributed lease execution receipt readiness as terminal closure, calling a live backend from a validation path, serializing secret material, and losing audit linkage between scheduler, lease, worker mesh, and failure receipts. The mitigation is a non-live handoff schema and validator that bind source receipt refs, require admission gates and runtime witnesses, deny dispatch and backend authority, require WorkerFailureReceipt obligations, preserve no-terminal-closure flags, and retain a receipt envelope.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "auth boundary check proving scheduler dispatch, runtime dispatch, and worker invocation remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "non-live execution check proving backend calls, network, filesystem writes, and connector calls remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_admission_and_result_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving scheduler, distributed lease execution, worker mesh, worker failure, and UAO refs are required",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_missing_required_refs"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving receipt refs and contract summary counts cannot drift silently",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving secret access and raw success paths remain denied by the authority scope",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_authority_drift"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving terminal closure remains blocked until runtime receipt and effect reconciliation evidence exist",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_handoff_rejects_admission_and_result_drift"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id and actor id are carried in the handoff record",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_scheduler_worker_runtime_receipt_handoff.py::test_scheduler_worker_runtime_receipt_handoff_passes"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public scheduler worker runtime receipt handoff schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep SchedulerWorkerRuntimeReceiptHandoff validation non-live and deterministic",
+    "bind temporal scheduler, distributed lease execution, worker mesh, worker failure, and UAO refs before future worker invocation",
+    "require WorkerFailureReceipt for every failed or partial worker dispatch",
+    "deny scheduler dispatch, runtime dispatch, worker invocation, backend calls, external network, filesystem writes, connector calls, terminal closure, and success claims",
+    "block terminal closure until runtime receipt and effect reconciliation evidence exist",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid deployment or production readiness claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/scheduler-worker-runtime-receipt-handoff/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/scheduler-worker-runtime-receipt-handoff/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/scheduler-worker-runtime-receipt-handoff/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/scheduler-worker-runtime-receipt-handoff/20260615"
+}

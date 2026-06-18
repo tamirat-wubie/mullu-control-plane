@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-preflight:1",
+  "title": "TeamOps Shared Inbox Terminal Closure Anchor Preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checked_at",
+    "ready",
+    "solver_outcome",
+    "proof_state",
+    "bundle_path",
+    "bundle_id",
+    "command_id",
+    "terminal_certificate_id",
+    "bundle_hash",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
+    "anchor_target",
+    "planned_external_anchor_status",
+    "planned_external_anchor_ref",
+    "operator_authority_ref",
+    "anchor_signing_secret_present",
+    "signature_key_id_present",
+    "artifact_count",
+    "artifact_root_hash",
+    "required_artifact_types",
+    "artifacts",
+    "step_count",
+    "steps",
+    "blockers",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-terminal-anchor-preflight-[0-9a-f]{16}$"
+    },
+    "checked_at": {"type": "string", "format": "date-time"},
+    "ready": {"type": "boolean"},
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Pass", "Unknown", "Fail"]
+    },
+    "bundle_path": {"type": "string", "minLength": 1},
+    "bundle_id": {"type": "string", "pattern": "^trust-bundle-[0-9a-f]{16}$"},
+    "command_id": {"type": "string", "const": "team_ops.shared_inbox_triage"},
+    "terminal_certificate_id": {"type": "string", "minLength": 1},
+    "bundle_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "provider_observation_receipt_ref": {"type": "string", "minLength": 1},
+    "provider_observation_receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "provider_observation_receipt_valid": {"type": "boolean", "const": true},
+    "anchor_target": {
+      "type": "string",
+      "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
+    },
+    "planned_external_anchor_status": {"type": "string", "const": "pending"},
+    "planned_external_anchor_ref": {"type": "string", "const": ""},
+    "operator_authority_ref": {"type": "string"},
+    "anchor_signing_secret_present": {"type": "boolean"},
+    "signature_key_id_present": {"type": "boolean"},
+    "artifact_count": {"type": "integer", "minimum": 5},
+    "artifact_root_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "required_artifact_types": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "command",
+          "execution_receipt",
+          "provider_observation",
+          "verification_result",
+          "terminal_certificate"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"$ref": "#/$defs/evidence_artifact"}
+    },
+    "step_count": {"type": "integer", "minimum": 8, "maximum": 8},
+    "steps": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/preflight_step"}
+    },
+    "blockers": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "preflight_only",
+        "anchor_receipt_created",
+        "anchor_bundle_called",
+        "remote_submit_executed",
+        "ledger_append_executed",
+        "provider_call_performed",
+        "external_mailbox_write_performed",
+        "external_message_sent",
+        "raw_message_content_serialized",
+        "raw_provider_payload_serialized",
+        "no_secret_values_serialized",
+        "production_ready_claimed",
+        "requires_operator_confirmation_for_anchor"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "const": "team_ops_shared_inbox_terminal_closure_anchor_preflight"
+        },
+        "preflight_only": {"type": "boolean", "const": true},
+        "anchor_receipt_created": {"type": "boolean", "const": false},
+        "anchor_bundle_called": {"type": "boolean", "const": false},
+        "remote_submit_executed": {"type": "boolean", "const": false},
+        "ledger_append_executed": {"type": "boolean", "const": false},
+        "provider_call_performed": {"type": "boolean", "const": false},
+        "external_mailbox_write_performed": {"type": "boolean", "const": false},
+        "external_message_sent": {"type": "boolean", "const": false},
+        "raw_message_content_serialized": {"type": "boolean", "const": false},
+        "raw_provider_payload_serialized": {"type": "boolean", "const": false},
+        "no_secret_values_serialized": {"type": "boolean", "const": true},
+        "production_ready_claimed": {"type": "boolean", "const": false},
+        "requires_operator_confirmation_for_anchor": {"type": "boolean", "const": true}
+      }
+    }
+  },
+  "$defs": {
+    "evidence_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_type",
+        "artifact_id",
+        "artifact_hash",
+        "evidence_ref",
+        "required",
+        "metadata"
+      ],
+      "properties": {
+        "artifact_type": {
+          "type": "string",
+          "enum": [
+            "command",
+            "approval",
+            "execution_receipt",
+            "provider_observation",
+            "verification_result",
+            "effect_reconciliation",
+            "terminal_certificate",
+            "learning_decision",
+            "deployment_witness",
+            "orgos_event_receipt"
+          ]
+        },
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "evidence_ref": {"type": "string", "pattern": "^proof://.+"},
+        "required": {"type": "boolean"},
+        "metadata": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "preflight_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "passed", "detail"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "bundle_validation",
+            "bundle_anchor_status",
+            "anchor_target",
+            "operator_authority",
+            "anchor_signing_secret",
+            "signature_key_id",
+            "artifact_projection",
+            "effect_boundary"
+          ]
+        },
+        "passed": {"type": "boolean"},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

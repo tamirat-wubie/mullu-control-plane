@@ -1,0 +1,90 @@
+{
+  "security_review_id": "sdlc_security_github_branch_protection_reconcile_receipt_boundary_20260615",
+  "change_id": "sdlc_req_github_branch_protection_reconcile_receipt_boundary_20260615",
+  "impact_categories": [
+    "auth",
+    "tenant_scope",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "GitHub branch-protection reconciliation can mutate repository policy when an installation token is used against the protected-branch endpoint. The main risks are unapproved branch policy mutation, unnecessary external apply when observed state already satisfies policy, raw token or JWT disclosure, accepting missing observed state as compliance, accepting forged response evidence, accepting non-2xx responses as applied, overclaiming dry-run proof as live reconciliation, and leaking private-key or token material through metadata or refs. The mitigation is to keep the planner non-live, hash desired policy and REST payload, make observed-state gaps explicit, require readiness evidence refs for all modes, forbid apply evidence in plan-only and dry-run modes, require observed drift plus operator approval plus token-exchange receipt, action-execution receipt, 2xx status, and response hash before apply-approved receipts admit a reconcile claim, and block secret-shaped material before receipt admission.",
+  "required_checks": [
+    {
+      "category": "external_api",
+      "check": "plan-only and dry-run check proving the planner performs no GitHub API call, authenticates no request, stores no raw token, and rejects apply response evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_dry_run_rejects_apply_evidence"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving apply-approved mode requires token-exchange and action-execution receipts before admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_requires_external_receipts"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving repository, branch, policy hash, endpoint, method, payload, drift, and plan hash are bound into deterministic receipt evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_noop_is_hash_bound"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction and secret absence check proving raw token-shaped metadata blocks receipt admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_rejects_secret_value_disclosure"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proving non-apply modes reject approval, token-exchange, action-execution, response status, and response hash evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_dry_run_rejects_apply_evidence"
+    },
+    {
+      "category": "policy",
+      "check": "mutation minimization check proving apply-approved mode blocks external apply admission when observed state already satisfies policy",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_blocks_noop_apply"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant id, actor id, command id, repository, and branch are carried and policy drift is branch-scoped",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_reconcile_plan_reports_observed_drift"
+    },
+    {
+      "category": "auth",
+      "check": "auth boundary check proving apply-approved mode requires approval, token-exchange receipt, and action-execution receipt evidence before external apply admission",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_branch_protection_reconcile.py::test_branch_protection_apply_approved_requires_external_receipts"
+    },
+    {
+      "category": "audit",
+      "check": "protocol manifest check proving the public GitHub branch-protection reconcile receipt schema is indexed",
+      "status": "passed",
+      "evidence_ref": "python scripts/validate_protocol_manifest.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "keep BranchProtectionReconciler non-live and deterministic",
+    "require readiness evidence refs for all branch-protection reconcile receipts",
+    "forbid apply response evidence in plan-only and dry-run modes",
+    "block apply-approved external mutation when observed state already satisfies policy",
+    "make missing observed branch-protection state explicit rather than treating it as compliant",
+    "require approval, token-exchange receipt, action-execution receipt, 2xx response, and response payload hash for apply-approved mode",
+    "block raw token, JWT, and private-key shaped material before receipt admission",
+    "index the public receipt schema in the governance protocol manifest",
+    "avoid request authentication, GitHub API calls, workflow dispatch, branch protection mutation, check-run mutation, deployment, or production claims"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/github-branch-protection-reconcile-receipt-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/github-branch-protection-reconcile-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/github-branch-protection-reconcile-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/github-branch-protection-reconcile-receipt-boundary/20260615"
+}

@@ -1,0 +1,1353 @@
+{
+  "assurance": {
+    "assurance_id": "personal_assistant_teamops_projection_no_effect_assurance",
+    "authority_drift_detected": false,
+    "blocking_reasons": [
+      "live_probe_requires_separate_approval_binding"
+    ],
+    "checked_controls": [
+      "teamops_plan_is_not_provider_call",
+      "live_probe_gate_is_evidence_only",
+      "no_mailbox_read",
+      "no_mailbox_mutation",
+      "no_draft_creation",
+      "no_external_send",
+      "no_connector_mutation",
+      "no_secret_value_serialization",
+      "no_raw_private_payload_storage"
+    ],
+    "foundation_only": true,
+    "next_action": "bind live-probe evidence separately before any provider probe",
+    "outcome": "AwaitingEvidence",
+    "ready_for_customer_readiness_claim": false,
+    "ready_for_live_connector_execution": false,
+    "ready_for_live_probe_execution": false
+  },
+  "connectors_used": [
+    "gmail"
+  ],
+  "effect_boundary": {
+    "connector_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "deployment_mutation_allowed": false,
+    "draft_creation_allowed": false,
+    "execution_allowed": false,
+    "external_send_allowed": false,
+    "live_connector_execution_allowed": false,
+    "live_probe_execution_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "mailbox_read_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "public_readiness_claim_allowed": false,
+    "system_of_record_write_allowed": false,
+    "teamops_plan_records_allowed": true
+  },
+  "generated_at": "2026-06-15T00:15:00+00:00",
+  "governed": true,
+  "metadata": {
+    "connector_mutation_allowed": false,
+    "external_send_allowed": false,
+    "foundation_only": true,
+    "live_connector_execution_allowed": false,
+    "live_probe_execution_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "mailbox_read_allowed": false,
+    "projection_contract": "teamops_shared_inbox_plan_evidence_only",
+    "runtime_boundary": "teamops_plan_does_not_call_provider",
+    "system_of_record_write_allowed": false
+  },
+  "private_payload_policy": {
+    "body_projection": "none",
+    "connector_payload_projection": "ref_only",
+    "handoff_payload_projection": "bounded_operator_handoff",
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false
+  },
+  "projection_count": 2,
+  "projection_ids": [
+    "pa_teamops_projection_item_blocked_001",
+    "pa_teamops_projection_item_ready_001"
+  ],
+  "projection_set_id": "pa_teamops_projection_foundation_001",
+  "projections": [
+    {
+      "plan": {
+        "effect_boundary": "teamops_shared_inbox_plan_only_no_provider_call",
+        "execution_allowed": false,
+        "external_message_allowed": false,
+        "handoff": {
+          "assistant_profile_id": "team_ops.default",
+          "blocked_until": [
+            "operator_approval_ref",
+            "gmail:gmail_oauth_adapter_mode_missing",
+            "gmail:gmail_oauth_operation_family_missing_or_unsupported",
+            "gmail:gmail_oauth_durable_secret_missing",
+            "gmail:gmail_oauth_witness_ref_missing",
+            "gmail:gmail_oauth_scope_missing",
+            "team_ops:team_ops_profile_missing_or_unsupported",
+            "team_ops:team_ops_shared_inbox_provider_missing_or_unsupported",
+            "team_ops:team_ops_operation_mode_missing_or_unsupported",
+            "team_ops:team_ops_external_send_policy_missing_or_unsupported",
+            "team_ops:team_ops_witness_ref_missing"
+          ],
+          "capability_boundary": {
+            "allowed_capabilities": [
+              "messaging.thread.read",
+              "email.read",
+              "email.draft",
+              "task.assign",
+              "email.send.with_approval"
+            ],
+            "external_send_requires_approval": true,
+            "forbidden_actions": [
+              "external_send_without_approval",
+              "provider_mutation_from_handoff_script",
+              "secret_value_serialization",
+              "cross_tenant_shared_inbox_access"
+            ],
+            "idempotency_window_required": true,
+            "operator_approval_queue_required": true,
+            "plan_only": true,
+            "tenant_scope_required": true
+          },
+          "connector_id": "gmail",
+          "credential_values_disclosed": false,
+          "external_message_sent": false,
+          "external_provider_mutation_performed": false,
+          "github_secret_mutation_performed": false,
+          "gmail_oauth_preflight_summary": {
+            "blocker_count": 11,
+            "credential_values_disclosed": false,
+            "external_provider_mutation_performed": false,
+            "finding_rule_ids": [
+              "gmail_oauth_adapter_mode_missing",
+              "gmail_oauth_operation_family_missing_or_unsupported",
+              "gmail_oauth_durable_secret_missing",
+              "gmail_oauth_durable_secret_missing",
+              "gmail_oauth_durable_secret_missing",
+              "gmail_oauth_witness_ref_missing",
+              "gmail_oauth_witness_ref_missing",
+              "gmail_oauth_witness_ref_missing",
+              "gmail_oauth_witness_ref_missing",
+              "gmail_oauth_witness_ref_missing",
+              "gmail_oauth_scope_missing"
+            ],
+            "ready_for_live_probe": false,
+            "receipt_id": "durable_gmail_oauth_runtime_preflight",
+            "scope_analysis": {
+              "least_privilege_satisfied": false,
+              "metadata_scope_search_compatible": true,
+              "minimum_required_scopes": [],
+              "recognized_scope_count": 0,
+              "recognized_scopes": [],
+              "scope_env_present": false,
+              "scope_sensitivity": "none",
+              "unknown_scope_count": 0
+            },
+            "signal_inventory": [
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_SCOPE_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_ACCESS_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_OAUTH_CLIENT_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_OAUTH_CLIENT_SECRET",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_REFRESH_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF",
+                "secret_value_disclosed": false
+              }
+            ],
+            "solver_outcome": "AwaitingEvidence",
+            "status": "awaiting_evidence"
+          },
+          "handoff_id": "teamops-shared-inbox-operator-handoff-c5373a6ec6a906f1",
+          "operation_family": "read_and_send_with_approval",
+          "operator_actions": [
+            {
+              "action_id": "authorize_team_ops_assistant_profile",
+              "effect_boundary": "assistant_profile_authority",
+              "evidence_ref_env": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_shared_inbox_identity",
+              "effect_boundary": "shared_inbox_identity",
+              "evidence_ref_env": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+              "provider": "gmail",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_team_directory_owner_queue",
+              "effect_boundary": "organization_directory_and_owner_queue",
+              "evidence_ref_env": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+              "required_evidence": [
+                "directory sync witness",
+                "owner queue witness",
+                "tenant scope witness"
+              ],
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "declare_external_send_approval_policy",
+              "effect_boundary": "external_send_policy",
+              "evidence_ref_env": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+              "required_policy": "approval_required",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_gmail_oauth_least_privilege_scope",
+              "effect_boundary": "external_provider_configuration",
+              "evidence_ref_env": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+              "requires_explicit_operator_execution": true,
+              "scope_set": [
+                "https://www.googleapis.com/auth/gmail.readonly",
+                "https://www.googleapis.com/auth/gmail.send"
+              ]
+            },
+            {
+              "action_id": "complete_provider_setup_without_secret_serialization",
+              "effect_boundary": "external_provider_authorization",
+              "evidence_ref_env": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+              "requires_explicit_operator_execution": true,
+              "secret_outputs": [
+                "GMAIL_OAUTH_CLIENT_ID",
+                "GMAIL_OAUTH_CLIENT_SECRET",
+                "GMAIL_REFRESH_TOKEN"
+              ]
+            },
+            {
+              "action_id": "record_team_ops_revocation_recovery_receipt",
+              "effect_boundary": "recovery_evidence",
+              "evidence_ref_env": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "run_team_ops_shared_inbox_preflight",
+              "command": "python scripts\\validate_team_ops_shared_inbox_operator_handoff.py --require-live-probe --json",
+              "effect_boundary": "repository_local_validation",
+              "requires_explicit_operator_execution": false
+            }
+          ],
+          "operator_approval_ref": "",
+          "preflight_environment_basis": "observed_environment_without_defaults",
+          "provider_setup_authorized": false,
+          "ready_for_live_probe": false,
+          "ready_for_provider_setup": false,
+          "recommended_runtime_defaults": [
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+              "recommended_value": "google"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+              "recommended_value": "gmail"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+              "recommended_value": "read_and_send_with_approval"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "GMAIL_SCOPE_ID",
+              "recommended_value": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+              "recommended_value": "team_ops.default"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+              "recommended_value": "gmail"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+              "recommended_value": "shared_inbox_triage"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+              "recommended_value": "approval_required"
+            }
+          ],
+          "repository": "tamirat-wubie/mullu-control-plane",
+          "runtime_bindings": [
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "GMAIL_SCOPE_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_OAUTH_CLIENT_ID",
+              "secret_store_command": "gh secret set GMAIL_OAUTH_CLIENT_ID --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_OAUTH_CLIENT_SECRET",
+              "secret_store_command": "gh secret set GMAIL_OAUTH_CLIENT_SECRET --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_REFRESH_TOKEN",
+              "secret_store_command": "gh secret set GMAIL_REFRESH_TOKEN --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            }
+          ],
+          "schema_version": 1,
+          "scope_decision": {
+            "external_send_requires_approval": true,
+            "full_mail_scope_allowed": false,
+            "least_privilege_required": true,
+            "metadata_scope_search_compatible": true,
+            "minimum_scopes": [
+              "https://www.googleapis.com/auth/gmail.readonly",
+              "https://www.googleapis.com/auth/gmail.send"
+            ],
+            "operation_family": "read_and_send_with_approval",
+            "scope_sensitivity": "restricted"
+          },
+          "solver_outcome": "AwaitingEvidence",
+          "status": "awaiting_operator_authority",
+          "team_ops_preflight_summary": {
+            "blocker_count": 11,
+            "credential_values_disclosed": false,
+            "external_message_sent": false,
+            "external_provider_mutation_performed": false,
+            "finding_rule_ids": [
+              "team_ops_profile_missing_or_unsupported",
+              "team_ops_shared_inbox_provider_missing_or_unsupported",
+              "team_ops_operation_mode_missing_or_unsupported",
+              "team_ops_external_send_policy_missing_or_unsupported",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing",
+              "team_ops_witness_ref_missing"
+            ],
+            "ready_for_live_probe": false,
+            "receipt_id": "team_ops_shared_inbox_handoff_preflight",
+            "signal_inventory": [
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+                "secret_value_disclosed": false
+              }
+            ],
+            "solver_outcome": "AwaitingEvidence",
+            "status": "awaiting_evidence"
+          },
+          "verification_commands": [
+            "python scripts\\validate_team_ops_shared_inbox_operator_handoff.py --require-blocked --json",
+            "python scripts\\validate_durable_gmail_oauth_runtime_preflight.py --json --require-ready",
+            "python -m pytest tests\\test_produce_team_ops_shared_inbox_operator_handoff.py tests\\test_validate_team_ops_shared_inbox_operator_handoff.py -q"
+          ],
+          "workflow_id": "team_ops.shared_inbox_triage"
+        },
+        "live_probe_executed": false,
+        "live_probe_gate": {
+          "approval_binding_required": true,
+          "authority_receipt_required": true,
+          "blocked_until": [
+            "operator_approval_ref",
+            "gmail:gmail_oauth_adapter_mode_missing",
+            "gmail:gmail_oauth_operation_family_missing_or_unsupported",
+            "gmail:gmail_oauth_durable_secret_missing",
+            "gmail:gmail_oauth_witness_ref_missing",
+            "gmail:gmail_oauth_scope_missing",
+            "team_ops:team_ops_profile_missing_or_unsupported",
+            "team_ops:team_ops_shared_inbox_provider_missing_or_unsupported",
+            "team_ops:team_ops_operation_mode_missing_or_unsupported",
+            "team_ops:team_ops_external_send_policy_missing_or_unsupported",
+            "team_ops:team_ops_witness_ref_missing"
+          ],
+          "external_message_sent": false,
+          "external_provider_call_performed": false,
+          "handoff_status": "awaiting_operator_authority",
+          "live_probe_executed": false,
+          "mailbox_write_performed": false,
+          "operator_input_request_required": true,
+          "ready_for_live_probe": false,
+          "solver_outcome": "AwaitingEvidence"
+        },
+        "mailbox_mutation_allowed": false,
+        "next_actions": [
+          "operator_approval_ref",
+          "gmail:gmail_oauth_adapter_mode_missing",
+          "gmail:gmail_oauth_operation_family_missing_or_unsupported",
+          "gmail:gmail_oauth_durable_secret_missing",
+          "gmail:gmail_oauth_witness_ref_missing",
+          "gmail:gmail_oauth_scope_missing",
+          "team_ops:team_ops_profile_missing_or_unsupported",
+          "team_ops:team_ops_shared_inbox_provider_missing_or_unsupported",
+          "team_ops:team_ops_operation_mode_missing_or_unsupported",
+          "team_ops:team_ops_external_send_policy_missing_or_unsupported",
+          "team_ops:team_ops_witness_ref_missing"
+        ],
+        "plan_type": "teamops_shared_inbox_foundation"
+      },
+      "plan_type": "teamops_shared_inbox_foundation",
+      "projection_id": "pa_teamops_projection_item_blocked_001",
+      "receipt": {
+        "actions_not_taken": [
+          "gmail_not_called",
+          "shared_inbox_not_read",
+          "email_not_sent",
+          "email_not_drafted",
+          "mailbox_not_mutated",
+          "provider_configuration_not_mutated",
+          "secret_values_not_serialized",
+          "live_probe_not_executed"
+        ],
+        "actions_taken": [
+          "teamops_handoff_plan_prepared",
+          "live_probe_gate_classified",
+          "receipt_created"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [
+          "gmail"
+        ],
+        "decision": "allowed",
+        "evidence_refs": [
+          "proof://personal-assistant/request/teamops_projection_blocked_001",
+          "proof://personal-assistant/teamops/shared-inbox/teamops-shared-inbox-operator-handoff-c5373a6ec6a906f1"
+        ],
+        "inputs_used": [
+          "teamops_shared_inbox_goal",
+          "gmail_connector_proof_ref",
+          "operator_handoff_projection"
+        ],
+        "memory_observation_refs": [],
+        "metadata": {
+          "blocked_until": [
+            "operator_approval_ref",
+            "gmail:gmail_oauth_adapter_mode_missing",
+            "gmail:gmail_oauth_operation_family_missing_or_unsupported",
+            "gmail:gmail_oauth_durable_secret_missing",
+            "gmail:gmail_oauth_witness_ref_missing",
+            "gmail:gmail_oauth_scope_missing",
+            "team_ops:team_ops_profile_missing_or_unsupported",
+            "team_ops:team_ops_shared_inbox_provider_missing_or_unsupported",
+            "team_ops:team_ops_operation_mode_missing_or_unsupported",
+            "team_ops:team_ops_external_send_policy_missing_or_unsupported",
+            "team_ops:team_ops_witness_ref_missing"
+          ],
+          "connector_mutation_allowed": false,
+          "external_write_allowed": false,
+          "handoff_id": "teamops-shared-inbox-operator-handoff-c5373a6ec6a906f1",
+          "handoff_solver_outcome": "AwaitingEvidence",
+          "handoff_status": "awaiting_operator_authority",
+          "live_connector_execution_allowed": false,
+          "live_probe_executed": false,
+          "ready_for_live_probe": false,
+          "system_of_record_write_allowed": false
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "none",
+          "connector_payload_projection": "ref_only",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_teamops_projection_blocked_001_teamops_shared_inbox_plan",
+        "redactions": [
+          "secret_values_not_serialized",
+          "approval_refs_redacted",
+          "connector_payload_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/teamops/shared-inbox/teamops_projection_blocked_001"
+        ],
+        "request_id": "pa_request_teamops_projection_blocked_001",
+        "risk_level": "P2",
+        "skill_id": "teamops.shared_inbox.plan",
+        "timestamp": "2026-06-15T00:15:00+00:00"
+      },
+      "request_id": "pa_request_teamops_projection_blocked_001",
+      "skill_id": "teamops.shared_inbox.plan"
+    },
+    {
+      "plan": {
+        "effect_boundary": "teamops_shared_inbox_plan_only_no_provider_call",
+        "execution_allowed": false,
+        "external_message_allowed": false,
+        "handoff": {
+          "assistant_profile_id": "team_ops.default",
+          "blocked_until": [],
+          "capability_boundary": {
+            "allowed_capabilities": [
+              "messaging.thread.read",
+              "email.read",
+              "email.draft",
+              "task.assign",
+              "email.send.with_approval"
+            ],
+            "external_send_requires_approval": true,
+            "forbidden_actions": [
+              "external_send_without_approval",
+              "provider_mutation_from_handoff_script",
+              "secret_value_serialization",
+              "cross_tenant_shared_inbox_access"
+            ],
+            "idempotency_window_required": true,
+            "operator_approval_queue_required": true,
+            "plan_only": true,
+            "tenant_scope_required": true
+          },
+          "connector_id": "gmail",
+          "credential_values_disclosed": false,
+          "external_message_sent": false,
+          "external_provider_mutation_performed": false,
+          "github_secret_mutation_performed": false,
+          "gmail_oauth_preflight_summary": {
+            "blocker_count": 0,
+            "credential_values_disclosed": false,
+            "external_provider_mutation_performed": false,
+            "finding_rule_ids": [],
+            "ready_for_live_probe": true,
+            "receipt_id": "durable_gmail_oauth_runtime_preflight",
+            "scope_analysis": {
+              "least_privilege_satisfied": true,
+              "metadata_scope_search_compatible": true,
+              "minimum_required_scopes": [
+                "https://www.googleapis.com/auth/gmail.readonly",
+                "https://www.googleapis.com/auth/gmail.send"
+              ],
+              "recognized_scope_count": 2,
+              "recognized_scopes": [
+                "https://www.googleapis.com/auth/gmail.readonly",
+                "https://www.googleapis.com/auth/gmail.send"
+              ],
+              "scope_env_present": true,
+              "scope_sensitivity": "restricted",
+              "unknown_scope_count": 0
+            },
+            "signal_inventory": [
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "GMAIL_SCOPE_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": false,
+                "github_secret_present": false,
+                "name": "GMAIL_ACCESS_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "GMAIL_OAUTH_CLIENT_ID",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "GMAIL_OAUTH_CLIENT_SECRET",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "GMAIL_REFRESH_TOKEN",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF",
+                "secret_value_disclosed": false
+              }
+            ],
+            "solver_outcome": "SolvedVerified",
+            "status": "passed"
+          },
+          "handoff_id": "teamops-shared-inbox-operator-handoff-5fe98b9526239b4f",
+          "operation_family": "read_and_send_with_approval",
+          "operator_actions": [
+            {
+              "action_id": "authorize_team_ops_assistant_profile",
+              "effect_boundary": "assistant_profile_authority",
+              "evidence_ref_env": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_shared_inbox_identity",
+              "effect_boundary": "shared_inbox_identity",
+              "evidence_ref_env": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+              "provider": "gmail",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_team_directory_owner_queue",
+              "effect_boundary": "organization_directory_and_owner_queue",
+              "evidence_ref_env": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+              "required_evidence": [
+                "directory sync witness",
+                "owner queue witness",
+                "tenant scope witness"
+              ],
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "declare_external_send_approval_policy",
+              "effect_boundary": "external_send_policy",
+              "evidence_ref_env": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+              "required_policy": "approval_required",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "bind_gmail_oauth_least_privilege_scope",
+              "effect_boundary": "external_provider_configuration",
+              "evidence_ref_env": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+              "requires_explicit_operator_execution": true,
+              "scope_set": [
+                "https://www.googleapis.com/auth/gmail.readonly",
+                "https://www.googleapis.com/auth/gmail.send"
+              ]
+            },
+            {
+              "action_id": "complete_provider_setup_without_secret_serialization",
+              "effect_boundary": "external_provider_authorization",
+              "evidence_ref_env": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+              "requires_explicit_operator_execution": true,
+              "secret_outputs": [
+                "GMAIL_OAUTH_CLIENT_ID",
+                "GMAIL_OAUTH_CLIENT_SECRET",
+                "GMAIL_REFRESH_TOKEN"
+              ]
+            },
+            {
+              "action_id": "record_team_ops_revocation_recovery_receipt",
+              "effect_boundary": "recovery_evidence",
+              "evidence_ref_env": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+              "requires_explicit_operator_execution": true
+            },
+            {
+              "action_id": "run_team_ops_shared_inbox_preflight",
+              "command": "python scripts\\validate_team_ops_shared_inbox_operator_handoff.py --require-live-probe --json",
+              "effect_boundary": "repository_local_validation",
+              "requires_explicit_operator_execution": false
+            }
+          ],
+          "operator_approval_ref": "ref:2ea5a0f1e888",
+          "preflight_environment_basis": "observed_environment_without_defaults",
+          "provider_setup_authorized": true,
+          "ready_for_live_probe": true,
+          "ready_for_provider_setup": false,
+          "recommended_runtime_defaults": [
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+              "recommended_value": "google"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+              "recommended_value": "gmail"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+              "recommended_value": "read_and_send_with_approval"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "GMAIL_SCOPE_ID",
+              "recommended_value": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+              "recommended_value": "team_ops.default"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+              "recommended_value": "gmail"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+              "recommended_value": "shared_inbox_triage"
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+              "recommended_value": "approval_required"
+            }
+          ],
+          "repository": "tamirat-wubie/mullu-control-plane",
+          "runtime_bindings": [
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "GMAIL_SCOPE_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_OAUTH_CLIENT_ID",
+              "secret_store_command": "gh secret set GMAIL_OAUTH_CLIENT_ID --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_OAUTH_CLIENT_SECRET",
+              "secret_store_command": "gh secret set GMAIL_OAUTH_CLIENT_SECRET --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "secret",
+              "name": "GMAIL_REFRESH_TOKEN",
+              "secret_store_command": "gh secret set GMAIL_REFRESH_TOKEN --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "non_secret_config",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+              "secret_store_command": "",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            },
+            {
+              "classification": "witness_ref",
+              "name": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+              "secret_store_command": "gh secret set MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF --repo tamirat-wubie/mullu-control-plane",
+              "value_must_not_be_committed": true
+            }
+          ],
+          "schema_version": 1,
+          "scope_decision": {
+            "external_send_requires_approval": true,
+            "full_mail_scope_allowed": false,
+            "least_privilege_required": true,
+            "metadata_scope_search_compatible": true,
+            "minimum_scopes": [
+              "https://www.googleapis.com/auth/gmail.readonly",
+              "https://www.googleapis.com/auth/gmail.send"
+            ],
+            "operation_family": "read_and_send_with_approval",
+            "scope_sensitivity": "restricted"
+          },
+          "solver_outcome": "SolvedVerified",
+          "status": "ready_for_live_probe",
+          "team_ops_preflight_summary": {
+            "blocker_count": 0,
+            "credential_values_disclosed": false,
+            "external_message_sent": false,
+            "external_provider_mutation_performed": false,
+            "finding_rule_ids": [],
+            "ready_for_live_probe": true,
+            "receipt_id": "team_ops_shared_inbox_handoff_preflight",
+            "signal_inventory": [
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_ASSISTANT_PROFILE",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": false,
+                "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF",
+                "secret_value_disclosed": false
+              },
+              {
+                "env_present": true,
+                "github_secret_present": true,
+                "name": "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF",
+                "secret_value_disclosed": false
+              }
+            ],
+            "solver_outcome": "SolvedVerified",
+            "status": "passed"
+          },
+          "verification_commands": [
+            "python scripts\\validate_team_ops_shared_inbox_operator_handoff.py --require-blocked --json",
+            "python scripts\\validate_durable_gmail_oauth_runtime_preflight.py --json --require-ready",
+            "python -m pytest tests\\test_produce_team_ops_shared_inbox_operator_handoff.py tests\\test_validate_team_ops_shared_inbox_operator_handoff.py -q"
+          ],
+          "workflow_id": "team_ops.shared_inbox_triage"
+        },
+        "live_probe_executed": false,
+        "live_probe_gate": {
+          "approval_binding_required": true,
+          "authority_receipt_required": true,
+          "blocked_until": [],
+          "external_message_sent": false,
+          "external_provider_call_performed": false,
+          "handoff_status": "ready_for_live_probe",
+          "live_probe_executed": false,
+          "mailbox_write_performed": false,
+          "operator_input_request_required": true,
+          "ready_for_live_probe": true,
+          "solver_outcome": "SolvedVerified"
+        },
+        "mailbox_mutation_allowed": false,
+        "next_actions": [
+          "bind redacted live-probe approval before any read-only provider probe"
+        ],
+        "plan_type": "teamops_shared_inbox_foundation"
+      },
+      "plan_type": "teamops_shared_inbox_foundation",
+      "projection_id": "pa_teamops_projection_item_ready_001",
+      "receipt": {
+        "actions_not_taken": [
+          "gmail_not_called",
+          "shared_inbox_not_read",
+          "email_not_sent",
+          "email_not_drafted",
+          "mailbox_not_mutated",
+          "provider_configuration_not_mutated",
+          "secret_values_not_serialized",
+          "live_probe_not_executed"
+        ],
+        "actions_taken": [
+          "teamops_handoff_plan_prepared",
+          "live_probe_gate_classified",
+          "receipt_created"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [
+          "gmail"
+        ],
+        "decision": "allowed",
+        "evidence_refs": [
+          "proof://personal-assistant/request/teamops_projection_ready_001",
+          "proof://personal-assistant/teamops/shared-inbox/teamops-shared-inbox-operator-handoff-5fe98b9526239b4f"
+        ],
+        "inputs_used": [
+          "teamops_shared_inbox_goal",
+          "gmail_connector_proof_ref",
+          "operator_handoff_projection"
+        ],
+        "memory_observation_refs": [],
+        "metadata": {
+          "blocked_until": [],
+          "connector_mutation_allowed": false,
+          "external_write_allowed": false,
+          "handoff_id": "teamops-shared-inbox-operator-handoff-5fe98b9526239b4f",
+          "handoff_solver_outcome": "SolvedVerified",
+          "handoff_status": "ready_for_live_probe",
+          "live_connector_execution_allowed": false,
+          "live_probe_executed": false,
+          "ready_for_live_probe": true,
+          "system_of_record_write_allowed": false
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "none",
+          "connector_payload_projection": "ref_only",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_teamops_projection_ready_001_teamops_shared_inbox_plan",
+        "redactions": [
+          "secret_values_not_serialized",
+          "approval_refs_redacted",
+          "connector_payload_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/teamops/shared-inbox/teamops_projection_ready_001"
+        ],
+        "request_id": "pa_request_teamops_projection_ready_001",
+        "risk_level": "P2",
+        "skill_id": "teamops.shared_inbox.plan",
+        "timestamp": "2026-06-15T00:15:00+00:00"
+      },
+      "request_id": "pa_request_teamops_projection_ready_001",
+      "skill_id": "teamops.shared_inbox.plan"
+    }
+  ],
+  "receipt_ids": [
+    "pa_receipt_teamops_projection_blocked_001_teamops_shared_inbox_plan",
+    "pa_receipt_teamops_projection_ready_001_teamops_shared_inbox_plan"
+  ],
+  "source_projection": "operator_supplied_teamops_shared_inbox_evidence"
+}

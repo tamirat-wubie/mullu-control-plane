@@ -41,7 +41,7 @@ def test_harness_read_model_persistence_accepts_default_rehearsal() -> None:
     assert validation.ok, validation.errors
     assert validation.example_path == "examples/agentic_service_harness_read_models.foundation.json"
     assert validation.persisted_record_count == validation.replayed_record_count
-    assert validation.persisted_record_count == 11
+    assert validation.persisted_record_count == 13
     assert len(validation.chain_head) == 64
     assert validation.duplicate_rejected is True
     assert validation.secret_rejected is True
@@ -56,11 +56,14 @@ def test_harness_read_model_store_replays_source_projection(tmp_path: Path) -> N
     reloaded = AppendOnlyHarnessReadModelStore(tmp_path / "harness-read-models.jsonl")
     rebuilt = rebuild_read_model(reloaded.entries)
 
-    assert len(store.entries) == 11
+    assert len(store.entries) == 13
     assert len(reloaded.entries) == len(store.entries)
     assert reloaded.chain_head == store.chain_head
     assert rebuilt == source
     assert rebuilt["projection_scope"]["read_only"] is True
+    assert rebuilt["workspace_allocations"][0]["workspace_created"] is False
+    assert rebuilt["workspace_allocations"][0]["commands_executed"] is False
+    assert rebuilt["durable_entity_bindings"]["store_mode"] == "append_only_jsonl_rehearsal"
     assert rebuilt["permission_snapshot"]["can_deploy"] is False
 
 
@@ -81,7 +84,7 @@ def test_harness_read_model_store_rejects_duplicate_record(tmp_path: Path) -> No
             causal_ref="test://duplicate",
         )
 
-    assert first_entry_count == 11
+    assert first_entry_count == 13
     assert len(store.entries) == first_entry_count
     assert store.chain_head == store.entries[-1]["entry_hash"]
 
@@ -120,7 +123,7 @@ def test_harness_read_model_store_rejects_corrupted_chain(tmp_path: Path) -> Non
     with pytest.raises(HarnessReadModelPersistenceError, match="previous_entry_hash mismatch"):
         AppendOnlyHarnessReadModelStore(store_path)
 
-    assert len(lines) == 11
+    assert len(lines) == 13
     assert corrupted["record_kind"] == "projection_scope"
     assert corrupted["previous_entry_hash"] == "wrong"
 
@@ -136,6 +139,6 @@ def test_harness_read_model_persistence_writer_records_failures(tmp_path: Path) 
 
     assert written == output_path
     assert payload["ok"] is True
-    assert payload["persisted_record_count"] == 11
+    assert payload["persisted_record_count"] == 13
     assert payload["duplicate_rejected"] is True
     assert payload["secret_rejected"] is True

@@ -174,7 +174,7 @@ def test_clarification_request_contract_matches_public_schema():
 
     assert errors == []
     assert clarification.request_id == interpreted.request_id
-    assert clarification.raw_message_hash == interpreted.raw_message_hash
+    assert clarification.raw_message_hash == f"hash://gateway-message/{interpreted.raw_message_hash}"
     assert clarification.question
 
 

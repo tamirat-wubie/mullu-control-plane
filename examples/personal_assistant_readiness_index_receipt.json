@@ -1,0 +1,206 @@
+{
+  "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+  "schema_version": "personal_assistant.readiness_index_receipt.v1",
+  "generated_at": "2026-06-16T10:28:03Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "receipt_is_not_execution_authority": true,
+  "receipt_is_not_terminal_closure": true,
+  "source_evidence": [
+    {
+      "source_id": "personal_assistant_foundation_evidence",
+      "source_ref": "examples/personal_assistant_foundation_evidence_receipt.json",
+      "receipt_id": "personal-assistant-foundation-evidence-7892c43aefaa8bb4",
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closed": true,
+      "no_effect_boundary_verified": true
+    }
+  ],
+  "readiness_index": {
+    "lane_count": 12,
+    "solved_verified_lane_count": 12,
+    "awaiting_evidence_lane_count": 0,
+    "blocked_action_count": 18,
+    "registered_skill_count": 15,
+    "foundation_only_skill_count": 15,
+    "capability_count": 12,
+    "candidate_capability_count": 12,
+    "production_ready_capability_count": 0
+  },
+  "lane_records": [
+    {
+      "lane_id": "request_intake_whqr",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 3,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "skill_registry",
+      "stage": "runtime_read_model",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 3,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "approval_queue",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 2,
+      "schema_count": 3,
+      "validator_count": 3,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "memory_observation",
+      "stage": "candidate_only",
+      "state": "SolvedVerified",
+      "route_count": 3,
+      "schema_count": 2,
+      "validator_count": 3,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "read_only_projection",
+      "stage": "projection_only",
+      "state": "SolvedVerified",
+      "route_count": 0,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "draft_projection",
+      "stage": "projection_only",
+      "state": "SolvedVerified",
+      "route_count": 0,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "teamops_shared_inbox",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "github_codex_review",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "research_source_compare",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "math_reasoning",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "schedule_planning",
+      "stage": "runtime_preview",
+      "state": "SolvedVerified",
+      "route_count": 1,
+      "schema_count": 1,
+      "validator_count": 2,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "lane_id": "operator_console",
+      "stage": "read_model",
+      "state": "SolvedVerified",
+      "route_count": 2,
+      "schema_count": 1,
+      "validator_count": 3,
+      "receipt_required": true,
+      "foundation_only": true,
+      "no_effect_boundary_verified": true
+    }
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "production_ready_claim_allowed": false,
+    "secret_values_serialized": false,
+    "raw_private_payloads_serialized": false
+  },
+  "authority_blocks": {
+    "live_execution_blocked": true,
+    "connector_mutation_blocked": true,
+    "external_communication_blocked": true,
+    "deployment_mutation_blocked": true,
+    "customer_readiness_claim_blocked": true,
+    "nested_mind_live_activation_blocked": true,
+    "secret_serialization_blocked": true,
+    "raw_private_payload_serialization_blocked": true
+  },
+  "summary": {
+    "readiness_index_closed": true,
+    "foundation_evidence_closed": true,
+    "all_lanes_solved_verified": true,
+    "no_effect_boundary_verified": true,
+    "production_ready": false,
+    "customer_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-readiness-index-2026-06-16",
+        "reason": "Recorded Personal Assistant readiness index while preserving no-effect authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

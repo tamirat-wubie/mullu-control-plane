@@ -1,0 +1,64 @@
+{
+  "requirement_id": "REQ-browser-observation-receipt-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-browser-observation-receipt",
+  "problem_statement": "Browser inspection can produce useful operator evidence, but without a typed boundary it can drift into navigation, click, submit, cookie/session, secret, connector, or publication authority.",
+  "success_criteria": [
+    "BrowserObservationReceipt validates against a public JSON schema and Foundation Mode example",
+    "BrowserObservationReceipt binds source URL hash, DOM digest ref, screenshot digest ref, consent scope, capture policy ref, evidence classification ref, and UAO ref",
+    "BrowserObservationReceipt blocks navigation, click, form submit, keystroke injection, cookie/session reads, secret capture, external writes, connector calls, publication, terminal closure, and success claims",
+    "BrowserObservationReceipt rejects raw URL storage, raw DOM storage, raw screenshot storage, raw secret storage, digest drift, missing evidence refs, receipt ref drift, and summary count drift",
+    "BrowserObservationReceipt is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no browser navigation authority",
+    "no click authority",
+    "no form submit authority",
+    "no keystroke injection authority",
+    "no cookie or session access",
+    "no raw secret capture",
+    "no connector call authority",
+    "no external publication",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "source URL remains hash-only in the Foundation example",
+    "DOM, screenshot, and title evidence remain digest refs",
+    "raw URL, raw DOM, raw screenshot, and raw secret storage remain false",
+    "browser mutation flags remain false",
+    "operator review remains required",
+    "LifeMeaningJudgment and UAO refs remain explicit",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/browser_observation_receipt.schema.json",
+    "examples/browser_observation_receipt.foundation.json",
+    "scripts/validate_browser_observation_receipt.py",
+    "tests/test_validate_browser_observation_receipt.py",
+    "docs/87_browser_observation_receipt_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_browser_observation_receipt.py",
+    "python -m pytest tests/test_validate_browser_observation_receipt.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_browser_observation_receipt_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/browser_observation_receipt.schema.json",
+    "examples/browser_observation_receipt.foundation.json",
+    "scripts/validate_browser_observation_receipt.py",
+    "tests/test_validate_browser_observation_receipt.py",
+    "docs/87_browser_observation_receipt_contract.md",
+    "examples/sdlc/design_browser_observation_receipt_20260616.json",
+    "examples/sdlc/security_review_browser_observation_receipt_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/browser-observation-receipt/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/browser-observation-receipt/requirement",
+  "receipt_ref": "receipt://sdlc/browser-observation-receipt/requirement"
+}

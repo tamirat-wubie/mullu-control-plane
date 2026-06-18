@@ -1,0 +1,88 @@
+{
+  "security_review_id": "SEC-trusted-capture-evidence-packet-20260616",
+  "change_id": "trusted-capture-evidence-packet-20260616",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "tenant_scope",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Trusted capture evidence can accidentally become live screen, camera, microphone, video, audio, sensor, file-write, connector, external-write, raw-media retention, or publication authority if evidence and authority boundaries are not explicit. The mitigation is a digest-only schema and validator that reject raw storage and deny all capture authority in Foundation Mode.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "trusted capture packet live capture, recording, camera, microphone, sensor, connector, write, publication, and terminal authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms capture evidence remains digest refs and raw surface, media, audio, sensor, source body, and secret storage remain denied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_raw_media_retention"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR check confirms tenant scope stays foundation-local-only and capture mode remains dry-run operator-supplied digest",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_digest_and_scope_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms capture policy, evidence classification, browser observation, UAO, and LifeMeaningJudgment refs are retained",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_trusted_capture_evidence_packet.py::test_trusted_capture_evidence_packet_rejects_receipt_ref_and_count_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms the proof coverage matrix includes the trusted capture evidence packet surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_trusted_capture_evidence_packet_blocks_capture_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "trusted-capture-evidence-packet-authority-confusion",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode packet blocks live capture, media recording, screen recording, microphone capture, camera capture, sensor reads, file writes, connector calls, external writes, publication, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/trusted_capture_evidence_packet.schema.json",
+        "scripts/validate_trusted_capture_evidence_packet.py",
+        "tests/test_validate_trusted_capture_evidence_packet.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "trusted-capture-evidence-packet-private-payload-retention",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode packet requires digest refs, raw surface/media/audio/sensor/source-body/secret retention denial, private payload redaction, and operator review.",
+      "evidence_refs": [
+        "examples/trusted_capture_evidence_packet.foundation.json",
+        "tests/test_validate_trusted_capture_evidence_packet.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep TrustedCaptureEvidencePacket validation non-live and deterministic",
+    "require digest refs instead of raw browser, screen, video, audio, sensor, source body, or connector payloads",
+    "require capture policy, evidence classification, browser observation, UAO, and LifeMeaningJudgment refs",
+    "deny live capture, recording, camera, microphone, sensor reads, writes, connector calls, and external writes",
+    "deny publication, terminal closure, and success claims in Foundation Mode"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/trusted_capture_evidence_packet.schema.json",
+    "examples/trusted_capture_evidence_packet.foundation.json",
+    "scripts/validate_trusted_capture_evidence_packet.py",
+    "tests/test_validate_trusted_capture_evidence_packet.py",
+    "receipt://sdlc/trusted-capture-evidence-packet/security"
+  ],
+  "uao_ref": "uao://sdlc/trusted-capture-evidence-packet/security",
+  "causal_decision_trace_ref": "trace://sdlc/trusted-capture-evidence-packet/security",
+  "receipt_ref": "receipt://sdlc/trusted-capture-evidence-packet/security"
+}

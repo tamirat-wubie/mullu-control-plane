@@ -19,6 +19,7 @@ COPY docs/ ./docs/
 COPY tests/fixtures/ ./tests/fixtures/
 COPY .change_assurance/authority_directory_sync.json ./.change_assurance/authority_directory_sync.json
 COPY examples/authority_directory_sync_render_pilot.json ./examples/authority_directory_sync_render_pilot.json
+COPY examples/personal_assistant_skill_registry.json ./examples/personal_assistant_skill_registry.json
 COPY DEPLOYMENT_STATUS.md KNOWN_LIMITATIONS_v0.1.md SECURITY_MODEL_v0.1.md ./
 COPY docker/render-uvicorn-wrapper.sh ./render-bin/uvicorn
 

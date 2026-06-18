@@ -58,6 +58,39 @@ def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     assert loop_entry["surface"] == "governance"
 
 
+def test_protocol_manifest_indexes_search_decision() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    search_entry = entries["search-decision"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert search_entry["path"] == "schemas/search_decision.schema.json"
+    assert search_entry["urn"] == "urn:mullusi:schema:search-decision:1"
+    assert search_entry["surface"] == "search"
+
+
+def test_protocol_manifest_indexes_search_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    search_entry = entries["search-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert search_entry["path"] == "schemas/search_receipt.schema.json"
+    assert search_entry["urn"] == "urn:mullusi:schema:search-receipt:1"
+    assert search_entry["surface"] == "search"
+
+
+def test_protocol_manifest_indexes_capture_policy_decision_ledger() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    ledger_entry = entries["capture-policy-decision-ledger"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert ledger_entry["path"] == "schemas/capture_policy_decision_ledger.schema.json"
+    assert ledger_entry["urn"] == "urn:mullusi:schema:capture-policy-decision-ledger:1"
+    assert ledger_entry["surface"] == "data_governance"
+
+
 def test_protocol_manifest_indexes_component_registry() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -544,6 +577,21 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
     team_ops_binding_entry = entries["team-ops-shared-inbox-live-probe-approval-binding"]
     team_ops_authority_entry = entries["team-ops-shared-inbox-live-probe-authority"]
     team_ops_input_entry = entries["team-ops-shared-inbox-live-probe-operator-input-request"]
+    team_ops_receipt_entry = entries["team-ops-shared-inbox-live-probe-receipt"]
+    team_ops_provider_observation_entry = entries["team-ops-shared-inbox-provider-observation-receipt"]
+    team_ops_routing_entry = entries["team-ops-shared-inbox-observation-routing-receipt"]
+    team_ops_approval_queue_entry = entries["team-ops-shared-inbox-approval-queue-receipt"]
+    team_ops_approval_decision_entry = entries["team-ops-shared-inbox-approval-decision-receipt"]
+    team_ops_send_preparation_entry = entries["team-ops-shared-inbox-send-preparation-receipt"]
+    team_ops_send_execution_entry = entries["team-ops-shared-inbox-send-execution-receipt"]
+    team_ops_sent_message_observation_entry = entries["team-ops-shared-inbox-sent-message-observation-receipt"]
+    team_ops_terminal_closure_review_entry = entries["team-ops-shared-inbox-terminal-closure-review-packet"]
+    team_ops_terminal_anchor_preflight_entry = entries[
+        "team-ops-shared-inbox-terminal-closure-anchor-preflight"
+    ]
+    team_ops_terminal_anchor_receipt_entry = entries[
+        "team-ops-shared-inbox-terminal-closure-anchor-receipt"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert handoff_entry["path"] == "schemas/durable_gmail_oauth_operator_handoff.schema.json"
@@ -569,6 +617,79 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
         "urn:mullusi:schema:team-ops-shared-inbox-live-probe-operator-input-request:1"
     )
     assert team_ops_input_entry["surface"] == "team_ops"
+    assert team_ops_receipt_entry["path"] == "schemas/team_ops_shared_inbox_live_probe_receipt.schema.json"
+    assert team_ops_receipt_entry["urn"] == "urn:mullusi:schema:team-ops-shared-inbox-live-probe-receipt:1"
+    assert team_ops_receipt_entry["surface"] == "team_ops"
+    assert team_ops_provider_observation_entry["path"] == (
+        "schemas/team_ops_shared_inbox_provider_observation_receipt.schema.json"
+    )
+    assert team_ops_provider_observation_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-provider-observation-receipt:1"
+    )
+    assert team_ops_provider_observation_entry["surface"] == "team_ops"
+    assert team_ops_routing_entry["path"] == (
+        "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json"
+    )
+    assert team_ops_routing_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-observation-routing-receipt:1"
+    )
+    assert team_ops_routing_entry["surface"] == "team_ops"
+    assert team_ops_approval_queue_entry["path"] == (
+        "schemas/team_ops_shared_inbox_approval_queue_receipt.schema.json"
+    )
+    assert team_ops_approval_queue_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-approval-queue-receipt:1"
+    )
+    assert team_ops_approval_queue_entry["surface"] == "team_ops"
+    assert team_ops_approval_decision_entry["path"] == (
+        "schemas/team_ops_shared_inbox_approval_decision_receipt.schema.json"
+    )
+    assert team_ops_approval_decision_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-approval-decision-receipt:1"
+    )
+    assert team_ops_approval_decision_entry["surface"] == "team_ops"
+    assert team_ops_send_preparation_entry["path"] == (
+        "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json"
+    )
+    assert team_ops_send_preparation_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-send-preparation-receipt:1"
+    )
+    assert team_ops_send_preparation_entry["surface"] == "team_ops"
+    assert team_ops_send_execution_entry["path"] == (
+        "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json"
+    )
+    assert team_ops_send_execution_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1"
+    )
+    assert team_ops_send_execution_entry["surface"] == "team_ops"
+    assert team_ops_sent_message_observation_entry["path"] == (
+        "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json"
+    )
+    assert team_ops_sent_message_observation_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-sent-message-observation-receipt:1"
+    )
+    assert team_ops_sent_message_observation_entry["surface"] == "team_ops"
+    assert team_ops_terminal_closure_review_entry["path"] == (
+        "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json"
+    )
+    assert team_ops_terminal_closure_review_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-review-packet:1"
+    )
+    assert team_ops_terminal_closure_review_entry["surface"] == "team_ops"
+    assert team_ops_terminal_anchor_preflight_entry["path"] == (
+        "schemas/team_ops_shared_inbox_terminal_closure_anchor_preflight.schema.json"
+    )
+    assert team_ops_terminal_anchor_preflight_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-preflight:1"
+    )
+    assert team_ops_terminal_anchor_preflight_entry["surface"] == "team_ops"
+    assert team_ops_terminal_anchor_receipt_entry["path"] == (
+        "schemas/team_ops_shared_inbox_terminal_closure_anchor_receipt.schema.json"
+    )
+    assert team_ops_terminal_anchor_receipt_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-terminal-closure-anchor-receipt:1"
+    )
+    assert team_ops_terminal_anchor_receipt_entry["surface"] == "team_ops"
 
 
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
@@ -657,6 +778,17 @@ def test_protocol_manifest_indexes_govern_cloud_public_route_monitor_receipt() -
     assert monitor_entry["path"] == "schemas/govern_cloud_public_route_monitor_receipt.schema.json"
     assert monitor_entry["urn"] == "urn:mullusi:schema:govern-cloud-public-route-monitor-receipt:1"
     assert monitor_entry["surface"] == "observability"
+
+
+def test_protocol_manifest_indexes_personal_assistant_public_console_probe_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    probe_entry = entries["personal-assistant-public-console-probe-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert probe_entry["path"] == "schemas/personal_assistant_public_console_probe_receipt.schema.json"
+    assert probe_entry["urn"] == "urn:mullusi:schema:personal-assistant-public-console-probe-receipt:1"
+    assert probe_entry["surface"] == "observability"
 
 
 def test_protocol_manifest_indexes_governed_swarm_production_readiness() -> None:
@@ -1451,6 +1583,157 @@ def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
     assert search_worker_entry["path"] == "schemas/read_only_search_worker_path.schema.json"
     assert search_worker_entry["urn"] == "urn:mullusi:schema:read-only-search-worker-path:1"
     assert search_worker_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_worker_failure_receipt_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    worker_failure_entry = entries["worker-failure-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert worker_failure_entry["path"] == "schemas/worker_failure_receipt.schema.json"
+    assert worker_failure_entry["urn"] == "urn:mullusi:schema:worker-failure-receipt:1"
+    assert worker_failure_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_binding_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_only_worker_entry = entries["read-only-worker-binding"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_only_worker_entry["path"] == "schemas/read_only_worker_binding.schema.json"
+    assert read_only_worker_entry["urn"] == "urn:mullusi:schema:read-only-worker-binding:1"
+    assert read_only_worker_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_lease_preflight_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    preflight_entry = entries["read-only-worker-lease-preflight"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert preflight_entry["path"] == "schemas/read_only_worker_lease_preflight.schema.json"
+    assert preflight_entry["urn"] == "urn:mullusi:schema:read-only-worker-lease-preflight:1"
+    assert preflight_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_rehearsal_receipt_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    rehearsal_entry = entries["read-only-worker-rehearsal-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert rehearsal_entry["path"] == "schemas/read_only_worker_rehearsal_receipt.schema.json"
+    assert rehearsal_entry["urn"] == "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1"
+    assert rehearsal_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_handoff_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    handoff_entry = entries["read-only-worker-runtime-receipt-handoff"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert handoff_entry["path"] == "schemas/read_only_worker_runtime_receipt_handoff.schema.json"
+    assert handoff_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-handoff:1"
+    assert handoff_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_emitter_dry_run_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dry_run_entry = entries["read-only-worker-runtime-receipt-emitter-dry-run"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dry_run_entry["path"] == "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json"
+    assert dry_run_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-dry-run:1"
+    assert dry_run_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_runner_binding_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-runner-binding-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_runner_binding_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_candidate_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    candidate_entry = entries["read-only-worker-runtime-receipt-candidate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert candidate_entry["path"] == "schemas/read_only_worker_runtime_receipt_candidate.schema.json"
+    assert candidate_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-candidate:1"
+    assert candidate_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_schema_binding_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-receipt-schema-binding-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_receipt_schema_binding_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-receipt-schema-binding-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_store_write_path_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-receipt-store-write-path-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_receipt_store_write_path_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-store-write-path-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_runner_registration_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-runner-registration-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_runner_registration_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_dispatch_endpoint_registration_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-dispatch-endpoint-registration-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_dispatch_endpoint_registration_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-dispatch-endpoint-registration-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_receipt_emitter_registration_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-receipt-emitter-registration-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_receipt_emitter_registration_witness.schema.json"
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-receipt-emitter-registration-witness:1"
+    )
+    assert witness_entry["surface"] == "worker"
 
 
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:

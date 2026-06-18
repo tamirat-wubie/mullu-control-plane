@@ -19,6 +19,8 @@
     "receipts",
     "evidence",
     "result_summaries",
+    "workspace_allocations",
+    "durable_entity_bindings",
     "permission_snapshot",
     "validators",
     "next_action",
@@ -99,6 +101,16 @@
         "$ref": "#/$defs/harness_result_summary_read_model"
       }
     },
+    "workspace_allocations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/harness_workspace_allocation_read_model"
+      }
+    },
+    "durable_entity_bindings": {
+      "$ref": "#/$defs/durable_entity_bindings"
+    },
     "permission_snapshot": {
       "$ref": "#/$defs/permission_snapshot"
     },
@@ -133,7 +145,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
     },
     "text_list": {
       "type": "array",
@@ -186,6 +198,24 @@
         "blocked"
       ]
     },
+    "sandbox_command": {
+      "type": "string",
+      "enum": [
+        "git.status",
+        "git.diff",
+        "python.pytest",
+        "python.validator",
+        "npm.test",
+        "cargo.test"
+      ]
+    },
+    "sandbox_network_policy": {
+      "type": "string",
+      "enum": [
+        "none",
+        "proxy_allowlist"
+      ]
+    },
     "risk_level": {
       "type": "string",
       "enum": [
@@ -194,6 +224,134 @@
         "high",
         "critical"
       ]
+    },
+    "durable_entity_kind": {
+      "type": "string",
+      "enum": [
+        "User",
+        "Organization",
+        "Project",
+        "RepositoryConnection",
+        "AgentRun",
+        "ApprovalRequest",
+        "Receipt",
+        "WorkspaceAllocation",
+        "LoopStatus"
+      ]
+    },
+    "durable_entity_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_contract_ref",
+        "store_mode",
+        "read_only",
+        "append_enabled",
+        "mutation_routes_admitted",
+        "secret_values_serialized",
+        "entity_bindings"
+      ],
+      "properties": {
+        "store_contract_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "store_mode": {
+          "type": "string",
+          "const": "append_only_jsonl_rehearsal"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_routes_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "entity_bindings": {
+          "type": "array",
+          "minItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/durable_entity_binding"
+          }
+        }
+      }
+    },
+    "durable_entity_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_kind",
+        "record_kind",
+        "collection_ref",
+        "primary_key",
+        "tenant_key",
+        "owner_ref_fields",
+        "identity_source_ref",
+        "read_model_source",
+        "write_authority_enabled",
+        "append_enabled",
+        "mutation_route",
+        "secret_values_serialized",
+        "evidence_refs"
+      ],
+      "properties": {
+        "entity_kind": {
+          "$ref": "#/$defs/durable_entity_kind"
+        },
+        "record_kind": {
+          "$ref": "#/$defs/identifier"
+        },
+        "collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "primary_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "tenant_key": {
+          "$ref": "#/$defs/identifier"
+        },
+        "owner_ref_fields": {
+          "$ref": "#/$defs/text_list"
+        },
+        "identity_source_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "read_model_source": {
+          "type": "string",
+          "enum": [
+            "fixture_projection",
+            "runtime_projection"
+          ]
+        },
+        "write_authority_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_route": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        }
+      }
     },
     "read_only_guard": {
       "type": "object",
@@ -798,6 +956,121 @@
           "const": true
         },
         "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "harness_workspace_allocation_read_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allocation_id",
+        "sandbox_id",
+        "project_id",
+        "run_ids",
+        "branch_workspace_ref",
+        "base_branch",
+        "working_branch_ref",
+        "command_allowlist",
+        "path_allowlist",
+        "timeout_seconds",
+        "network_policy",
+        "cleanup_receipt_ref",
+        "command_log_collection_ref",
+        "test_log_collection_ref",
+        "diff_collection_ref",
+        "redaction_policy",
+        "read_only",
+        "workspace_created",
+        "commands_executed",
+        "files_written",
+        "cleanup_executed",
+        "production_mutation_allowed",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "allocation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sandbox_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "branch_workspace_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "base_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "working_branch_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "command_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sandbox_command"
+          }
+        },
+        "path_allowlist": {
+          "$ref": "#/$defs/text_list"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "network_policy": {
+          "$ref": "#/$defs/sandbox_network_policy"
+        },
+        "cleanup_receipt_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "command_log_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "test_log_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "diff_collection_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "redaction_policy": {
+          "type": "string",
+          "const": "hash_or_reference_only"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "workspace_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "commands_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "files_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "cleanup_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
           "type": "boolean",
           "const": false
         }

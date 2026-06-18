@@ -1,0 +1,110 @@
+{
+  "map_id": "research-source-conflict-map-foundation",
+  "map_version": "research_source_conflict_map.v1",
+  "generated_at": "2026-06-16T10:45:00Z",
+  "research_scope": {
+    "research_question_hash": "hash://sha256/research-source-conflict-map-foundation-question",
+    "source_mode": "operator_supplied_citation_refs",
+    "search_decision_ref": "schemas/search_decision.schema.json",
+    "search_receipt_ref": "schemas/search_receipt.schema.json",
+    "tenant_scope": "foundation-local-only",
+    "uao_ref": "uao://foundation/research-source-conflict-map"
+  },
+  "source_set": [
+    {
+      "source_ref": "source://foundation/local-doc-a",
+      "citation_ref": "citation://foundation/local-doc-a",
+      "freshness_status": "unknown",
+      "trust_tier": "operator_supplied",
+      "claim_digest_ref": "hash://sha256/foundation-source-a-claim",
+      "source_summary_digest_ref": "hash://sha256/foundation-source-a-summary",
+      "raw_source_body": null
+    },
+    {
+      "source_ref": "source://foundation/local-doc-b",
+      "citation_ref": "citation://foundation/local-doc-b",
+      "freshness_status": "unknown",
+      "trust_tier": "operator_supplied",
+      "claim_digest_ref": "hash://sha256/foundation-source-b-claim",
+      "source_summary_digest_ref": "hash://sha256/foundation-source-b-summary",
+      "raw_source_body": null
+    }
+  ],
+  "conflict_set": [
+    {
+      "conflict_ref": "conflict://foundation/source-a-source-b",
+      "contradiction_class": "factual_disagreement",
+      "severity": "medium",
+      "claim_refs": [
+        "claim://foundation/source-a-claim",
+        "claim://foundation/source-b-claim"
+      ],
+      "citation_refs": [
+        "citation://foundation/local-doc-a",
+        "citation://foundation/local-doc-b"
+      ],
+      "freshness_impact": "unknown_requires_sensing",
+      "current_claim_allowed": false
+    }
+  ],
+  "follow_up_sensing": [
+    {
+      "sensing_ref": "sensing://foundation/primary-source-needed",
+      "conflict_ref": "conflict://foundation/source-a-source-b",
+      "sensing_need": "primary_source_needed",
+      "approval_required": true,
+      "live_search_allowed": false,
+      "source_contact_allowed": false
+    }
+  ],
+  "authority_boundary": {
+    "external_retrieval_performed": false,
+    "web_search_performed": false,
+    "connector_call_performed": false,
+    "source_contact_performed": false,
+    "raw_source_body_stored": false,
+    "raw_secret_value_stored": false,
+    "answer_synthesis_allowed": false,
+    "current_claim_allowed": false,
+    "memory_write_performed": false,
+    "publication_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "retention_policy": {
+    "citation_refs_retained": true,
+    "raw_source_bodies_retained": false,
+    "private_payload_redacted": true,
+    "operator_review_required": true,
+    "retention_policy_ref": "docs/FOUNDATION_MODE.md"
+  },
+  "receipt_refs": {
+    "research_source_conflict_map_schema": "schemas/research_source_conflict_map.schema.json",
+    "search_decision_schema": "schemas/search_decision.schema.json",
+    "search_receipt_schema": "schemas/search_receipt.schema.json",
+    "evidence_classification_manifest_schema": "schemas/evidence_classification_manifest.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "source_count": 2,
+    "conflict_count": 1,
+    "follow_up_sensing_count": 1,
+    "authority_denial_count": 12,
+    "receipt_ref_count": 6,
+    "evidence_ref_count": 11
+  },
+  "evidence_refs": [
+    "schemas/research_source_conflict_map.schema.json",
+    "examples/research_source_conflict_map.foundation.json",
+    "scripts/validate_research_source_conflict_map.py",
+    "tests/test_validate_research_source_conflict_map.py",
+    "docs/88_research_source_conflict_map_contract.md",
+    "schemas/search_decision.schema.json",
+    "schemas/search_receipt.schema.json",
+    "schemas/evidence_classification_manifest.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/life_meaning_judgment.schema.json",
+    "docs/82_cross_repo_opportunity_map.md"
+  ]
+}

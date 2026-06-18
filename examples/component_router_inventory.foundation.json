@@ -464,7 +464,7 @@
         "teamops_shared_inbox"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 3,
+      "declared_route_count": 15,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/assistant/finance-ops/plans",
@@ -472,6 +472,31 @@
         "/api/v1/assistant/team-ops/plans"
       ],
       "surface_id": "assistant_kernel_planning"
+    },
+    {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "snet"
+      ],
+      "component_lane": "reasoning_symbolic_core",
+      "declared_route_count": 1,
+      "notes": "SNet operator read-model proof surface is documentation and proof-bound; this classification records ownership without mounting execution authority.",
+      "sample_routes": [
+        "/api/v1/snet/operator/read-model"
+      ],
+      "surface_id": "snet_operator_read_model"
     },
     {
       "binding_level": "platform_family_classified",

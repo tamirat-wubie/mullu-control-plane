@@ -18,6 +18,7 @@ import copy
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
@@ -29,6 +30,7 @@ from gateway.command_spine import (
 )
 from gateway.audit_trace_verifier import _recompute_event_hash
 from mcoi_runtime.app.governed_execution import (
+    _recomputed_universal_action_proof_hash,
     build_universal_operator_kernel,
     universal_command_dispatch as _app_universal_command_dispatch,
     universal_command_orchestration_record_view,
@@ -58,7 +60,15 @@ from mcoi_runtime.contracts.meta_reasoning import (
 )
 from mcoi_runtime.contracts.simulation import RiskLevel, VerdictType
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
-from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
+from mcoi_runtime.contracts.terminal_closure import (
+    TerminalClosureCertificate,
+    TerminalClosureDisposition,
+)
+from mcoi_runtime.contracts.whqr import WHQRDocument, WHQRNode, WHRole
+
+WHQR_CANONICAL_HASH = "sha256:" + ("a" * 64)
+WHQR_SEMANTICS_HASH = "sha256:" + ("b" * 64)
+WHQR_REPLAY_REF = f"whqr://replay/{WHQR_CANONICAL_HASH}"
 from mcoi_runtime.contracts.world_state import (
     ContradictionRecord,
     ContradictionStrategy,
@@ -107,6 +117,39 @@ VALID_TEMPLATE = {
 
 def _clock() -> str:
     return NOW
+
+
+def _certificate_with_metadata(
+    certificate: TerminalClosureCertificate,
+    metadata: dict[str, str],
+) -> TerminalClosureCertificate:
+    return TerminalClosureCertificate(
+        certificate_id=certificate.certificate_id,
+        command_id=certificate.command_id,
+        execution_id=certificate.execution_id,
+        disposition=certificate.disposition,
+        verification_result_id=certificate.verification_result_id,
+        effect_reconciliation_id=certificate.effect_reconciliation_id,
+        evidence_refs=certificate.evidence_refs,
+        closed_at=certificate.closed_at,
+        response_closure_ref=certificate.response_closure_ref,
+        memory_entry_id=certificate.memory_entry_id,
+        compensation_outcome_id=certificate.compensation_outcome_id,
+        accepted_risk_id=certificate.accepted_risk_id,
+        case_id=certificate.case_id,
+        graph_refs=certificate.graph_refs,
+        metadata=metadata,
+    )
+
+
+def _whqr_replay_metadata() -> dict[str, str]:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    return {
+        "whqr_canonical_json": document.canonical_json(),
+        "whqr_canonical_hash": document.canonical_hash(),
+        "whqr_semantics_hash": document.semantics_hash,
+        "whqr_version": document.whqr_version,
+    }
 
 
 def _replace_command_event_with_recomputed_hash(event, **changes):
@@ -335,6 +378,7 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["recovery_plan"]["recovery_kind"] == "rollback_and_compensation"
     assert record["recovery_plan"]["recovery_plan_ref"]
     assert record["recovery_plan"]["certificate_ref"]
+    assert record["closure"]["whqr_replay_binding"] is None
     assert record["claim_ledger"]["ledger_ref"].startswith("claim-ledger://")
     assert record["claim_ledger"]["unverified_claim_ids"] == []
     assert record["fracture_report"]["report_ref"].startswith("fracture-report://")
@@ -387,6 +431,61 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
     assert any(ref.startswith("world-state://snapshot/") for ref in record["input_refs"])
+
+
+def test_universal_action_record_binds_whqr_replay_metadata_in_closure_receipt() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-whqr-replay-binding")
+    result = kernel.run(request)
+    assert result.terminal_certificate is not None
+    metadata = {**dict(result.terminal_certificate.metadata), **_whqr_replay_metadata()}
+    whqr_certificate = _certificate_with_metadata(result.terminal_certificate, metadata)
+    result = replace(result, terminal_certificate=whqr_certificate)
+
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+    binding = record["closure"]["whqr_replay_binding"]
+    closure_receipt = next(
+        receipt for receipt in record["receipts"] if receipt["kind"] == "closure"
+    )
+
+    assert validation_errors == []
+    assert binding["replay_ref"] == f"whqr://replay/{metadata['whqr_canonical_hash']}"
+    assert binding["canonical_hash"] == metadata["whqr_canonical_hash"]
+    assert binding["semantics_hash"] == metadata["whqr_semantics_hash"]
+    assert binding["version"] == metadata["whqr_version"]
+    assert closure_receipt["confirms"] == stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": record["closure_state"],
+            "reconciliation_ref": record["closure"]["reconciliation_ref"],
+            "memory_ref": record["closure"]["memory_ref"],
+            "whqr_replay_ref": binding["replay_ref"],
+            "whqr_canonical_hash": binding["canonical_hash"],
+            "whqr_semantics_hash": binding["semantics_hash"],
+            "whqr_version": binding["version"],
+        },
+    )
+
+
+def test_universal_action_record_rejects_tampered_whqr_replay_metadata() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-whqr-replay-tamper")
+    result = kernel.run(request)
+    assert result.terminal_certificate is not None
+    metadata = {**dict(result.terminal_certificate.metadata), **_whqr_replay_metadata()}
+    metadata["whqr_canonical_json"] = metadata["whqr_canonical_json"].replace(
+        "payment_request",
+        "delete_file",
+    )
+    whqr_certificate = _certificate_with_metadata(result.terminal_certificate, metadata)
+    result = replace(result, terminal_certificate=whqr_certificate)
+
+    with pytest.raises(
+        RuntimeCoreInvariantError,
+        match="UAO closure WHQR replay document is invalid",
+    ):
+        build_universal_action_orchestration_record(request=request, result=result)
 
 
 def test_universal_action_record_rejects_malformed_life_meaning_evidence_refs() -> None:
@@ -1034,6 +1133,7 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert proof.admission_receipt_ref == result.admission_receipt_ref
     assert proof.execution_receipt_ref == result.execution_receipt_ref
     assert proof.closure_state == "closed_allowed"
+    assert proof.whqr_replay_binding == {}
     assert proof.proof_hash == result.proof_hash
     assert proof.capability_id == "shell_command"
     assert proof.dispatch_ledger_hash == result.dispatch_result.ledger_hash
@@ -1044,6 +1144,334 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert CommandState.DISPATCHED.value in proof.state_sequence
     assert CommandState.LEARNING_DECIDED.value in proof.state_sequence
     assert len(proof.event_hashes) >= 5
+
+
+def test_universal_action_proof_hash_rejects_malformed_whqr_replay_binding() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-shape",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:runtime-canonical",
+        "canonical_hash": "runtime-canonical",
+        "semantics_hash": "sha256:runtime-semantics",
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["canonical_hash"] == (
+        "runtime-canonical"
+    )
+    assert malformed_detail["whqr_replay_binding"]["replay_ref"].startswith(
+        "whqr://replay/sha256:"
+    )
+
+
+def test_universal_action_proof_hash_rejects_empty_whqr_digest_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-empty-digest",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:",
+        "canonical_hash": "sha256:",
+        "semantics_hash": "sha256:",
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["canonical_hash"] == "sha256:"
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"] == "sha256:"
+
+
+def test_universal_action_proof_hash_rejects_whitespace_whqr_digest_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-whitespace-digest",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:   ",
+        "canonical_hash": "sha256:   ",
+        "semantics_hash": "sha256:\t",
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["replay_ref"].endswith("   ")
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"].endswith("\t")
+
+
+def test_universal_action_proof_hash_rejects_nonhex_whqr_digest_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-nonhex-digest",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:" + ("g" * 64),
+        "canonical_hash": "sha256:" + ("g" * 64),
+        "semantics_hash": "sha256:" + ("A" * 64),
+        "version": "0.1.0",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["canonical_hash"].endswith("g" * 64)
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"].endswith("A" * 64)
+
+
+def test_universal_action_proof_hash_rejects_leading_zero_whqr_version() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-leading-zero-version",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": WHQR_REPLAY_REF,
+        "canonical_hash": WHQR_CANONICAL_HASH,
+        "semantics_hash": WHQR_SEMANTICS_HASH,
+        "version": "01.002.0003",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["version"] == "01.002.0003"
+    assert malformed_detail["whqr_replay_binding"]["canonical_hash"].startswith("sha256:")
+
+
+def test_universal_action_proof_hash_rejects_non_ascii_decimal_whqr_version() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-whqr-non-ascii-version",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    malformed_detail = copy.deepcopy(valid_event_detail["universal_action"])
+    malformed_detail["whqr_replay_binding"] = {
+        "replay_ref": WHQR_REPLAY_REF,
+        "canonical_hash": WHQR_CANONICAL_HASH,
+        "semantics_hash": WHQR_SEMANTICS_HASH,
+        "version": "\u0661.2.3",
+    }
+
+    proof_hash = _recomputed_universal_action_proof_hash(malformed_detail)
+
+    assert proof_hash is None
+    assert malformed_detail["whqr_replay_binding"]["version"] == "\u0661.2.3"
+    assert malformed_detail["whqr_replay_binding"]["semantics_hash"].startswith("sha256:")
+
+
+def test_universal_command_proof_view_rejects_malformed_whqr_replay_binding() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-proof-view-whqr-shape",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    tampered_detail = copy.deepcopy(store._events[target_index].detail)
+    tampered_detail["universal_action"]["whqr_replay_binding"] = {
+        "replay_ref": "whqr://replay/sha256:runtime-canonical",
+        "canonical_hash": "runtime-canonical",
+        "semantics_hash": "sha256:runtime-semantics",
+        "version": "0.1.0",
+    }
+    store._events[target_index] = _replace_command_event_with_recomputed_hash(
+        store._events[target_index],
+        detail=tampered_detail,
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    proof = universal_command_proof_view(reloaded_ledger, command.command_id)
+
+    assert proof is None
+    assert reloaded_ledger.get(command.command_id) is not None
+    assert (
+        _recompute_event_hash(store._events[target_index])
+        == store._events[target_index].event_hash
+    )
 
 
 def test_universal_command_orchestration_record_replays_success_events() -> None:

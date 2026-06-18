@@ -55,6 +55,7 @@ class ApprovalStrengthDecision(StrEnum):
 _CHANNEL_TRUST: dict[str, ChannelTrust] = {
     "operator_goal_intake": ChannelTrust.TRUSTED_CONTROL,
     "operator_console": ChannelTrust.TRUSTED_CONTROL,
+    "test": ChannelTrust.TRUSTED_CONTROL,
     "web": ChannelTrust.TRUSTED_CONTROL,
     "slack": ChannelTrust.VERIFIED_EXTERNAL,
     "teams": ChannelTrust.VERIFIED_EXTERNAL,

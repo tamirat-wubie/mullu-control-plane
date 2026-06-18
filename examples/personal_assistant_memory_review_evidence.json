@@ -1,0 +1,1009 @@
+{
+  "assurance": {
+    "assurance_id": "personal_assistant_memory_review_no_effect_assurance",
+    "authority_drift_detected": false,
+    "blocking_reasons": [],
+    "checked_controls": [
+      "memory_review_is_not_memory_admission",
+      "kept_review_deferred_without_write",
+      "rejected_review_blocks_memory_admission",
+      "revision_review_deferred_without_write",
+      "deferred_review_deferred_without_write",
+      "expired_review_blocks_memory_admission",
+      "no_live_memory_write",
+      "no_nested_mind_live_activation",
+      "no_connector_mutation",
+      "no_raw_private_payload_storage",
+      "no_secret_value_serialization"
+    ],
+    "foundation_only": true,
+    "next_action": "continue governed memory admission hardening before any live memory write",
+    "outcome": "SolvedVerified",
+    "ready_for_customer_readiness_claim": false,
+    "ready_for_live_memory_write": false,
+    "ready_for_live_nested_mind_activation": false
+  },
+  "effect_boundary": {
+    "connector_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "deployment_mutation_allowed": false,
+    "execution_allowed": false,
+    "live_memory_write_allowed": false,
+    "memory_admission_allowed": false,
+    "memory_review_records_allowed": true,
+    "nested_mind_live_activation_allowed": false,
+    "public_readiness_claim_allowed": false,
+    "raw_private_payload_storage_allowed": false,
+    "secret_value_storage_allowed": false,
+    "system_of_record_write_allowed": false
+  },
+  "generated_at": "2026-06-15T00:04:00+00:00",
+  "governed": true,
+  "memory_observation_ids": [
+    "pa_memory_review_candidate_kept_for_operator_review_001",
+    "pa_memory_review_candidate_rejected_002",
+    "pa_memory_review_candidate_revision_requested_003",
+    "pa_memory_review_candidate_deferred_004",
+    "pa_memory_review_candidate_expired_005"
+  ],
+  "metadata": {
+    "connector_mutation_allowed": false,
+    "foundation_only": true,
+    "live_memory_write_allowed": false,
+    "memory_admission_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "projection_contract": "memory_review_evidence_only",
+    "runtime_boundary": "review_does_not_write_memory",
+    "system_of_record_write_allowed": false
+  },
+  "private_payload_policy": {
+    "connector_payload_projection": "ref_only",
+    "raw_private_payload_serialized": false,
+    "review_payload_projection": "bounded_operator_review_record",
+    "secret_values_serialized": false
+  },
+  "receipt_ids": [
+    "pa_receipt_kept_for_operator_review_001_memory_review",
+    "pa_receipt_rejected_002_memory_review",
+    "pa_receipt_revision_requested_003_memory_review",
+    "pa_receipt_deferred_004_memory_review",
+    "pa_receipt_expired_005_memory_review"
+  ],
+  "review_count": 5,
+  "review_ids": [
+    "pa_memory_review_kept_for_operator_review_001",
+    "pa_memory_review_rejected_002",
+    "pa_memory_review_revision_requested_003",
+    "pa_memory_review_deferred_004",
+    "pa_memory_review_expired_005"
+  ],
+  "review_set_id": "pa_memory_review_set_foundation_001",
+  "reviews": [
+    {
+      "candidate": {
+        "memory_observation_id": "pa_memory_review_candidate_kept_for_operator_review_001",
+        "observation": {
+          "claim": "User prefers one-at-a-time repository closures.",
+          "confidence": "high",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-001"
+          ],
+          "memory_observation_id": "pa_memory_review_candidate_kept_for_operator_review_001",
+          "memory_type": "preference",
+          "metadata": {
+            "fixture": "runtime_memory_review_evidence",
+            "foundation_only": true,
+            "live_memory_write_allowed": false,
+            "nested_mind_live_activation_allowed": false,
+            "source_projection": "claim_only"
+          },
+          "mutable": true,
+          "nested_mind_status": "staging_only",
+          "receipt_id": "pa_receipt_memory_review_source_001",
+          "retention_policy": "operator_review",
+          "scope": "assistant_workflow",
+          "sensitivity": "internal",
+          "source": {
+            "observed_at": "2026-06-15T00:00:00+00:00",
+            "source_ref": "conversation:memory-review-001",
+            "source_type": "user_confirmation"
+          }
+        },
+        "receipt": {
+          "actions_not_taken": [
+            "live_memory_not_written",
+            "nested_mind_not_activated",
+            "raw_chat_log_not_stored",
+            "raw_connector_payload_not_stored",
+            "system_of_record_not_mutated"
+          ],
+          "actions_taken": [
+            "memory_observation_candidate_prepared",
+            "receipt_created"
+          ],
+          "approval_ref": "",
+          "approval_required": false,
+          "connectors_used": [],
+          "decision": "allowed",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-001"
+          ],
+          "inputs_used": [
+            "memory_claim_projection",
+            "source_ref",
+            "receipt_ref"
+          ],
+          "memory_observation_refs": [
+            "pa_memory_review_candidate_kept_for_operator_review_001"
+          ],
+          "metadata": {
+            "candidate_only": true,
+            "confidence": "high",
+            "live_memory_write_allowed": false,
+            "memory_type": "preference",
+            "nested_mind_live_activation_allowed": false,
+            "retention_policy": "operator_review",
+            "scope": "assistant_workflow"
+          },
+          "mode": "preview",
+          "outcome": "SolvedVerified",
+          "private_payload_policy": {
+            "body_projection": "digest_only",
+            "connector_payload_projection": "no_connector_payload",
+            "raw_private_payload_serialized": false,
+            "secret_values_serialized": false
+          },
+          "receipt_id": "pa_receipt_review_candidate_kept_for_operator_review_001_memory_observe",
+          "redactions": [
+            "claim_only_no_raw_chat_log",
+            "secret_values_not_serialized"
+          ],
+          "replay_refs": [
+            "replay://personal-assistant/memory/review_candidate_kept_for_operator_review_001"
+          ],
+          "request_id": "pa_request_memory_review_001",
+          "risk_level": "P2",
+          "skill_id": "memory.observe",
+          "timestamp": "2026-06-15T00:00:00+00:00"
+        }
+      },
+      "decision": "kept_for_operator_review",
+      "memory_observation_id": "pa_memory_review_candidate_kept_for_operator_review_001",
+      "reason_codes": [
+        "operator_kept_for_operator_review_preview"
+      ],
+      "receipt": {
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated",
+          "memory_observation_not_admitted_to_live_memory",
+          "memory_store_not_mutated",
+          "nested_mind_live_activation_not_started"
+        ],
+        "actions_taken": [
+          "memory_observation_review_recorded",
+          "memory_review_kept_for_operator_review"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "deferred",
+        "evidence_refs": [
+          "proof://personal-assistant/memory/review-source-001",
+          "proof://personal-assistant/memory/operator-review-001"
+        ],
+        "inputs_used": [
+          "memory_observation_candidate",
+          "review_decision",
+          "review_evidence_ref"
+        ],
+        "memory_observation_refs": [
+          "pa_memory_review_candidate_kept_for_operator_review_001"
+        ],
+        "metadata": {
+          "candidate_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_decision": "kept_for_operator_review",
+          "review_only": true
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "digest_only",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_kept_for_operator_review_001_memory_review",
+        "redactions": [
+          "claim_only_no_raw_chat_log",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/memory-review/kept_for_operator_review_001"
+        ],
+        "request_id": "pa_request_memory_review_001",
+        "risk_level": "P2",
+        "skill_id": "memory.observe",
+        "timestamp": "2026-06-15T00:04:00+00:00"
+      },
+      "review": {
+        "candidate_receipt_id": "pa_receipt_review_candidate_kept_for_operator_review_001_memory_observe",
+        "decision": "kept_for_operator_review",
+        "deferred_until": "",
+        "expires_at": "",
+        "live_memory_write_allowed": false,
+        "memory_admission_allowed": false,
+        "memory_observation_id": "pa_memory_review_candidate_kept_for_operator_review_001",
+        "metadata": {
+          "fixture": "runtime_memory_review_evidence",
+          "foundation_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_only": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "raw_private_payload_storage_allowed": false,
+        "reason_codes": [
+          "operator_kept_for_operator_review_preview"
+        ],
+        "review_evidence_ref": "proof://personal-assistant/memory/operator-review-001",
+        "review_id": "pa_memory_review_kept_for_operator_review_001",
+        "reviewed_at": "2026-06-15T00:04:00+00:00",
+        "reviewer_ref": "operator:tamirat",
+        "revision_request": "",
+        "secret_value_storage_allowed": false
+      },
+      "review_id": "pa_memory_review_kept_for_operator_review_001",
+      "reviewed_at": "2026-06-15T00:04:00+00:00",
+      "reviewer_ref": "operator:tamirat"
+    },
+    {
+      "candidate": {
+        "memory_observation_id": "pa_memory_review_candidate_rejected_002",
+        "observation": {
+          "claim": "User prefers one-at-a-time repository closures.",
+          "confidence": "high",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-002"
+          ],
+          "memory_observation_id": "pa_memory_review_candidate_rejected_002",
+          "memory_type": "preference",
+          "metadata": {
+            "fixture": "runtime_memory_review_evidence",
+            "foundation_only": true,
+            "live_memory_write_allowed": false,
+            "nested_mind_live_activation_allowed": false,
+            "source_projection": "claim_only"
+          },
+          "mutable": true,
+          "nested_mind_status": "staging_only",
+          "receipt_id": "pa_receipt_memory_review_source_002",
+          "retention_policy": "operator_review",
+          "scope": "assistant_workflow",
+          "sensitivity": "internal",
+          "source": {
+            "observed_at": "2026-06-15T00:00:00+00:00",
+            "source_ref": "conversation:memory-review-002",
+            "source_type": "user_confirmation"
+          }
+        },
+        "receipt": {
+          "actions_not_taken": [
+            "live_memory_not_written",
+            "nested_mind_not_activated",
+            "raw_chat_log_not_stored",
+            "raw_connector_payload_not_stored",
+            "system_of_record_not_mutated"
+          ],
+          "actions_taken": [
+            "memory_observation_candidate_prepared",
+            "receipt_created"
+          ],
+          "approval_ref": "",
+          "approval_required": false,
+          "connectors_used": [],
+          "decision": "allowed",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-002"
+          ],
+          "inputs_used": [
+            "memory_claim_projection",
+            "source_ref",
+            "receipt_ref"
+          ],
+          "memory_observation_refs": [
+            "pa_memory_review_candidate_rejected_002"
+          ],
+          "metadata": {
+            "candidate_only": true,
+            "confidence": "high",
+            "live_memory_write_allowed": false,
+            "memory_type": "preference",
+            "nested_mind_live_activation_allowed": false,
+            "retention_policy": "operator_review",
+            "scope": "assistant_workflow"
+          },
+          "mode": "preview",
+          "outcome": "SolvedVerified",
+          "private_payload_policy": {
+            "body_projection": "digest_only",
+            "connector_payload_projection": "no_connector_payload",
+            "raw_private_payload_serialized": false,
+            "secret_values_serialized": false
+          },
+          "receipt_id": "pa_receipt_review_candidate_rejected_002_memory_observe",
+          "redactions": [
+            "claim_only_no_raw_chat_log",
+            "secret_values_not_serialized"
+          ],
+          "replay_refs": [
+            "replay://personal-assistant/memory/review_candidate_rejected_002"
+          ],
+          "request_id": "pa_request_memory_review_002",
+          "risk_level": "P2",
+          "skill_id": "memory.observe",
+          "timestamp": "2026-06-15T00:00:00+00:00"
+        }
+      },
+      "decision": "rejected",
+      "memory_observation_id": "pa_memory_review_candidate_rejected_002",
+      "reason_codes": [
+        "operator_rejected_preview"
+      ],
+      "receipt": {
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated",
+          "memory_observation_not_admitted_to_live_memory",
+          "memory_store_not_mutated",
+          "nested_mind_live_activation_not_started"
+        ],
+        "actions_taken": [
+          "memory_observation_review_recorded",
+          "memory_review_rejected"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "blocked",
+        "evidence_refs": [
+          "proof://personal-assistant/memory/review-source-002",
+          "proof://personal-assistant/memory/operator-review-002"
+        ],
+        "inputs_used": [
+          "memory_observation_candidate",
+          "review_decision",
+          "review_evidence_ref"
+        ],
+        "memory_observation_refs": [
+          "pa_memory_review_candidate_rejected_002"
+        ],
+        "metadata": {
+          "candidate_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_decision": "rejected",
+          "review_only": true
+        },
+        "mode": "preview",
+        "outcome": "GovernanceBlocked",
+        "private_payload_policy": {
+          "body_projection": "digest_only",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_rejected_002_memory_review",
+        "redactions": [
+          "claim_only_no_raw_chat_log",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/memory-review/rejected_002"
+        ],
+        "request_id": "pa_request_memory_review_002",
+        "risk_level": "P2",
+        "skill_id": "memory.observe",
+        "timestamp": "2026-06-15T00:04:00+00:00"
+      },
+      "review": {
+        "candidate_receipt_id": "pa_receipt_review_candidate_rejected_002_memory_observe",
+        "decision": "rejected",
+        "deferred_until": "",
+        "expires_at": "",
+        "live_memory_write_allowed": false,
+        "memory_admission_allowed": false,
+        "memory_observation_id": "pa_memory_review_candidate_rejected_002",
+        "metadata": {
+          "fixture": "runtime_memory_review_evidence",
+          "foundation_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_only": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "raw_private_payload_storage_allowed": false,
+        "reason_codes": [
+          "operator_rejected_preview"
+        ],
+        "review_evidence_ref": "proof://personal-assistant/memory/operator-review-002",
+        "review_id": "pa_memory_review_rejected_002",
+        "reviewed_at": "2026-06-15T00:04:00+00:00",
+        "reviewer_ref": "operator:tamirat",
+        "revision_request": "",
+        "secret_value_storage_allowed": false
+      },
+      "review_id": "pa_memory_review_rejected_002",
+      "reviewed_at": "2026-06-15T00:04:00+00:00",
+      "reviewer_ref": "operator:tamirat"
+    },
+    {
+      "candidate": {
+        "memory_observation_id": "pa_memory_review_candidate_revision_requested_003",
+        "observation": {
+          "claim": "User prefers one-at-a-time repository closures.",
+          "confidence": "high",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-003"
+          ],
+          "memory_observation_id": "pa_memory_review_candidate_revision_requested_003",
+          "memory_type": "preference",
+          "metadata": {
+            "fixture": "runtime_memory_review_evidence",
+            "foundation_only": true,
+            "live_memory_write_allowed": false,
+            "nested_mind_live_activation_allowed": false,
+            "source_projection": "claim_only"
+          },
+          "mutable": true,
+          "nested_mind_status": "staging_only",
+          "receipt_id": "pa_receipt_memory_review_source_003",
+          "retention_policy": "operator_review",
+          "scope": "assistant_workflow",
+          "sensitivity": "internal",
+          "source": {
+            "observed_at": "2026-06-15T00:00:00+00:00",
+            "source_ref": "conversation:memory-review-003",
+            "source_type": "user_confirmation"
+          }
+        },
+        "receipt": {
+          "actions_not_taken": [
+            "live_memory_not_written",
+            "nested_mind_not_activated",
+            "raw_chat_log_not_stored",
+            "raw_connector_payload_not_stored",
+            "system_of_record_not_mutated"
+          ],
+          "actions_taken": [
+            "memory_observation_candidate_prepared",
+            "receipt_created"
+          ],
+          "approval_ref": "",
+          "approval_required": false,
+          "connectors_used": [],
+          "decision": "allowed",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-003"
+          ],
+          "inputs_used": [
+            "memory_claim_projection",
+            "source_ref",
+            "receipt_ref"
+          ],
+          "memory_observation_refs": [
+            "pa_memory_review_candidate_revision_requested_003"
+          ],
+          "metadata": {
+            "candidate_only": true,
+            "confidence": "high",
+            "live_memory_write_allowed": false,
+            "memory_type": "preference",
+            "nested_mind_live_activation_allowed": false,
+            "retention_policy": "operator_review",
+            "scope": "assistant_workflow"
+          },
+          "mode": "preview",
+          "outcome": "SolvedVerified",
+          "private_payload_policy": {
+            "body_projection": "digest_only",
+            "connector_payload_projection": "no_connector_payload",
+            "raw_private_payload_serialized": false,
+            "secret_values_serialized": false
+          },
+          "receipt_id": "pa_receipt_review_candidate_revision_requested_003_memory_observe",
+          "redactions": [
+            "claim_only_no_raw_chat_log",
+            "secret_values_not_serialized"
+          ],
+          "replay_refs": [
+            "replay://personal-assistant/memory/review_candidate_revision_requested_003"
+          ],
+          "request_id": "pa_request_memory_review_003",
+          "risk_level": "P2",
+          "skill_id": "memory.observe",
+          "timestamp": "2026-06-15T00:00:00+00:00"
+        }
+      },
+      "decision": "revision_requested",
+      "memory_observation_id": "pa_memory_review_candidate_revision_requested_003",
+      "reason_codes": [
+        "operator_revision_requested_preview"
+      ],
+      "receipt": {
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated",
+          "memory_observation_not_admitted_to_live_memory",
+          "memory_store_not_mutated",
+          "nested_mind_live_activation_not_started"
+        ],
+        "actions_taken": [
+          "memory_observation_review_recorded",
+          "memory_review_revision_requested"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "deferred",
+        "evidence_refs": [
+          "proof://personal-assistant/memory/review-source-003",
+          "proof://personal-assistant/memory/operator-review-003"
+        ],
+        "inputs_used": [
+          "memory_observation_candidate",
+          "review_decision",
+          "review_evidence_ref"
+        ],
+        "memory_observation_refs": [
+          "pa_memory_review_candidate_revision_requested_003"
+        ],
+        "metadata": {
+          "candidate_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_decision": "revision_requested",
+          "review_only": true
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "digest_only",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_revision_requested_003_memory_review",
+        "redactions": [
+          "claim_only_no_raw_chat_log",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/memory-review/revision_requested_003"
+        ],
+        "request_id": "pa_request_memory_review_003",
+        "risk_level": "P2",
+        "skill_id": "memory.observe",
+        "timestamp": "2026-06-15T00:04:00+00:00"
+      },
+      "review": {
+        "candidate_receipt_id": "pa_receipt_review_candidate_revision_requested_003_memory_observe",
+        "decision": "revision_requested",
+        "deferred_until": "",
+        "expires_at": "",
+        "live_memory_write_allowed": false,
+        "memory_admission_allowed": false,
+        "memory_observation_id": "pa_memory_review_candidate_revision_requested_003",
+        "metadata": {
+          "fixture": "runtime_memory_review_evidence",
+          "foundation_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_only": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "raw_private_payload_storage_allowed": false,
+        "reason_codes": [
+          "operator_revision_requested_preview"
+        ],
+        "review_evidence_ref": "proof://personal-assistant/memory/operator-review-003",
+        "review_id": "pa_memory_review_revision_requested_003",
+        "reviewed_at": "2026-06-15T00:04:00+00:00",
+        "reviewer_ref": "operator:tamirat",
+        "revision_request": "Clarify scope before any future review.",
+        "secret_value_storage_allowed": false
+      },
+      "review_id": "pa_memory_review_revision_requested_003",
+      "reviewed_at": "2026-06-15T00:04:00+00:00",
+      "reviewer_ref": "operator:tamirat"
+    },
+    {
+      "candidate": {
+        "memory_observation_id": "pa_memory_review_candidate_deferred_004",
+        "observation": {
+          "claim": "User prefers one-at-a-time repository closures.",
+          "confidence": "high",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-004"
+          ],
+          "memory_observation_id": "pa_memory_review_candidate_deferred_004",
+          "memory_type": "preference",
+          "metadata": {
+            "fixture": "runtime_memory_review_evidence",
+            "foundation_only": true,
+            "live_memory_write_allowed": false,
+            "nested_mind_live_activation_allowed": false,
+            "source_projection": "claim_only"
+          },
+          "mutable": true,
+          "nested_mind_status": "staging_only",
+          "receipt_id": "pa_receipt_memory_review_source_004",
+          "retention_policy": "operator_review",
+          "scope": "assistant_workflow",
+          "sensitivity": "internal",
+          "source": {
+            "observed_at": "2026-06-15T00:00:00+00:00",
+            "source_ref": "conversation:memory-review-004",
+            "source_type": "user_confirmation"
+          }
+        },
+        "receipt": {
+          "actions_not_taken": [
+            "live_memory_not_written",
+            "nested_mind_not_activated",
+            "raw_chat_log_not_stored",
+            "raw_connector_payload_not_stored",
+            "system_of_record_not_mutated"
+          ],
+          "actions_taken": [
+            "memory_observation_candidate_prepared",
+            "receipt_created"
+          ],
+          "approval_ref": "",
+          "approval_required": false,
+          "connectors_used": [],
+          "decision": "allowed",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-004"
+          ],
+          "inputs_used": [
+            "memory_claim_projection",
+            "source_ref",
+            "receipt_ref"
+          ],
+          "memory_observation_refs": [
+            "pa_memory_review_candidate_deferred_004"
+          ],
+          "metadata": {
+            "candidate_only": true,
+            "confidence": "high",
+            "live_memory_write_allowed": false,
+            "memory_type": "preference",
+            "nested_mind_live_activation_allowed": false,
+            "retention_policy": "operator_review",
+            "scope": "assistant_workflow"
+          },
+          "mode": "preview",
+          "outcome": "SolvedVerified",
+          "private_payload_policy": {
+            "body_projection": "digest_only",
+            "connector_payload_projection": "no_connector_payload",
+            "raw_private_payload_serialized": false,
+            "secret_values_serialized": false
+          },
+          "receipt_id": "pa_receipt_review_candidate_deferred_004_memory_observe",
+          "redactions": [
+            "claim_only_no_raw_chat_log",
+            "secret_values_not_serialized"
+          ],
+          "replay_refs": [
+            "replay://personal-assistant/memory/review_candidate_deferred_004"
+          ],
+          "request_id": "pa_request_memory_review_004",
+          "risk_level": "P2",
+          "skill_id": "memory.observe",
+          "timestamp": "2026-06-15T00:00:00+00:00"
+        }
+      },
+      "decision": "deferred",
+      "memory_observation_id": "pa_memory_review_candidate_deferred_004",
+      "reason_codes": [
+        "operator_deferred_preview"
+      ],
+      "receipt": {
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated",
+          "memory_observation_not_admitted_to_live_memory",
+          "memory_store_not_mutated",
+          "nested_mind_live_activation_not_started"
+        ],
+        "actions_taken": [
+          "memory_observation_review_recorded",
+          "memory_review_deferred"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "deferred",
+        "evidence_refs": [
+          "proof://personal-assistant/memory/review-source-004",
+          "proof://personal-assistant/memory/operator-review-004"
+        ],
+        "inputs_used": [
+          "memory_observation_candidate",
+          "review_decision",
+          "review_evidence_ref"
+        ],
+        "memory_observation_refs": [
+          "pa_memory_review_candidate_deferred_004"
+        ],
+        "metadata": {
+          "candidate_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_decision": "deferred",
+          "review_only": true
+        },
+        "mode": "preview",
+        "outcome": "SolvedVerified",
+        "private_payload_policy": {
+          "body_projection": "digest_only",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_deferred_004_memory_review",
+        "redactions": [
+          "claim_only_no_raw_chat_log",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/memory-review/deferred_004"
+        ],
+        "request_id": "pa_request_memory_review_004",
+        "risk_level": "P2",
+        "skill_id": "memory.observe",
+        "timestamp": "2026-06-15T00:04:00+00:00"
+      },
+      "review": {
+        "candidate_receipt_id": "pa_receipt_review_candidate_deferred_004_memory_observe",
+        "decision": "deferred",
+        "deferred_until": "2026-06-16T00:00:00+00:00",
+        "expires_at": "",
+        "live_memory_write_allowed": false,
+        "memory_admission_allowed": false,
+        "memory_observation_id": "pa_memory_review_candidate_deferred_004",
+        "metadata": {
+          "fixture": "runtime_memory_review_evidence",
+          "foundation_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_only": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "raw_private_payload_storage_allowed": false,
+        "reason_codes": [
+          "operator_deferred_preview"
+        ],
+        "review_evidence_ref": "proof://personal-assistant/memory/operator-review-004",
+        "review_id": "pa_memory_review_deferred_004",
+        "reviewed_at": "2026-06-15T00:04:00+00:00",
+        "reviewer_ref": "operator:tamirat",
+        "revision_request": "",
+        "secret_value_storage_allowed": false
+      },
+      "review_id": "pa_memory_review_deferred_004",
+      "reviewed_at": "2026-06-15T00:04:00+00:00",
+      "reviewer_ref": "operator:tamirat"
+    },
+    {
+      "candidate": {
+        "memory_observation_id": "pa_memory_review_candidate_expired_005",
+        "observation": {
+          "claim": "User prefers one-at-a-time repository closures.",
+          "confidence": "high",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-005"
+          ],
+          "memory_observation_id": "pa_memory_review_candidate_expired_005",
+          "memory_type": "preference",
+          "metadata": {
+            "fixture": "runtime_memory_review_evidence",
+            "foundation_only": true,
+            "live_memory_write_allowed": false,
+            "nested_mind_live_activation_allowed": false,
+            "source_projection": "claim_only"
+          },
+          "mutable": true,
+          "nested_mind_status": "staging_only",
+          "receipt_id": "pa_receipt_memory_review_source_005",
+          "retention_policy": "operator_review",
+          "scope": "assistant_workflow",
+          "sensitivity": "internal",
+          "source": {
+            "observed_at": "2026-06-15T00:00:00+00:00",
+            "source_ref": "conversation:memory-review-005",
+            "source_type": "user_confirmation"
+          }
+        },
+        "receipt": {
+          "actions_not_taken": [
+            "live_memory_not_written",
+            "nested_mind_not_activated",
+            "raw_chat_log_not_stored",
+            "raw_connector_payload_not_stored",
+            "system_of_record_not_mutated"
+          ],
+          "actions_taken": [
+            "memory_observation_candidate_prepared",
+            "receipt_created"
+          ],
+          "approval_ref": "",
+          "approval_required": false,
+          "connectors_used": [],
+          "decision": "allowed",
+          "evidence_refs": [
+            "proof://personal-assistant/memory/review-source-005"
+          ],
+          "inputs_used": [
+            "memory_claim_projection",
+            "source_ref",
+            "receipt_ref"
+          ],
+          "memory_observation_refs": [
+            "pa_memory_review_candidate_expired_005"
+          ],
+          "metadata": {
+            "candidate_only": true,
+            "confidence": "high",
+            "live_memory_write_allowed": false,
+            "memory_type": "preference",
+            "nested_mind_live_activation_allowed": false,
+            "retention_policy": "operator_review",
+            "scope": "assistant_workflow"
+          },
+          "mode": "preview",
+          "outcome": "SolvedVerified",
+          "private_payload_policy": {
+            "body_projection": "digest_only",
+            "connector_payload_projection": "no_connector_payload",
+            "raw_private_payload_serialized": false,
+            "secret_values_serialized": false
+          },
+          "receipt_id": "pa_receipt_review_candidate_expired_005_memory_observe",
+          "redactions": [
+            "claim_only_no_raw_chat_log",
+            "secret_values_not_serialized"
+          ],
+          "replay_refs": [
+            "replay://personal-assistant/memory/review_candidate_expired_005"
+          ],
+          "request_id": "pa_request_memory_review_005",
+          "risk_level": "P2",
+          "skill_id": "memory.observe",
+          "timestamp": "2026-06-15T00:00:00+00:00"
+        }
+      },
+      "decision": "expired",
+      "memory_observation_id": "pa_memory_review_candidate_expired_005",
+      "reason_codes": [
+        "operator_expired_preview"
+      ],
+      "receipt": {
+        "actions_not_taken": [
+          "live_memory_not_written",
+          "nested_mind_not_activated",
+          "raw_chat_log_not_stored",
+          "raw_connector_payload_not_stored",
+          "system_of_record_not_mutated",
+          "memory_observation_not_admitted_to_live_memory",
+          "memory_store_not_mutated",
+          "nested_mind_live_activation_not_started"
+        ],
+        "actions_taken": [
+          "memory_observation_review_recorded",
+          "memory_review_expired"
+        ],
+        "approval_ref": "",
+        "approval_required": false,
+        "connectors_used": [],
+        "decision": "blocked",
+        "evidence_refs": [
+          "proof://personal-assistant/memory/review-source-005",
+          "proof://personal-assistant/memory/operator-review-005"
+        ],
+        "inputs_used": [
+          "memory_observation_candidate",
+          "review_decision",
+          "review_evidence_ref"
+        ],
+        "memory_observation_refs": [
+          "pa_memory_review_candidate_expired_005"
+        ],
+        "metadata": {
+          "candidate_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_decision": "expired",
+          "review_only": true
+        },
+        "mode": "preview",
+        "outcome": "GovernanceBlocked",
+        "private_payload_policy": {
+          "body_projection": "digest_only",
+          "connector_payload_projection": "no_connector_payload",
+          "raw_private_payload_serialized": false,
+          "secret_values_serialized": false
+        },
+        "receipt_id": "pa_receipt_expired_005_memory_review",
+        "redactions": [
+          "claim_only_no_raw_chat_log",
+          "secret_values_not_serialized"
+        ],
+        "replay_refs": [
+          "replay://personal-assistant/memory-review/expired_005"
+        ],
+        "request_id": "pa_request_memory_review_005",
+        "risk_level": "P2",
+        "skill_id": "memory.observe",
+        "timestamp": "2026-06-15T00:04:00+00:00"
+      },
+      "review": {
+        "candidate_receipt_id": "pa_receipt_review_candidate_expired_005_memory_observe",
+        "decision": "expired",
+        "deferred_until": "",
+        "expires_at": "2026-06-15T01:00:00+00:00",
+        "live_memory_write_allowed": false,
+        "memory_admission_allowed": false,
+        "memory_observation_id": "pa_memory_review_candidate_expired_005",
+        "metadata": {
+          "fixture": "runtime_memory_review_evidence",
+          "foundation_only": true,
+          "live_memory_write_allowed": false,
+          "memory_admission_allowed": false,
+          "nested_mind_live_activation_allowed": false,
+          "review_only": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "raw_private_payload_storage_allowed": false,
+        "reason_codes": [
+          "operator_expired_preview"
+        ],
+        "review_evidence_ref": "proof://personal-assistant/memory/operator-review-005",
+        "review_id": "pa_memory_review_expired_005",
+        "reviewed_at": "2026-06-15T00:04:00+00:00",
+        "reviewer_ref": "operator:tamirat",
+        "revision_request": "",
+        "secret_value_storage_allowed": false
+      },
+      "review_id": "pa_memory_review_expired_005",
+      "reviewed_at": "2026-06-15T00:04:00+00:00",
+      "reviewer_ref": "operator:tamirat"
+    }
+  ],
+  "source_projection": "operator_supplied_memory_review_evidence"
+}

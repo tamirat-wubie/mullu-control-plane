@@ -1,0 +1,197 @@
+{
+  "symbol_id": "universal-symbol-mullu.universal-symbol-kernel-0000000000000001",
+  "symbol_version": "universal_symbol.v1",
+  "generated_at": "2026-06-16T00:00:00Z",
+  "symbol_identity": {
+    "label": "Universal Symbol Kernel",
+    "symbol_kind": "concept",
+    "domain": "foundation_symbolics",
+    "local_name": "universal_symbol_kernel",
+    "canonical_ref": "schemas/universal_symbol.schema.json",
+    "ontology_status": "candidate",
+    "definition": "A boundary-drawn, constraint-held, mesh-embedded causal unit that can represent concepts, skills, components, receipts, actions, questions, answers, metadata, relations, traces, proofs, failures, unknowns, policies, boundaries, and artifacts without granting runtime authority."
+  },
+  "symbol_boundary": {
+    "boundary_scope": "foundation-mode-symbol-native-contract",
+    "inside_refs": [
+      "symbol://identity",
+      "symbol://boundary",
+      "symbol://metadata",
+      "symbol://relations",
+      "symbol://causality",
+      "symbol://lineage",
+      "symbol://governance",
+      "symbol://proof",
+      "symbol://skill-projection"
+    ],
+    "outside_refs": [
+      "runtime://live-dispatch",
+      "connector://live-call",
+      "filesystem://write",
+      "external://write",
+      "closure://terminal"
+    ],
+    "protected_refs": [
+      "secret://raw-values",
+      "payload://raw-private-data",
+      "governance://authority-boundary"
+    ],
+    "environment_refs": [
+      "docs/73_snet_operator_read_model.md",
+      "docs/MULLU_COMPONENT_HARNESS.md",
+      "docs/52_mullu_governance_protocol.md"
+    ],
+    "retention_policy_ref": "retention://universal-symbol-kernel/foundation-digest-and-refs-only"
+  },
+  "symbol_metadata": {
+    "metadata_refs": [
+      "metadata://identity-is-required",
+      "metadata://metadata-is-symbolizable",
+      "metadata://unknowns-are-first-class"
+    ],
+    "metadata_is_symbolizable": true,
+    "question_refs": [
+      "wh://what",
+      "wh://why",
+      "wh://how",
+      "wh://depends-on"
+    ],
+    "answer_refs": [
+      "answer://foundation-symbol-contract"
+    ],
+    "unknown_refs": [
+      "unknown://runtime-admission-awaiting-evidence"
+    ],
+    "contradiction_refs": []
+  },
+  "symbol_relations": {
+    "relation_refs": [
+      "relation://snet-to-universal-symbol",
+      "relation://teamops-receipt-to-symbol",
+      "relation://software-dev-receipt-to-symbol"
+    ],
+    "upstream_refs": [
+      "mcoi/mcoi_runtime/contracts/snet.py",
+      "mcoi/mcoi_runtime/snet/engine.py"
+    ],
+    "downstream_refs": [
+      "capabilities/software_dev/capability_pack.json",
+      "docs/MULLU_COMPONENT_HARNESS.md"
+    ],
+    "peer_refs": [
+      "schemas/snet_mesh_receipt.schema.json",
+      "schemas/sccml_trace_adapter_witness.schema.json"
+    ],
+    "relation_is_symbolizable": true
+  },
+  "symbol_causality": {
+    "cause_refs": [
+      "cause://user-defined-symbol-theory",
+      "cause://snet-partial-symbol-implementation"
+    ],
+    "effect_refs": [
+      "effect://platform-wide-symbol-envelope-ready-for-validation"
+    ],
+    "pre_state_ref": "state://snet-symbols-local-only",
+    "post_state_ref": "state://universal-symbol-contract-foundation-only",
+    "causal_trace_ref": "trace://universal-symbol-kernel/foundation-admission",
+    "unsupported_causal_gap_refs": [
+      "gap://no-live-symbol-runtime-yet",
+      "gap://no-automatic-skill-symbolization-yet",
+      "gap://no-terminal-closure-authority"
+    ],
+    "causality_is_symbolizable": true
+  },
+  "symbol_lineage": {
+    "origin_ref": "conversation://symbol-definition-deep-application-request",
+    "parent_symbol_refs": [
+      "symbol://snet-recursive-mesh",
+      "symbol://component-harness",
+      "symbol://sccml-trace-adapter-witness"
+    ],
+    "child_symbol_refs": [
+      "symbol://teamops-receipt-envelope",
+      "symbol://software-dev-change-envelope",
+      "symbol://worker-receipt-envelope"
+    ],
+    "promotion_refs": [
+      "promotion://snet-symbol-to-universal-symbol-boundary"
+    ],
+    "mutation_refs": []
+  },
+  "symbol_governance": {
+    "governance_mode": "foundation",
+    "uao_ref": "uao://universal-symbol-kernel/foundation",
+    "policy_refs": [
+      "policy://foundation-mode",
+      "policy://no-runtime-authority",
+      "policy://no-raw-private-payload-retention"
+    ],
+    "authority_refs": [],
+    "approval_refs": [],
+    "blocked_action_refs": [
+      "blocked://connector-call",
+      "blocked://external-write",
+      "blocked://filesystem-write",
+      "blocked://runtime-dispatch",
+      "blocked://state-mutation",
+      "blocked://terminal-closure",
+      "blocked://success-claim"
+    ],
+    "risk_tier": "medium"
+  },
+  "symbol_proof": {
+    "proof_state": "awaiting_evidence",
+    "proof_refs": [
+      "proof://schema-valid-universal-symbol"
+    ],
+    "receipt_refs": [
+      "receipt://universal-symbol-foundation-example"
+    ],
+    "witness_refs": [
+      "witness://foundation-mode-no-authority"
+    ],
+    "terminal_closure_ref": "",
+    "proof_is_symbolizable": true
+  },
+  "symbol_skill_projection": {
+    "projected_skill_refs": [
+      "skill://teamops-shared-inbox",
+      "skill://software-dev",
+      "skill://snet",
+      "skill://sccml-trace-adapter"
+    ],
+    "adapter_refs": [
+      "adapter://future-symbol-skill-adapter"
+    ],
+    "skill_transfer_refs": [
+      "transfer://teamops-proof-chain-to-software-dev-proof-chain"
+    ],
+    "skill_projection_is_advisory_only": true
+  },
+  "symbol_authority_boundary": {
+    "raw_private_payload_stored": false,
+    "raw_secret_value_stored": false,
+    "connector_call_performed": false,
+    "external_write_performed": false,
+    "filesystem_write_performed": false,
+    "runtime_dispatch_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "contract_summary": {
+    "symbol_native_boundary": true,
+    "everything_symbolizable": true,
+    "authority_denial_count": 9,
+    "symbolizable_surface_count": 8,
+    "evidence_ref_count": 5
+  },
+  "evidence_refs": [
+    "schemas/universal_symbol.schema.json",
+    "examples/universal_symbol_kernel.foundation.json",
+    "docs/91_universal_symbol_kernel.md",
+    "scripts/validate_universal_symbol_kernel.py",
+    "tests/test_validate_universal_symbol_kernel.py"
+  ]
+}

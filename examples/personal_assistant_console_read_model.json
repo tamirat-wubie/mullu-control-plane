@@ -1,0 +1,1414 @@
+{
+  "console_id": "personal_assistant_console_foundation",
+  "status": "foundation_read_only",
+  "solver_outcome": "SolvedVerified",
+  "generated_at": "2026-06-14T00:00:00Z",
+  "governed": true,
+  "sections": {
+    "chat": {
+      "item_count": 0,
+      "execution_allowed": false
+    },
+    "tasks": {
+      "item_count": 0,
+      "task_write_allowed": false
+    },
+    "approvals": {
+      "item_count": 0,
+      "execution_allowed": false
+    },
+    "receipts": {
+      "item_count": 1,
+      "receipt_required": true
+    },
+    "skills": {
+      "item_count": 15,
+      "registry_loaded": true
+    },
+    "memory": {
+      "item_count": 0,
+      "live_memory_write_allowed": false
+    },
+    "teamops": {
+      "item_count": 0,
+      "live_probe_allowed": false
+    },
+    "lane_status": {
+      "item_count": 12,
+      "execution_allowed": false
+    }
+  },
+  "chat": {
+    "recent_requests": [],
+    "ask_clarification_allowed": true,
+    "draft_allowed": true,
+    "execution_allowed": false,
+    "external_actions_allowed": false
+  },
+  "tasks": {
+    "items": [],
+    "task_write_allowed": false,
+    "system_of_record_write_allowed": false
+  },
+  "approval_queue": {
+    "approval_count": 0,
+    "approval_ids": [],
+    "state_counts": {
+      "requested": 0,
+      "approved": 0,
+      "rejected": 0,
+      "revised": 0,
+      "blocked": 0
+    },
+    "receipt_ids": [],
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "external_send_allowed": false,
+    "connector_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
+    "approval_is_execution": false,
+    "records": [],
+    "metadata": {
+      "foundation_only": true,
+      "queue_projection": "read_model",
+      "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+      "live_connector_execution_allowed": false,
+      "approval_decision_executes_action": false
+    }
+  },
+  "receipts": {
+    "receipt_count": 1,
+    "items": [
+      {
+        "receipt_id": "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614",
+        "receipt_kind": "read_only_worker_rehearsal_receipt",
+        "source_receipt_ref": "examples/read_only_worker_rehearsal_receipt.foundation.json",
+        "source_schema_ref": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+        "binding_ref": "examples/read_only_worker_binding.foundation.json",
+        "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+        "selected_worker_path": "read_only_repo_inspection",
+        "worker_id": "worker_local_read_only_repo_inspection",
+        "rehearsal_mode": "LOCAL_DRY_RUN",
+        "decision": "rehearsal_recorded",
+        "solver_outcome": "SolvedVerified",
+        "dispatch_admitted": false,
+        "runtime_dispatch_allowed": false,
+        "filesystem_write_allowed": false,
+        "external_effect_allowed": false,
+        "connector_call_allowed": false,
+        "terminal_closure_allowed": false,
+        "success_claim_allowed": false,
+        "output_digest": "sha256:9bdf907542da43c8c83374e0c1a880bb4b9bf9792a67997c15c061d56f33e977",
+        "evidence_ref_count": 8
+      }
+    ],
+    "receipt_required_for_actions": true,
+    "viewer_binding": {
+      "viewer_id": "foundation_receipt_viewer_binding",
+      "viewer_state": "foundation_read_only",
+      "foundation_only": true,
+      "projection_count": 1,
+      "projected_receipt_ids": [
+        "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
+      ],
+      "source_receipt_refs": [
+        "examples/read_only_worker_rehearsal_receipt.foundation.json"
+      ],
+      "read_only_worker_rehearsal_bound": true,
+      "runtime_dispatch_allowed": false,
+      "filesystem_write_allowed": false,
+      "external_effect_allowed": false,
+      "connector_call_allowed": false,
+      "terminal_closure_allowed": false,
+      "success_claim_allowed": false
+    }
+  },
+  "skills": {
+    "skill_count": 15,
+    "skill_ids": [
+      "calendar.day.brief",
+      "calendar.event.draft",
+      "deployment.publish.review",
+      "document.summarize",
+      "email.inbox.summarize",
+      "email.response.draft",
+      "email.send.with_approval",
+      "github.pr.summarize",
+      "math.reasoning.plan",
+      "memory.observe",
+      "personal_assistant.clarification.request",
+      "planning.optimize_schedule",
+      "research.web_search",
+      "task.create_draft",
+      "teamops.shared_inbox.plan"
+    ],
+    "groups": [
+      "calendar",
+      "document",
+      "foundation_governance",
+      "github_codex",
+      "inbox",
+      "math",
+      "memory",
+      "planning",
+      "research",
+      "task",
+      "teamops"
+    ],
+    "risk_levels": {
+      "P0": 2,
+      "P1": 4,
+      "P2": 7,
+      "P3": 0,
+      "P4": 1,
+      "P5": 1
+    },
+    "skills": [
+      {
+        "skill_id": "calendar.day.brief",
+        "name": "Calendar Day Brief",
+        "description": "Summarize calendar events without creating, moving, canceling, or inviting.",
+        "group": "calendar",
+        "mode": "read_only",
+        "risk_level": "P1",
+        "requires_approval": false,
+        "connectors": [
+          "google_calendar"
+        ],
+        "inputs": [
+          "date_window"
+        ],
+        "outputs": [
+          "day_brief",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "create_event",
+          "move_event",
+          "cancel_event",
+          "invite_people",
+          "connector_mutation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+        "capability_refs": [
+          "calendar.read",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": true,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "calendar.event.draft",
+        "name": "Calendar Event Draft",
+        "description": "Prepare a proposed calendar event without creating or inviting.",
+        "group": "calendar",
+        "mode": "draft_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [
+          "google_calendar"
+        ],
+        "inputs": [
+          "meeting_goal",
+          "time_constraints"
+        ],
+        "outputs": [
+          "event_draft",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "draft",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "create_event",
+          "move_event",
+          "cancel_event",
+          "invite_people",
+          "connector_mutation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "calendar.conflict_check",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": true,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "deployment.publish.review",
+        "name": "Deployment Publication Review",
+        "description": "Review a future deployment publication request without deploying.",
+        "group": "foundation_governance",
+        "mode": "blocked",
+        "risk_level": "P5",
+        "requires_approval": true,
+        "connectors": [],
+        "inputs": [
+          "deployment_request_ref"
+        ],
+        "outputs": [
+          "readiness_review",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "plan",
+          "review_receipt",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "deploy_service",
+          "publish",
+          "public_post",
+          "system_of_record_write"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P5",
+        "capability_refs": [
+          "personal_assistant.approval.classify",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": true
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "execution_enabled": false
+        }
+      },
+      {
+        "skill_id": "document.summarize",
+        "name": "Document Summary",
+        "description": "Summarize a document through an approved read projection.",
+        "group": "document",
+        "mode": "read_only",
+        "risk_level": "P1",
+        "requires_approval": false,
+        "connectors": [
+          "google_drive"
+        ],
+        "inputs": [
+          "document_ref"
+        ],
+        "outputs": [
+          "summary",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "extract",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "publish",
+          "delete",
+          "external_submission",
+          "system_of_record_write"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+        "capability_refs": [
+          "document.read",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": true,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "email.inbox.summarize",
+        "name": "Inbox Summary",
+        "description": "Summarize inbox messages through a redacted read-only projection.",
+        "group": "inbox",
+        "mode": "read_only",
+        "risk_level": "P1",
+        "requires_approval": false,
+        "connectors": [
+          "gmail"
+        ],
+        "inputs": [
+          "time_window",
+          "priority_filter"
+        ],
+        "outputs": [
+          "summary",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "classify",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "send",
+          "delete",
+          "archive",
+          "forward",
+          "label_batch",
+          "connector_mutation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+        "capability_refs": [
+          "email.read",
+          "email.search",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": true,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "email.response.draft",
+        "name": "Email Response Draft",
+        "description": "Prepare a response draft artifact without sending or mutating mailbox state.",
+        "group": "inbox",
+        "mode": "draft_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [
+          "gmail"
+        ],
+        "inputs": [
+          "message_ref",
+          "response_goal"
+        ],
+        "outputs": [
+          "draft_text",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "draft",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "send",
+          "forward",
+          "archive",
+          "delete",
+          "connector_mutation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "email.reply_suggest",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": true,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "email.send.with_approval",
+        "name": "Send Email With Approval",
+        "description": "Future approval-gated external email send boundary; not executable in this foundation layer.",
+        "group": "inbox",
+        "mode": "approval_required",
+        "risk_level": "P4",
+        "requires_approval": true,
+        "connectors": [
+          "gmail"
+        ],
+        "inputs": [
+          "draft_ref",
+          "recipient_refs",
+          "approval_ref"
+        ],
+        "outputs": [
+          "provider_receipt_ref",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "send",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "send_without_approval",
+          "recipient_unapproved",
+          "connector_mutation_without_receipt"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P4",
+        "capability_refs": [
+          "email.send.with_approval",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": true,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": true,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "execution_enabled": false
+        }
+      },
+      {
+        "skill_id": "github.pr.summarize",
+        "name": "Pull Request Summary",
+        "description": "Summarize repository or pull-request state without pushing or merging.",
+        "group": "github_codex",
+        "mode": "read_only",
+        "risk_level": "P1",
+        "requires_approval": false,
+        "connectors": [
+          "github"
+        ],
+        "inputs": [
+          "repository_ref",
+          "pull_request_ref"
+        ],
+        "outputs": [
+          "summary",
+          "risk_notes",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "recommend",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "open_pull_request",
+          "merge_pull_request",
+          "push_branch",
+          "deploy_service"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+        "capability_refs": [
+          "software_dev.repo_map.read",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": true,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "math.reasoning.plan",
+        "name": "Math Reasoning Plan",
+        "description": "Calculate, compare scenarios, check units, and explain assumptions without writing records, moving money, or mutating connectors.",
+        "group": "math",
+        "mode": "planning_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "problem_statement",
+          "known_values",
+          "constraints"
+        ],
+        "outputs": [
+          "calculation_plan",
+          "assumption_report",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "plan",
+          "compare",
+          "optimize",
+          "ask_clarification",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "pay_invoice",
+          "paid_subscription_action",
+          "system_of_record_write",
+          "connector_mutation",
+          "external_submission",
+          "public_post",
+          "publish",
+          "deploy_service"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "personal_assistant.skill_plan.build",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "math_execution_boundary": "planning_only"
+        }
+      },
+      {
+        "skill_id": "memory.observe",
+        "name": "Memory Observation Candidate",
+        "description": "Prepare evidence-backed memory observations without writing live memory.",
+        "group": "memory",
+        "mode": "planning_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "claim",
+          "source_ref",
+          "receipt_ref"
+        ],
+        "outputs": [
+          "memory_observation_candidate",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "memory_observe",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "memory_write",
+          "raw_chat_log_stored",
+          "live_nested_mind_activation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "personal_assistant.memory_observation.prepare",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "nested_mind_status": "staging_only"
+        }
+      },
+      {
+        "skill_id": "personal_assistant.clarification.request",
+        "name": "Personal Assistant Clarification Request",
+        "description": "Prepare WHQR clarification requests when an assistant request is missing required bindings.",
+        "group": "planning",
+        "mode": "planning_only",
+        "risk_level": "P0",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "missing_bindings",
+          "request_context"
+        ],
+        "outputs": [
+          "clarification_requests",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "ask_clarification",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "send",
+          "delete",
+          "archive",
+          "forward",
+          "connector_mutation",
+          "system_of_record_write"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+        "capability_refs": [
+          "personal_assistant.clarification.request",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "whqr_bridge": true
+        }
+      },
+      {
+        "skill_id": "planning.optimize_schedule",
+        "name": "Schedule Optimization Plan",
+        "description": "Assign operator-supplied work items to operator-supplied time windows without creating events, writing tasks, or mutating systems.",
+        "group": "planning",
+        "mode": "planning_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "objective",
+          "time_windows",
+          "work_items",
+          "constraints"
+        ],
+        "outputs": [
+          "schedule_plan",
+          "capacity_summary",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "plan",
+          "optimize",
+          "recommend",
+          "ask_clarification",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "create_event",
+          "move_event",
+          "cancel_event",
+          "invite_people",
+          "message_person",
+          "system_of_record_write",
+          "connector_mutation",
+          "external_submission",
+          "public_post",
+          "pay_invoice",
+          "paid_subscription_action",
+          "deploy_service",
+          "memory_write"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "personal_assistant.planning.schedule_preview",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "planning_execution_boundary": "preview_only"
+        }
+      },
+      {
+        "skill_id": "research.web_search",
+        "name": "Web Research",
+        "description": "Collect and compare public sources without submission or posting.",
+        "group": "research",
+        "mode": "read_only",
+        "risk_level": "P0",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "research_question"
+        ],
+        "outputs": [
+          "source_compare",
+          "citation_pack",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "read",
+          "summarize",
+          "compare",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "external_submission",
+          "public_post",
+          "paid_subscription_action"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+        "capability_refs": [
+          "personal_assistant.skill_plan.build",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": true,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "task.create_draft",
+        "name": "Task Draft",
+        "description": "Prepare a task proposal without writing to a task system or memory.",
+        "group": "task",
+        "mode": "draft_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [],
+        "inputs": [
+          "task_goal",
+          "source_ref",
+          "priority",
+          "due_hint"
+        ],
+        "outputs": [
+          "task_draft",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "plan",
+          "draft",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "system_of_record_write",
+          "connector_mutation",
+          "memory_write",
+          "external_submission"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "task.draft.prepare",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": true,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "task_write_boundary": "approval_required_future"
+        }
+      },
+      {
+        "skill_id": "teamops.shared_inbox.plan",
+        "name": "TeamOps Shared Inbox Plan",
+        "description": "Prepare a shared-inbox handoff plan without mailbox mutation.",
+        "group": "teamops",
+        "mode": "planning_only",
+        "risk_level": "P2",
+        "requires_approval": false,
+        "connectors": [
+          "gmail"
+        ],
+        "inputs": [
+          "queue_ref",
+          "operator_goal"
+        ],
+        "outputs": [
+          "handoff_plan",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "plan",
+          "prepare_packet",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "send",
+          "archive",
+          "delete",
+          "label_batch",
+          "connector_mutation"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+        "capability_refs": [
+          "personal_assistant.skill_plan.build",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": false,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true
+        }
+      }
+    ]
+  },
+  "memory": {
+    "candidate_count": 0,
+    "memory_observation_ids": [],
+    "memory_types": [],
+    "live_memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "raw_private_payload_storage_allowed": false,
+    "secret_value_storage_allowed": false,
+    "candidate_only": true,
+    "candidates": [],
+    "metadata": {
+      "foundation_only": true,
+      "ledger_projection": "read_model",
+      "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+      "live_memory_write_allowed": false,
+      "nested_mind_live_activation_allowed": false,
+      "raw_private_payload_storage_allowed": false,
+      "secret_value_storage_allowed": false
+    }
+  },
+  "teamops": {
+    "plans": [],
+    "live_probe_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "provider_call_allowed": false
+  },
+  "lane_status": {
+    "status_id": "personal_assistant_foundation_lane_status",
+    "foundation_only": true,
+    "lane_count": 12,
+    "runtime_preview_lane_count": 7,
+    "read_model_lane_count": 2,
+    "projection_only_lane_count": 3,
+    "governed": true,
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "lanes": [
+      {
+        "lane_id": "request_intake_whqr",
+        "display_name": "Request Intake and WHQR",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/requests/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_request.schema.json",
+          "schemas/personal_assistant_plan.schema.json",
+          "schemas/personal_assistant_receipt.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_receipt.py",
+          "tests/test_personal_assistant_intake.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "skill_registry",
+        "display_name": "Skill Registry",
+        "stage": "runtime_read_model",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/skills"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_skill.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_skill_registry.py",
+          "tests/test_personal_assistant_skill_registry.py",
+          "tests/test_personal_assistant_runtime_skill_registry.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "approval_queue",
+        "display_name": "Approval Queue",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/approval-queue",
+          "/api/v1/personal-assistant/approval-queue/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_approval.schema.json",
+          "schemas/personal_assistant_approval_queue.schema.json",
+          "schemas/personal_assistant_approval_decision.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_approval_queue.py",
+          "scripts/validate_personal_assistant_approval_decision.py",
+          "tests/test_personal_assistant_approval_queue.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "memory_observation",
+        "display_name": "Memory Observation",
+        "stage": "candidate_only",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/memory-observations",
+          "/api/v1/personal-assistant/memory-observations/preview",
+          "/api/v1/personal-assistant/memory-observations/review/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_memory_observation.schema.json",
+          "schemas/personal_assistant_memory_review.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_memory_observation.py",
+          "scripts/validate_personal_assistant_memory_review.py",
+          "tests/test_personal_assistant_memory_runtime.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "read_only_projection",
+        "display_name": "Read-Only Inbox and Calendar",
+        "stage": "projection_only",
+        "state": "SolvedVerified",
+        "route_refs": [],
+        "schema_refs": [
+          "schemas/personal_assistant_read_only_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_read_only_projection.py",
+          "tests/test_validate_personal_assistant_read_only_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "draft_projection",
+        "display_name": "Draft-Only Assistant",
+        "stage": "projection_only",
+        "state": "SolvedVerified",
+        "route_refs": [],
+        "schema_refs": [
+          "schemas/personal_assistant_draft_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_draft_projection.py",
+          "tests/test_validate_personal_assistant_draft_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "teamops_shared_inbox",
+        "display_name": "TeamOps Shared Inbox",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_teamops_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_teamops_projection.py",
+          "tests/test_validate_personal_assistant_teamops_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "github_codex_review",
+        "display_name": "GitHub and Codex Review",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/github-codex/review/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_github_codex_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_github_codex_projection.py",
+          "tests/test_validate_personal_assistant_github_codex_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "research_source_compare",
+        "display_name": "Research Source Compare",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/research/source-compare/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_research_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_research_projection.py",
+          "tests/test_validate_personal_assistant_research_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "math_reasoning",
+        "display_name": "Math Reasoning",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/math/reasoning/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_math_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_math_projection.py",
+          "tests/test_validate_personal_assistant_math_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "schedule_planning",
+        "display_name": "Schedule Planning",
+        "stage": "runtime_preview",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/personal-assistant/planning/schedule/preview"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_planning_projection.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_planning_projection.py",
+          "tests/test_validate_personal_assistant_planning_projection.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      },
+      {
+        "lane_id": "operator_console",
+        "display_name": "Operator Console",
+        "stage": "read_model",
+        "state": "SolvedVerified",
+        "route_refs": [
+          "/api/v1/console/personal-assistant",
+          "/api/v1/console/personal-assistant/view"
+        ],
+        "schema_refs": [
+          "schemas/personal_assistant_console_read_model.schema.json"
+        ],
+        "validator_refs": [
+          "scripts/validate_personal_assistant_console_read_model.py",
+          "tests/test_validate_personal_assistant_console_read_model.py",
+          "tests/test_personal_assistant_console.py"
+        ],
+        "foundation_only": true,
+        "execution_allowed": false,
+        "live_connector_execution_allowed": false,
+        "connector_mutation_allowed": false,
+        "external_effect_allowed": false,
+        "customer_readiness_claim_allowed": false,
+        "nested_mind_live_activation_allowed": false,
+        "receipt_required": true
+      }
+    ]
+  },
+  "assurance": {
+    "assurance_id": "personal_assistant_foundation_no_effect_assurance",
+    "outcome": "SolvedVerified",
+    "foundation_only": true,
+    "ready_for_live_execution": false,
+    "ready_for_customer_readiness_claim": false,
+    "authority_drift_detected": false,
+    "blocking_reasons": [],
+    "checked_controls": [
+      "approval_queue_no_execution",
+      "approval_decision_is_not_execution",
+      "memory_candidate_only",
+      "nested_mind_staging_only",
+      "teamops_no_live_probe",
+      "no_raw_private_payload_serialization",
+      "no_secret_value_serialization",
+      "receipt_viewer_read_only_projection",
+      "foundation_lane_status_no_effect"
+    ],
+    "next_action": "continue foundation-stage assistant hardening without enabling live execution"
+  },
+  "blocked_actions": [
+    "send_email",
+    "delete_email",
+    "archive_email",
+    "forward_email",
+    "label_large_batch",
+    "create_calendar_event",
+    "move_calendar_event",
+    "cancel_calendar_event",
+    "invite_people",
+    "message_person",
+    "store_contact",
+    "export_contact_list",
+    "pay_invoice",
+    "publish_public_post",
+    "deploy_service",
+    "mutate_connector_state",
+    "write_system_of_record",
+    "activate_live_nested_mind"
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "mailbox_read_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "external_send_allowed": false,
+    "calendar_write_allowed": false,
+    "task_write_allowed": false,
+    "memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "deployment_mutation_allowed": false,
+    "public_readiness_claim_allowed": false
+  },
+  "private_payload_policy": {
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false,
+    "connector_payload_projection": "ref_only",
+    "chat_log_projection": "none"
+  },
+  "evidence_refs": [
+    "examples/personal_assistant_skill_registry.json",
+    "examples/read_only_worker_rehearsal_receipt.foundation.json",
+    "schemas/read_only_worker_rehearsal_receipt.schema.json",
+    "scripts/validate_read_only_worker_rehearsal_receipt.py",
+    "tests/test_validate_read_only_worker_rehearsal_receipt.py"
+  ],
+  "receipt_refs": [
+    "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
+  ]
+}

@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-observation-routing-receipt:1",
+  "title": "TeamOps Shared Inbox Observation Routing Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "workflow_id",
+    "source_live_probe_receipt_ref",
+    "source_live_probe_receipt_id",
+    "live_probe_receipt_valid",
+    "live_probe_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
+    "status",
+    "solver_outcome",
+    "proof_state",
+    "routed_at",
+    "observation_digest",
+    "message_digest",
+    "thread_digest",
+    "subject_hash",
+    "sender_hash",
+    "recipient_hashes",
+    "classification",
+    "priority",
+    "owner_queue",
+    "assignment_required",
+    "assigned_owner_ref",
+    "draft_response_required",
+    "approval_required_before_external_send",
+    "external_send_allowed",
+    "draft_created_by_producer",
+    "external_mailbox_write_performed",
+    "external_message_sent",
+    "provider_mutation_performed",
+    "raw_message_content_serialized",
+    "no_secret_values_serialized",
+    "evidence_refs",
+    "blocked_until",
+    "recovery_actions",
+    "validation_commands"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-observation-routing-receipt-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "team_ops.shared_inbox_triage"
+    },
+    "source_live_probe_receipt_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_live_probe_receipt_id": {
+      "type": "string"
+    },
+    "live_probe_receipt_valid": {
+      "type": "boolean"
+    },
+    "live_probe_receipt_ready": {
+      "type": "boolean"
+    },
+    "provider_observation_receipt_ref": {
+      "type": "string"
+    },
+    "provider_observation_receipt_id": {
+      "type": "string"
+    },
+    "provider_observation_receipt_valid": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["blocked", "failed", "passed"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "GovernanceBlocked", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Fail", "Pass"]
+    },
+    "routed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observation_digest": {
+      "type": "string"
+    },
+    "message_digest": {
+      "type": "string"
+    },
+    "thread_digest": {
+      "type": "string"
+    },
+    "subject_hash": {
+      "type": "string"
+    },
+    "sender_hash": {
+      "type": "string"
+    },
+    "recipient_hashes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sha256_hex"
+      }
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "support_request",
+        "sales_request",
+        "finance_request",
+        "security_request",
+        "internal_ops",
+        "unknown"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"]
+    },
+    "owner_queue": {
+      "type": "string",
+      "enum": ["support", "sales", "finance", "security", "operations", "triage"]
+    },
+    "assignment_required": {
+      "type": "boolean"
+    },
+    "assigned_owner_ref": {
+      "type": "string"
+    },
+    "draft_response_required": {
+      "type": "boolean"
+    },
+    "approval_required_before_external_send": {
+      "type": "boolean"
+    },
+    "external_send_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "draft_created_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_message_sent": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_message_content_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "live_probe_receipt_valid": {
+            "const": true
+          },
+          "live_probe_receipt_ready": {
+            "const": true
+          },
+          "provider_observation_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": {
+            "const": true
+          },
+          "solver_outcome": {
+            "const": "SolvedVerified"
+          },
+          "proof_state": {
+            "const": "Pass"
+          },
+          "observation_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "message_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "thread_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "subject_hash": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "sender_hash": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "recipient_hashes": {
+            "minItems": 1
+          },
+          "classification": {
+            "enum": [
+              "support_request",
+              "sales_request",
+              "finance_request",
+              "security_request",
+              "internal_ops"
+            ]
+          },
+          "owner_queue": {
+            "enum": ["support", "sales", "finance", "security", "operations"]
+          },
+          "approval_required_before_external_send": {
+            "const": true
+          },
+          "evidence_refs": {
+            "minItems": 1
+          },
+          "blocked_until": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          },
+          "assignment_required": {
+            "const": true
+          }
+        },
+        "required": ["status", "assignment_required"]
+      },
+      "then": {
+        "properties": {
+          "assigned_owner_ref": {
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

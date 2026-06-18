@@ -1,0 +1,67 @@
+{
+  "design_id": "sdlc_design_adapter_external_effect_receipt_boundary_20260615",
+  "requirement_id": "sdlc_req_adapter_external_effect_receipt_boundary_20260615",
+  "architecture_summary": "Add a pure AdapterExternalEffectEvidence assessment to signed adapter worker clients. The assessment keeps plan-only receipts non-claiming, admits dry-run execution success only with local proof fields, and admits live-provider execution success only when provider observation hash/ref fields, idempotency key, rollback or recovery ref, approval ref, verification status, false secret disclosure, false forbidden-effect observation, and evidence refs are complete. Signed worker response validation invokes this assessment when the receipt declares effect evidence or the capability is a known external-write action, dispatcher worker results reuse the same assessment, and worker receipts emit normalized effect metadata for verified live-effect observations without provider network calls, request authentication, or credential mutation inside the assessment.",
+  "affected_modules": [
+    "gateway/adapter_worker_clients.py",
+    "gateway/capability_dispatch.py",
+    "gateway/browser_worker.py",
+    "gateway/email_calendar_worker.py",
+    "gateway/messaging_worker.py",
+    "gateway/phone_worker.py",
+    "tests/test_gateway/test_adapter_worker_clients.py",
+    "tests/test_gateway/test_adapter_worker_dispatch.py",
+    "docs/64_durable_gmail_connector_runtime_plan.md",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_sdlc_security_review.py",
+    "examples/sdlc/requirement_adapter_external_effect_receipt_boundary_20260615.json",
+    "examples/sdlc/design_adapter_external_effect_receipt_boundary_20260615.json",
+    "examples/sdlc/security_review_adapter_external_effect_receipt_boundary_20260615.json"
+  ],
+  "data_model_changes": [
+    "add AdapterExternalEffectEvidence as an immutable worker receipt record for plan-only, dry-run, and live-provider effect modes, approval ref, forbidden-effect observation, and secret-disclosure status",
+    "add AdapterExternalEffectAssessment as an immutable decision record with normalized evidence fields, blocker codes, execution_success_claim_allowed, plan_only, network_call_performed=false, and request_authentication_performed=false",
+    "extend adapter worker receipts with normalized effect_mode, external_effect_claimed, retained provider observation, idempotency, rollback/recovery, and secret-disclosure metadata for verified live effects"
+  ],
+  "schema_changes": [],
+  "validator_changes": [
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    "tests/test_gateway/test_adapter_worker_clients.py",
+    "tests/test_gateway/test_adapter_worker_dispatch.py",
+    "tests/test_gateway/test_browser_worker.py",
+    "tests/test_gateway/test_email_calendar_worker.py",
+    "tests/test_gateway/test_messaging_worker.py",
+    "tests/test_gateway/test_phone_worker.py",
+    "tests/test_gateway/test_worker_contract_import_without_fastapi.py",
+    "tests/test_gateway/test_proxy_policy.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_sdlc_security_review.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the adapter external-effect evidence types, assessment helper, signed receipt and dispatcher enforcement hooks, worker receipt metadata additions, focused tests, SDLC evidence artifacts, and durable connector documentation section, then rerun adapter worker tests, SDLC artifact validation, security review validation, release readiness validation, and workspace governance preflight.",
+  "migration_plan": "No persistence or deployment migration is required. Existing non-effect adapter worker responses retain their current signed receipt behavior. Known external-write responses must emit provider evidence, approval, idempotency, and recovery metadata before succeeded status is admitted.",
+  "test_plan": [
+    "python -m pytest tests/test_gateway/test_adapter_worker_clients.py -q",
+    "python -m pytest tests/test_gateway/test_adapter_worker_dispatch.py -q",
+    "python -m pytest tests/test_gateway/test_browser_worker.py tests/test_gateway/test_email_calendar_worker.py tests/test_gateway/test_messaging_worker.py tests/test_gateway/test_phone_worker.py -q",
+    "python -m pytest tests/test_gateway/test_worker_contract_import_without_fastapi.py tests/test_gateway/test_proxy_policy.py -q",
+    "python -m pytest tests/test_validate_sdlc_artifact.py tests/test_sdlc_security_review.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_adapter_external_effect_receipt_boundary_20260615.json --strict",
+    "python scripts/validate_sdlc_release_readiness.py --strict",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json"
+  ],
+  "uao_ref": "uao://sdlc/design/adapter-external-effect-receipt-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/design/adapter-external-effect-receipt-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/design/adapter-external-effect-receipt-boundary/20260615"
+}

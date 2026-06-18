@@ -146,17 +146,20 @@
       "run_id": "run-read-model-foundation",
       "evidence_refs": [
         "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
-        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_ONLY_STATUS_ROUTE_DESIGN.md"
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_ONLY_STATUS_ROUTE_DESIGN.md",
+        "examples/agentic_service_harness_github_repo_task_service.foundation.json"
       ],
       "command_log_refs": [
         "command://validator/agentic-service-harness-read-models",
         "command://validator/agentic-service-harness-read-model-persistence",
+        "command://validator/agentic-service-harness-github-repo-task-service",
         "command://validator/agentic-service-harness-read-only-status-route-design",
         "command://validator/agentic-service-harness-read-only-status-route"
       ],
       "test_log_refs": [
         "test://pytest/test-agentic-service-harness-read-models",
         "test://pytest/test-agentic-service-harness-read-model-persistence",
+        "test://pytest/test-agentic-service-harness-github-repo-task-service",
         "test://pytest/test-agentic-service-harness-read-only-status-route-design",
         "test://pytest/test-agentic-service-harness-read-only-status-route"
       ],
@@ -188,6 +191,240 @@
       "terminal_closure": false
     }
   ],
+  "workspace_allocations": [
+    {
+      "allocation_id": "workspace-allocation-read-model-foundation",
+      "sandbox_id": "sandbox-read-only-foundation",
+      "project_id": "project-agentic-service-harness",
+      "run_ids": [
+        "run-read-model-foundation"
+      ],
+      "branch_workspace_ref": "workspace://harness/read-model-foundation/read-only",
+      "base_branch": "main",
+      "working_branch_ref": "branch://none/read-only-projection",
+      "command_allowlist": [
+        "git.status",
+        "git.diff",
+        "python.validator"
+      ],
+      "path_allowlist": [
+        "."
+      ],
+      "timeout_seconds": 120,
+      "network_policy": "none",
+      "cleanup_receipt_ref": "receipt://sandbox-cleanup-read-model-foundation",
+      "command_log_collection_ref": "logs://harness/read-model-foundation/commands",
+      "test_log_collection_ref": "logs://harness/read-model-foundation/tests",
+      "diff_collection_ref": "diff://none/read-only-projection",
+      "redaction_policy": "hash_or_reference_only",
+      "read_only": true,
+      "workspace_created": false,
+      "commands_executed": false,
+      "files_written": false,
+      "cleanup_executed": false,
+      "production_mutation_allowed": false,
+      "secret_values_serialized": false
+    }
+  ],
+  "durable_entity_bindings": {
+    "store_contract_ref": "scripts/validate_agentic_service_harness_read_model_persistence.py",
+    "store_mode": "append_only_jsonl_rehearsal",
+    "read_only": true,
+    "append_enabled": false,
+    "mutation_routes_admitted": false,
+    "secret_values_serialized": false,
+    "entity_bindings": [
+      {
+        "entity_kind": "User",
+        "record_kind": "account",
+        "collection_ref": "read-model://accounts",
+        "primary_key": "user_id",
+        "tenant_key": "tenant_id",
+        "owner_ref_fields": [
+          "organization_memberships"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/user",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md"
+        ]
+      },
+      {
+        "entity_kind": "Organization",
+        "record_kind": "organization",
+        "collection_ref": "contract://organizations",
+        "primary_key": "organization_id",
+        "tenant_key": "tenant_id",
+        "owner_ref_fields": [
+          "owner_user_ids",
+          "admin_user_ids",
+          "project_ids"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/organization",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+        ]
+      },
+      {
+        "entity_kind": "Project",
+        "record_kind": "project",
+        "collection_ref": "read-model://projects",
+        "primary_key": "project_id",
+        "tenant_key": "tenant_id",
+        "owner_ref_fields": [
+          "organization_id",
+          "repository_connection_ids",
+          "agent_run_ids",
+          "receipt_refs",
+          "loop_status_ref"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/project",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "examples/agentic_service_harness_read_models.foundation.json"
+        ]
+      },
+      {
+        "entity_kind": "RepositoryConnection",
+        "record_kind": "repository",
+        "collection_ref": "read-model://repositories",
+        "primary_key": "connection_id",
+        "tenant_key": "project_id",
+        "owner_ref_fields": [
+          "project_id",
+          "credential_binding_ref"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/repository_connection",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "policy://harness/no-secret-serialization"
+        ]
+      },
+      {
+        "entity_kind": "AgentRun",
+        "record_kind": "run",
+        "collection_ref": "read-model://runs",
+        "primary_key": "run_id",
+        "tenant_key": "project_id",
+        "owner_ref_fields": [
+          "project_id",
+          "approval_gate_ids",
+          "receipt_id",
+          "evidence_bundle_id",
+          "result_summary_id"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/agent_run",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "policy://harness/no-adapter-execution"
+        ]
+      },
+      {
+        "entity_kind": "ApprovalRequest",
+        "record_kind": "approval",
+        "collection_ref": "read-model://approvals",
+        "primary_key": "gate_id",
+        "tenant_key": "run_id",
+        "owner_ref_fields": [
+          "run_id",
+          "evidence_refs"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/approval_gate",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "policy://harness/no-self-approval"
+        ]
+      },
+      {
+        "entity_kind": "Receipt",
+        "record_kind": "receipt",
+        "collection_ref": "read-model://receipts",
+        "primary_key": "receipt_id",
+        "tenant_key": "run_id",
+        "owner_ref_fields": [
+          "run_id",
+          "task_request_ref",
+          "evidence_refs"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness.schema.json#/$defs/agent_run_receipt",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "scripts/validate_agentic_service_harness_read_model_persistence.py"
+        ]
+      },
+      {
+        "entity_kind": "WorkspaceAllocation",
+        "record_kind": "workspace_allocation",
+        "collection_ref": "read-model://workspace_allocations",
+        "primary_key": "allocation_id",
+        "tenant_key": "project_id",
+        "owner_ref_fields": [
+          "project_id",
+          "sandbox_id",
+          "run_ids",
+          "cleanup_receipt_ref"
+        ],
+        "identity_source_ref": "schemas/agentic_service_harness_read_models.schema.json#/$defs/harness_workspace_allocation_read_model",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "workspace://harness/read-model-foundation/read-only"
+        ]
+      },
+      {
+        "entity_kind": "LoopStatus",
+        "record_kind": "loop_status",
+        "collection_ref": "read-model://projects/loop_status_ref",
+        "primary_key": "loop_status_ref",
+        "tenant_key": "project_id",
+        "owner_ref_fields": [
+          "project_id",
+          "loop_status_ref"
+        ],
+        "identity_source_ref": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md#public-api-foundation",
+        "read_model_source": "fixture_projection",
+        "write_authority_enabled": false,
+        "append_enabled": false,
+        "mutation_route": false,
+        "secret_values_serialized": false,
+        "evidence_refs": [
+          "loop://holistic-loop/read-model-foundation"
+        ]
+      }
+    ]
+  },
   "permission_snapshot": {
     "roles": [
       "viewer",
@@ -225,6 +462,11 @@
     {
       "validator_id": "agentic-service-harness-read-model-persistence",
       "command": "python scripts/validate_agentic_service_harness_read_model_persistence.py",
+      "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-github-repo-task-service",
+      "command": "python scripts/validate_agentic_service_harness_github_repo_task_service.py --strict",
       "required_for_closure": true
     },
     {

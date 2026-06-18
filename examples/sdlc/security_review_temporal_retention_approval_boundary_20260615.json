@@ -1,0 +1,60 @@
+{
+  "security_review_id": "sdlc_security_temporal_retention_approval_boundary_20260615",
+  "change_id": "sdlc_req_temporal_retention_approval_boundary_20260615",
+  "impact_categories": [
+    "tenant_scope",
+    "policy",
+    "receipts",
+    "audit",
+    "memory"
+  ],
+  "threat_model": "Temporal retention receipts guard lifecycle decisions that can lead to deletion, anonymization, archive, or review. The risk is a due timestamp being misread as sufficient authority for an irreversible lifecycle action. The mitigation is an approval-certificate and backup-guard boundary inside the same retention receipt, with deterministic blocker codes when due destructive or high-risk action requests omit approval refs, approval certificate hash, or backup guard hash.",
+  "required_checks": [
+    {
+      "category": "policy",
+      "check": "policy bypass check proving destructive and high-risk retention actions declare approval as required when retention checks are active",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_allows_delete_at_due_boundary"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proving due deletion is blocked without retention approval refs, approval certificate hash, and backup guard hash",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_due_delete_without_retention_approval"
+    },
+    {
+      "category": "tenant_scope",
+      "check": "IDOR tenant-scope check proving tenant and legal-hold checks continue to block lifecycle action independent of approval evidence",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_blocks_legal_hold_wrong_tenant_missing_evidence_and_sources"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check proving approval evidence fields and approval metadata remain visible in the audited receipt",
+      "status": "passed",
+      "evidence_ref": "schemas/temporal_retention_window_receipt.schema.json"
+    },
+    {
+      "category": "memory",
+      "check": "memory admission check proving retention-active records remain deferred rather than admitted for lifecycle action",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_temporal_retention_window.py::test_retention_window_defers_delete_before_delete_after"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "require retained approval certificate refs before due destructive or high-risk retention action allowance",
+    "require retained approval certificate hash before due destructive or high-risk retention action allowance",
+    "require backup guard hash when policy requires it",
+    "preserve legal hold, tenant scope, source receipt, and timing checks as independent blockers",
+    "keep the change local to receipt evaluation with no live deletion executor or provider authority"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/temporal-retention-approval-boundary/20260615"
+  ],
+  "uao_ref": "uao://sdlc/security-review/temporal-retention-approval-boundary/20260615",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/temporal-retention-approval-boundary/20260615",
+  "receipt_ref": "receipt://sdlc/security-review/temporal-retention-approval-boundary/20260615"
+}

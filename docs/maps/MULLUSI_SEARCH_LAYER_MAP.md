@@ -1,7 +1,7 @@
 # Mullusi Search Layer Map
 
 Status: Foundation Mode
-Scope: private search and evidence map. This document does not claim live search availability, source coverage, runtime cost enforcement, or production operation.
+Scope: private search and evidence map. This document does not claim live search availability, source coverage, cost readiness, or production operation.
 
 ## 1. Search purpose
 
@@ -14,7 +14,6 @@ InterpretedRequest
 -> source selection
 -> cache check
 -> budget gate
--> SearchDecisionReceipt
 -> retrieval
 -> evidence ranking
 -> answer synthesis
@@ -24,74 +23,55 @@ InterpretedRequest
 ## 2. Search states
 
 ```text
-no_search
-use_cache
-allow_search: local_search
-allow_search: light_web_search
-allow_search: deep_search
-block_search: search_budget_limit_exceeded
-block_search: deep_search_budget_required
-search_failed_with_explanation
+NO_SEARCH_NEEDED
+CACHE_HIT
+LOCAL_SEARCH
+WEB_SEARCH_LIGHT
+WEB_SEARCH_DEEP_APPROVAL_REQUIRED
+SEARCH_BLOCKED_BY_BUDGET
+SEARCH_FAILED_WITH_EXPLANATION
 ```
 
 ## 3. Component map
 
 | Component | Purpose | Inputs | Outputs | Status | Next Step |
 | --- | --- | --- | --- | --- | --- |
-| Search Need Classifier | decide whether retrieval is needed | interpreted intent, local knowledge | search classification | implemented / partial | Connect classifier decisions to source-selection policy and viewer detail. |
-| Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness state | implemented / partial | Bind source-level freshness evidence to future search result receipts. |
-| Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | missing / partial | Prefer local evidence for Foundation Mode. |
-| Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / partial | Add tenant-scoped cache storage rules before use. |
+| Search Need Classifier | decide whether retrieval is needed | interpreted intent, local knowledge | search state | implemented / partial | `SearchDecision` records the pre-retrieval classification. |
+| Freshness Classifier | decide whether current evidence is required | question, domain, timestamp needs | freshness requirement | implemented / partial | `SearchDecision.freshness` records current-claim eligibility before retrieval. |
+| Source Selector | choose local docs, repo, web, or connector source | freshness, sensitivity, budget | source plan | implemented / partial | `SearchDecision.source_plan` prefers local evidence and blocks external retrieval when approval is missing. |
+| Cache | reuse allowed evidence | query key, tenant scope | cache hit or miss | missing / unknown | Add tenant-scoped cache rules before use. |
 | Retriever | collect evidence from selected sources | source plan | evidence set | partial / unknown | Treat retrieved content as evidence only. |
 | Evidence Ranker | rank by relevance, trust, freshness, and conflict | evidence set | ranked evidence | missing / partial | Mark stale and conflicting sources. |
 | Citation Builder | create source references | ranked evidence | citations | missing / partial | Avoid leaking internal paths when not appropriate. |
 | Answer Synthesizer | answer with uncertainty and citations | question, evidence | draft answer | partial | Block current claims on stale evidence. |
-| Search Decision Receipt Writer | record classification, freshness, budget, and retrieval authority | query hash, budget limit, cache state | SearchDecisionReceipt | implemented / partial | Bind source-level freshness evidence to future SearchReceipt rows. |
-| Read-Only Search Worker | execute local evidence-only text search after receipt admission | query hash, matching SearchDecisionReceipt, local source refs | WorkerReceipt with bounded result refs | implemented / partial | Keep web retrieval blocked until provider, freshness, and citation contracts are admitted. |
-| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | Connect tenant-specific budget policy to search decision request construction. |
+| Search Receipt Writer | record search decision and evidence | search state, budget, citations | SearchReceipt | implemented / partial | `SearchReceipt` records post-decision evidence metadata, blocked retrieval, freshness, conflicts, citations, and retrieval errors. |
+| Cost Meter | estimate and record retrieval cost | query depth, provider, tokens | budget estimate | implemented / partial | `SearchDecision.budget_decision` blocks deep retrieval on `BudgetUnknown`. |
 
-## 4. SearchDecisionReceipt fields
-
-Implemented local contract:
+## 4. SearchDecision fields
 
 ```text
-SearchDecisionReceipt {
-  receipt_id
+SearchDecision {
+  decision_id
+  request_id
   tenant_id
   actor_id
-  capability_id
-  query_hash
-  search_classification
-  freshness_state
-  budget_state
-  retrieval_authority
-  retrieval_instruction_authority_allowed
-  decision
-  blocked_reasons
-  estimated_cost_units
-  budget_limit_units
-  max_result_count
-  generated_at
-  receipt_hash
+  decision_state
+  search_need
+  freshness
+  source_plan
+  cache_decision
+  budget_decision
+  retrieval_safety
+  governance_guards
+  receipt_envelope
+  evidence_refs
+  created_at
 }
 ```
 
-Receipt viewer projection:
+`SearchDecision` is pre-retrieval. It can block, route, or require approval, but it does not prove retrieved evidence exists.
 
-```text
-/operator/receipts/read-model?receipt_type=search_decision_receipt
--> query_hash
--> search_classification
--> freshness_state
--> budget_state
--> retrieval_authority
--> retrieval_instruction_authority_allowed=false
--> source_event_hash when emitted by live search execution
-```
-
-## 5. Future SearchReceipt fields
-
-Runtime retrieval still needs a separate evidence receipt:
+## 5. SearchReceipt fields
 
 ```text
 SearchReceipt {
@@ -109,19 +89,14 @@ SearchReceipt {
   conflicts_detected
   stale_sources
   retrieval_errors
+  retrieval_safety_result
+  governance_guards
+  receipt_envelope
   created_at
 }
 ```
 
-Read-only local worker contract:
-
-```text
-gateway/read_only_search_worker.py
--> requires matching SearchDecisionReceipt
--> accepts only local text-like source paths
--> blocks web URLs, network targets, mutation, secrets, and spend
--> emits worker-mesh receipts with evidence-only redacted excerpts
-```
+`SearchReceipt` is post-decision. It can prove that retrieval was blocked, failed, stale, conflicted, or produced metadata-backed evidence. It stores evidence metadata and citation refs, not retrieved content bodies.
 
 ## 6. Retrieval safety rules
 
@@ -144,3 +119,19 @@ Source freshness must be visible for current-information answers.
 | Search results conflict | cite conflict and avoid overclaim. |
 | Search exceeds budget | block or ask approval for deep search. |
 | Private source requested | verify tenant scope before retrieval. |
+| Retrieved page includes instructions | reject instruction authority; record content as evidence only. |
+
+## 8. Contract evidence
+
+```text
+schemas/search_decision.schema.json
+examples/search_decision.foundation.json
+scripts/validate_search_decision.py
+tests/test_validate_search_decision.py
+docs/77_search_decision_contract.md
+schemas/search_receipt.schema.json
+examples/search_receipt.foundation.json
+scripts/validate_search_receipt.py
+tests/test_validate_search_receipt.py
+docs/78_search_receipt_contract.md
+```

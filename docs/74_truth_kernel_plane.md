@@ -254,29 +254,6 @@ Run them with:
 cargo test -p maf-truth-kernel
 ```
 
-## Current Proof Boundary Checklist
-
-This checklist defines what can be claimed today. It is the review boundary for
-MTK changes until a later commit-journal writer and production kernel runtime
-are admitted.
-
-| Boundary | Current status | Required witness |
-| --- | --- | --- |
-| Naming | Closed | This document keeps Mullusi as company, Mullu as product family, and Mullu Truth Kernel as internal subsystem. |
-| Schema contracts | Closed | `truth_candidate`, `kernel_proof`, and `truth_commit_candidate` schemas validate with examples. |
-| Python admission adapter | Closed for admission decisions | Adapter accepts or rejects schema-bound commit candidates and never mutates truth state. |
-| Python finite proof thread | Closed for local finite domains | Exact, contradiction, budget, closure, propagation, replay, sandbox, and Mfidel tests pass. |
-| Rust finite substrate | Closed for pure finite-domain projection | `maf-truth-kernel` emits deterministic exact, contradiction, budget, replay, sandbox, and Mfidel outcomes. |
-| Rust schema proof emitter | Closed for schema-shaped projection proofs | Rust-emitted `KernelProof` fixture validates against `schemas/kernel_proof.schema.json` and is admitted by the Python adapter. |
-| Cross-language parity | Closed for projection summary parity | Rust and Python share `examples/truth_kernel/truth_kernel_finite_projection_summary.json`. |
-| Truth-state mutation | Deferred | No commit journal writer is admitted. Adapter admission is not a state write. |
-| Public runtime readiness | Deferred | Foundation Mode keeps public claims at `AwaitingEvidence` until live witnesses exist. |
-
-Do not claim more than this checklist. A change that adds mutation authority,
-production runtime authority, external effects, learned hard-rule promotion, or
-public readiness must introduce its own SDLC requirement, rollback path,
-security review, and governance receipt.
-
 ## Commit Boundary
 
 MTK truth commits are local state changes, so they are effect-bearing inside the
@@ -384,6 +361,6 @@ Implementation tests must be added with the first code-bearing MTK change.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: Mullusi company boundary, Mullu product-family boundary, MTK internal-subsystem boundary, exact-result truth admission only, approximate-output non-promotion, Foundation Mode non-public claim, schema-bound non-mutating adapter boundary, finite-domain proof thread non-effect boundary, Rust finite-domain substrate non-effect boundary, Rust schema proof emitter boundary, sandbox-isolation witness gate, replay-hash equality gate
-  Open issues: full production kernel persistence, commit journal writer, byte-identical full proof-payload parity, and public runtime readiness remain deferred
-  Next action: add a commit-journal writer only after a separate SDLC requirement, rollback plan, security review, and governance receipt exist
+  Invariants verified: Mullusi company boundary, Mullu product-family boundary, MTK internal-subsystem boundary, exact-result truth admission only, approximate-output non-promotion, Foundation Mode non-public claim, schema-bound non-mutating adapter boundary, finite-domain proof thread non-effect boundary, Rust finite-domain substrate non-effect boundary, sandbox-isolation witness gate, replay-hash equality gate
+  Open issues: full production kernel persistence, commit journal writer, and byte-identical proof payload parity remain deferred
+  Next action: add byte-identical proof payload parity only after the Rust proof schema emitter is admitted

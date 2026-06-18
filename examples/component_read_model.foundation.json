@@ -1179,11 +1179,11 @@
     "blocked_component_count": 1,
     "bound_route_count": 30,
     "bundle_count": 3,
-    "classified_declared_route_count": 424,
+    "classified_declared_route_count": 437,
     "component_count": 10,
     "lifecycle_receipt_count": 10,
     "proof_bound_count": 9,
-    "route_family_classification_count": 76
+    "route_family_classification_count": 77
   },
   "terminal_closure_required": true,
   "validators": [

@@ -1,0 +1,66 @@
+{
+  "requirement_id": "REQ-trusted-capture-evidence-packet-20260616",
+  "request_id": "continue-cross-repo-opportunity-map-trusted-capture-evidence-packet",
+  "problem_statement": "Capture policy and browser observation receipts exist, but future browser, screen, video, audio, sensor, and reality-capture evidence needs a standard digest-only packet before any live capture authority is considered.",
+  "success_criteria": [
+    "TrustedCaptureEvidencePacket validates against a public JSON schema and Foundation Mode example",
+    "TrustedCaptureEvidencePacket binds source-surface hash, capture policy ref, evidence classification ref, browser observation ref, consent ref, UAO ref, LifeMeaningJudgment ref, and digest refs for surface, frame, media, transcript, sensor, and artifact manifest evidence",
+    "TrustedCaptureEvidencePacket blocks live capture, media recording, screen recording, microphone capture, camera capture, sensor reads, file writes, connector calls, external writes, raw media storage, raw source-body storage, raw secret storage, publication, terminal closure, and success claims",
+    "TrustedCaptureEvidencePacket rejects authority drift, raw media or privacy drift, digest and scope drift, missing evidence refs, receipt ref drift, and summary count drift",
+    "TrustedCaptureEvidencePacket is covered by a focused validator, root test, protocol manifest entry, proof coverage matrix entry, and CI hook"
+  ],
+  "non_goals": [
+    "no live capture",
+    "no media recording",
+    "no camera or microphone capture",
+    "no sensor read authority",
+    "no file write authority",
+    "no connector call authority",
+    "no raw media retention",
+    "no raw source-body retention",
+    "no raw secret retention",
+    "no external publication",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "source surface remains hash-only in the Foundation example",
+    "capture artifacts remain digest refs",
+    "capture policy, evidence classification, browser observation, UAO, and LifeMeaningJudgment refs remain explicit",
+    "live capture and media recording remain false",
+    "camera, microphone, and sensor reads remain false",
+    "raw payload retention remains false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/trusted_capture_evidence_packet.schema.json",
+    "examples/trusted_capture_evidence_packet.foundation.json",
+    "scripts/validate_trusted_capture_evidence_packet.py",
+    "tests/test_validate_trusted_capture_evidence_packet.py",
+    "docs/89_trusted_capture_evidence_packet_contract.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_trusted_capture_evidence_packet.py",
+    "python -m pytest tests/test_validate_trusted_capture_evidence_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_trusted_capture_evidence_packet_20260616.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/trusted_capture_evidence_packet.schema.json",
+    "examples/trusted_capture_evidence_packet.foundation.json",
+    "scripts/validate_trusted_capture_evidence_packet.py",
+    "tests/test_validate_trusted_capture_evidence_packet.py",
+    "docs/89_trusted_capture_evidence_packet_contract.md",
+    "examples/sdlc/design_trusted_capture_evidence_packet_20260616.json",
+    "examples/sdlc/security_review_trusted_capture_evidence_packet_20260616.json"
+  ],
+  "uao_ref": "uao://sdlc/trusted-capture-evidence-packet/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/trusted-capture-evidence-packet/requirement",
+  "receipt_ref": "receipt://sdlc/trusted-capture-evidence-packet/requirement"
+}

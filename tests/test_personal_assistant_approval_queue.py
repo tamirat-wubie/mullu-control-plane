@@ -32,6 +32,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVAL_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval.schema.json"
+APPROVAL_QUEUE_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval_queue.schema.json"
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 CREATED_AT = "2026-06-14T00:00:00+00:00"
 DECIDED_AT = "2026-06-14T00:03:00+00:00"
@@ -54,6 +55,23 @@ def test_approval_queue_enqueues_p4_packet_without_execution() -> None:
     assert "proposed_action_not_executed" in receipt["actions_not_taken"]
     assert queue.read_model()["execution_allowed"] is False
     assert "raw_connector_payload" not in serialized
+
+
+def test_approval_queue_read_model_matches_schema_and_denies_execution() -> None:
+    queue = PersonalAssistantApprovalQueue()
+    record = _enqueue_email_send(queue)
+    read_model = queue.read_model()
+
+    assert _validate_schema_instance(_load_schema(APPROVAL_QUEUE_SCHEMA_PATH), read_model) == []
+    assert read_model["approval_count"] == 1
+    assert read_model["approval_ids"] == [record.approval_id]
+    assert read_model["receipt_ids"] == [record.latest_receipt["receipt_id"]]
+    assert read_model["execution_allowed"] is False
+    assert read_model["live_connector_execution_allowed"] is False
+    assert read_model["external_send_allowed"] is False
+    assert read_model["connector_mutation_allowed"] is False
+    assert read_model["approval_is_execution"] is False
+    assert read_model["metadata"]["approval_decision_executes_action"] is False
 
 
 def test_approved_decision_links_evidence_and_still_defers_execution() -> None:

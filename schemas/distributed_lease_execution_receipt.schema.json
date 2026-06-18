@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:distributed-lease-execution-receipt:1",
+  "title": "Distributed Lease Execution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "backend_kind",
+    "execution_mode",
+    "execution_status",
+    "job_id",
+    "worker_id",
+    "expected_payload_hash",
+    "operation_payload",
+    "operation_payload_hash",
+    "execution_plan",
+    "execution_plan_hash",
+    "adapter_registry_receipt",
+    "adapter_registry_receipt_hash",
+    "claim_receipt_hash",
+    "adapter_status",
+    "claim_receipt_status",
+    "claim_outcome",
+    "execution_admissible",
+    "external_gateway_delegated",
+    "blocked_reasons",
+    "required_actions",
+    "required_controls",
+    "evidence_refs",
+    "evaluated_at",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "lease_service_call_performed",
+    "adapter_backend_call_performed",
+    "scheduler_mutation_performed",
+    "worker_dispatch_performed",
+    "request_authentication_performed",
+    "raw_secret_stored",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^distributed-lease-execution-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "backend_kind": {"$ref": "#/$defs/backend_kind"},
+    "execution_mode": {
+      "type": "string",
+      "enum": ["plan_only", "local_compare_and_swap", "external_gateway"]
+    },
+    "execution_status": {
+      "type": "string",
+      "enum": ["execution_receipt_ready", "execution_delegated", "execution_blocked"]
+    },
+    "job_id": {"type": "string", "minLength": 1},
+    "worker_id": {"type": "string", "minLength": 1},
+    "expected_payload_hash": {"$ref": "#/$defs/sha256_ref"},
+    "operation_payload": {"type": "object", "additionalProperties": true},
+    "operation_payload_hash": {"$ref": "#/$defs/sha256_hex"},
+    "execution_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "backend_kind",
+        "execution_mode",
+        "job_id",
+        "worker_id",
+        "expected_payload_hash",
+        "operation_payload",
+        "operation_payload_hash",
+        "adapter_registry_receipt_hash",
+        "claim_receipt_hash",
+        "plan_hash",
+        "created_at"
+      ],
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "pattern": "^distributed-lease-execution-plan-[0-9a-f]{16}$"
+        },
+        "backend_kind": {"$ref": "#/$defs/backend_kind"},
+        "execution_mode": {
+          "type": "string",
+          "enum": ["plan_only", "local_compare_and_swap", "external_gateway"]
+        },
+        "job_id": {"type": "string", "minLength": 1},
+        "worker_id": {"type": "string", "minLength": 1},
+        "expected_payload_hash": {"$ref": "#/$defs/sha256_ref"},
+        "operation_payload": {"type": "object", "additionalProperties": true},
+        "operation_payload_hash": {"$ref": "#/$defs/sha256_hex"},
+        "adapter_registry_receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+        "claim_receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+        "plan_hash": {"$ref": "#/$defs/sha256_hex"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "execution_plan_hash": {"$ref": "#/$defs/sha256_hex"},
+    "adapter_registry_receipt": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_id",
+        "backend_kind",
+        "adapter_status",
+        "claim_receipt_hash",
+        "claim_receipt_status",
+        "claim_outcome",
+        "receipt_hash"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^distributed-lease-adapter-registry-receipt-[0-9a-f]{16}$"
+        },
+        "backend_kind": {"$ref": "#/$defs/backend_kind"},
+        "adapter_status": {
+          "type": "string",
+          "enum": ["adapter_ready", "adapter_delegated", "adapter_blocked"]
+        },
+        "claim_receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+        "claim_receipt_status": {
+          "type": "string",
+          "enum": ["planned", "dry_run_accepted", "claim_receipt_bound", "blocked"]
+        },
+        "claim_outcome": {
+          "type": "string",
+          "enum": ["not_observed", "granted", "rejected", "conflict", "deferred"]
+        },
+        "receipt_hash": {"$ref": "#/$defs/sha256_hex"}
+      }
+    },
+    "adapter_registry_receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+    "claim_receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+    "adapter_status": {
+      "type": "string",
+      "enum": ["adapter_ready", "adapter_delegated", "adapter_blocked"]
+    },
+    "claim_receipt_status": {
+      "type": "string",
+      "enum": ["planned", "dry_run_accepted", "claim_receipt_bound", "blocked"]
+    },
+    "claim_outcome": {
+      "type": "string",
+      "enum": ["not_observed", "granted", "rejected", "conflict", "deferred"]
+    },
+    "execution_admissible": {"type": "boolean"},
+    "external_gateway_delegated": {"type": "boolean"},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:distributed-lease-execution-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "lease_service_call_performed": {"type": "boolean", "const": false},
+    "adapter_backend_call_performed": {"type": "boolean", "const": false},
+    "scheduler_mutation_performed": {"type": "boolean", "const": false},
+    "worker_dispatch_performed": {"type": "boolean", "const": false},
+    "request_authentication_performed": {"type": "boolean", "const": false},
+    "raw_secret_stored": {"type": "boolean", "const": false},
+    "receipt_hash": {"$ref": "#/$defs/sha256_hex"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "execution_plan_hash_bound",
+        "adapter_registry_receipt_hash_bound",
+        "claim_receipt_hash_bound",
+        "payload_hash_bound",
+        "operation_payload_hash_bound",
+        "lease_service_not_called",
+        "adapter_backend_not_called",
+        "scheduler_mutation_not_performed",
+        "worker_dispatch_not_performed",
+        "request_authentication_not_performed",
+        "raw_secret_not_stored",
+        "external_gateway_delegated",
+        "execution_admissible",
+        "secret_absence_verified"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "execution_plan_hash_bound": {"type": "boolean", "const": true},
+        "adapter_registry_receipt_hash_bound": {"type": "boolean", "const": true},
+        "claim_receipt_hash_bound": {"type": "boolean", "const": true},
+        "payload_hash_bound": {"type": "boolean", "const": true},
+        "operation_payload_hash_bound": {"type": "boolean", "const": true},
+        "lease_service_not_called": {"type": "boolean", "const": true},
+        "adapter_backend_not_called": {"type": "boolean", "const": true},
+        "scheduler_mutation_not_performed": {"type": "boolean", "const": true},
+        "worker_dispatch_not_performed": {"type": "boolean", "const": true},
+        "request_authentication_not_performed": {"type": "boolean", "const": true},
+        "raw_secret_not_stored": {"type": "boolean", "const": true},
+        "external_gateway_delegated": {"type": "boolean"},
+        "execution_admissible": {"type": "boolean"},
+        "secret_absence_verified": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha256_ref": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "backend_kind": {
+      "type": "string",
+      "enum": [
+        "sqlite_compare_and_swap",
+        "postgres_advisory_lock",
+        "redis_redlock",
+        "etcd_lease",
+        "consul_session",
+        "external_http_gateway"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"execution_status": {"const": "execution_blocked"}},
+        "required": ["execution_status"]
+      },
+      "then": {
+        "properties": {
+          "execution_admissible": {"const": false},
+          "external_gateway_delegated": {"const": false},
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "execution_admissible": {"const": false},
+              "external_gateway_delegated": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"execution_status": {"const": "execution_receipt_ready"}},
+        "required": ["execution_status"]
+      },
+      "then": {
+        "properties": {
+          "execution_mode": {"const": "local_compare_and_swap"},
+          "adapter_status": {"const": "adapter_ready"},
+          "execution_admissible": {"const": true},
+          "external_gateway_delegated": {"const": false},
+          "blocked_reasons": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"execution_status": {"const": "execution_delegated"}},
+        "required": ["execution_status"]
+      },
+      "then": {
+        "properties": {
+          "execution_mode": {"const": "external_gateway"},
+          "adapter_status": {"const": "adapter_delegated"},
+          "execution_admissible": {"const": true},
+          "external_gateway_delegated": {"const": true},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "execution_admissible": {"const": true},
+              "external_gateway_delegated": {"const": true}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

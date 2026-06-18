@@ -1,0 +1,83 @@
+{
+  "preflight_id": "read-only-worker-lease-preflight-foundation-repo-inspection-20260614",
+  "preflight_version": "read_only_worker_lease_preflight.v1",
+  "binding_ref": "examples/read_only_worker_binding.foundation.json",
+  "selected_worker_path": "read_only_repo_inspection",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-14T15:05:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "runtime_dispatch_allowed": false,
+    "lease_preflight_required": true,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "raw_output_retention_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "lease_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "lease_policy_id": "lease-policy-read-only-repo-inspection-foundation",
+    "scope_id": "scope-read-only-repo-inspection-local",
+    "allowed_resource_patterns": [
+      "repo://local/docs/*",
+      "repo://local/schemas/*",
+      "repo://local/tests/*"
+    ],
+    "max_lease_seconds": 30,
+    "renewal_grace_seconds": 5,
+    "fencing_token_required": true,
+    "positive_sequence_required": true,
+    "runtime_clock_ref": "gateway.temporal_kernel.TrustedClock",
+    "temporal_lease_window_schema_ref": "schemas/temporal_lease_window_receipt.schema.json"
+  },
+  "dispatch_gate": {
+    "dispatch_admitted": false,
+    "foundation_mode": true,
+    "required_temporal_statuses": [
+      "lease_active"
+    ],
+    "blocked_without_lease_receipt": true,
+    "missing_lease_reason": "lease_snapshot_required",
+    "worker_failure_receipt_required_on_failure": true,
+    "terminal_closure_required": true
+  },
+  "receipt_refs": {
+    "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
+    "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
+    "worker_mesh_schema": "schemas/worker_mesh.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json"
+  },
+  "contract_summary": {
+    "allowed_resource_pattern_count": 3,
+    "required_temporal_status_count": 1,
+    "receipt_ref_count": 5,
+    "evidence_ref_count": 8
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "gap://GAP-WORKER-003",
+    "temporal://lease-window/pre-dispatch"
+  ],
+  "evidence_refs": [
+    "schemas/read_only_worker_lease_preflight.schema.json",
+    "examples/read_only_worker_lease_preflight.foundation.json",
+    "scripts/validate_read_only_worker_lease_preflight.py",
+    "tests/test_validate_read_only_worker_lease_preflight.py",
+    "schemas/read_only_worker_binding.schema.json",
+    "examples/read_only_worker_binding.foundation.json",
+    "schemas/temporal_lease_window_receipt.schema.json",
+    "docs/80_read_only_worker_binding_contract.md"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This preflight binds the selected read-only worker path to lease evidence requirements. It does not register, dispatch, or execute a worker."
+  }
+}

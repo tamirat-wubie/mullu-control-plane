@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1",
+  "title": "TeamOps Shared Inbox Send Execution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "workflow_id",
+    "source_send_preparation_receipt_ref",
+    "source_send_preparation_receipt_id",
+    "send_preparation_receipt_valid",
+    "send_preparation_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
+    "status",
+    "solver_outcome",
+    "proof_state",
+    "executed_at",
+    "approval_queue_id",
+    "approval_request_ref",
+    "approval_decision_ref",
+    "approver_ref",
+    "decision",
+    "approval_state",
+    "external_send_authorized_by_decision",
+    "send_preparation_ref",
+    "prepared_message_ref",
+    "thread_ref",
+    "recipient_hash",
+    "prepared_message_hash",
+    "send_execution_state",
+    "send_execution_ready",
+    "send_execution_ref",
+    "dispatch_receipt_ref",
+    "provider_message_ref",
+    "dispatch_receipt_hash",
+    "provider_message_hash",
+    "send_execution_observed",
+    "send_execution_performed_by_producer",
+    "external_message_sent",
+    "external_message_sent_by_producer",
+    "external_mailbox_write_performed_by_producer",
+    "provider_mutation_performed_by_producer",
+    "provider_call_performed_by_producer",
+    "draft_created_by_producer",
+    "raw_message_content_serialized",
+    "raw_recipient_serialized",
+    "raw_subject_serialized",
+    "raw_body_serialized",
+    "no_secret_values_serialized",
+    "requires_sent_message_observation_receipt",
+    "evidence_refs",
+    "blocked_until",
+    "recovery_actions",
+    "validation_commands"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-send-execution-receipt-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "team_ops.shared_inbox_triage"
+    },
+    "source_send_preparation_receipt_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_send_preparation_receipt_id": {
+      "type": "string"
+    },
+    "send_preparation_receipt_valid": {
+      "type": "boolean"
+    },
+    "send_preparation_receipt_ready": {
+      "type": "boolean"
+    },
+    "provider_observation_receipt_ref": {
+      "type": "string"
+    },
+    "provider_observation_receipt_id": {
+      "type": "string",
+      "pattern": "^$|^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+    },
+    "provider_observation_receipt_valid": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["blocked", "failed", "passed"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "GovernanceBlocked", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Fail", "Pass"]
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approval_queue_id": {
+      "type": "string",
+      "enum": ["", "team_ops.external_send_approval"]
+    },
+    "approval_request_ref": {
+      "type": "string"
+    },
+    "approval_decision_ref": {
+      "type": "string"
+    },
+    "approver_ref": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["", "approved", "denied", "expired"]
+    },
+    "approval_state": {
+      "type": "string",
+      "enum": ["missing", "approved", "denied", "expired", "invalid"]
+    },
+    "external_send_authorized_by_decision": {
+      "type": "boolean"
+    },
+    "send_preparation_ref": {
+      "type": "string"
+    },
+    "prepared_message_ref": {
+      "type": "string"
+    },
+    "thread_ref": {
+      "type": "string"
+    },
+    "recipient_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "prepared_message_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "send_execution_state": {
+      "type": "string",
+      "enum": ["missing", "sent", "not_authorized", "invalid"]
+    },
+    "send_execution_ready": {
+      "type": "boolean"
+    },
+    "send_execution_ref": {
+      "type": "string"
+    },
+    "dispatch_receipt_ref": {
+      "type": "string"
+    },
+    "provider_message_ref": {
+      "type": "string"
+    },
+    "dispatch_receipt_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "provider_message_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "send_execution_observed": {
+      "type": "boolean"
+    },
+    "send_execution_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_message_sent": {
+      "type": "boolean"
+    },
+    "external_message_sent_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_call_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "draft_created_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_message_content_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_recipient_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_subject_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_body_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "requires_sent_message_observation_receipt": {
+      "type": "boolean",
+      "const": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "send_preparation_receipt_valid": {
+            "const": true
+          },
+          "send_preparation_receipt_ready": {
+            "const": true
+          },
+          "provider_observation_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": {
+            "const": true
+          },
+          "solver_outcome": {
+            "const": "SolvedVerified"
+          },
+          "proof_state": {
+            "const": "Pass"
+          },
+          "approval_queue_id": {
+            "const": "team_ops.external_send_approval"
+          },
+          "approval_request_ref": {
+            "minLength": 1
+          },
+          "approval_decision_ref": {
+            "minLength": 1
+          },
+          "approver_ref": {
+            "minLength": 1
+          },
+          "decision": {
+            "const": "approved"
+          },
+          "approval_state": {
+            "const": "approved"
+          },
+          "external_send_authorized_by_decision": {
+            "const": true
+          },
+          "send_preparation_ref": {
+            "minLength": 1
+          },
+          "prepared_message_ref": {
+            "minLength": 1
+          },
+          "thread_ref": {
+            "minLength": 1
+          },
+          "recipient_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "prepared_message_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "send_execution_state": {
+            "const": "sent"
+          },
+          "send_execution_ready": {
+            "const": true
+          },
+          "send_execution_ref": {
+            "minLength": 1
+          },
+          "dispatch_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_message_ref": {
+            "minLength": 1
+          },
+          "dispatch_receipt_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "provider_message_hash": {
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "send_execution_observed": {
+            "const": true
+          },
+          "external_message_sent": {
+            "const": true
+          },
+          "evidence_refs": {
+            "minItems": 1
+          },
+          "blocked_until": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

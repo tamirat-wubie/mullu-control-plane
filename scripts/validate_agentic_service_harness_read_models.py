@@ -48,6 +48,18 @@ EXPECTED_COLLECTIONS = (
     "receipts",
     "evidence",
     "result_summaries",
+    "workspace_allocations",
+)
+EXPECTED_DURABLE_ENTITY_KINDS = (
+    "User",
+    "Organization",
+    "Project",
+    "RepositoryConnection",
+    "AgentRun",
+    "ApprovalRequest",
+    "Receipt",
+    "WorkspaceAllocation",
+    "LoopStatus",
 )
 DENIAL_FLAGS = (
     "ui_created",
@@ -57,7 +69,9 @@ DENIAL_FLAGS = (
     "secret_values_serialized",
 )
 READ_ONLY_FALSE_FLAGS = (
+    "append_enabled",
     "mutation_route",
+    "mutation_routes_admitted",
     "executes_transition",
     "emits_receipt",
     "terminal_closure",
@@ -73,6 +87,11 @@ READ_ONLY_FALSE_FLAGS = (
     "can_mutate_dns",
     "can_mutate_secrets",
     "can_run_destructive_operations",
+    "workspace_created",
+    "commands_executed",
+    "files_written",
+    "cleanup_executed",
+    "production_mutation_allowed",
 )
 HIGH_RISK_ACTIONS = (
     "merge",
@@ -183,6 +202,8 @@ def _validate_read_model_semantics(
     _validate_collection_presence(example, errors, label)
     _validate_projection_scope(example, errors, label)
     _validate_reference_integrity(example, errors, label)
+    _validate_workspace_allocations(example, errors, label)
+    _validate_durable_entity_bindings(example, errors, label)
     _validate_complete_high_risk_actions(example, errors, label)
     _validate_read_only_flags(example, errors, label)
     _validate_secret_surface(example, errors, label)
@@ -225,6 +246,8 @@ def _validate_reference_integrity(
     project_ids = _ids(example.get("projects"), "project_id")
     repository_ids = _ids(example.get("repositories"), "connection_id")
     run_ids = _ids(example.get("runs"), "run_id")
+    allocation_ids = _ids(example.get("workspace_allocations"), "allocation_id")
+    allocation_sandbox_ids = _ids(example.get("workspace_allocations"), "sandbox_id")
     approval_ids = _ids(example.get("approvals"), "gate_id")
     receipt_ids = _ids(example.get("receipts"), "receipt_id")
     evidence_ids = _ids(example.get("evidence"), "bundle_id")
@@ -264,6 +287,8 @@ def _validate_reference_integrity(
             errors.append(f"{run_label} evidence ref missing")
         if run.get("result_summary_id") not in summary_ids:
             errors.append(f"{run_label} summary ref missing")
+        if run.get("sandbox_id") not in allocation_sandbox_ids:
+            errors.append(f"{run_label} sandbox allocation ref missing")
 
     for collection_name, ref_key in (
         ("approvals", "run_id"),
@@ -274,6 +299,110 @@ def _validate_reference_integrity(
         for item in _objects(example.get(collection_name)):
             if item.get(ref_key) not in run_ids:
                 errors.append(f"{label}: {collection_name} {item.get(ref_key)} run ref missing")
+
+    for allocation in _objects(example.get("workspace_allocations")):
+        allocation_label = f"{label}: workspace allocation {allocation.get('allocation_id')}"
+        if allocation.get("project_id") not in project_ids:
+            errors.append(f"{allocation_label} project ref missing")
+        _require_refs(
+            observed=allocation.get("run_ids", ()),
+            valid=run_ids,
+            label=f"{allocation_label} run refs",
+            errors=errors,
+        )
+    if len(allocation_ids) != len(_objects(example.get("workspace_allocations"))):
+        errors.append(f"{label}: workspace allocations require unique allocation_id values")
+
+
+def _validate_workspace_allocations(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    allocations = example.get("workspace_allocations")
+    if not isinstance(allocations, list):
+        errors.append(f"{label}: workspace_allocations must be a list")
+        return
+    if not allocations:
+        errors.append(f"{label}: workspace_allocations must not be empty")
+    for allocation in _objects(allocations):
+        allocation_label = f"{label}: workspace allocation {allocation.get('allocation_id')}"
+        if allocation.get("read_only") is not True:
+            errors.append(f"{allocation_label} read_only must be true")
+        for flag_name in (
+            "workspace_created",
+            "commands_executed",
+            "files_written",
+            "cleanup_executed",
+            "production_mutation_allowed",
+            "secret_values_serialized",
+        ):
+            if allocation.get(flag_name) is not False:
+                errors.append(f"{allocation_label} {flag_name} must remain false")
+        for ref_name in (
+            "branch_workspace_ref",
+            "working_branch_ref",
+            "cleanup_receipt_ref",
+            "command_log_collection_ref",
+            "test_log_collection_ref",
+            "diff_collection_ref",
+        ):
+            if not isinstance(allocation.get(ref_name), str) or not allocation.get(ref_name):
+                errors.append(f"{allocation_label} {ref_name} must be a non-empty ref")
+        for list_name in ("run_ids", "command_allowlist", "path_allowlist"):
+            if not isinstance(allocation.get(list_name), list) or not allocation.get(list_name):
+                errors.append(f"{allocation_label} {list_name} must be a non-empty list")
+
+
+def _validate_durable_entity_bindings(
+    example: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    bindings = example.get("durable_entity_bindings")
+    if not isinstance(bindings, dict):
+        errors.append(f"{label}: durable_entity_bindings must be an object")
+        return
+    if bindings.get("read_only") is not True:
+        errors.append(f"{label}: durable_entity_bindings.read_only must be true")
+    for flag_name in ("append_enabled", "mutation_routes_admitted", "secret_values_serialized"):
+        if bindings.get(flag_name) is not False:
+            errors.append(f"{label}: durable_entity_bindings.{flag_name} must remain false")
+    entity_bindings = bindings.get("entity_bindings")
+    if not isinstance(entity_bindings, list):
+        errors.append(f"{label}: durable_entity_bindings.entity_bindings must be a list")
+        return
+    observed_kinds = [
+        str(item.get("entity_kind"))
+        for item in entity_bindings
+        if isinstance(item, dict)
+    ]
+    missing = sorted(set(EXPECTED_DURABLE_ENTITY_KINDS) - set(observed_kinds))
+    extra = sorted(set(observed_kinds) - set(EXPECTED_DURABLE_ENTITY_KINDS))
+    if missing:
+        errors.append(f"{label}: durable entity bindings missing {missing}")
+    if extra:
+        errors.append(f"{label}: durable entity bindings unknown {extra}")
+    if len(observed_kinds) != len(set(observed_kinds)):
+        errors.append(f"{label}: durable entity bindings must not duplicate entity_kind")
+
+    for item in _objects(entity_bindings):
+        entity_kind = item.get("entity_kind")
+        item_label = f"{label}: durable entity binding {entity_kind}"
+        if item.get("write_authority_enabled") is not False:
+            errors.append(f"{item_label} write_authority_enabled must remain false")
+        if item.get("append_enabled") is not False:
+            errors.append(f"{item_label} append_enabled must remain false")
+        if item.get("mutation_route") is not False:
+            errors.append(f"{item_label} mutation_route must remain false")
+        if item.get("secret_values_serialized") is not False:
+            errors.append(f"{item_label} secret_values_serialized must remain false")
+        owner_ref_fields = item.get("owner_ref_fields")
+        if not isinstance(owner_ref_fields, list) or not owner_ref_fields:
+            errors.append(f"{item_label} owner_ref_fields must be a non-empty list")
+        evidence_refs = item.get("evidence_refs")
+        if not isinstance(evidence_refs, list) or not evidence_refs:
+            errors.append(f"{item_label} evidence_refs must be a non-empty list")
 
 
 def _validate_complete_high_risk_actions(

@@ -463,8 +463,13 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
     assert content.count("validate_general_agent_promotion_handoff_preflight.py") == 2
     assert content.count("validate_general_agent_promotion_handoff_preflight.py --report") == 2
-    assert content.count("--strict --json") == 2
     workflow_lines = content.splitlines()
+    assert sum(
+        1
+        for line in workflow_lines
+        if "preflight_general_agent_promotion_handoff.py" in line
+        and "--strict --json" in line
+    ) == 2
     packet_gate_lines = [
         index
         for index, line in enumerate(workflow_lines)

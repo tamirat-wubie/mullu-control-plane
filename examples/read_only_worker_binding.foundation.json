@@ -1,0 +1,100 @@
+{
+  "binding_id": "read-only-worker-binding-foundation-repo-inspection-20260614",
+  "binding_version": "read_only_worker_binding.v1",
+  "selected_worker_path": "read_only_repo_inspection",
+  "selection_state": "FOUNDATION_SELECTED",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-14T10:55:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "runtime_dispatch_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "raw_output_retention_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "worker_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "allowed_input_refs": [
+      "repo://local/docs",
+      "repo://local/schemas",
+      "repo://local/tests"
+    ],
+    "forbidden_input_refs": [
+      "secret://*",
+      "network://*",
+      "tenant://other"
+    ],
+    "network_allowlist": [],
+    "allowed_output_refs": [
+      "receipt://worker-dispatch/*",
+      "receipt://worker-failure/*",
+      "evidence://local-repo/path-hash"
+    ],
+    "forbidden_output_refs": [
+      "raw-output://*",
+      "secret://*",
+      "external-request://*",
+      "filesystem-write://*"
+    ],
+    "timeout_seconds": 30,
+    "max_retry_count": 0,
+    "receipt_schema_refs": [
+      "schemas/worker_mesh.schema.json",
+      "schemas/worker_failure_receipt.schema.json"
+    ],
+    "verification_refs": [
+      "scripts/validate_read_only_worker_binding.py",
+      "scripts/validate_worker_failure_receipt.py"
+    ],
+    "rollback_refs": [
+      "rollback://read-only-worker-binding/remove-binding-artifacts"
+    ],
+    "recovery_refs": [
+      "recovery://read-only-worker-binding/reselect-worker-path-before-runtime"
+    ]
+  },
+  "contract_summary": {
+    "allowed_input_count": 3,
+    "forbidden_input_count": 3,
+    "network_allowlist_count": 0,
+    "allowed_output_count": 3,
+    "forbidden_output_count": 4,
+    "receipt_schema_count": 2,
+    "verification_ref_count": 2,
+    "rollback_ref_count": 1,
+    "recovery_ref_count": 1
+  },
+  "governance_refs": [
+    "gap://GAP-WORKER-001",
+    "gap://GAP-WORKER-002",
+    "gap://GAP-WORKER-003",
+    "policy://foundation-mode/no-live-worker-dispatch"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://read-only-worker-binding/foundation-repo-inspection/20260614",
+    "causal_decision_trace_ref": "trace://read-only-worker-binding/foundation-repo-inspection/20260614",
+    "receipt_ref": "receipt://read-only-worker-binding/foundation-repo-inspection/20260614"
+  },
+  "evidence_refs": [
+    "schemas/read_only_worker_binding.schema.json",
+    "examples/read_only_worker_binding.foundation.json",
+    "scripts/validate_read_only_worker_binding.py",
+    "tests/test_validate_read_only_worker_binding.py",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/sdlc/requirement_read_only_worker_binding_20260614.json",
+    "examples/sdlc/design_read_only_worker_binding_20260614.json"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This binding selects the first worker path and receipt obligations only. It does not register, dispatch, or execute a live worker."
+  }
+}

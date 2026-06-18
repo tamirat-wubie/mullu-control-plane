@@ -314,6 +314,617 @@
           "rollback_or_compensation_required": false
         }
       }
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.review",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_memory_observation.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_memory_review.schema.json",
+      "effect_model": {
+        "expected_effects": ["memory_observation_review_record_emitted"],
+        "forbidden_effects": [
+          "memory_written",
+          "memory_candidate_admitted",
+          "raw_chat_log_stored",
+          "raw_connector_payload_stored",
+          "live_nested_mind_activation",
+          "system_of_record_mutated"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["review_id", "memory_observation_id", "reviewer_ref", "reason_codes", "receipt_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Review personal-assistant memory observation",
+        "risk_tier": "medium",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.memory_observation.review"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "memory_written",
+            "memory_candidate_admitted",
+            "raw_chat_log_stored",
+            "raw_connector_payload_stored",
+            "live_nested_mind_activation",
+            "system_of_record_mutated"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.teamops_shared_inbox.plan",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_teamops_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["teamops_shared_inbox_plan_projection_emitted"],
+        "forbidden_effects": [
+          "gmail_called",
+          "shared_inbox_read",
+          "email_drafted",
+          "email_sent",
+          "mailbox_mutated",
+          "provider_configuration_mutated",
+          "raw_connector_payload_stored",
+          "secret_value_serialized",
+          "live_probe_executed"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "gmail_connector_proof_ref",
+          "operator_handoff_projection",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Plan TeamOps shared-inbox handoff",
+        "risk_tier": "medium",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["teamops.shared_inbox.plan"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "gmail_called",
+            "shared_inbox_read",
+            "email_drafted",
+            "email_sent",
+            "mailbox_mutated",
+            "provider_configuration_mutated",
+            "raw_connector_payload_stored",
+            "secret_value_serialized",
+            "live_probe_executed"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.github_codex.review",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_github_codex_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["github_codex_review_projection_emitted"],
+        "forbidden_effects": [
+          "github_called",
+          "repository_read",
+          "repository_mutated",
+          "pull_request_opened",
+          "pull_request_merged",
+          "branch_pushed",
+          "issue_created",
+          "review_submitted",
+          "deployment_started",
+          "raw_diff_stored",
+          "raw_connector_payload_stored",
+          "secret_value_serialized"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "github_connector_proof_ref",
+          "operator_supplied_change_summary",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Review GitHub/Codex change evidence",
+        "risk_tier": "medium",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["github.pr.summarize"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "github_called",
+            "repository_read",
+            "repository_mutated",
+            "pull_request_opened",
+            "pull_request_merged",
+            "branch_pushed",
+            "issue_created",
+            "review_submitted",
+            "deployment_started",
+            "raw_diff_stored",
+            "raw_connector_payload_stored",
+            "secret_value_serialized"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.research.source_compare",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_research_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["research_source_compare_projection_emitted"],
+        "forbidden_effects": [
+          "web_search_performed",
+          "source_contacted",
+          "external_submission_performed",
+          "public_post_created",
+          "paid_subscription_started",
+          "raw_source_body_stored",
+          "raw_connector_payload_stored",
+          "secret_value_serialized",
+          "memory_written",
+          "system_of_record_mutated"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "operator_supplied_source_summary",
+          "citation_ref",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Compare public research source evidence",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["research.web_search"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "web_search_performed",
+            "source_contacted",
+            "external_submission_performed",
+            "public_post_created",
+            "paid_subscription_started",
+            "raw_source_body_stored",
+            "raw_connector_payload_stored",
+            "secret_value_serialized",
+            "memory_written",
+            "system_of_record_mutated"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.math.reasoning_plan",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_math_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["math_reasoning_projection_emitted"],
+        "forbidden_effects": [
+          "money_moved",
+          "paid_subscription_changed",
+          "system_of_record_mutated",
+          "connector_state_mutated",
+          "external_submission_sent",
+          "public_post_created",
+          "deployment_started",
+          "raw_private_payload_stored",
+          "raw_connector_payload_stored",
+          "secret_value_serialized",
+          "memory_written"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "operator_supplied_known_value",
+          "unit_check",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Project planning-only math reasoning",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["math.reasoning.plan"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "money_moved",
+            "paid_subscription_changed",
+            "system_of_record_mutated",
+            "connector_state_mutated",
+            "external_submission_sent",
+            "public_post_created",
+            "deployment_started",
+            "raw_private_payload_stored",
+            "raw_connector_payload_stored",
+            "secret_value_serialized",
+            "memory_written"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.planning.schedule_preview",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_planning_projection.schema.json",
+      "effect_model": {
+        "expected_effects": ["planning_schedule_projection_emitted"],
+        "forbidden_effects": [
+          "calendar_event_created",
+          "calendar_event_moved",
+          "calendar_event_cancelled",
+          "invite_sent",
+          "task_written",
+          "task_system_mutated",
+          "person_messaged",
+          "system_of_record_mutated",
+          "connector_state_mutated",
+          "external_submission_sent",
+          "public_post_created",
+          "money_moved",
+          "paid_subscription_changed",
+          "deployment_started",
+          "raw_private_payload_stored",
+          "raw_connector_payload_stored",
+          "secret_value_serialized",
+          "memory_written"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "request_id",
+          "operator_supplied_time_window",
+          "operator_supplied_work_item",
+          "capacity_summary",
+          "receipt_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Project schedule planning preview",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["planning.optimize_schedule"],
+          "allowed_networks": [],
+          "forbidden_effects": [
+            "calendar_event_created",
+            "calendar_event_moved",
+            "calendar_event_cancelled",
+            "invite_sent",
+            "task_written",
+            "task_system_mutated",
+            "person_messaged",
+            "system_of_record_mutated",
+            "connector_state_mutated",
+            "external_submission_sent",
+            "public_post_created",
+            "money_moved",
+            "paid_subscription_changed",
+            "deployment_started",
+            "raw_private_payload_stored",
+            "raw_connector_payload_stored",
+            "secret_value_serialized",
+            "memory_written"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.clarification.request",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "effect_model": {
+        "expected_effects": ["clarification_projection_emitted"],
+        "forbidden_effects": ["connector_called", "external_message_sent", "workspace_file_written", "memory_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["request_id", "missing_bindings", "clarification_request_ids"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Prepare personal-assistant clarification requests",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.clarification.request"],
+          "allowed_networks": [],
+          "forbidden_effects": ["connector_called", "external_message_sent", "workspace_file_written", "memory_written"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
     }
   ]
 }

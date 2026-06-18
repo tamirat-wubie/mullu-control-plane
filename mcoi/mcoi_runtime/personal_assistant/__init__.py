@@ -43,17 +43,40 @@ from .intake import (
     RequestInterface,
     interpret_user_request,
 )
+from .github_codex import (
+    GitHubCodexReviewProjection,
+    plan_github_codex_review,
+)
+from .math_reasoning import (
+    MathReasoningProjection,
+    plan_math_reasoning,
+)
+from .planning import (
+    PlanningScheduleProjection,
+    plan_schedule_optimization,
+)
+from .research import (
+    ResearchSourceCompareProjection,
+    plan_research_source_compare,
+)
 from .memory import (
     MemoryConfidence,
     MemoryObservationCandidate,
+    MemoryObservationReview,
     MemoryObservationSource,
     MemoryObservationType,
     MemoryRetentionPolicy,
+    MemoryReviewDecision,
     MemoryScope,
     MemorySensitivity,
     NestedMindStatus,
     PersonalAssistantMemoryObservationLedger,
     prepare_memory_observation,
+    review_memory_observation_candidate,
+)
+from .planner import (
+    PersonalAssistantPlanningEnvelope,
+    build_personal_assistant_preview_plan,
 )
 from .read_only import (
     ReadOnlyAssistantProjection,
@@ -91,21 +114,28 @@ __all__ = (
     "EmailDraftInput",
     "MemoryConfidence",
     "MemoryObservationCandidate",
+    "MemoryObservationReview",
     "MemoryObservationSource",
     "MemoryObservationType",
     "MemoryRetentionPolicy",
+    "MemoryReviewDecision",
     "MemoryScope",
     "MemorySensitivity",
     "NestedMindStatus",
     "PersonalAssistantMemoryObservationLedger",
+    "PersonalAssistantPlanningEnvelope",
+    "PlanningScheduleProjection",
+    "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
     "RedactedInboxMessage",
+    "ResearchSourceCompareProjection",
     "TaskDraftInput",
     "TeamOpsSharedInboxProjection",
     "ApprovalScope",
     "ConnectorProofRef",
     "GovernedIntent",
+    "GitHubCodexReviewProjection",
     "MissingBinding",
     "RequestExecutionMode",
     "RequestInterface",
@@ -113,6 +143,7 @@ __all__ = (
     "SkillRiskLevel",
     "build_clarification_requests",
     "build_personal_assistant_console_read_model",
+    "build_personal_assistant_preview_plan",
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",
@@ -120,7 +151,12 @@ __all__ = (
     "load_default_skill_registry",
     "load_skill_registry",
     "prepare_memory_observation",
+    "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
+    "plan_github_codex_review",
+    "plan_math_reasoning",
+    "plan_schedule_optimization",
+    "plan_research_source_compare",
     "render_personal_assistant_console_html",
     "summarize_calendar_day_read_only",
     "summarize_inbox_read_only",

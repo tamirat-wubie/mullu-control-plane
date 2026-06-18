@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:problem-star-compilation-receipt:1",
+  "title": "ProblemStar Compilation Receipt",
+  "description": "Read-only receipt proving a Phi-GPS v3 ProblemCompiler episode separated raw input into ProblemStar fields, evidence, assumptions, unknowns, contradictions, goals, constraints, risks, actions, and proof obligations before solver routing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "compiler_name",
+    "problem_id",
+    "input_hash",
+    "schema_version",
+    "kernel_schema_version",
+    "compilation_outcome",
+    "source_envelope",
+    "kernel_draft",
+    "separated_surfaces",
+    "governance_guards",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "receipt_version": { "type": "string", "const": "problem_star_compilation_receipt.v1" },
+    "compiler_name": { "type": "string", "const": "Phi-GPS ProblemCompiler" },
+    "problem_id": { "type": "string", "minLength": 1 },
+    "input_hash": { "type": "string", "minLength": 1 },
+    "schema_version": { "type": "string", "const": "phi2-gps-v3" },
+    "kernel_schema_version": { "type": "string", "const": "phi2-gps-v2.2" },
+    "compilation_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"] },
+    "source_envelope": { "$ref": "#/$defs/source_envelope" },
+    "kernel_draft": { "$ref": "#/$defs/problem_star_kernel_draft" },
+    "separated_surfaces": { "$ref": "#/$defs/separated_surfaces" },
+    "governance_guards": { "$ref": "#/$defs/governance_guards" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "source_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_type", "source", "timestamp", "requester", "authority_context", "urgency", "declared_goal", "declared_constraints"],
+      "properties": {
+        "input_type": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "requester": { "type": "string", "minLength": 1 },
+        "authority_context": { "type": "string", "minLength": 1 },
+        "urgency": { "type": "string", "enum": ["low", "normal", "high", "critical"] },
+        "declared_goal": { "type": "string", "minLength": 1 },
+        "declared_constraints": { "$ref": "#/$defs/string_array" }
+      }
+    },
+    "problem_star_kernel_draft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["problem_id", "field_order", "fields", "unknown_fields"],
+      "properties": {
+        "problem_id": { "type": "string", "minLength": 1 },
+        "field_order": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": { "type": "string", "enum": ["W", "B", "O", "I", "G", "U", "Lambda", "N", "A_e", "A_w", "T", "R", "K", "Pi"] }
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["W", "B", "O", "I", "G", "U", "Lambda", "N", "A_e", "A_w", "T", "R", "K", "Pi"],
+          "properties": {
+            "W": { "$ref": "#/$defs/problem_star_field" },
+            "B": { "$ref": "#/$defs/problem_star_field" },
+            "O": { "$ref": "#/$defs/problem_star_field" },
+            "I": { "$ref": "#/$defs/problem_star_field" },
+            "G": { "$ref": "#/$defs/problem_star_field" },
+            "U": { "$ref": "#/$defs/problem_star_field" },
+            "Lambda": { "$ref": "#/$defs/problem_star_field" },
+            "N": { "$ref": "#/$defs/problem_star_field" },
+            "A_e": { "$ref": "#/$defs/problem_star_field" },
+            "A_w": { "$ref": "#/$defs/problem_star_field" },
+            "T": { "$ref": "#/$defs/problem_star_field" },
+            "R": { "$ref": "#/$defs/problem_star_field" },
+            "K": { "$ref": "#/$defs/problem_star_field" },
+            "Pi": { "$ref": "#/$defs/problem_star_field" }
+          }
+        },
+        "unknown_fields": { "$ref": "#/$defs/string_array" }
+      }
+    },
+    "problem_star_field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "confidence", "evidence_refs"],
+      "properties": {
+        "status": { "type": "string", "enum": ["known", "partial", "unknown", "conflicting", "hypothesized", "forbidden"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence_refs": { "$ref": "#/$defs/string_array" },
+        "value_summary": { "type": "string" }
+      }
+    },
+    "separated_surfaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence", "assumptions", "unknowns", "contradictions", "goals", "constraints", "risks", "available_actions", "proof_obligations"],
+      "properties": {
+        "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence_item" } },
+        "assumptions": { "type": "array", "items": { "$ref": "#/$defs/assumption_item" } },
+        "unknowns": { "type": "array", "items": { "$ref": "#/$defs/unknown_item" } },
+        "contradictions": { "type": "array", "items": { "$ref": "#/$defs/contradiction_item" } },
+        "goals": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/named_statement" } },
+        "constraints": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/named_statement" } },
+        "risks": { "type": "array", "items": { "$ref": "#/$defs/risk_item" } },
+        "available_actions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/action_item" } },
+        "proof_obligations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/proof_obligation" } }
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "source_ref", "statement", "confidence"],
+      "properties": {
+        "evidence_id": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "assumption_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assumption_id", "statement", "source_ref", "confidence"],
+      "properties": {
+        "assumption_id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "unknown_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unknown_id", "dimension", "question", "impact", "resolution"],
+      "properties": {
+        "unknown_id": { "type": "string", "minLength": 1 },
+        "dimension": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1 },
+        "impact": { "type": "string", "enum": ["critical", "significant", "minor"] },
+        "resolution": { "type": "string", "enum": ["observe", "query", "test", "assume", "verify"] }
+      }
+    },
+    "contradiction_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contradiction_id", "claims_in_conflict", "severity", "scope", "resolution_status"],
+      "properties": {
+        "contradiction_id": { "type": "string", "minLength": 1 },
+        "claims_in_conflict": { "$ref": "#/$defs/non_empty_string_array" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "scope": { "type": "string", "minLength": 1 },
+        "resolution_status": { "type": "string", "enum": ["unresolved", "deferred", "resolved"] }
+      }
+    },
+    "named_statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "statement"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 }
+      }
+    },
+    "risk_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_id", "description", "severity", "mitigation"],
+      "properties": {
+        "risk_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "mitigation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "action_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "action_class", "permission_required", "reversibility", "proof_obligation"],
+      "properties": {
+        "action_id": { "type": "string", "minLength": 1 },
+        "action_class": { "type": "string", "enum": ["epistemic", "effect_bearing", "hybrid"] },
+        "permission_required": { "type": "boolean" },
+        "reversibility": { "type": "string", "enum": ["reversible", "compensatable", "irreversible", "unknown"] },
+        "proof_obligation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "proof_obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "description", "proof_state", "required_before"],
+      "properties": {
+        "obligation_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "proof_state": { "type": "string", "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"] },
+        "required_before": { "type": "string", "enum": ["solver_routing", "execution", "learning_admission"] }
+      }
+    },
+    "governance_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_registration_claimed", "execution_authority_granted", "connector_authority_granted", "deployment_claimed", "terminal_closure", "evidence_assumption_separated", "contradictions_append_only", "proof_obligations_do_not_modify_identity_or_laws", "mfidel_atomicity_preserved"],
+      "properties": {
+        "runtime_registration_claimed": { "type": "boolean", "const": false },
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "connector_authority_granted": { "type": "boolean", "const": false },
+        "deployment_claimed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "evidence_assumption_separated": { "type": "boolean", "const": true },
+        "contradictions_append_only": { "type": "boolean", "const": true },
+        "proof_obligations_do_not_modify_identity_or_laws": { "type": "boolean", "const": true },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "minLength": 1 },
+        "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+        "receipt_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-approval-decision-receipt:1",
+  "title": "TeamOps Shared Inbox Approval Decision Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "workflow_id",
+    "source_approval_queue_receipt_ref",
+    "source_approval_queue_receipt_id",
+    "approval_queue_receipt_valid",
+    "approval_queue_receipt_ready",
+    "provider_observation_receipt_ref",
+    "provider_observation_receipt_id",
+    "provider_observation_receipt_valid",
+    "status",
+    "solver_outcome",
+    "proof_state",
+    "decided_at",
+    "approval_queue_id",
+    "approval_request_ref",
+    "required_approver_role",
+    "approver_ref",
+    "approver_role",
+    "decision",
+    "approval_state",
+    "decision_evidence_ref",
+    "decision_reason_ref",
+    "operator_decision_evidence_recorded",
+    "approval_decision_performed_by_producer",
+    "external_send_authorized_by_decision",
+    "requires_separate_send_receipt",
+    "draft_created_by_producer",
+    "external_mailbox_write_performed",
+    "external_message_sent",
+    "provider_mutation_performed",
+    "raw_message_content_serialized",
+    "raw_decision_text_serialized",
+    "no_secret_values_serialized",
+    "evidence_refs",
+    "blocked_until",
+    "recovery_actions",
+    "validation_commands"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-approval-decision-receipt-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "team_ops.shared_inbox_triage"
+    },
+    "source_approval_queue_receipt_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_approval_queue_receipt_id": {
+      "type": "string"
+    },
+    "approval_queue_receipt_valid": {
+      "type": "boolean"
+    },
+    "approval_queue_receipt_ready": {
+      "type": "boolean"
+    },
+    "provider_observation_receipt_ref": {
+      "type": "string"
+    },
+    "provider_observation_receipt_id": {
+      "type": "string"
+    },
+    "provider_observation_receipt_valid": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["blocked", "failed", "passed"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "GovernanceBlocked", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Fail", "Pass"]
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approval_queue_id": {
+      "type": "string",
+      "enum": ["", "team_ops.external_send_approval"]
+    },
+    "approval_request_ref": {
+      "type": "string"
+    },
+    "required_approver_role": {
+      "type": "string",
+      "enum": ["", "team_ops_owner", "team_ops_manager", "security_reviewer", "finance_owner", "operations_owner"]
+    },
+    "approver_ref": {
+      "type": "string"
+    },
+    "approver_role": {
+      "type": "string",
+      "enum": ["", "team_ops_owner", "team_ops_manager", "security_reviewer", "finance_owner", "operations_owner"]
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["", "approved", "denied", "expired"]
+    },
+    "approval_state": {
+      "type": "string",
+      "enum": ["missing", "approved", "denied", "expired", "invalid"]
+    },
+    "decision_evidence_ref": {
+      "type": "string"
+    },
+    "decision_reason_ref": {
+      "type": "string"
+    },
+    "operator_decision_evidence_recorded": {
+      "type": "boolean"
+    },
+    "approval_decision_performed_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_send_authorized_by_decision": {
+      "type": "boolean"
+    },
+    "requires_separate_send_receipt": {
+      "type": "boolean",
+      "const": true
+    },
+    "draft_created_by_producer": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_message_sent": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_message_content_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "raw_decision_text_serialized": {
+      "type": "boolean",
+      "const": false
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "approval_queue_receipt_valid": {
+            "const": true
+          },
+          "approval_queue_receipt_ready": {
+            "const": true
+          },
+          "provider_observation_receipt_ref": {
+            "minLength": 1
+          },
+          "provider_observation_receipt_id": {
+            "pattern": "^teamops-shared-inbox-provider-observation-receipt-[0-9a-f]{16}$"
+          },
+          "provider_observation_receipt_valid": {
+            "const": true
+          },
+          "solver_outcome": {
+            "const": "SolvedVerified"
+          },
+          "proof_state": {
+            "const": "Pass"
+          },
+          "approval_queue_id": {
+            "const": "team_ops.external_send_approval"
+          },
+          "approval_request_ref": {
+            "minLength": 1
+          },
+          "required_approver_role": {
+            "enum": ["team_ops_owner", "team_ops_manager", "security_reviewer", "finance_owner", "operations_owner"]
+          },
+          "approver_ref": {
+            "minLength": 1
+          },
+          "approver_role": {
+            "enum": ["team_ops_owner", "team_ops_manager", "security_reviewer", "finance_owner", "operations_owner"]
+          },
+          "decision": {
+            "enum": ["approved", "denied", "expired"]
+          },
+          "decision_evidence_ref": {
+            "minLength": 1
+          },
+          "operator_decision_evidence_recorded": {
+            "const": true
+          },
+          "evidence_refs": {
+            "minItems": 1
+          },
+          "blocked_until": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          },
+          "decision": {
+            "const": "approved"
+          }
+        },
+        "required": ["status", "decision"]
+      },
+      "then": {
+        "properties": {
+          "approval_state": {
+            "const": "approved"
+          },
+          "external_send_authorized_by_decision": {
+            "const": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          },
+          "decision": {
+            "enum": ["denied", "expired"]
+          }
+        },
+        "required": ["status", "decision"]
+      },
+      "then": {
+        "properties": {
+          "external_send_authorized_by_decision": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
+}

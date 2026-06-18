@@ -9,7 +9,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 
 # Deployment Status Witness
 
-**Last audited:** 2026-06-12
+**Last audited:** 2026-06-14
 **Deployment witness state:** `published`
 **Public production health endpoint:** `https://api.mullusi.com/health`
 **Gateway health endpoint:** `/health`
@@ -89,7 +89,17 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
 | Public production health | Declared from a verified published deployment witness; `https://api.mullusi.com/health` is the public health endpoint, `.change_assurance/deployment_witness.json` records `deployment_claim=published`, and `.change_assurance/public_production_health_declaration.json` records the operator-approved declaration receipt | Reflected |
-| Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `/v1/health`, `/v1/version`, and the blocked `/v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
+| Govern Cloud public route monitor | `scripts/collect_govern_cloud_public_route_monitor.py` writes `.change_assurance/govern_cloud_public_route_monitor_receipt.json` from `GET /v1/health`, `GET /v1/version`, and the blocked `POST /v1/govern/evaluate` guard; `docs/GOVERN_CLOUD_PUBLIC_ROUTE_MONITOR_RUNBOOK.md` defines cadence and rollback | Reflected |
+| Govern Cloud evaluate-route rollback witness | `scripts/validate_govern_evaluate_route_rollback.py` verifies `/v1/health` and `/v1/version` remain public read routes while `POST /v1/govern/evaluate` returns 404 without outbound proxy transport | Reflected |
+| Personal assistant public console probe | `scripts/collect_personal_assistant_public_console_probe.py` writes `examples/personal_assistant_public_console_probe_receipt.json` from the public read-only JSON and HTML console routes while preserving no-effect authority boundaries | Reflected |
+| Personal assistant component witness | `scripts/collect_personal_assistant_component_witness.py` writes `examples/personal_assistant_component_witness_receipt.json` from local component graph, bundle compilation, and lifecycle receipts while preserving draft-only/no-effect authority boundaries | Reflected |
+| Personal assistant foundation evidence | `scripts/collect_personal_assistant_foundation_evidence.py` writes `examples/personal_assistant_foundation_evidence_receipt.json` from the console read model, public console probe, and component witness while preserving no-effect foundation boundaries | Reflected |
+| Personal assistant readiness index | `scripts/collect_personal_assistant_readiness_index.py` writes `examples/personal_assistant_readiness_index_receipt.json` from the foundation evidence receipt, console read model, skill registry, and capability pack while preserving live-execution and customer-readiness blocks | Reflected |
+| Personal assistant coherence ledger | `scripts/collect_personal_assistant_coherence_ledger.py` writes `examples/personal_assistant_coherence_ledger_receipt.json` from the readiness index, console read model, skill registry, and capability pack while preserving no-effect dependency and authority-block records | Reflected |
+| Personal assistant authority coverage | `scripts/collect_personal_assistant_authority_coverage.py` writes `examples/personal_assistant_authority_coverage_receipt.json` from the skill registry, approval matrix, skill policy, capability pack, and coherence ledger while preserving no-effect execution authority boundaries | Reflected |
+| Personal assistant capsule alignment | `scripts/collect_personal_assistant_capsule_alignment.py` writes `examples/personal_assistant_capsule_alignment_receipt.json` from the capsule, capability pack, protocol manifest, and authority coverage receipt while preserving no-effect capsule and schema binding boundaries | Reflected |
+| Personal assistant policy matrix | `scripts/collect_personal_assistant_policy_matrix.py` writes `examples/personal_assistant_policy_matrix_receipt.json` from the skill policy, approval matrix, capsule, authority coverage, and capsule alignment receipts while preserving no-effect approval and payload-redaction boundaries | Reflected |
+| Personal assistant runtime boundary | `scripts/collect_personal_assistant_runtime_boundary.py` writes `examples/personal_assistant_runtime_boundary_receipt.json` from runtime module source, capability pack, and policy matrix evidence while preserving no-effect connector, deployment, memory, and system-of-record boundaries | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -104,7 +114,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Observed pilot health probe URL | `https://api.mullusi.com/health` is the declared public production health endpoint backed by the published deployment witness and public-health declaration receipt |
 | Upstream API readiness | `api.mullusi.com` has a verified published deployment witness, clear runtime and authority responsibility debt, production evidence closure, and declared public health endpoint `https://api.mullusi.com/health` |
 | Deployment witness workflow runs | A deployment witness workflow run collected the published witness for `https://api.mullusi.com`; the local deployment witness records verified signatures, clear runtime and authority responsibility debt, production evidence closure, and `deployment_claim=published` |
-| Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
+| Gateway publication workflow runs | `gateway-publication.yml` run `27489039439` completed successfully and dispatched deployment witness run `27489044697` |
 
 ## Closure Requirements
 
@@ -195,3 +205,21 @@ Before this witness can claim public deployment health, the repository must name
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
 | General-agent promotion validation | `python scripts/validate_general_agent_promotion.py --strict` |
 | Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
+| Personal assistant public console probe | `python scripts/collect_personal_assistant_public_console_probe.py --output examples/personal_assistant_public_console_probe_receipt.json --json` |
+| Personal assistant public console probe validation | `python scripts/validate_personal_assistant_public_console_probe_receipt.py --receipt examples/personal_assistant_public_console_probe_receipt.json --output .change_assurance/personal_assistant_public_console_probe_validation.json --require-closed --json` |
+| Personal assistant component witness | `python scripts/collect_personal_assistant_component_witness.py --output examples/personal_assistant_component_witness_receipt.json --json` |
+| Personal assistant component witness validation | `python scripts/validate_personal_assistant_component_witness_receipt.py --receipt examples/personal_assistant_component_witness_receipt.json --output .change_assurance/personal_assistant_component_witness_validation.json --require-closed --json` |
+| Personal assistant foundation evidence | `python scripts/collect_personal_assistant_foundation_evidence.py --output examples/personal_assistant_foundation_evidence_receipt.json --json` |
+| Personal assistant foundation evidence validation | `python scripts/validate_personal_assistant_foundation_evidence_receipt.py --receipt examples/personal_assistant_foundation_evidence_receipt.json --output .change_assurance/personal_assistant_foundation_evidence_validation.json --require-closed --json` |
+| Personal assistant readiness index | `python scripts/collect_personal_assistant_readiness_index.py --output examples/personal_assistant_readiness_index_receipt.json --json` |
+| Personal assistant readiness index validation | `python scripts/validate_personal_assistant_readiness_index_receipt.py --receipt examples/personal_assistant_readiness_index_receipt.json --output .change_assurance/personal_assistant_readiness_index_validation.json --require-closed --json` |
+| Personal assistant coherence ledger | `python scripts/collect_personal_assistant_coherence_ledger.py --output examples/personal_assistant_coherence_ledger_receipt.json --json` |
+| Personal assistant coherence ledger validation | `python scripts/validate_personal_assistant_coherence_ledger_receipt.py --receipt examples/personal_assistant_coherence_ledger_receipt.json --output .change_assurance/personal_assistant_coherence_ledger_validation.json --require-closed --json` |
+| Personal assistant authority coverage | `python scripts/collect_personal_assistant_authority_coverage.py --output examples/personal_assistant_authority_coverage_receipt.json --json` |
+| Personal assistant authority coverage validation | `python scripts/validate_personal_assistant_authority_coverage_receipt.py --receipt examples/personal_assistant_authority_coverage_receipt.json --output .change_assurance/personal_assistant_authority_coverage_validation.json --require-closed --json` |
+| Personal assistant capsule alignment | `python scripts/collect_personal_assistant_capsule_alignment.py --output examples/personal_assistant_capsule_alignment_receipt.json --json` |
+| Personal assistant capsule alignment validation | `python scripts/validate_personal_assistant_capsule_alignment_receipt.py --receipt examples/personal_assistant_capsule_alignment_receipt.json --output .change_assurance/personal_assistant_capsule_alignment_validation.json --require-closed --json` |
+| Personal assistant policy matrix | `python scripts/collect_personal_assistant_policy_matrix.py --output examples/personal_assistant_policy_matrix_receipt.json --json` |
+| Personal assistant policy matrix validation | `python scripts/validate_personal_assistant_policy_matrix_receipt.py --receipt examples/personal_assistant_policy_matrix_receipt.json --output .change_assurance/personal_assistant_policy_matrix_validation.json --require-closed --json` |
+| Personal assistant runtime boundary | `python scripts/collect_personal_assistant_runtime_boundary.py --output examples/personal_assistant_runtime_boundary_receipt.json --json` |
+| Personal assistant runtime boundary validation | `python scripts/validate_personal_assistant_runtime_boundary_receipt.py --receipt examples/personal_assistant_runtime_boundary_receipt.json --output .change_assurance/personal_assistant_runtime_boundary_validation.json --require-closed --json` |
