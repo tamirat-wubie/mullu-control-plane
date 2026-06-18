@@ -83,6 +83,7 @@ from mcoi_runtime.personal_assistant import (
     plan_research_source_compare,
     plan_schedule_optimization,
     plan_teamops_shared_inbox,
+    prepare_approval_proposal_from_plan,
     prepare_memory_observation,
     render_personal_assistant_console_html,
     review_memory_observation_candidate,
@@ -293,6 +294,23 @@ class GatewayPersonalAssistantApprovalPreviewRequest(BaseModel):
     decided_at: str = ""
     decision_evidence_ref: str = ""
     revision_request: str = ""
+
+
+class GatewayPersonalAssistantApprovalProposalPreviewRequest(BaseModel):
+    """Stateless approval proposal preview request for public gateway evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str
+    plan: dict[str, Any] = Field(default_factory=dict)
+    request_id: str = ""
+    submitted_at: str = ""
+    interface: str = RequestInterface.API_ROUTE.value
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    approval_scope: str = ApprovalScope.PER_PLAN.value
+    thread_id: str = "thread-personal-assistant-approval-proposal-preview"
+    requested_from_id: str = "operator"
+    include_console_read_model: bool = False
 
 
 class GatewayPersonalAssistantMemorySource(BaseModel):
@@ -2102,6 +2120,107 @@ def create_gateway_app(
             "live_connector_execution_allowed": False,
             "governed": True,
         }
+
+    @app.post("/api/v1/personal-assistant/approval-proposals/preview")
+    def preview_personal_assistant_approval_proposal(req: GatewayPersonalAssistantApprovalProposalPreviewRequest):
+        try:
+            now = req.submitted_at or _clock()
+            if req.plan:
+                plan_payload = dict(req.plan)
+                envelope_payload: dict[str, Any] = {
+                    "request": {},
+                    "plan": plan_payload,
+                    "receipt": {},
+                    "governed": True,
+                    "execution_allowed": False,
+                }
+                clarification_payload = {
+                    "request_id": str(plan_payload.get("request_id", "")),
+                    "clarifications": [],
+                    "clarification_count": 0,
+                }
+            else:
+                request_id = req.request_id or _gateway_personal_assistant_request_id(
+                    req.user_request,
+                    now,
+                    req.interface,
+                )
+                intent = interpret_user_request(
+                    req.user_request,
+                    request_id=request_id,
+                    submitted_at=now,
+                    interface=req.interface,
+                    connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+                )
+                clarification_bundle = build_clarification_requests(
+                    intent,
+                    thread_id=req.thread_id,
+                    requested_from_id=req.requested_from_id,
+                    requested_at=now,
+                )
+                envelope = build_personal_assistant_preview_plan(
+                    intent,
+                    plan_id=_gateway_personal_assistant_plan_id(request_id),
+                    created_at=now,
+                )
+                plan_payload = dict(envelope.plan)
+                envelope_payload = envelope.as_dict()
+                clarification_payload = {
+                    "request_id": clarification_bundle.request_id,
+                    "clarifications": [
+                        clarification.to_json_dict()
+                        for clarification in clarification_bundle.clarifications
+                    ],
+                    "clarification_count": len(clarification_bundle.clarifications),
+                }
+            proposal = prepare_approval_proposal_from_plan(
+                plan_payload,
+                approval_scope=req.approval_scope,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant approval proposal preview",
+                    "error_code": "invalid_personal_assistant_approval_proposal_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        proposal_payload = proposal.as_dict()
+        response: dict[str, Any] = {
+            **envelope_payload,
+            "approval_proposal": proposal_payload,
+            "approval_queue": PersonalAssistantApprovalQueue().read_model(),
+            "clarification_bundle": clarification_payload,
+            "outcome": "AwaitingEvidence",
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "approval_enqueued": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+        if req.include_console_read_model:
+            request_row = {
+                "request_id": str(plan_payload.get("request_id", "")),
+                "summary": str(plan_payload.get("goal", req.user_request)),
+                "status": str(plan_payload.get("mode", "preview")),
+            }
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=now,
+                recent_requests=(request_row,),
+                receipts=(envelope_payload["receipt"],) if envelope_payload.get("receipt") else (),
+                approval_proposals=(proposal_payload,),
+            )
+        return response
 
     @app.post("/api/v1/personal-assistant/approval-queue/preview")
     def preview_personal_assistant_approval_queue(req: GatewayPersonalAssistantApprovalPreviewRequest):
