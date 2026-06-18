@@ -64,9 +64,11 @@ def test_trust_ledger_remote_submission_preflight_accepts_ready_export(tmp_path:
     assert report.ledger_path == ledger_path.name
     assert report.next_ledger_sequence == 1
     assert report.previous_submission_hash == "0" * 64
+    assert "provider_observation" in report.required_artifact_types
     assert len(report.expected_remote_submission_payload_hash) == 64
     assert report.expected_remote_idempotency_key == report.expected_remote_submission_payload_hash
     assert payload["ledger_path"] == ledger_path.name
+    assert payload["required_artifact_types"] == list(report.required_artifact_types)
     assert payload["metadata"]["remote_submit_executed"] is False
     assert payload["metadata"]["ledger_append_executed"] is False
     assert str(tmp_path) not in payload["ledger_path"]
@@ -120,6 +122,8 @@ def test_trust_ledger_remote_submission_preflight_projects_final_submit_payload_
     assert submission["valid"] is True
     assert preflight.next_ledger_sequence == submission["ledger_sequence"]
     assert preflight.previous_submission_hash == submission["previous_submission_hash"]
+    assert "provider_observation" in preflight.required_artifact_types
+    assert "provider_observation" in submission["submission_receipt"]["required_artifact_types"]
     assert preflight.expected_remote_submission_payload_hash == submission["remote_submission"]["submission_payload_hash"]
     assert preflight.expected_remote_idempotency_key == transport.request.get_header("Idempotency-key")
 
@@ -310,6 +314,7 @@ def test_trust_ledger_remote_submission_preflight_writer_validates_schema(tmp_pa
     assert payload["receipt_id"].startswith("trust-ledger-remote-submission-preflight-")
     assert payload["receipt_id"] == _remote_preflight_receipt_id(payload)
     assert payload["next_ledger_sequence"] == 1
+    assert "provider_observation" in payload["required_artifact_types"]
     assert payload["expected_remote_idempotency_key"] == payload["expected_remote_submission_payload_hash"]
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []
 
@@ -421,6 +426,12 @@ def _artifacts() -> tuple[TrustLedgerEvidenceArtifact, ...]:
             artifact_id="execution-1",
             artifact_hash=_hash("execution-1"),
             evidence_ref="proof://execution-1",
+        ),
+        TrustLedgerEvidenceArtifact(
+            artifact_type="provider_observation",
+            artifact_id="provider-observation-1",
+            artifact_hash=_hash("provider-observation-1"),
+            evidence_ref="proof://provider-observation-1",
         ),
         TrustLedgerEvidenceArtifact(
             artifact_type="verification_result",
