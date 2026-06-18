@@ -198,13 +198,17 @@ def _admit_all_pilot_evidence(client: TestClient) -> None:
         "security_public_claim_boundary",
         "security_approval",
         "finance_budget_check",
+        "terminal_closure_certificate",
         "learning_admission_decision",
     )
     for requirement_id in requirements:
+        evidence_ref = f"evidence:{requirement_id}"
+        if requirement_id == "terminal_closure_certificate":
+            evidence_ref = "terminal:gateway-pilot"
         response = client.post(
             "/api/v1/cases/case.launch_gateway_pilot/evidence",
             json={
-                "evidence_ref": f"evidence:{requirement_id}",
+                "evidence_ref": evidence_ref,
                 "requirement_id": requirement_id,
                 "submitted_by": "operator",
             },
@@ -241,6 +245,10 @@ def _closure_gate_evidence_refs() -> list[str]:
         "evidence:security_approval",
         "evidence:finance_budget_check",
     ]
+
+
+def _terminal_closure_evidence_refs() -> list[str]:
+    return [*_closure_gate_evidence_refs(), "terminal:gateway-pilot"]
 
 
 def _record_engineering_dispatch_receipt_for_route(client: TestClient, requirement_id: str) -> tuple[str, str, str]:
@@ -1733,6 +1741,7 @@ def test_authority_map_view_is_read_only_escaped_and_chained(tmp_path: Path) -> 
     assert executive_authority["evidence_requirement_ids"] == [
         "executive_objective",
         "learning_admission_decision",
+        "terminal_closure_certificate",
     ]
     assert executive_authority["escalation_path"][0]["department_id"] == "security_compliance"
     assert view.status_code == 200
@@ -1882,7 +1891,7 @@ def test_case_portfolio_reports_closed_verified_case(tmp_path: Path) -> None:
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -1958,6 +1967,43 @@ def test_closure_certificate_reports_required_gate_evidence_before_closure(tmp_p
     assert "closure_gate_evidence_required" in {item["kind"] for item in portfolio.json()["attention_items"]}
     assert readiness.json()["ready_to_close"] is True
     assert readiness.json()["required_closure_evidence_refs"] == _closure_gate_evidence_refs()
+
+
+def test_case_close_rejects_unadmitted_terminal_certificate_evidence(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": [*_closure_gate_evidence_refs(), "terminal:unadmitted"],
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:unadmitted",
+        },
+    )
+    fetched = client.get("/api/v1/cases/case.launch_gateway_pilot")
+
+    assert approval.status_code == 200
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "case_closure_rejected"
+    assert fetched.json()["case"]["status"] == "planned"
+    assert fetched.json()["closure"] is None
 
 
 def test_closure_certificate_reports_stale_gate_after_newer_evidence(tmp_path: Path) -> None:
@@ -2050,7 +2096,7 @@ def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2099,7 +2145,7 @@ def test_learning_binding_requires_admission_evidence_refs(tmp_path: Path) -> No
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2145,7 +2191,7 @@ def test_learning_binding_rejects_unadmitted_admission_evidence_refs(tmp_path: P
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2191,7 +2237,7 @@ def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: 
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2244,6 +2290,15 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
     _admit_all_pilot_evidence(client)
+    escaped_certificate_id = "<script>alert('terminal')</script>"
+    certificate_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": escaped_certificate_id,
+            "requirement_id": "terminal_closure_certificate",
+            "submitted_by": "operator",
+        },
+    )
     approval = client.post(
         "/api/v1/cases/case.launch_gateway_pilot/approvals",
         json={
@@ -2262,9 +2317,9 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": [*_closure_gate_evidence_refs(), escaped_certificate_id],
             "terminal_disposition": "committed",
-            "terminal_certificate_id": "<script>alert('terminal')</script>",
+            "terminal_certificate_id": escaped_certificate_id,
         },
     )
     learning = client.post(
@@ -2284,6 +2339,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
 
     assert approval.status_code == 200
+    assert certificate_evidence.status_code == 200
     assert closure.status_code == 200
     assert learning.status_code == 200
     assert certificate.status_code == 200
@@ -2294,7 +2350,10 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
         "evidence:learning_admission_decision",
     ]
     assert certificate.json()["closure_gate_evidence"]["required_gate_evidence_refs"] == _closure_gate_evidence_refs()
-    assert certificate.json()["closure_gate_evidence"]["closure_evidence_refs"] == _closure_gate_evidence_refs()
+    assert certificate.json()["closure_gate_evidence"]["closure_evidence_refs"] == [
+        *_closure_gate_evidence_refs(),
+        escaped_certificate_id,
+    ]
     assert certificate.json()["closure_gate_evidence"]["omitted_gate_evidence_refs"] == []
     assert certificate.json()["attention_items"] == []
     assert view.status_code == 200
@@ -2304,7 +2363,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     assert "proof timeline" in view.text
     assert "proof explorer" in view.text
     assert "evidence:learning_admission_decision" in view.text
-    assert "<script>alert('terminal')</script>" not in view.text
+    assert escaped_certificate_id not in view.text
     assert "&lt;script&gt;alert(&#x27;terminal&#x27;)&lt;/script&gt;" in view.text
     assert before["events"] == after["events"]
     assert before["gate_decisions"] == after["gate_decisions"]
@@ -2332,7 +2391,7 @@ def test_closed_case_reports_closure_packet_drift_after_gate_refresh(tmp_path: P
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2420,7 +2479,7 @@ def test_closure_packet_drift_accepts_remediation_routing(tmp_path: Path) -> Non
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2526,7 +2585,7 @@ def test_closure_packet_drift_remediation_rejects_mismatched_refs(tmp_path: Path
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2591,7 +2650,7 @@ def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_pa
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2749,7 +2808,7 @@ def test_closure_packet_drift_operator_action_binds_review_remediation(tmp_path:
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2832,7 +2891,7 @@ def test_closure_packet_drift_operator_action_binds_compensation_runbook_remedia
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2926,7 +2985,7 @@ def test_closure_packet_drift_operator_action_binds_accepted_risk_runbook_remedi
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -3024,7 +3083,7 @@ def test_closure_packet_drift_operator_action_rejects_missing_policy_evidence(tm
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -3096,7 +3155,7 @@ def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> Non
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": _closure_gate_evidence_refs(),
+            "evidence_refs": _terminal_closure_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -3376,9 +3435,10 @@ def test_launch_gateway_pilot_readiness_packet_closes_after_verified_witness(
     assert response.json()["closure_status"] == "closed"
     assert response.json()["closure"]["terminal_disposition"] == "committed"
     assert response.json()["blocked_gate_decisions"] == []
-    assert len(response.json()["admitted_evidence"]) == 5
+    assert len(response.json()["admitted_evidence"]) == 6
     assert {item["status"] for item in response.json()["gate_decisions"]} == {"allowed"}
     assert "approval:security-dual-control" in response.json()["closure"]["evidence_refs"]
+    assert "terminal:gateway-pilot-readiness" in response.json()["closure"]["evidence_refs"]
     assert fetched.json()["case"]["status"] == "closed"
     assert fetched.json()["closure"]["terminal_certificate_id"] == "terminal:gateway-pilot-readiness"
     assert readiness.status_code == 200
