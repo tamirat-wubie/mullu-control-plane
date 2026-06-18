@@ -7,6 +7,7 @@ Invariants: truth is not permission; missing evidence is unknown; connectors com
 from __future__ import annotations
 
 import json
+from types import MappingProxyType
 
 import pytest
 
@@ -177,14 +178,42 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
             metadata={"evidence_refs": ("evidence:invoice",)},
         )
     )
+    metadata_mapping_tampered = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="payment_request",
+            metadata={"details": {"evidence_ref": "evidence:invoice"}},
+        )
+    )
+    metadata_nested_mapping_tampered = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHAT,
+            target="payment_request",
+            metadata={"details": {"evidence_ref": "evidence:invoice"}},
+        )
+    )
 
     object.__setattr__(node_tampered.root, "role", "what")
     object.__setattr__(logical_tampered.root, "args", list(logical_tampered.root.args))
-    object.__setattr__(connector_tampered.root.right, "metadata", {"evidence": object()})
+    object.__setattr__(
+        connector_tampered.root.right,
+        "metadata",
+        MappingProxyType({"evidence": object()}),
+    )
     object.__setattr__(
         metadata_sequence_tampered.root,
         "metadata",
-        {"evidence_refs": ["evidence:invoice"]},
+        MappingProxyType({"evidence_refs": ["evidence:invoice"]}),
+    )
+    object.__setattr__(
+        metadata_mapping_tampered.root,
+        "metadata",
+        {"details": {"evidence_ref": "evidence:invoice"}},
+    )
+    object.__setattr__(
+        metadata_nested_mapping_tampered.root,
+        "metadata",
+        MappingProxyType({"details": {"evidence_ref": "evidence:invoice"}}),
     )
 
     with pytest.raises(ValueError, match=r"root\.role"):
@@ -195,6 +224,10 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
         connector_tampered.verify_semantics()
     with pytest.raises(ValueError, match="metadata value must be immutable"):
         metadata_sequence_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata must be immutable"):
+        metadata_mapping_tampered.verify_semantics()
+    with pytest.raises(ValueError, match="metadata must be immutable"):
+        metadata_nested_mapping_tampered.verify_semantics()
 
 
 def test_document_imports_canonical_json_with_replay_hash() -> None:

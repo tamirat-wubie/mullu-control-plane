@@ -177,6 +177,8 @@ def _require_optional_text(value: Any, name: str) -> None:
 def _require_metadata_tree(metadata: Any, name: str) -> None:
     if not isinstance(metadata, Mapping):
         raise ValueError(f"{name} metadata must be a mapping")
+    if not isinstance(metadata, MappingProxyType):
+        raise ValueError(f"{name} metadata must be immutable")
     for key, value in metadata.items():
         _require_text(key, "metadata key")
         _require_metadata_value_tree(value, name)
