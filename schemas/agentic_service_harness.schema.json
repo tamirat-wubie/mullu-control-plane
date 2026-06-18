@@ -758,12 +758,21 @@
       "additionalProperties": false,
       "required": [
         "gate_id",
+        "approval_request_id",
+        "approval_request_ref",
+        "gateway_approval_ref",
         "run_id",
         "action_class",
         "risk_level",
         "status",
         "approver_role_required",
         "approval_required",
+        "decision_required",
+        "requested_evidence_ref",
+        "response_record_required",
+        "response_record_collected",
+        "approval_collected",
+        "authority_granted",
         "self_approval_allowed",
         "permits_external_effect",
         "evidence_refs"
@@ -771,6 +780,15 @@
       "properties": {
         "gate_id": {
           "$ref": "#/$defs/identifier"
+        },
+        "approval_request_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "approval_request_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "gateway_approval_ref": {
+          "$ref": "#/$defs/evidence_ref"
         },
         "run_id": {
           "$ref": "#/$defs/identifier"
@@ -796,6 +814,31 @@
         },
         "approval_required": {
           "type": "boolean"
+        },
+        "decision_required": {
+          "type": "string",
+          "enum": [
+            "none",
+            "operator_response_required"
+          ]
+        },
+        "requested_evidence_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "response_record_required": {
+          "type": "boolean"
+        },
+        "response_record_collected": {
+          "type": "boolean",
+          "const": false
+        },
+        "approval_collected": {
+          "type": "boolean",
+          "const": false
+        },
+        "authority_granted": {
+          "type": "boolean",
+          "const": false
         },
         "self_approval_allowed": {
           "type": "boolean",

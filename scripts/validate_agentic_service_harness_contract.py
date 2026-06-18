@@ -73,6 +73,7 @@ VALID_LIFECYCLE_STATES = {
     "cancelled",
 }
 TERMINAL_LIFECYCLE_STATES = {"completed", "blocked", "cancelled"}
+VALID_APPROVAL_DECISIONS = {"none", "operator_response_required"}
 EXPECTED_NON_GOALS = (
     "no_unrestricted_openclaw_automation",
     "no_claude_code_integration",
@@ -335,18 +336,47 @@ def _validate_approval_gates(
             errors.append(f"{label}: approval_gates[{index}] must be an object")
             continue
         action_class = gate.get("action_class")
+        gate_label = f"{label}: {action_class} gate {index}"
+        for ref_name in (
+            "approval_request_id",
+            "approval_request_ref",
+            "gateway_approval_ref",
+            "requested_evidence_ref",
+        ):
+            if not isinstance(gate.get(ref_name), str) or not gate.get(ref_name):
+                errors.append(f"{gate_label} {ref_name} must be a non-empty ref")
+        if gate.get("decision_required") not in VALID_APPROVAL_DECISIONS:
+            errors.append(f"{gate_label} decision_required is invalid")
+        if gate.get("requested_evidence_ref") not in gate.get("evidence_refs", ()):
+            errors.append(f"{gate_label} requested_evidence_ref must appear in evidence_refs")
+        if gate.get("approval_collected") is not False:
+            errors.append(f"{gate_label} approval_collected must remain false")
+        if gate.get("authority_granted") is not False:
+            errors.append(f"{gate_label} authority_granted must remain false")
+        if gate.get("response_record_collected") is not False:
+            errors.append(f"{gate_label} response_record_collected must remain false")
+        if gate.get("approval_required") is True:
+            if gate.get("decision_required") != "operator_response_required":
+                errors.append(f"{gate_label} approval_required must require operator response")
+            if gate.get("response_record_required") is not True:
+                errors.append(f"{gate_label} approval_required must require response record")
+        elif gate.get("approval_required") is False:
+            if gate.get("decision_required") != "none":
+                errors.append(f"{gate_label} non-required approval must set decision_required none")
+            if gate.get("response_record_required") is not False:
+                errors.append(f"{gate_label} non-required approval must not require response record")
+        else:
+            errors.append(f"{gate_label} approval_required must be boolean")
         if action_class not in {"write_to_branch", "open_pr"}:
             continue
         if gate.get("status") != "pending":
-            errors.append(f"{label}: {action_class} gate {index} must stay pending")
+            errors.append(f"{gate_label} must stay pending")
         if gate.get("approval_required") is not True:
-            errors.append(f"{label}: {action_class} gate {index} must require approval")
+            errors.append(f"{gate_label} must require approval")
         if gate.get("self_approval_allowed") is not False:
-            errors.append(f"{label}: {action_class} gate {index} must block self approval")
+            errors.append(f"{gate_label} must block self approval")
         if gate.get("permits_external_effect") is not False:
-            errors.append(
-                f"{label}: {action_class} gate {index} must not permit external effect"
-            )
+            errors.append(f"{gate_label} must not permit external effect")
 
 
 def _validate_agent_runs(

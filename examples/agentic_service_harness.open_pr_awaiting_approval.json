@@ -66,14 +66,23 @@
   "approval_gates": [
     {
       "action_class": "open_pr",
+      "approval_collected": false,
       "approval_required": true,
+      "approval_request_id": "approval-request.openpr",
+      "approval_request_ref": "approval-request://harness/gate.openpr",
       "approver_role_required": "approver",
+      "authority_granted": false,
+      "decision_required": "operator_response_required",
       "evidence_refs": [
         "approval://openpr-required",
         "receipt://branch-evidence-required"
       ],
       "gate_id": "gate.openpr",
+      "gateway_approval_ref": "gateway-approval://operator/open-pr",
       "permits_external_effect": false,
+      "requested_evidence_ref": "approval://openpr-required",
+      "response_record_collected": false,
+      "response_record_required": true,
       "risk_level": "high",
       "run_id": "run.openpr",
       "self_approval_allowed": false,

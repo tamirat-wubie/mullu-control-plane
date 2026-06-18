@@ -99,15 +99,15 @@ def test_readiness_map_rejects_missing_agent_run_first_pr(tmp_path: Path) -> Non
     assert "missing ready row: AgentRun lifecycle read model" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_approval_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_approval_ready_row(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(approval): bind approval request projection`",
-            "1. `harness(receipts): add dry-run run receipt emitter`",
+            "| ApprovalRequest | READY |",
+            "| ApprovalRequest | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -116,7 +116,27 @@ def test_readiness_map_rejects_missing_approval_first_pr(tmp_path: Path) -> None
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: ApprovalRequest projection binding" in serialized_errors
+    assert "missing ready row: ApprovalRequest projection binding" in serialized_errors
+
+
+def test_readiness_map_rejects_missing_receipt_first_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(receipts): add dry-run run receipt emitter`",
+            "1. `harness(sandbox): bind temporary branch workspace preflight`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "missing first next PR: dry-run run receipt emitter" in serialized_errors
 
 
 def test_readiness_map_rejects_mutation_route_string(tmp_path: Path) -> None:

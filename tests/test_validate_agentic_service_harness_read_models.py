@@ -62,6 +62,14 @@ def test_agentic_service_harness_read_models_accept_default_example() -> None:
         "receipt://agent-run/run-read-model-foundation/lifecycle/completed"
     ]
     assert run["read_only_query_ref"] == "agent-run://run-read-model-foundation/read-only-query"
+    approval = payload["approvals"][0]
+    assert approval["approval_request_id"] == "approval-request.not-required-read-only"
+    assert approval["approval_request_ref"] == "approval-request://harness/approval-not-required-read-only"
+    assert approval["gateway_approval_ref"] == "gateway-approval://none/read-only-not-required"
+    assert approval["decision_required"] == "none"
+    assert approval["response_record_required"] is False
+    assert approval["approval_collected"] is False
+    assert approval["authority_granted"] is False
     repository = payload["repositories"][0]
     assert repository["provider_repository_ref"] == "github-repository://tamirat-wubie/mullu-control-plane"
     assert repository["installation_state"] == "presence_only"
@@ -158,6 +166,29 @@ def test_agentic_service_harness_read_models_reject_lifecycle_gap(
     assert "read_only_query_ref must be a non-empty ref" in serialized_errors
 
 
+def test_agentic_service_harness_read_models_reject_approval_request_binding_gap(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    approval = payload["approvals"][0]
+    approval["approval_request_ref"] = ""
+    approval["requested_evidence_ref"] = "policy://missing"
+    approval["approval_collected"] = True
+    approval["authority_granted"] = True
+    approval["response_record_collected"] = True
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "approval_request_ref must be a non-empty ref" in serialized_errors
+    assert "requested_evidence_ref must appear in evidence_refs" in serialized_errors
+    assert "approval_collected must remain false" in serialized_errors
+    assert "authority_granted must remain false" in serialized_errors
+    assert "response_record_collected must remain false" in serialized_errors
+
+
 def test_agentic_service_harness_read_models_reject_secret_like_payload(
     tmp_path: Path,
 ) -> None:
@@ -205,6 +236,27 @@ def test_agentic_service_harness_read_models_reject_missing_durable_binding(
     assert validation.ok is False
     assert "durable entity bindings missing" in serialized_errors
     assert "ApprovalRequest" in serialized_errors
+
+
+def test_agentic_service_harness_read_models_reject_approval_request_binding_identity_gap(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    approval_binding = next(
+        binding
+        for binding in payload["durable_entity_bindings"]["entity_bindings"]
+        if binding["entity_kind"] == "ApprovalRequest"
+    )
+    approval_binding["primary_key"] = "gate_id"
+    approval_binding["owner_ref_fields"].remove("gateway_approval_ref")
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_read_models(example_paths=(example_path,))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "primary_key must be approval_request_id" in serialized_errors
+    assert "owner_ref_fields missing gateway_approval_ref" in serialized_errors
 
 
 def test_agentic_service_harness_read_models_reject_enabled_durable_append(
