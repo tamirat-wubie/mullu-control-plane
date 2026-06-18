@@ -5,7 +5,7 @@ Dependencies: organization kernel contracts and runtime invariant helpers.
 Invariants:
   - Cases cannot open without organization, department, assigned departments, and owner role.
   - Plan steps cannot be admitted without checked preconditions, authority, capability certification, evidence, and approvals.
-  - Case terminal closure requires all plan steps admitted plus effect reconciliation evidence.
+  - Case terminal closure requires all plan steps admitted plus effect reconciliation evidence and certificate evidence.
   - Learning admission can only bind after terminal closure exists and admission evidence is admitted.
 """
 
@@ -49,6 +49,7 @@ from .request_tenant_guard import assert_owns
 
 
 LAUNCH_GATEWAY_PILOT_CASE_TYPE = "launch_gateway_pilot"
+TERMINAL_CLOSURE_CERTIFICATE_REQUIREMENT = "terminal_closure_certificate"
 LEARNING_ADMISSION_DECISION_REQUIREMENT = "learning_admission_decision"
 DEFAULT_ORGANIZATION_DEPARTMENT_IDS = (
     "executive",
@@ -432,10 +433,15 @@ class OrganizationKernel:
         self._require_case_plan(organization_case.case_id)
         if not self._all_plan_steps_allowed(organization_case.case_id):
             raise RuntimeCoreInvariantError("case closure requires allowed plan step gates")
+        certificate_id = ensure_non_empty_text("terminal_certificate_id", terminal_certificate_id)
         self._validate_closure_gate_evidence(organization_case.case_id, reconciliation.evidence_refs)
+        self._validate_terminal_certificate_evidence(
+            organization_case.case_id,
+            certificate_id,
+            reconciliation.evidence_refs,
+        )
         self._validate_terminal_reconciliation(reconciliation, terminal_disposition)
         self._reconciliations[reconciliation.reconciliation_id] = reconciliation
-        certificate_id = ensure_non_empty_text("terminal_certificate_id", terminal_certificate_id)
         closed_at = self._clock()
         closure_id = stable_identifier(
             "org-terminal-closure",
@@ -1401,6 +1407,18 @@ class OrganizationKernel:
         if missing_from_closure:
             raise RuntimeCoreInvariantError("closure requires gate evidence refs")
 
+    def _validate_terminal_certificate_evidence(
+        self,
+        case_id: str,
+        terminal_certificate_id: str,
+        closure_evidence_refs: tuple[str, ...],
+    ) -> None:
+        certificate = self._case_evidence.get(terminal_certificate_id)
+        if certificate is None or certificate.case_id != case_id:
+            raise RuntimeCoreInvariantError("terminal closure certificate evidence unavailable")
+        if terminal_certificate_id not in set(closure_evidence_refs):
+            raise RuntimeCoreInvariantError("closure requires terminal certificate evidence ref")
+
     def _all_plan_steps_allowed(self, case_id: str) -> bool:
         plan = self._require_case_plan(case_id)
         for step in plan.steps:
@@ -1468,7 +1486,11 @@ def default_department_packs(org_id: str) -> tuple[DepartmentPack, ...]:
             owns=("objectives", "risk_tolerance", "closure_boundary"),
             allowed_case_types=case_types,
             allowed_capabilities=("executive.objective.freeze",),
-            required_evidence=("executive_objective", LEARNING_ADMISSION_DECISION_REQUIREMENT),
+            required_evidence=(
+                "executive_objective",
+                TERMINAL_CLOSURE_CERTIFICATE_REQUIREMENT,
+                LEARNING_ADMISSION_DECISION_REQUIREMENT,
+            ),
             escalation_departments=("security_compliance",),
             metrics=("objective_change_count", "unresolved_risk_count"),
             failure_modes=("unowned_objective", "risk_tolerance_missing"),
@@ -1664,6 +1686,14 @@ def default_evidence_requirements(org_id: str) -> tuple[EvidenceRequirement, ...
             case_type=LAUNCH_GATEWAY_PILOT_CASE_TYPE,
             evidence_type="objective_record",
             description="Frozen objective and risk tolerance.",
+        ),
+        EvidenceRequirement(
+            requirement_id=TERMINAL_CLOSURE_CERTIFICATE_REQUIREMENT,
+            org_id=org_id,
+            department_id="executive",
+            case_type=LAUNCH_GATEWAY_PILOT_CASE_TYPE,
+            evidence_type="terminal_closure_certificate",
+            description="Evidence that the terminal closure certificate was minted and bound to the case.",
         ),
         EvidenceRequirement(
             requirement_id=LEARNING_ADMISSION_DECISION_REQUIREMENT,

@@ -56,6 +56,7 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_ident
 from mcoi_runtime.core.organization_kernel import (
     LAUNCH_GATEWAY_PILOT_CASE_TYPE,
     OrganizationKernel,
+    TERMINAL_CLOSURE_CERTIFICATE_REQUIREMENT,
     bootstrap_minimum_organization,
     open_launch_gateway_pilot,
 )
@@ -1726,6 +1727,9 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
             for item in closure_certificate.get("evidence_refs", [])
             if isinstance(item, str)
         ]
+    bound_terminal_certificate_refs: set[str] = set()
+    if isinstance(closure_certificate, dict) and isinstance(closure_certificate.get("terminal_certificate_id"), str):
+        bound_terminal_certificate_refs.add(str(closure_certificate["terminal_certificate_id"]))
     closure_ref_set = set(closure_refs)
     omitted_refs = [
         ref for ref in required_refs
@@ -1733,7 +1737,7 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
     ]
     superseded_closure_refs = [
         ref for ref in closure_refs
-        if required_refs and ref not in required_refs
+        if required_refs and ref not in required_refs and ref not in bound_terminal_certificate_refs
     ]
     stale_step_ids = [
         item["step_id"] for item in stale_gate_decisions
@@ -4359,6 +4363,22 @@ def _admit_launch_gateway_readiness_packet(
             )
         )
         admitted.append(evidence)
+    admitted.append(
+        kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=req.terminal_certificate_id,
+                case_id=case_id,
+                requirement_id=TERMINAL_CLOSURE_CERTIFICATE_REQUIREMENT,
+                submitted_by=req.submitted_by,
+                submitted_at=_clock_now(),
+                metadata={
+                    "source": "launch_gateway_pilot_readiness_packet",
+                    "request": req.metadata,
+                    "terminal_certificate_id": req.terminal_certificate_id,
+                },
+            )
+        )
+    )
     return tuple(admitted)
 
 
@@ -4371,6 +4391,7 @@ def _launch_gateway_closure_evidence_refs(
         refs.extend(decision.evidence_refs)
         refs.extend(decision.approval_refs)
     refs.extend(req.closure_evidence_refs)
+    refs.append(req.terminal_certificate_id)
     deduped: list[str] = []
     for ref in refs:
         if ref not in deduped:
