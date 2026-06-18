@@ -137,12 +137,13 @@
       "name": "Governance Core",
       "owner_surface": "governance",
       "proof_binding": {
-        "evidence_file_count": 12,
+        "evidence_file_count": 19,
         "inventory_surface_ids": [
           "authority_obligation_mesh",
           "component_autopsy",
           "component_harness_read_model",
           "component_request_simulator",
+          "component_symbol_read_model",
           "gateway_approval_resolution",
           "gateway_capability_fabric",
           "gateway_webhook_ingress"
@@ -150,7 +151,7 @@
         "required_surface_ids": [
           "gateway_capability_fabric"
         ],
-        "runtime_witness_count": 6,
+        "runtime_witness_count": 11,
         "state": "proof_bound"
       },
       "proof_surface": {
@@ -164,11 +165,12 @@
           "component_autopsy",
           "component_harness_read_model",
           "component_request_simulator",
+          "component_symbol_read_model",
           "gateway_approval_resolution",
           "gateway_capability_fabric",
           "gateway_webhook_ingress"
         ],
-        "route_count": 22,
+        "route_count": 23,
         "state": "bound"
       },
       "state": "registered",
@@ -1177,13 +1179,13 @@
     "authority_witness_count": 10,
     "awaiting_binding_count": 1,
     "blocked_component_count": 1,
-    "bound_route_count": 30,
+    "bound_route_count": 31,
     "bundle_count": 3,
-    "classified_declared_route_count": 437,
+    "classified_declared_route_count": 438,
     "component_count": 10,
     "lifecycle_receipt_count": 10,
     "proof_bound_count": 9,
-    "route_family_classification_count": 77
+    "route_family_classification_count": 78
   },
   "terminal_closure_required": true,
   "validators": [

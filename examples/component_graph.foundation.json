@@ -541,7 +541,7 @@
       "proof_binding_state": "proof_bound",
       "request_path_count": 6,
       "route_binding_state": "bound",
-      "route_count": 22,
+      "route_count": 23,
       "state": "registered",
       "type": "governance_core",
       "wiring_state": "present"

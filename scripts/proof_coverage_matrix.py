@@ -335,6 +335,54 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "component_symbol_read_model",
+            ["/api/v1/components/symbols"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/symbol_operator_read_models.py",
+                "mcoi/mcoi_runtime/app/routers/components.py",
+                "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+                "schemas/universal_symbol.schema.json",
+                "scripts/validate_universal_symbol_kernel.py",
+                "mcoi/tests/test_symbol_operator_read_models.py",
+                "mcoi/tests/test_symbol_skill_adapter.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            (
+                "Component Harness symbol read model projects component registry "
+                "entries into UniversalSymbol envelopes through one read-only route "
+                "without granting runtime dispatch, connector calls, filesystem "
+                "writes, terminal closure, or success-claim authority."
+            ),
+            [
+                "component_symbol_read_model_projects_schema_valid_symbols",
+                "component_symbol_route_is_read_only",
+                "symbol_operator_read_models_deny_runtime_authority",
+                "symbol_operator_read_model_rejects_invalid_limits",
+                "universal_symbol_kernel_validates",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_symbol_read_model_projects_schema_valid_symbols": [
+                    "component_symbol_read_model_projects_schema_valid_symbols",
+                ],
+                "component_symbol_route_is_read_only": [
+                    "component_symbol_route_is_read_only",
+                ],
+                "symbol_operator_read_models_deny_runtime_authority": [
+                    "symbol_operator_read_models_deny_runtime_authority",
+                ],
+                "symbol_operator_read_model_rejects_invalid_limits": [
+                    "symbol_operator_read_model_rejects_invalid_limits",
+                ],
+                "universal_symbol_kernel_validates": [
+                    "foundation_universal_symbol_kernel_validates",
+                ],
+            },
+        ),
+        _surface(
             "component_autopsy",
             ["/api/v1/components/{component_id}/autopsy"],
             "read_model",
