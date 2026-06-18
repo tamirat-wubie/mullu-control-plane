@@ -529,7 +529,7 @@ def _canonical(value: Any) -> Any:
     if isinstance(value, StrEnum):
         return value.value
     if isinstance(value, Mapping):
-        return {str(key): _canonical(item) for key, item in value.items()}
+        return {_require_text(key, "canonical mapping key"): _canonical(item) for key, item in value.items()}
     if isinstance(value, tuple):
         return [_canonical(item) for item in value]
     if isinstance(value, list):
