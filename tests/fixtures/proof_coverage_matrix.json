@@ -1014,6 +1014,13 @@
       ]
     },
     {
+      "action_id": "publish_maf_receipt_parity_witness_contract",
+      "status": "closed",
+      "surfaces": [
+        "maf_receipt_parity_witness"
+      ]
+    },
+    {
       "action_id": "publish_research_source_conflict_map_contract",
       "status": "closed",
       "surfaces": [
@@ -1385,7 +1392,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 126,
+      "action_proof": 127,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 52,
@@ -1393,7 +1400,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 178,
+      "audit_chain": 179,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1401,21 +1408,21 @@
     "by_coverage_state": {
       "proven": 72,
       "unproven": 0,
-      "witnessed": 109
+      "witnessed": 110
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
-      "request_proof": 125
+      "request_proof": 126
     },
-    "surface_count": 181
+    "surface_count": 182
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 181,
+      "strong": 182,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -11126,6 +11133,68 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "examples/maf_receipt_parity_witness.foundation.json",
+        "scripts/validate_maf_receipt_parity_witness.py",
+        "tests/test_validate_maf_receipt_parity_witness.py",
+        "schemas/sdlc_transition_receipt.schema.json",
+        "schemas/worker_failure_receipt.schema.json",
+        "schemas/universal_action_orchestration.schema.json",
+        "schemas/life_meaning_judgment.schema.json",
+        "docs/93_maf_receipt_parity_witness_contract.md",
+        "docs/82_cross_repo_opportunity_map.md",
+        "docs/MAF_RECEIPT_COVERAGE.md",
+        "maf/MAF_BOUNDARY.md",
+        "maf/rust/Cargo.toml"
+      ],
+      "notes": "MAF receipt parity witnesses bind Python receipt schema digests to Rust MAF crate manifest and entry digests while keeping PyO3, subprocess, CLI execution, Rust execution, connector calls, writes, runtime dispatch, terminal closure, and success claims denied until ABI, subprocess, fixture, and failure-path witnesses exist.",
+      "representative_paths": [
+        "MafReceiptParityWitness",
+        "validate_maf_receipt_parity_witness",
+        "maf_receipt_parity_witness.v1"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "maf_receipt_parity_witness_denies_runtime_binding": [
+          "maf_receipt_parity_witness_passes",
+          "maf_receipt_parity_witness_rejects_runtime_authority_drift"
+        ],
+        "maf_receipt_parity_witness_rejects_digest_drift": [
+          "maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+          "maf_receipt_parity_witness_rejects_rust_crate_digest_drift"
+        ],
+        "maf_receipt_parity_witness_rejects_gap_closure_without_evidence": [
+          "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+        ],
+        "maf_receipt_parity_witness_rejects_summary_drift": [
+          "maf_receipt_parity_witness_rejects_summary_drift"
+        ],
+        "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs": [
+          "maf_receipt_parity_witness_passes"
+        ],
+        "maf_receipt_parity_witness_schema_valid": [
+          "maf_receipt_parity_witness_passes"
+        ],
+        "maf_receipt_parity_witness_sdlc_artifacts_valid": [
+          "sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+        ]
+      },
+      "runtime_witnesses": [
+        "maf_receipt_parity_witness_schema_valid",
+        "maf_receipt_parity_witness_denies_runtime_binding",
+        "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs",
+        "maf_receipt_parity_witness_rejects_digest_drift",
+        "maf_receipt_parity_witness_rejects_gap_closure_without_evidence",
+        "maf_receipt_parity_witness_rejects_summary_drift",
+        "maf_receipt_parity_witness_sdlc_artifacts_valid"
+      ],
+      "surface_id": "maf_receipt_parity_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "schemas/research_source_conflict_map.schema.json",
         "examples/research_source_conflict_map.foundation.json",
         "scripts/validate_research_source_conflict_map.py",
@@ -14578,8 +14647,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1836,
-    "runtime_witness_count": 1836,
+    "exact_test_anchor_count": 1843,
+    "runtime_witness_count": 1843,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23224,6 +23293,59 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "invariant_fuzz_execution_report",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes"
+            ],
+            "witness": "maf_receipt_parity_witness_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes",
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_runtime_authority_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_denies_runtime_binding"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_passes"
+            ],
+            "witness": "maf_receipt_parity_witness_requires_python_schema_and_rust_crate_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_python_schema_digest_drift",
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_rust_crate_digest_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_digest_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_summary_drift"
+            ],
+            "witness": "maf_receipt_parity_witness_rejects_summary_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_maf_receipt_parity_witness.py::test_sdlc_requirement_and_design_validate_for_maf_receipt_parity_witness"
+            ],
+            "witness": "maf_receipt_parity_witness_sdlc_artifacts_valid"
+          }
+        ],
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
+        "surface_id": "maf_receipt_parity_witness",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

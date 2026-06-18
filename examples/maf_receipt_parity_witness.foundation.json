@@ -1,0 +1,379 @@
+{
+  "witness_id": "maf-receipt-parity-witness-foundation-20260618",
+  "witness_version": "maf_receipt_parity_witness.v1",
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "parity_scope": {
+    "source_family": "maf/rust",
+    "foundation_mode": true,
+    "parity_mode": "digest_only_static_surface_map",
+    "runtime_binding_claimed": false,
+    "rust_execution_performed": false,
+    "python_to_rust_call_path_claimed": false,
+    "direct_runtime_binding_deferred": true,
+    "uao_ref": "uao://maf/receipt-parity-witness/foundation",
+    "life_meaning_judgment_ref": "life-meaning://maf/receipt-parity-witness/foundation",
+    "required_future_witnesses": [
+      "witness://maf/abi-cli-contract",
+      "witness://maf/subprocess-effect-boundary",
+      "witness://maf/deterministic-fixture-parity",
+      "witness://maf/failure-receipt-path"
+    ]
+  },
+  "python_schema_surfaces": [
+    {
+      "schema_id": "sdlc-transition-receipt",
+      "schema_ref": "schemas/sdlc_transition_receipt.schema.json",
+      "schema_digest_sha256": "31a21e0440cecfd087d0970325bf2e99ce5c57376387875adb5fd90e16af5e5b",
+      "surface_family": "receipt",
+      "parity_role": "transition_receipt",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "worker-failure-receipt",
+      "schema_ref": "schemas/worker_failure_receipt.schema.json",
+      "schema_digest_sha256": "359721d22f0e671de6fcc1bed49b228acbd1f454b6b694e6e07c5c977c0b23c5",
+      "surface_family": "receipt",
+      "parity_role": "failure_receipt",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "universal-action-orchestration",
+      "schema_ref": "schemas/universal_action_orchestration.schema.json",
+      "schema_digest_sha256": "bc9b181d0cb5cb4d2d28a210b75303d466d161f5a31a2273d34dcf83eb83074e",
+      "surface_family": "orchestration",
+      "parity_role": "uao_record",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "capability-descriptor",
+      "schema_ref": "schemas/capability_descriptor.schema.json",
+      "schema_digest_sha256": "566727405f433571d1410ac313c6b89b2ab9fb6c6d48a32755b530815c1a0f76",
+      "surface_family": "capability",
+      "parity_role": "capability_descriptor",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "policy-decision",
+      "schema_ref": "schemas/policy_decision.schema.json",
+      "schema_digest_sha256": "8bbef1a16ba901cd1f9550d7a896df4b4cd1d90fc63e7149abfa7e7e95939dde",
+      "surface_family": "governance",
+      "parity_role": "policy_decision",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "supervisor-tick",
+      "schema_ref": "schemas/supervisor_tick.schema.json",
+      "schema_digest_sha256": "c4a212a9a204b80d0e8b9c11e7fd083ddf72554a40181acb9e168343abb93f60",
+      "surface_family": "supervision",
+      "parity_role": "supervisor_tick",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "learning-admission",
+      "schema_ref": "schemas/learning_admission.schema.json",
+      "schema_digest_sha256": "89eb8e5de621d6362b9b18f27e547dfb22297ad7493def7ad067d4ce8da605d7",
+      "surface_family": "learning",
+      "parity_role": "learning_admission",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "kernel-proof",
+      "schema_ref": "schemas/kernel_proof.schema.json",
+      "schema_digest_sha256": "71f8a5717e7d9d8ea9b3097993f4466b6448b8ab9867c3aa33d6a50aff3ae4f9",
+      "surface_family": "truth",
+      "parity_role": "kernel_proof",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "agent-identity",
+      "schema_ref": "schemas/agent_identity.schema.json",
+      "schema_digest_sha256": "71c6ed3b9ffd3dd925874fa26d2242462533018118db7be2393e499df63589b4",
+      "surface_family": "agent",
+      "parity_role": "agent_identity",
+      "required_for_parity": true
+    },
+    {
+      "schema_id": "github-action-execution-receipt",
+      "schema_ref": "schemas/github_action_execution_receipt.schema.json",
+      "schema_digest_sha256": "3e63964753d8c1b3bd9a5651b074b85c6629b60b4e18394e89153f8b2c8385a0",
+      "surface_family": "ops",
+      "parity_role": "execution_receipt",
+      "required_for_parity": true
+    }
+  ],
+  "rust_crate_surfaces": [
+    {
+      "crate_name": "maf-kernel",
+      "crate_manifest_ref": "maf/rust/crates/maf-kernel/Cargo.toml",
+      "crate_manifest_digest_sha256": "3b38f360fe9772d15457173f67d81c2139120c8677bb580c40f0058d830137a8",
+      "crate_entry_ref": "maf/rust/crates/maf-kernel/src/lib.rs",
+      "crate_entry_digest_sha256": "719f7bae48b2a380a1e0149f880bb25656c9f82c34ec847c0dbe11050cee225a",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-event",
+      "crate_manifest_ref": "maf/rust/crates/maf-event/Cargo.toml",
+      "crate_manifest_digest_sha256": "fd2397ee811fbfa5cebb2ddecf4e5d27a1fe1e0242d6336d8fcd0f92813b1e61",
+      "crate_entry_ref": "maf/rust/crates/maf-event/src/lib.rs",
+      "crate_entry_digest_sha256": "ba6080d3eccbd57cdd767202eeeb4b4d351782e3daa80296a13c6334a6c7c502",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-governance",
+      "crate_manifest_ref": "maf/rust/crates/maf-governance/Cargo.toml",
+      "crate_manifest_digest_sha256": "6e7d40fd7e1d08827ddd9398969a9f031743624eeecde7e05658f9631966308a",
+      "crate_entry_ref": "maf/rust/crates/maf-governance/src/lib.rs",
+      "crate_entry_digest_sha256": "c958f136960602672699951e1119c780b956c59800c850faf4b5a06cdf56235e",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-orchestration",
+      "crate_manifest_ref": "maf/rust/crates/maf-orchestration/Cargo.toml",
+      "crate_manifest_digest_sha256": "0f4d83578b83c7d05946bb4d62b8136e65948134ae988325106acf4326f1b9a5",
+      "crate_entry_ref": "maf/rust/crates/maf-orchestration/src/lib.rs",
+      "crate_entry_digest_sha256": "ccbfa9229f4a88875cd9422dfd8c63c326553bb97047685eaf23d1c898779728",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-capability",
+      "crate_manifest_ref": "maf/rust/crates/maf-capability/Cargo.toml",
+      "crate_manifest_digest_sha256": "88eb7c34d76eb441fe6cb43c6fd2b14094ced8527ac3397f97d4165306612342",
+      "crate_entry_ref": "maf/rust/crates/maf-capability/src/lib.rs",
+      "crate_entry_digest_sha256": "3b1146cc53d86560f12e12d48b5f7769458e5e66d0f84381f43b96ca3963ea11",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-agent",
+      "crate_manifest_ref": "maf/rust/crates/maf-agent/Cargo.toml",
+      "crate_manifest_digest_sha256": "7ca993e826243c10df3bb7e75de4ebd5e38c62f510304727f58e9955eb4a23a5",
+      "crate_entry_ref": "maf/rust/crates/maf-agent/src/lib.rs",
+      "crate_entry_digest_sha256": "a25de96d87001993f0a9c9f85ee704860990c0d55138dd840b792257f75eb376",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-supervisor",
+      "crate_manifest_ref": "maf/rust/crates/maf-supervisor/Cargo.toml",
+      "crate_manifest_digest_sha256": "ddf59fb918c2b192321e55b74a503a6202bd6b7b32841328a2174070691ec932",
+      "crate_entry_ref": "maf/rust/crates/maf-supervisor/src/lib.rs",
+      "crate_entry_digest_sha256": "cd546b0d1ece0331ec38decf2af19459da269e82e7bd65e556e56453b08d6ec9",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-ops",
+      "crate_manifest_ref": "maf/rust/crates/maf-ops/Cargo.toml",
+      "crate_manifest_digest_sha256": "cf8f57dafb5d54df8a44ca7446f0e1d6de4beaef4476f9a4d2d31c8f6f98be0f",
+      "crate_entry_ref": "maf/rust/crates/maf-ops/src/lib.rs",
+      "crate_entry_digest_sha256": "24eb2d55be6656b90337706ade3ec09fb77de91026a8683ffd4eae8e697c558a",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-learning",
+      "crate_manifest_ref": "maf/rust/crates/maf-learning/Cargo.toml",
+      "crate_manifest_digest_sha256": "21f101c85142a81acdea9b29d1de50e3ef6ffe4b322c9fd75156ae2ce6f9d268",
+      "crate_entry_ref": "maf/rust/crates/maf-learning/src/lib.rs",
+      "crate_entry_digest_sha256": "7cdd26cbe9d285d4f0f1edff766019aa1e22a4322fb0d1b92fbdaf999d96c14a",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-truth-kernel",
+      "crate_manifest_ref": "maf/rust/crates/maf-truth-kernel/Cargo.toml",
+      "crate_manifest_digest_sha256": "d3a145dd31ed574a3cccfe83a7ec694acbd82092210cd9cbd4748db90176cdb1",
+      "crate_entry_ref": "maf/rust/crates/maf-truth-kernel/src/lib.rs",
+      "crate_entry_digest_sha256": "0417b0ecf0640a4e7246c6981431c87324fff3c1605974e649ffeed0ba075420",
+      "crate_kind": "library",
+      "execution_authority_denied": true,
+      "cli_surface": false
+    },
+    {
+      "crate_name": "maf-cli",
+      "crate_manifest_ref": "maf/rust/crates/maf-cli/Cargo.toml",
+      "crate_manifest_digest_sha256": "56b2a166109b9b6d68c9d311d4930be684aa876e38399e0038f7cad79fb7264b",
+      "crate_entry_ref": "maf/rust/crates/maf-cli/src/main.rs",
+      "crate_entry_digest_sha256": "c2b6c37eb6fddce6eacf47cc100b2b17d09eecf239cee29c832f89f659826a07",
+      "crate_kind": "binary",
+      "execution_authority_denied": true,
+      "cli_surface": true
+    }
+  ],
+  "parity_mappings": [
+    {
+      "mapping_id": "map://maf/transition-receipt/kernel",
+      "python_schema_ref": "schemas/sdlc_transition_receipt.schema.json",
+      "rust_crate_name": "maf-kernel",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/sdlc_transition_receipt.schema.json", "maf/rust/crates/maf-kernel/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/failure-receipt/event",
+      "python_schema_ref": "schemas/worker_failure_receipt.schema.json",
+      "rust_crate_name": "maf-event",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/worker_failure_receipt.schema.json", "maf/rust/crates/maf-event/src/lib.rs"],
+      "gap_refs": ["gap://maf/failure-receipt-path", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/uao/orchestration",
+      "python_schema_ref": "schemas/universal_action_orchestration.schema.json",
+      "rust_crate_name": "maf-orchestration",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/universal_action_orchestration.schema.json", "maf/rust/crates/maf-orchestration/src/lib.rs"],
+      "gap_refs": ["gap://maf/abi-cli-contract", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/capability/capability-crate",
+      "python_schema_ref": "schemas/capability_descriptor.schema.json",
+      "rust_crate_name": "maf-capability",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/capability_descriptor.schema.json", "maf/rust/crates/maf-capability/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/policy/governance",
+      "python_schema_ref": "schemas/policy_decision.schema.json",
+      "rust_crate_name": "maf-governance",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/policy_decision.schema.json", "maf/rust/crates/maf-governance/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/supervisor/supervisor-crate",
+      "python_schema_ref": "schemas/supervisor_tick.schema.json",
+      "rust_crate_name": "maf-supervisor",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/supervisor_tick.schema.json", "maf/rust/crates/maf-supervisor/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/learning/learning-crate",
+      "python_schema_ref": "schemas/learning_admission.schema.json",
+      "rust_crate_name": "maf-learning",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/learning_admission.schema.json", "maf/rust/crates/maf-learning/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/kernel-proof/truth-kernel",
+      "python_schema_ref": "schemas/kernel_proof.schema.json",
+      "rust_crate_name": "maf-truth-kernel",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/kernel_proof.schema.json", "maf/rust/crates/maf-truth-kernel/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/agent/agent-crate",
+      "python_schema_ref": "schemas/agent_identity.schema.json",
+      "rust_crate_name": "maf-agent",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/agent_identity.schema.json", "maf/rust/crates/maf-agent/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/ops/execution-receipt",
+      "python_schema_ref": "schemas/github_action_execution_receipt.schema.json",
+      "rust_crate_name": "maf-ops",
+      "parity_status": "digest_recorded_gap_open",
+      "matched_evidence_refs": ["schemas/github_action_execution_receipt.schema.json", "maf/rust/crates/maf-ops/src/lib.rs"],
+      "gap_refs": ["gap://maf/deterministic-fixture-parity", "gap://maf/runtime-binding-not-claimed"],
+      "runtime_binding_allowed": false
+    },
+    {
+      "mapping_id": "map://maf/cli/authority-denied",
+      "python_schema_ref": "schemas/universal_action_orchestration.schema.json",
+      "rust_crate_name": "maf-cli",
+      "parity_status": "authority_denied",
+      "matched_evidence_refs": ["maf/rust/crates/maf-cli/Cargo.toml", "maf/rust/crates/maf-cli/src/main.rs"],
+      "gap_refs": ["gap://maf/cli-execution-authority-denied"],
+      "runtime_binding_allowed": false
+    }
+  ],
+  "authority_boundary": {
+    "digest_only_static_read_allowed": true,
+    "pyo3_binding_allowed": false,
+    "subprocess_execution_allowed": false,
+    "cli_execution_allowed": false,
+    "rust_crate_execution_allowed": false,
+    "python_imports_rust_allowed": false,
+    "external_connector_call_allowed": false,
+    "network_call_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "canonical_state_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "maf_receipt_parity_witness_schema": "schemas/maf_receipt_parity_witness.schema.json",
+    "maf_receipt_parity_witness_example": "examples/maf_receipt_parity_witness.foundation.json",
+    "maf_receipt_parity_witness_validator": "scripts/validate_maf_receipt_parity_witness.py",
+    "maf_receipt_parity_witness_tests": "tests/test_validate_maf_receipt_parity_witness.py",
+    "maf_boundary_doc": "maf/MAF_BOUNDARY.md",
+    "maf_receipt_coverage_doc": "docs/MAF_RECEIPT_COVERAGE.md",
+    "rust_workspace_manifest": "maf/rust/Cargo.toml",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json"
+  },
+  "contract_summary": {
+    "python_schema_surface_count": 10,
+    "rust_crate_surface_count": 11,
+    "parity_mapping_count": 11,
+    "authority_denial_count": 13,
+    "awaiting_gap_count": 21,
+    "evidence_ref_count": 23
+  },
+  "evidence_refs": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "docs/93_maf_receipt_parity_witness_contract.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "docs/MAF_RECEIPT_COVERAGE.md",
+    "maf/MAF_BOUNDARY.md",
+    "maf/rust/Cargo.toml",
+    "maf/rust/crates/maf-kernel/src/lib.rs",
+    "maf/rust/crates/maf-event/src/lib.rs",
+    "maf/rust/crates/maf-governance/src/lib.rs",
+    "maf/rust/crates/maf-orchestration/src/lib.rs",
+    "maf/rust/crates/maf-capability/src/lib.rs",
+    "maf/rust/crates/maf-agent/src/lib.rs",
+    "maf/rust/crates/maf-supervisor/src/lib.rs",
+    "maf/rust/crates/maf-ops/src/lib.rs",
+    "maf/rust/crates/maf-learning/src/lib.rs",
+    "maf/rust/crates/maf-truth-kernel/src/lib.rs",
+    "maf/rust/crates/maf-cli/src/main.rs",
+    "examples/sdlc/requirement_maf_receipt_parity_witness_20260618.json",
+    "examples/sdlc/design_maf_receipt_parity_witness_20260618.json",
+    "examples/sdlc/security_review_maf_receipt_parity_witness_20260618.json"
+  ]
+}

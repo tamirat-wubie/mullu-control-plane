@@ -1,0 +1,101 @@
+{
+  "security_review_id": "SEC-maf-receipt-parity-witness-20260618",
+  "change_id": "maf-receipt-parity-witness-20260618",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "MAF receipt parity evidence can accidentally become a runtime binding claim if digest evidence is conflated with PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python import paths, or runtime dispatch. The main risks are creating an unwitnessed Python-to-Rust call path, invoking a Rust binary through CLI or subprocess, touching connectors or network resources, exposing secrets in parity evidence, closing deterministic fixture gaps without evidence, and claiming terminal closure. The mitigation is a read-only digest witness and validator that reject authority drift, digest drift, missing future witnesses, gap closure, raw secret markers, and summary drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, runtime dispatch, canonical state mutation, terminal closure, and success authority remain false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_runtime_authority_drift"
+    },
+    {
+      "category": "external_api",
+      "check": "external connector calls and network calls remain denied by the authority boundary",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_runtime_authority_drift"
+    },
+    {
+      "category": "secrets",
+      "check": "redaction check confirms secret marker validation rejects client_secret, tokens, API keys, and private-key markers in witness payloads",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check confirms Foundation Mode parity mode remains digest_only_static_surface_map and required future witnesses remain open",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_gap_closure_without_evidence"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check confirms receipt refs bind the witness schema, example, validator, tests, MAF boundary doc, receipt coverage doc, UAO schema, LifeMeaningJudgment schema, and WorkerFailureReceipt schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_missing_refs_and_secrets"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms Python schema digests, Rust crate digests, mapping counts, authority denial counts, and gap counts cannot drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_maf_receipt_parity_witness.py::test_maf_receipt_parity_witness_rejects_summary_drift"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check confirms the proof coverage matrix includes the MafReceiptParityWitness surface",
+      "status": "passed",
+      "evidence_ref": "tests/test_proof_coverage_matrix.py::test_maf_receipt_parity_witness_denies_runtime_binding"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "maf-runtime-binding-authority",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Foundation Mode witness blocks PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, runtime dispatch, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/maf_receipt_parity_witness.schema.json",
+        "scripts/validate_maf_receipt_parity_witness.py",
+        "tests/test_validate_maf_receipt_parity_witness.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "maf-digest-parity-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "Witness records digest parity only and requires open future witnesses for ABI/CLI contract, subprocess effect boundary, deterministic fixture parity, and failure receipt path before runtime binding can be reconsidered.",
+      "evidence_refs": [
+        "examples/maf_receipt_parity_witness.foundation.json",
+        "tests/test_validate_maf_receipt_parity_witness.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep MafReceiptParityWitness validation read-only and deterministic",
+    "require canonical source digests for Python schema surfaces and Rust crate surfaces",
+    "require open gap refs for every digest-only mapping",
+    "deny PyO3, subprocess, CLI, Rust execution, connectors, network, secrets, writes, dispatch, terminal closure, and success claims",
+    "reject secret markers and summary count drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/maf_receipt_parity_witness.schema.json",
+    "examples/maf_receipt_parity_witness.foundation.json",
+    "scripts/validate_maf_receipt_parity_witness.py",
+    "tests/test_validate_maf_receipt_parity_witness.py",
+    "receipt://sdlc/maf-receipt-parity-witness/security"
+  ],
+  "uao_ref": "uao://sdlc/maf-receipt-parity-witness/security",
+  "causal_decision_trace_ref": "trace://sdlc/maf-receipt-parity-witness/security",
+  "receipt_ref": "receipt://sdlc/maf-receipt-parity-witness/security"
+}
