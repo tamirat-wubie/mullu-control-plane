@@ -4106,6 +4106,67 @@ class TestGatewayStatus:
             data, sort_keys=True
         )
 
+    def test_operator_receipt_viewer_projects_llm_interpretation_proposal_receipt(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proposal-receipt",
+            idempotency_key="proposal-receipt-viewer",
+            intent="llm_completion",
+            payload={
+                "body": "proposal raw body must stay hidden secret-proposal-1",
+                "llm_interpretation_proposal": {
+                    "proposal_id": "interpretation-proposal-aaaaaaaaaaaaaaaa",
+                    "request_id": "interpreted-request-bbbbbbbbbbbbbbbb",
+                    "raw_message_hash": "hash-proposal-raw-message",
+                    "proposal_source": "llm_assisted_interpretation",
+                    "proposed_intent_class": "document_instruction",
+                    "proposed_capability_id": "enterprise.document_generate",
+                    "proposed_slot_names": ["action", "target"],
+                    "proposed_slots_hash": "hash-proposed-slots",
+                    "proposal_confidence": 0.82,
+                    "deterministic_intent_class": "unclear_message",
+                    "deterministic_capability_id": "",
+                    "deterministic_confidence": 0.25,
+                    "validation_status": "accepted_as_proposal",
+                    "authority_level": "proposal_only",
+                    "deterministic_override_allowed": False,
+                    "action_authority_granted": False,
+                    "execution_allowed": False,
+                    "rejected_reasons": [],
+                    "created_at": "2026-06-18T12:00:00+00:00",
+                    "raw_message": "secret-proposal-1",
+                    "slots": {"target": "secret-proposal-1"},
+                },
+            },
+        )
+
+        resp = client.get(
+            "/operator/receipts/read-model"
+            f"?tenant_id=t1&command_id={command.command_id}"
+            "&receipt_type=llm_interpretation_proposal_receipt"
+        )
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_RECEIPT_VIEWER_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        row = data["receipt_groups"][0]
+        receipt = row["receipts"][0]
+        assert row["receipt_types"] == ["llm_interpretation_proposal_receipt"]
+        assert receipt["receipt_type"] == "llm_interpretation_proposal_receipt"
+        assert receipt["status"] == "accepted_as_proposal"
+        assert receipt["details"]["authority_level"] == "proposal_only"
+        assert receipt["details"]["execution_allowed"] is False
+        assert receipt["details"]["proposed_slot_names"] == ["action", "target"]
+        assert receipt["evidence_refs"]["proposed_slots_hash"] == "hash-proposed-slots"
+        assert "secret-proposal-1" not in json.dumps(data, sort_keys=True)
+
     def test_operator_receipt_viewer_projects_search_decision_receipts(
         self, gateway_app, client
     ):

@@ -136,6 +136,7 @@
       "type": "string",
       "enum": [
         "interpretation_receipt",
+        "llm_interpretation_proposal_receipt",
         "search_decision_receipt",
         "search_receipt",
         "plan_step_receipt",

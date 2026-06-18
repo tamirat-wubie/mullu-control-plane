@@ -53,10 +53,33 @@ _INTERPRETATION_RECEIPT_FIELDS = (
     "created_at",
 )
 
+_LLM_INTERPRETATION_PROPOSAL_FIELDS = (
+    "proposal_id",
+    "request_id",
+    "raw_message_hash",
+    "proposal_source",
+    "proposed_intent_class",
+    "proposed_capability_id",
+    "proposed_slot_names",
+    "proposed_slots_hash",
+    "proposal_confidence",
+    "deterministic_intent_class",
+    "deterministic_capability_id",
+    "deterministic_confidence",
+    "validation_status",
+    "authority_level",
+    "deterministic_override_allowed",
+    "action_authority_granted",
+    "execution_allowed",
+    "rejected_reasons",
+    "created_at",
+)
+
 _CAPABILITY_INTENT_KEYS = ("capability_intent", "skill_intent")
 
 _RECEIPT_TYPES = (
     "interpretation_receipt",
+    "llm_interpretation_proposal_receipt",
     "search_decision_receipt",
     "search_receipt",
     "plan_step_receipt",
@@ -1917,6 +1940,9 @@ def _receipts_for_command(
     interpretation = _interpretation_receipt(command)
     if interpretation is not None:
         receipts.append(interpretation)
+    proposal = _llm_interpretation_proposal_receipt(command)
+    if proposal is not None:
+        receipts.append(proposal)
     search_decision = _search_decision_receipt(command, events)
     if search_decision is not None:
         receipts.append(search_decision)
@@ -2457,6 +2483,37 @@ def _interpretation_receipt(command: CommandEnvelope) -> dict[str, Any] | None:
         "receipt_id": receipt_id,
         "receipt_hash": _stable_hash(details),
         "status": "recorded",
+        "details": details,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _llm_interpretation_proposal_receipt(command: CommandEnvelope) -> dict[str, Any] | None:
+    raw_receipt = command.redacted_payload.get("llm_interpretation_proposal")
+    if not isinstance(raw_receipt, Mapping):
+        return None
+    details = {
+        key: _json_safe_value(raw_receipt[key])
+        for key in _LLM_INTERPRETATION_PROPOSAL_FIELDS
+        if key in raw_receipt
+    }
+    receipt_id = str(
+        details.get("proposal_id")
+        or command.redacted_payload.get("llm_interpretation_proposal_id")
+        or f"llm-interpretation-proposal:{command.command_id}"
+    )
+    evidence_refs = {
+        "raw_message_hash": str(details.get("raw_message_hash", "")),
+        "request_id": str(details.get("request_id", "")),
+        "proposed_slots_hash": str(details.get("proposed_slots_hash", "")),
+        "deterministic_intent_class": str(details.get("deterministic_intent_class", "")),
+        "validation_status": str(details.get("validation_status", "")),
+    }
+    return {
+        "receipt_type": "llm_interpretation_proposal_receipt",
+        "receipt_id": receipt_id,
+        "receipt_hash": _stable_hash(details),
+        "status": str(details.get("validation_status", "recorded")),
         "details": details,
         "evidence_refs": evidence_refs,
     }
