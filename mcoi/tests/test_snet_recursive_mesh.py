@@ -570,6 +570,36 @@ def test_parent_question_id_must_match_symbol_causal_scope() -> None:
     assert mesh.metadata[promoted_child.created_from_metadata_id].question_id == depends_on_question_id
 
 
+def test_created_from_metadata_id_must_exist_before_symbol_mutation() -> None:
+    mesh = SNetRecursiveMesh()
+
+    with pytest.raises(KeyError, match="unknown SNet metadata_id"):
+        mesh.add_symbol("Forged child", created_from_metadata_id="snet-metadata:missing")
+
+    assert mesh.symbols == {}
+    assert mesh._symbol_identity_index == {}
+
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = next(
+        question_id
+        for question_id in tick.generated_question_ids
+        if mesh.questions[question_id].wh_type is SNetWHType.DEPENDS_ON
+    )
+    answer = mesh.ingest_answer(
+        question_id,
+        "Water",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    metadata = mesh.extract_metadata(question_id, answer.answer_id)
+    promoted_child = mesh.promote_metadata(metadata.metadata_id)
+
+    assert promoted_child is not None
+    assert promoted_child.created_from_metadata_id == metadata.metadata_id
+    assert mesh.metadata[metadata.metadata_id].promoted_symbol_id == promoted_child.symbol_id
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")

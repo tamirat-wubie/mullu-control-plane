@@ -89,6 +89,8 @@ class SNetRecursiveMesh:
         definition_text = _optional_text(definition, "definition")
         parent_context_text = _optional_text(parent_context, "parent_context")
         created_from_metadata_id_text = _optional_text(created_from_metadata_id, "created_from_metadata_id")
+        if created_from_metadata_id_text:
+            self._require_metadata(created_from_metadata_id_text)
         identity_key = (
             _ascii_lower_stripped(label_text),
             _ascii_lower_stripped(sense_id_text or label_text),
