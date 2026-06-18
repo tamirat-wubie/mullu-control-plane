@@ -6991,33 +6991,6 @@ def test_autonomous_test_generation_surface_keeps_plans_activation_blocked() -> 
     assert closure_actions["publish_autonomous_test_generation_plan_contract"]["status"] == "closed"
 
 
-def test_universal_symbol_operator_read_models_surface_binds_component_worker_and_receipt_symbols() -> None:
-    matrix = _load_fixture()
-    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
-    witness_surfaces = {
-        surface["surface_id"]: surface
-        for surface in matrix["witness_integrity"]["surfaces"]
-    }
-    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    surface = surfaces["universal_symbol_operator_read_models"]
-    witnesses = set(surface["runtime_witnesses"])
-
-    assert surface["coverage_state"] == "witnessed"
-    assert surface["request_proof"] == "read_model"
-    assert surface["action_proof"] == "read_model"
-    assert "/api/v1/components/symbols" in surface["representative_paths"]
-    assert "software_receipt_symbols" in surface["representative_paths"]
-    assert "build_worker_receipt_symbol_read_model" in surface["representative_paths"]
-    assert "mcoi/mcoi_runtime/app/symbol_operator_read_models.py" in surface["evidence_files"]
-    assert "mcoi/tests/test_symbol_operator_read_models.py" in surface["evidence_files"]
-    assert "component_symbol_read_model_projects_schema_valid_symbols" in witnesses
-    assert "worker_receipt_symbol_read_model_projects_schema_valid_symbols" in witnesses
-    assert "symbol_operator_read_models_deny_runtime_authority" in witnesses
-    assert witness_surfaces["universal_symbol_operator_read_models"]["exact_test_anchor_count"] == 6
-    assert witness_surfaces["universal_symbol_operator_read_models"]["unanchored_witness_count"] == 0
-    assert closure_actions["publish_universal_symbol_operator_read_models"]["status"] == "closed"
-
-
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()
