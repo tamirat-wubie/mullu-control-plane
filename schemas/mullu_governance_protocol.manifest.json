@@ -2343,6 +2343,12 @@
       "path": "schemas/read_only_worker_uao_dispatch_authorization_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-uao-dispatch-authorization-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-phi-gov-dispatch-authorization-witness",
+      "path": "schemas/read_only_worker_phi_gov_dispatch_authorization_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-phi-gov-dispatch-authorization-witness:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [
