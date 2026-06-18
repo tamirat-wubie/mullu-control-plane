@@ -175,6 +175,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_authority_transitions.py"),
         ),
         CheckCommand(
+            "channel_approval_strength_policy",
+            (python_executable, "scripts/validate_channel_approval_strength_policy.py"),
+        ),
+        CheckCommand(
             "component_registry",
             (python_executable, "scripts/validate_component_registry.py"),
         ),

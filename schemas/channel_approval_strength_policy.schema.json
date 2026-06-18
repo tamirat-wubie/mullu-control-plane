@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:channel-approval-strength-policy:1",
+  "title": "Channel Approval Strength Policy",
+  "description": "Foundation Mode policy matrix for request-bound, cross-channel, and risk-tiered approval responses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_id",
+    "schema_ref",
+    "foundation_mode_only",
+    "default_decision",
+    "channel_trust",
+    "risk_strength_matrix",
+    "cross_channel_rules",
+    "blocked_patterns",
+    "required_receipts",
+    "proof_obligations"
+  ],
+  "properties": {
+    "policy_id": {
+      "type": "string",
+      "const": "channel_approval_strength_policy.foundation"
+    },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:channel-approval-strength-policy:1"
+    },
+    "foundation_mode_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "default_decision": {
+      "type": "string",
+      "const": "block"
+    },
+    "channel_trust": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/channel_trust_entry"
+      }
+    },
+    "risk_strength_matrix": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/risk_strength_entry"
+      }
+    },
+    "cross_channel_rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_identity_required",
+        "same_tenant_required",
+        "same_request_id_required",
+        "binding_witness_required",
+        "unbound_cross_channel_approval_decision"
+      ],
+      "properties": {
+        "same_identity_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "same_tenant_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "same_request_id_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "binding_witness_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "unbound_cross_channel_approval_decision": {
+          "type": "string",
+          "const": "block"
+        }
+      }
+    },
+    "blocked_patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "casual_yes_without_request_id",
+          "expired_approval_response",
+          "identity_mismatch",
+          "tenant_mismatch",
+          "untrusted_response_channel",
+          "cross_channel_without_binding_witness",
+          "high_risk_without_operator_bound_approval",
+          "critical_without_dual_control"
+        ]
+      }
+    },
+    "required_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "approval_request_receipt",
+          "approval_strength_policy_receipt",
+          "identity_binding_receipt",
+          "tenant_binding_receipt",
+          "request_id_binding_receipt",
+          "channel_binding_witness",
+          "approval_resolution_receipt",
+          "denial_receipt"
+        ]
+      }
+    },
+    "proof_obligations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "tenant_identity_bound",
+          "actor_identity_bound",
+          "request_id_bound",
+          "approval_not_expired",
+          "risk_strength_satisfied",
+          "cross_channel_binding_when_channels_differ",
+          "high_risk_operator_bound",
+          "critical_dual_control",
+          "no_casual_text_approval"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "channel_trust_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel",
+        "trust_class",
+        "approval_ceiling"
+      ],
+      "properties": {
+        "channel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trust_class": {
+          "type": "string",
+          "enum": [
+            "trusted_control",
+            "verified_external",
+            "weak_external",
+            "untrusted"
+          ]
+        },
+        "approval_ceiling": {
+          "type": "string",
+          "enum": [
+            "contextual",
+            "request_bound",
+            "operator_bound",
+            "dual_control"
+          ]
+        }
+      }
+    },
+    "risk_strength_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_tier",
+        "required_strength",
+        "minimum_controls"
+      ],
+      "properties": {
+        "risk_tier": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "required_strength": {
+          "type": "string",
+          "enum": [
+            "contextual",
+            "request_bound",
+            "operator_bound",
+            "dual_control"
+          ]
+        },
+        "minimum_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
