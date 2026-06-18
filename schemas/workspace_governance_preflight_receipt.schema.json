@@ -307,6 +307,7 @@
           "type": "string",
           "enum": [
             "completed",
+            "exception",
             "timeout",
             "terminated"
           ]

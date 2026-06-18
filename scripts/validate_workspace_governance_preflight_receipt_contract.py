@@ -40,7 +40,7 @@ REQUIRED_RECEIPT_FIELDS = (
 )
 REQUIRED_CHECK_FIELDS = ("name", "args", "return_code", "passed", "stdout", "stderr")
 OPTIONAL_CHECK_FIELDS = ("termination_reason", "termination_signal")
-ALLOWED_TERMINATION_REASONS = ("completed", "timeout", "terminated")
+ALLOWED_TERMINATION_REASONS = ("completed", "exception", "timeout", "terminated")
 ALLOWED_STATUSES = ("passed", "failed")
 REQUIRED_PREFLIGHT_CHECK_NAMES = tuple(command.name for command in build_check_commands("python"))
 REQUIRED_PREFLIGHT_COMMAND_TAILS_BY_NAME = {
