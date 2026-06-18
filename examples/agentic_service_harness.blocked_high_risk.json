@@ -28,6 +28,8 @@
       ],
       "created_at": "2026-06-11T22:20:00Z",
       "evidence_bundle_id": "bundle.highrisk",
+      "lifecycle_state": "blocked",
+      "lifecycle_updated_at": "2026-06-11T22:20:30Z",
       "mode": "read_only",
       "receipt_id": "receipt.highrisk",
       "result_summary_id": "summary.highrisk",
@@ -35,7 +37,11 @@
       "sandbox_id": "sandbox.highrisk",
       "selected_agent_ref": "agent://codex-style-symbolic-operator",
       "status": "blocked",
-      "task_id": "task.highrisk"
+      "terminal_state": true,
+      "task_id": "task.highrisk",
+      "transition_receipt_refs": [
+        "receipt://agent-run/run.highrisk/lifecycle/blocked"
+      ]
     }
   ],
   "agent_tasks": [

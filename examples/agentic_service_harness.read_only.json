@@ -20,6 +20,8 @@
       "blocked_actions": [],
       "created_at": "2026-06-11T22:00:00Z",
       "evidence_bundle_id": "bundle.readonly",
+      "lifecycle_state": "completed",
+      "lifecycle_updated_at": "2026-06-11T22:00:30Z",
       "mode": "read_only",
       "receipt_id": "receipt.readonly",
       "result_summary_id": "summary.readonly",
@@ -27,7 +29,11 @@
       "sandbox_id": "sandbox.readonly",
       "selected_agent_ref": "agent://codex-style-symbolic-operator",
       "status": "ready_read_only",
-      "task_id": "task.readonly"
+      "terminal_state": true,
+      "task_id": "task.readonly",
+      "transition_receipt_refs": [
+        "receipt://agent-run/run.readonly/lifecycle/completed"
+      ]
     }
   ],
   "agent_tasks": [

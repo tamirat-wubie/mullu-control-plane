@@ -64,6 +64,15 @@ BLOCKED_HIGH_RISK_ACTIONS = (
     "secret_mutation",
     "destructive_operation",
 )
+VALID_LIFECYCLE_STATES = {
+    "queued",
+    "running",
+    "awaiting_approval",
+    "completed",
+    "blocked",
+    "cancelled",
+}
+TERMINAL_LIFECYCLE_STATES = {"completed", "blocked", "cancelled"}
 EXPECTED_NON_GOALS = (
     "no_unrestricted_openclaw_automation",
     "no_claude_code_integration",
@@ -200,6 +209,7 @@ def _validate_contract_semantics(
     _validate_denial_flags(contract, errors, label)
     _validate_permission_model(contract, errors, label)
     _validate_repository_connections(contract, errors, label)
+    _validate_agent_runs(contract, errors, label)
     _validate_non_goals(contract, errors, label)
     _validate_approval_gates(contract, errors, label)
     _validate_blocked_high_risk_scenario(contract, errors, label, scenario)
@@ -337,6 +347,32 @@ def _validate_approval_gates(
             errors.append(
                 f"{label}: {action_class} gate {index} must not permit external effect"
             )
+
+
+def _validate_agent_runs(
+    contract: dict[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    for run in _objects(contract.get("agent_runs", ())):
+        run_label = f"{label}: agent_run {run.get('run_id')}"
+        lifecycle_state = run.get("lifecycle_state")
+        terminal_state = run.get("terminal_state")
+        if lifecycle_state not in VALID_LIFECYCLE_STATES:
+            errors.append(f"{run_label} lifecycle_state is invalid")
+        if not isinstance(run.get("lifecycle_updated_at"), str) or not run.get("lifecycle_updated_at"):
+            errors.append(f"{run_label} lifecycle_updated_at must be a non-empty timestamp")
+        transition_receipt_refs = run.get("transition_receipt_refs")
+        if not isinstance(transition_receipt_refs, list) or not transition_receipt_refs:
+            errors.append(f"{run_label} transition_receipt_refs must be a non-empty list")
+        if run.get("status") == "awaiting_approval" and lifecycle_state != "awaiting_approval":
+            errors.append(f"{run_label} awaiting approval status must match lifecycle_state")
+        if run.get("status") == "blocked" and lifecycle_state != "blocked":
+            errors.append(f"{run_label} blocked status must match lifecycle_state")
+        if lifecycle_state in TERMINAL_LIFECYCLE_STATES and terminal_state is not True:
+            errors.append(f"{run_label} terminal lifecycle state must set terminal_state true")
+        if lifecycle_state not in TERMINAL_LIFECYCLE_STATES and terminal_state is not False:
+            errors.append(f"{run_label} non-terminal lifecycle state must set terminal_state false")
 
 
 def _validate_blocked_high_risk_scenario(

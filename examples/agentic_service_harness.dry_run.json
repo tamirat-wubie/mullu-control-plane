@@ -21,6 +21,8 @@
       "blocked_actions": [],
       "created_at": "2026-06-11T22:05:00Z",
       "evidence_bundle_id": "bundle.dryrun",
+      "lifecycle_state": "completed",
+      "lifecycle_updated_at": "2026-06-11T22:05:30Z",
       "mode": "dry_run",
       "receipt_id": "receipt.dryrun",
       "result_summary_id": "summary.dryrun",
@@ -28,7 +30,11 @@
       "sandbox_id": "sandbox.dryrun",
       "selected_agent_ref": "agent://codex-style-symbolic-operator",
       "status": "ready_dry_run",
+      "terminal_state": true,
       "task_id": "task.dryrun"
+      ,"transition_receipt_refs": [
+        "receipt://agent-run/run.dryrun/lifecycle/completed"
+      ]
     }
   ],
   "agent_tasks": [
