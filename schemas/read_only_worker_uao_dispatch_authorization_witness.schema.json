@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-uao-dispatch-authorization-witness:1",
+  "title": "Read-Only Worker UAO Dispatch Authorization Witness",
+  "description": "Foundation Mode witness for future Universal Action Orchestration dispatch authorization before read_only_repo_inspection runtime dispatch without authorizing UAO, authorizing Phi_gov, admitting dispatch, invoking a worker, emitting receipts, appending receipts, calling connectors, claiming success, or allowing terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "runtime_dispatch_admission_witness_ref",
+    "active_runtime_lease_admission_witness_ref",
+    "selected_worker_path",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "authority_scope",
+    "uao_dispatch_authorization_contract",
+    "activation_evaluation",
+    "admission_decision",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^read-only-worker-uao-dispatch-authorization-witness-[a-z0-9-]+$"
+    },
+    "receipt_version": {
+      "type": "string",
+      "const": "read_only_worker_uao_dispatch_authorization_witness.v1"
+    },
+    "runtime_dispatch_admission_witness_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json"
+    },
+    "active_runtime_lease_admission_witness_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json"
+    },
+    "selected_worker_path": {
+      "type": "string",
+      "const": "read_only_repo_inspection"
+    },
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "authority_scope": {"$ref": "#/$defs/authority_scope"},
+    "uao_dispatch_authorization_contract": {
+      "$ref": "#/$defs/uao_dispatch_authorization_contract"
+    },
+    "activation_evaluation": {"$ref": "#/$defs/activation_evaluation"},
+    "admission_decision": {"$ref": "#/$defs/admission_decision"},
+    "receipt_refs": {"$ref": "#/$defs/receipt_refs"},
+    "contract_summary": {"$ref": "#/$defs/contract_summary"},
+    "governance_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "receipt_envelope": {"$ref": "#/$defs/receipt_envelope"},
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "foundation_witness_only",
+        "uao_dispatch_authorization_witness_defined",
+        "active_runtime_lease_observed",
+        "uao_dispatch_authorization_performed",
+        "phi_gov_dispatch_authorization_performed",
+        "runtime_dispatch_admission_performed",
+        "dispatch_admission_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "runtime_receipt_emission_allowed",
+        "receipt_append_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "read_only": {"type": "boolean", "const": true},
+        "foundation_witness_only": {"type": "boolean", "const": true},
+        "uao_dispatch_authorization_witness_defined": {"type": "boolean", "const": true},
+        "active_runtime_lease_observed": {"type": "boolean", "const": false},
+        "uao_dispatch_authorization_performed": {"type": "boolean", "const": false},
+        "phi_gov_dispatch_authorization_performed": {"type": "boolean", "const": false},
+        "runtime_dispatch_admission_performed": {"type": "boolean", "const": false},
+        "dispatch_admission_allowed": {"type": "boolean", "const": false},
+        "runtime_dispatch_allowed": {"type": "boolean", "const": false},
+        "worker_invocation_allowed": {"type": "boolean", "const": false},
+        "runtime_receipt_emission_allowed": {"type": "boolean", "const": false},
+        "receipt_append_allowed": {"type": "boolean", "const": false},
+        "external_network_allowed": {"type": "boolean", "const": false},
+        "secret_access_allowed": {"type": "boolean", "const": false},
+        "filesystem_write_allowed": {"type": "boolean", "const": false},
+        "connector_authority_allowed": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false},
+        "success_claim_allowed": {"type": "boolean", "const": false},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true}
+      }
+    },
+    "uao_dispatch_authorization_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "operation_family",
+        "witness_mode",
+        "source_runtime_dispatch_admission_witness_ref",
+        "source_active_runtime_lease_admission_witness_ref",
+        "target_uao_dispatch_authorization_ref",
+        "uao_authorization_profile",
+        "required_source_receipt_refs",
+        "required_authorization_input_refs",
+        "activation_obligations_checked",
+        "validation_refs"
+      ],
+      "properties": {
+        "worker_id": {"type": "string", "const": "worker_local_read_only_repo_inspection"},
+        "capability": {"type": "string", "const": "read_only_repo_inspection"},
+        "operation_family": {"type": "string", "const": "local_repo_inspection"},
+        "witness_mode": {
+          "type": "string",
+          "const": "UAO_DISPATCH_AUTHORIZATION_WITNESS_ONLY"
+        },
+        "source_runtime_dispatch_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json"
+        },
+        "source_active_runtime_lease_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json"
+        },
+        "target_uao_dispatch_authorization_ref": {
+          "type": "string",
+          "const": "candidate://uao/dispatch-authorization/read-only-repo-inspection"
+        },
+        "uao_authorization_profile": {
+          "type": "string",
+          "const": "LOCAL_READ_ONLY_REPO_INSPECTION_UAO_DISPATCH_AUTHORIZATION"
+        },
+        "required_source_receipt_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "required_authorization_input_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "activation_obligations_checked": {"$ref": "#/$defs/non_empty_string_array"},
+        "validation_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "activation_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream_runtime_dispatch_admission_witness_validated",
+        "upstream_active_runtime_lease_admission_witness_validated",
+        "uao_request_required",
+        "effect_bearing_classification_required",
+        "no_bypass_rule_required",
+        "policy_allow_decision_required",
+        "tenant_actor_worker_scope_required",
+        "active_runtime_lease_admission_required",
+        "runtime_clock_required",
+        "phi_gov_authorization_required_before_dispatch",
+        "worker_failure_receipt_required_on_error",
+        "effect_reconciliation_required",
+        "mfidel_atomicity_preserved",
+        "active_runtime_lease_observed",
+        "uao_dispatch_authorization_performed",
+        "phi_gov_dispatch_authorization_performed",
+        "runtime_dispatch_admission_performed",
+        "dispatch_admission_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "runtime_receipt_emitted",
+        "receipt_append_performed"
+      ],
+      "properties": {
+        "upstream_runtime_dispatch_admission_witness_validated": {"type": "boolean", "const": true},
+        "upstream_active_runtime_lease_admission_witness_validated": {"type": "boolean", "const": true},
+        "uao_request_required": {"type": "boolean", "const": true},
+        "effect_bearing_classification_required": {"type": "boolean", "const": true},
+        "no_bypass_rule_required": {"type": "boolean", "const": true},
+        "policy_allow_decision_required": {"type": "boolean", "const": true},
+        "tenant_actor_worker_scope_required": {"type": "boolean", "const": true},
+        "active_runtime_lease_admission_required": {"type": "boolean", "const": true},
+        "runtime_clock_required": {"type": "boolean", "const": true},
+        "phi_gov_authorization_required_before_dispatch": {"type": "boolean", "const": true},
+        "worker_failure_receipt_required_on_error": {"type": "boolean", "const": true},
+        "effect_reconciliation_required": {"type": "boolean", "const": true},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true},
+        "active_runtime_lease_observed": {"type": "boolean", "const": false},
+        "uao_dispatch_authorization_performed": {"type": "boolean", "const": false},
+        "phi_gov_dispatch_authorization_performed": {"type": "boolean", "const": false},
+        "runtime_dispatch_admission_performed": {"type": "boolean", "const": false},
+        "dispatch_admission_allowed": {"type": "boolean", "const": false},
+        "runtime_dispatch_allowed": {"type": "boolean", "const": false},
+        "worker_invocation_allowed": {"type": "boolean", "const": false},
+        "runtime_receipt_emitted": {"type": "boolean", "const": false},
+        "receipt_append_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "uao_dispatch_authorized",
+        "phi_gov_dispatch_authorized",
+        "runtime_dispatch_admitted",
+        "terminal_closure_allowed",
+        "remaining_denied_until_refs",
+        "blocked_reason_refs",
+        "uao_dispatch_authorization_witness_defined"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "const": "UAO_DISPATCH_AUTHORIZATION_WITNESS_BLOCKED_AWAITING_AUTHORIZATION_EVIDENCE"
+        },
+        "uao_dispatch_authorized": {"type": "boolean", "const": false},
+        "phi_gov_dispatch_authorized": {"type": "boolean", "const": false},
+        "runtime_dispatch_admitted": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false},
+        "remaining_denied_until_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "blocked_reason_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "uao_dispatch_authorization_witness_defined": {"type": "boolean", "const": true}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_worker_uao_dispatch_authorization_witness_schema",
+        "read_only_worker_runtime_dispatch_admission_witness_schema",
+        "read_only_worker_active_runtime_lease_admission_witness_schema",
+        "worker_failure_receipt_schema",
+        "universal_action_orchestration_schema"
+      ],
+      "properties": {
+        "read_only_worker_uao_dispatch_authorization_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_uao_dispatch_authorization_witness.schema.json"
+        },
+        "read_only_worker_runtime_dispatch_admission_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json"
+        },
+        "read_only_worker_active_runtime_lease_admission_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_active_runtime_lease_admission_witness.schema.json"
+        },
+        "worker_failure_receipt_schema": {
+          "type": "string",
+          "const": "schemas/worker_failure_receipt.schema.json"
+        },
+        "universal_action_orchestration_schema": {
+          "type": "string",
+          "const": "schemas/universal_action_orchestration.schema.json"
+        }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_receipt_ref_count",
+        "authorization_input_ref_count",
+        "activation_obligation_count",
+        "validation_ref_count",
+        "activation_true_check_count",
+        "activation_denied_check_count",
+        "remaining_denied_until_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_receipt_ref_count": {"type": "integer", "minimum": 1},
+        "authorization_input_ref_count": {"type": "integer", "minimum": 1},
+        "activation_obligation_count": {"type": "integer", "minimum": 1},
+        "validation_ref_count": {"type": "integer", "minimum": 1},
+        "activation_true_check_count": {"type": "integer", "minimum": 1},
+        "activation_denied_check_count": {"type": "integer", "minimum": 1},
+        "remaining_denied_until_ref_count": {"type": "integer", "minimum": 1},
+        "blocked_reason_ref_count": {"type": "integer", "minimum": 1},
+        "receipt_ref_count": {"type": "integer", "minimum": 1},
+        "evidence_ref_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": {"type": "string", "minLength": 1},
+        "causal_decision_trace_ref": {"type": "string", "minLength": 1},
+        "receipt_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}
