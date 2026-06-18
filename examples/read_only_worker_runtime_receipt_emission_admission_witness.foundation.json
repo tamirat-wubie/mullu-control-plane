@@ -61,6 +61,7 @@
       "examples/read_only_worker_runtime_runner_registration_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+      "examples/read_only_worker_runtime_receipt_store_operator_approval_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_schema_binding_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_schema_binding_activation_witness.foundation.json",
       "examples/read_only_worker_runtime_receipt_candidate.foundation.json",
@@ -218,10 +219,11 @@
     "worker_mesh_schema": "schemas/worker_mesh.schema.json",
     "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
     "read_only_worker_runtime_receipt_schema_binding_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json",
-    "read_only_worker_runtime_receipt_store_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json"
+    "read_only_worker_runtime_receipt_store_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json",
+    "read_only_worker_runtime_receipt_store_operator_approval_witness_schema": "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json"
   },
   "contract_summary": {
-    "source_receipt_ref_count": 14,
+    "source_receipt_ref_count": 15,
     "activation_input_ref_count": 18,
     "activation_obligation_count": 10,
     "validation_ref_count": 9,
@@ -229,8 +231,8 @@
     "activation_denied_check_count": 11,
     "remaining_denied_until_ref_count": 16,
     "blocked_reason_ref_count": 17,
-    "receipt_ref_count": 19,
-    "evidence_ref_count": 43
+    "receipt_ref_count": 20,
+    "evidence_ref_count": 46
   },
   "governance_refs": [
     "policy://foundation-mode/no-live-worker-dispatch",
@@ -265,6 +267,9 @@
     "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_store_activation_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_store_activation_witness.py",
+    "schemas/read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_store_operator_approval_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_store_operator_approval_witness.py",
     "examples/read_only_worker_runtime_receipt_store_write_path_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_store_write_path_witness.py",
