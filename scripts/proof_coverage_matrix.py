@@ -5232,7 +5232,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry admitted case-evidence decision refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, closure-derived learning admissions that must carry decision evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions with typed compensation and accepted-risk runbook projections plus executable terminal binding stamps surfaced in certificate and proof-explorer views, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -5294,7 +5294,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_proof_timeline_reports_open_case_without_closure",
                 "case_proof_timeline_reports_closure_certificate_and_learning",
                 "learning_binding_requires_admission_evidence_refs",
-                "learning_binding_rejects_unadmitted_admission_evidence_refs",
                 "learning_binding_requires_closed_case_and_admission_decision",
                 "launch_gateway_pilot_collects_deployment_witness_and_allows_engineering_gate",
                 "launch_gateway_pilot_gate_preview_is_non_mutating",
@@ -7902,6 +7901,65 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "maf_failure_receipt_path_witness_sdlc_artifacts_valid": [
                     "sdlc_requirement_and_design_validate_for_maf_failure_receipt_path"
+                ],
+            },
+        ),
+        _surface(
+            "maf_runtime_binding_admission_witness",
+            [
+                "MafRuntimeBindingAdmissionWitness",
+                "validate_maf_runtime_binding_admission_witness",
+                "maf_runtime_binding_admission_witness.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/maf_runtime_binding_admission_witness.schema.json",
+                "examples/maf_runtime_binding_admission_witness.foundation.json",
+                "scripts/validate_maf_runtime_binding_admission_witness.py",
+                "tests/test_validate_maf_runtime_binding_admission_witness.py",
+                "schemas/maf_failure_receipt_path_witness.schema.json",
+                "examples/maf_failure_receipt_path_witness.foundation.json",
+                "scripts/validate_maf_failure_receipt_path_witness.py",
+                "tests/test_validate_maf_failure_receipt_path_witness.py",
+                "docs/98_maf_runtime_binding_admission_witness.md",
+                "docs/97_maf_failure_receipt_path_witness.md",
+                "docs/AUDIT_F8_SCOPING_PLAN.md",
+                "maf/MAF_BOUNDARY.md",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+            ],
+            "MAF runtime binding admission witnesses bind closed static MAF prerequisites to required UAO, implementation design, rollback, runtime execution receipt, CI Rust backend, and terminal closure evidence while keeping implementation start, runtime binding, PyO3, subprocess execution, backend default flips, writes, runtime dispatch, terminal closure, and success claims denied.",
+            [
+                "maf_runtime_binding_admission_witness_schema_valid",
+                "maf_runtime_binding_admission_witness_denies_execution",
+                "maf_runtime_binding_admission_witness_requires_implementation_evidence",
+                "maf_runtime_binding_admission_witness_rejects_requirement_drift",
+                "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift",
+                "maf_runtime_binding_admission_witness_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "maf_runtime_binding_admission_witness_schema_valid": [
+                    "maf_runtime_binding_admission_witness_passes"
+                ],
+                "maf_runtime_binding_admission_witness_denies_execution": [
+                    "maf_runtime_binding_admission_witness_passes",
+                    "maf_runtime_binding_admission_rejects_authority_drift",
+                ],
+                "maf_runtime_binding_admission_witness_requires_implementation_evidence": [
+                    "maf_runtime_binding_admission_witness_passes",
+                    "maf_runtime_binding_admission_rejects_scope_and_evidence_drift",
+                ],
+                "maf_runtime_binding_admission_witness_rejects_requirement_drift": [
+                    "maf_runtime_binding_admission_rejects_requirement_drift"
+                ],
+                "maf_runtime_binding_admission_witness_rejects_digest_and_summary_drift": [
+                    "maf_runtime_binding_admission_rejects_digest_and_summary_drift"
+                ],
+                "maf_runtime_binding_admission_witness_sdlc_artifacts_valid": [
+                    "sdlc_requirement_and_design_validate_for_maf_runtime_binding_admission"
                 ],
             },
         ),
@@ -12241,6 +12299,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_maf_failure_receipt_path_witness_contract",
             "surfaces": ["maf_failure_receipt_path_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_maf_runtime_binding_admission_witness_contract",
+            "surfaces": ["maf_runtime_binding_admission_witness"],
             "status": "closed",
         },
         {

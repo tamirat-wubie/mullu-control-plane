@@ -1,0 +1,72 @@
+{
+  "requirement_id": "REQ-maf-runtime-binding-admission-witness-20260618",
+  "request_id": "continue-cross-repo-opportunity-map-maf-runtime-binding-admission-witness",
+  "problem_statement": "MAF runtime binding is the next F8 substrate-disconnect thread, but executable binding cannot start until UAO admission, implementation design, rollback evidence, runtime execution receipts, CI Rust backend evidence, and terminal closure review are explicit.",
+  "success_criteria": [
+    "MafRuntimeBindingAdmissionWitness validates against a public JSON schema and Foundation Mode example",
+    "MafRuntimeBindingAdmissionWitness binds the closed MAF static prerequisite witness refs and the F8 scoping plan",
+    "MafRuntimeBindingAdmissionWitness records runtime binding admission while keeping solver outcome AwaitingEvidence",
+    "MafRuntimeBindingAdmissionWitness requires UAO admission, implementation design, rollback recovery, runtime execution receipts, CI Rust backend lane, and terminal closure review before implementation",
+    "MafRuntimeBindingAdmissionWitness blocks implementation start, runtime binding, PyO3 binding, subprocess execution, CLI execution, Rust crate execution, Python Rust imports, CI backend default flip, secret access, writes, runtime dispatch, canonical state mutation, terminal closure, and success claims",
+    "MafRuntimeBindingAdmissionWitness rejects authority drift, scope drift, required evidence drift, admission requirement drift, source digest drift, secret markers, receipt ref drift, and summary count drift"
+  ],
+  "non_goals": [
+    "no runtime binding implementation",
+    "no implementation start authority",
+    "no PyO3 binding",
+    "no subprocess execution",
+    "no CLI execution",
+    "no Rust crate execution",
+    "no Python-to-Rust import path",
+    "no CI backend default flip",
+    "no external connector call",
+    "no network call",
+    "no secret access",
+    "no filesystem write",
+    "no runtime dispatch",
+    "no canonical state mutation",
+    "no terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "admission mode remains governed_runtime_binding_admission",
+    "solver outcome remains AwaitingEvidence",
+    "runtime_binding_admission_recorded remains true",
+    "runtime_binding_claimed, implementation_authority_claimed, and terminal_closure_claimed remain false",
+    "each source artifact digest must match repository-local source files",
+    "each admission requirement must remain blocked_until_evidence",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "schemas/maf_runtime_binding_admission_witness.schema.json",
+    "examples/maf_runtime_binding_admission_witness.foundation.json",
+    "scripts/validate_maf_runtime_binding_admission_witness.py",
+    "tests/test_validate_maf_runtime_binding_admission_witness.py",
+    "docs/98_maf_runtime_binding_admission_witness.md",
+    "docs/82_cross_repo_opportunity_map.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/proof_coverage_matrix.py",
+    ".github/workflows/ci.yml"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_maf_runtime_binding_admission_witness.py",
+    "python -m pytest tests/test_validate_maf_runtime_binding_admission_witness.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_maf_runtime_binding_admission_witness_20260618.json --strict"
+  ],
+  "evidence_required": [
+    "schemas/maf_runtime_binding_admission_witness.schema.json",
+    "examples/maf_runtime_binding_admission_witness.foundation.json",
+    "scripts/validate_maf_runtime_binding_admission_witness.py",
+    "tests/test_validate_maf_runtime_binding_admission_witness.py",
+    "docs/98_maf_runtime_binding_admission_witness.md",
+    "examples/sdlc/design_maf_runtime_binding_admission_witness_20260618.json",
+    "examples/sdlc/security_review_maf_runtime_binding_admission_witness_20260618.json"
+  ],
+  "uao_ref": "uao://sdlc/maf-runtime-binding-admission-witness/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/maf-runtime-binding-admission-witness/requirement",
+  "receipt_ref": "receipt://sdlc/maf-runtime-binding-admission-witness/requirement"
+}

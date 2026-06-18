@@ -779,6 +779,12 @@
       "surface": "maf"
     },
     {
+      "schema_id": "maf-runtime-binding-admission-witness",
+      "path": "schemas/maf_runtime_binding_admission_witness.schema.json",
+      "urn": "urn:mullusi:schema:maf-runtime-binding-admission-witness:1",
+      "surface": "maf"
+    },
+    {
       "schema_id": "world-substrate-replay-witness",
       "path": "schemas/world_substrate_replay_witness.schema.json",
       "urn": "urn:mullusi:schema:world-substrate-replay-witness:1",
