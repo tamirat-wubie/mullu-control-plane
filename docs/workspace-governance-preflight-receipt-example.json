@@ -1,5 +1,5 @@
 {
-  "check_count": 219,
+  "check_count": 220,
   "checks": [
     {
       "args": [
@@ -273,6 +273,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR REPOSITORY EFFECT ROLLBACK PLAN WITNESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.py"
+      ],
+      "name": "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR CI GATE BEFORE READY FOR REVIEW WITNESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
