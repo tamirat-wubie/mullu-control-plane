@@ -883,6 +883,23 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_simple_assistant_ui_boundary.py"),
         ),
         CheckCommand(
+            "universal_symbol_runtime_admission_policy",
+            (python_executable, "scripts/validate_universal_symbol_runtime_admission_policy.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_adapter_receipt_persistence_policy",
+            (python_executable, "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_append_audit_witness",
+            (python_executable, "scripts/validate_universal_symbol_append_audit_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_authority_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_authority_witness.py"),
+        ),
+        CheckCommand("universal_symbol_kernel", (python_executable, "scripts/validate_universal_symbol_kernel.py")),
+        CheckCommand(
             "logic_governance_application",
             (python_executable, "scripts/validate_logic_governance_application.py"),
         ),

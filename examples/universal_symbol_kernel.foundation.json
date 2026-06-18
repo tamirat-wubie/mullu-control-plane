@@ -185,11 +185,19 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 17
+    "evidence_ref_count": 29
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "examples/universal_symbol_kernel.foundation.json",
+    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
     "docs/40_proof_coverage_matrix.md",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
@@ -204,6 +212,10 @@
     "scripts/validate_universal_symbol_kernel.py",
     "tests/fixtures/proof_coverage_matrix.json",
     "tests/test_proof_coverage_matrix.py",
+    "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
+    "scripts/validate_universal_symbol_append_audit_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
     "tests/test_validate_universal_symbol_kernel.py"
   ]
 }

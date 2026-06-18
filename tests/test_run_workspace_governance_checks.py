@@ -129,6 +129,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     repository_governance_phase = [
         "protocol_manifest",
         "simple_assistant_ui_boundary",
+        "universal_symbol_runtime_admission_policy",
+        "universal_symbol_adapter_receipt_persistence_policy",
+        "universal_symbol_append_audit_witness",
+        "universal_symbol_receipt_store_authority_witness",
+        "universal_symbol_kernel",
         "logic_governance_application",
         "life_meaning_governance",
         "phi_gps_v3_platform_spec",
@@ -526,6 +531,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
     assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
+    assert_ordered("simple_assistant_ui_boundary", "universal_symbol_runtime_admission_policy")
+    assert_ordered("universal_symbol_runtime_admission_policy", "universal_symbol_adapter_receipt_persistence_policy")
+    assert_ordered(
+        "universal_symbol_adapter_receipt_persistence_policy",
+        "universal_symbol_append_audit_witness",
+    )
+    assert_ordered(
+        "universal_symbol_append_audit_witness",
+        "universal_symbol_receipt_store_authority_witness",
+    )
+    assert_ordered("universal_symbol_receipt_store_authority_witness", "universal_symbol_kernel")
+    assert_ordered("universal_symbol_kernel", "logic_governance_application")
     assert_ordered("code_change_physics_packet", "search_decision_receipt")
     assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 

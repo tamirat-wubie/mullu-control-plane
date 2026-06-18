@@ -1673,6 +1673,30 @@
       "surface": "symbol"
     },
     {
+      "schema_id": "universal-symbol-adapter-receipt-persistence-policy",
+      "path": "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-adapter-receipt-persistence-policy:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-append-audit-witness",
+      "path": "schemas/universal_symbol_append_audit_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-append-audit-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-receipt-store-authority-witness",
+      "path": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-authority-witness:1",
+      "surface": "symbol"
+    },
+    {
+      "schema_id": "universal-symbol-runtime-admission-policy",
+      "path": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbol-runtime-admission-policy:1",
+      "surface": "symbol"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",

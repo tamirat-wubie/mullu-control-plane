@@ -41,6 +41,18 @@ The component/worker projection pass closed the second inspection gap:
 3. The worker projection needed to remain fixture-backed and reject live receipt-store drift.
 4. The proof coverage matrix needed a dedicated surface for UniversalSymbol operator read models.
 
+The receipt-store authority pass closed the next persistence gap:
+
+1. Adapter receipt persistence policy named receipt-store authority as a blocker, but no witness contract defined the required evidence.
+2. Authority requirements needed to stay explicit without granting writer registration, write-path registration, append, dispatch, mutation, or terminal closure.
+3. Append preconditions needed `Delta_reject` refs so unknown hard constraints could not silently pass.
+
+The append audit witness pass closed the next audit gap:
+
+1. Receipt-store authority named append audit as a blocker, but no append audit witness contract existed.
+2. Candidate append evidence needed explicit digest-ref custody, idempotency, durability replay, rollback/recovery, UAO, and LifeMeaningJudgment requirements.
+3. Append audit needed to remain non-authorizing until writer registration and write-path evidence exist.
+
 ## Fixes Applied
 
 | Area | Fix |
@@ -65,6 +77,8 @@ The component/worker projection pass closed the second inspection gap:
 | Component symbol route | Added `/api/v1/components/symbols` as a GET-only UniversalSymbol projection route. |
 | Symbol operator tests | Added `mcoi/tests/test_symbol_operator_read_models.py` for component route, worker fixture projection, authority denial, and invalid limit rejection. |
 | Proof matrix binding | Added `universal_symbol_operator_read_models` to `scripts/proof_coverage_matrix.py`, regenerated `tests/fixtures/proof_coverage_matrix.json`, and updated `docs/40_proof_coverage_matrix.md`. |
+| Receipt-store authority witness | Added blocked authority witness schema, foundation example, validator, drift tests, protocol registration, and proof matrix surface. |
+| Append audit witness | Added blocked append audit schema, foundation example, validator, drift tests, protocol registration, and proof matrix surface. |
 
 ## Edge Cases Covered
 
@@ -96,6 +110,16 @@ component symbol route read-only methods
 worker receipt symbol read model
 worker live fixture drift rejection
 proof matrix symbol surface binding
+receipt-store authority witness
+receipt-store authority grant drift
+append precondition drift
+missing authority requirement
+receipt-store authority evidence count drift
+append audit witness
+append audit authority drift
+append audit missing Delta_reject drift
+append audit raw-payload constraint drift
+append audit evidence count drift
 ```
 
 ## Constructive Deltas
@@ -109,6 +133,10 @@ proof matrix symbol surface binding
 - Read-only software receipt symbol observability source added.
 - Read-only component and worker symbol operator projections added.
 - UniversalSymbol proof coverage matrix surface added.
+- UniversalSymbol runtime admission policy contract added.
+- UniversalSymbol adapter receipt persistence policy contract added.
+- UniversalSymbol receipt-store authority witness contract added.
+- UniversalSymbol append audit witness contract added.
 
 ## Fracture Deltas
 
@@ -122,16 +150,16 @@ No product-readiness or customer-readiness claim added.
 
 1. CI root-lane inclusion if required.
 2. Proof-state coverage report across symbol projections.
-3. Skill-by-skill runtime admission policy.
-4. Adapter receipt persistence policy.
+3. Receipt-store writer and write-path registration witnesses.
 5. Runtime promotion witness requirements.
+6. Live runtime admission implementation.
 
 ## Refined Judgment
 
 Use:
 
 ```text
-Universal Symbol Kernel foundation contract added; first read-only Symbol Skill Adapter proof thread added; software receipt, component, and worker symbol inspection sources added; proof coverage matrix binding added; live runtime admission remains AwaitingEvidence.
+Universal Symbol Kernel foundation contract added; first read-only Symbol Skill Adapter proof thread added; software receipt, component, and worker symbol inspection sources added; proof coverage matrix binding added; blocked runtime admission policy contract added; adapter receipt persistence policy contract added; receipt-store authority witness contract added; append audit witness contract added; live runtime admission remains AwaitingEvidence.
 ```
 
 Do not use yet:
@@ -145,6 +173,6 @@ Universal symbol closure is complete.
 STATUS:
   Audit: complete
   Inspection: complete
-  Weakness fixes: schema validation, authority custody, proof custody, evidence custody, enum-count binding, adapter projection, component/worker read-only operator projection, raw-payload rejection, proof matrix binding, and edge-test coverage improved
-  Gap fixes: protocol registration, first Symbol Skill Adapter proof thread, software receipt symbol read model, component/worker symbol read models, and proof coverage matrix surface completed; remaining runtime admission gaps recorded
+  Weakness fixes: schema validation, authority custody, proof custody, evidence custody, enum-count binding, adapter projection, component/worker read-only operator projection, raw-payload rejection, proof matrix binding, blocked runtime admission policy, adapter receipt persistence policy, receipt-store authority denial witness, append audit witness, and edge-test coverage improved
+  Gap fixes: protocol registration, first Symbol Skill Adapter proof thread, software receipt symbol read model, component/worker symbol read models, proof coverage matrix surface, skill-by-skill runtime admission policy contract, adapter receipt persistence policy contract, receipt-store authority witness contract, and append audit witness contract completed; remaining writer registration and live runtime admission gaps recorded
   Runtime authority: denied

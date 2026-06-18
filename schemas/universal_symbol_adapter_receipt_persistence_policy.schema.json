@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-adapter-receipt-persistence-policy:1",
+  "title": "Universal Symbol Adapter Receipt Persistence Policy",
+  "description": "Foundation Mode policy for UniversalSymbol adapter receipt persistence. This schema permits digest/ref-only candidate receipt evaluation and denies receipt-store append, raw payload storage, raw secret storage, live dispatch, connector calls, filesystem writes, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_id",
+    "schema_version",
+    "generated_at",
+    "policy_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "policy_is_not_receipt_store_authority",
+    "persistence_decision",
+    "candidate_receipt_policy",
+    "required_before_append",
+    "authority_denials",
+    "admitted_projection_sources",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "policy_id": { "type": "string", "const": "universal-symbol-adapter-receipt-persistence-policy-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "policy_scope": { "type": "string", "const": "foundation-mode-universal-symbol-adapter-receipt-persistence" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "policy_is_not_receipt_store_authority": { "type": "boolean", "const": true },
+    "persistence_decision": { "type": "string", "const": "blocked_pending_receipt_store_authority" },
+    "candidate_receipt_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_receipt_evaluation_allowed",
+        "candidate_receipt_persistence_allowed",
+        "digest_and_ref_only",
+        "raw_payload_allowed",
+        "raw_secret_allowed",
+        "source_ref_required",
+        "schema_validation_required",
+        "symbol_authority_denial_required",
+        "terminal_closure_ref_allowed"
+      ],
+      "properties": {
+        "candidate_receipt_evaluation_allowed": { "type": "boolean", "const": true },
+        "candidate_receipt_persistence_allowed": { "type": "boolean", "const": false },
+        "digest_and_ref_only": { "type": "boolean", "const": true },
+        "raw_payload_allowed": { "type": "boolean", "const": false },
+        "raw_secret_allowed": { "type": "boolean", "const": false },
+        "source_ref_required": { "type": "boolean", "const": true },
+        "schema_validation_required": { "type": "boolean", "const": true },
+        "symbol_authority_denial_required": { "type": "boolean", "const": true },
+        "terminal_closure_ref_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "required_before_append": {
+      "type": "array",
+      "minItems": 6,
+      "items": { "$ref": "#/$defs/append_condition" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "admitted_projection_sources": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "$ref": "#/$defs/projection_source" },
+      "uniqueItems": true
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "receipt_store_authority_missing",
+          "operator_approval_missing",
+          "append_audit_witness_not_admitted",
+          "rollback_recovery_witness_missing",
+          "raw_payload_storage_forbidden",
+          "raw_secret_storage_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_before_append_count",
+        "admitted_projection_source_count",
+        "authority_denial_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "required_before_append_count": { "type": "integer", "minimum": 6 },
+        "admitted_projection_source_count": { "type": "integer", "minimum": 4 },
+        "authority_denial_count": { "type": "integer", "const": 9 },
+        "blocked_reason_count": { "type": "integer", "minimum": 5 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "append_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition_id",
+        "proof_state",
+        "decision",
+        "required_evidence_ref"
+      ],
+      "properties": {
+        "condition_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "decision": { "type": "string", "const": "block_append" },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_append_performed",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "filesystem_write_performed",
+        "external_write_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "filesystem_write_performed": { "type": "boolean", "const": false },
+        "external_write_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "projection_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ref",
+        "symbol_kind",
+        "candidate_receipt_allowed",
+        "persistence_allowed",
+        "blocked_action_refs"
+      ],
+      "properties": {
+        "source_ref": { "$ref": "#/$defs/ref" },
+        "symbol_kind": { "type": "string", "enum": ["receipt", "component", "trace", "action"] },
+        "candidate_receipt_allowed": { "type": "boolean", "const": true },
+        "persistence_allowed": { "type": "boolean", "const": false },
+        "blocked_action_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

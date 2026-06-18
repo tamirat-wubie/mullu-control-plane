@@ -4,7 +4,7 @@ Purpose: apply the user-defined Mullu symbol concept as a platform-wide Foundati
 
 Governance scope: symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority denial, and evidence references.
 
-Dependencies: `schemas/universal_symbol.schema.json`, `examples/universal_symbol_kernel.foundation.json`, `docs/40_proof_coverage_matrix.md`, `scripts/validate_universal_symbol_kernel.py`, `scripts/proof_coverage_matrix.py`, `tests/test_validate_universal_symbol_kernel.py`, `tests/test_proof_coverage_matrix.py`, `tests/fixtures/proof_coverage_matrix.json`, `mcoi/mcoi_runtime/core/symbol_skill_adapter.py`, `mcoi/mcoi_runtime/app/symbol_operator_read_models.py`, `mcoi/mcoi_runtime/app/software_receipt_observability.py`, `mcoi/mcoi_runtime/app/routers/components.py`, `mcoi/tests/test_symbol_skill_adapter.py`, `mcoi/tests/test_symbol_operator_read_models.py`, `mcoi/tests/test_software_receipt_observability.py`, `mcoi/mcoi_runtime/contracts/snet.py`, `mcoi/mcoi_runtime/snet/engine.py`, and `docs/MULLU_COMPONENT_HARNESS.md`.
+Dependencies: `schemas/universal_symbol.schema.json`, `schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json`, `schemas/universal_symbol_append_audit_witness.schema.json`, `schemas/universal_symbol_receipt_store_authority_witness.schema.json`, `schemas/universal_symbol_runtime_admission_policy.schema.json`, `examples/universal_symbol_kernel.foundation.json`, `examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json`, `examples/universal_symbol_append_audit_witness.foundation.json`, `examples/universal_symbol_receipt_store_authority_witness.foundation.json`, `examples/universal_symbol_runtime_admission_policy.foundation.json`, `docs/40_proof_coverage_matrix.md`, `scripts/validate_universal_symbol_kernel.py`, `scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py`, `scripts/validate_universal_symbol_append_audit_witness.py`, `scripts/validate_universal_symbol_receipt_store_authority_witness.py`, `scripts/validate_universal_symbol_runtime_admission_policy.py`, `scripts/proof_coverage_matrix.py`, `tests/test_validate_universal_symbol_kernel.py`, `tests/test_proof_coverage_matrix.py`, `tests/fixtures/proof_coverage_matrix.json`, `mcoi/mcoi_runtime/core/symbol_skill_adapter.py`, `mcoi/mcoi_runtime/app/symbol_operator_read_models.py`, `mcoi/mcoi_runtime/app/software_receipt_observability.py`, `mcoi/mcoi_runtime/app/routers/components.py`, `mcoi/tests/test_symbol_skill_adapter.py`, `mcoi/tests/test_symbol_operator_read_models.py`, `mcoi/tests/test_software_receipt_observability.py`, `mcoi/mcoi_runtime/contracts/snet.py`, `mcoi/mcoi_runtime/snet/engine.py`, and `docs/MULLU_COMPONENT_HARNESS.md`.
 
 Invariants:
 
@@ -186,12 +186,154 @@ It binds the component symbol route, software receipt symbol observability sourc
 tests/fixtures/proof_coverage_matrix.json
 ```
 
+## Runtime admission policy
+
+The first skill-by-skill runtime admission policy is:
+
+```text
+schemas/universal_symbol_runtime_admission_policy.schema.json
+examples/universal_symbol_runtime_admission_policy.foundation.json
+```
+
+It is a blocked Foundation Mode policy. It defines the gates required before runtime registration can exist:
+
+```text
+UniversalSymbol schema
+Symbol Skill Adapter
+UAO no-bypass policy
+Phi_gov state-write authority
+LifeMeaningJudgment
+runtime authority witness
+receipt persistence policy
+rollback/recovery witness
+operator approval
+proof coverage binding
+```
+
+The policy covers initial skill/component/receipt lanes:
+
+```text
+TeamOps shared inbox
+software development
+governance core component
+worker receipt ledger
+```
+
+Every lane remains:
+
+```text
+admission_state=blocked_pending_runtime_witness
+```
+
+This closes the policy-definition gap only. It does not register a live runtime, dispatch a skill, append a receipt store, call a connector, write files, mutate state, or claim terminal closure.
+
+## Adapter receipt persistence policy
+
+The first adapter receipt persistence policy is:
+
+```text
+schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json
+examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json
+```
+
+It permits only digest/ref-only candidate receipt evaluation. It denies:
+
+```text
+receipt_store_append
+raw_payload_storage
+raw_secret_storage
+runtime_dispatch
+connector_call
+filesystem_write
+external_write
+state_mutation
+terminal_closure
+```
+
+The policy binds the current projection sources:
+
+```text
+software_receipt_symbols
+/api/v1/components/symbols
+build_worker_receipt_symbol_read_model
+symbol_skill_adapter
+```
+
+Each source may produce candidate receipt evidence for inspection, but persistence remains blocked until receipt-store authority, operator approval, append audit witness, and rollback/recovery evidence exist.
+
+## Receipt-store authority witness
+
+The first UniversalSymbol receipt-store authority witness is:
+
+```text
+schemas/universal_symbol_receipt_store_authority_witness.schema.json
+examples/universal_symbol_receipt_store_authority_witness.foundation.json
+```
+
+It defines the evidence required before any UniversalSymbol adapter receipt may be appended:
+
+```text
+append audit witness
+receipt-store writer registration
+receipt-store write-path registration
+operator approval
+rollback/recovery witness
+idempotency witness
+durability replay witness
+```
+
+The witness remains a Foundation Mode denial:
+
+```text
+authority_is_granted=false
+receipt_store_authority_granted=false
+receipt_store_writer_registered=false
+receipt_store_write_path_registered=false
+receipt_store_append_performed=false
+raw_payload_stored=false
+raw_secret_stored=false
+runtime_dispatch_performed=false
+connector_call_performed=false
+state_mutation_performed=false
+terminal_closure_allowed=false
+```
+
+Unknown hard preconditions block append and require `Delta_reject` refs. This closes the missing authority-witness contract gap without granting append authority.
+
+## Append audit witness
+
+The first UniversalSymbol append audit witness is:
+
+```text
+schemas/universal_symbol_append_audit_witness.schema.json
+examples/universal_symbol_append_audit_witness.foundation.json
+```
+
+It defines the audit evidence required before any candidate receipt append can be considered:
+
+```text
+append sequence witness
+digest-ref custody
+idempotency witness
+durability replay witness
+rollback/recovery witness
+UAO ref
+LifeMeaningJudgment ref
+receipt-store write-path authority
+```
+
+It remains a Foundation Mode denial. It does not register a writer, register a write path, append a receipt, store raw payloads, store raw secrets, dispatch runtime work, call connectors, mutate state, or allow terminal closure.
+
 ## Verification
 
 Run:
 
 ```powershell
 python scripts\validate_universal_symbol_kernel.py
+python scripts\validate_universal_symbol_adapter_receipt_persistence_policy.py
+python scripts\validate_universal_symbol_append_audit_witness.py
+python scripts\validate_universal_symbol_receipt_store_authority_witness.py
+python scripts\validate_universal_symbol_runtime_admission_policy.py
 python -m pytest tests\test_validate_universal_symbol_kernel.py -q
 python -m pytest mcoi\tests\test_symbol_skill_adapter.py -q
 python -m pytest mcoi\tests\test_software_receipt_observability.py -q
@@ -212,7 +354,7 @@ This contract does not claim:
 
 ```text
 live universal symbol runtime
-automatic skill symbolization
+automatic runtime skill symbolization
 connector access
 filesystem writes
 runtime dispatch
@@ -225,9 +367,9 @@ public SaaS readiness
 
 ## Next action
 
-The next real implementation step is a proof-state coverage report that compares symbol projections against proof coverage matrix surfaces without granting runtime authority.
+The next real implementation step is a receipt-store writer registration witness that proves append authority remains scoped, reversible, replayable, and terminal-closure-denied before any write path exists.
 
 STATUS:
-  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, and proof coverage matrix binding added
-  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding
-  Open issues: proof-state coverage report, adapter receipt persistence policy, and skill-by-skill runtime admission remain AwaitingEvidence
+  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, and append audit witness contract added
+  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, UAO and LifeMeaningJudgment append preconditions
+  Open issues: proof-state coverage report, receipt-store writer registration witness, receipt-store write-path witness, runtime authority witnesses, and live runtime admission remain AwaitingEvidence

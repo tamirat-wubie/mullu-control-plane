@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-runtime-admission-policy:1",
+  "title": "Universal Symbol Runtime Admission Policy",
+  "description": "Foundation Mode policy contract for future UniversalSymbol runtime admission. This schema records blocked admission gates and does not grant runtime registration, live dispatch, connector calls, filesystem writes, state mutation, receipt-store append, terminal closure, or production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_id",
+    "schema_version",
+    "generated_at",
+    "policy_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "policy_is_not_runtime_authority",
+    "admission_decision",
+    "symbolization_scope",
+    "required_gates",
+    "authority_denials",
+    "admission_conditions",
+    "skill_admission_matrix",
+    "receipt_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "policy_id": { "type": "string", "const": "universal-symbol-runtime-admission-policy-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "policy_scope": { "type": "string", "const": "foundation-mode-universal-symbol-runtime-admission" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "policy_is_not_runtime_authority": { "type": "boolean", "const": true },
+    "admission_decision": { "type": "string", "const": "blocked" },
+    "symbolization_scope": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string",
+        "enum": [
+          "skill",
+          "component",
+          "receipt",
+          "action",
+          "question",
+          "answer",
+          "metadata",
+          "relation",
+          "trace",
+          "proof",
+          "failure",
+          "unknown",
+          "policy",
+          "boundary",
+          "artifact"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "required_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "universal_symbol_schema_ref",
+        "symbol_skill_adapter_ref",
+        "uao_ref",
+        "phi_gov_ref",
+        "life_meaning_judgment_ref",
+        "runtime_authority_witness_ref",
+        "receipt_persistence_policy_ref",
+        "rollback_recovery_ref",
+        "operator_approval_ref",
+        "proof_coverage_ref"
+      ],
+      "properties": {
+        "universal_symbol_schema_ref": { "$ref": "#/$defs/ref" },
+        "symbol_skill_adapter_ref": { "$ref": "#/$defs/ref" },
+        "uao_ref": { "$ref": "#/$defs/ref" },
+        "phi_gov_ref": { "$ref": "#/$defs/ref" },
+        "life_meaning_judgment_ref": { "$ref": "#/$defs/ref" },
+        "runtime_authority_witness_ref": { "$ref": "#/$defs/ref" },
+        "receipt_persistence_policy_ref": { "$ref": "#/$defs/ref" },
+        "rollback_recovery_ref": { "$ref": "#/$defs/ref" },
+        "operator_approval_ref": { "$ref": "#/$defs/ref" },
+        "proof_coverage_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "admission_conditions": {
+      "type": "array",
+      "minItems": 6,
+      "items": { "$ref": "#/$defs/admission_condition" }
+    },
+    "skill_admission_matrix": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "$ref": "#/$defs/skill_admission" }
+    },
+    "receipt_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "append_allowed",
+        "raw_payload_allowed",
+        "raw_secret_allowed",
+        "digest_and_ref_only",
+        "receipt_store_authority_ref",
+        "persistence_decision"
+      ],
+      "properties": {
+        "append_allowed": { "type": "boolean", "const": false },
+        "raw_payload_allowed": { "type": "boolean", "const": false },
+        "raw_secret_allowed": { "type": "boolean", "const": false },
+        "digest_and_ref_only": { "type": "boolean", "const": true },
+        "receipt_store_authority_ref": { "$ref": "#/$defs/ref" },
+        "persistence_decision": { "type": "string", "const": "blocked_pending_receipt_store_authority" }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "string",
+        "enum": [
+          "runtime_authority_witness_missing",
+          "receipt_store_authority_missing",
+          "operator_approval_missing",
+          "rollback_recovery_witness_missing",
+          "life_meaning_judgment_missing",
+          "proof_coverage_incomplete",
+          "skill_admission_witness_missing",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbolization_scope_count",
+        "admission_condition_count",
+        "skill_admission_count",
+        "authority_denial_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "symbolization_scope_count": { "type": "integer", "minimum": 10 },
+        "admission_condition_count": { "type": "integer", "minimum": 6 },
+        "skill_admission_count": { "type": "integer", "minimum": 4 },
+        "authority_denial_count": { "type": "integer", "const": 9 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_registration_performed",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "state_mutation_enabled",
+        "receipt_store_append_enabled",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "state_mutation_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    },
+    "admission_condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition_id",
+        "required_before",
+        "proof_state",
+        "decision",
+        "evidence_ref"
+      ],
+      "properties": {
+        "condition_id": { "$ref": "#/$defs/ref" },
+        "required_before": { "type": "string", "const": "runtime_registration" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "decision": { "type": "string", "const": "block" },
+        "evidence_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "skill_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_ref",
+        "symbol_kind",
+        "admission_state",
+        "required_witness_refs",
+        "blocked_action_refs"
+      ],
+      "properties": {
+        "skill_ref": { "$ref": "#/$defs/ref" },
+        "symbol_kind": { "type": "string", "enum": ["skill", "component", "receipt", "trace"] },
+        "admission_state": { "type": "string", "const": "blocked_pending_runtime_witness" },
+        "required_witness_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "blocked_action_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

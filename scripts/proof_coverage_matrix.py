@@ -387,6 +387,258 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_runtime_admission_policy",
+            [
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "validate_universal_symbol_runtime_admission_policy",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_runtime_admission_policy.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol runtime admission policy defines blocked skill-by-skill admission gates while denying runtime registration, live dispatch, connector calls, filesystem writes, state mutation, receipt-store append, terminal closure, and production readiness.",
+            [
+                "foundation_universal_symbol_runtime_admission_policy_validates",
+                "runtime_admission_policy_rejects_live_dispatch_drift",
+                "runtime_admission_policy_rejects_receipt_append_drift",
+                "runtime_admission_policy_rejects_skill_admission_upgrade",
+                "runtime_admission_policy_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_runtime_admission_policy_validates": [
+                    "foundation_universal_symbol_runtime_admission_policy_validates"
+                ],
+                "runtime_admission_policy_rejects_live_dispatch_drift": [
+                    "runtime_admission_policy_rejects_live_dispatch_drift"
+                ],
+                "runtime_admission_policy_rejects_receipt_append_drift": [
+                    "runtime_admission_policy_rejects_receipt_append_drift"
+                ],
+                "runtime_admission_policy_rejects_skill_admission_upgrade": [
+                    "runtime_admission_policy_rejects_skill_admission_upgrade"
+                ],
+                "runtime_admission_policy_rejects_evidence_ref_count_drift": [
+                    "runtime_admission_policy_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_adapter_receipt_persistence_policy",
+            [
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+                "validate_universal_symbol_adapter_receipt_persistence_policy",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
+                "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol adapter receipt persistence policy permits digest/ref-only candidate receipt evaluation while denying receipt-store append, raw payload storage, raw secret storage, runtime dispatch, connector calls, writes, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_adapter_receipt_persistence_policy_validates",
+                "adapter_receipt_persistence_policy_rejects_append_drift",
+                "adapter_receipt_persistence_policy_rejects_raw_payload_drift",
+                "adapter_receipt_persistence_policy_rejects_projection_persistence_drift",
+                "adapter_receipt_persistence_policy_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_adapter_receipt_persistence_policy_validates": [
+                    "foundation_universal_symbol_adapter_receipt_persistence_policy_validates"
+                ],
+                "adapter_receipt_persistence_policy_rejects_append_drift": [
+                    "adapter_receipt_persistence_policy_rejects_append_drift"
+                ],
+                "adapter_receipt_persistence_policy_rejects_raw_payload_drift": [
+                    "adapter_receipt_persistence_policy_rejects_raw_payload_drift"
+                ],
+                "adapter_receipt_persistence_policy_rejects_projection_persistence_drift": [
+                    "adapter_receipt_persistence_policy_rejects_projection_persistence_drift"
+                ],
+                "adapter_receipt_persistence_policy_rejects_evidence_ref_count_drift": [
+                    "adapter_receipt_persistence_policy_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_append_audit_witness",
+            [
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "validate_universal_symbol_append_audit_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_append_audit_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol append audit witness defines digest-ref custody, append sequence, idempotency, durability replay, rollback/recovery, UAO, and LifeMeaningJudgment requirements while denying writer registration, write-path registration, append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_append_audit_witness_validates",
+                "append_audit_witness_rejects_append_authority_drift",
+                "append_audit_witness_rejects_missing_delta_reject",
+                "append_audit_witness_rejects_candidate_raw_payload_drift",
+                "append_audit_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_append_audit_witness_validates": [
+                    "foundation_universal_symbol_append_audit_witness_validates"
+                ],
+                "append_audit_witness_rejects_append_authority_drift": [
+                    "append_audit_witness_rejects_append_authority_drift"
+                ],
+                "append_audit_witness_rejects_missing_delta_reject": [
+                    "append_audit_witness_rejects_missing_delta_reject"
+                ],
+                "append_audit_witness_rejects_candidate_raw_payload_drift": [
+                    "append_audit_witness_rejects_candidate_raw_payload_drift"
+                ],
+                "append_audit_witness_rejects_evidence_ref_count_drift": [
+                    "append_audit_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_authority_witness",
+            [
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "validate_universal_symbol_receipt_store_authority_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol receipt-store authority witness defines future append authority requirements while keeping authority ungranted and denying writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_receipt_store_authority_witness_validates",
+                "receipt_store_authority_witness_rejects_authority_grant_drift",
+                "receipt_store_authority_witness_rejects_append_precondition_drift",
+                "receipt_store_authority_witness_rejects_missing_requirement",
+                "receipt_store_authority_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_receipt_store_authority_witness_validates": [
+                    "foundation_universal_symbol_receipt_store_authority_witness_validates"
+                ],
+                "receipt_store_authority_witness_rejects_authority_grant_drift": [
+                    "receipt_store_authority_witness_rejects_authority_grant_drift"
+                ],
+                "receipt_store_authority_witness_rejects_append_precondition_drift": [
+                    "receipt_store_authority_witness_rejects_append_precondition_drift"
+                ],
+                "receipt_store_authority_witness_rejects_missing_requirement": [
+                    "receipt_store_authority_witness_rejects_missing_requirement"
+                ],
+                "receipt_store_authority_witness_rejects_evidence_ref_count_drift": [
+                    "receipt_store_authority_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_append_audit_witness",
+            [
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "validate_universal_symbol_append_audit_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_append_audit_witness.schema.json",
+                "examples/universal_symbol_append_audit_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+                "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_append_audit_witness.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+            ],
+            "UniversalSymbol append audit witness defines append-only, digest/ref-only audit requirements while keeping append authority ungranted and denying writer registration, write-path registration, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_append_audit_witness_validates",
+                "append_audit_witness_rejects_append_authority_drift",
+                "append_audit_witness_rejects_missing_requirement",
+                "append_audit_witness_rejects_missing_delta_reject",
+                "append_audit_witness_rejects_candidate_raw_payload_drift",
+                "append_audit_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_append_audit_witness_validates": [
+                    "foundation_universal_symbol_append_audit_witness_validates"
+                ],
+                "append_audit_witness_rejects_append_authority_drift": [
+                    "append_audit_witness_rejects_append_authority_drift"
+                ],
+                "append_audit_witness_rejects_missing_requirement": [
+                    "append_audit_witness_rejects_missing_requirement"
+                ],
+                "append_audit_witness_rejects_missing_delta_reject": [
+                    "append_audit_witness_rejects_missing_delta_reject"
+                ],
+                "append_audit_witness_rejects_candidate_raw_payload_drift": [
+                    "append_audit_witness_rejects_candidate_raw_payload_drift"
+                ],
+                "append_audit_witness_rejects_evidence_ref_count_drift": [
+                    "append_audit_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "component_autopsy",
             ["/api/v1/components/{component_id}/autopsy"],
             "read_model",
@@ -2053,6 +2305,111 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "channel_approval_strength_policy_rejects_high_risk_downgrade",
                 "channel_approval_strength_policy_rejects_missing_casual_text_obligation",
             ],
+        ),
+        _surface(
+            "cross_channel_conversation_binding_policy",
+            [
+                "evaluate_cross_channel_conversation_binding",
+                "build_cross_channel_conversation_binding_receipt",
+                "gateway.cross_channel_conversation_binding",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/cross_channel_conversation_binding.py",
+                "gateway/channel_approval_strength.py",
+                "tests/test_gateway/test_cross_channel_conversation_binding.py",
+                "docs/maps/MULLUSI_GAP_REGISTER.md",
+            ],
+            "Cross-channel conversation binding policy blocks same-channel conversation ambiguity, missing cross-channel binding witnesses, expired bindings, unauthorized actors, tenant or identity mismatches, unknown channels, and emits hash-only receipts without raw message exposure or live channel promotion claims.",
+            [
+                "same_channel_same_conversation_is_allowed",
+                "same_channel_different_conversation_without_binding_is_blocked",
+                "cross_channel_reply_without_witness_is_blocked",
+                "cross_channel_bound_request_reply_is_allowed",
+                "cross_channel_casual_reply_without_request_or_context_is_blocked",
+                "cross_channel_expired_binding_is_blocked",
+                "unknown_channel_blocks_with_explicit_reason",
+                "binding_receipt_hides_raw_message_and_is_stable",
+            ],
+            runtime_witness_anchor_aliases={
+                "same_channel_same_conversation_is_allowed": [
+                    "same_channel_same_conversation_is_allowed"
+                ],
+                "same_channel_different_conversation_without_binding_is_blocked": [
+                    "same_channel_different_conversation_without_binding_is_blocked"
+                ],
+                "cross_channel_reply_without_witness_is_blocked": [
+                    "cross_channel_reply_without_witness_is_blocked"
+                ],
+                "cross_channel_bound_request_reply_is_allowed": [
+                    "cross_channel_bound_request_reply_is_allowed"
+                ],
+                "cross_channel_casual_reply_without_request_or_context_is_blocked": [
+                    "cross_channel_casual_reply_without_request_or_context_is_blocked"
+                ],
+                "cross_channel_expired_binding_is_blocked": [
+                    "cross_channel_expired_binding_is_blocked"
+                ],
+                "unknown_channel_blocks_with_explicit_reason": [
+                    "unknown_channel_blocks_with_explicit_reason"
+                ],
+                "binding_receipt_hides_raw_message_and_is_stable": [
+                    "binding_receipt_hides_raw_message_and_is_stable"
+                ],
+            },
+        ),
+        _surface(
+            "policy_denial_response_composer",
+            [
+                "compose_policy_denial_response",
+                "gateway.denial_response",
+                "GatewayRouter policy denial responses",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/denial_response.py",
+                "gateway/router.py",
+                "tests/test_gateway/test_denial_response.py",
+                "tests/test_gateway/test_router.py",
+                "docs/maps/MULLUSI_GAP_REGISTER.md",
+            ],
+            "Policy denial response composer maps governed denial kinds to user-facing redacted messages, records template metadata, required controls, and evidence refs, preserves existing audit fields, and avoids exposing internal reasons or raw payloads.",
+            [
+                "tenant_denial_template_is_user_facing_and_redacted",
+                "approval_strength_denial_preserves_controls_without_raw_detail",
+                "unknown_denial_kind_degrades_to_policy_denied",
+                "unknown_tenant_returns_error",
+                "channel_approval_callback_denies_mismatched_identity",
+                "channel_approval_callback_blocks_high_risk_without_operator_session",
+                "channel_approval_callback_blocks_self_approved_payment",
+            ],
+            runtime_witness_anchor_aliases={
+                "tenant_denial_template_is_user_facing_and_redacted": [
+                    "tenant_denial_template_is_user_facing_and_redacted"
+                ],
+                "approval_strength_denial_preserves_controls_without_raw_detail": [
+                    "approval_strength_denial_preserves_controls_without_raw_detail"
+                ],
+                "unknown_denial_kind_degrades_to_policy_denied": [
+                    "unknown_denial_kind_degrades_to_policy_denied"
+                ],
+                "unknown_tenant_returns_error": ["unknown_tenant_returns_error"],
+                "channel_approval_callback_denies_mismatched_identity": [
+                    "channel_approval_callback_denies_mismatched_identity"
+                ],
+                "channel_approval_callback_blocks_high_risk_without_operator_session": [
+                    "channel_approval_callback_blocks_high_risk_without_operator_session"
+                ],
+                "channel_approval_callback_blocks_self_approved_payment": [
+                    "channel_approval_callback_blocks_self_approved_payment"
+                ],
+            },
         ),
         _surface(
             "restricted_adapter_worker_boundaries",
@@ -11150,6 +11507,41 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_operator_read_models",
             "surfaces": ["universal_symbol_operator_read_models"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_runtime_admission_policy",
+            "surfaces": ["universal_symbol_runtime_admission_policy"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_adapter_receipt_persistence_policy",
+            "surfaces": ["universal_symbol_adapter_receipt_persistence_policy"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_append_audit_witness",
+            "surfaces": ["universal_symbol_append_audit_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_authority_witness",
+            "surfaces": ["universal_symbol_receipt_store_authority_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_append_audit_witness",
+            "surfaces": ["universal_symbol_append_audit_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_cross_channel_conversation_binding_policy",
+            "surfaces": ["cross_channel_conversation_binding_policy"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_policy_denial_response_composer",
+            "surfaces": ["policy_denial_response_composer"],
             "status": "closed",
         },
         {

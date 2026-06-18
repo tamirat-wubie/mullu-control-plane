@@ -6851,6 +6851,180 @@ def test_universal_symbol_operator_read_models_surface_binds_component_worker_an
     assert closure_actions["publish_universal_symbol_operator_read_models"]["status"] == "closed"
 
 
+def test_universal_symbol_runtime_admission_policy_surface_blocks_runtime_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_runtime_admission_policy"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_runtime_admission_policy.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_runtime_admission_policy.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_runtime_admission_policy.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_runtime_admission_policy_validates" in witnesses
+    assert "runtime_admission_policy_rejects_live_dispatch_drift" in witnesses
+    assert "runtime_admission_policy_rejects_receipt_append_drift" in witnesses
+    assert witness_surfaces["universal_symbol_runtime_admission_policy"]["exact_test_anchor_count"] == 5
+    assert witness_surfaces["universal_symbol_runtime_admission_policy"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_runtime_admission_policy"]["status"] == "closed"
+
+
+def test_universal_symbol_adapter_receipt_persistence_policy_surface_blocks_append_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_adapter_receipt_persistence_policy"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_adapter_receipt_persistence_policy_validates" in witnesses
+    assert "adapter_receipt_persistence_policy_rejects_append_drift" in witnesses
+    assert "adapter_receipt_persistence_policy_rejects_raw_payload_drift" in witnesses
+    assert witness_surfaces["universal_symbol_adapter_receipt_persistence_policy"]["exact_test_anchor_count"] == 5
+    assert witness_surfaces["universal_symbol_adapter_receipt_persistence_policy"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_adapter_receipt_persistence_policy"]["status"] == "closed"
+
+
+def test_universal_symbol_append_audit_witness_surface_blocks_append_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_append_audit_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_append_audit_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_append_audit_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_append_audit_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_append_audit_witness_validates" in witnesses
+    assert "append_audit_witness_rejects_append_authority_drift" in witnesses
+    assert "append_audit_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_append_audit_witness"]["exact_test_anchor_count"] == 5
+    assert witness_surfaces["universal_symbol_append_audit_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_append_audit_witness"]["status"] == "closed"
+
+
+def test_universal_symbol_receipt_store_authority_witness_surface_blocks_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_authority_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_receipt_store_authority_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_receipt_store_authority_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_receipt_store_authority_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_receipt_store_authority_witness_validates" in witnesses
+    assert "receipt_store_authority_witness_rejects_authority_grant_drift" in witnesses
+    assert "receipt_store_authority_witness_rejects_append_precondition_drift" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_authority_witness"]["exact_test_anchor_count"] == 5
+    assert witness_surfaces["universal_symbol_receipt_store_authority_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_authority_witness"]["status"] == "closed"
+
+
+def test_universal_symbol_append_audit_witness_surface_blocks_append_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_append_audit_witness"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_append_audit_witness.schema.json" in surface["representative_paths"]
+    assert "examples/universal_symbol_append_audit_witness.foundation.json" in surface["representative_paths"]
+    assert "scripts/validate_universal_symbol_append_audit_witness.py" in surface["evidence_files"]
+    assert "foundation_universal_symbol_append_audit_witness_validates" in witnesses
+    assert "append_audit_witness_rejects_append_authority_drift" in witnesses
+    assert "append_audit_witness_rejects_missing_delta_reject" in witnesses
+    assert witness_surfaces["universal_symbol_append_audit_witness"]["exact_test_anchor_count"] == 6
+    assert witness_surfaces["universal_symbol_append_audit_witness"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_append_audit_witness"]["status"] == "closed"
+
+
+def test_cross_channel_conversation_binding_policy_surface_blocks_ambiguous_handoffs() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["cross_channel_conversation_binding_policy"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "proven"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "gateway/cross_channel_conversation_binding.py" in surface["evidence_files"]
+    assert "tests/test_gateway/test_cross_channel_conversation_binding.py" in surface["evidence_files"]
+    assert "cross_channel_reply_without_witness_is_blocked" in witnesses
+    assert "cross_channel_bound_request_reply_is_allowed" in witnesses
+    assert "binding_receipt_hides_raw_message_and_is_stable" in witnesses
+    assert witness_surfaces["cross_channel_conversation_binding_policy"]["exact_test_anchor_count"] == 8
+    assert witness_surfaces["cross_channel_conversation_binding_policy"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_cross_channel_conversation_binding_policy"]["status"] == "closed"
+
+
+def test_policy_denial_response_composer_surface_redacts_user_facing_denials() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["policy_denial_response_composer"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "proven"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "gateway/denial_response.py" in surface["evidence_files"]
+    assert "gateway/router.py" in surface["evidence_files"]
+    assert "tests/test_gateway/test_denial_response.py" in surface["evidence_files"]
+    assert "tenant_denial_template_is_user_facing_and_redacted" in witnesses
+    assert "approval_strength_denial_preserves_controls_without_raw_detail" in witnesses
+    assert "channel_approval_callback_denies_mismatched_identity" in witnesses
+    assert witness_surfaces["policy_denial_response_composer"]["exact_test_anchor_count"] == 7
+    assert witness_surfaces["policy_denial_response_composer"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_policy_denial_response_composer"]["status"] == "closed"
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()
