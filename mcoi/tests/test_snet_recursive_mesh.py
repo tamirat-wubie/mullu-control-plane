@@ -600,6 +600,56 @@ def test_created_from_metadata_id_must_exist_before_symbol_mutation() -> None:
     assert mesh.metadata[metadata.metadata_id].promoted_symbol_id == promoted_child.symbol_id
 
 
+def test_created_from_metadata_id_must_match_promoted_symbol_semantics() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = next(
+        question_id
+        for question_id in tick.generated_question_ids
+        if mesh.questions[question_id].wh_type is SNetWHType.DEPENDS_ON
+    )
+    answer = mesh.ingest_answer(
+        question_id,
+        "Water",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    metadata = mesh.extract_metadata(question_id, answer.answer_id)
+    expected_parent_context = f"{seed.label}:{metadata.facet}:{metadata.value}"
+    before_symbol_ids = set(mesh.symbols)
+    before_identity_index = dict(mesh._symbol_identity_index)
+
+    invalid_symbol_specs = (
+        {"label": "Fire", "symbol_type": "promoted_metadata", "parent_context": expected_parent_context, "depth": 1},
+        {"label": metadata.value, "symbol_type": "unknown", "parent_context": expected_parent_context, "depth": 1},
+        {"label": metadata.value, "symbol_type": "promoted_metadata", "parent_context": "Seed:wrong:water", "depth": 1},
+        {"label": metadata.value, "symbol_type": "promoted_metadata", "parent_context": expected_parent_context, "depth": 0},
+    )
+
+    for invalid_spec in invalid_symbol_specs:
+        with pytest.raises(ValueError, match="created_from_metadata_id must match"):
+            mesh.add_symbol(
+                invalid_spec["label"],
+                symbol_type=invalid_spec["symbol_type"],
+                parent_context=invalid_spec["parent_context"],
+                created_from_metadata_id=metadata.metadata_id,
+                depth=invalid_spec["depth"],
+            )
+
+    assert set(mesh.symbols) == before_symbol_ids
+    assert mesh._symbol_identity_index == before_identity_index
+    assert mesh.metadata[metadata.metadata_id].promoted_symbol_id == ""
+
+    promoted_child = mesh.promote_metadata(metadata.metadata_id)
+
+    assert promoted_child is not None
+    assert promoted_child.label == metadata.value
+    assert promoted_child.symbol_type == "promoted_metadata"
+    assert promoted_child.parent_context == expected_parent_context
+    assert promoted_child.depth == seed.depth + 1
+
+
 def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
     mesh = SNetRecursiveMesh()
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
