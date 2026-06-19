@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:research-epistemics-profile:1",
+  "title": "WRE-A2 Research Epistemics Profile",
+  "description": "Foundation Mode, no-effect contract separating factual evaluation from action governance before any research-runtime expansion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "profile_version",
+    "generated_at",
+    "maturity",
+    "operating_mode",
+    "compatibility",
+    "epistemic_contract",
+    "authority_boundary",
+    "next_gate",
+    "evidence_refs"
+  ],
+  "properties": {
+    "profile_id": {"type": "string", "minLength": 1},
+    "profile_version": {"const": "wre_a2_research_epistemics.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "maturity": {"const": "specified"},
+    "operating_mode": {"const": "foundation_no_effect"},
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "whqr_contract_ref",
+        "claim_verification_ref",
+        "universal_evidence_graph_ref",
+        "research_runtime_ref",
+        "memory_mesh_ref",
+        "source_conflict_map_ref",
+        "truth_kernel_ref"
+      ],
+      "properties": {
+        "whqr_contract_ref": {"type": "string", "minLength": 1},
+        "claim_verification_ref": {"type": "string", "minLength": 1},
+        "universal_evidence_graph_ref": {"type": "string", "minLength": 1},
+        "research_runtime_ref": {"type": "string", "minLength": 1},
+        "memory_mesh_ref": {"type": "string", "minLength": 1},
+        "source_conflict_map_ref": {"type": "string", "minLength": 1},
+        "truth_kernel_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "epistemic_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truth_action_separation",
+        "claim_types",
+        "dispositions",
+        "confidence_dimensions",
+        "scalar_confidence_is_canonical",
+        "contradiction_preservation",
+        "abstention_required",
+        "source_lineage_required",
+        "truth_kernel_auto_promotion"
+      ],
+      "properties": {
+        "truth_action_separation": {"const": true},
+        "claim_types": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {"enum": ["empirical", "causal", "predictive", "historical", "normative", "ontological", "symbolic_structural"]}
+        },
+        "dispositions": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {"enum": ["validated_conclusion", "supported_hypothesis", "speculative_hypothesis", "competing_model", "unresolved_contradiction", "partial_result", "abstention", "safety_escalation"]}
+        },
+        "confidence_dimensions": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {"enum": ["evidential", "logical", "provenance", "empirical", "temporal_applicability", "calibration", "action_safety"]}
+        },
+        "scalar_confidence_is_canonical": {"const": false},
+        "contradiction_preservation": {"const": true},
+        "abstention_required": {"const": true},
+        "source_lineage_required": {"const": true},
+        "truth_kernel_auto_promotion": {"const": false}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_research_execution_allowed",
+        "external_retrieval_allowed",
+        "connector_calls_allowed",
+        "answer_synthesis_authority",
+        "memory_write_allowed",
+        "truth_mutation_allowed",
+        "publication_allowed",
+        "medical_decision_authority",
+        "autonomous_self_modification_allowed"
+      ],
+      "properties": {
+        "runtime_research_execution_allowed": {"const": false},
+        "external_retrieval_allowed": {"const": false},
+        "connector_calls_allowed": {"const": false},
+        "answer_synthesis_authority": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "truth_mutation_allowed": {"const": false},
+        "publication_allowed": {"const": false},
+        "medical_decision_authority": {"const": false},
+        "autonomous_self_modification_allowed": {"const": false}
+      }
+    },
+    "next_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prerequisite", "runtime_contracts_allowed", "operator_review_required"],
+      "properties": {
+        "prerequisite": {"const": "cdg_rccm_pr_1960_green_and_merged"},
+        "runtime_contracts_allowed": {"const": false},
+        "operator_review_required": {"const": true}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
