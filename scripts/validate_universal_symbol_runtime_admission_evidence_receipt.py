@@ -1,20 +1,17 @@
-"""Validate the Universal Symbol receipt-store lifecycle evidence receipt.
+"""Validate the Universal Symbol runtime admission evidence receipt.
 
-Purpose: prove receipt-store lifecycle evidence remains explicit and
-non-authorizing until live active grant, temporal, revocation, replacement, and
-audit evidence exists.
+Purpose: prove live runtime admission evidence remains incomplete and
+non-authorizing until operator, orchestration, receipt-store, skill-lane,
+rollback, and proof evidence exists.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: lifecycle evidence schema/example, reapproval revocation witness,
-approval decision witness, temporal reapproval receipt schema, docs, proof
-coverage matrix, and tests.
+Dependencies: runtime admission evidence schema/example, runtime admission
+policy, runtime authority witness, skill runtime authority witness, docs, and
+tests.
 Invariants:
-  - The receipt is not lifecycle authority.
-  - Reapproval, revocation, grant extension, replacement decision, lifecycle
-    audit commit, receipt append, raw payload storage, raw secret storage,
-    runtime dispatch, connector calls, mutation, and terminal closure remain
-    denied.
-  - Missing live lifecycle evidence blocks lifecycle recording and logs
-    Delta_reject refs.
+  - The receipt does not grant runtime authority.
+  - Every required live evidence item blocks runtime admission.
+  - Runtime registration, live dispatch, connector calls, writes, append,
+    mutation, terminal closure, and production readiness remain denied.
 """
 
 from __future__ import annotations
@@ -31,102 +28,110 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = (
-    REPO_ROOT / "schemas" / "universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json"
-)
-DEFAULT_RECEIPT_PATH = (
-    REPO_ROOT / "examples" / "universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json"
-)
-
-AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
-    "receipt_store_reapproval_recorded",
-    "receipt_store_revocation_recorded",
-    "approval_grant_extended",
-    "replacement_decision_recorded",
-    "lifecycle_audit_committed",
-    "receipt_store_append_performed",
-    "raw_payload_stored",
-    "raw_secret_stored",
-    "runtime_dispatch_performed",
-    "connector_call_performed",
-    "state_mutation_performed",
-    "terminal_closure_allowed",
-)
+DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_runtime_admission_evidence_receipt.schema.json"
+DEFAULT_RECEIPT_PATH = REPO_ROOT / "examples" / "universal_symbol_runtime_admission_evidence_receipt.foundation.json"
 
 REQUIRED_EVIDENCE_KINDS: tuple[str, ...] = (
-    "active_grant_identity",
-    "reapproval_window",
-    "expiry_evidence",
-    "revocation_request",
-    "revocation_effect_boundary",
-    "replacement_decision",
-    "lifecycle_audit_receipt",
+    "live_runtime_witness",
+    "runtime_authority_witness",
+    "operator_approval",
+    "uao_decision",
+    "phi_gov_decision",
+    "life_meaning_judgment",
+    "receipt_store_authority",
+    "skill_lane_witness",
+    "rollback_recovery_handoff",
 )
 
 CONSISTENCY_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
-    "active_grant_matches_approval_decision_required",
-    "reapproval_window_after_decision_required",
-    "expiry_after_grant_required",
-    "revocation_effect_boundary_required",
-    "replacement_decision_links_revoked_grant_required",
-    "lifecycle_audit_receipt_required",
-    "all_live_evidence_required_before_lifecycle_recording",
+    "runtime_authority_witness_matches_policy_required",
+    "operator_approval_matches_authority_scope_required",
+    "uao_decision_matches_effect_boundary_required",
+    "phi_gov_decision_matches_state_write_required",
+    "life_meaning_judgment_matches_effect_required",
+    "receipt_store_authority_denial_respected",
+    "skill_lane_witnesses_match_admission_matrix_required",
+    "rollback_recovery_handoff_required",
+    "proof_coverage_surface_closed_required",
+    "all_live_evidence_required_before_runtime_admission",
+)
+
+AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
+    "runtime_admission_granted",
+    "runtime_registration_performed",
+    "live_dispatch_enabled",
+    "connector_call_enabled",
+    "filesystem_write_enabled",
+    "external_write_enabled",
+    "receipt_store_append_enabled",
+    "raw_payload_stored",
+    "raw_secret_stored",
+    "state_mutation_performed",
+    "terminal_closure_allowed",
+    "production_readiness_claimed",
 )
 
 REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "missing_active_grant_blocks_lifecycle_recording",
-    "missing_reapproval_window_blocks_lifecycle_recording",
-    "missing_expiry_evidence_blocks_lifecycle_recording",
-    "missing_revocation_request_blocks_lifecycle_recording",
-    "missing_replacement_decision_blocks_lifecycle_recording",
-    "missing_lifecycle_audit_blocks_lifecycle_recording",
-    "unknown_hard_constraint_blocks_lifecycle_recording",
+    "missing_live_runtime_witness_blocks_admission",
+    "missing_operator_approval_blocks_admission",
+    "missing_orchestration_decision_blocks_admission",
+    "missing_receipt_store_authority_blocks_admission",
+    "missing_skill_lane_witness_blocks_admission",
+    "missing_rollback_recovery_blocks_admission",
+    "unknown_hard_constraint_blocks_admission",
     "failed_precondition_logs_delta_reject",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
-    "active_grant_identity_missing",
-    "reapproval_window_missing",
-    "expiry_evidence_missing",
-    "revocation_request_missing",
-    "revocation_effect_boundary_missing",
-    "replacement_decision_path_missing",
-    "lifecycle_audit_receipt_missing",
-    "receipt_store_lifecycle_recording_forbidden",
+    "live_runtime_witness_missing",
+    "runtime_authority_witness_missing",
+    "operator_approval_missing",
+    "uao_decision_missing",
+    "phi_gov_decision_missing",
+    "life_meaning_judgment_missing",
+    "receipt_store_authority_missing",
+    "skill_lane_witness_missing",
+    "rollback_recovery_handoff_missing",
+    "proof_coverage_missing",
+    "runtime_admission_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
-    "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
-    "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
-    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
-    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
-    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
-    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
-    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
-    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
-    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
-    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
-    "schemas/temporal_reapproval_receipt.schema.json",
+    "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+    "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+    "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+    "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
-    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
-    "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
-    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
-    "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
-    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
-    "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+    "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_authority_read_model.py",
     "scripts/proof_coverage_matrix.py",
+    "tests/test_validate_universal_symbol_kernel.py",
     "tests/test_proof_coverage_matrix.py",
 )
 
 
-class UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError(ValueError):
-    """Raised when the lifecycle evidence receipt violates Foundation Mode."""
+class UniversalSymbolRuntimeAdmissionEvidenceReceiptError(ValueError):
+    """Raised when the runtime admission evidence receipt violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -135,19 +140,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError(f"missing file: {path}") from exc
+        raise UniversalSymbolRuntimeAdmissionEvidenceReceiptError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolRuntimeAdmissionEvidenceReceiptError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError(f"expected object: {path}")
+        raise UniversalSymbolRuntimeAdmissionEvidenceReceiptError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
+def validate_universal_symbol_runtime_admission_evidence_receipt(
     receipt_path: Path = DEFAULT_RECEIPT_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied lifecycle authority, and evidence refs."""
+    """Validate schema shape, live-evidence blockers, and denied authority."""
 
     schema = load_json_object(schema_path)
     receipt = load_json_object(receipt_path)
@@ -156,8 +161,8 @@ def validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(receipt, schema, errors)
     _validate_receipt_boundary(receipt, errors)
-    _validate_lifecycle_subject(receipt, errors)
-    _validate_live_evidence_requirements(receipt, errors)
+    _validate_runtime_subject(receipt, errors)
+    _validate_live_evidence(receipt, errors)
     _validate_consistency_constraints(receipt, errors)
     _validate_authority_denials(receipt, errors)
     _validate_rejection_policy(receipt, errors)
@@ -166,35 +171,32 @@ def validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
     _validate_evidence_refs(receipt, errors)
     _validate_evidence_ref_files(receipt, errors)
 
-    report = {
+    result = {
         "receipt_path": _repo_relative(receipt_path),
         "schema_path": _repo_relative(schema_path),
         "valid": not errors,
         "receipt_id": receipt.get("receipt_id", ""),
         "solver_outcome": receipt.get("solver_outcome", ""),
-        "lifecycle_evidence_decision": receipt.get("lifecycle_evidence_decision", ""),
+        "admission_evidence_decision": receipt.get("admission_evidence_decision", ""),
+        "live_evidence_requirement_count": _list_len(receipt.get("required_live_evidence")) or 0,
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "live_evidence_requirement_count": len(receipt.get("required_live_evidence", []))
-        if isinstance(receipt.get("required_live_evidence"), list)
-        else 0,
-        "evidence_ref_count": len(receipt.get("evidence_refs", []))
-        if isinstance(receipt.get("evidence_refs"), list)
-        else 0,
+        "consistency_constraint_count": len(CONSISTENCY_CONSTRAINT_TRUE_FIELDS),
+        "evidence_ref_count": _list_len(receipt.get("evidence_refs")) or 0,
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError("; ".join(errors))
-    return report
+        raise UniversalSymbolRuntimeAdmissionEvidenceReceiptError("; ".join(errors))
+    return result
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-receipt:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-runtime-admission-evidence-receipt:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
     required = schema.get("required")
-    if not isinstance(required, list) or "authority_denials" not in required:
-        errors.append("schema must require authority_denials")
+    if not isinstance(required, list) or "required_live_evidence" not in required:
+        errors.append("schema must require required_live_evidence")
 
 
 def _validate_json_schema(receipt: Mapping[str, Any], schema: Mapping[str, Any], errors: list[str]) -> None:
@@ -213,33 +215,30 @@ def _validate_receipt_boundary(receipt: Mapping[str, Any], errors: list[str]) ->
         errors.append("foundation_mode must remain true")
     if receipt.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
-    if (
-        receipt.get("lifecycle_evidence_decision")
-        != "blocked_pending_live_grant_temporal_revocation_replacement_and_audit_evidence"
+    if receipt.get("admission_evidence_decision") != (
+        "blocked_pending_live_runtime_admission_operator_orchestration_receipt_store_skill_recovery_and_proof_evidence"
     ):
-        errors.append("lifecycle_evidence_decision must remain blocked")
-    if receipt.get("lifecycle_evidence_receipt_is_not_lifecycle_authority") is not True:
-        errors.append("lifecycle evidence receipt must not grant lifecycle authority")
+        errors.append("admission_evidence_decision must remain blocked")
+    if receipt.get("receipt_is_not_runtime_authority") is not True:
+        errors.append("receipt must not be runtime authority")
 
 
-def _validate_lifecycle_subject(receipt: Mapping[str, Any], errors: list[str]) -> None:
-    subject = _mapping(receipt.get("lifecycle_subject"))
-    if subject.get("authority_scope") != "receipt-store-lifecycle-evidence-only":
-        errors.append("lifecycle_subject.authority_scope must remain evidence-only")
-    for field_name in (
-        "symbol_ref",
-        "approval_decision_witness_ref",
-        "reapproval_revocation_witness_ref",
-        "operator_reapproval_expiry_witness_ref",
-        "operator_revocation_witness_ref",
-        "replacement_decision_receipt_ref",
-        "tenant_scope_ref",
-    ):
-        if not isinstance(subject.get(field_name), str) or not subject.get(field_name):
-            errors.append(f"lifecycle_subject.{field_name} must be a non-empty ref")
+def _validate_runtime_subject(receipt: Mapping[str, Any], errors: list[str]) -> None:
+    subject = _mapping(receipt.get("runtime_subject"))
+    expected_refs = {
+        "runtime_admission_policy_ref": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "runtime_authority_witness_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "runtime_authority_read_model_ref": "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+        "skill_runtime_authority_witness_ref": "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    }
+    for field_name, expected_ref in expected_refs.items():
+        if subject.get(field_name) != expected_ref:
+            errors.append(f"runtime_subject.{field_name} drift")
+    if subject.get("authority_scope") != "runtime-admission-evidence-only":
+        errors.append("runtime_subject.authority_scope must remain evidence-only")
 
 
-def _validate_live_evidence_requirements(receipt: Mapping[str, Any], errors: list[str]) -> None:
+def _validate_live_evidence(receipt: Mapping[str, Any], errors: list[str]) -> None:
     requirements = receipt.get("required_live_evidence")
     if not isinstance(requirements, list) or not requirements:
         errors.append("required_live_evidence must be non-empty")
@@ -247,15 +246,22 @@ def _validate_live_evidence_requirements(receipt: Mapping[str, Any], errors: lis
     evidence_kinds: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("live evidence requirement entries must be objects")
+            errors.append("required_live_evidence entries must be objects")
             continue
+        evidence_id = str(requirement.get("evidence_id"))
         evidence_kinds.append(str(requirement.get("evidence_kind")))
+        if requirement.get("evidence_kind") == "live_runtime_witness" and requirement.get(
+            "required_evidence_ref"
+        ) != "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json":
+            errors.append("live_runtime_witness must bind runtime live witness input receipt schema")
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('evidence_id')}: proof_state must block lifecycle recording")
-        if requirement.get("current_decision") != "lifecycle_recording_blocked":
-            errors.append(f"{requirement.get('evidence_id')}: current_decision must be lifecycle_recording_blocked")
+            errors.append(f"{evidence_id}: proof_state must block admission")
+        if requirement.get("current_decision") != "runtime_admission_blocked":
+            errors.append(f"{evidence_id}: current_decision must remain blocked")
+        if not str(requirement.get("required_evidence_ref", "")):
+            errors.append(f"{evidence_id}: required_evidence_ref is required")
         if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
-            errors.append(f"{requirement.get('evidence_id')}: delta_reject_ref must be logged")
+            errors.append(f"{evidence_id}: delta_reject_ref must be logged")
     _require_members("required_live_evidence", evidence_kinds, REQUIRED_EVIDENCE_KINDS, errors)
 
 
@@ -285,7 +291,8 @@ def _validate_blocked_reasons(receipt: Mapping[str, Any], errors: list[str]) -> 
     if not isinstance(blocked_reasons, list):
         errors.append("blocked_reasons must be a list")
         return
-    _require_members("blocked_reasons", [item for item in blocked_reasons if isinstance(item, str)], REQUIRED_BLOCKED_REASONS, errors)
+    observed = [item for item in blocked_reasons if isinstance(item, str)]
+    _require_members("blocked_reasons", observed, REQUIRED_BLOCKED_REASONS, errors)
 
 
 def _validate_contract_summary(receipt: Mapping[str, Any], errors: list[str]) -> None:
@@ -367,22 +374,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        report = validate_universal_symbol_receipt_store_lifecycle_evidence_receipt(
-            args.receipt,
-            args.schema,
-        )
-    except UniversalSymbolReceiptStoreLifecycleEvidenceReceiptError as exc:
+        report = validate_universal_symbol_runtime_admission_evidence_receipt(args.receipt, args.schema)
+    except UniversalSymbolRuntimeAdmissionEvidenceReceiptError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": str(exc).split("; ")}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_receipt_store_lifecycle_evidence_receipt: {exc}")
+            print(f"[FAIL] universal_symbol_runtime_admission_evidence_receipt: {exc}")
             print("STATUS: failed")
         return 1
 
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_receipt_store_lifecycle_evidence_receipt")
+        print("[PASS] universal_symbol_runtime_admission_evidence_receipt")
         print("STATUS: passed")
     return 0
 

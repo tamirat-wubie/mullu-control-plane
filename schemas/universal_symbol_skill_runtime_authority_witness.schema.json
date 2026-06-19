@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-skill-runtime-authority-witness:1",
+  "title": "Universal Symbol Skill Runtime Authority Witness",
+  "description": "Foundation Mode witness for skill-by-skill UniversalSymbol runtime authority. This witness defines lane-level runtime authority obligations for the current runtime admission matrix while denying skill admission, runtime registration, live dispatch, connector calls, filesystem writes, external writes, receipt-store append, raw payload storage, raw secret storage, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "generated_at",
+    "witness_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "skill_authority_decision",
+    "skill_runtime_authority_witness_is_not_skill_authority",
+    "lane_requirements",
+    "authority_denials",
+    "lane_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "witness_id": { "type": "string", "const": "universal-symbol-skill-runtime-authority-witness-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "witness_scope": { "type": "string", "const": "foundation-mode-universal-symbol-skill-runtime-authority" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "skill_authority_decision": { "type": "string", "const": "blocked_pending_lane_operator_receipt_recovery_and_audit_evidence" },
+    "skill_runtime_authority_witness_is_not_skill_authority": { "type": "boolean", "const": true },
+    "lane_requirements": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/lane_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "lane_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_admission_policy_required",
+        "runtime_authority_witness_required",
+        "operator_approval_required",
+        "receipt_store_authority_required",
+        "rollback_recovery_required",
+        "lane_audit_receipt_required",
+        "blocked_action_refs_required",
+        "terminal_closure_denial_required"
+      ],
+      "properties": {
+        "runtime_admission_policy_required": { "type": "boolean", "const": true },
+        "runtime_authority_witness_required": { "type": "boolean", "const": true },
+        "operator_approval_required": { "type": "boolean", "const": true },
+        "receipt_store_authority_required": { "type": "boolean", "const": true },
+        "rollback_recovery_required": { "type": "boolean", "const": true },
+        "lane_audit_receipt_required": { "type": "boolean", "const": true },
+        "blocked_action_refs_required": { "type": "boolean", "const": true },
+        "terminal_closure_denial_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_lane_authority_blocks_admission",
+        "missing_operator_approval_blocks_admission",
+        "missing_receipt_store_authority_blocks_admission",
+        "missing_recovery_blocks_admission",
+        "missing_audit_receipt_blocks_admission",
+        "unknown_hard_constraint_blocks_admission",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_lane_authority_blocks_admission": { "type": "boolean", "const": true },
+        "missing_operator_approval_blocks_admission": { "type": "boolean", "const": true },
+        "missing_receipt_store_authority_blocks_admission": { "type": "boolean", "const": true },
+        "missing_recovery_blocks_admission": { "type": "boolean", "const": true },
+        "missing_audit_receipt_blocks_admission": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_admission": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "runtime_admission_policy_missing",
+          "runtime_authority_witness_missing",
+          "lane_operator_approval_missing",
+          "receipt_store_authority_missing",
+          "rollback_recovery_missing",
+          "lane_audit_receipt_missing",
+          "blocked_action_refs_missing",
+          "skill_runtime_authority_binding_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_requirement_count",
+        "authority_denial_count",
+        "lane_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "lane_requirement_count": { "type": "integer", "const": 4 },
+        "authority_denial_count": { "type": "integer", "const": 13 },
+        "lane_constraint_count": { "type": "integer", "const": 8 },
+        "rejection_check_count": { "type": "integer", "const": 7 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "lane_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_ref",
+        "symbol_kind",
+        "proof_state",
+        "admission_state",
+        "required_evidence_refs",
+        "blocked_action_refs",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "lane_ref": {
+          "type": "string",
+          "enum": [
+            "skill://teamops-shared-inbox",
+            "skill://software-dev",
+            "component://governance-core",
+            "receipt://worker-ledger"
+          ]
+        },
+        "symbol_kind": { "type": "string", "enum": ["skill", "component", "receipt"] },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "admission_state": { "type": "string", "const": "blocked_pending_live_runtime_authority" },
+        "required_evidence_refs": {
+          "type": "array",
+          "minItems": 6,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "blocked_action_refs": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_runtime_authority_granted",
+        "runtime_registration_performed",
+        "skill_admission_recorded",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "receipt_store_append_enabled",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "skill_runtime_authority_granted": { "type": "boolean", "const": false },
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "skill_admission_recorded": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

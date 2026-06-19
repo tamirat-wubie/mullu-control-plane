@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-runtime-live-witness-input-receipt:1",
+  "title": "Universal Symbol Runtime Live Witness Input Receipt",
+  "description": "Foundation Mode receipt contract for collecting live runtime witness inputs. This receipt names the endpoint, process, probe, dry-run, no-effect, receipt-store denial, operator observation, and freshness inputs required before live runtime admission can be evaluated while denying runtime authority, runtime admission, dispatch, connector calls, external writes, receipt-store append, mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "receipt_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "input_receipt_decision",
+    "receipt_is_not_runtime_authority",
+    "input_subject",
+    "required_input_channels",
+    "input_consistency_constraints",
+    "authority_denials",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "const": "universal-symbol-runtime-live-witness-input-receipt-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "receipt_scope": { "type": "string", "const": "foundation-mode-universal-symbol-runtime-live-witness-input" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "input_receipt_decision": {
+      "type": "string",
+      "const": "blocked_pending_live_endpoint_process_probe_dry_run_no_effect_receipt_denial_operator_and_freshness_inputs"
+    },
+    "receipt_is_not_runtime_authority": { "type": "boolean", "const": true },
+    "input_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_admission_evidence_receipt_ref",
+        "runtime_admission_policy_ref",
+        "runtime_authority_read_model_ref",
+        "input_scope"
+      ],
+      "properties": {
+        "runtime_admission_evidence_receipt_ref": { "$ref": "#/$defs/ref" },
+        "runtime_admission_policy_ref": { "$ref": "#/$defs/ref" },
+        "runtime_authority_read_model_ref": { "$ref": "#/$defs/ref" },
+        "input_scope": { "type": "string", "const": "runtime-live-witness-inputs-only" }
+      }
+    },
+    "required_input_channels": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/input_channel" },
+      "uniqueItems": true
+    },
+    "input_consistency_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint_matches_declared_runtime_required",
+        "process_identity_matches_endpoint_required",
+        "health_probe_matches_process_required",
+        "dry_run_has_no_effect_required",
+        "receipt_store_append_denial_required",
+        "operator_observation_matches_probe_required",
+        "freshness_window_required",
+        "all_inputs_required_before_live_runtime_witness"
+      ],
+      "properties": {
+        "endpoint_matches_declared_runtime_required": { "type": "boolean", "const": true },
+        "process_identity_matches_endpoint_required": { "type": "boolean", "const": true },
+        "health_probe_matches_process_required": { "type": "boolean", "const": true },
+        "dry_run_has_no_effect_required": { "type": "boolean", "const": true },
+        "receipt_store_append_denial_required": { "type": "boolean", "const": true },
+        "operator_observation_matches_probe_required": { "type": "boolean", "const": true },
+        "freshness_window_required": { "type": "boolean", "const": true },
+        "all_inputs_required_before_live_runtime_witness": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_endpoint_blocks_live_witness",
+        "missing_process_identity_blocks_live_witness",
+        "missing_health_probe_blocks_live_witness",
+        "missing_no_effect_dry_run_blocks_live_witness",
+        "missing_receipt_store_denial_blocks_live_witness",
+        "missing_operator_observation_blocks_live_witness",
+        "unknown_hard_constraint_blocks_live_witness",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_endpoint_blocks_live_witness": { "type": "boolean", "const": true },
+        "missing_process_identity_blocks_live_witness": { "type": "boolean", "const": true },
+        "missing_health_probe_blocks_live_witness": { "type": "boolean", "const": true },
+        "missing_no_effect_dry_run_blocks_live_witness": { "type": "boolean", "const": true },
+        "missing_receipt_store_denial_blocks_live_witness": { "type": "boolean", "const": true },
+        "missing_operator_observation_blocks_live_witness": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_live_witness": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "runtime_endpoint_input_missing",
+          "runtime_process_identity_input_missing",
+          "runtime_health_probe_input_missing",
+          "runtime_no_effect_dry_run_input_missing",
+          "receipt_store_append_denial_input_missing",
+          "operator_observation_input_missing",
+          "freshness_window_input_missing",
+          "live_runtime_witness_forbidden",
+          "runtime_admission_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_channel_count",
+        "consistency_constraint_count",
+        "authority_denial_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "input_channel_count": { "type": "integer", "const": 8 },
+        "consistency_constraint_count": { "type": "integer", "const": 8 },
+        "authority_denial_count": { "type": "integer", "const": 12 },
+        "rejection_check_count": { "type": "integer", "const": 8 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "input_channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "input_kind",
+        "proof_state",
+        "required_input_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "input_id": { "$ref": "#/$defs/ref" },
+        "input_kind": {
+          "type": "string",
+          "enum": [
+            "runtime_endpoint",
+            "runtime_process_identity",
+            "runtime_health_probe",
+            "runtime_no_effect_dry_run",
+            "receipt_store_append_denial",
+            "operator_observation",
+            "freshness_window",
+            "proof_coverage_binding"
+          ]
+        },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_input_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "live_runtime_witness_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_witness_accepted",
+        "runtime_admission_granted",
+        "runtime_registration_performed",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "receipt_store_append_enabled",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "live_runtime_witness_accepted": { "type": "boolean", "const": false },
+        "runtime_admission_granted": { "type": "boolean", "const": false },
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

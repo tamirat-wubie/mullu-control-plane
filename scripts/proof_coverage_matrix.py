@@ -437,6 +437,139 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_runtime_admission_evidence_receipt",
+            [
+                "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+                "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+                "validate_universal_symbol_runtime_admission_evidence_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+                "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "schemas/universal_symbol_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+                "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+                "scripts/validate_universal_symbol_runtime_admission_policy.py",
+                "scripts/validate_universal_symbol_runtime_authority_witness.py",
+                "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol runtime admission evidence receipt records missing live runtime, operator, orchestration, receipt-store, skill-lane, rollback, and proof evidence while denying runtime admission, registration, dispatch, connector calls, receipt-store append, mutation, terminal closure, and production readiness.",
+            [
+                "foundation_universal_symbol_runtime_admission_evidence_receipt_validates",
+                "runtime_admission_evidence_receipt_rejects_authority_drift",
+                "runtime_admission_evidence_receipt_rejects_missing_live_evidence_kind",
+                "runtime_admission_evidence_receipt_rejects_missing_delta_reject",
+                "runtime_admission_evidence_receipt_rejects_consistency_drift",
+                "runtime_admission_evidence_receipt_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_runtime_admission_evidence_receipt_validates": [
+                    "foundation_universal_symbol_runtime_admission_evidence_receipt_validates"
+                ],
+                "runtime_admission_evidence_receipt_rejects_authority_drift": [
+                    "runtime_admission_evidence_receipt_rejects_authority_drift"
+                ],
+                "runtime_admission_evidence_receipt_rejects_missing_live_evidence_kind": [
+                    "runtime_admission_evidence_receipt_rejects_missing_live_evidence_kind"
+                ],
+                "runtime_admission_evidence_receipt_rejects_missing_delta_reject": [
+                    "runtime_admission_evidence_receipt_rejects_missing_delta_reject"
+                ],
+                "runtime_admission_evidence_receipt_rejects_consistency_drift": [
+                    "runtime_admission_evidence_receipt_rejects_consistency_drift"
+                ],
+                "runtime_admission_evidence_receipt_rejects_evidence_ref_count_drift": [
+                    "runtime_admission_evidence_receipt_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_runtime_live_witness_input_receipt",
+            [
+                "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+                "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+                "validate_universal_symbol_runtime_live_witness_input_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+                "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+                "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+                "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+                "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+                "schemas/universal_symbol_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
+                "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+                "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol runtime live witness input receipt names endpoint, process, probe, no-effect dry-run, receipt-store denial, operator observation, freshness, and proof coverage inputs while denying live witness acceptance, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_runtime_live_witness_input_receipt_validates",
+                "runtime_live_witness_input_receipt_rejects_authority_drift",
+                "runtime_live_witness_input_receipt_rejects_missing_input_kind",
+                "runtime_live_witness_input_receipt_rejects_missing_delta_reject",
+                "runtime_live_witness_input_receipt_rejects_consistency_drift",
+                "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_runtime_live_witness_input_receipt_validates": [
+                    "foundation_universal_symbol_runtime_live_witness_input_receipt_validates"
+                ],
+                "runtime_live_witness_input_receipt_rejects_authority_drift": [
+                    "runtime_live_witness_input_receipt_rejects_authority_drift"
+                ],
+                "runtime_live_witness_input_receipt_rejects_missing_input_kind": [
+                    "runtime_live_witness_input_receipt_rejects_missing_input_kind"
+                ],
+                "runtime_live_witness_input_receipt_rejects_missing_delta_reject": [
+                    "runtime_live_witness_input_receipt_rejects_missing_delta_reject"
+                ],
+                "runtime_live_witness_input_receipt_rejects_consistency_drift": [
+                    "runtime_live_witness_input_receipt_rejects_consistency_drift"
+                ],
+                "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift": [
+                    "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_runtime_authority_witness",
             [
                 "schemas/universal_symbol_runtime_authority_witness.schema.json",
@@ -450,6 +583,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_runtime_authority_witness.schema.json",
                 "examples/universal_symbol_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
                 "schemas/universal_symbol_runtime_admission_policy.schema.json",
                 "examples/universal_symbol_runtime_admission_policy.foundation.json",
                 "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
@@ -461,6 +596,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/universal_symbol.schema.json",
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
                 "scripts/validate_universal_symbol_runtime_authority_witness.py",
                 "scripts/validate_universal_symbol_runtime_admission_policy.py",
                 "tests/test_validate_universal_symbol_kernel.py",
@@ -494,6 +630,134 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "runtime_authority_witness_rejects_evidence_ref_count_drift": [
                     "runtime_authority_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_runtime_authority_read_model",
+            [
+                "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+                "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+                "validate_universal_symbol_runtime_authority_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+                "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+                "schemas/universal_symbol_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+                "scripts/validate_universal_symbol_runtime_authority_witness.py",
+                "scripts/validate_universal_symbol_runtime_admission_policy.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol runtime authority read model projects simple operator statuses while remaining read-only and denying runtime authority, dispatch, connector calls, receipt-store append, mutation, terminal closure, and production readiness.",
+            [
+                "foundation_universal_symbol_runtime_authority_read_model_validates",
+                "runtime_authority_read_model_rejects_activation_drift",
+                "runtime_authority_read_model_rejects_status_drift",
+                "runtime_authority_read_model_rejects_missing_projection_link",
+                "runtime_authority_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_runtime_authority_read_model_validates": [
+                    "foundation_universal_symbol_runtime_authority_read_model_validates"
+                ],
+                "runtime_authority_read_model_rejects_activation_drift": [
+                    "runtime_authority_read_model_rejects_activation_drift"
+                ],
+                "runtime_authority_read_model_rejects_status_drift": [
+                    "runtime_authority_read_model_rejects_status_drift"
+                ],
+                "runtime_authority_read_model_rejects_missing_projection_link": [
+                    "runtime_authority_read_model_rejects_missing_projection_link"
+                ],
+                "runtime_authority_read_model_rejects_evidence_ref_count_drift": [
+                    "runtime_authority_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_skill_runtime_authority_witness",
+            [
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+                "validate_universal_symbol_skill_runtime_authority_witness",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_runtime_admission_policy.schema.json",
+                "examples/universal_symbol_runtime_admission_policy.foundation.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+                "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+                "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
+                "scripts/validate_universal_symbol_runtime_authority_witness.py",
+                "scripts/validate_universal_symbol_runtime_admission_policy.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol skill runtime authority witness defines lane-level authority requirements for teamops-shared-inbox, software-dev, governance-core, and worker-ledger while denying skill runtime authority, runtime registration, skill admission recording, live dispatch, connector calls, filesystem writes, external writes, receipt-store append, raw payload storage, raw secret storage, state mutation, terminal closure, and production readiness.",
+            [
+                "foundation_universal_symbol_skill_runtime_authority_witness_validates",
+                "skill_runtime_authority_witness_rejects_skill_authority_drift",
+                "skill_runtime_authority_witness_rejects_missing_lane",
+                "skill_runtime_authority_witness_rejects_missing_delta_reject",
+                "skill_runtime_authority_witness_rejects_constraint_drift",
+                "skill_runtime_authority_witness_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_skill_runtime_authority_witness_validates": [
+                    "foundation_universal_symbol_skill_runtime_authority_witness_validates"
+                ],
+                "skill_runtime_authority_witness_rejects_skill_authority_drift": [
+                    "skill_runtime_authority_witness_rejects_skill_authority_drift"
+                ],
+                "skill_runtime_authority_witness_rejects_missing_lane": [
+                    "skill_runtime_authority_witness_rejects_missing_lane"
+                ],
+                "skill_runtime_authority_witness_rejects_missing_delta_reject": [
+                    "skill_runtime_authority_witness_rejects_missing_delta_reject"
+                ],
+                "skill_runtime_authority_witness_rejects_constraint_drift": [
+                    "skill_runtime_authority_witness_rejects_constraint_drift"
+                ],
+                "skill_runtime_authority_witness_rejects_evidence_ref_count_drift": [
+                    "skill_runtime_authority_witness_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -1074,14 +1338,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/91_universal_symbol_kernel.md",
                 "docs/92_universal_symbol_kernel_audit.md",
                 "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+                "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
                 "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+                "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "scripts/proof_coverage_matrix.py",
                 "tests/test_proof_coverage_matrix.py",
             ],
-            "UniversalSymbol receipt-store lifecycle evidence receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence requirements while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            "UniversalSymbol receipt-store lifecycle evidence receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence requirements, with deterministic non-authorizing reference intake, while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
             [
                 "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates",
                 "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift",
@@ -1090,6 +1356,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref",
                 "lifecycle_evidence_receipt_rejects_consistency_drift",
                 "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift",
+                "lifecycle_evidence_producer_collects_refs_without_authority",
+                "lifecycle_evidence_producer_reports_missing_refs",
+                "lifecycle_evidence_producer_rejects_unknown_evidence_kind",
+                "lifecycle_evidence_producer_rejects_raw_secret_like_ref",
             ],
             runtime_witness_anchor_aliases={
                 "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates": [
@@ -1112,6 +1382,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift": [
                     "lifecycle_evidence_receipt_rejects_evidence_ref_count_drift"
+                ],
+                "lifecycle_evidence_producer_collects_refs_without_authority": [
+                    "lifecycle_evidence_producer_collects_refs_without_authority"
+                ],
+                "lifecycle_evidence_producer_reports_missing_refs": [
+                    "lifecycle_evidence_producer_reports_missing_refs"
+                ],
+                "lifecycle_evidence_producer_rejects_unknown_evidence_kind": [
+                    "lifecycle_evidence_producer_rejects_unknown_evidence_kind"
+                ],
+                "lifecycle_evidence_producer_rejects_raw_secret_like_ref": [
+                    "lifecycle_evidence_producer_rejects_raw_secret_like_ref"
                 ],
             },
         ),
@@ -12878,8 +13160,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_runtime_admission_evidence_receipt",
+            "surfaces": ["universal_symbol_runtime_admission_evidence_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_runtime_live_witness_input_receipt",
+            "surfaces": ["universal_symbol_runtime_live_witness_input_receipt"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_runtime_authority_witness",
             "surfaces": ["universal_symbol_runtime_authority_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_runtime_authority_read_model",
+            "surfaces": ["universal_symbol_runtime_authority_read_model"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_skill_runtime_authority_witness",
+            "surfaces": ["universal_symbol_skill_runtime_authority_witness"],
             "status": "closed",
         },
         {
