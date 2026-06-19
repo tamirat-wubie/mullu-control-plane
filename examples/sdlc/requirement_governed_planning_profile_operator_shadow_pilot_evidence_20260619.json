@@ -1,0 +1,60 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_operator_shadow_pilot_evidence_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile shadow dossier needs a schema-backed operator shadow-pilot evidence intake packet so future observations can be recorded without confusing the intake contract with runtime promotion evidence.",
+  "success_criteria": [
+    "a deterministic validator emits the operator shadow-pilot evidence request from the current shadow dossier",
+    "the checked-in fixture remains AwaitingEvidence and matches the deterministic produced packet",
+    "the schema denies runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure",
+    "the packet covers all five shadow dossier plan classes with uncollected operator observation placeholders",
+    "focused tests cover schema compatibility, fixture parity, missing plan class rejection, collected-observation rejection, and authority-drift rejection"
+  ],
+  "non_goals": [
+    "do not collect concrete operator observations",
+    "do not approve runtime promotion",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim replay, recovery, or terminal closure evidence"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the evidence packet is local, read-only, deterministic, and reversible",
+    "all observations remain AwaitingEvidence until a later operator witness record exists",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+    "examples/governed_planning_profile_operator_shadow_pilot_evidence.awaiting_evidence.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_operator_shadow_pilot_evidence_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_operator_shadow_pilot_evidence_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py -q",
+    "python -m pytest tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "evidence_required": [
+    "schema-backed AwaitingEvidence operator evidence fixture",
+    "deterministic validator and produced packet parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/operator-shadow-pilot-evidence/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/operator-shadow-pilot-evidence/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/operator-shadow-pilot-evidence/requirement/20260619"
+}

@@ -137,6 +137,9 @@ def test_protocol_manifest_is_valid() -> None:
     governed_planning_profile_entry = entries["governed-planning-profile"]
     governed_planning_profile_report_entry = entries["governed-planning-profile-admission-report"]
     governed_planning_profile_dossier_entry = entries["governed-planning-profile-shadow-dossier"]
+    governed_planning_profile_operator_evidence_entry = entries[
+        "governed-planning-profile-operator-shadow-pilot-evidence"
+    ]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
 
@@ -181,6 +184,13 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:governed-planning-profile-shadow-dossier:1"
     )
     assert governed_planning_profile_dossier_entry["surface"] == "planning"
+    assert governed_planning_profile_operator_evidence_entry["path"] == (
+        "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json"
+    )
+    assert governed_planning_profile_operator_evidence_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-evidence:1"
+    )
+    assert governed_planning_profile_operator_evidence_entry["surface"] == "planning"
     assert governed_symbolic_loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
     assert governed_symbolic_loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
     assert governed_symbolic_loop_entry["surface"] == "governance"
