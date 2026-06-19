@@ -186,6 +186,11 @@ from scripts.validate_universal_symbol_runtime_authority_read_model import (
     UniversalSymbolRuntimeAuthorityReadModelError,
     validate_universal_symbol_runtime_authority_read_model,
 )
+from scripts.validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_LIFECYCLE_EVIDENCE_BUNDLE_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_LIFECYCLE_EVIDENCE_BUNDLE_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model,
+)
 from scripts.validate_universal_symbol_skill_runtime_authority_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH,
@@ -211,7 +216,22 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 123
+    assert report["evidence_ref_count"] == 127
+
+
+def test_lifecycle_evidence_bundle_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model(
+        DEFAULT_LIFECYCLE_EVIDENCE_BUNDLE_READ_MODEL_PATH,
+        DEFAULT_LIFECYCLE_EVIDENCE_BUNDLE_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Evidence bundle visible"
+    assert report["evidence_kind_row_count"] == 7
+    assert report["effective_denial_count"] == 11
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:

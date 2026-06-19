@@ -1763,6 +1763,12 @@
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle:1"
     },
     {
+      "path": "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model:1"
+    },
+    {
       "path": "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
       "schema_id": "universal-symbol-receipt-store-lifecycle-audit-receipt",
       "surface": "symbol",

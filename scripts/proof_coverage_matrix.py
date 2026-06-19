@@ -1665,6 +1665,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store lifecycle evidence bundle read model exposes simple operator status and bounded evidence-kind rows while remaining read-only and denying lifecycle authority, raw detail exposure, receipt append, mutation, and terminal closure.",
+            [
+                "foundation_lifecycle_evidence_bundle_read_model_validates",
+                "lifecycle_evidence_bundle_read_model_rejects_authority_drift",
+                "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility",
+                "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind",
+                "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified",
+                "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_lifecycle_evidence_bundle_read_model_validates": [
+                    "foundation_lifecycle_evidence_bundle_read_model_validates"
+                ],
+                "lifecycle_evidence_bundle_read_model_rejects_authority_drift": [
+                    "lifecycle_evidence_bundle_read_model_rejects_authority_drift"
+                ],
+                "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility": [
+                    "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility"
+                ],
+                "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind": [
+                    "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind"
+                ],
+                "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified": [
+                    "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified"
+                ],
+                "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift": [
+                    "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_lifecycle_audit_receipt",
             [
                 "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
@@ -13504,6 +13557,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_bundle",
             "surfaces": ["universal_symbol_receipt_store_lifecycle_evidence_bundle"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
+            "surfaces": ["universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model"],
             "status": "closed",
         },
         {

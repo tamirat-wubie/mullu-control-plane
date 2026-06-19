@@ -151,6 +151,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_reapproval_revocation_witness",
         "universal_symbol_receipt_store_lifecycle_evidence_receipt",
         "universal_symbol_receipt_store_lifecycle_evidence_bundle",
+        "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
         "universal_symbol_receipt_store_lifecycle_audit_receipt",
         "universal_symbol_receipt_store_tenant_scope_witness",
         "universal_symbol_receipt_store_writer_duty_scope_witness",
@@ -635,6 +636,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_receipt_store_lifecycle_evidence_bundle",
+        "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
         "universal_symbol_receipt_store_lifecycle_audit_receipt",
     )
     assert_ordered(

@@ -177,6 +177,13 @@
       ]
     },
     {
+      "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model"
+      ]
+    },
+    {
       "action_id": "publish_universal_symbol_receipt_store_lifecycle_audit_receipt",
       "status": "closed",
       "surfaces": [
@@ -1661,12 +1668,12 @@
       "action_proof": 163,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 54,
+      "read_model": 55,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 217,
+      "audit_chain": 218,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1674,21 +1681,21 @@
     "by_coverage_state": {
       "proven": 78,
       "unproven": 0,
-      "witnessed": 142
+      "witnessed": 143
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 56,
+      "read_model": 57,
       "request_proof": 162
     },
-    "surface_count": 220
+    "surface_count": 221
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 220,
+      "strong": 221,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -5540,6 +5547,59 @@
         "lifecycle_evidence_bundle_rejects_evidence_ref_count_drift"
       ],
       "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_bundle"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+        "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.foundation.json",
+        "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+        "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+        "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+        "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+        "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+        "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store lifecycle evidence bundle read model exposes simple operator status and bounded evidence-kind rows while remaining read-only and denying lifecycle authority, raw detail exposure, receipt append, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+        "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.foundation.json",
+        "validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "foundation_lifecycle_evidence_bundle_read_model_validates": [
+          "foundation_lifecycle_evidence_bundle_read_model_validates"
+        ],
+        "lifecycle_evidence_bundle_read_model_rejects_authority_drift": [
+          "lifecycle_evidence_bundle_read_model_rejects_authority_drift"
+        ],
+        "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift": [
+          "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift"
+        ],
+        "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind": [
+          "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind"
+        ],
+        "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified": [
+          "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified"
+        ],
+        "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility": [
+          "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_lifecycle_evidence_bundle_read_model_validates",
+        "lifecycle_evidence_bundle_read_model_rejects_authority_drift",
+        "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility",
+        "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind",
+        "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified",
+        "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model"
     },
     {
       "action_proof": "action_proof",
@@ -17357,8 +17417,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2120,
-    "runtime_witness_count": 2120,
+    "exact_test_anchor_count": 2126,
+    "runtime_witness_count": 2126,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18681,6 +18741,51 @@
         "exact_test_anchor_count": 7,
         "runtime_witness_count": 7,
         "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_bundle",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_foundation_lifecycle_evidence_bundle_read_model_validates"
+            ],
+            "witness": "foundation_lifecycle_evidence_bundle_read_model_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_lifecycle_evidence_bundle_read_model_rejects_authority_drift"
+            ],
+            "witness": "lifecycle_evidence_bundle_read_model_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility"
+            ],
+            "witness": "lifecycle_evidence_bundle_read_model_rejects_raw_detail_visibility"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind"
+            ],
+            "witness": "lifecycle_evidence_bundle_read_model_rejects_missing_evidence_kind"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified"
+            ],
+            "witness": "lifecycle_evidence_bundle_read_model_rejects_placeholder_content_verified"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py::test_lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "lifecycle_evidence_bundle_read_model_rejects_evidence_ref_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
