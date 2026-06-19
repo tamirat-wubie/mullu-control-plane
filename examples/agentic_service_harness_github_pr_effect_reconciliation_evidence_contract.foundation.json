@@ -1,0 +1,98 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_effect_reconciliation_witness_ref": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json",
+  "witness_kind": "effect_reconciliation_evidence_contract",
+  "requested_evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+  "evidence_contract_status": "AwaitingEvidence",
+  "effect_reconciliation_collected": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "effect_reconciliation_evidence_contract": {
+    "evidence_contract_id": "effect-reconciliation-evidence.github-pr-before-terminal-closure",
+    "source_effect_reconciliation_request_id": "effect-reconciliation.github-pr-before-terminal-closure",
+    "required_evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+    "required_collector_mode": "read_only_github_pr_state_observation",
+    "branch_state_observation_required": true,
+    "pull_request_state_observation_required": true,
+    "check_state_observation_required": true,
+    "merge_state_observation_required": true,
+    "branch_deletion_state_observation_required": true,
+    "live_evidence_collection_required": true,
+    "live_evidence_collected": false,
+    "read_only_collection_only": true,
+    "mutation_allowed": false,
+    "terminal_closure_authorized_after_collection": false
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "effect_reconciliation_live_evidence",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "branch_created": false,
+    "pull_request_opened": false,
+    "ready_for_review_marked": false,
+    "pull_request_merged": false,
+    "branch_deleted": false,
+    "repository_written": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "receipt_store_appended": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_effect_reconciliation_evidence_contract_schema": "schemas/agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.schema.json",
+    "github_pr_effect_reconciliation_witness_schema": "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json",
+    "github_pr_terminal_closure_certificate_witness_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
+    "github_pr_ci_gate_before_ready_for_review_witness_schema": "schemas/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.schema.json",
+    "github_pr_repository_effect_rollback_plan_witness_schema": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
+    "github_pr_uao_admission_witness_schema": "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json",
+    "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
+    "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-effect-reconciliation-evidence-contract",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect read-only live GitHub PR state observations into governed effect reconciliation evidence."
+}

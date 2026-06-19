@@ -101,6 +101,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-github-pr-effect-reconciliation-evidence-contract",
+      "path": "schemas/agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-effect-reconciliation-evidence-contract:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-witness:1",
