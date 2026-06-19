@@ -1,0 +1,62 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_replay_recovery_witness_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile sequence has collected local runtime-promotion approval evidence and now needs a schema-backed replay/recovery witness that closes only the replay/recovery evidence gap without granting runtime promotion authority.",
+  "success_criteria": [
+    "a deterministic validator emits the replay/recovery witness from the current runtime-promotion approval packet",
+    "the checked-in local replay/recovery witness matches the deterministic produced witness",
+    "the schema records replay/recovery evidence as collected while denying replay execution, rollback execution, runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure",
+    "the witness records passed controls for source approval validity, plan-class replay probe coverage, zero replay mismatches, rollback plan documentation, recovery handoff documentation, authority denials, and Foundation Mode no-effect boundary",
+    "the witness keeps runtime promotion blocked by terminal closure certificate evidence",
+    "focused tests cover schema compatibility, fixture parity, source approval binding, replay/recovery controls, missing terminal gate rejection, uncollected source approval rejection, authority-drift rejection, and recovery-boundary drift rejection"
+  ],
+  "non_goals": [
+    "do not authorize runtime promotion",
+    "do not execute replay or rollback",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim terminal closure evidence",
+    "do not replace the prior runtime-promotion approval packet"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the replay/recovery witness is local, read-only, deterministic, and reversible",
+    "runtime promotion remains AwaitingEvidence until terminal closure evidence exists",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_replay_recovery_witness.py",
+    "schemas/governed_planning_profile_replay_recovery_witness.schema.json",
+    "examples/governed_planning_profile_replay_recovery_witness.local.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_replay_recovery_witness.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_replay_recovery_witness_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_replay_recovery_witness_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_replay_recovery_witness.py",
+    "python scripts/validate_governed_planning_profile_replay_recovery_witness.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_witness.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "evidence_required": [
+    "schema-backed local replay/recovery witness fixture",
+    "deterministic validator and produced witness parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/replay-recovery-witness/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/replay-recovery-witness/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/replay-recovery-witness/requirement/20260619"
+}
