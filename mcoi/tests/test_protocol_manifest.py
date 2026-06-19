@@ -155,6 +155,9 @@ def test_protocol_manifest_is_valid() -> None:
     governed_planning_profile_terminal_closure_entry = entries[
         "governed-planning-profile-terminal-closure-certificate"
     ]
+    governed_planning_profile_runtime_authorization_request_entry = entries[
+        "governed-planning-profile-runtime-authorization-request"
+    ]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
 
@@ -234,6 +237,13 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
     )
     assert governed_planning_profile_terminal_closure_entry["surface"] == "planning"
+    assert governed_planning_profile_runtime_authorization_request_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_request.schema.json"
+    )
+    assert governed_planning_profile_runtime_authorization_request_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-request:1"
+    )
+    assert governed_planning_profile_runtime_authorization_request_entry["surface"] == "planning"
     assert governed_symbolic_loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
     assert governed_symbolic_loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
     assert governed_symbolic_loop_entry["surface"] == "governance"

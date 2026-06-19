@@ -1055,6 +1055,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
     },
     {
+      "path": "schemas/governed_planning_profile_runtime_authorization_request.schema.json",
+      "schema_id": "governed-planning-profile-runtime-authorization-request",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-request:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",
