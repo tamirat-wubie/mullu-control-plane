@@ -1,0 +1,51 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_operator_shadow_pilot_evidence_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_operator_shadow_pilot_evidence_20260619",
+  "architecture_summary": "Add a local validator/emitter that binds the deterministic GovernedPlanningProfile shadow dossier id and hash to an AwaitingEvidence operator shadow-pilot evidence packet. The packet records uncollected observation placeholders and promotion blockers only; no runtime module imports it and no authority state changes.",
+  "affected_modules": [
+    "governed_planning_profile_lineage",
+    "schema_protocol_manifest",
+    "ci_root_coverage_policy",
+    "sdlc_artifact_lineage",
+    "planning_architecture_documentation"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileOperatorShadowPilotEvidence fields for source dossier identity, expected plan classes, uncollected scenario observations, promotion gates, authority denials, validators, and deterministic evidence hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py, schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json, the AwaitingEvidence fixture, focused tests, manifest entries, documentation additions, CI binding, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because no router, worker, dispatch, write, connector, scheduler, or registration surface is added.",
+  "migration_plan": "No runtime migration. Existing profiles, shadow dossiers, admission reports, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The evidence packet is regenerated from the current deterministic shadow dossier.",
+  "test_plan": [
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py -q",
+    "python -m pytest tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "uao_ref": "uao://governed-planning-profile/operator-shadow-pilot-evidence/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/operator-shadow-pilot-evidence/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/operator-shadow-pilot-evidence/design/20260619"
+}

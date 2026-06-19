@@ -147,6 +147,27 @@ shapes before operator shadow-pilot evidence exists. A verified dossier means
 the local projection is structurally coherent; it does not mean runtime
 promotion is authorized.
 
+## Operator Shadow-Pilot Evidence
+
+The next no-effect evidence slice is
+`examples/governed_planning_profile_operator_shadow_pilot_evidence.awaiting_evidence.json`,
+validated by
+`scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py`
+and governed by
+`schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json`.
+
+This packet binds the deterministic shadow dossier id and hash to five
+operator-observation placeholders, one for each covered plan class. Each
+placeholder remains `AwaitingEvidence`; parity is not confirmed, runtime
+promotion is not ready, and every promotion gate still blocks runtime
+promotion. The packet is therefore an intake contract for future operator
+observations, not the observations themselves.
+
+The packet also records remaining promotion gates for operator shadow-pilot
+observation, runtime promotion approval, replay/recovery witness, and terminal
+closure certificate. All execution, dispatch, runtime replanning, success, and
+terminal closure authority stays hard false.
+
 ## Validation
 
 ```text
@@ -154,13 +175,16 @@ python scripts/validate_governed_planning_profile.py
 python scripts/validate_governed_planning_profile.py --json
 python scripts/report_governed_planning_profile_shadow_dossier.py
 python scripts/report_governed_planning_profile_shadow_dossier.py --json
+python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py
+python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
+python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, and multi-class shadow dossier defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, and operator evidence intake contract defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, or closure authority
-  Open issues: operator shadow-pilot evidence, runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
-  Next action: collect operator shadow-pilot evidence before any runtime promotion
+  Open issues: concrete operator shadow-pilot observations, runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
+  Next action: record concrete operator shadow-pilot observations before any runtime promotion

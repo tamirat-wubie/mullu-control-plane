@@ -1499,6 +1499,12 @@
       "surface": "planning"
     },
     {
+      "schema_id": "governed-planning-profile-operator-shadow-pilot-evidence",
+      "path": "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+      "urn": "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-evidence:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "supervisor-tick",
       "path": "schemas/supervisor_tick.schema.json",
       "urn": "urn:mullusi:schema:supervisor-tick:1",

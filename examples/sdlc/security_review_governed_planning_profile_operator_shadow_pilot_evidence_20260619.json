@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-operator-shadow-pilot-evidence-20260619",
+  "change_id": "governed-planning-profile-operator-shadow-pilot-evidence-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "An operator shadow-pilot evidence intake packet could be mistaken for collected operator evidence or runtime promotion approval if it allows collected-observation flags, parity confirmation, promotion readiness, or terminal closure claims. The mitigation is a schema-backed AwaitingEvidence fixture with hard false authority fields, explicit unknown observation refs, promotion gates that continue to block runtime promotion, and focused tests for authority and evidence-drift rejection.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the operator evidence packet keeps runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proves collected observations and promotion-ready flags remain rejected until a separate operator witness exists",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_rejects_collected_observation"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proves the checked-in fixture matches the deterministic produced packet and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_schema_accepts_fixture_and_produced_packet"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check records one AwaitingEvidence observation placeholder for every expected shadow dossier plan class",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_binds_all_expected_plan_classes"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-operator-evidence-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, and terminal_closure.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+        "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-operator-evidence-collection-confusion",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The fixture remains AwaitingEvidence, all observation refs are unknown refs, and collected-observation drift is rejected.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_operator_shadow_pilot_evidence.awaiting_evidence.json",
+        "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py::test_operator_shadow_pilot_evidence_rejects_collected_observation"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the evidence packet local, deterministic, and read-only",
+    "hard-deny all runtime promotion and terminal closure fields in the schema",
+    "bind the packet to the deterministic shadow dossier id and hash",
+    "record plan-class observation placeholders without claiming any observation has been collected"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "receipt://governed-planning-profile/operator-shadow-pilot-evidence/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/operator-shadow-pilot-evidence/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/operator-shadow-pilot-evidence/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/operator-shadow-pilot-evidence/security/20260619"
+}
