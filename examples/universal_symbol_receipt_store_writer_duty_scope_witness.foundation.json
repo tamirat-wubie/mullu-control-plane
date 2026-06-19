@@ -1,0 +1,158 @@
+{
+  "witness_id": "universal-symbol-receipt-store-writer-duty-scope-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-writer-duty-scope",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "writer_duty_scope_decision": "blocked_pending_writer_role_action_bounds_and_separation_evidence",
+  "writer_duty_scope_witness_is_not_duty_authority": true,
+  "duty_requirements": [
+    {
+      "requirement_id": "requirement://writer-role-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "identity://universal-symbol/receipt-store-writer-role",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-writer-role-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://permitted-receipt-kinds",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schema-manifest://universal-symbol/receipt-store-permitted-receipts",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-permitted-receipt-kinds-missing"
+    },
+    {
+      "requirement_id": "requirement://permitted-action-scope",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "action-scope://universal-symbol/receipt-store-writer-duty-permitted",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-permitted-action-scope-missing"
+    },
+    {
+      "requirement_id": "requirement://denied-action-scope",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "action-scope://universal-symbol/receipt-store-writer-duty-denied",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-denied-action-scope-missing"
+    },
+    {
+      "requirement_id": "requirement://separation-of-duties",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "separation://universal-symbol/receipt-store-writer-duty",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-separation-of-duties-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-scope-link",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "tenant-scope://universal-symbol/receipt-store-writer-duty-scope-link",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-tenant-scope-link-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/writer-duty-scope-audit",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-audit-receipt-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-or-rebinding-path",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revocation://universal-symbol/receipt-store-writer-duty-scope",
+      "current_decision": "writer_duty_scope_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-duty-scope-revocation-or-rebinding-path-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_writer_duty_scope_bound": false,
+    "receipt_store_tenant_scope_bound": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_writer_identity_registered": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "duty_scope_constraints": {
+    "writer_role_identity_required": true,
+    "permitted_receipt_kinds_required": true,
+    "permitted_action_scope_required": true,
+    "denied_action_scope_required": true,
+    "separation_of_duties_required": true,
+    "tenant_scope_link_required": true,
+    "audit_receipt_required": true,
+    "revocation_or_rebinding_path_required": true
+  },
+  "rejection_policy": {
+    "missing_writer_role_blocks_duty_scope": true,
+    "missing_permitted_receipts_blocks_duty_scope": true,
+    "missing_action_scope_blocks_duty_scope": true,
+    "missing_separation_blocks_duty_scope": true,
+    "unknown_hard_constraint_blocks_duty_scope": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "writer_role_identity_missing",
+    "permitted_receipt_kinds_missing",
+    "permitted_action_scope_missing",
+    "denied_action_scope_missing",
+    "separation_of_duties_missing",
+    "tenant_scope_link_missing",
+    "audit_receipt_missing",
+    "revocation_or_rebinding_path_missing",
+    "receipt_store_writer_duty_scope_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_path_confinement_witness",
+    "define_write_path_idempotency_witness",
+    "define_durability_replay_witness"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+    "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
+  ],
+  "contract_summary": {
+    "duty_requirement_count": 8,
+    "authority_denial_count": 13,
+    "duty_scope_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 30
+  }
+}

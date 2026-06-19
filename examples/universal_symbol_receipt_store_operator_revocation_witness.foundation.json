@@ -1,0 +1,142 @@
+{
+  "witness_id": "universal-symbol-receipt-store-operator-revocation-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-operator-revocation",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "revocation_decision": "blocked_pending_live_revocation_state_scope_and_audit_evidence",
+  "revocation_witness_is_not_revocation_authority": true,
+  "revocation_requirements": [
+    {
+      "requirement_id": "requirement://operator-identity-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "identity://universal-symbol/operator/receipt-store-revocation",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-operator-identity-missing"
+    },
+    {
+      "requirement_id": "requirement://approval-decision-ref",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval://universal-symbol/receipt-store/revocation-decision-ref",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-approval-decision-ref-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-state",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revoke://universal-symbol/receipt-store/state",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-state-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-scope",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "scope://universal-symbol/receipt-store/revocation",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-scope-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-reason",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "reason://universal-symbol/receipt-store/revocation",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-reason-missing"
+    },
+    {
+      "requirement_id": "requirement://effective-at",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "temporal://universal-symbol/receipt-store/revocation-effective-at",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-effective-at-missing"
+    },
+    {
+      "requirement_id": "requirement://propagation-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/revocation-propagation",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-propagation-receipt-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/revocation-audit",
+      "current_decision": "revocation_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/revocation-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_revocation_bound": false,
+    "receipt_store_approval_decision_recorded": false,
+    "receipt_store_operator_approval_recorded": false,
+    "receipt_store_writer_identity_registered": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "revocation_constraints": {
+    "operator_identity_witness_required": true,
+    "approval_decision_ref_required": true,
+    "revocation_state_required": true,
+    "revocation_scope_required": true,
+    "revocation_reason_required": true,
+    "effective_at_required": true,
+    "propagation_receipt_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_operator_identity_blocks_revocation": true,
+    "missing_approval_decision_blocks_revocation": true,
+    "missing_revocation_state_blocks_revocation": true,
+    "missing_revocation_scope_blocks_revocation": true,
+    "unknown_hard_constraint_blocks_revocation": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "operator_identity_witness_missing",
+    "approval_decision_ref_missing",
+    "revocation_state_missing",
+    "revocation_scope_missing",
+    "revocation_reason_missing",
+    "effective_at_missing",
+    "propagation_receipt_missing",
+    "audit_receipt_missing",
+    "receipt_store_revocation_binding_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_revocation_state_evidence",
+    "bind_revocation_scope_and_reason",
+    "record_revocation_effective_time",
+    "bind_revocation_propagation_audit_receipt"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "revocation_requirement_count": 8,
+    "authority_denial_count": 13,
+    "revocation_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 13
+  }
+}

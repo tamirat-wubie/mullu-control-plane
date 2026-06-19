@@ -1,0 +1,141 @@
+{
+  "receipt_id": "universal-symbol-receipt-store-lifecycle-audit-receipt-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "receipt_scope": "foundation-mode-universal-symbol-receipt-store-lifecycle-audit",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "audit_decision": "blocked_pending_lifecycle_witness_decision_grant_delta_reject_digest_and_auditor_evidence",
+  "lifecycle_audit_receipt_is_not_lifecycle_authority": true,
+  "audit_requirements": [
+    {
+      "requirement_id": "requirement://source-lifecycle-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store/reapproval-revocation",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-source-witness-missing"
+    },
+    {
+      "requirement_id": "requirement://approval-decision-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store/approval-decision",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-approval-decision-missing"
+    },
+    {
+      "requirement_id": "requirement://active-grant-ref",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "grant://universal-symbol/receipt-store/active",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-active-grant-missing"
+    },
+    {
+      "requirement_id": "requirement://lifecycle-event-kind",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "event-kind://universal-symbol/receipt-store/lifecycle",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-event-kind-missing"
+    },
+    {
+      "requirement_id": "requirement://before-after-authority-envelope",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "authority-envelope://universal-symbol/receipt-store/lifecycle-before-after",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-authority-envelope-missing"
+    },
+    {
+      "requirement_id": "requirement://delta-reject-ledger",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "delta-reject://universal-symbol/receipt-store/lifecycle-ledger",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-delta-reject-ledger-missing"
+    },
+    {
+      "requirement_id": "requirement://redaction-digest-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "digest://universal-symbol/receipt-store/lifecycle-redaction",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-redaction-digest-missing"
+    },
+    {
+      "requirement_id": "requirement://auditor-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "identity://universal-symbol/receipt-store/lifecycle-auditor",
+      "current_decision": "lifecycle_audit_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-auditor-identity-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_lifecycle_audit_recorded": false,
+    "receipt_store_reapproval_recorded": false,
+    "receipt_store_revocation_recorded": false,
+    "receipt_store_append_performed": false,
+    "replacement_decision_recorded": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "audit_constraints": {
+    "source_lifecycle_witness_required": true,
+    "approval_decision_witness_required": true,
+    "active_grant_ref_required": true,
+    "lifecycle_event_kind_required": true,
+    "before_after_authority_envelope_required": true,
+    "delta_reject_ledger_required": true,
+    "redaction_digest_binding_required": true,
+    "auditor_identity_required": true
+  },
+  "rejection_policy": {
+    "missing_lifecycle_witness_blocks_audit": true,
+    "missing_decision_or_grant_blocks_audit": true,
+    "missing_authority_envelope_blocks_audit": true,
+    "missing_delta_reject_or_digest_blocks_audit": true,
+    "unknown_hard_constraint_blocks_audit": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "source_lifecycle_witness_missing",
+    "approval_decision_witness_missing",
+    "active_grant_ref_missing",
+    "lifecycle_event_kind_missing",
+    "before_after_authority_envelope_missing",
+    "delta_reject_ledger_missing",
+    "redaction_digest_binding_missing",
+    "auditor_identity_missing",
+    "lifecycle_audit_recording_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_replacement_decision_receipt",
+    "bind_lifecycle_audit_to_reapproval_revocation_witness",
+    "define_digest_only_lifecycle_audit_payload",
+    "define_auditor_identity_evidence"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "audit_requirement_count": 8,
+    "authority_denial_count": 12,
+    "audit_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 13
+  }
+}

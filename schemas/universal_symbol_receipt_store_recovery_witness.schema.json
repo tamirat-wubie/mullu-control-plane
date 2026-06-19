@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-recovery-witness:1",
+  "title": "Universal Symbol Receipt Store Recovery Witness",
+  "description": "Foundation Mode witness for a future UniversalSymbol receipt-store recovery boundary. This witness defines rollback, compensation, snapshot, replay, incident handoff, and audit obligations while denying recovery binding, recovery execution, rollback execution, compensation execution, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "generated_at",
+    "witness_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "recovery_decision",
+    "recovery_witness_is_not_execution_authority",
+    "recovery_requirements",
+    "authority_denials",
+    "recovery_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "witness_id": { "type": "string", "const": "universal-symbol-receipt-store-recovery-witness-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "witness_scope": { "type": "string", "const": "foundation-mode-universal-symbol-receipt-store-recovery" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "recovery_decision": { "type": "string", "const": "blocked_pending_recovery_plan_snapshot_rollback_compensation_and_audit_evidence" },
+    "recovery_witness_is_not_execution_authority": { "type": "boolean", "const": true },
+    "recovery_requirements": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/recovery_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "recovery_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recovery_plan_required",
+        "rollback_plan_required",
+        "compensation_plan_required",
+        "recovery_snapshot_required",
+        "durability_replay_binding_required",
+        "effect_boundary_required",
+        "incident_handoff_required",
+        "post_recovery_audit_required"
+      ],
+      "properties": {
+        "recovery_plan_required": { "type": "boolean", "const": true },
+        "rollback_plan_required": { "type": "boolean", "const": true },
+        "compensation_plan_required": { "type": "boolean", "const": true },
+        "recovery_snapshot_required": { "type": "boolean", "const": true },
+        "durability_replay_binding_required": { "type": "boolean", "const": true },
+        "effect_boundary_required": { "type": "boolean", "const": true },
+        "incident_handoff_required": { "type": "boolean", "const": true },
+        "post_recovery_audit_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_recovery_plan_blocks_recovery",
+        "missing_rollback_or_compensation_blocks_recovery",
+        "missing_snapshot_blocks_recovery",
+        "missing_replay_binding_blocks_recovery",
+        "unknown_hard_constraint_blocks_recovery",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_recovery_plan_blocks_recovery": { "type": "boolean", "const": true },
+        "missing_rollback_or_compensation_blocks_recovery": { "type": "boolean", "const": true },
+        "missing_snapshot_blocks_recovery": { "type": "boolean", "const": true },
+        "missing_replay_binding_blocks_recovery": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_recovery": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "recovery_plan_missing",
+          "rollback_plan_missing",
+          "compensation_plan_missing",
+          "recovery_snapshot_missing",
+          "durability_replay_binding_missing",
+          "effect_boundary_missing",
+          "incident_handoff_missing",
+          "post_recovery_audit_missing",
+          "receipt_store_recovery_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recovery_requirement_count",
+        "authority_denial_count",
+        "recovery_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "recovery_requirement_count": { "type": "integer", "minimum": 8 },
+        "authority_denial_count": { "type": "integer", "const": 13 },
+        "recovery_constraint_count": { "type": "integer", "const": 8 },
+        "rejection_check_count": { "type": "integer", "const": 6 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "recovery_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "recovery_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_recovery_bound",
+        "receipt_store_write_path_registered",
+        "receipt_store_append_performed",
+        "recovery_execution_performed",
+        "rollback_execution_performed",
+        "compensation_execution_performed",
+        "replay_state_committed",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "receipt_store_recovery_bound": { "type": "boolean", "const": false },
+        "receipt_store_write_path_registered": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "recovery_execution_performed": { "type": "boolean", "const": false },
+        "rollback_execution_performed": { "type": "boolean", "const": false },
+        "compensation_execution_performed": { "type": "boolean", "const": false },
+        "replay_state_committed": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

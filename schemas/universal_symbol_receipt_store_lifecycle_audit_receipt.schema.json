@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-audit-receipt:1",
+  "title": "Universal Symbol Receipt Store Lifecycle Audit Receipt",
+  "description": "Foundation Mode contract for a future UniversalSymbol receipt-store lifecycle audit receipt. This receipt contract defines source lifecycle witness, approval decision witness, active grant, lifecycle event kind, before/after authority envelope, Delta_reject ledger, redaction/digest binding, and auditor identity obligations while denying audit recording, lifecycle recording, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "receipt_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "audit_decision",
+    "lifecycle_audit_receipt_is_not_lifecycle_authority",
+    "audit_requirements",
+    "authority_denials",
+    "audit_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "const": "universal-symbol-receipt-store-lifecycle-audit-receipt-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "receipt_scope": { "type": "string", "const": "foundation-mode-universal-symbol-receipt-store-lifecycle-audit" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "audit_decision": { "type": "string", "const": "blocked_pending_lifecycle_witness_decision_grant_delta_reject_digest_and_auditor_evidence" },
+    "lifecycle_audit_receipt_is_not_lifecycle_authority": { "type": "boolean", "const": true },
+    "audit_requirements": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/audit_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "audit_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_lifecycle_witness_required",
+        "approval_decision_witness_required",
+        "active_grant_ref_required",
+        "lifecycle_event_kind_required",
+        "before_after_authority_envelope_required",
+        "delta_reject_ledger_required",
+        "redaction_digest_binding_required",
+        "auditor_identity_required"
+      ],
+      "properties": {
+        "source_lifecycle_witness_required": { "type": "boolean", "const": true },
+        "approval_decision_witness_required": { "type": "boolean", "const": true },
+        "active_grant_ref_required": { "type": "boolean", "const": true },
+        "lifecycle_event_kind_required": { "type": "boolean", "const": true },
+        "before_after_authority_envelope_required": { "type": "boolean", "const": true },
+        "delta_reject_ledger_required": { "type": "boolean", "const": true },
+        "redaction_digest_binding_required": { "type": "boolean", "const": true },
+        "auditor_identity_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_lifecycle_witness_blocks_audit",
+        "missing_decision_or_grant_blocks_audit",
+        "missing_authority_envelope_blocks_audit",
+        "missing_delta_reject_or_digest_blocks_audit",
+        "unknown_hard_constraint_blocks_audit",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_lifecycle_witness_blocks_audit": { "type": "boolean", "const": true },
+        "missing_decision_or_grant_blocks_audit": { "type": "boolean", "const": true },
+        "missing_authority_envelope_blocks_audit": { "type": "boolean", "const": true },
+        "missing_delta_reject_or_digest_blocks_audit": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_audit": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "source_lifecycle_witness_missing",
+          "approval_decision_witness_missing",
+          "active_grant_ref_missing",
+          "lifecycle_event_kind_missing",
+          "before_after_authority_envelope_missing",
+          "delta_reject_ledger_missing",
+          "redaction_digest_binding_missing",
+          "auditor_identity_missing",
+          "lifecycle_audit_recording_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "audit_requirement_count",
+        "authority_denial_count",
+        "audit_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "audit_requirement_count": { "type": "integer", "minimum": 8 },
+        "authority_denial_count": { "type": "integer", "const": 12 },
+        "audit_constraint_count": { "type": "integer", "const": 8 },
+        "rejection_check_count": { "type": "integer", "const": 6 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "audit_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "lifecycle_audit_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_lifecycle_audit_recorded",
+        "receipt_store_reapproval_recorded",
+        "receipt_store_revocation_recorded",
+        "receipt_store_append_performed",
+        "replacement_decision_recorded",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "receipt_store_lifecycle_audit_recorded": { "type": "boolean", "const": false },
+        "receipt_store_reapproval_recorded": { "type": "boolean", "const": false },
+        "receipt_store_revocation_recorded": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "replacement_decision_recorded": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}
