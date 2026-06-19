@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-enablement-operator-input-request:1",
+  "title": "Read-Only Worker Runtime Enablement Operator Input Request",
+  "description": "Foundation Mode request contract for collecting runtime enablement evidence names before read_only_repo_inspection runtime activation, without enabling dispatch, invoking a worker, emitting receipts, appending receipts, calling connectors, reading secrets, or claiming terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "witness_receipt_id",
+    "ready",
+    "runtime_enablement_allowed",
+    "witness_validation_ok",
+    "solver_outcome",
+    "proof_state",
+    "required_inputs",
+    "blocked_actions",
+    "source_artifacts",
+    "runtime_enablement_summary",
+    "no_secret_values_serialized",
+    "runtime_enablement_executed",
+    "runtime_dispatch_performed",
+    "worker_invocation_performed",
+    "runtime_receipt_emitted",
+    "receipt_append_performed",
+    "terminal_closure_performed",
+    "next_action"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^read-only-worker-runtime-enablement-input-request-[0-9a-f]{16}$"
+    },
+    "witness_receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "runtime_enablement_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "witness_validation_ok": {
+      "type": "boolean"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Fail"]
+    },
+    "required_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/operator_input"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "read_only_worker_runtime_enablement",
+          "read_only_worker_runtime_dispatch_admission",
+          "read_only_worker_runtime_dispatch",
+          "read_only_worker_invocation",
+          "read_only_worker_runtime_receipt_emission",
+          "read_only_worker_receipt_append",
+          "read_only_worker_terminal_closure_claim"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "source_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_only_worker_runtime_enablement_witness"],
+      "properties": {
+        "read_only_worker_runtime_enablement_witness": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "runtime_enablement_summary": {
+      "$ref": "#/$defs/runtime_enablement_summary"
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "runtime_enablement_executed": {
+      "type": "boolean",
+      "const": false
+    },
+    "runtime_dispatch_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "worker_invocation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "runtime_receipt_emitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "receipt_append_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "operator_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "blocker",
+        "input_kind",
+        "required_names",
+        "current_state",
+        "evidence_source",
+        "next_action"
+      ],
+      "properties": {
+        "input_id": {
+          "type": "string",
+          "pattern": "^read-only-worker-runtime-enablement-input-[0-9a-f]{12}$"
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_kind": {
+          "type": "string",
+          "enum": [
+            "terminal_closure_certificate",
+            "runtime_runner_registration",
+            "runtime_dispatch_endpoint_registration",
+            "runtime_receipt_emitter_registration",
+            "runtime_receipt_store_activation",
+            "operator_runtime_enablement_approval",
+            "active_runtime_lease_observation",
+            "uao_dispatch_authorization",
+            "phi_gov_dispatch_authorization",
+            "runtime_dispatch_admission",
+            "runtime_disablement_rollback_plan",
+            "trusted_runtime_clock",
+            "valid_runtime_enablement_witness"
+          ]
+        },
+        "required_names": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "read_only_worker_terminal_closure_certificate",
+              "read_only_worker_runtime_runner_registration_receipt",
+              "read_only_worker_runtime_dispatch_endpoint_registration_receipt",
+              "read_only_worker_runtime_receipt_emitter_registration_receipt",
+              "read_only_worker_runtime_receipt_store_activation_receipt",
+              "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF",
+              "read_only_worker_active_runtime_lease_observation",
+              "read_only_worker_uao_dispatch_authorization_receipt",
+              "read_only_worker_phi_gov_dispatch_authorization_receipt",
+              "read_only_worker_runtime_dispatch_admission_receipt",
+              "read_only_worker_runtime_disablement_rollback_plan",
+              "read_only_worker_trusted_runtime_clock_receipt",
+              "read_only_worker_runtime_enablement_witness"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "current_state": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "present_invalid"]
+        },
+        "evidence_source": {
+          "type": "string",
+          "const": "read_only_worker_runtime_enablement_witness"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "runtime_enablement_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "operation_family",
+        "witness_mode",
+        "read_only",
+        "runtime_enablement_allowed",
+        "dispatch_admission_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "const": "worker_local_read_only_repo_inspection"
+        },
+        "capability": {
+          "type": "string",
+          "const": "read_only_repo_inspection"
+        },
+        "operation_family": {
+          "type": "string",
+          "const": "local_repo_inspection"
+        },
+        "witness_mode": {
+          "type": "string",
+          "const": "RUNTIME_ENABLEMENT_WITNESS_ONLY"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "runtime_enablement_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "dispatch_admission_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_dispatch_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "worker_invocation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_network_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_access_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "filesystem_write_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "connector_authority_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "success_claim_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  }
+}
