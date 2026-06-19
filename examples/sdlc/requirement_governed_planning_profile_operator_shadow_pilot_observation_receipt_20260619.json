@@ -1,0 +1,60 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_operator_shadow_pilot_observation_receipt_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile operator shadow-pilot evidence request now needs a schema-backed local observation receipt so concrete deterministic observations can be recorded without granting runtime promotion authority.",
+  "success_criteria": [
+    "a deterministic validator emits the operator shadow-pilot observation receipt from the current shadow dossier and evidence request",
+    "the checked-in local receipt matches the deterministic produced receipt",
+    "the schema allows collected local observations while denying runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure",
+    "the receipt covers all five shadow dossier plan classes with receipt-bound observation refs and zero shadow mismatches",
+    "the receipt keeps runtime promotion blocked by runtime approval, replay/recovery, and terminal closure gates",
+    "focused tests cover schema compatibility, fixture parity, uncollected receipt rejection, missing promotion gate rejection, and authority-drift rejection"
+  ],
+  "non_goals": [
+    "do not approve runtime promotion",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim replay, recovery, or terminal closure evidence",
+    "do not replace the prior AwaitingEvidence intake packet"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the observation receipt is local, read-only, deterministic, and reversible",
+    "runtime promotion remains AwaitingEvidence until separate approval, replay/recovery, and terminal closure evidence exists",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "schemas/governed_planning_profile_operator_shadow_pilot_observation_receipt.schema.json",
+    "examples/governed_planning_profile_operator_shadow_pilot_observation_receipt.local.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_operator_shadow_pilot_observation_receipt_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_operator_shadow_pilot_observation_receipt_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "python scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "evidence_required": [
+    "schema-backed local observation receipt fixture",
+    "deterministic validator and produced receipt parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/operator-shadow-pilot-observation-receipt/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/operator-shadow-pilot-observation-receipt/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/operator-shadow-pilot-observation-receipt/requirement/20260619"
+}
