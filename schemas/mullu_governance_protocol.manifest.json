@@ -1763,6 +1763,12 @@
       "surface": "symbol"
     },
     {
+      "schema_id": "universal-symbolic-quantum-capability-boundary",
+      "path": "schemas/universal_symbolic_quantum_capability_boundary.schema.json",
+      "urn": "urn:mullusi:schema:universal-symbolic-quantum-capability-boundary:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",
