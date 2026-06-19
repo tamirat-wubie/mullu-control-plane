@@ -1,0 +1,140 @@
+{
+  "preflight_id": "agentic-service-harness-live-producer-external-adapter-evidence-preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_effect_receipt_preflight_ref": "preflight://agentic-service-harness/live-producer-effect-receipt-preflight",
+  "source_effect_receipt_status": "AwaitingEvidence",
+  "operator_approval_status": "Satisfied",
+  "target_witness_kind": "external_adapter_evidence",
+  "external_adapter_evidence_status": "AwaitingEvidence",
+  "preflight_decision": "blocked_until_external_adapter_evidence_exists",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "live_effect_observed": false,
+  "effect_receipt_collected": false,
+  "external_adapter_integrated": false,
+  "adapter_credentials_present": false,
+  "adapter_credentials_serialized": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "required_external_adapter_evidence": {
+    "evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+    "required_provider_identity_ref": "provider://agentic-service-harness/external-adapter-provider-required",
+    "required_adapter_descriptor_ref": "adapter://agentic-service-harness/live-producer-adapter-descriptor-required",
+    "required_capability_scope_ref": "scope://agentic-service-harness/live-producer-adapter-capability-required",
+    "required_egress_policy_ref": "policy://agentic-service-harness/live-producer-egress-policy-required",
+    "required_redaction_ref": "redaction://agentic-service-harness/external-adapter-evidence-redaction-required",
+    "required_effect_receipt_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+    "status": "AwaitingEvidence",
+    "blocks_live_producer": true,
+    "adapter_credentials_present": false,
+    "adapter_credentials_serialized": false,
+    "authority_granted": false
+  },
+  "missing_evidence": [
+    {
+      "evidence_id": "external_adapter_evidence_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "provider_identity_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "adapter_descriptor_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "capability_scope_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "egress_policy_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "redaction_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "effect_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "remaining_witnesses": [
+    {
+      "witness_kind": "effect_receipt",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "external_adapter_evidence",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "secret_handoff",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "rollback_proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-external-adapter-evidence-preflight",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_preflight.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Keep external adapter evidence AwaitingEvidence until a redacted provider identity, adapter descriptor, capability scope, egress policy, effect receipt linkage, and evidence redaction proof exist without credential serialization."
+}

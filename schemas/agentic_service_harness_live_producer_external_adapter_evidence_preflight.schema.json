@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-live-producer-external-adapter-evidence-preflight:1",
+  "title": "Agentic Service Harness Live Producer External Adapter Evidence Preflight",
+  "description": "Read-only preflight for the live producer external adapter evidence witness. This schema records adapter evidence requirements and keeps live producer admission blocked; it does not claim adapter integration, adapter credential possession, live network egress, live effect observation, runtime receipt collection, UI, mutation endpoints, branch writes, pull request creation, deployment, DNS mutation, secret mutation, destructive operations, runtime state writes, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preflight_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_effect_receipt_preflight_ref",
+    "source_effect_receipt_status",
+    "operator_approval_status",
+    "target_witness_kind",
+    "external_adapter_evidence_status",
+    "preflight_decision",
+    "planning_only",
+    "read_only",
+    "live_producer_implemented",
+    "live_effect_observed",
+    "effect_receipt_collected",
+    "external_adapter_integrated",
+    "adapter_credentials_present",
+    "adapter_credentials_serialized",
+    "authority_granted",
+    "terminal_closure",
+    "scope",
+    "required_external_adapter_evidence",
+    "missing_evidence",
+    "remaining_witnesses",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "preflight_id": {
+      "type": "string",
+      "const": "agentic-service-harness-live-producer-external-adapter-evidence-preflight"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_effect_receipt_preflight_ref": { "$ref": "#/$defs/evidence_ref" },
+    "source_effect_receipt_status": { "type": "string", "const": "AwaitingEvidence" },
+    "operator_approval_status": { "type": "string", "const": "Satisfied" },
+    "target_witness_kind": { "type": "string", "const": "external_adapter_evidence" },
+    "external_adapter_evidence_status": { "type": "string", "const": "AwaitingEvidence" },
+    "preflight_decision": {
+      "type": "string",
+      "const": "blocked_until_external_adapter_evidence_exists"
+    },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "live_producer_implemented": { "type": "boolean", "const": false },
+    "live_effect_observed": { "type": "boolean", "const": false },
+    "effect_receipt_collected": { "type": "boolean", "const": false },
+    "external_adapter_integrated": { "type": "boolean", "const": false },
+    "adapter_credentials_present": { "type": "boolean", "const": false },
+    "adapter_credentials_serialized": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "required_external_adapter_evidence": { "$ref": "#/$defs/required_external_adapter_evidence" },
+    "missing_evidence": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/missing_evidence_item" },
+      "uniqueItems": true
+    },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/remaining_witness" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "organization_id", "project_id", "repository_connection_id", "read_only"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "required_external_adapter_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ref",
+        "required_provider_identity_ref",
+        "required_adapter_descriptor_ref",
+        "required_capability_scope_ref",
+        "required_egress_policy_ref",
+        "required_redaction_ref",
+        "required_effect_receipt_ref",
+        "status",
+        "blocks_live_producer",
+        "adapter_credentials_present",
+        "adapter_credentials_serialized",
+        "authority_granted"
+      ],
+      "properties": {
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_provider_identity_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_adapter_descriptor_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_capability_scope_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_egress_policy_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_redaction_ref": { "$ref": "#/$defs/evidence_ref" },
+        "required_effect_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_producer": { "type": "boolean", "const": true },
+        "adapter_credentials_present": { "type": "boolean", "const": false },
+        "adapter_credentials_serialized": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "missing_evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "status", "blocks_live_producer"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "external_adapter_evidence_ref",
+            "provider_identity_ref",
+            "adapter_descriptor_ref",
+            "capability_scope_ref",
+            "egress_policy_ref",
+            "redaction_ref",
+            "effect_receipt_ref"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_producer": { "type": "boolean", "const": true }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["witness_kind", "status", "blocks_live_producer", "authority_granted"],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": ["effect_receipt", "external_adapter_evidence", "secret_handoff", "rollback_proof"]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_producer": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "network_policy"
+      ],
+      "properties": {
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
