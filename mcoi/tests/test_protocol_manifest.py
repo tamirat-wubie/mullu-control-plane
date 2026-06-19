@@ -125,6 +125,9 @@ def test_protocol_manifest_is_valid() -> None:
     read_only_worker_runtime_active_lease_admission_witness_entry = entries[
         "read-only-worker-runtime-active-lease-admission-witness"
     ]
+    read_only_worker_runtime_authority_chain_witness_entry = entries[
+        "read-only-worker-runtime-authority-chain-witness"
+    ]
     read_only_worker_runtime_dispatch_admission_witness_entry = entries[
         "read-only-worker-runtime-dispatch-admission-witness"
     ]
@@ -522,6 +525,13 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:read-only-worker-runtime-active-lease-admission-witness:1"
     )
     assert read_only_worker_runtime_active_lease_admission_witness_entry["surface"] == "worker"
+    assert read_only_worker_runtime_authority_chain_witness_entry["path"] == (
+        "schemas/read_only_worker_runtime_authority_chain_witness.schema.json"
+    )
+    assert read_only_worker_runtime_authority_chain_witness_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-authority-chain-witness:1"
+    )
+    assert read_only_worker_runtime_authority_chain_witness_entry["surface"] == "worker"
     assert read_only_worker_runtime_dispatch_admission_witness_entry["path"] == (
         "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json"
     )
