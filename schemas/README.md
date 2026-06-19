@@ -58,6 +58,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `team_ops_shared_inbox_send_execution_receipt.schema.json` | Canonical TeamOps shared inbox send-execution receipt binding ready preparation evidence to redacted provider dispatch evidence without local provider mutation |
 | `team_ops_shared_inbox_sent_message_observation_receipt.schema.json` | Canonical TeamOps shared inbox sent-message observation receipt binding send execution to two redacted provider observations, duplicate-absence evidence, and deterministic replay |
 | `team_ops_shared_inbox_terminal_closure_review_packet.schema.json` | Canonical TeamOps shared inbox terminal closure review packet binding sent-message observation and provider-observation receipt evidence into a non-terminal closure candidate review |
+| `personal_assistant_approval_review_packet.schema.json` | Canonical no-effect Personal Assistant approval proposal review packet with operator checks, authority denials, and evidence refs |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
@@ -188,6 +189,12 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_active_runtime_lease_admission_witness.schema.json` | Canonical Foundation Mode witness for future active read-only worker runtime lease admission evidence |
 | `read_only_worker_uao_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker UAO dispatch authorization evidence |
 | `read_only_worker_phi_gov_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker Phi_gov dispatch authorization evidence |
+| `read_only_worker_effect_reconciliation_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker effect reconciliation evidence |
+| `read_only_worker_receipt_append_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker receipt append evidence |
+| `read_only_worker_terminal_closure_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker terminal closure evidence |
+| `read_only_worker_runtime_enablement_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker runtime enablement evidence |
+| `read_only_worker_runtime_enablement_operator_input_request.schema.json` | Public-safe request contract for missing read-only worker runtime enablement evidence names |
+| `read_only_worker_runtime_enablement_evidence_request_status_ledger.schema.json` | Read-only status ledger for unresolved read-only worker runtime enablement evidence requests |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |

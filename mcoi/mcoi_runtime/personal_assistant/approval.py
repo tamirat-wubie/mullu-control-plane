@@ -194,6 +194,47 @@ class ApprovalPlanProposal:
             "approval_is_execution": False,
         }
 
+    def as_review_packet(self, *, generated_at: str, reviewer_ref: str) -> dict[str, Any]:
+        """Return an operator-facing no-effect review packet for this proposal."""
+        generated_at = _require_text(generated_at, "generated_at")
+        reviewer_ref = _require_text(reviewer_ref, "reviewer_ref")
+        return {
+            "schema_version": "personal_assistant.approval_review_packet.v1",
+            "review_packet_id": f"pa_approval_review_{_plan_suffix(self.plan_id)}",
+            "request_id": self.request_id,
+            "plan_id": self.plan_id,
+            "generated_at": generated_at,
+            "reviewer_ref": reviewer_ref,
+            "risk_level": self.risk_level.value,
+            "approval_scope": self.approval_scope.value,
+            "review_state": "preview_only",
+            "proposed_actions": [action.as_dict() for action in self.proposed_actions],
+            "forbidden_without_approval": list(self.forbidden_without_approval),
+            "evidence_refs": list(self.evidence_refs),
+            "required_operator_checks": _review_required_checks(self.risk_level),
+            "authority_denials": _review_authority_denials(self.risk_level),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "approval_enqueued": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "money_legal_public_action_allowed": False,
+            },
+            "metadata": {
+                "foundation_only": True,
+                "approval_matrix_ref": self.approval_matrix_ref,
+                "approval_packet_is_execution": False,
+                "review_packet_is_execution": False,
+                "live_nested_mind_activation_allowed": False,
+                "customer_readiness_claim_allowed": False,
+            },
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class ApprovalQueueRecord:
@@ -477,6 +518,7 @@ class PersonalAssistantApprovalQueue:
             "approval_ids": [record.approval_id for record in records],
             "state_counts": state_counts,
             "receipt_ids": receipt_ids,
+            "workflow_v0": _approval_queue_workflow_v0(records),
             "execution_allowed": False,
             "live_connector_execution_allowed": False,
             "external_send_allowed": False,
@@ -492,6 +534,119 @@ class PersonalAssistantApprovalQueue:
                 "approval_decision_executes_action": False,
             },
         }
+
+
+def _approval_queue_workflow_v0(records: Sequence[ApprovalQueueRecord]) -> dict[str, Any]:
+    items = [_approval_queue_workflow_item(record) for record in records]
+    pending_count = sum(1 for item in items if item["decision"]["current_decision"] == "pending")
+    terminal_count = len(items) - pending_count
+    return {
+        "workflow_id": "personal_assistant_approval_queue_v0",
+        "workflow_state": "read_model",
+        "stage_order": [
+            "draft_action",
+            "risk_class",
+            "requested_approval",
+            "operator_decision",
+            "receipt",
+        ],
+        "decision_controls": ["approve", "reject", "revise"],
+        "approval_decision_records_allowed": True,
+        "approval_decision_executes_action": False,
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+        "draft_action_count": sum(int(item["draft_action_count"]) for item in items),
+        "requested_approval_count": len(items),
+        "pending_decision_count": pending_count,
+        "terminal_decision_count": terminal_count,
+        "receipt_count": sum(int(item["receipt_count"]) for item in items),
+        "items": items,
+    }
+
+
+def _approval_queue_workflow_item(record: ApprovalQueueRecord) -> dict[str, Any]:
+    packet = dict(record.packet)
+    proposed_actions = _sequence_of_mappings(packet.get("proposed_actions", ()))
+    receipts = [dict(receipt) for receipt in record.receipts]
+    latest_receipt = receipts[-1] if receipts else {}
+    decision_record = dict(packet.get("decision_record", {})) if isinstance(packet.get("decision_record"), Mapping) else {}
+    metadata = dict(packet.get("metadata", {})) if isinstance(packet.get("metadata"), Mapping) else {}
+    revision_request = str(metadata.get("revision_request", ""))
+    decision: dict[str, Any] = {
+        "current_decision": str(decision_record.get("decision", "pending")),
+        "available_decisions": ["approved", "rejected", "revised"],
+        "reason_codes": _string_list(decision_record.get("reason_codes", ())),
+        "decided_at": str(decision_record.get("decided_at", "")),
+        "approval_is_execution": False,
+        "execution_allowed": False,
+    }
+    if revision_request:
+        decision["revision_request"] = revision_request
+    return {
+        "approval_id": record.approval_id,
+        "request_id": str(packet.get("request_id", "")),
+        "plan_id": str(packet.get("plan_id", "")),
+        "draft_action_count": len(proposed_actions),
+        "draft_actions": [
+            {
+                "action_id": str(action.get("action_id", "")),
+                "skill_id": str(action.get("skill_id", "")),
+                "summary": str(action.get("summary", "")),
+                "effect_boundary": str(action.get("effect_boundary", "")),
+                "execution_allowed": False,
+            }
+            for action in proposed_actions
+        ],
+        "risk_class": {
+            "risk_level": str(packet.get("risk_level", "")),
+            "explicit_approval_required": bool(packet.get("explicit_approval_required", False)),
+            "forbidden_without_approval": _string_list(packet.get("forbidden_without_approval", ())),
+        },
+        "requested_approval": {
+            "approval_state": str(packet.get("approval_state", "")),
+            "approver_ref": str(packet.get("approver_ref", "")),
+            "approval_scope": str(packet.get("approval_scope", "")),
+            "evidence_refs": _string_list(packet.get("evidence_refs", ())),
+            "approval_request_recorded": True,
+        },
+        "decision": decision,
+        "receipt": {
+            "receipt_ids": [
+                str(receipt["receipt_id"])
+                for receipt in receipts
+                if isinstance(receipt.get("receipt_id"), str)
+            ],
+            "latest_receipt_id": str(latest_receipt.get("receipt_id", "")),
+            "latest_receipt_decision": str(latest_receipt.get("decision", "")),
+            "latest_receipt_outcome": str(latest_receipt.get("outcome", "")),
+            "receipt_required": True,
+        },
+        "receipt_count": len(receipts),
+        "effect_boundary": {
+            "approval_decision_records_allowed": True,
+            "approval_decision_executes_action": False,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+        },
+    }
+
+
+def _sequence_of_mappings(values: Any) -> list[dict[str, Any]]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        return []
+    return [dict(value) for value in values if isinstance(value, Mapping)]
+
+
+def _string_list(values: Any) -> list[str]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        return []
+    return [str(value) for value in values if isinstance(value, str) and value]
 
 
 def _assert_actions_match_registry(
@@ -655,6 +810,71 @@ def _approval_metadata(
     if revision_request:
         metadata["revision_request"] = revision_request
     return metadata
+
+
+def _review_required_checks(risk_level: SkillRiskLevel) -> list[str]:
+    checks = [
+        "confirm_request_identity",
+        "confirm_plan_identity",
+        "confirm_proposed_action_scope",
+        "confirm_evidence_refs_present",
+        "confirm_forbidden_actions_remain_unexecuted",
+        "confirm_receipt_required",
+    ]
+    if risk_level.order >= SkillRiskLevel.P4.order:
+        checks.append("confirm_external_recipient_or_target_scope")
+    if risk_level is SkillRiskLevel.P5:
+        checks.append("confirm_money_legal_public_deployment_boundary_blocked")
+    return checks
+
+
+def _review_authority_denials(risk_level: SkillRiskLevel) -> list[dict[str, str | bool]]:
+    denials = [
+        (
+            "execution",
+            "Approval review packets are no-effect previews and cannot execute proposed actions.",
+        ),
+        (
+            "approval_enqueue",
+            "Approval review packets do not enqueue approval records without an explicit queue action.",
+        ),
+        (
+            "connector_mutation",
+            "Connector mutation remains blocked until a future approved execution gate exists.",
+        ),
+        (
+            "memory_write",
+            "Memory writes remain blocked; review packets are evidence projections only.",
+        ),
+    ]
+    if risk_level.order >= SkillRiskLevel.P4.order:
+        denials.append(
+            (
+                "external_send",
+                "External communication remains blocked until a separate approved execution path exists.",
+            )
+        )
+    if risk_level is SkillRiskLevel.P5:
+        denials.extend(
+            (
+                (
+                    "money_legal_public_action",
+                    "Money, legal, public, deployment, and customer-impacting actions remain blocked.",
+                ),
+                (
+                    "deployment_mutation",
+                    "Deployment mutation remains blocked in Foundation Mode.",
+                ),
+            )
+        )
+    return [
+        {
+            "authority": authority,
+            "denied": True,
+            "reason": reason,
+        }
+        for authority, reason in denials
+    ]
 
 
 def _decision_actions_taken(decision: ApprovalDecision) -> tuple[str, ...]:

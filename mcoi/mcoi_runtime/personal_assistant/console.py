@@ -128,17 +128,21 @@ _FOUNDATION_LANES = (
         "route_refs": [
             "/api/v1/personal-assistant/approval-queue",
             "/api/v1/personal-assistant/approval-queue/preview",
+            "/api/v1/personal-assistant/approval-proposals/preview",
             "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
         ],
         "schema_refs": [
             "schemas/personal_assistant_approval.schema.json",
             "schemas/personal_assistant_approval_queue.schema.json",
             "schemas/personal_assistant_approval_decision.schema.json",
+            "schemas/personal_assistant_approval_review_packet.schema.json",
         ],
         "validator_refs": [
             "scripts/validate_personal_assistant_approval_queue.py",
             "scripts/validate_personal_assistant_approval_decision.py",
+            "scripts/validate_personal_assistant_approval_review_packet.py",
             "tests/test_personal_assistant_approval_queue.py",
+            "tests/test_validate_personal_assistant_approval_review_packet.py",
         ],
     },
     {
@@ -289,6 +293,7 @@ _MEMORY_FALSE_CONTROLS = (
 )
 _MEMORY_METADATA_FALSE_CONTROLS = _MEMORY_FALSE_CONTROLS
 _READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
+_READINESS_PROMPT = "Show my assistant readiness."
 
 
 def build_personal_assistant_console_read_model(
@@ -340,6 +345,13 @@ def build_personal_assistant_console_read_model(
         teamops_rows=teamops_rows,
         lane_status=lane_status,
     )
+    receipt_refs = _receipt_refs(receipt_rows, approval_model, memory_model)
+    assistant_readiness = _build_assistant_readiness_demo(
+        skill_model=skill_model,
+        receipt_rows=receipt_rows,
+        lane_status=lane_status,
+        outcome=assurance["outcome"],
+    )
     return {
         "console_id": "personal_assistant_console_foundation",
         "status": "foundation_read_only",
@@ -360,6 +372,10 @@ def build_personal_assistant_console_read_model(
                 "live_memory_write_allowed": False,
             },
             "teamops": {"item_count": len(teamops_rows), "live_probe_allowed": False},
+            "assistant_readiness": {
+                "item_count": 1,
+                "execution_allowed": False,
+            },
             "lane_status": {
                 "item_count": lane_status["lane_count"],
                 "execution_allowed": False,
@@ -393,6 +409,7 @@ def build_personal_assistant_console_read_model(
             "provider_call_allowed": False,
         },
         "lane_status": lane_status,
+        "assistant_readiness": assistant_readiness,
         "assurance": assurance,
         "blocked_actions": list(_BLOCKED_ACTIONS),
         "effect_boundary": dict(_EFFECT_BOUNDARY),
@@ -403,7 +420,7 @@ def build_personal_assistant_console_read_model(
             "chat_log_projection": "none",
         },
         "evidence_refs": ["examples/personal_assistant_skill_registry.json"],
-        "receipt_refs": _receipt_refs(receipt_rows, approval_model, memory_model),
+        "receipt_refs": receipt_refs,
     }
 
 
@@ -421,6 +438,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
     receipts = _mapping_value(payload, "receipts")
     teamops = _mapping_value(payload, "teamops")
     lane_status = _mapping_value(payload, "lane_status")
+    assistant_readiness = _mapping_value(payload, "assistant_readiness")
     metrics = (
         ("Status", payload.get("status", "")),
         ("Skills", sections.get("skills", {}).get("item_count", 0) if isinstance(sections.get("skills"), Mapping) else 0),
@@ -433,6 +451,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
         ("Receipts", receipts.get("receipt_count", 0)),
         ("Memory Candidates", memory.get("candidate_count", 0)),
         ("Foundation Lanes", lane_status.get("lane_count", 0)),
+        ("Readiness Prompt", assistant_readiness.get("user_prompt", "")),
         ("Execution Allowed", boundary.get("execution_allowed", False)),
     )
     metric_items = "\n".join(
@@ -481,6 +500,7 @@ def render_personal_assistant_console_html(payload: Mapping[str, Any]) -> str:
   {_panel_table("Skill Status", skills.get("skills", ()), ("skill_id", "mode", "risk_level"))}
   {_panel_table("Memory Candidates", memory.get("candidates", ()), ("memory_observation_id", "memory_type", "confidence"))}
   {_panel_table("TeamOps Plans", teamops.get("plans", ()), ("request_id", "skill_id", "status"))}
+  {_readiness_panel(assistant_readiness)}
   {_panel_table("Foundation Lanes", lane_status.get("lanes", ()), ("lane_id", "stage", "state"))}
   {_sequence_table("Blocked Actions", payload.get("blocked_actions", ()))}
 </body>
@@ -683,6 +703,187 @@ def _build_lane_status() -> dict[str, Any]:
     }
 
 
+def _build_assistant_readiness_demo(
+    *,
+    skill_model: Mapping[str, Any],
+    receipt_rows: Sequence[Mapping[str, Any]],
+    lane_status: Mapping[str, Any],
+    outcome: str,
+) -> dict[str, Any]:
+    read_only_lane = _lane_by_id(lane_status, "read_only_projection")
+    skill_rows = _sequence_of_mappings(skill_model.get("skills", ()))
+    skill_ids = tuple(str(skill_id) for skill_id in skill_model.get("skill_ids", ()) if isinstance(skill_id, str))
+    return {
+        "readiness_id": "personal_assistant_read_only_readiness_demo",
+        "user_prompt": _READINESS_PROMPT,
+        "mode": "read_only",
+        "foundation_only": True,
+        "governed": True,
+        "outcome": outcome,
+        "inbox_projection_status": _projection_status(
+            lane=read_only_lane,
+            skill_id="email.inbox.summarize",
+            projection_kind="inbox_redacted_summary",
+            route_ref="/api/v1/personal-assistant/read-only/inbox/preview",
+        ),
+        "calendar_projection_status": _projection_status(
+            lane=read_only_lane,
+            skill_id="calendar.day.brief",
+            projection_kind="calendar_redacted_day_brief",
+            route_ref="/api/v1/personal-assistant/read-only/calendar/preview",
+        ),
+        "available_skills": {
+            "skill_count": len(skill_ids),
+            "skill_ids": list(skill_ids),
+            "read_only_skill_ids": _skill_ids_by_mode(skill_rows, "read_only"),
+            "draft_only_skill_ids": _skill_ids_by_mode(skill_rows, "draft_only"),
+            "approval_required_skill_ids": _approval_required_skill_ids(skill_rows),
+        },
+        "blocked_actions": list(_BLOCKED_ACTIONS),
+        "required_approvals": _required_approval_readiness_controls(),
+        "receipts": _readiness_receipts(receipt_rows),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "private_payload_policy": {
+            "raw_private_payload_serialized": False,
+            "secret_values_serialized": False,
+            "connector_payload_projection": "ref_only",
+            "chat_log_projection": "none",
+        },
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "mailbox_read_allowed": False,
+        "mailbox_mutation_allowed": False,
+        "external_send_allowed": False,
+        "calendar_write_allowed": False,
+        "task_write_allowed": False,
+        "memory_write_allowed": False,
+        "raw_private_payload_serialized": False,
+        "secret_values_serialized": False,
+        "customer_readiness_claim_allowed": False,
+    }
+
+
+def _projection_status(
+    *,
+    lane: Mapping[str, Any],
+    skill_id: str,
+    projection_kind: str,
+    route_ref: str,
+) -> dict[str, Any]:
+    route_refs = [str(ref) for ref in lane.get("route_refs", ()) if isinstance(ref, str)]
+    return {
+        "projection_state": "available_from_redacted_preview",
+        "projection_kind": projection_kind,
+        "skill_id": skill_id,
+        "lane_id": str(lane.get("lane_id", "read_only_projection")),
+        "route_refs": [route_ref] if route_ref in route_refs else [],
+        "schema_refs": [str(ref) for ref in lane.get("schema_refs", ()) if isinstance(ref, str)],
+        "validator_refs": [str(ref) for ref in lane.get("validator_refs", ()) if isinstance(ref, str)],
+        "receipt_required": True,
+        "live_connector_execution_allowed": False,
+        "mailbox_read_allowed": False,
+        "mailbox_mutation_allowed": False,
+        "calendar_write_allowed": False,
+        "external_send_allowed": False,
+        "raw_private_payload_serialized": False,
+    }
+
+
+def _skill_ids_by_mode(skill_rows: Sequence[Mapping[str, Any]], mode: str) -> list[str]:
+    return sorted(
+        str(row["skill_id"])
+        for row in skill_rows
+        if row.get("mode") == mode and isinstance(row.get("skill_id"), str)
+    )
+
+
+def _approval_required_skill_ids(skill_rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    return sorted(
+        str(row["skill_id"])
+        for row in skill_rows
+        if row.get("requires_approval") is True and isinstance(row.get("skill_id"), str)
+    )
+
+
+def _required_approval_readiness_controls() -> list[dict[str, Any]]:
+    return [
+        {
+            "approval_id": "external_email_send_approval",
+            "required_for_skill_id": "email.send.with_approval",
+            "risk_level": "P4",
+            "approval_scope": "per_recipient",
+            "receipt_required": True,
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+        },
+        {
+            "approval_id": "calendar_write_approval",
+            "required_for_skill_id": "calendar.event.create.with_approval",
+            "risk_level": "P3",
+            "approval_scope": "per_event",
+            "receipt_required": True,
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+        },
+        {
+            "approval_id": "task_system_write_approval",
+            "required_for_skill_id": "task.create.with_approval",
+            "risk_level": "P3",
+            "approval_scope": "per_task",
+            "receipt_required": True,
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+        },
+        {
+            "approval_id": "deployment_publication_approval",
+            "required_for_skill_id": "deployment.publish.review",
+            "risk_level": "P5",
+            "approval_scope": "per_publication",
+            "receipt_required": True,
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+        },
+    ]
+
+
+def _readiness_receipts(receipt_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    receipt_ids = sorted(
+        str(row["receipt_id"])
+        for row in receipt_rows
+        if isinstance(row.get("receipt_id"), str) and str(row.get("receipt_id"))
+    )
+    source_refs = sorted(
+        str(row["source_receipt_ref"])
+        for row in receipt_rows
+        if isinstance(row.get("source_receipt_ref"), str) and str(row.get("source_receipt_ref"))
+    )
+    return {
+        "receipt_count": len(receipt_ids),
+        "receipt_ids": receipt_ids,
+        "source_receipt_refs": source_refs,
+        "receipt_required_for_actions": True,
+        "runtime_dispatch_allowed": False,
+        "external_effect_allowed": False,
+        "connector_call_allowed": False,
+        "success_claim_allowed": False,
+    }
+
+
+def _lane_by_id(lane_status: Mapping[str, Any], lane_id: str) -> dict[str, Any]:
+    for lane in _sequence_of_mappings(lane_status.get("lanes", ())):
+        if lane.get("lane_id") == lane_id:
+            return lane
+    return {}
+
+
 def _sequence_of_mappings(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, (list, tuple)):
         return []
@@ -787,6 +988,42 @@ def _panel_table(title: str, raw_rows: object, columns: tuple[str, ...]) -> str:
     <h2>{escape(title)}</h2>
     <table>
       <thead><tr>{header}</tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </section>"""
+
+
+def _readiness_panel(readiness: Mapping[str, Any]) -> str:
+    inbox = _mapping_value(readiness, "inbox_projection_status")
+    calendar = _mapping_value(readiness, "calendar_projection_status")
+    skills = _mapping_value(readiness, "available_skills")
+    receipts = _mapping_value(readiness, "receipts")
+    blocked_actions = readiness.get("blocked_actions", ())
+    required_approvals = readiness.get("required_approvals", ())
+    blocked_action_count = len(blocked_actions) if isinstance(blocked_actions, (list, tuple)) else 0
+    required_approval_count = len(required_approvals) if isinstance(required_approvals, (list, tuple)) else 0
+    rows = (
+        ("Prompt", readiness.get("user_prompt", "")),
+        ("Inbox Projection", inbox.get("projection_state", "")),
+        ("Calendar Projection", calendar.get("projection_state", "")),
+        ("Available Skills", skills.get("skill_count", 0)),
+        ("Blocked Actions", blocked_action_count),
+        ("Required Approvals", required_approval_count),
+        ("Receipts", receipts.get("receipt_count", 0)),
+        ("Live Connector Execution", readiness.get("live_connector_execution_allowed", False)),
+    )
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(label))}</td>"
+        f"<td>{escape(str(value))}</td>"
+        "</tr>"
+        for label, value in rows
+    )
+    return f"""
+  <section>
+    <h2>Assistant Readiness</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Status</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
   </section>"""

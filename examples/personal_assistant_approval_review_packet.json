@@ -1,0 +1,85 @@
+{
+  "schema_version": "personal_assistant.approval_review_packet.v1",
+  "review_packet_id": "pa_approval_review_approval_review_packet_001",
+  "request_id": "pa_request_approval_review_packet_001",
+  "plan_id": "pa_plan_approval_review_packet_001",
+  "generated_at": "2026-06-14T00:00:00+00:00",
+  "reviewer_ref": "operator:tamirat",
+  "risk_level": "P4",
+  "approval_scope": "per_recipient",
+  "review_state": "preview_only",
+  "proposed_actions": [
+    {
+      "action_id": "step_01_email_send_with_approval_send",
+      "skill_id": "email.send.with_approval",
+      "risk_level": "P4",
+      "effect_boundary": "external_write_boundary",
+      "summary": "Request approval for send through email.send.with_approval at external_write_boundary."
+    }
+  ],
+  "forbidden_without_approval": [
+    "send",
+    "forward",
+    "connector_mutation"
+  ],
+  "evidence_refs": [
+    "proof://personal-assistant/request/approval-review-packet-001",
+    "proof://personal-assistant/plan/approval_review_packet_001"
+  ],
+  "required_operator_checks": [
+    "confirm_request_identity",
+    "confirm_plan_identity",
+    "confirm_proposed_action_scope",
+    "confirm_evidence_refs_present",
+    "confirm_forbidden_actions_remain_unexecuted",
+    "confirm_receipt_required",
+    "confirm_external_recipient_or_target_scope"
+  ],
+  "authority_denials": [
+    {
+      "authority": "execution",
+      "denied": true,
+      "reason": "Approval review packets are no-effect previews and cannot execute proposed actions."
+    },
+    {
+      "authority": "approval_enqueue",
+      "denied": true,
+      "reason": "Approval review packets do not enqueue approval records without an explicit queue action."
+    },
+    {
+      "authority": "connector_mutation",
+      "denied": true,
+      "reason": "Connector mutation remains blocked until a future approved execution gate exists."
+    },
+    {
+      "authority": "memory_write",
+      "denied": true,
+      "reason": "Memory writes remain blocked; review packets are evidence projections only."
+    },
+    {
+      "authority": "external_send",
+      "denied": true,
+      "reason": "External communication remains blocked until a separate approved execution path exists."
+    }
+  ],
+  "effect_boundary": {
+    "execution_allowed": false,
+    "approval_is_execution": false,
+    "approval_enqueued": false,
+    "live_connector_execution_allowed": false,
+    "external_send_allowed": false,
+    "connector_mutation_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
+    "money_legal_public_action_allowed": false
+  },
+  "metadata": {
+    "foundation_only": true,
+    "approval_matrix_ref": "personal_assistant_approval_matrix.foundation.v1",
+    "approval_packet_is_execution": false,
+    "review_packet_is_execution": false,
+    "live_nested_mind_activation_allowed": false,
+    "customer_readiness_claim_allowed": false
+  }
+}

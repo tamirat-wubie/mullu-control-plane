@@ -146,6 +146,12 @@ def test_protocol_manifest_is_valid() -> None:
     governed_planning_profile_operator_observation_entry = entries[
         "governed-planning-profile-operator-shadow-pilot-observation-receipt"
     ]
+    governed_planning_profile_runtime_approval_entry = entries[
+        "governed-planning-profile-runtime-promotion-approval-packet"
+    ]
+    governed_planning_profile_replay_recovery_entry = entries[
+        "governed-planning-profile-replay-recovery-witness"
+    ]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
 
@@ -204,6 +210,20 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-observation-receipt:1"
     )
     assert governed_planning_profile_operator_observation_entry["surface"] == "planning"
+    assert governed_planning_profile_runtime_approval_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json"
+    )
+    assert governed_planning_profile_runtime_approval_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
+    )
+    assert governed_planning_profile_runtime_approval_entry["surface"] == "planning"
+    assert governed_planning_profile_replay_recovery_entry["path"] == (
+        "schemas/governed_planning_profile_replay_recovery_witness.schema.json"
+    )
+    assert governed_planning_profile_replay_recovery_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
+    )
+    assert governed_planning_profile_replay_recovery_entry["surface"] == "planning"
     assert governed_symbolic_loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
     assert governed_symbolic_loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
     assert governed_symbolic_loop_entry["surface"] == "governance"

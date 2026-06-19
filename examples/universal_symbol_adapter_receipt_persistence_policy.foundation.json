@@ -1,0 +1,170 @@
+{
+  "policy_id": "universal-symbol-adapter-receipt-persistence-policy-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "policy_scope": "foundation-mode-universal-symbol-adapter-receipt-persistence",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "policy_is_not_receipt_store_authority": true,
+  "persistence_decision": "blocked_pending_receipt_store_authority",
+  "candidate_receipt_policy": {
+    "candidate_receipt_evaluation_allowed": true,
+    "candidate_receipt_persistence_allowed": false,
+    "digest_and_ref_only": true,
+    "raw_payload_allowed": false,
+    "raw_secret_allowed": false,
+    "source_ref_required": true,
+    "schema_validation_required": true,
+    "symbol_authority_denial_required": true,
+    "terminal_closure_ref_allowed": false
+  },
+  "required_before_append": [
+    {
+      "condition_id": "condition://receipt-store-authority",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "authority://universal-symbol/receipt-store"
+    },
+    {
+      "condition_id": "condition://operator-approval",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "approval://universal-symbol/receipt-persistence"
+    },
+    {
+      "condition_id": "condition://append-audit-witness",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "witness://universal-symbol/receipt-append-audit"
+    },
+    {
+      "condition_id": "condition://rollback-recovery",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "recovery://universal-symbol/receipt-persistence"
+    },
+    {
+      "condition_id": "condition://raw-payload-denial",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "policy://universal-symbol/no-raw-payload"
+    },
+    {
+      "condition_id": "condition://terminal-closure-denial",
+      "proof_state": "Unknown",
+      "decision": "block_append",
+      "required_evidence_ref": "policy://universal-symbol/no-terminal-closure"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "filesystem_write_performed": false,
+    "external_write_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "admitted_projection_sources": [
+    {
+      "source_ref": "software_receipt_symbols",
+      "symbol_kind": "receipt",
+      "candidate_receipt_allowed": true,
+      "persistence_allowed": false,
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://raw-payload-storage",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "source_ref": "route://api/v1/components/symbols",
+      "symbol_kind": "component",
+      "candidate_receipt_allowed": true,
+      "persistence_allowed": false,
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://runtime-dispatch",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "source_ref": "build_worker_receipt_symbol_read_model",
+      "symbol_kind": "receipt",
+      "candidate_receipt_allowed": true,
+      "persistence_allowed": false,
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://live-worker-dispatch",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "source_ref": "symbol_skill_adapter",
+      "symbol_kind": "trace",
+      "candidate_receipt_allowed": true,
+      "persistence_allowed": false,
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://raw-secret-storage",
+        "blocked://terminal-closure"
+      ]
+    }
+  ],
+  "blocked_reasons": [
+    "receipt_store_authority_missing",
+    "operator_approval_missing",
+    "append_audit_witness_not_admitted",
+    "rollback_recovery_witness_missing",
+    "raw_payload_storage_forbidden",
+    "raw_secret_storage_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_universal_symbol_append_audit_witness",
+    "define_receipt_store_writer_registration_witness",
+    "define_receipt_store_write_path_witness",
+    "bind_append_audit_witness_requirements",
+    "add_recovery_plan_for_symbol_receipt_persistence"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
+    "scripts/validate_universal_symbol_append_audit_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "required_before_append_count": 6,
+    "admitted_projection_source_count": 4,
+    "authority_denial_count": 9,
+    "blocked_reason_count": 7,
+    "evidence_ref_count": 29
+  }
+}

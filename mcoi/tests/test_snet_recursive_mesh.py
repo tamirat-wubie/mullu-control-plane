@@ -318,6 +318,10 @@ def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
     second_seed = second_mesh.add_symbol("Second seed", symbol_type="physical_biological_object")
     with pytest.raises(ValueError, match="must be a non-empty string"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "   "})
+    with pytest.raises(ValueError, match="no leading or trailing whitespace"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: " Seed"})
+    with pytest.raises(ValueError, match="no leading or trailing whitespace"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "Seed "})
     with pytest.raises(ValueError, match="WH answer key"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {TextSubclass("what"): "Seed"})
     with pytest.raises(ValueError, match="must be a non-empty string"):
@@ -1302,6 +1306,88 @@ def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     assert valid_symbol.sense_id == ""
     assert valid_question.parent_question_id == ""
     assert valid_metadata.promoted_symbol_id == ""
+
+
+def test_direct_snet_contracts_reject_identifier_whitespace_drift() -> None:
+    with pytest.raises(ValueError, match="symbol_id"):
+        SNetSymbol(symbol_id=" symbol:1", label="Seed")
+    with pytest.raises(ValueError, match="created_from_metadata_id"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", created_from_metadata_id=" metadata:1")
+    with pytest.raises(ValueError, match="target_symbol_id"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1 ",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="identity",
+        )
+    with pytest.raises(ValueError, match="question_id"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id=" question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="answer_id"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1 ",
+            facet="identity",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="target_symbol_id"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type="identity",
+            target_symbol_id=" symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general",
+        )
+    with pytest.raises(ValueError, match="question_id"):
+        SNetUnknown(
+            unknown_id="unknown:1",
+            symbol_id="symbol:1",
+            missing_facet="identity",
+            question_id="question:1 ",
+            importance_score=0.5,
+            blocking_reason="missing answer",
+        )
+    with pytest.raises(ValueError, match="tick_id"):
+        SNetTickResult(tick_id=" tick:1", symbol_id="symbol:1", status=SNetTickStatus.RAN)
+
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="receipt_id"):
+        SNetMeshReceipt(**{**receipt_payload, "receipt_id": f"{receipt_payload['receipt_id']} "})
+    with pytest.raises(ValueError, match="mesh_digest"):
+        SNetMeshReceipt(**{**receipt_payload, "mesh_digest": f" {receipt_payload['mesh_digest']}"})
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", created_from_metadata_id="metadata:2")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        parent_question_id="question:1",
+    )
+    valid_tick = SNetTickResult(tick_id="tick:1", symbol_id="symbol:2", status=SNetTickStatus.RAN)
+
+    assert valid_symbol.created_from_metadata_id == "metadata:2"
+    assert valid_question.parent_question_id == "question:1"
+    assert valid_tick.tick_id == "tick:1"
 
 
 def test_direct_snet_contracts_reject_optional_text_comparison_drift() -> None:

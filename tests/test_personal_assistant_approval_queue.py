@@ -35,11 +35,16 @@ from mcoi_runtime.personal_assistant import (
     prepare_approval_proposal_from_plan,
 )
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload
+from scripts.validate_personal_assistant_approval_queue import (
+    DEFAULT_QUEUE,
+    validate_personal_assistant_approval_queue,
+)
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVAL_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval.schema.json"
+APPROVAL_REVIEW_PACKET_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval_review_packet.schema.json"
 APPROVAL_QUEUE_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval_queue.schema.json"
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 CREATED_AT = "2026-06-14T00:00:00+00:00"
@@ -80,6 +85,31 @@ def test_approval_queue_read_model_matches_schema_and_denies_execution() -> None
     assert read_model["connector_mutation_allowed"] is False
     assert read_model["approval_is_execution"] is False
     assert read_model["metadata"]["approval_decision_executes_action"] is False
+    workflow = read_model["workflow_v0"]
+    workflow_item = workflow["items"][0]
+    assert workflow["workflow_id"] == "personal_assistant_approval_queue_v0"
+    assert workflow["stage_order"] == [
+        "draft_action",
+        "risk_class",
+        "requested_approval",
+        "operator_decision",
+        "receipt",
+    ]
+    assert workflow["decision_controls"] == ["approve", "reject", "revise"]
+    assert workflow["draft_action_count"] == 1
+    assert workflow["requested_approval_count"] == 1
+    assert workflow["pending_decision_count"] == 1
+    assert workflow["terminal_decision_count"] == 0
+    assert workflow["receipt_count"] == 1
+    assert workflow["approval_decision_executes_action"] is False
+    assert workflow["execution_allowed"] is False
+    assert workflow_item["draft_actions"][0]["action_id"] == "send_prepared_email_draft"
+    assert workflow_item["risk_class"]["risk_level"] == "P4"
+    assert workflow_item["requested_approval"]["approval_state"] == "requested"
+    assert workflow_item["decision"]["current_decision"] == "pending"
+    assert workflow_item["decision"]["approval_is_execution"] is False
+    assert workflow_item["receipt"]["latest_receipt_id"] == record.latest_receipt["receipt_id"]
+    assert workflow_item["effect_boundary"]["external_send_allowed"] is False
 
 
 def test_approved_decision_links_evidence_and_still_defers_execution() -> None:
@@ -106,6 +136,13 @@ def test_approved_decision_links_evidence_and_still_defers_execution() -> None:
     assert "approval_decision_recorded" in receipt["actions_taken"]
     assert "external_message_not_sent" in receipt["actions_not_taken"]
     assert receipt["metadata"]["approval_is_execution"] is False
+    workflow = queue.read_model()["workflow_v0"]
+    assert workflow["pending_decision_count"] == 0
+    assert workflow["terminal_decision_count"] == 1
+    assert workflow["receipt_count"] == 2
+    assert workflow["items"][0]["decision"]["current_decision"] == "approved"
+    assert workflow["items"][0]["receipt"]["latest_receipt_decision"] == "deferred"
+    assert workflow["items"][0]["effect_boundary"]["approval_decision_executes_action"] is False
 
 
 def test_reject_and_revise_decisions_record_reason_without_execution() -> None:
@@ -136,6 +173,13 @@ def test_reject_and_revise_decisions_record_reason_without_execution() -> None:
     assert revised_update.packet["metadata"]["revision_request"].startswith("Revise the draft")
     assert "approval_revision_requested" in revised_update.latest_receipt["actions_taken"]
     assert revised_queue.read_model()["state_counts"]["revised"] == 1
+    rejected_workflow = rejected_queue.read_model()["workflow_v0"]
+    revised_workflow = revised_queue.read_model()["workflow_v0"]
+    assert rejected_workflow["items"][0]["decision"]["current_decision"] == "rejected"
+    assert rejected_workflow["items"][0]["receipt"]["latest_receipt_decision"] == "blocked"
+    assert revised_workflow["items"][0]["decision"]["current_decision"] == "revised"
+    assert revised_workflow["items"][0]["decision"]["revision_request"].startswith("Revise the draft")
+    assert revised_workflow["items"][0]["receipt"]["latest_receipt_decision"] == "deferred"
 
 
 def test_approval_queue_rejects_non_approval_skill_and_duplicate_decisions() -> None:
@@ -209,6 +253,34 @@ def test_approval_queue_rejects_raw_payload_fields_and_secret_like_values() -> N
     assert "message_body" not in str(raw_exc.value)
 
 
+def test_approval_queue_fixture_validates_workflow_v0() -> None:
+    result = validate_personal_assistant_approval_queue()
+
+    assert result.valid is True
+    assert result.queue_path == "examples/personal_assistant_approval_queue_read_model.json"
+    assert result.approval_count == 1
+    assert result.receipt_count == 1
+    assert result.errors == ()
+
+
+def test_approval_queue_validator_rejects_workflow_authority_drift(tmp_path: Path) -> None:
+    payload = json.loads(DEFAULT_QUEUE.read_text(encoding="utf-8"))
+    payload["workflow_v0"]["approval_decision_executes_action"] = True
+    payload["workflow_v0"]["items"][0]["decision"]["approval_is_execution"] = True
+    payload["workflow_v0"]["items"][0]["effect_boundary"]["external_send_allowed"] = True
+    payload["workflow_v0"]["items"][0]["receipt"]["latest_receipt_id"] = "pa_receipt_forged"
+    candidate = tmp_path / "unsafe_approval_queue.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_personal_assistant_approval_queue(queue_path=candidate)
+
+    assert result.valid is False
+    assert "workflow_v0.approval_decision_executes_action must be false" in result.errors
+    assert "workflow_v0.items[0].decision.approval_is_execution must be false" in result.errors
+    assert "workflow_v0.items[0].effect_boundary.external_send_allowed must be false" in result.errors
+    assert "workflow_v0.items[0].receipt.latest_receipt_id must match latest receipt" in result.errors
+
+
 def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
     intent = GovernedIntent(
         request_id="pa_request_approval_proposal_p4_001",
@@ -233,6 +305,10 @@ def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
         envelope.plan,
         approval_scope=ApprovalScope.PER_RECIPIENT,
     )
+    review_packet = proposal.as_review_packet(
+        generated_at=CREATED_AT,
+        reviewer_ref="operator:tamirat",
+    )
     queue = PersonalAssistantApprovalQueue()
     record = queue.enqueue(
         **proposal.as_enqueue_kwargs(
@@ -241,6 +317,18 @@ def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
         )
     )
 
+    assert _validate_schema_instance(_load_schema(APPROVAL_REVIEW_PACKET_SCHEMA_PATH), review_packet) == []
+    assert review_packet["review_state"] == "preview_only"
+    assert review_packet["effect_boundary"]["execution_allowed"] is False
+    assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert "confirm_external_recipient_or_target_scope" in review_packet["required_operator_checks"]
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "execution",
+        "approval_enqueue",
+        "connector_mutation",
+        "memory_write",
+        "external_send",
+    }
     assert proposal.execution_allowed is False
     assert proposal.approval_matrix_ref == "personal_assistant_approval_matrix.foundation.v1"
     assert proposal.risk_level is SkillRiskLevel.P4
@@ -274,6 +362,10 @@ def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> Non
         created_at=CREATED_AT,
     )
     proposal = prepare_approval_proposal_from_plan(envelope.plan)
+    review_packet = proposal.as_review_packet(
+        generated_at=CREATED_AT,
+        reviewer_ref="operator:tamirat",
+    )
     queue = PersonalAssistantApprovalQueue()
     record = queue.enqueue(
         **proposal.as_enqueue_kwargs(
@@ -284,6 +376,12 @@ def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> Non
 
     assert envelope.plan["mode"] == "blocked"
     assert proposal.risk_level is SkillRiskLevel.P5
+    assert _validate_schema_instance(_load_schema(APPROVAL_REVIEW_PACKET_SCHEMA_PATH), review_packet) == []
+    assert "confirm_money_legal_public_deployment_boundary_blocked" in review_packet["required_operator_checks"]
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "money_legal_public_action",
+        "deployment_mutation",
+    }
     assert proposal.proposed_actions[0].skill_id == "deployment.publish.review"
     assert "deploy_service" in proposal.forbidden_without_approval
     assert "publish" in proposal.forbidden_without_approval

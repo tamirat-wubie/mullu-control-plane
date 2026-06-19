@@ -1,0 +1,88 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T15:30:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_evidence_contract_ref": "examples/agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.foundation.json",
+  "witness_kind": "effect_reconciliation_live_evidence",
+  "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+  "effect_reconciliation_collected": true,
+  "authority_granted": false,
+  "read_only": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "observed_pull_request": {
+    "pull_request_number": 1957,
+    "pull_request_url": "https://github.com/tamirat-wubie/mullu-control-plane/pull/1957",
+    "head_ref_name": "codex/github-pr-effect-reconciliation-evidence-20260618",
+    "head_ref_oid": "0c732169bf61284ac5cd47add6e1af379c5debc6",
+    "state": "MERGED",
+    "is_draft": false,
+    "merged_at": "2026-06-19T15:28:21Z",
+    "merge_commit_oid": "204bae695ede604a5ae27861e3eab7778e1564d1",
+    "head_branch_exists_after_merge": false,
+    "observation_source": "gh_pr_view_and_ls_remote_read_only"
+  },
+  "observed_checks": {
+    "observation_source": "gh_pr_checks_read_only",
+    "bucket": "pass",
+    "failed_count": 0,
+    "pending_count": 0,
+    "passed_count_minimum": 70,
+    "all_required_checks_green": true
+  },
+  "reconciliation_result": {
+    "branch_state_reconciled": true,
+    "pull_request_state_reconciled": true,
+    "check_state_reconciled": true,
+    "merge_state_reconciled": true,
+    "branch_deletion_state_reconciled": true,
+    "terminal_closure_authorized": false
+  },
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "repository_written_by_witness": false,
+    "connector_called_by_witness": false,
+    "mutation_route_admitted_by_witness": false,
+    "receipt_store_appended_by_witness": false,
+    "secret_values_serialized_by_witness": false,
+    "network_policy": "read_only_github_metadata"
+  },
+  "receipt_refs": {
+    "github_pr_effect_reconciliation_live_evidence_schema": "schemas/agentic_service_harness_github_pr_effect_reconciliation_live_evidence.schema.json",
+    "github_pr_effect_reconciliation_evidence_contract_schema": "schemas/agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.schema.json",
+    "github_pr_effect_reconciliation_witness_schema": "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json",
+    "github_pr_terminal_closure_certificate_witness_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-effect-reconciliation-live-evidence",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_live_evidence.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind this read-only evidence to a terminal closure certificate candidate without granting terminal closure automatically."
+}

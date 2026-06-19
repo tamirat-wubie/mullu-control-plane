@@ -60,6 +60,22 @@ RAW_PRIVATE_FIELD_NAMES = frozenset(
         "raw_thread",
     }
 )
+WORKFLOW_STAGE_ORDER = (
+    "draft_action",
+    "risk_class",
+    "requested_approval",
+    "operator_decision",
+    "receipt",
+)
+WORKFLOW_DECISION_CONTROLS = ("approve", "reject", "revise")
+WORKFLOW_FALSE_FIELDS = (
+    "approval_decision_executes_action",
+    "execution_allowed",
+    "live_connector_execution_allowed",
+    "external_send_allowed",
+    "connector_mutation_allowed",
+    "system_of_record_write_allowed",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,7 +187,129 @@ def _validate_queue_semantics(
                 receipt_ids.append(receipt_id)
     if sorted(queue.get("receipt_ids", ())) != sorted(receipt_ids):
         errors.append("receipt_ids must match receipts embedded in records")
+    _validate_workflow_v0(queue, records, receipt_ids, errors)
     return tuple(errors)
+
+
+def _validate_workflow_v0(
+    queue: dict[str, Any],
+    records: list[Any],
+    receipt_ids: list[str],
+    errors: list[str],
+) -> None:
+    workflow = queue.get("workflow_v0")
+    if not isinstance(workflow, dict):
+        errors.append("workflow_v0 must be an object")
+        return
+    if tuple(workflow.get("stage_order", ())) != WORKFLOW_STAGE_ORDER:
+        errors.append("workflow_v0.stage_order must match Approval Queue v0 stages")
+    if tuple(workflow.get("decision_controls", ())) != WORKFLOW_DECISION_CONTROLS:
+        errors.append("workflow_v0.decision_controls must be approve/reject/revise")
+    if workflow.get("approval_decision_records_allowed") is not True:
+        errors.append("workflow_v0.approval_decision_records_allowed must be true")
+    for field_name in WORKFLOW_FALSE_FIELDS:
+        if workflow.get(field_name) is not False:
+            errors.append(f"workflow_v0.{field_name} must be false")
+    items = workflow.get("items")
+    if not isinstance(items, list):
+        errors.append("workflow_v0.items must be a list")
+        return
+    if workflow.get("requested_approval_count") != len(records):
+        errors.append("workflow_v0.requested_approval_count must match records length")
+    if workflow.get("receipt_count") != len(receipt_ids):
+        errors.append("workflow_v0.receipt_count must match queue receipt count")
+    if workflow.get("draft_action_count") != _workflow_draft_action_count(items):
+        errors.append("workflow_v0.draft_action_count must match workflow item draft actions")
+    pending_count = 0
+    terminal_count = 0
+    records_by_id = {
+        str(record["approval_id"]): record
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("approval_id"), str)
+    }
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            errors.append(f"workflow_v0.items[{index}] must be an object")
+            continue
+        approval_id = str(item.get("approval_id", ""))
+        record = records_by_id.get(approval_id)
+        if record is None:
+            errors.append(f"workflow_v0.items[{index}].approval_id must reference a queue record")
+            continue
+        _validate_workflow_item(index, item, record, errors)
+        decision = _mapping(item.get("decision")).get("current_decision")
+        if decision == "pending":
+            pending_count += 1
+        else:
+            terminal_count += 1
+    if workflow.get("pending_decision_count") != pending_count:
+        errors.append("workflow_v0.pending_decision_count must match pending workflow decisions")
+    if workflow.get("terminal_decision_count") != terminal_count:
+        errors.append("workflow_v0.terminal_decision_count must match terminal workflow decisions")
+
+
+def _validate_workflow_item(index: int, item: dict[str, Any], record: dict[str, Any], errors: list[str]) -> None:
+    label = f"workflow_v0.items[{index}]"
+    packet = _mapping(record.get("packet"))
+    receipts = record.get("receipts") if isinstance(record.get("receipts"), list) else []
+    latest_receipt = _mapping(receipts[-1]) if receipts else {}
+    proposed_actions = packet.get("proposed_actions") if isinstance(packet.get("proposed_actions"), list) else []
+    if item.get("request_id") != packet.get("request_id"):
+        errors.append(f"{label}.request_id must match packet.request_id")
+    if item.get("plan_id") != packet.get("plan_id"):
+        errors.append(f"{label}.plan_id must match packet.plan_id")
+    if item.get("draft_action_count") != len(proposed_actions):
+        errors.append(f"{label}.draft_action_count must match packet proposed actions")
+    if item.get("receipt_count") != len(receipts):
+        errors.append(f"{label}.receipt_count must match record receipts")
+    risk_class = _mapping(item.get("risk_class"))
+    if risk_class.get("risk_level") != packet.get("risk_level"):
+        errors.append(f"{label}.risk_class.risk_level must match packet.risk_level")
+    if risk_class.get("explicit_approval_required") is not True:
+        errors.append(f"{label}.risk_class.explicit_approval_required must be true")
+    requested = _mapping(item.get("requested_approval"))
+    if requested.get("approval_state") != packet.get("approval_state"):
+        errors.append(f"{label}.requested_approval.approval_state must match packet.approval_state")
+    if requested.get("approval_request_recorded") is not True:
+        errors.append(f"{label}.requested_approval.approval_request_recorded must be true")
+    decision = _mapping(item.get("decision"))
+    packet_decision = _mapping(packet.get("decision_record"))
+    if decision.get("current_decision") != packet_decision.get("decision"):
+        errors.append(f"{label}.decision.current_decision must match packet decision")
+    if tuple(decision.get("available_decisions", ())) != ("approved", "rejected", "revised"):
+        errors.append(f"{label}.decision.available_decisions must be approved/rejected/revised")
+    if decision.get("approval_is_execution") is not False:
+        errors.append(f"{label}.decision.approval_is_execution must be false")
+    if decision.get("execution_allowed") is not False:
+        errors.append(f"{label}.decision.execution_allowed must be false")
+    receipt = _mapping(item.get("receipt"))
+    if receipt.get("latest_receipt_id") != latest_receipt.get("receipt_id"):
+        errors.append(f"{label}.receipt.latest_receipt_id must match latest receipt")
+    if receipt.get("latest_receipt_decision") != latest_receipt.get("decision"):
+        errors.append(f"{label}.receipt.latest_receipt_decision must match latest receipt")
+    if receipt.get("receipt_required") is not True:
+        errors.append(f"{label}.receipt.receipt_required must be true")
+    effect_boundary = _mapping(item.get("effect_boundary"))
+    if effect_boundary.get("approval_decision_records_allowed") is not True:
+        errors.append(f"{label}.effect_boundary.approval_decision_records_allowed must be true")
+    for field_name in WORKFLOW_FALSE_FIELDS:
+        if effect_boundary.get(field_name) is not False:
+            errors.append(f"{label}.effect_boundary.{field_name} must be false")
+
+
+def _workflow_draft_action_count(items: list[Any]) -> int:
+    count = 0
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        draft_actions = item.get("draft_actions")
+        if isinstance(draft_actions, list):
+            count += len(draft_actions)
+    return count
+
+
+def _mapping(payload: Any) -> dict[str, Any]:
+    return dict(payload) if isinstance(payload, dict) else {}
 
 
 def _scan_private_or_secret_payload(payload: Any, errors: list[str], *, path: str) -> None:

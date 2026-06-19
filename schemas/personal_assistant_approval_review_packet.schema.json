@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-approval-review-packet:1",
+  "title": "Personal Assistant Approval Review Packet",
+  "description": "No-effect operator review packet for a personal-assistant approval proposal.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "review_packet_id",
+    "request_id",
+    "plan_id",
+    "generated_at",
+    "reviewer_ref",
+    "risk_level",
+    "approval_scope",
+    "review_state",
+    "proposed_actions",
+    "forbidden_without_approval",
+    "evidence_refs",
+    "required_operator_checks",
+    "authority_denials",
+    "effect_boundary",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": { "const": "personal_assistant.approval_review_packet.v1" },
+    "review_packet_id": { "type": "string", "pattern": "^pa_approval_review_[a-z0-9][a-z0-9_:-]*$" },
+    "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
+    "plan_id": { "type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "reviewer_ref": { "type": "string", "minLength": 1 },
+    "risk_level": { "type": "string", "enum": ["P3", "P4", "P5"] },
+    "approval_scope": {
+      "type": "string",
+      "enum": ["per_request", "per_plan", "per_skill", "per_action", "per_recipient"]
+    },
+    "review_state": { "const": "preview_only" },
+    "proposed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/proposed_action" }
+    },
+    "forbidden_without_approval": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "required_operator_checks": {
+      "type": "array",
+      "minItems": 6,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "authority_denials": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authority", "denied", "reason"],
+        "properties": {
+          "authority": { "type": "string", "minLength": 1 },
+          "denied": { "const": true },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_allowed",
+        "approval_is_execution",
+        "approval_enqueued",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "system_of_record_write_allowed",
+        "money_legal_public_action_allowed"
+      ],
+      "properties": {
+        "execution_allowed": { "const": false },
+        "approval_is_execution": { "const": false },
+        "approval_enqueued": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "external_send_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "memory_write_allowed": { "const": false },
+        "deployment_mutation_allowed": { "const": false },
+        "system_of_record_write_allowed": { "const": false },
+        "money_legal_public_action_allowed": { "const": false }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "approval_matrix_ref",
+        "approval_packet_is_execution",
+        "review_packet_is_execution",
+        "live_nested_mind_activation_allowed",
+        "customer_readiness_claim_allowed"
+      ],
+      "properties": {
+        "foundation_only": { "const": true },
+        "approval_matrix_ref": { "type": "string", "minLength": 1 },
+        "approval_packet_is_execution": { "const": false },
+        "review_packet_is_execution": { "const": false },
+        "live_nested_mind_activation_allowed": { "const": false },
+        "customer_readiness_claim_allowed": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "proposed_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "skill_id", "risk_level", "effect_boundary", "summary"],
+      "properties": {
+        "action_id": { "type": "string", "minLength": 1 },
+        "skill_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+        "risk_level": { "type": "string", "enum": ["P3", "P4", "P5"] },
+        "effect_boundary": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

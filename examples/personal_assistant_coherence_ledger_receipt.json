@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-coherence-ledger-b9c82f54f879d24d",
+  "receipt_id": "personal-assistant-coherence-ledger-8c41be9862803f39",
   "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
-  "generated_at": "2026-06-16T14:57:54Z",
+  "generated_at": "2026-06-19T18:45:36Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -11,7 +11,7 @@
     {
       "source_id": "personal_assistant_readiness_index",
       "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
-      "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+      "receipt_id": "personal-assistant-readiness-index-288cbaae88dce421",
       "proof_state": "Pass",
       "solver_outcome": "SolvedVerified",
       "closed": true,
@@ -22,7 +22,7 @@
     "coherence_ledger_closed": true,
     "readiness_index_closed": true,
     "lane_count": 12,
-    "dependency_edge_count": 59,
+    "dependency_edge_count": 69,
     "blocked_authority_count": 8,
     "next_action_count": 12,
     "all_lanes_bound_to_sources": true,
@@ -39,7 +39,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/requests/preview"
@@ -75,7 +75,7 @@
       "stage": "runtime_read_model",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/skills"
@@ -110,23 +110,28 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/approval-queue",
-        "/api/v1/personal-assistant/approval-queue/preview"
+        "/api/v1/personal-assistant/approval-queue/preview",
+        "/api/v1/personal-assistant/approval-proposals/preview",
+        "/api/v1/personal-assistant/approval-proposals/from-draft/preview"
       ],
       "schema_refs": [
         "schemas/personal_assistant_approval.schema.json",
         "schemas/personal_assistant_approval_queue.schema.json",
-        "schemas/personal_assistant_approval_decision.schema.json"
+        "schemas/personal_assistant_approval_decision.schema.json",
+        "schemas/personal_assistant_approval_review_packet.schema.json"
       ],
       "validator_refs": [
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
-        "tests/test_personal_assistant_approval_queue.py"
+        "scripts/validate_personal_assistant_approval_review_packet.py",
+        "tests/test_personal_assistant_approval_queue.py",
+        "tests/test_validate_personal_assistant_approval_review_packet.py"
       ],
-      "dependency_edge_count": 8,
+      "dependency_edge_count": 13,
       "blocked_authority_refs": [
         "live_execution_blocked",
         "connector_mutation_blocked",
@@ -148,7 +153,7 @@
       "stage": "candidate_only",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/memory-observations",
@@ -183,12 +188,15 @@
     {
       "ledger_record_id": "pa-coherence-lane-read_only_projection",
       "lane_id": "read_only_projection",
-      "stage": "projection_only",
+      "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
-      "route_refs": [],
+      "route_refs": [
+        "/api/v1/personal-assistant/read-only/inbox/preview",
+        "/api/v1/personal-assistant/read-only/calendar/preview"
+      ],
       "schema_refs": [
         "schemas/personal_assistant_read_only_projection.schema.json"
       ],
@@ -196,7 +204,7 @@
         "scripts/validate_personal_assistant_read_only_projection.py",
         "tests/test_validate_personal_assistant_read_only_projection.py"
       ],
-      "dependency_edge_count": 3,
+      "dependency_edge_count": 5,
       "blocked_authority_refs": [
         "live_execution_blocked",
         "connector_mutation_blocked",
@@ -215,12 +223,16 @@
     {
       "ledger_record_id": "pa-coherence-lane-draft_projection",
       "lane_id": "draft_projection",
-      "stage": "projection_only",
+      "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
-      "route_refs": [],
+      "route_refs": [
+        "/api/v1/personal-assistant/drafts/email/preview",
+        "/api/v1/personal-assistant/drafts/calendar-event/preview",
+        "/api/v1/personal-assistant/drafts/task/preview"
+      ],
       "schema_refs": [
         "schemas/personal_assistant_draft_projection.schema.json"
       ],
@@ -228,7 +240,7 @@
         "scripts/validate_personal_assistant_draft_projection.py",
         "tests/test_validate_personal_assistant_draft_projection.py"
       ],
-      "dependency_edge_count": 3,
+      "dependency_edge_count": 6,
       "blocked_authority_refs": [
         "live_execution_blocked",
         "connector_mutation_blocked",
@@ -250,7 +262,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview"
@@ -284,7 +296,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/github-codex/review/preview"
@@ -318,7 +330,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/research/source-compare/preview"
@@ -352,7 +364,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/math/reasoning/preview"
@@ -386,7 +398,7 @@
       "stage": "runtime_preview",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/personal-assistant/planning/schedule/preview"
@@ -420,7 +432,7 @@
       "stage": "read_model",
       "state": "SolvedVerified",
       "source_receipt_ids": [
-        "personal-assistant-readiness-index-32ab1b89855642f5"
+        "personal-assistant-readiness-index-288cbaae88dce421"
       ],
       "route_refs": [
         "/api/v1/console/personal-assistant",
@@ -515,7 +527,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-coherence-ledger-2026-06-16",
+        "delta_id": "delta-personal-assistant-coherence-ledger-2026-06-19",
         "reason": "Recorded Personal Assistant coherence ledger while preserving no-effect authority.",
         "logged_in_lineage": true
       }

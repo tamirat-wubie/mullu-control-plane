@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-authority-coverage-8f3f740417ae2757",
+  "receipt_id": "personal-assistant-authority-coverage-ff6ddef1e2a65362",
   "schema_version": "personal_assistant.authority_coverage_receipt.v1",
-  "generated_at": "2026-06-16T16:37:37Z",
+  "generated_at": "2026-06-19T18:45:43Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -42,7 +42,7 @@
   "authority_summary": {
     "authority_coverage_closed": true,
     "coherence_ledger_closed": true,
-    "skill_count": 15,
+    "skill_count": 17,
     "capability_count": 12,
     "risk_level_count": 6,
     "approval_matrix_levels_bound": true,
@@ -112,7 +112,7 @@
         "execute_with_approval",
         "blocked"
       ],
-      "skill_count": 0,
+      "skill_count": 2,
       "matrix_bound": true,
       "policy_bound": true
     },
@@ -350,6 +350,72 @@
         "internal_write_allowed": false,
         "external_write_allowed": false,
         "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": false,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "calendar.event.create.with_approval",
+      "mode": "approval_required",
+      "risk_level": "P3",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+      "requires_approval": true,
+      "private_connector_required": true,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "create_event",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "create_event_without_approval",
+        "invite_people",
+        "connector_mutation_without_receipt"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": true,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": false,
+        "connector_mutation_allowed": true,
+        "money_legal_public_allowed": false
+      },
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "no_effect_boundary_verified": true
+    },
+    {
+      "skill_id": "task.create.with_approval",
+      "mode": "approval_required",
+      "risk_level": "P3",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+      "requires_approval": true,
+      "private_connector_required": false,
+      "uao_required": true,
+      "receipt_required": true,
+      "memory_write_allowed": false,
+      "allowed_actions": [
+        "system_of_record_write",
+        "produce_receipt"
+      ],
+      "blocked_actions": [
+        "write_task_without_approval",
+        "connector_mutation_without_receipt",
+        "memory_write"
+      ],
+      "effect_boundary": {
+        "read_only": false,
+        "draft_only": false,
+        "internal_write_allowed": true,
+        "external_write_allowed": false,
+        "system_of_record_write_allowed": true,
         "connector_mutation_allowed": false,
         "money_legal_public_allowed": false
       },
@@ -879,7 +945,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-authority-coverage-2026-06-16",
+        "delta_id": "delta-personal-assistant-authority-coverage-2026-06-19",
         "reason": "Authority coverage closed for no-effect Foundation Mode hardening without granting execution authority.",
         "logged_in_lineage": true
       }

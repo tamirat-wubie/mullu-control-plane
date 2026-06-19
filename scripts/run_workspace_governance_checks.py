@@ -230,6 +230,27 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_live_evidence.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
             (
                 python_executable,
@@ -1213,6 +1234,116 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "universal_action_orchestration_validation_receipt_example",
             (python_executable, "scripts/validate_universal_action_orchestration_receipt.py"),
         ),
+        CheckCommand(
+            "universal_symbol_runtime_admission_policy",
+            (python_executable, "scripts/validate_universal_symbol_runtime_admission_policy.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_runtime_authority_witness",
+            (python_executable, "scripts/validate_universal_symbol_runtime_authority_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_adapter_receipt_persistence_policy",
+            (python_executable, "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_append_audit_witness",
+            (python_executable, "scripts/validate_universal_symbol_append_audit_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_approval_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_identity_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_approval_decision_witness",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_operator_revocation_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_replacement_decision_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_reapproval_revocation_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_audit_receipt",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_tenant_scope_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_writer_duty_scope_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_path_confinement_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_write_path_idempotency_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_durability_replay_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_recovery_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_writer_identity_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_writer_registration_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_path_custody_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_write_path_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_write_path_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_authority_witness",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_authority_witness.py"),
+        ),
+        CheckCommand("universal_symbol_kernel", (python_executable, "scripts/validate_universal_symbol_kernel.py")),
         CheckCommand("sdlc_artifact_validation", (python_executable, "scripts/validate_sdlc_artifact.py")),
         CheckCommand("sdlc_route_validation", (python_executable, "scripts/validate_sdlc_route.py")),
         CheckCommand("sdlc_state_machine_validation", (python_executable, "scripts/validate_sdlc_state_machine.py")),
