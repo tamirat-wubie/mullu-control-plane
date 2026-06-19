@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-shadow-dossier-20260619",
+  "change_id": "governed-planning-profile-shadow-dossier-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A multi-scenario planning-profile dossier could be mistaken for runtime promotion evidence if it overclaims readiness, hides authority blockers, or emits terminal closure language. The mitigation is a schema-backed no-effect dossier with hard false authority fields, nested admission report validation, explicit AwaitingEvidence outcome, and focused tests for authority-drift rejection.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves dossier and nested reports keep execution, dispatch, runtime replanning, terminal closure, and success claims false",
+      "status": "passed",
+      "evidence_ref": "tests/test_report_governed_planning_profile_shadow_dossier.py::test_shadow_dossier_covers_expected_plan_classes_without_authority"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass check proves authority-drift claims are rejected by the dossier validator",
+      "status": "passed",
+      "evidence_ref": "tests/test_report_governed_planning_profile_shadow_dossier.py::test_shadow_dossier_rejects_runtime_authority_claim"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proves the dossier validates nested admission reports against the existing report schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_report_governed_planning_profile_shadow_dossier.py::test_shadow_dossier_schema_accepts_dossier_and_nested_reports"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check records distinct blocker shapes for uncompiled, compound, high-risk, and world-contradiction scenarios",
+      "status": "passed",
+      "evidence_ref": "tests/test_report_governed_planning_profile_shadow_dossier.py::test_shadow_dossier_records_distinct_blocker_shapes"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-shadow-dossier-authority-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The dossier schema and validator hard-deny execution_allowed, dispatch_allowed, runtime_replanning_enabled, terminal_closure, and success_claim_allowed.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_shadow_dossier.schema.json",
+        "tests/test_report_governed_planning_profile_shadow_dossier.py::test_shadow_dossier_rejects_runtime_authority_claim"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-shadow-dossier-promotion-confusion",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The dossier solver outcome remains AwaitingEvidence and the next action is operator shadow-pilot evidence collection before runtime promotion.",
+      "evidence_refs": [
+        "scripts/report_governed_planning_profile_shadow_dossier.py",
+        "docs/GOVERNED_PLANNING_PROFILE.md"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the dossier local, deterministic, and read-only",
+    "hard-deny all execution and terminal closure fields in the schema",
+    "validate nested admission reports against the existing admission report schema",
+    "record representative plan-class coverage without granting runtime promotion"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_shadow_dossier.schema.json",
+    "scripts/report_governed_planning_profile_shadow_dossier.py",
+    "tests/test_report_governed_planning_profile_shadow_dossier.py",
+    "receipt://governed-planning-profile/shadow-dossier/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/shadow-dossier/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/shadow-dossier/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/shadow-dossier/security/20260619"
+}

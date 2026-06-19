@@ -1,0 +1,51 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_shadow_dossier_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_shadow_dossier_20260619",
+  "architecture_summary": "Add a deterministic local reporter that uses the existing gateway goal compiler, causal simulator, and GovernedPlanningProfile admission adapter to produce a no-effect shadow dossier across representative plan classes. The reporter is not imported by runtime modules and does not register or execute planning behavior.",
+  "affected_modules": [
+    "gateway_planning_and_simulation_lineage",
+    "governed_planning_profile_lineage",
+    "schema_protocol_manifest",
+    "ci_root_coverage_policy",
+    "sdlc_artifact_lineage",
+    "planning_architecture_documentation"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileShadowDossier fields for scenario summaries, nested admission reports, aggregate blocker counts, closure conditions, evidence refs, and deterministic dossier hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_shadow_dossier.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "tests/test_report_governed_planning_profile_shadow_dossier.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove scripts/report_governed_planning_profile_shadow_dossier.py, schemas/governed_planning_profile_shadow_dossier.schema.json, focused reporter tests, manifest entries, documentation additions, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because the reporter has no router, worker, dispatch, write, connector, scheduler, or registration surface.",
+  "migration_plan": "No runtime migration. Existing compiled plans, simulation receipts, admission reports, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The dossier is generated on demand from deterministic local scenarios.",
+  "test_plan": [
+    "python scripts/report_governed_planning_profile_shadow_dossier.py",
+    "python scripts/report_governed_planning_profile_shadow_dossier.py --json",
+    "python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py tests/test_gateway/test_governed_planning_profile_adapter.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py -q",
+    "python -m pytest tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "uao_ref": "uao://governed-planning-profile/shadow-dossier/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/shadow-dossier/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/shadow-dossier/design/20260619"
+}

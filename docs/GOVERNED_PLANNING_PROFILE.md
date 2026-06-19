@@ -122,17 +122,45 @@ The report can say `shadow_parity_status = matched`, but it still cannot grant
 execution, dispatch, runtime replanning, success, or terminal closure. Those
 fields are hard false in the report schema.
 
+## Shadow Dossier
+
+The next no-effect slice is
+`scripts/report_governed_planning_profile_shadow_dossier.py`. It runs the
+read-only adapter across representative gateway planning classes:
+
+1. uncompiled conversation;
+2. read-only search;
+3. compound search-to-notification;
+4. high-risk payment;
+5. search blocked by open world-state contradictions.
+
+The dossier output is governed by
+`schemas/governed_planning_profile_shadow_dossier.schema.json`. It records
+scenario summaries, full admission reports, aggregate blocker counts, and
+closure conditions. The dossier is a local proof surface only: it does not
+register a planner, call a router, execute a plan, dispatch work, enable
+runtime replanning, approve promotion, claim success, or provide terminal
+closure.
+
+The dossier is useful because it proves profile projection over multiple plan
+shapes before operator shadow-pilot evidence exists. A verified dossier means
+the local projection is structurally coherent; it does not mean runtime
+promotion is authorized.
+
 ## Validation
 
 ```text
 python scripts/validate_governed_planning_profile.py
 python scripts/validate_governed_planning_profile.py --json
+python scripts/report_governed_planning_profile_shadow_dossier.py
+python scripts/report_governed_planning_profile_shadow_dossier.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
+python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, and first read-only adapter defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, and multi-class shadow dossier defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, or closure authority
   Open issues: operator shadow-pilot evidence, runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
-  Next action: run shadow admission reports across more plan classes before any runtime promotion
+  Next action: collect operator shadow-pilot evidence before any runtime promotion
