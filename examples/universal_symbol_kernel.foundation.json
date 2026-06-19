@@ -185,7 +185,7 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 151
+    "evidence_ref_count": 155
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
@@ -213,6 +213,7 @@
     "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
     "schemas/universal_symbol_receipt_store_path_confinement_read_model.schema.json",
     "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+    "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
     "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
     "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
     "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
@@ -253,6 +254,7 @@
     "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
     "examples/universal_symbol_receipt_store_path_confinement_read_model.foundation.json",
     "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json",
     "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
     "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
     "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
@@ -293,6 +295,7 @@
     "tests/test_validate_universal_symbol_receipt_store_tenant_scope_read_model.py",
     "tests/test_validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py",
     "tests/test_validate_universal_symbol_receipt_store_path_confinement_read_model.py",
+    "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
     "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
     "scripts/validate_universal_symbol_append_audit_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
@@ -319,6 +322,7 @@
     "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_confinement_read_model.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
     "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
     "scripts/validate_universal_symbol_receipt_store_recovery_witness.py",
     "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",

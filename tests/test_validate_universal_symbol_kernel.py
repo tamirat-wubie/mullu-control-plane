@@ -129,6 +129,11 @@ from scripts.validate_universal_symbol_receipt_store_write_path_idempotency_witn
     UniversalSymbolReceiptStoreWritePathIdempotencyWitnessError,
     validate_universal_symbol_receipt_store_write_path_idempotency_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_write_path_idempotency_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_WRITE_PATH_IDEMPOTENCY_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_IDEMPOTENCY_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_write_path_idempotency_read_model,
+)
 from scripts.validate_universal_symbol_receipt_store_durability_replay_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_DURABILITY_REPLAY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_DURABILITY_REPLAY_WITNESS_PATH,
@@ -246,7 +251,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 151
+    assert report["evidence_ref_count"] == 155
 
 
 def test_lifecycle_evidence_bundle_read_model_validates_from_kernel_evidence() -> None:
@@ -348,6 +353,21 @@ def test_path_confinement_read_model_validates_from_kernel_evidence() -> None:
     assert report["valid"] is True
     assert report["solver_outcome"] == "AwaitingEvidence"
     assert report["primary_status"] == "Path confinement blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 11
+    assert report["read_model_constraint_count"] == 8
+    assert report["evidence_ref_count"] == 10
+
+
+def test_write_path_idempotency_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_write_path_idempotency_read_model(
+        DEFAULT_WRITE_PATH_IDEMPOTENCY_READ_MODEL_PATH,
+        DEFAULT_WRITE_PATH_IDEMPOTENCY_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Write-path idempotency blocked"
     assert report["requirement_row_count"] == 8
     assert report["effective_denial_count"] == 11
     assert report["read_model_constraint_count"] == 8

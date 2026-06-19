@@ -275,6 +275,13 @@
       ]
     },
     {
+      "action_id": "publish_universal_symbol_receipt_store_write_path_idempotency_read_model",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_receipt_store_write_path_idempotency_read_model"
+      ]
+    },
+    {
       "action_id": "publish_universal_symbol_receipt_store_durability_replay_witness",
       "status": "closed",
       "surfaces": [
@@ -1710,12 +1717,12 @@
       "action_proof": 163,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 61,
+      "read_model": 62,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 224,
+      "audit_chain": 225,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1723,21 +1730,21 @@
     "by_coverage_state": {
       "proven": 78,
       "unproven": 0,
-      "witnessed": 149
+      "witnessed": 150
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 63,
+      "read_model": 64,
       "request_proof": 162
     },
-    "surface_count": 227
+    "surface_count": 228
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 227,
+      "strong": 228,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -6457,6 +6464,71 @@
         "write_path_idempotency_witness_rejects_evidence_ref_count_drift"
       ],
       "surface_id": "universal_symbol_receipt_store_write_path_idempotency_witness"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json",
+        "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+        "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
+        "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+        "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol receipt-store write-path idempotency read model projects blocked idempotency status, idempotency requirement rows, Delta_reject logging state, raw-detail visibility denial, duplicate append denial, and effective denial fields while denying idempotency authority, write-path registration, path custody registration, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+      "representative_paths": [
+        "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+        "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json",
+        "validate_universal_symbol_receipt_store_write_path_idempotency_read_model"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "foundation_write_path_idempotency_read_model_validates": [
+          "foundation_write_path_idempotency_read_model_validates"
+        ],
+        "write_path_idempotency_read_model_rejects_authority_drift": [
+          "write_path_idempotency_read_model_rejects_authority_drift"
+        ],
+        "write_path_idempotency_read_model_rejects_duplicate_append_drift": [
+          "write_path_idempotency_read_model_rejects_duplicate_append_drift"
+        ],
+        "write_path_idempotency_read_model_rejects_duplicate_requirement_row": [
+          "write_path_idempotency_read_model_rejects_duplicate_requirement_row"
+        ],
+        "write_path_idempotency_read_model_rejects_evidence_ref_count_drift": [
+          "write_path_idempotency_read_model_rejects_evidence_ref_count_drift"
+        ],
+        "write_path_idempotency_read_model_rejects_missing_delta_reject_log": [
+          "write_path_idempotency_read_model_rejects_missing_delta_reject_log"
+        ],
+        "write_path_idempotency_read_model_rejects_missing_requirement": [
+          "write_path_idempotency_read_model_rejects_missing_requirement"
+        ],
+        "write_path_idempotency_read_model_rejects_raw_detail_visibility": [
+          "write_path_idempotency_read_model_rejects_raw_detail_visibility"
+        ],
+        "write_path_idempotency_read_model_rejects_witness_projection_drift": [
+          "write_path_idempotency_read_model_rejects_witness_projection_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_write_path_idempotency_read_model_validates",
+        "write_path_idempotency_read_model_rejects_authority_drift",
+        "write_path_idempotency_read_model_rejects_duplicate_append_drift",
+        "write_path_idempotency_read_model_rejects_raw_detail_visibility",
+        "write_path_idempotency_read_model_rejects_missing_requirement",
+        "write_path_idempotency_read_model_rejects_duplicate_requirement_row",
+        "write_path_idempotency_read_model_rejects_missing_delta_reject_log",
+        "write_path_idempotency_read_model_rejects_witness_projection_drift",
+        "write_path_idempotency_read_model_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_receipt_store_write_path_idempotency_read_model"
     },
     {
       "action_proof": "action_proof",
@@ -17829,8 +17901,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2175,
-    "runtime_witness_count": 2175,
+    "exact_test_anchor_count": 2184,
+    "runtime_witness_count": 2184,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19861,6 +19933,69 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "universal_symbol_receipt_store_write_path_idempotency_witness",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_foundation_write_path_idempotency_read_model_validates"
+            ],
+            "witness": "foundation_write_path_idempotency_read_model_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_authority_drift"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_duplicate_append_drift"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_duplicate_append_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_raw_detail_visibility"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_raw_detail_visibility"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_missing_requirement"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_missing_requirement"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_duplicate_requirement_row"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_duplicate_requirement_row"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_missing_delta_reject_log"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_missing_delta_reject_log"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_witness_projection_drift"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_witness_projection_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py::test_write_path_idempotency_read_model_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "write_path_idempotency_read_model_rejects_evidence_ref_count_drift"
+          }
+        ],
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
+        "surface_id": "universal_symbol_receipt_store_write_path_idempotency_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

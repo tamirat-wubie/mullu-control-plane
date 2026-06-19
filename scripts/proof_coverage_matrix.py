@@ -2531,6 +2531,71 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_write_path_idempotency_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_write_path_idempotency_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store write-path idempotency read model projects blocked idempotency status, idempotency requirement rows, Delta_reject logging state, raw-detail visibility denial, duplicate append denial, and effective denial fields while denying idempotency authority, write-path registration, path custody registration, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_write_path_idempotency_read_model_validates",
+                "write_path_idempotency_read_model_rejects_authority_drift",
+                "write_path_idempotency_read_model_rejects_duplicate_append_drift",
+                "write_path_idempotency_read_model_rejects_raw_detail_visibility",
+                "write_path_idempotency_read_model_rejects_missing_requirement",
+                "write_path_idempotency_read_model_rejects_duplicate_requirement_row",
+                "write_path_idempotency_read_model_rejects_missing_delta_reject_log",
+                "write_path_idempotency_read_model_rejects_witness_projection_drift",
+                "write_path_idempotency_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_write_path_idempotency_read_model_validates": [
+                    "foundation_write_path_idempotency_read_model_validates"
+                ],
+                "write_path_idempotency_read_model_rejects_authority_drift": [
+                    "write_path_idempotency_read_model_rejects_authority_drift"
+                ],
+                "write_path_idempotency_read_model_rejects_duplicate_append_drift": [
+                    "write_path_idempotency_read_model_rejects_duplicate_append_drift"
+                ],
+                "write_path_idempotency_read_model_rejects_raw_detail_visibility": [
+                    "write_path_idempotency_read_model_rejects_raw_detail_visibility"
+                ],
+                "write_path_idempotency_read_model_rejects_missing_requirement": [
+                    "write_path_idempotency_read_model_rejects_missing_requirement"
+                ],
+                "write_path_idempotency_read_model_rejects_duplicate_requirement_row": [
+                    "write_path_idempotency_read_model_rejects_duplicate_requirement_row"
+                ],
+                "write_path_idempotency_read_model_rejects_missing_delta_reject_log": [
+                    "write_path_idempotency_read_model_rejects_missing_delta_reject_log"
+                ],
+                "write_path_idempotency_read_model_rejects_witness_projection_drift": [
+                    "write_path_idempotency_read_model_rejects_witness_projection_drift"
+                ],
+                "write_path_idempotency_read_model_rejects_evidence_ref_count_drift": [
+                    "write_path_idempotency_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_durability_replay_witness",
             [
                 "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
@@ -13995,6 +14060,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_receipt_store_write_path_idempotency_witness",
             "surfaces": ["universal_symbol_receipt_store_write_path_idempotency_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_write_path_idempotency_read_model",
+            "surfaces": ["universal_symbol_receipt_store_write_path_idempotency_read_model"],
             "status": "closed",
         },
         {

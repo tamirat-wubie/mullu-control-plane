@@ -8022,6 +8022,53 @@ def test_universal_symbol_receipt_store_write_path_idempotency_witness_surface_b
     assert closure_actions["publish_universal_symbol_receipt_store_write_path_idempotency_witness"]["status"] == "closed"
 
 
+def test_universal_symbol_receipt_store_write_path_idempotency_read_model_surface_is_read_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_write_path_idempotency_read_model"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "read_model"
+    assert surface["action_proof"] == "read_model"
+    assert (
+        "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json"
+        in surface["representative_paths"]
+    )
+    assert (
+        "examples/universal_symbol_receipt_store_write_path_idempotency_read_model.foundation.json"
+        in surface["representative_paths"]
+    )
+    assert (
+        "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py"
+        in surface["evidence_files"]
+    )
+    assert "tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py" in surface[
+        "evidence_files"
+    ]
+    assert "foundation_write_path_idempotency_read_model_validates" in witnesses
+    assert "write_path_idempotency_read_model_rejects_authority_drift" in witnesses
+    assert "write_path_idempotency_read_model_rejects_duplicate_append_drift" in witnesses
+    assert "write_path_idempotency_read_model_rejects_raw_detail_visibility" in witnesses
+    assert "write_path_idempotency_read_model_rejects_missing_requirement" in witnesses
+    assert "write_path_idempotency_read_model_rejects_duplicate_requirement_row" in witnesses
+    assert "write_path_idempotency_read_model_rejects_missing_delta_reject_log" in witnesses
+    assert "write_path_idempotency_read_model_rejects_witness_projection_drift" in witnesses
+    assert "write_path_idempotency_read_model_rejects_evidence_ref_count_drift" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_write_path_idempotency_read_model"][
+        "exact_test_anchor_count"
+    ] == 9
+    assert witness_surfaces["universal_symbol_receipt_store_write_path_idempotency_read_model"][
+        "unanchored_witness_count"
+    ] == 0
+    assert closure_actions["publish_universal_symbol_receipt_store_write_path_idempotency_read_model"]["status"] == "closed"
+
+
 def test_universal_symbol_receipt_store_durability_replay_witness_surface_blocks_replay_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

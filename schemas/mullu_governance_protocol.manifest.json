@@ -1871,6 +1871,12 @@
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-idempotency-witness:1"
     },
     {
+      "path": "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-write-path-idempotency-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-idempotency-read-model:1"
+    },
+    {
       "path": "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
       "schema_id": "universal-symbol-receipt-store-durability-replay-witness",
       "surface": "symbol",
