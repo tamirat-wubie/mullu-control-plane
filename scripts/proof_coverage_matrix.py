@@ -2293,6 +2293,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/personal-assistant/memory-observations",
                 "/api/v1/personal-assistant/memory-observations/preview",
                 "/api/v1/personal-assistant/memory-observations/review/preview",
+                "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
                 "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
                 "/api/v1/personal-assistant/github-codex/review/preview",
                 "/api/v1/personal-assistant/research/source-compare/preview",
@@ -2370,7 +2371,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_personal_assistant_math_projection.py",
                 "scripts/validate_personal_assistant_planning_projection.py",
             ],
-            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, TeamOps Gmail live-probe readiness, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
@@ -2392,6 +2393,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "personal_assistant_memory_observation_read_model_public_safe",
                 "personal_assistant_memory_observation_preview_candidate_only",
                 "personal_assistant_memory_observation_review_no_effect",
+                "personal_assistant_teamops_gmail_live_probe_no_effect",
                 "personal_assistant_teamops_shared_inbox_plan_no_effect",
                 "personal_assistant_github_codex_review_no_effect",
                 "personal_assistant_research_source_compare_no_effect",
@@ -2507,6 +2509,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "gateway_personal_assistant_memory_review_preview_records_no_effect_review",
                     "gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
                     "gateway_personal_assistant_memory_review_preview_rejects_raw_payload",
+                ],
+                "personal_assistant_teamops_gmail_live_probe_no_effect": [
+                    "gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence_only",
+                    "gateway_personal_assistant_teamops_gmail_live_probe_rejects_raw_credential_value",
                 ],
                 "personal_assistant_teamops_shared_inbox_plan_no_effect": [
                     "personal_assistant_teamops_projection_fixture_validates",

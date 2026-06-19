@@ -88,6 +88,7 @@ from mcoi_runtime.personal_assistant import (
     plan_teamops_shared_inbox,
     prepare_approval_proposal_from_plan,
     prepare_memory_observation,
+    preview_teamops_gmail_live_probe,
     render_personal_assistant_console_html,
     review_memory_observation_candidate,
     summarize_calendar_day_read_only,
@@ -554,6 +555,22 @@ class GatewayPersonalAssistantTeamOpsPreviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_request: str = "Prepare a TeamOps shared inbox handoff."
+    request_id: str = ""
+    submitted_at: str = ""
+    generated_at: str = ""
+    connector_refs: list[GatewayPersonalAssistantConnectorRef] = Field(default_factory=list)
+    environment: dict[str, str] = Field(default_factory=dict)
+    github_secret_names: list[str] = Field(default_factory=list)
+    operator_approval_ref: str = ""
+    repository: str = "tamirat-wubie/mullu-control-plane"
+
+
+class GatewayPersonalAssistantTeamOpsLiveProbePreviewRequest(BaseModel):
+    """Stateless TeamOps/Gmail presence-only live-probe preview request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_request: str = "Verify TeamOps Gmail live probe readiness."
     request_id: str = ""
     submitted_at: str = ""
     generated_at: str = ""
@@ -3284,6 +3301,68 @@ def create_gateway_app(
                 "mailbox_mutation_allowed": False,
                 "draft_creation_allowed": False,
                 "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
+    @app.post("/api/v1/personal-assistant/teamops/gmail/live-probe/preview")
+    def preview_personal_assistant_teamops_gmail_live_probe(
+        req: GatewayPersonalAssistantTeamOpsLiveProbePreviewRequest,
+    ):
+        try:
+            now = req.generated_at or req.submitted_at or _clock()
+            submitted_at = req.submitted_at or now
+            request_id = req.request_id or _gateway_personal_assistant_request_id(
+                req.user_request,
+                submitted_at,
+                RequestInterface.API_ROUTE.value,
+            )
+            intent = interpret_user_request(
+                req.user_request,
+                request_id=request_id,
+                submitted_at=submitted_at,
+                interface=RequestInterface.API_ROUTE,
+                connector_refs=tuple(_pydantic_payload(connector) for connector in req.connector_refs),
+            )
+            projection = preview_teamops_gmail_live_probe(
+                intent,
+                generated_at=now,
+                environment=req.environment,
+                github_secret_names=set(req.github_secret_names),
+                operator_approval_ref=req.operator_approval_ref,
+                repository=req.repository,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant TeamOps Gmail live probe preview",
+                    "error_code": "invalid_personal_assistant_teamops_gmail_live_probe_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "teamops_gmail_live_probe": projection.as_dict(),
+            "receipt": dict(projection.receipt),
+            "outcome": str(projection.receipt.get("outcome", "AwaitingEvidence")),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "external_provider_call_allowed": False,
+                "full_mailbox_read_allowed": False,
+                "message_body_read_allowed": False,
+                "message_search_allowed": False,
+                "mailbox_mutation_allowed": False,
+                "draft_creation_allowed": False,
+                "external_send_allowed": False,
+                "delete_allowed": False,
+                "archive_allowed": False,
                 "connector_mutation_allowed": False,
                 "deployment_mutation_allowed": False,
                 "system_of_record_write_allowed": False,

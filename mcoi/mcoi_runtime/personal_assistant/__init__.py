@@ -106,8 +106,10 @@ from .skill_registry import (
     load_skill_registry,
 )
 from .teamops import (
+    TeamOpsGmailLiveProbeProjection,
     TeamOpsSharedInboxProjection,
     plan_teamops_shared_inbox,
+    preview_teamops_gmail_live_probe,
 )
 from .whqr_bridge import (
     PersonalAssistantClarificationBundle,
@@ -152,6 +154,7 @@ __all__ = (
     "RedactedInboxMessage",
     "ResearchSourceCompareProjection",
     "TaskDraftInput",
+    "TeamOpsGmailLiveProbeProjection",
     "TeamOpsSharedInboxProjection",
     "ApprovalScope",
     "ConnectorProofRef",
@@ -179,6 +182,7 @@ __all__ = (
     "prepare_approval_proposal_from_plan",
     "review_memory_observation_candidate",
     "plan_teamops_shared_inbox",
+    "preview_teamops_gmail_live_probe",
     "plan_github_codex_review",
     "plan_math_reasoning",
     "plan_schedule_optimization",
