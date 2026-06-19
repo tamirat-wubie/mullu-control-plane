@@ -289,6 +289,9 @@ jobs:
       - name: Test Universal Symbol kernel contract
         run: python -m pytest tests/test_validate_universal_symbol_kernel.py tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py -q
 
+      - name: Test runtime authority evidence root contracts
+        run: python -m pytest tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py tests/test_validate_observation_evidence_acquisition_architecture.py tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py -q
+
       - name: Test SNet mesh receipt contract
         run: python -m pytest tests/test_validate_snet_mesh_receipt.py -q
 
