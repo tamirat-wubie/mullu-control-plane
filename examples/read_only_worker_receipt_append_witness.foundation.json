@@ -1,0 +1,183 @@
+{
+  "receipt_id": "read-only-worker-receipt-append-witness-foundation-repo-inspection-20260619",
+  "receipt_version": "read_only_worker_receipt_append_witness.v1",
+  "effect_reconciliation_witness_ref": "examples/read_only_worker_effect_reconciliation_witness.foundation.json",
+  "runtime_receipt_emission_admission_witness_ref": "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+  "runtime_receipt_store_activation_witness_ref": "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+  "selected_worker_path": "read_only_repo_inspection",
+  "tenant_id": "tenant_local_foundation",
+  "actor_id": "operator_local_foundation",
+  "created_at": "2026-06-19T16:45:00Z",
+  "solver_outcome": "SolvedVerified",
+  "authority_scope": {
+    "read_only": true,
+    "foundation_witness_only": true,
+    "receipt_append_witness_defined": true,
+    "active_runtime_lease_observed": false,
+    "uao_dispatch_authorization_performed": false,
+    "receipt_append_performed": false,
+    "runtime_dispatch_admission_performed": false,
+    "dispatch_admission_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "worker_invocation_allowed": false,
+    "runtime_receipt_emission_allowed": false,
+    "receipt_append_allowed": false,
+    "external_network_allowed": false,
+    "secret_access_allowed": false,
+    "filesystem_write_allowed": false,
+    "connector_authority_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false,
+    "mfidel_atomicity_preserved": true
+  },
+  "receipt_append_contract": {
+    "worker_id": "worker_local_read_only_repo_inspection",
+    "capability": "read_only_repo_inspection",
+    "operation_family": "local_repo_inspection",
+    "witness_mode": "RECEIPT_APPEND_WITNESS_ONLY",
+    "source_effect_reconciliation_witness_ref": "examples/read_only_worker_effect_reconciliation_witness.foundation.json",
+    "source_runtime_receipt_emission_admission_witness_ref": "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+    "source_runtime_receipt_store_activation_witness_ref": "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+    "target_receipt_append_ref": "candidate://receipt-append/read-only-repo-inspection",
+    "append_profile": "LOCAL_READ_ONLY_REPO_INSPECTION_RECEIPT_APPEND",
+    "required_source_receipt_refs": [
+      "examples/read_only_worker_effect_reconciliation_witness.foundation.json",
+      "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+      "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json"
+    ],
+    "required_authorization_input_refs": [
+      "evidence://worker/effect-reconciliation",
+      "evidence://runtime-receipt/emission-admission",
+      "evidence://receipt-store/activation",
+      "evidence://receipt-store/append-only-proof",
+      "evidence://receipt-store/idempotency-proof",
+      "evidence://receipt/digest",
+      "evidence://worker-failure-receipt-on-error",
+      "evidence://runtime-clock/trusted-now"
+    ],
+    "activation_obligations_checked": [
+      "receipt append must consume effect reconciliation witness evidence",
+      "receipt append must consume runtime receipt emission admission evidence",
+      "receipt append must consume receipt-store activation evidence",
+      "receipt append must prove append-only store behavior",
+      "receipt append must prove idempotency before any write",
+      "receipt append must bind receipt digest evidence",
+      "receipt append must preserve WorkerFailureReceipt obligation on error",
+      "receipt append must pass before terminal closure"
+    ],
+    "validation_refs": [
+      "scripts/validate_read_only_worker_receipt_append_witness.py",
+      "scripts/validate_read_only_worker_effect_reconciliation_witness.py",
+      "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+      "scripts/validate_read_only_worker_runtime_receipt_store_activation_witness.py",
+      "scripts/validate_schemas.py",
+      "scripts/validate_protocol_manifest.py",
+      "scripts/validate_sdlc_artifact.py",
+      "tests/test_validate_read_only_worker_receipt_append_witness.py"
+    ]
+  },
+  "activation_evaluation": {
+    "upstream_effect_reconciliation_witness_validated": true,
+    "upstream_runtime_receipt_emission_admission_witness_bound": true,
+    "upstream_runtime_receipt_store_activation_witness_bound": true,
+    "append_only_store_required": true,
+    "receipt_digest_required": true,
+    "idempotency_key_required": true,
+    "runtime_clock_required": true,
+    "worker_failure_receipt_required_on_error": true,
+    "receipt_append_required": true,
+    "mfidel_atomicity_preserved": true,
+    "active_runtime_lease_observed": false,
+    "uao_dispatch_authorization_performed": false,
+    "receipt_append_performed": false,
+    "runtime_dispatch_admission_performed": false,
+    "dispatch_admission_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "worker_invocation_allowed": false,
+    "runtime_receipt_emitted": false
+  },
+  "admission_decision": {
+    "decision": "RECEIPT_APPEND_WITNESS_BLOCKED_AWAITING_APPEND_EVIDENCE",
+    "uao_dispatch_authorized": false,
+    "phi_gov_dispatch_authorized": false,
+    "runtime_dispatch_admitted": false,
+    "terminal_closure_allowed": false,
+    "remaining_denied_until_refs": [
+      "evidence://worker/effect-reconciliation",
+      "evidence://runtime-receipt/emission-admission",
+      "evidence://receipt-store/activation",
+      "evidence://receipt-store/append-only-proof",
+      "evidence://receipt-store/idempotency-proof",
+      "evidence://receipt/digest",
+      "evidence://runtime-clock/trusted-now"
+    ],
+    "blocked_reason_refs": [
+      "blocked://effect-reconciliation/not-proven",
+      "blocked://runtime-receipt/emission-admission-missing",
+      "blocked://receipt-store/activation-missing",
+      "blocked://receipt-store/append-only-not-proven",
+      "blocked://receipt-store/idempotency-not-proven",
+      "blocked://receipt/digest-missing",
+      "blocked://runtime-clock/trusted-now-missing"
+    ],
+    "receipt_append_witness_defined": true
+  },
+  "receipt_refs": {
+    "read_only_worker_receipt_append_witness_schema": "schemas/read_only_worker_receipt_append_witness.schema.json",
+    "read_only_worker_effect_reconciliation_witness_schema": "schemas/read_only_worker_effect_reconciliation_witness.schema.json",
+    "read_only_worker_runtime_receipt_emission_admission_witness_schema": "schemas/read_only_worker_runtime_receipt_emission_admission_witness.schema.json",
+    "read_only_worker_runtime_receipt_store_activation_witness_schema": "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json",
+    "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json"
+  },
+  "contract_summary": {
+    "source_receipt_ref_count": 3,
+    "authorization_input_ref_count": 8,
+    "activation_obligation_count": 8,
+    "validation_ref_count": 8,
+    "activation_true_check_count": 10,
+    "activation_denied_check_count": 8,
+    "remaining_denied_until_ref_count": 7,
+    "blocked_reason_ref_count": 7,
+    "receipt_ref_count": 6,
+    "evidence_ref_count": 19
+  },
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "policy://worker-runtime/receipt-append-blocked",
+    "policy://receipt-store/append-only-required",
+    "gap://GAP-WORKER-001",
+    "gap://GAP-WORKER-002",
+    "gap://GAP-WORKER-003"
+  ],
+  "receipt_envelope": {
+    "uao_ref": "uao://read-only-worker-receipt-append-witness/foundation-repo-inspection/20260619",
+    "causal_decision_trace_ref": "trace://read-only-worker-receipt-append-witness/foundation-repo-inspection/20260619",
+    "receipt_ref": "receipt://read-only-worker-receipt-append-witness/foundation-repo-inspection/20260619"
+  },
+  "evidence_refs": [
+    "schemas/read_only_worker_receipt_append_witness.schema.json",
+    "examples/read_only_worker_receipt_append_witness.foundation.json",
+    "scripts/validate_read_only_worker_receipt_append_witness.py",
+    "tests/test_validate_read_only_worker_receipt_append_witness.py",
+    "schemas/read_only_worker_effect_reconciliation_witness.schema.json",
+    "examples/read_only_worker_effect_reconciliation_witness.foundation.json",
+    "scripts/validate_read_only_worker_effect_reconciliation_witness.py",
+    "tests/test_validate_read_only_worker_effect_reconciliation_witness.py",
+    "schemas/read_only_worker_runtime_receipt_emission_admission_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "schemas/read_only_worker_runtime_receipt_store_activation_witness.schema.json",
+    "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+    "scripts/validate_read_only_worker_runtime_receipt_store_activation_witness.py",
+    "tests/test_validate_read_only_worker_runtime_receipt_store_activation_witness.py",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/universal_action_orchestration.schema.json",
+    "docs/80_read_only_worker_binding_contract.md"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "runtime_note": "This witness defines the receipt append evidence boundary only. It does not admit dispatch, invoke a worker, emit receipts, append receipts, or close terminal evidence."
+  }
+}

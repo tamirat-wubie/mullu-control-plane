@@ -1643,6 +1643,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-phi-gov-dispatch-authorization-witness:1"
     },
     {
+      "path": "schemas/read_only_worker_receipt_append_witness.schema.json",
+      "schema_id": "read-only-worker-receipt-append-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-receipt-append-witness:1"
+    },
+    {
       "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
       "schema_id": "read-only-worker-rehearsal-receipt",
       "surface": "worker",

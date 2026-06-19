@@ -13,9 +13,9 @@ Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `56a810e6e47ed2aefb3cd8b4eab64ca2e8a0a218`
+Current `origin/main`: `6b7367a2f58070212f9c668524f8d23d4f2bc377`
 
-Open PRs after readiness-map refresh: PR #1989, PR #1987, PR #1986, and PR #1984 remain outside this map-only closure.
+Open PRs after readiness-map refresh: the live open PR queue remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -28,7 +28,7 @@ Open PRs after readiness-map refresh: PR #1989, PR #1987, PR #1986, and PR #1984
 | Worker effect reconciliation witness PR | READY | PR #1983 merged at `2026-06-19T16:32:05Z`, merge commit `92c0bf83841253ca395cf3d35259bab82715b79d`. |
 | Remote CI | READY | Build Verification, SDLC Governance Gate, Schema Validation, Gateway Closure and Witness Tests, Rust, TypeScript, Python compatibility, Python soak, MCOI shards, and GitHub App token boundary checks were green before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | PARTIAL | `gh pr list --state open` returned PR #1989, PR #1987, PR #1986, and PR #1984 after fetching `origin/main`; they are tracked outside this readiness-map-only closure and do not grant harness execution authority. |
+| Open PR queue | PARTIAL | `gh pr list --state open` returned PR #1992, PR #1991, PR #1986, and PR #1984 after fetching `origin/main` at refresh time; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
