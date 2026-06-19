@@ -28,7 +28,13 @@ if str(WORKSPACE_ROOT) not in sys.path:
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
-DEFAULT_SCHEMA_PATH = WORKSPACE_ROOT / "schemas" / "cdg_rccm_component_contract.schema.json"
+DEFAULT_SCHEMA_PATH = (
+    WORKSPACE_ROOT
+    / "mcoi"
+    / "mcoi_runtime"
+    / "convergence"
+    / "cdg_rccm_component_contract.schema.json"
+)
 DEFAULT_CONTRACT_PATH = WORKSPACE_ROOT / "examples" / "cdg_rccm_component_contract.foundation.json"
 EXPECTED_SCHEMA_ID = "urn:mullusi:schema:cdg-rccm-component-contract:1"
 EXPECTED_SCHEMA_TITLE = "CDG-RCCM Component Contract"
@@ -48,7 +54,7 @@ REQUIRED_FALSE_GUARDS = (
     "deployment_claimed",
 )
 REQUIRED_EVIDENCE_REFS = (
-    "schemas/cdg_rccm_component_contract.schema.json",
+    "mcoi/mcoi_runtime/convergence/cdg_rccm_component_contract.schema.json",
     "examples/cdg_rccm_component_contract.foundation.json",
     "scripts/validate_cdg_rccm_component_contract.py",
     "mcoi/tests/test_cdg_rccm_component_contract.py",
