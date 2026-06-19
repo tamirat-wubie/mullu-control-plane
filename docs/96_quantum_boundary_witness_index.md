@@ -2,8 +2,8 @@
 
 Purpose: anchor the Foundation Mode quantum witness chain in one review surface.
 Governance scope: OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS.
-Dependencies: `docs/93_universal_symbolic_quantum_capability_boundary.md`, `docs/94_non_live_openqasm_export_planning_witness.md`, `docs/95_non_live_local_quantum_simulator_boundary_witness.md`, and `scripts/validate_quantum_boundary_witnesses.py`.
-Invariants: planning only; read only; no live QPU execution; no simulator runtime execution; no OpenQASM or QIR source emission; no hardware credential access; no quantum job submission; no cryptanalysis execution; no result distribution claim; no quantum advantage claim; no production readiness claim; no terminal closure.
+Dependencies: `docs/93_universal_symbolic_quantum_capability_boundary.md`, `docs/94_non_live_openqasm_export_planning_witness.md`, `docs/95_non_live_local_quantum_simulator_boundary_witness.md`, `docs/97_non_live_quantum_fixture_catalog_witness.md`, and `scripts/validate_quantum_boundary_witnesses.py`.
+Invariants: planning only; read only; no live QPU execution; no simulator runtime execution; no OpenQASM or QIR source emission; no executable fixture generation; no simulator input generation; no hardware credential access; no quantum job submission; no cryptanalysis execution; no result distribution claim; no quantum advantage claim; no production readiness claim; no terminal closure.
 
 ## Witness Chain
 
@@ -11,6 +11,7 @@ Invariants: planning only; read only; no live QPU execution; no simulator runtim
 USQCA-PQE Foundation Mode Boundary
 -> non-live OpenQASM export planning witness
 -> non-live local quantum simulator boundary witness
+-> non-live deterministic fixture catalog witness
 -> aggregate quantum boundary witness validator
 -> reviewable non-execution proof surface
 ```
@@ -22,6 +23,7 @@ USQCA-PQE Foundation Mode Boundary
 | 1 | `universal_symbolic_quantum_capability_boundary` | Declares the governed quantum capability boundary. | `scripts/validate_universal_symbolic_quantum_capability_boundary.py` |
 | 2 | `non_live_openqasm_export_planning_witness` | Plans a future export path without source emission. | `scripts/validate_non_live_openqasm_export_planning_witness.py` |
 | 3 | `non_live_local_quantum_simulator_boundary_witness` | Plans a future tiny local simulator boundary without runtime invocation. | `scripts/validate_non_live_local_quantum_simulator_boundary_witness.py` |
+| 4 | `non_live_quantum_fixture_catalog_witness` | Plans deterministic symbolic fixtures without executable artifacts. | `scripts/validate_non_live_quantum_fixture_catalog_witness.py` |
 
 ## Aggregate Validation
 
@@ -46,6 +48,8 @@ live QPU execution
 simulator runtime execution
 OpenQASM source emission
 QIR source emission
+executable fixture generation
+simulator input generation
 simulator engine selection
 state-vector materialization
 measurement shot execution
@@ -66,4 +70,4 @@ The quantum boundary stack is valid only as a governed planning and witness surf
 
 ## Next Valid Action
 
-A later deterministic fixture catalog, OpenQASM exporter, or tiny local simulator must be introduced as a separate governed change with its own schema, validator, focused tests, resource ceiling evidence, isolation boundary, result-claim policy, and explicit operator authorization.
+A later executable fixture catalog, OpenQASM exporter, or tiny local simulator must be introduced as a separate governed change with its own schema, validator, focused tests, resource ceiling evidence, isolation boundary, result-claim policy, and explicit operator authorization.
