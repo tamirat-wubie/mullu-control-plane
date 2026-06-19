@@ -142,6 +142,24 @@ def _validate_logical_arity(expr: LogicalExpr, issues: list[StaticCheckIssue]) -
                 f"{expr.op.value}:{len(expr.args)}",
             )
         )
+        return
+    if expr.op is LogicalOp.NOT and len(expr.args) != 1:
+        issues.append(
+            StaticCheckIssue(
+                "invalid_logical_arity",
+                "not requires exactly one WHQR expression",
+                f"{expr.op.value}:{len(expr.args)}",
+            )
+        )
+        return
+    if expr.op in {LogicalOp.AND, LogicalOp.OR, LogicalOp.IFF, LogicalOp.XOR} and len(expr.args) < 2:
+        issues.append(
+            StaticCheckIssue(
+                "invalid_logical_arity",
+                f"{expr.op.value} requires at least two WHQR expressions",
+                f"{expr.op.value}:{len(expr.args)}",
+            )
+        )
 
 
 def _modality_key(node: WHQRNode) -> str:

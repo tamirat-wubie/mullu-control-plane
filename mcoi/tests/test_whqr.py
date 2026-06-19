@@ -49,6 +49,13 @@ def _node(target: str, role: WHRole = WHRole.WHAT) -> WHQRNode:
     return WHQRNode(role=role, target=target)
 
 
+def _forged_logical_expr(op: LogicalOp, args: tuple[WHQRNode, ...]) -> LogicalExpr:
+    expr = object.__new__(LogicalExpr)
+    object.__setattr__(expr, "op", op)
+    object.__setattr__(expr, "args", args)
+    return expr
+
+
 def test_contract_keeps_truth_norm_and_evidence_split() -> None:
     result = GateResult(
         truth=TruthGate.UNKNOWN,
@@ -742,6 +749,41 @@ def test_iff_and_xor_evaluator_resolve_declared_logical_operators() -> None:
     assert exclusive_unknown.evidence is EvidenceGate.UNPROVEN
 
 
+def test_evaluator_bounds_malformed_non_unary_logical_arity() -> None:
+    ctx = WHQREvaluationContext(
+        node_results={
+            "left": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
+        }
+    )
+    malformed = (
+        _forged_logical_expr(LogicalOp.AND, (_node("left"),)),
+        _forged_logical_expr(LogicalOp.OR, (_node("left"),)),
+        _forged_logical_expr(LogicalOp.IFF, (_node("left"),)),
+        _forged_logical_expr(LogicalOp.XOR, (_node("left"),)),
+        _forged_logical_expr(LogicalOp.IMPLIES, (_node("left"),)),
+    )
+    results = tuple(evaluate(expr, ctx) for expr in malformed)
+
+    assert tuple(result.truth for result in results) == (TruthGate.UNKNOWN,) * len(malformed)
+    assert tuple(result.evidence for result in results) == (EvidenceGate.UNPROVEN,) * len(malformed)
+    assert tuple(result.reason for result in results) == (
+        "invalid_logical_arity:and",
+        "invalid_logical_arity:or",
+        "invalid_logical_arity:iff",
+        "invalid_logical_arity:xor",
+        "invalid_logical_arity:implies",
+    )
+
+
+def test_logical_expr_contract_rejects_empty_args_before_evaluation() -> None:
+    with pytest.raises(ValueError, match="args must contain"):
+        LogicalExpr(op=LogicalOp.AND, args=())
+    with pytest.raises(ValueError, match="args must contain"):
+        LogicalExpr(op=LogicalOp.OR, args=())
+    with pytest.raises(ValueError, match="args must contain"):
+        LogicalExpr(op=LogicalOp.NOT, args=())
+
+
 def test_unresolved_negation_and_connector_behavior_are_bounded() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="not cannot apply"):
         evaluate(LogicalExpr(op=LogicalOp.NOT, args=(_node("missing"),)))
@@ -862,6 +904,21 @@ def test_static_checks_deny_invalid_implies_arity_before_policy_admission() -> N
     assert decision.reasons[0].code == "whqr_static_deny"
     assert decision.reasons[0].details["gate_reason"] == "invalid_logical_arity:implies"
     assert decision.reasons[0].details["static_issues"][0]["code"] == "invalid_logical_arity"
+
+
+def test_static_checks_deny_singleton_logical_arity() -> None:
+    malformed = (
+        _forged_logical_expr(LogicalOp.AND, (_node("actor_present"),)),
+        _forged_logical_expr(LogicalOp.OR, (_node("actor_present"),)),
+        _forged_logical_expr(LogicalOp.IFF, (_node("actor_present"),)),
+        _forged_logical_expr(LogicalOp.XOR, (_node("actor_present"),)),
+    )
+    reports = tuple(validate_static(expr) for expr in malformed)
+
+    assert tuple(report.passed for report in reports) == (False,) * len(malformed)
+    assert tuple(report.issues[0].code for report in reports) == ("invalid_logical_arity",) * len(malformed)
+    assert tuple(report.issues[0].target for report in reports) == ("and:1", "or:1", "iff:1", "xor:1")
+    assert all(report.issues[0].message.endswith("requires at least two WHQR expressions") for report in reports)
 
 
 def test_static_checks_detect_causal_cycles() -> None:
