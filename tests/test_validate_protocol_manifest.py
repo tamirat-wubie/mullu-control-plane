@@ -74,6 +74,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     replay_recovery_entry = entries[
         "governed-planning-profile-replay-recovery-witness"
     ]
+    terminal_closure_entry = entries[
+        "governed-planning-profile-terminal-closure-certificate"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -113,6 +116,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
     )
     assert replay_recovery_entry["surface"] == "planning"
+    assert terminal_closure_entry["path"] == (
+        "schemas/governed_planning_profile_terminal_closure_certificate.schema.json"
+    )
+    assert terminal_closure_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
+    )
+    assert terminal_closure_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:
