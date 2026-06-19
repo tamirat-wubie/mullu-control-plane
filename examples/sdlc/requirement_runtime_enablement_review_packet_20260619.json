@@ -1,0 +1,50 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_enablement_review_packet.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_review_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_enablement_review_packet",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-enable-review-packet/20260619",
+  "constraints": [
+    "Review packet must not accept submitted evidence.",
+    "Review packet must not grant runtime enablement authority.",
+    "Repo-local witness refs must not satisfy requested runtime enablement input names by themselves.",
+    "Missing operator approval, runtime disablement rollback plan, and trusted runtime clock evidence must remain explicit.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_runtime_enablement_review_packet.schema.json",
+    "examples/read_only_worker_runtime_enablement_review_packet.foundation.json",
+    "scripts/validate_read_only_worker_runtime_enablement_review_packet.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_review_packet.py"
+  ],
+  "non_goals": [
+    "Do not accept evidence.",
+    "Do not grant runtime enablement authority.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not claim terminal closure."
+  ],
+  "problem_statement": "Runtime enablement submitted refs were recorded for review, but there was no bounded review packet that marked repo-local refs reviewed while preserving missing evidence and authority denial.",
+  "receipt_ref": "examples/read_only_worker_runtime_enablement_review_packet.foundation.json",
+  "request_id": "runtime_enablement_review_packet_20260619",
+  "requirement_id": "sdlc_req_runtime_enablement_review_packet_20260619",
+  "risk_class": "high",
+  "success_criteria": [
+    "The review packet derives from submitted evidence refs.",
+    "The packet contains twelve review records, nine reviewed repo-local refs, and three missing input blockers.",
+    "Accepted evidence, rejected evidence, authority grants, runtime enablement, dispatch, worker invocation, receipt emission, receipt append, and terminal closure counts remain zero.",
+    "Focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-enable-review-packet/20260619"
+}

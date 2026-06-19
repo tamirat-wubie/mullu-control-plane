@@ -1739,6 +1739,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-submitted-evidence-refs:1"
     },
     {
+      "path": "schemas/read_only_worker_runtime_enablement_review_packet.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-review-packet",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-review-packet:1"
+    },
+    {
       "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
       "schema_id": "read-only-worker-runtime-receipt-candidate",
       "surface": "worker",

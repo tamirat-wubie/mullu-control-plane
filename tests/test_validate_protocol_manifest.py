@@ -2078,6 +2078,21 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_submitted
     assert evidence_refs_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_review_packet_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    review_packet_entry = entries["read-only-worker-runtime-enablement-review-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert review_packet_entry["path"] == (
+        "schemas/read_only_worker_runtime_enablement_review_packet.schema.json"
+    )
+    assert review_packet_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-enablement-review-packet:1"
+    )
+    assert review_packet_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
