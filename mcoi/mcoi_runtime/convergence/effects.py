@@ -11,7 +11,12 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Callable, Mapping
 
-from .contracts import EvidenceScope, ProjectionCertificate, SettlementLevel, stable_hash
+from .contracts import (
+    EvidenceScope,
+    ProjectionCertificate,
+    SettlementLevel,
+    stable_hash,
+)
 
 
 class EffectStatus(StrEnum):
@@ -42,7 +47,9 @@ class EffectPlan:
                 raise ValueError(f"{field_name} must be a non-empty string")
         if not isinstance(self.payload, Mapping):
             raise ValueError("payload must be a mapping")
-        if not self.authority_refs or any(type(ref) is not str or not ref for ref in self.authority_refs):
+        if not self.authority_refs or any(
+            type(ref) is not str or not ref for ref in self.authority_refs
+        ):
             raise ValueError("authority_refs must contain non-empty strings")
         if any(type(item) is not str or not item for item in self.preconditions):
             raise ValueError("preconditions must contain non-empty strings")
@@ -75,11 +82,16 @@ class WorldObservation:
     def __post_init__(self) -> None:
         if type(self.observation_id) is not str or not self.observation_id:
             raise ValueError("observation_id must be a non-empty string")
-        if not self.evidence_refs or any(type(ref) is not str or not ref for ref in self.evidence_refs):
+        if not self.evidence_refs or any(
+            type(ref) is not str or not ref for ref in self.evidence_refs
+        ):
             raise ValueError("evidence_refs must contain non-empty strings")
         if self.evidence_scope is not EvidenceScope.PHYSICALLY_VERIFIED:
             raise ValueError("world verification requires physically verified evidence")
-        if type(self.confidence) not in (int, float) or not 0.0 <= float(self.confidence) <= 1.0:
+        if (
+            type(self.confidence) not in (int, float)
+            or not 0.0 <= float(self.confidence) <= 1.0
+        ):
             raise ValueError("confidence must be between 0.0 and 1.0")
 
 
@@ -111,19 +123,37 @@ def issue_world_verified_certificate(
         rule_hash=closure_certificate.rule_hash,
         input_hash=closure_certificate.input_hash,
         dependency_certificate_ids=tuple(
-            dict.fromkeys((*closure_certificate.dependency_certificate_ids, closure_certificate.certificate_id))
+            dict.fromkeys(
+                (
+                    *closure_certificate.dependency_certificate_ids,
+                    closure_certificate.certificate_id,
+                )
+            )
         ),
         assumptions=closure_certificate.assumptions,
-        evidence_refs=tuple(dict.fromkeys((*closure_certificate.evidence_refs, *observation.evidence_refs))),
+        evidence_refs=tuple(
+            dict.fromkeys(
+                (*closure_certificate.evidence_refs, *observation.evidence_refs)
+            )
+        ),
         evidence_scope=EvidenceScope.PHYSICALLY_VERIFIED,
-        confidence=min(float(closure_certificate.confidence), float(observation.confidence)),
+        confidence=min(
+            float(closure_certificate.confidence),
+            float(observation.confidence),
+        ),
         value=observation.observed_value,
         audit_digest=stable_hash("cdg-world-audit", payload),
     )
 
 
 class ClosureGatedEffectCommitter:
-    """Idempotent effect committer that accepts only closure-certified work."""
+    """Idempotent effect committer that accepts only closure-certified work.
+
+    Pre-execution blockers are deliberately not cached. A caller may repair
+    missing closure or recovery evidence and retry the same idempotency key.
+    Once execution is attempted, its terminal receipt is cached so retries do
+    not duplicate the effect.
+    """
 
     def __init__(self) -> None:
         self._receipts_by_idempotency_key: dict[str, EffectReceipt] = {}
@@ -141,20 +171,32 @@ class ClosureGatedEffectCommitter:
         if existing is not None:
             return existing
         if not closure_certificate.valid:
-            return self._record_blocked(plan, closure_certificate, "closure_certificate_stale")
+            return self._blocked_receipt(
+                plan,
+                closure_certificate,
+                "closure_certificate_stale",
+            )
         if closure_certificate.level < SettlementLevel.CLOSURE_CERTIFIED:
-            return self._record_blocked(plan, closure_certificate, "closure_certificate_level_insufficient")
+            return self._blocked_receipt(
+                plan,
+                closure_certificate,
+                "closure_certificate_level_insufficient",
+            )
         if plan.irreversible and compensator is None:
-            return self._record_blocked(plan, closure_certificate, "irreversible_effect_requires_recovery_handler")
+            return self._blocked_receipt(
+                plan,
+                closure_certificate,
+                "irreversible_effect_requires_recovery_handler",
+            )
 
         try:
             execution_result = executor(plan)
-        except Exception as exc:
+        except Exception:
             receipt = self._receipt(
                 plan,
                 closure_certificate,
                 EffectStatus.RECOVERY_REQUIRED,
-                reason=f"effect_execution_fault:{type(exc).__name__}",
+                reason="effect_execution_fault",
             )
             self._receipts_by_idempotency_key[plan.idempotency_key] = receipt
             return receipt
@@ -190,14 +232,14 @@ class ClosureGatedEffectCommitter:
                     },
                     reason="effect_verification_failed_and_compensated",
                 )
-            except Exception as exc:
+            except Exception:
                 receipt = self._receipt(
                     plan,
                     closure_certificate,
                     EffectStatus.RECOVERY_REQUIRED,
                     execution_result=execution_result,
                     verification_result=verification_result,
-                    reason=f"effect_compensation_fault:{type(exc).__name__}",
+                    reason="effect_compensation_fault",
                 )
         else:
             receipt = self._receipt(
@@ -211,15 +253,18 @@ class ClosureGatedEffectCommitter:
         self._receipts_by_idempotency_key[plan.idempotency_key] = receipt
         return receipt
 
-    def _record_blocked(
+    def _blocked_receipt(
         self,
         plan: EffectPlan,
         certificate: ProjectionCertificate,
         reason: str,
     ) -> EffectReceipt:
-        receipt = self._receipt(plan, certificate, EffectStatus.BLOCKED, reason=reason)
-        self._receipts_by_idempotency_key[plan.idempotency_key] = receipt
-        return receipt
+        return self._receipt(
+            plan,
+            certificate,
+            EffectStatus.BLOCKED,
+            reason=reason,
+        )
 
     @staticmethod
     def _receipt(
