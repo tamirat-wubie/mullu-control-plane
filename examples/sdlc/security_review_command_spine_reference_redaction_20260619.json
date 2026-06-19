@@ -1,0 +1,58 @@
+{
+  "security_review_id": "sdlc_security_command_spine_reference_redaction_20260619",
+  "change_id": "sdlc_req_command_spine_reference_redaction_20260619",
+  "impact_categories": [
+    "secrets",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Command payload redaction must preserve governed metadata references needed for receipt correlation without preserving secret-derived strings. A broad metadata hash bypass could leak credential hashes or token-derived identifiers. The mitigation is an explicit metadata reference allowlist plus compound secret-name detection before any reference preservation is considered.",
+  "required_checks": [
+    {
+      "category": "secrets",
+      "check": "redaction test proves api_key, api_key_hash, password_hash, and nested intent api keys are masked",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_command_spine.py::test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capability_params"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proves goal_intake_preview_id and source_sender_id_hash metadata references remain stable",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_command_spine.py::test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capability_params"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check covers gateway command redaction behavior in the focused command-spine regression suite",
+      "status": "passed",
+      "evidence_ref": "python -m pytest tests/test_gateway/test_command_spine.py -q"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "finding_command_metadata_hash_bypass_20260619",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "replace broad metadata *_hash preservation with explicit reference-hash allowlist and compound secret field detection",
+      "evidence_refs": [
+        "gateway/command_spine.py::_is_secret_field",
+        "gateway/command_spine.py::_is_metadata_reference_field",
+        "tests/test_gateway/test_command_spine.py::test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capability_params"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "detect compound secret field names before preserving text",
+    "preserve only named metadata reference identifiers",
+    "preserve only explicitly allowed metadata reference hashes",
+    "cover secret-like hash fields and allowed planning references in the same regression test"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/command-spine-reference-redaction/20260619"
+  ],
+  "uao_ref": "uao://sdlc/security-review/command-spine-reference-redaction/20260619",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/command-spine-reference-redaction/20260619",
+  "receipt_ref": "receipt://sdlc/security-review/command-spine-reference-redaction/20260619"
+}

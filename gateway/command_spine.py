@@ -1253,6 +1253,19 @@ _SECRET_FIELD_NAMES = {
     "secret",
     "token",
 }
+_SECRET_FIELD_MARKERS = tuple(sorted(_SECRET_FIELD_NAMES, key=len, reverse=True))
+_REFERENCE_FIELD_NAMES = {
+    "goal_intake_preview_id",
+    "interpretation_receipt_id",
+    "plan_id",
+    "plan_step_id",
+    "preview_id",
+    "recovered_plan_id",
+    "recovery_witness_id",
+}
+_REFERENCE_HASH_FIELD_NAMES = {
+    "source_sender_id_hash",
+}
 
 
 def redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1304,7 +1317,7 @@ def _redact_payload_value(
             for child in value
         )
     if isinstance(value, str):
-        if preserve_text:
+        if preserve_text or _is_metadata_reference_field(field_name, path):
             return value
         return _redact_pii_text(value)
     return value
@@ -1320,7 +1333,19 @@ def _redact_pii_text(value: str) -> str:
 
 def _is_secret_field(field_name: str) -> bool:
     normalized = field_name.strip().lower().replace("-", "_")
-    return normalized in _SECRET_FIELD_NAMES
+    return normalized in _SECRET_FIELD_NAMES or any(
+        normalized.startswith(f"{marker}_")
+        or normalized.endswith(f"_{marker}")
+        or f"_{marker}_" in normalized
+        for marker in _SECRET_FIELD_MARKERS
+    )
+
+
+def _is_metadata_reference_field(field_name: str, path: tuple[str, ...]) -> bool:
+    if "metadata" not in path:
+        return False
+    normalized = field_name.strip().lower().replace("-", "_")
+    return normalized in _REFERENCE_FIELD_NAMES or normalized in _REFERENCE_HASH_FIELD_NAMES
 
 
 def _is_execution_params_path(path: tuple[str, ...]) -> bool:

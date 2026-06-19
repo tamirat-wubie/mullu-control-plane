@@ -96,6 +96,10 @@ def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capab
         "body": "Email owner@example.com, call +1 202-555-0199, ssn 123-45-6789, card 4111 1111 1111 1111.",
         "metadata": {
             "api_key": "sk-live-secret",
+            "api_key_hash": "sha256:credential-derived",
+            "goal_intake_preview_id": "plan-preview-3814958822923e26",
+            "password_hash": "sha256:password-derived",
+            "source_sender_id_hash": "3814958822923e26",
             "notes": ["backup@example.com"],
         },
         "capability_intent": {
@@ -126,6 +130,10 @@ def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capab
         "card [REDACTED:PAYMENT_CARD]."
     )
     assert redacted["metadata"]["api_key"] == "[REDACTED:SECRET]"
+    assert redacted["metadata"]["api_key_hash"] == "[REDACTED:SECRET]"
+    assert redacted["metadata"]["goal_intake_preview_id"] == "plan-preview-3814958822923e26"
+    assert redacted["metadata"]["password_hash"] == "[REDACTED:SECRET]"
+    assert redacted["metadata"]["source_sender_id_hash"] == "3814958822923e26"
     assert redacted["metadata"]["notes"] == ["[REDACTED:EMAIL]"]
     assert redacted["capability_intent"]["params"]["recipient"] == "owner@example.com"
     assert redacted["capability_intent"]["params"]["body"] == "Send the report to owner@example.com"
