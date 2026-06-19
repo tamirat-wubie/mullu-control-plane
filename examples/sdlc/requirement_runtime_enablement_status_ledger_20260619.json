@@ -1,0 +1,54 @@
+{
+  "requirement_id": "sdlc_req_runtime_enablement_status_ledger_20260619",
+  "request_id": "platform_runtime_enablement_status_ledger_20260619",
+  "problem_statement": "ReadOnlyWorkerRuntimeEnablementOperatorInputRequest names required runtime enablement evidence, but the workflow needs a read-only status ledger that records every requested input as unresolved without treating the ledger as evidence or authority.",
+  "success_criteria": [
+    "the status ledger schema validates with exactly twelve status records derived from the operator input request",
+    "the validator rejects evidence submission, evidence acceptance, authority drift, runtime enablement drift, dispatch drift, missing records, and summary drift",
+    "the ledger keeps runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector calls, secret serialization, and success claims denied"
+  ],
+  "non_goals": [
+    "do not submit evidence",
+    "do not accept or reject evidence",
+    "do not authorize runtime enablement",
+    "do not dispatch or invoke a worker",
+    "do not emit or append runtime receipts",
+    "do not claim terminal closure or runtime success"
+  ],
+  "constraints": [
+    "Foundation Mode remains local-first and witness-only",
+    "Mfidel atomicity must remain preserved",
+    "status records must be generated from the operator input request",
+    "all effect-bearing worker runtime actions remain blocked"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    ".github/workflows/ci.yml",
+    "docs/00_platform_overview.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/read_only_worker_runtime_enablement_evidence_request_status_ledger.foundation.json",
+    "examples/sdlc/design_runtime_enablement_status_ledger_20260619.json",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_runtime_enablement_evidence_request_status_ledger.schema.json",
+    "scripts/validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py",
+    "tests/test_validate_protocol_manifest.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "schema-backed status ledger fixture",
+    "operator input request projection",
+    "protocol manifest registration",
+    "focused pytest coverage"
+  ],
+  "uao_ref": "uao://read-only-worker-runtime-enablement-status-ledger/requirement/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-runtime-enablement-status-ledger/requirement/20260619",
+  "receipt_ref": "receipt://read-only-worker-runtime-enablement-status-ledger/requirement/20260619"
+}
