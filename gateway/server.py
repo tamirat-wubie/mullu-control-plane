@@ -2941,9 +2941,14 @@ def create_gateway_app(
             ) from exc
 
         proposal_payload = proposal.as_dict()
+        review_packet = proposal.as_review_packet(
+            generated_at=now,
+            reviewer_ref=req.requested_from_id,
+        )
         response: dict[str, Any] = {
             **envelope_payload,
             "approval_proposal": proposal_payload,
+            "approval_review_packet": review_packet,
             "approval_queue": PersonalAssistantApprovalQueue().read_model(),
             "clarification_bundle": clarification_payload,
             "outcome": "AwaitingEvidence",
@@ -3000,8 +3005,13 @@ def create_gateway_app(
             ) from exc
 
         proposal_payload = proposal.as_dict()
+        review_packet = proposal.as_review_packet(
+            generated_at=now,
+            reviewer_ref=req.approver_ref,
+        )
         response: dict[str, Any] = {
             "approval_proposal": proposal_payload,
+            "approval_review_packet": review_packet,
             "approval_queue": PersonalAssistantApprovalQueue().read_model(),
             "draft_ref": req.draft.draft_ref,
             "source_draft": {

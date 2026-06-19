@@ -1343,6 +1343,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1"
     },
     {
+      "path": "schemas/personal_assistant_approval_review_packet.schema.json",
+      "schema_id": "personal-assistant-approval-review-packet",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-approval-review-packet:1"
+    },
+    {
       "path": "schemas/personal_assistant_approval_queue.schema.json",
       "schema_id": "personal-assistant-approval-queue",
       "surface": "approval",

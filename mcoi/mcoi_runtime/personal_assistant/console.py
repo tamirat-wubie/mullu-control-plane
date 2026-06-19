@@ -128,17 +128,21 @@ _FOUNDATION_LANES = (
         "route_refs": [
             "/api/v1/personal-assistant/approval-queue",
             "/api/v1/personal-assistant/approval-queue/preview",
+            "/api/v1/personal-assistant/approval-proposals/preview",
             "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
         ],
         "schema_refs": [
             "schemas/personal_assistant_approval.schema.json",
             "schemas/personal_assistant_approval_queue.schema.json",
             "schemas/personal_assistant_approval_decision.schema.json",
+            "schemas/personal_assistant_approval_review_packet.schema.json",
         ],
         "validator_refs": [
             "scripts/validate_personal_assistant_approval_queue.py",
             "scripts/validate_personal_assistant_approval_decision.py",
+            "scripts/validate_personal_assistant_approval_review_packet.py",
             "tests/test_personal_assistant_approval_queue.py",
+            "tests/test_validate_personal_assistant_approval_review_packet.py",
         ],
     },
     {

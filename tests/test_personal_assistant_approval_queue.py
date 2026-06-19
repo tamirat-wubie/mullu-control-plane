@@ -40,6 +40,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVAL_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval.schema.json"
+APPROVAL_REVIEW_PACKET_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval_review_packet.schema.json"
 APPROVAL_QUEUE_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_approval_queue.schema.json"
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 CREATED_AT = "2026-06-14T00:00:00+00:00"
@@ -233,6 +234,10 @@ def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
         envelope.plan,
         approval_scope=ApprovalScope.PER_RECIPIENT,
     )
+    review_packet = proposal.as_review_packet(
+        generated_at=CREATED_AT,
+        reviewer_ref="operator:tamirat",
+    )
     queue = PersonalAssistantApprovalQueue()
     record = queue.enqueue(
         **proposal.as_enqueue_kwargs(
@@ -241,6 +246,18 @@ def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
         )
     )
 
+    assert _validate_schema_instance(_load_schema(APPROVAL_REVIEW_PACKET_SCHEMA_PATH), review_packet) == []
+    assert review_packet["review_state"] == "preview_only"
+    assert review_packet["effect_boundary"]["execution_allowed"] is False
+    assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert "confirm_external_recipient_or_target_scope" in review_packet["required_operator_checks"]
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "execution",
+        "approval_enqueue",
+        "connector_mutation",
+        "memory_write",
+        "external_send",
+    }
     assert proposal.execution_allowed is False
     assert proposal.approval_matrix_ref == "personal_assistant_approval_matrix.foundation.v1"
     assert proposal.risk_level is SkillRiskLevel.P4
@@ -274,6 +291,10 @@ def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> Non
         created_at=CREATED_AT,
     )
     proposal = prepare_approval_proposal_from_plan(envelope.plan)
+    review_packet = proposal.as_review_packet(
+        generated_at=CREATED_AT,
+        reviewer_ref="operator:tamirat",
+    )
     queue = PersonalAssistantApprovalQueue()
     record = queue.enqueue(
         **proposal.as_enqueue_kwargs(
@@ -284,6 +305,12 @@ def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> Non
 
     assert envelope.plan["mode"] == "blocked"
     assert proposal.risk_level is SkillRiskLevel.P5
+    assert _validate_schema_instance(_load_schema(APPROVAL_REVIEW_PACKET_SCHEMA_PATH), review_packet) == []
+    assert "confirm_money_legal_public_deployment_boundary_blocked" in review_packet["required_operator_checks"]
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "money_legal_public_action",
+        "deployment_mutation",
+    }
     assert proposal.proposed_actions[0].skill_id == "deployment.publish.review"
     assert "deploy_service" in proposal.forbidden_without_approval
     assert "publish" in proposal.forbidden_without_approval
