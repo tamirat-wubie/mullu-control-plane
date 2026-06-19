@@ -77,6 +77,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     terminal_closure_entry = entries[
         "governed-planning-profile-terminal-closure-certificate"
     ]
+    runtime_authorization_request_entry = entries[
+        "governed-planning-profile-runtime-authorization-request"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -123,6 +126,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
     )
     assert terminal_closure_entry["surface"] == "planning"
+    assert runtime_authorization_request_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_request.schema.json"
+    )
+    assert runtime_authorization_request_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-request:1"
+    )
+    assert runtime_authorization_request_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:
