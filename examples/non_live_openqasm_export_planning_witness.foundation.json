@@ -118,5 +118,5 @@
     "No quantum job is submitted.",
     "No result distribution or quantum advantage is claimed."
   ],
-  "next_action": "Review this planning witness before proposing a separate governed exporter implementation."
+  "next_action": "Review alongside the non-live local quantum simulator boundary witness before proposing a separate governed exporter implementation."
 }

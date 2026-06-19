@@ -107,5 +107,5 @@
     "No quantum result distribution has been observed.",
     "No quantum advantage is claimed."
   ],
-  "next_action": "Review the separate non-live OpenQASM export planning witness before any exporter implementation."
+  "next_action": "Review the separate non-live OpenQASM and local simulator planning witnesses before any exporter or simulator implementation."
 }

@@ -43,4 +43,4 @@ required_gates:
   - BackendIndependenceGate
   - NoExecutionAuthorityGate
   - WitnessLedgerGate
-next_action: Review the non-live OpenQASM export planning witness before any exporter implementation.
+next_action: Review alongside the non-live local quantum simulator boundary witness before any exporter or simulator implementation.

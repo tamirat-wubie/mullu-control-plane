@@ -94,4 +94,4 @@ WitnessLedgerGate
 
 ## Next Valid Action
 
-Review the planning witness. A later exporter implementation must be a separate governed change with source-emission authority, exporter tests, resource honesty evidence, and a no-execution boundary.
+Review this planning witness alongside `docs/95_non_live_local_quantum_simulator_boundary_witness.md`. A later exporter implementation must be a separate governed change with source-emission authority, exporter tests, resource honesty evidence, and a no-execution boundary.

@@ -1775,6 +1775,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "non-live-local-quantum-simulator-boundary-witness",
+      "path": "schemas/non_live_local_quantum_simulator_boundary_witness.schema.json",
+      "urn": "urn:mullusi:schema:non-live-local-quantum-simulator-boundary-witness:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",
