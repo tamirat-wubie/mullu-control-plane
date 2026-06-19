@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-authority-coverage-e65886963c80beaa",
+  "receipt_id": "personal-assistant-authority-coverage-ff6ddef1e2a65362",
   "schema_version": "personal_assistant.authority_coverage_receipt.v1",
-  "generated_at": "2026-06-19T16:39:50Z",
+  "generated_at": "2026-06-19T18:45:43Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,

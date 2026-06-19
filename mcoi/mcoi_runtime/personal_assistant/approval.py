@@ -194,6 +194,47 @@ class ApprovalPlanProposal:
             "approval_is_execution": False,
         }
 
+    def as_review_packet(self, *, generated_at: str, reviewer_ref: str) -> dict[str, Any]:
+        """Return an operator-facing no-effect review packet for this proposal."""
+        generated_at = _require_text(generated_at, "generated_at")
+        reviewer_ref = _require_text(reviewer_ref, "reviewer_ref")
+        return {
+            "schema_version": "personal_assistant.approval_review_packet.v1",
+            "review_packet_id": f"pa_approval_review_{_plan_suffix(self.plan_id)}",
+            "request_id": self.request_id,
+            "plan_id": self.plan_id,
+            "generated_at": generated_at,
+            "reviewer_ref": reviewer_ref,
+            "risk_level": self.risk_level.value,
+            "approval_scope": self.approval_scope.value,
+            "review_state": "preview_only",
+            "proposed_actions": [action.as_dict() for action in self.proposed_actions],
+            "forbidden_without_approval": list(self.forbidden_without_approval),
+            "evidence_refs": list(self.evidence_refs),
+            "required_operator_checks": _review_required_checks(self.risk_level),
+            "authority_denials": _review_authority_denials(self.risk_level),
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "approval_enqueued": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+                "money_legal_public_action_allowed": False,
+            },
+            "metadata": {
+                "foundation_only": True,
+                "approval_matrix_ref": self.approval_matrix_ref,
+                "approval_packet_is_execution": False,
+                "review_packet_is_execution": False,
+                "live_nested_mind_activation_allowed": False,
+                "customer_readiness_claim_allowed": False,
+            },
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class ApprovalQueueRecord:
@@ -769,6 +810,71 @@ def _approval_metadata(
     if revision_request:
         metadata["revision_request"] = revision_request
     return metadata
+
+
+def _review_required_checks(risk_level: SkillRiskLevel) -> list[str]:
+    checks = [
+        "confirm_request_identity",
+        "confirm_plan_identity",
+        "confirm_proposed_action_scope",
+        "confirm_evidence_refs_present",
+        "confirm_forbidden_actions_remain_unexecuted",
+        "confirm_receipt_required",
+    ]
+    if risk_level.order >= SkillRiskLevel.P4.order:
+        checks.append("confirm_external_recipient_or_target_scope")
+    if risk_level is SkillRiskLevel.P5:
+        checks.append("confirm_money_legal_public_deployment_boundary_blocked")
+    return checks
+
+
+def _review_authority_denials(risk_level: SkillRiskLevel) -> list[dict[str, str | bool]]:
+    denials = [
+        (
+            "execution",
+            "Approval review packets are no-effect previews and cannot execute proposed actions.",
+        ),
+        (
+            "approval_enqueue",
+            "Approval review packets do not enqueue approval records without an explicit queue action.",
+        ),
+        (
+            "connector_mutation",
+            "Connector mutation remains blocked until a future approved execution gate exists.",
+        ),
+        (
+            "memory_write",
+            "Memory writes remain blocked; review packets are evidence projections only.",
+        ),
+    ]
+    if risk_level.order >= SkillRiskLevel.P4.order:
+        denials.append(
+            (
+                "external_send",
+                "External communication remains blocked until a separate approved execution path exists.",
+            )
+        )
+    if risk_level is SkillRiskLevel.P5:
+        denials.extend(
+            (
+                (
+                    "money_legal_public_action",
+                    "Money, legal, public, deployment, and customer-impacting actions remain blocked.",
+                ),
+                (
+                    "deployment_mutation",
+                    "Deployment mutation remains blocked in Foundation Mode.",
+                ),
+            )
+        )
+    return [
+        {
+            "authority": authority,
+            "denied": True,
+            "reason": reason,
+        }
+        for authority, reason in denials
+    ]
 
 
 def _decision_actions_taken(decision: ApprovalDecision) -> tuple[str, ...]:
