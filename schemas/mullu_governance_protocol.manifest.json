@@ -1025,6 +1025,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-observation-receipt:1"
     },
     {
+      "path": "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+      "schema_id": "governed-planning-profile-runtime-promotion-approval-packet",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",
