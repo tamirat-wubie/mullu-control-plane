@@ -1,0 +1,50 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_runtime_promotion_approval_packet_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_promotion_approval_packet_20260619",
+  "architecture_summary": "Add a local validator/emitter that binds the deterministic GovernedPlanningProfile operator shadow-pilot observation receipt to a no-effect runtime-promotion approval evidence packet. The packet records approval criteria only; no runtime module imports it and no authority state changes.",
+  "affected_modules": [
+    "governed_planning_profile_lineage",
+    "schema_protocol_manifest",
+    "ci_root_coverage_policy",
+    "sdlc_artifact_lineage",
+    "planning_architecture_documentation"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileRuntimePromotionApprovalPacket fields for source observation receipt identity, passed approval criteria, per-scenario approval summaries, satisfied and remaining promotion gates, authority denials, validators, and deterministic packet hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py, schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json, the local approval packet fixture, focused tests, manifest entries, documentation additions, CI binding, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because no router, worker, dispatch, write, connector, scheduler, or registration surface is added.",
+  "migration_plan": "No runtime migration. Existing profiles, shadow dossiers, evidence requests, observation receipts, admission reports, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The approval packet is regenerated from the current deterministic observation receipt.",
+  "test_plan": [
+    "python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-promotion-approval-packet/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-promotion-approval-packet/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-promotion-approval-packet/design/20260619"
+}
