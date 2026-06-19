@@ -39,7 +39,7 @@
     "mcoi/mcoi_runtime/convergence",
     "mcoi/tests/test_recursive_convergence_kernel.py",
     "mcoi/tests/test_cdg_rccm_component_contract.py",
-    "schemas/cdg_rccm_component_contract.schema.json",
+    "mcoi/mcoi_runtime/convergence/cdg_rccm_component_contract.schema.json",
     "examples/cdg_rccm_component_contract.foundation.json",
     "scripts/validate_cdg_rccm_component_contract.py",
     "docs/CDG_RCCM_RECURSIVE_CONVERGENCE_KERNEL.md",
