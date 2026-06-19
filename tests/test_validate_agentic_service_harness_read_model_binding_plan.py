@@ -119,15 +119,15 @@ def test_readiness_map_rejects_missing_approval_ready_row(tmp_path: Path) -> Non
     assert "missing ready row: ApprovalRequest projection binding" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_receipt_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_sandbox_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(receipts): add dry-run run receipt emitter`",
             "1. `harness(sandbox): bind temporary branch workspace preflight`",
+            "1. `harness(github): add read-only repo task intake`",
         ),
         encoding="utf-8",
     )
@@ -136,7 +136,7 @@ def test_readiness_map_rejects_missing_receipt_first_pr(tmp_path: Path) -> None:
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: dry-run run receipt emitter" in serialized_errors
+    assert "missing first next PR: temporary branch workspace preflight" in serialized_errors
 
 
 def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
@@ -146,7 +146,7 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Current `origin/main`: `6b7367a2f58070212f9c668524f8d23d4f2bc377`",
+            "Current `origin/main`: `5c77e4f7d43e9b7423b20f5f9fb965745b1c7d20`",
             "Current `origin/main`: `short-ref`",
         ),
         encoding="utf-8",
@@ -166,7 +166,7 @@ def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) ->
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Open PRs after readiness-map refresh: the live open PR queue remains outside this map-only closure.",
+            "Open PRs after readiness-map refresh: the live open PR queue includes draft PR #2012 only; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.",
             "Open PRs after readiness-map refresh: none.",
         ),
         encoding="utf-8",
