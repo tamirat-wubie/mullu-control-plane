@@ -115,7 +115,7 @@
         "no_dead_component_action_required"
       ],
       "request_path_count": 1,
-      "route_count": 1,
+      "route_count": 2,
       "signals": [
         "no_dependent_components"
       ]

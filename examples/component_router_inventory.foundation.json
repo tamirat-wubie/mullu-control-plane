@@ -132,14 +132,17 @@
       "can_enable_live_action": false,
       "component_id": "inceptadive_shadow",
       "expected_routes": [
-        "/api/v1/console/shadow"
+        "/api/v1/console/shadow",
+        "/api/v1/shadow/inspect"
       ],
-      "notes": "InceptaDive shadow is bound only to its console posture route.",
+      "notes": "InceptaDive shadow is bound to its console posture route and bounded advisory inspection route; neither binding grants execution authority.",
       "proof_surface_ids": [
+        "inceptadive_shadow_inspection_routes",
         "operator_console_read_models"
       ],
       "route_prefixes": [
-        "/api/v1/console/shadow"
+        "/api/v1/console/shadow",
+        "/api/v1/shadow"
       ]
     },
     {
@@ -1676,6 +1679,31 @@
         "/api/v1/console/note-memory"
       ],
       "surface_id": "operator_console_read_models"
+    },
+    {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "inceptadive_shadow"
+      ],
+      "component_lane": "assistant_product_core",
+      "declared_route_count": 1,
+      "notes": "Route family classification records InceptaDive advisory inspection ownership only; it does not grant route execution authority.",
+      "sample_routes": [
+        "/api/v1/shadow/inspect"
+      ],
+      "surface_id": "inceptadive_shadow_inspection_routes"
     },
     {
       "binding_level": "platform_family_classified",

@@ -13,12 +13,17 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+import os
+from typing import Any, Mapping, Sequence
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.cognitive_planning_integration import planning_context_for
+from mcoi_runtime.app.inceptadive_shadow_integration import (
+    InceptaDiveShadowRuntime,
+    build_inceptadive_shadow_runtime,
+)
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.assistant_kernel import (
@@ -34,6 +39,8 @@ from mcoi_runtime.assistant_kernel import (
     team_ops_shared_inbox_closure_contract,
     team_ops_shared_inbox_goal,
 )
+from mcoi_runtime.core.inceptadive_shadow_hooks import run_planning_shadow_hook
+from mcoi_runtime.core.inceptadive_shadow_types import ShadowSeverity
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.personal_assistant import (
     PersonalAssistantInvariantError,
@@ -195,6 +202,15 @@ def preview_personal_assistant_request(req: PersonalAssistantPreviewRequest):
             ),
             receipts=(envelope.receipt,),
         )
+    response["inceptadive_shadow_advisory"] = _inceptadive_shadow_advisory(
+        request_id=str(envelope.request["request_id"]),
+        user_input=req.user_request,
+        normal_intent=str(envelope.request.get("user_goal", "")),
+        plan_steps=_personal_assistant_plan_steps(envelope.plan),
+        explicit_target="personal_assistant_preview",
+        scope=req.interface,
+        created_at=now,
+    )
     return response
 
 
@@ -242,6 +258,19 @@ def compile_finance_ops_assistant_plan(req: FinanceOpsAssistantPlanRequest):
         "outcome": "AwaitingEvidence" if plan.blocked else "SolvedUnverified",
         "governed": True,
     }
+    response["inceptadive_shadow_advisory"] = _inceptadive_shadow_advisory(
+        request_id=_assistant_shadow_request_id("finance-ops", plan.plan_id),
+        user_input="compile FinanceOps invoice payment plan"
+        + (" with approval evidence" if req.consent_evidence_refs else ""),
+        normal_intent="finance_ops_invoice_payment",
+        plan_steps=tuple(step.capability_id for step in plan.steps),
+        explicit_target="finance_ops_invoice_payment_plan",
+        scope=req.tenant_id,
+        risk_level=ShadowSeverity.HIGH if plan.steps else ShadowSeverity.MEDIUM,
+        external_side_effect=True,
+        retrieval_receipt_ids=tuple(req.consent_evidence_refs),
+        created_at=now,
+    )
     if cognitive_context is not None:
         response["cognitive_planning_context"] = cognitive_context
     return response
@@ -293,6 +322,19 @@ def compile_team_ops_assistant_plan(req: TeamOpsAssistantPlanRequest, request: R
         "outcome": "AwaitingEvidence" if plan.blocked else "SolvedUnverified",
         "governed": True,
     }
+    response["inceptadive_shadow_advisory"] = _inceptadive_shadow_advisory(
+        request_id=_assistant_shadow_request_id("team-ops", plan.plan_id),
+        user_input="compile TeamOps shared inbox external message plan"
+        + (" with approval evidence" if req.consent_evidence_refs else ""),
+        normal_intent="team_ops_shared_inbox",
+        plan_steps=tuple(step.capability_id for step in plan.steps),
+        explicit_target="team_ops_shared_inbox_plan",
+        scope=req.tenant_id,
+        risk_level=ShadowSeverity.HIGH if plan.steps else ShadowSeverity.MEDIUM,
+        external_side_effect=True,
+        retrieval_receipt_ids=tuple(req.consent_evidence_refs),
+        created_at=now,
+    )
     if cognitive_context is not None:
         response["cognitive_planning_context"] = cognitive_context
     return response
@@ -360,6 +402,81 @@ def _operator_queue_item(
     if cognitive_context is not None:
         item["cognitive_planning_context"] = cognitive_context
     return item
+
+
+def _inceptadive_shadow_advisory(
+    *,
+    request_id: str,
+    user_input: str,
+    plan_steps: Sequence[str],
+    normal_intent: str = "",
+    explicit_target: str = "",
+    scope: str = "",
+    risk_level: ShadowSeverity = ShadowSeverity.LOW,
+    external_side_effect: bool = False,
+    memory_contradiction: bool = False,
+    retrieval_receipt_ids: Sequence[str] = (),
+    created_at: str,
+) -> dict[str, Any]:
+    """Return redacted non-executing InceptaDive metadata for assistant responses."""
+
+    try:
+        outcome = run_planning_shadow_hook(
+            _inceptadive_shadow_runtime(),
+            request_id=request_id,
+            user_input=user_input,
+            plan_steps=plan_steps,
+            normal_intent=normal_intent,
+            explicit_target=explicit_target,
+            scope=scope,
+            risk_level=risk_level,
+            external_side_effect=external_side_effect,
+            memory_contradiction=memory_contradiction,
+            retrieval_receipt_ids=tuple(str(ref).strip() for ref in retrieval_receipt_ids if str(ref).strip()),
+            created_at=created_at,
+        )
+        return outcome.to_dict()
+    except Exception as exc:  # noqa: BLE001 - advisory must not perturb assistant response
+        return {
+            "status": "unavailable",
+            "error_code": "inceptadive_shadow_advisory_unavailable",
+            "error_type": type(exc).__name__,
+            "governance_required": True,
+            "execution_authority": False,
+            "raw_request_text_exposed": False,
+            "private_memory_exposed": False,
+            "created_at": created_at,
+        }
+
+
+def _inceptadive_shadow_runtime() -> InceptaDiveShadowRuntime:
+    try:
+        runtime = deps.get("inceptadive_shadow_runtime")
+    except RuntimeError:
+        return build_inceptadive_shadow_runtime(os.environ)
+    if isinstance(runtime, InceptaDiveShadowRuntime):
+        return runtime
+    return build_inceptadive_shadow_runtime(os.environ)
+
+
+def _assistant_shadow_request_id(surface: str, plan_id: str) -> str:
+    return "assistant_shadow_" + stable_identifier(
+        "assistant-shadow-planning",
+        {"surface": surface, "plan_id": plan_id},
+    )
+
+
+def _personal_assistant_plan_steps(plan: Mapping[str, Any]) -> tuple[str, ...]:
+    steps = plan.get("steps", ())
+    if not isinstance(steps, Sequence) or isinstance(steps, (str, bytes)):
+        return ()
+    labels: list[str] = []
+    for step in steps:
+        if isinstance(step, Mapping):
+            skill_id = str(step.get("skill_id", "")).strip()
+            if skill_id:
+                labels.append(skill_id)
+    return tuple(labels)
 
 
 def _personal_assistant_request_id(user_request: str, submitted_at: str, interface: str) -> str:

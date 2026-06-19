@@ -240,7 +240,7 @@
     "live_action_ready": false,
     "preview_available": true,
     "proof_bound_component_count": 5,
-    "route_count": 28,
+    "route_count": 29,
     "simulation_count": 3
   },
   "terminal_closure_required": true,

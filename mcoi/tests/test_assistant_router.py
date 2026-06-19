@@ -14,6 +14,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_shadow_runtime
 from mcoi_runtime.app.routers import assistant as assistant_router_module
 from mcoi_runtime.app.routers.assistant import router
 from mcoi_runtime.app.routers.deps import deps
@@ -146,6 +147,9 @@ def test_personal_assistant_preview_compiles_inbox_request_without_execution() -
     assert body["clarification_bundle"]["clarification_count"] == 0
     assert body["effect_boundary"]["external_send_allowed"] is False
     assert body["console_read_model"]["effect_boundary"]["execution_allowed"] is False
+    assert body["inceptadive_shadow_advisory"]["execution_authority"] is False
+    assert body["inceptadive_shadow_advisory"]["raw_request_text_exposed"] is False
+    assert body["inceptadive_shadow_advisory"]["private_memory_exposed"] is False
 
 
 def test_personal_assistant_preview_blocks_unknown_request_with_whqr_step() -> None:
@@ -168,6 +172,9 @@ def test_personal_assistant_preview_blocks_unknown_request_with_whqr_step() -> N
     assert body["plan"]["steps"][0]["skill_id"] == "personal_assistant.clarification.request"
     assert body["receipt"]["decision"] == "blocked"
     assert "plan_execution_blocked_until_clarification" in body["receipt"]["actions_not_taken"]
+    assert body["inceptadive_shadow_advisory"]["stage"] == "planning"
+    assert body["inceptadive_shadow_advisory"]["governance_required"] is True
+    assert body["inceptadive_shadow_advisory"]["execution_authority"] is False
 
 
 def test_personal_assistant_preview_fails_closed_on_invalid_request() -> None:
@@ -224,6 +231,36 @@ def test_finance_ops_plan_with_consent_projects_dispatch_ready_controls() -> Non
     assert body["plan"]["closure_contract"]["two_confirmation_required"] is True
     assert "signed_evidence_bundle_exists" in body["goal"]["required_closure_predicates"]
     assert any(step["capability_id"] == "payment.execute.with_approval" for step in body["plan"]["steps"])
+    assert body["inceptadive_shadow_advisory"]["execution_authority"] is False
+    assert body["inceptadive_shadow_advisory"]["governance_required"] is True
+    assert body["inceptadive_shadow_advisory"]["receipt_id"].startswith("shadow-receipt-")
+    assert "approval:finance-owner" not in str(body["inceptadive_shadow_advisory"])
+
+
+def test_finance_ops_plan_records_inceptadive_shadow_advisory_history() -> None:
+    client = _client()
+    runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1"})
+    deps.set("inceptadive_shadow_runtime", runtime)
+
+    response = client.post(
+        "/api/v1/assistant/finance-ops/plans",
+        json=_active_consent_plan_request(),
+    )
+    body = response.json()
+    results, receipts = runtime.recent_activity(limit=5)
+
+    assert response.status_code == 200
+    assert body["inceptadive_shadow_advisory"]["status"] in {
+        "advisory",
+        "block_recommended",
+        "deep_required",
+        "repair_required",
+    }
+    assert len(results) == 1
+    assert len(receipts) == 1
+    assert results[0].to_dict()["execution_authority"] is False
+    assert receipts[0].to_dict()["execution_authority"] is False
+    assert "approval:finance-owner" not in str(body["inceptadive_shadow_advisory"])
 
 
 def test_team_ops_plan_blocks_without_active_external_send_consent() -> None:
