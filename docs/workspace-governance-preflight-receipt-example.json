@@ -1,5 +1,5 @@
 {
-  "check_count": 250,
+  "check_count": 251,
   "checks": [
     {
       "args": [
@@ -321,6 +321,19 @@
         "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_live_evidence.py"
       ],
       "name": "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate.py"
+      ],
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
       "passed": true,
       "return_code": 0,
       "stderr": "",
@@ -3305,7 +3318,7 @@
       "termination_signal": null
     }
   ],
-  "generated_at_epoch": 1781889421.8914437,
+  "generated_at_epoch": 1781889672.4034796,
   "receipt_id": "workspace_governance_preflight_receipt",
   "receipt_is_not_terminal_closure": true,
   "status": "passed",

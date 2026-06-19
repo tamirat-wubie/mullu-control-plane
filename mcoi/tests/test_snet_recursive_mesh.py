@@ -318,6 +318,10 @@ def test_answer_map_rejects_shape_drift_and_empty_wh_answers() -> None:
     second_seed = second_mesh.add_symbol("Second seed", symbol_type="physical_biological_object")
     with pytest.raises(ValueError, match="must be a non-empty string"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "   "})
+    with pytest.raises(ValueError, match="no leading or trailing whitespace"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: " Seed"})
+    with pytest.raises(ValueError, match="no leading or trailing whitespace"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "Seed "})
     with pytest.raises(ValueError, match="WH answer key"):
         second_mesh.run_tick_with_answers(second_seed.symbol_id, {TextSubclass("what"): "Seed"})
     with pytest.raises(ValueError, match="must be a non-empty string"):

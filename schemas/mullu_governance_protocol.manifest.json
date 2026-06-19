@@ -89,6 +89,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-repository-effect-rollback-plan-witness:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_candidate.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-candidate",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-candidate:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
       "surface": "runtime",
