@@ -1,0 +1,144 @@
+{
+  "receipt_id": "universal-symbol-receipt-store-replacement-decision-receipt-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "receipt_scope": "foundation-mode-universal-symbol-receipt-store-replacement-decision",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "replacement_decision": "blocked_pending_superseded_decision_replacement_decision_scope_revocation_audit_and_delta_reject_evidence",
+  "replacement_decision_receipt_is_not_decision_authority": true,
+  "replacement_requirements": [
+    {
+      "requirement_id": "requirement://superseded-approval-decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval-decision://universal-symbol/receipt-store/superseded",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-superseded-approval-decision-missing"
+    },
+    {
+      "requirement_id": "requirement://replacement-approval-decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval-decision://universal-symbol/receipt-store/replacement",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-approval-decision-missing"
+    },
+    {
+      "requirement_id": "requirement://replacement-reason",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "reason://universal-symbol/receipt-store/replacement-decision",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-reason-missing"
+    },
+    {
+      "requirement_id": "requirement://scope-equivalence",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "scope://universal-symbol/receipt-store/replacement-equivalence",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-scope-equivalence-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-continuity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "tenant://universal-symbol/receipt-store/replacement-continuity",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-tenant-continuity-missing"
+    },
+    {
+      "requirement_id": "requirement://revocation-link",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "revocation://universal-symbol/receipt-store/replacement-link",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-revocation-link-missing"
+    },
+    {
+      "requirement_id": "requirement://lifecycle-audit-link",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "audit://universal-symbol/receipt-store/replacement-lifecycle",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-lifecycle-audit-link-missing"
+    },
+    {
+      "requirement_id": "requirement://delta-reject-ledger",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "delta-reject://universal-symbol/receipt-store/replacement-ledger",
+      "current_decision": "replacement_decision_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-delta-reject-ledger-missing"
+    }
+  ],
+  "authority_denials": {
+    "replacement_decision_recorded": false,
+    "receipt_store_approval_decision_recorded": false,
+    "receipt_store_revocation_recorded": false,
+    "receipt_store_lifecycle_audit_recorded": false,
+    "receipt_store_append_performed": false,
+    "receipt_store_write_path_registered": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "replacement_constraints": {
+    "superseded_approval_decision_required": true,
+    "replacement_approval_decision_required": true,
+    "replacement_reason_required": true,
+    "scope_equivalence_required": true,
+    "tenant_continuity_required": true,
+    "revocation_link_required": true,
+    "lifecycle_audit_link_required": true,
+    "delta_reject_ledger_required": true
+  },
+  "rejection_policy": {
+    "missing_superseded_decision_blocks_replacement": true,
+    "missing_replacement_decision_blocks_replacement": true,
+    "missing_scope_or_tenant_blocks_replacement": true,
+    "missing_revocation_or_audit_link_blocks_replacement": true,
+    "unknown_hard_constraint_blocks_replacement": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "superseded_approval_decision_missing",
+    "replacement_approval_decision_missing",
+    "replacement_reason_missing",
+    "scope_equivalence_missing",
+    "tenant_continuity_missing",
+    "revocation_link_missing",
+    "lifecycle_audit_link_missing",
+    "delta_reject_ledger_missing",
+    "replacement_decision_recording_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "bind_replacement_decision_to_lifecycle_audit_receipt",
+    "define_digest_only_replacement_payload",
+    "define_superseded_decision_lookup",
+    "define_replacement_decision_replay_check"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "replacement_requirement_count": 8,
+    "authority_denial_count": 13,
+    "replacement_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 15
+  }
+}
