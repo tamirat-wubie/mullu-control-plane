@@ -1,0 +1,176 @@
+{
+  "approval_criteria": [
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "source_observation_receipt_valid",
+      "evidence_ref": "governed-planning-profile-operator-shadow-pilot-observation-receipt-5cb0a7a9a7d1bc33",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "all_plan_classes_observed",
+      "evidence_ref": "expected_plan_classes",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "shadow_parity_confirmed",
+      "evidence_ref": "observation_summary.parity_confirmed_count",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "projection_behavior_matched",
+      "evidence_ref": "observation_summary.projection_match_count",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "zero_shadow_mismatches",
+      "evidence_ref": "source_dossier.shadow_mismatch_count",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "authority_denials_preserved",
+      "evidence_ref": "authority_denials",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion": false,
+      "criterion_id": "foundation_no_effect_boundary_preserved",
+      "evidence_ref": "local_observation_only",
+      "status": "Pass"
+    }
+  ],
+  "approved_at": "2026-06-19T00:00:00Z",
+  "authority_denials": {
+    "dispatch_allowed": false,
+    "execution_allowed": false,
+    "runtime_promotion_authorized": false,
+    "runtime_replanning_enabled": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false
+  },
+  "dispatch_allowed": false,
+  "evidence_refs": [
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+    "examples/governed_planning_profile_runtime_promotion_approval_packet.local.json",
+    "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py"
+  ],
+  "execution_allowed": false,
+  "expected_plan_classes": [
+    "uncompiled_conversation",
+    "read_only_search",
+    "compound_search_notification",
+    "high_risk_payment",
+    "world_contradiction_search"
+  ],
+  "local_approval_only": true,
+  "mutation_route": false,
+  "next_action": "obtain replay/recovery witness and terminal closure certificate before runtime promotion",
+  "packet_hash": "c2bf975e8279ecea8ab7fffb6159d51f0431d15660b44d22fb8547b456ff0aae",
+  "packet_id": "governed-planning-profile-runtime-promotion-approval-packet-c2bf975e8279ecea",
+  "profile_id": "governed-planning-profile-foundation-v1",
+  "promotion_gate_summary": {
+    "approval_criterion_count": 7,
+    "remaining_promotion_gate_ids": [
+      "replay_recovery_witness",
+      "terminal_closure_certificate"
+    ],
+    "runtime_promotion_authorized": false,
+    "satisfied_promotion_gate_ids": [
+      "operator_shadow_pilot_observation",
+      "runtime_promotion_approval"
+    ],
+    "scenario_approval_count": 5
+  },
+  "read_only": true,
+  "remaining_promotion_gates": [
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "replay_recovery_witness",
+      "required_evidence_ref": "unknown://governed-planning-profile/replay-recovery-witness",
+      "status": "AwaitingEvidence"
+    },
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "terminal_closure_certificate",
+      "required_evidence_ref": "unknown://governed-planning-profile/terminal-closure-certificate",
+      "status": "AwaitingEvidence"
+    }
+  ],
+  "runtime_behavior_change": false,
+  "runtime_promotion_approval_collected": true,
+  "runtime_promotion_approval_status": "ConditionallyApprovedNoEffect",
+  "runtime_promotion_authorized": false,
+  "runtime_promotion_gate_satisfied": true,
+  "runtime_replanning_enabled": false,
+  "scenario_approvals": [
+    {
+      "approval_status": "ConditionallyApprovedNoEffect",
+      "observed_behavior_matches_projection": true,
+      "operator_observation_ref": "receipt://governed-planning-profile/operator-shadow-pilot/uncompiled_conversation",
+      "parity_confirmed": true,
+      "plan_class": "uncompiled_conversation",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-uncompiled-conversation"
+    },
+    {
+      "approval_status": "ConditionallyApprovedNoEffect",
+      "observed_behavior_matches_projection": true,
+      "operator_observation_ref": "receipt://governed-planning-profile/operator-shadow-pilot/read_only_search",
+      "parity_confirmed": true,
+      "plan_class": "read_only_search",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-read-only-search"
+    },
+    {
+      "approval_status": "ConditionallyApprovedNoEffect",
+      "observed_behavior_matches_projection": true,
+      "operator_observation_ref": "receipt://governed-planning-profile/operator-shadow-pilot/compound_search_notification",
+      "parity_confirmed": true,
+      "plan_class": "compound_search_notification",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-compound-search-notification"
+    },
+    {
+      "approval_status": "ConditionallyApprovedNoEffect",
+      "observed_behavior_matches_projection": true,
+      "operator_observation_ref": "receipt://governed-planning-profile/operator-shadow-pilot/high_risk_payment",
+      "parity_confirmed": true,
+      "plan_class": "high_risk_payment",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-high-risk-payment"
+    },
+    {
+      "approval_status": "ConditionallyApprovedNoEffect",
+      "observed_behavior_matches_projection": true,
+      "operator_observation_ref": "receipt://governed-planning-profile/operator-shadow-pilot/world_contradiction_search",
+      "parity_confirmed": true,
+      "plan_class": "world_contradiction_search",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-world-contradiction-search"
+    }
+  ],
+  "schema_version": "governed_planning_profile_runtime_promotion_approval_packet.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "source_observation_receipt": {
+    "operator_observation_collected": true,
+    "operator_observation_status": "Collected",
+    "receipt_hash": "5cb0a7a9a7d1bc333cb81d8178052142a226ee3ba58f8dae313c8f898231b36d",
+    "receipt_id": "governed-planning-profile-operator-shadow-pilot-observation-receipt-5cb0a7a9a7d1bc33",
+    "remaining_promotion_gate_count": 3,
+    "scenario_observation_count": 5
+  },
+  "success_claim_allowed": false,
+  "terminal_closure": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+      "validator_id": "governed-planning-profile-runtime-promotion-approval-packet"
+    }
+  ]
+}

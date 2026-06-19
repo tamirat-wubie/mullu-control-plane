@@ -1517,6 +1517,12 @@
       "surface": "planning"
     },
     {
+      "schema_id": "governed-planning-profile-runtime-promotion-approval-packet",
+      "path": "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "supervisor-tick",
       "path": "schemas/supervisor_tick.schema.json",
       "urn": "urn:mullusi:schema:supervisor-tick:1",
