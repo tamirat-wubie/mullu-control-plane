@@ -22,7 +22,7 @@
       "receipt_required": true
     },
     "skills": {
-      "item_count": 15,
+      "item_count": 17,
       "registry_loaded": true
     },
     "memory": {
@@ -124,10 +124,11 @@
     }
   },
   "skills": {
-    "skill_count": 15,
+    "skill_count": 17,
     "skill_ids": [
       "calendar.day.brief",
       "calendar.event.draft",
+      "calendar.event.create.with_approval",
       "deployment.publish.review",
       "document.summarize",
       "email.inbox.summarize",
@@ -140,6 +141,7 @@
       "planning.optimize_schedule",
       "research.web_search",
       "task.create_draft",
+      "task.create.with_approval",
       "teamops.shared_inbox.plan"
     ],
     "groups": [
@@ -271,6 +273,61 @@
         "public_readiness_claim_allowed": false,
         "metadata": {
           "foundation_only": true
+        }
+      },
+      {
+        "skill_id": "calendar.event.create.with_approval",
+        "name": "Create Calendar Event With Approval",
+        "description": "Future approval-gated calendar event creation boundary; not executable in this foundation layer and does not grant invite authority.",
+        "group": "calendar",
+        "mode": "approval_required",
+        "risk_level": "P3",
+        "requires_approval": true,
+        "connectors": [
+          "google_calendar"
+        ],
+        "inputs": [
+          "draft_ref",
+          "calendar_ref",
+          "approval_ref"
+        ],
+        "outputs": [
+          "provider_receipt_ref",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "create_event",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "create_event_without_approval",
+          "invite_people",
+          "connector_mutation_without_receipt"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": true,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+        "capability_refs": [
+          "calendar.event.create.with_approval",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": true,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": false,
+          "connector_mutation_allowed": true,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "execution_enabled": false,
+          "invite_authority_granted": false
         }
       },
       {
@@ -942,6 +999,58 @@
         "metadata": {
           "foundation_only": true,
           "task_write_boundary": "approval_required_future"
+        }
+      },
+      {
+        "skill_id": "task.create.with_approval",
+        "name": "Create Task With Approval",
+        "description": "Future approval-gated task system write boundary; not executable in this foundation layer.",
+        "group": "task",
+        "mode": "approval_required",
+        "risk_level": "P3",
+        "requires_approval": true,
+        "connectors": [],
+        "inputs": [
+          "task_draft_ref",
+          "task_system_ref",
+          "approval_ref"
+        ],
+        "outputs": [
+          "task_record_ref",
+          "receipt"
+        ],
+        "allowed_actions": [
+          "system_of_record_write",
+          "produce_receipt"
+        ],
+        "blocked_actions": [
+          "write_task_without_approval",
+          "connector_mutation_without_receipt",
+          "memory_write"
+        ],
+        "receipt_required": true,
+        "memory_write_allowed": false,
+        "private_connector_required": false,
+        "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+        "capability_refs": [
+          "task.create.with_approval",
+          "personal_assistant.receipt.project"
+        ],
+        "uao_required": true,
+        "effect_boundary": {
+          "read_only": false,
+          "draft_only": false,
+          "internal_write_allowed": true,
+          "external_write_allowed": false,
+          "system_of_record_write_allowed": true,
+          "connector_mutation_allowed": false,
+          "money_legal_public_allowed": false
+        },
+        "nested_mind_live_activation_allowed": false,
+        "public_readiness_claim_allowed": false,
+        "metadata": {
+          "foundation_only": true,
+          "execution_enabled": false
         }
       },
       {

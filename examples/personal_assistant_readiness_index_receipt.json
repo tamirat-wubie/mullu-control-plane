@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+  "receipt_id": "personal-assistant-readiness-index-288cbaae88dce421",
   "schema_version": "personal_assistant.readiness_index_receipt.v1",
-  "generated_at": "2026-06-16T10:28:03Z",
+  "generated_at": "2026-06-19T16:39:50Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -23,8 +23,8 @@
     "solved_verified_lane_count": 12,
     "awaiting_evidence_lane_count": 0,
     "blocked_action_count": 18,
-    "registered_skill_count": 15,
-    "foundation_only_skill_count": 15,
+    "registered_skill_count": 17,
+    "foundation_only_skill_count": 17,
     "capability_count": 12,
     "candidate_capability_count": 12,
     "production_ready_capability_count": 0
@@ -56,7 +56,7 @@
       "lane_id": "approval_queue",
       "stage": "runtime_preview",
       "state": "SolvedVerified",
-      "route_count": 2,
+      "route_count": 3,
       "schema_count": 3,
       "validator_count": 3,
       "receipt_required": true,
@@ -76,9 +76,9 @@
     },
     {
       "lane_id": "read_only_projection",
-      "stage": "projection_only",
+      "stage": "runtime_preview",
       "state": "SolvedVerified",
-      "route_count": 0,
+      "route_count": 2,
       "schema_count": 1,
       "validator_count": 2,
       "receipt_required": true,
@@ -87,9 +87,9 @@
     },
     {
       "lane_id": "draft_projection",
-      "stage": "projection_only",
+      "stage": "runtime_preview",
       "state": "SolvedVerified",
-      "route_count": 0,
+      "route_count": 3,
       "schema_count": 1,
       "validator_count": 2,
       "receipt_required": true,
@@ -196,7 +196,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-readiness-index-2026-06-16",
+        "delta_id": "delta-personal-assistant-readiness-index-2026-06-19",
         "reason": "Recorded Personal Assistant readiness index while preserving no-effect authority.",
         "logged_in_lineage": true
       }

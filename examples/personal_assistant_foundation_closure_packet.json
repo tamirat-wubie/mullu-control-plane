@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-8a4c02631d8e8eea",
+  "packet_id": "personal-assistant-foundation-closure-cd5a4b3f571a2002",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-18T02:29:54Z",
+  "generated_at": "2026-06-19T16:42:50Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -31,8 +31,8 @@
     {
       "source_kind": "readiness_index",
       "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
-      "source_sha256": "69759e96b4d0502145b41d582cdf4fd426e1dc4ad7724e211f2d3319edca67be",
-      "receipt_id": "personal-assistant-readiness-index-32ab1b89855642f5",
+      "source_sha256": "a77e2abcc08a90fa92cc019e1fce6c30af6283b4fdc8e32c28579d8d9560d370",
+      "receipt_id": "personal-assistant-readiness-index-288cbaae88dce421",
       "schema_version": "personal_assistant.readiness_index_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -50,8 +50,8 @@
     {
       "source_kind": "coherence_ledger",
       "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
-      "source_sha256": "b243afb7c258fbfb245ecd32cfe31474d6d9fc7db0188d5199bf515b61baee2b",
-      "receipt_id": "personal-assistant-coherence-ledger-b9c82f54f879d24d",
+      "source_sha256": "393fb2160eed6e7268bff84b73e87bd5fbdb87d2f84e5f26c4311439692b321d",
+      "receipt_id": "personal-assistant-coherence-ledger-57674e3c55c52fa3",
       "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -64,13 +64,13 @@
       "effect_violations": [],
       "bound": true,
       "payload_digest_only": true,
-      "serialized_length": 15847
+      "serialized_length": 16183
     },
     {
       "source_kind": "authority_coverage",
       "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
-      "source_sha256": "304bb02db884ceef1a8752110b5ef400998c408515ac6323a95807ddfba40ecb",
-      "receipt_id": "personal-assistant-authority-coverage-8f3f740417ae2757",
+      "source_sha256": "8d87b90f4fdcfdcc05648f21d559343a9fc1620bea2215e1334464a50f604ace",
+      "receipt_id": "personal-assistant-authority-coverage-e65886963c80beaa",
       "schema_version": "personal_assistant.authority_coverage_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -83,13 +83,13 @@
       "effect_violations": [],
       "bound": true,
       "payload_digest_only": true,
-      "serialized_length": 21418
+      "serialized_length": 23110
     },
     {
       "source_kind": "capsule_alignment",
       "source_ref": "examples/personal_assistant_capsule_alignment_receipt.json",
-      "source_sha256": "0bf3b341024024135edf6a3ae2cf4c73b8ede1384bd6617adb124ff17d30ebe0",
-      "receipt_id": "personal-assistant-capsule-alignment-e187e1d6ec5bf133",
+      "source_sha256": "2d2f12a2eaf173c5cdca34c683936352a10bf1d26f4ffea29f8b818d9253a8aa",
+      "receipt_id": "personal-assistant-capsule-alignment-4a7a102220b0ce4d",
       "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -107,8 +107,8 @@
     {
       "source_kind": "policy_matrix",
       "source_ref": "examples/personal_assistant_policy_matrix_receipt.json",
-      "source_sha256": "e6985a85b80cd59fb774ae7252504d7971a77bba69d142bcfe5091b2d7b6e1f8",
-      "receipt_id": "personal-assistant-policy-matrix-c24d862b17dc5444",
+      "source_sha256": "99324c2c62d4e9d43906fac1fe3c3953435baff7d3f207559c43779adbfdeb8c",
+      "receipt_id": "personal-assistant-policy-matrix-7aecfbe83ddf4338",
       "schema_version": "personal_assistant.policy_matrix_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -240,7 +240,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-18",
+        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-19",
         "reason": "Bound Personal Assistant Foundation Mode receipt chain without granting live authority.",
         "logged_in_lineage": true
       }
