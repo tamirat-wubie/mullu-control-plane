@@ -650,8 +650,10 @@ def _coerce_answer_map(answer_map: Mapping[str | SNetWHType, str]) -> dict[SNetW
             raise ValueError("SNet WH answer key must be a string or SNetWHType")
         if wh_type in answer_lookup:
             raise ValueError(f"duplicate SNet WH answer key: {wh_type.value}")
-        if type(answer_text) is not str or not answer_text.strip():
-            raise ValueError(f"SNet answer for {wh_type.value} must be a non-empty string")
+        if type(answer_text) is not str or not answer_text.strip() or answer_text != answer_text.strip():
+            raise ValueError(
+                f"SNet answer for {wh_type.value} must be a non-empty string with no leading or trailing whitespace"
+            )
         answer_lookup[wh_type] = answer_text
     return answer_lookup
 
