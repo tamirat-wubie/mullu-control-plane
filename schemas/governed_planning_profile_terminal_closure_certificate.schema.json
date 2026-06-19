@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1",
+  "title": "Governed Planning Profile Terminal Closure Certificate",
+  "description": "Read-only local terminal closure certificate for GovernedPlanningProfile promotion evidence that does not authorize runtime promotion, execution, dispatch, replanning, success, or terminal closure authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificate_id",
+    "schema_version",
+    "profile_id",
+    "certified_at",
+    "solver_outcome",
+    "terminal_closure_certificate_status",
+    "terminal_closure_gate_satisfied",
+    "all_promotion_evidence_satisfied",
+    "local_certificate_only",
+    "read_only",
+    "mutation_route",
+    "runtime_behavior_change",
+    "runtime_promotion_authorized",
+    "execution_allowed",
+    "dispatch_allowed",
+    "runtime_replanning_enabled",
+    "success_claim_allowed",
+    "terminal_closure",
+    "source_replay_recovery_witness",
+    "expected_plan_classes",
+    "terminal_closure_controls",
+    "scenario_terminal_closures",
+    "certificate_boundary",
+    "promotion_gate_summary",
+    "remaining_promotion_gates",
+    "authority_denials",
+    "evidence_refs",
+    "validators",
+    "next_action",
+    "certificate_hash"
+  ],
+  "properties": {
+    "certificate_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-terminal-closure-certificate-[a-f0-9]{16}$"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "governed_planning_profile_terminal_closure_certificate.v1"
+    },
+    "profile_id": {
+      "type": "string",
+      "const": "governed-planning-profile-foundation-v1"
+    },
+    "certified_at": {
+      "type": "string",
+      "const": "2026-06-19T00:00:00Z"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "SolvedVerified"
+    },
+    "terminal_closure_certificate_status": {
+      "type": "string",
+      "const": "CollectedNoEffect"
+    },
+    "terminal_closure_gate_satisfied": { "type": "boolean", "const": true },
+    "all_promotion_evidence_satisfied": { "type": "boolean", "const": true },
+    "local_certificate_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "mutation_route": { "type": "boolean", "const": false },
+    "runtime_behavior_change": { "type": "boolean", "const": false },
+    "runtime_promotion_authorized": { "type": "boolean", "const": false },
+    "execution_allowed": { "type": "boolean", "const": false },
+    "dispatch_allowed": { "type": "boolean", "const": false },
+    "runtime_replanning_enabled": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "source_replay_recovery_witness": {
+      "$ref": "#/$defs/source_replay_recovery_witness"
+    },
+    "expected_plan_classes": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "uncompiled_conversation" },
+        { "const": "read_only_search" },
+        { "const": "compound_search_notification" },
+        { "const": "high_risk_payment" },
+        { "const": "world_contradiction_search" }
+      ],
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "terminal_closure_controls": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/control_source_replay_recovery_witness_valid" },
+        { "$ref": "#/$defs/control_all_promotion_gates_satisfied" },
+        { "$ref": "#/$defs/control_zero_shadow_mismatches_preserved" },
+        { "$ref": "#/$defs/control_zero_replay_mismatches_preserved" },
+        { "$ref": "#/$defs/control_rollback_and_recovery_handoff_bound" },
+        { "$ref": "#/$defs/control_authority_denials_preserved" },
+        { "$ref": "#/$defs/control_foundation_no_effect_boundary_preserved" },
+        { "$ref": "#/$defs/control_terminal_certificate_hash_bound" }
+      ],
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "scenario_terminal_closures": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/scenario_terminal_closure" }
+    },
+    "certificate_boundary": { "$ref": "#/$defs/certificate_boundary" },
+    "promotion_gate_summary": { "$ref": "#/$defs/promotion_gate_summary" },
+    "remaining_promotion_gates": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "const": "submit separate runtime promotion authorization request before activation"
+    },
+    "certificate_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "source_replay_recovery_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_id",
+        "witness_hash",
+        "replay_recovery_witness_status",
+        "replay_recovery_gate_satisfied",
+        "scenario_witness_count",
+        "remaining_promotion_gate_count"
+      ],
+      "properties": {
+        "witness_id": {
+          "type": "string",
+          "pattern": "^governed-planning-profile-replay-recovery-witness-[a-f0-9]{16}$"
+        },
+        "witness_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "replay_recovery_witness_status": {
+          "type": "string",
+          "const": "CollectedNoEffect"
+        },
+        "replay_recovery_gate_satisfied": { "type": "boolean", "const": true },
+        "scenario_witness_count": { "type": "integer", "const": 5 },
+        "remaining_promotion_gate_count": { "type": "integer", "const": 1 }
+      }
+    },
+    "terminal_closure_control_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "status", "evidence_ref", "blocks_runtime_promotion_evidence"],
+      "properties": {
+        "control_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "const": "Pass" },
+        "evidence_ref": { "type": "string", "minLength": 1 },
+        "blocks_runtime_promotion_evidence": { "type": "boolean", "const": false }
+      }
+    },
+    "control_source_replay_recovery_witness_valid": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "source_replay_recovery_witness_valid" } } }
+      ]
+    },
+    "control_all_promotion_gates_satisfied": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "all_promotion_gates_satisfied" } } }
+      ]
+    },
+    "control_zero_shadow_mismatches_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "zero_shadow_mismatches_preserved" } } }
+      ]
+    },
+    "control_zero_replay_mismatches_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "zero_replay_mismatches_preserved" } } }
+      ]
+    },
+    "control_rollback_and_recovery_handoff_bound": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "rollback_and_recovery_handoff_bound" } } }
+      ]
+    },
+    "control_authority_denials_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "authority_denials_preserved" } } }
+      ]
+    },
+    "control_foundation_no_effect_boundary_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "foundation_no_effect_boundary_preserved" } } }
+      ]
+    },
+    "control_terminal_certificate_hash_bound": {
+      "allOf": [
+        { "$ref": "#/$defs/terminal_closure_control_base" },
+        { "type": "object", "properties": { "control_id": { "const": "terminal_certificate_hash_bound" } } }
+      ]
+    },
+    "scenario_terminal_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "plan_class",
+        "source_replay_probe_ref",
+        "source_recovery_path_ref",
+        "terminal_closure_status",
+        "replay_mismatch_count",
+        "rollback_path_documented",
+        "incident_handoff_documented",
+        "runtime_promotion_authorization_required",
+        "runtime_promotion_authorized",
+        "runtime_execution_performed"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "pattern": "^scenario-[a-z0-9-]+$" },
+        "plan_class": {
+          "type": "string",
+          "enum": [
+            "uncompiled_conversation",
+            "read_only_search",
+            "compound_search_notification",
+            "high_risk_payment",
+            "world_contradiction_search"
+          ]
+        },
+        "source_replay_probe_ref": {
+          "type": "string",
+          "pattern": "^hash://sha256/[a-f0-9]{64}$"
+        },
+        "source_recovery_path_ref": {
+          "type": "string",
+          "pattern": "^recovery://governed-planning-profile/[a-z0-9_]+$"
+        },
+        "terminal_closure_status": {
+          "type": "string",
+          "const": "ClosedNoEffect"
+        },
+        "replay_mismatch_count": { "type": "integer", "const": 0 },
+        "rollback_path_documented": { "type": "boolean", "const": true },
+        "incident_handoff_documented": { "type": "boolean", "const": true },
+        "runtime_promotion_authorization_required": { "type": "boolean", "const": true },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "runtime_execution_performed": { "type": "boolean", "const": false }
+      }
+    },
+    "certificate_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_replay_recovery_witness_bound",
+        "all_prior_gates_satisfied",
+        "terminal_certificate_collected",
+        "runtime_promotion_authorization_required",
+        "runtime_promotion_authorization_performed",
+        "runtime_execution_performed",
+        "terminal_closure_authority_granted"
+      ],
+      "properties": {
+        "source_replay_recovery_witness_bound": { "type": "boolean", "const": true },
+        "all_prior_gates_satisfied": { "type": "boolean", "const": true },
+        "terminal_certificate_collected": { "type": "boolean", "const": true },
+        "runtime_promotion_authorization_required": { "type": "boolean", "const": true },
+        "runtime_promotion_authorization_performed": { "type": "boolean", "const": false },
+        "runtime_execution_performed": { "type": "boolean", "const": false },
+        "terminal_closure_authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "promotion_gate_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "satisfied_promotion_gate_ids",
+        "remaining_promotion_gate_ids",
+        "terminal_closure_control_count",
+        "scenario_closure_count",
+        "all_promotion_evidence_satisfied",
+        "runtime_promotion_authorized"
+      ],
+      "properties": {
+        "satisfied_promotion_gate_ids": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "operator_shadow_pilot_observation" },
+            { "const": "runtime_promotion_approval" },
+            { "const": "replay_recovery_witness" },
+            { "const": "terminal_closure_certificate" }
+          ],
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "remaining_promotion_gate_ids": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "terminal_closure_control_count": { "type": "integer", "const": 8 },
+        "scenario_closure_count": { "type": "integer", "const": 5 },
+        "all_promotion_evidence_satisfied": { "type": "boolean", "const": true },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_promotion_authorized",
+        "execution_allowed",
+        "dispatch_allowed",
+        "runtime_replanning_enabled",
+        "success_claim_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "execution_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "runtime_replanning_enabled": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1049,6 +1049,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
     },
     {
+      "path": "schemas/governed_planning_profile_terminal_closure_certificate.schema.json",
+      "schema_id": "governed-planning-profile-terminal-closure-certificate",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",

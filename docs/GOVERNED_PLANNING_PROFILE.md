@@ -227,6 +227,28 @@ replay or rollback, does not authorize runtime promotion, and leaves terminal
 closure certificate evidence as `AwaitingEvidence`. Execution, dispatch,
 runtime replanning, success, and terminal closure authority remain hard false.
 
+## Terminal Closure Certificate
+
+The local terminal-closure slice is
+`examples/governed_planning_profile_terminal_closure_certificate.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_terminal_closure_certificate.py`
+and governed by
+`schemas/governed_planning_profile_terminal_closure_certificate.schema.json`.
+
+This certificate binds the replay/recovery witness and records that every
+promotion-evidence gate in the local no-effect ladder is now satisfied:
+operator shadow-pilot observation, runtime-promotion approval,
+replay/recovery witness, and terminal closure certificate. Each covered plan
+class receives a `ClosedNoEffect` terminal record that preserves zero replay
+mismatches, rollback documentation, and incident-handoff documentation.
+
+The certificate closes only the local evidence ladder. It does not authorize
+runtime promotion or activate any runtime path. Runtime promotion remains a
+separate authority-changing action that must be explicitly submitted and
+governed before activation. Execution, dispatch, runtime replanning, success,
+and terminal closure authority remain hard false.
+
 ## Validation
 
 ```text
@@ -242,6 +264,8 @@ python scripts/validate_governed_planning_profile_runtime_promotion_approval_pac
 python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py --json
 python scripts/validate_governed_planning_profile_replay_recovery_witness.py
 python scripts/validate_governed_planning_profile_replay_recovery_witness.py --json
+python scripts/validate_governed_planning_profile_terminal_closure_certificate.py
+python scripts/validate_governed_planning_profile_terminal_closure_certificate.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
@@ -249,10 +273,11 @@ python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_p
 python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py -q
 python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_witness.py -q
+python -m pytest tests/test_validate_governed_planning_profile_terminal_closure_certificate.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, and replay/recovery witness defined
-  Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, or closure authority
-  Open issues: terminal closure certificate remains AwaitingEvidence
-  Next action: obtain terminal closure certificate before any runtime promotion
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, and terminal closure certificate defined
+  Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, runtime promotion, or closure authority
+  Open issues: runtime promotion activation remains a separate authority-changing action
+  Next action: submit separate runtime promotion authorization request before activation
