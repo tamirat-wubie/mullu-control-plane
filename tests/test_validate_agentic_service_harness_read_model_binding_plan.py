@@ -146,7 +146,7 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Current `origin/main`: `b849663f9e5e4a2f0d0c6992bedad735e61fb6a8`",
+            "Current `origin/main`: `56a810e6e47ed2aefb3cd8b4eab64ca2e8a0a218`",
             "Current `origin/main`: `short-ref`",
         ),
         encoding="utf-8",
@@ -166,7 +166,7 @@ def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) ->
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Open PRs after readiness-map refresh: PR #1983 (`codex/worker-effect-reconciliation-witness-20260619`) remains outside this map-only closure.",
+            "Open PRs after readiness-map refresh: PR #1989, PR #1987, PR #1986, and PR #1984 remain outside this map-only closure.",
             "Open PRs after readiness-map refresh: none.",
         ),
         encoding="utf-8",
