@@ -1,0 +1,58 @@
+{
+  "design_id": "sdlc_design_runtime_enablement_status_ledger_20260619",
+  "requirement_id": "sdlc_req_runtime_enablement_status_ledger_20260619",
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerRuntimeEnablementEvidenceRequestStatusLedger contract, generated Foundation Mode fixture, validator, docs updates, manifest registration, CI target, SDLC artifacts, and focused tests that project unresolved operator evidence request status without submitting evidence or granting runtime authority.",
+  "affected_modules": [
+    "read_only_worker_runtime_admission_witnesses",
+    "operator_input_request_validation",
+    "workspace_governance_protocol_manifest",
+    "sdlc_artifact_examples",
+    "ci_worker_witness_tests"
+  ],
+  "data_model_changes": [
+    "Introduce ReadOnlyWorkerRuntimeEnablementEvidenceRequestStatusLedger fields for source operator request refs, runtime witness refs, status-only flags, effect-denial flags, twelve status records, empty submitted/accepted/rejected/authority refs, blocked actions, summary counts, validators, and next action."
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_runtime_enablement_evidence_request_status_ledger.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py",
+    "tests/test_validate_protocol_manifest.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the runtime enablement evidence request status ledger schema, example, validator, focused tests, docs updates, manifest entry, SDLC artifacts, and CI test target, then rerun schema validation, protocol manifest validation, SDLC validation, and focused status ledger tests before claiming rollback closure.",
+  "migration_plan": "No runtime migration. The change adds static Foundation Mode status-ledger artifacts only and does not alter live worker execution, receipt stores, connector authority, filesystem write authority, runtime enablement, or success-claim authority.",
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "uao_ref": "uao://read-only-worker-runtime-enablement-status-ledger/design/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-runtime-enablement-status-ledger/design/20260619",
+  "receipt_ref": "receipt://read-only-worker-runtime-enablement-status-ledger/design/20260619"
+}
