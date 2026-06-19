@@ -91,6 +91,17 @@ def test_protocol_manifest_indexes_search_receipt() -> None:
     assert search_entry["surface"] == "search"
 
 
+def test_protocol_manifest_indexes_research_epistemics_profile() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    profile_entry = entries["research-epistemics-profile"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert profile_entry["path"] == "schemas/research_epistemics_profile.schema.json"
+    assert profile_entry["urn"] == "urn:mullusi:schema:research-epistemics-profile:1"
+    assert profile_entry["surface"] == "research"
+
+
 def test_protocol_manifest_indexes_capture_policy_decision_ledger() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
