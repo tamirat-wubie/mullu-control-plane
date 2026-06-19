@@ -1487,6 +1487,12 @@
       "surface": "planning"
     },
     {
+      "schema_id": "governed-planning-profile-admission-report",
+      "path": "schemas/governed_planning_profile_admission_report.schema.json",
+      "urn": "urn:mullusi:schema:governed-planning-profile-admission-report:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "supervisor-tick",
       "path": "schemas/supervisor_tick.schema.json",
       "urn": "urn:mullusi:schema:supervisor-tick:1",

@@ -62,11 +62,15 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     profile_entry = entries["governed-planning-profile"]
+    report_entry = entries["governed-planning-profile-admission-report"]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
     assert profile_entry["urn"] == "urn:mullusi:schema:governed-planning-profile:1"
     assert profile_entry["surface"] == "planning"
+    assert report_entry["path"] == "schemas/governed_planning_profile_admission_report.schema.json"
+    assert report_entry["urn"] == "urn:mullusi:schema:governed-planning-profile-admission-report:1"
+    assert report_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:

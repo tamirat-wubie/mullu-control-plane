@@ -100,16 +100,39 @@ A future runtime adapter must provide separate enter and exit thresholds, a cool
 5. Record identity, evidence, authority, rollback, and closure mismatches.
 6. Promote no runtime behavior until adapter parity, replay, recovery, and operator evidence exist.
 
+## Reference Adapter And Shadow Admission
+
+The first adapter slice is `gateway/governed_planning_profile_adapter.py`.
+It consumes a compiled gateway plan and causal simulation receipt as structural
+read-only inputs, then emits a `GovernedPlanningProfileAdmissionReport`.
+
+The adapter does not import `gateway.goal_compiler`, `gateway.causal_simulator`,
+`gateway.plan_executor`, any router, or any worker surface. That preserves the
+existing rule that `gateway.goal_compiler` has only one non-test gateway
+consumer: `gateway.causal_simulator`.
+
+The report separates two classes of evidence:
+
+1. `shadow_mismatches`: identity, topology, or simulation drift between the
+   compiled plan and simulation receipt.
+2. `promotion_blockers`: authority, evidence, closure, or Foundation Mode
+   blockers that prevent runtime promotion even when shadow parity matches.
+
+The report can say `shadow_parity_status = matched`, but it still cannot grant
+execution, dispatch, runtime replanning, success, or terminal closure. Those
+fields are hard false in the report schema.
+
 ## Validation
 
 ```text
 python scripts/validate_governed_planning_profile.py
 python scripts/validate_governed_planning_profile.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
+python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 ```
 
 STATUS:
-  Completeness: static contract and Foundation fixture defined
+  Completeness: static contract, Foundation fixture, and first read-only adapter defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, or closure authority
-  Open issues: protocol-manifest registration, CI registration, adapter parity, shadow-pilot evidence, and runtime promotion remain AwaitingEvidence
-  Next action: add one reference adapter after this contract passes review
+  Open issues: operator shadow-pilot evidence, runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
+  Next action: run shadow admission reports across more plan classes before any runtime promotion
