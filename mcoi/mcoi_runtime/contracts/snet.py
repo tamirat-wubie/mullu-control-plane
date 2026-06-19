@@ -196,6 +196,14 @@ def _require_exact_text(value: object, field_name: str) -> str:
     return value
 
 
+def _require_optional_exact_text(value: object, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be an exact non-empty string or empty")
+    if value == "":
+        return ""
+    return _require_exact_text(value, field_name)
+
+
 def _require_optional_text(value: object, field_name: str) -> str:
     if type(value) is not str:
         raise ValueError(f"{field_name} must be a non-empty string")
@@ -284,10 +292,10 @@ class SNetSymbol(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "symbol_id", _require_text(self.symbol_id, "symbol_id"))
+        object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
         object.__setattr__(self, "label", _require_text(self.label, "label"))
         object.__setattr__(self, "symbol_type", _require_text(self.symbol_type, "symbol_type"))
-        object.__setattr__(self, "sense_id", _require_optional_text(self.sense_id, "sense_id"))
+        object.__setattr__(self, "sense_id", _require_optional_exact_text(self.sense_id, "sense_id"))
         object.__setattr__(self, "definition", _require_optional_text(self.definition, "definition"))
         if not isinstance(self.ontology_status, SNetOntologyStatus):
             raise ValueError("ontology_status must be a SNetOntologyStatus")
@@ -298,7 +306,7 @@ class SNetSymbol(ContractRecord):
         object.__setattr__(
             self,
             "created_from_metadata_id",
-            _require_optional_text(self.created_from_metadata_id, "created_from_metadata_id"),
+            _require_optional_exact_text(self.created_from_metadata_id, "created_from_metadata_id"),
         )
         object.__setattr__(self, "metadata_refs", _freeze_text_tuple(self.metadata_refs, "metadata_refs"))
         object.__setattr__(self, "relation_refs", _freeze_text_tuple(self.relation_refs, "relation_refs"))
@@ -323,8 +331,8 @@ class SNetQuestion(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
-        object.__setattr__(self, "target_symbol_id", _require_text(self.target_symbol_id, "target_symbol_id"))
+        object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
+        object.__setattr__(self, "target_symbol_id", _require_exact_text(self.target_symbol_id, "target_symbol_id"))
         if not isinstance(self.wh_type, SNetWHType):
             raise ValueError("wh_type must be a SNetWHType")
         object.__setattr__(self, "text", _require_text(self.text, "text"))
@@ -335,12 +343,12 @@ class SNetQuestion(ContractRecord):
         object.__setattr__(
             self,
             "parent_question_id",
-            _require_optional_text(self.parent_question_id, "parent_question_id"),
+            _require_optional_exact_text(self.parent_question_id, "parent_question_id"),
         )
         object.__setattr__(
             self,
             "branch_signature",
-            _require_optional_text(self.branch_signature, "branch_signature"),
+            _require_optional_exact_text(self.branch_signature, "branch_signature"),
         )
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
@@ -359,8 +367,8 @@ class SNetAnswer(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "answer_id", _require_text(self.answer_id, "answer_id"))
-        object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
+        object.__setattr__(self, "answer_id", _require_exact_text(self.answer_id, "answer_id"))
+        object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
         object.__setattr__(self, "raw_answer", _require_exact_text(self.raw_answer, "raw_answer"))
         object.__setattr__(
             self,
@@ -394,10 +402,10 @@ class SNetMetadata(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "metadata_id", _require_text(self.metadata_id, "metadata_id"))
-        object.__setattr__(self, "parent_symbol_id", _require_text(self.parent_symbol_id, "parent_symbol_id"))
-        object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
-        object.__setattr__(self, "answer_id", _require_text(self.answer_id, "answer_id"))
+        object.__setattr__(self, "metadata_id", _require_exact_text(self.metadata_id, "metadata_id"))
+        object.__setattr__(self, "parent_symbol_id", _require_exact_text(self.parent_symbol_id, "parent_symbol_id"))
+        object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
+        object.__setattr__(self, "answer_id", _require_exact_text(self.answer_id, "answer_id"))
         object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
         object.__setattr__(self, "value", _require_text(self.value, "value"))
         object.__setattr__(self, "context", _require_text(self.context, "context"))
@@ -409,7 +417,7 @@ class SNetMetadata(ContractRecord):
         object.__setattr__(
             self,
             "promoted_symbol_id",
-            _require_optional_text(self.promoted_symbol_id, "promoted_symbol_id"),
+            _require_optional_exact_text(self.promoted_symbol_id, "promoted_symbol_id"),
         )
         object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
@@ -430,10 +438,10 @@ class SNetRelation(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "relation_id", _require_text(self.relation_id, "relation_id"))
-        object.__setattr__(self, "source_symbol_id", _require_text(self.source_symbol_id, "source_symbol_id"))
+        object.__setattr__(self, "relation_id", _require_exact_text(self.relation_id, "relation_id"))
+        object.__setattr__(self, "source_symbol_id", _require_exact_text(self.source_symbol_id, "source_symbol_id"))
         object.__setattr__(self, "relation_type", _require_text(self.relation_type, "relation_type"))
-        object.__setattr__(self, "target_symbol_id", _require_text(self.target_symbol_id, "target_symbol_id"))
+        object.__setattr__(self, "target_symbol_id", _require_exact_text(self.target_symbol_id, "target_symbol_id"))
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "context", _require_text(self.context, "context"))
         object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
@@ -457,10 +465,10 @@ class SNetContradiction(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "contradiction_id", _require_text(self.contradiction_id, "contradiction_id"))
-        object.__setattr__(self, "symbol_id", _require_text(self.symbol_id, "symbol_id"))
-        object.__setattr__(self, "metadata_a_id", _require_text(self.metadata_a_id, "metadata_a_id"))
-        object.__setattr__(self, "metadata_b_id", _require_text(self.metadata_b_id, "metadata_b_id"))
+        object.__setattr__(self, "contradiction_id", _require_exact_text(self.contradiction_id, "contradiction_id"))
+        object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
+        object.__setattr__(self, "metadata_a_id", _require_exact_text(self.metadata_a_id, "metadata_a_id"))
+        object.__setattr__(self, "metadata_b_id", _require_exact_text(self.metadata_b_id, "metadata_b_id"))
         object.__setattr__(self, "context_a", _require_text(self.context_a, "context_a"))
         object.__setattr__(self, "context_b", _require_text(self.context_b, "context_b"))
         object.__setattr__(self, "reason", _require_text(self.reason, "reason"))
@@ -483,10 +491,10 @@ class SNetUnknown(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "unknown_id", _require_text(self.unknown_id, "unknown_id"))
-        object.__setattr__(self, "symbol_id", _require_text(self.symbol_id, "symbol_id"))
+        object.__setattr__(self, "unknown_id", _require_exact_text(self.unknown_id, "unknown_id"))
+        object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
         object.__setattr__(self, "missing_facet", _require_text(self.missing_facet, "missing_facet"))
-        object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
+        object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
         object.__setattr__(self, "importance_score", _require_unit_float(self.importance_score, "importance_score"))
         object.__setattr__(self, "blocking_reason", _require_text(self.blocking_reason, "blocking_reason"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
@@ -508,8 +516,8 @@ class SNetTickResult(ContractRecord):
     blocked_reasons: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "tick_id", _require_text(self.tick_id, "tick_id"))
-        object.__setattr__(self, "symbol_id", _require_text(self.symbol_id, "symbol_id"))
+        object.__setattr__(self, "tick_id", _require_exact_text(self.tick_id, "tick_id"))
+        object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
         if not isinstance(self.status, SNetTickStatus):
             raise ValueError("status must be a SNetTickStatus")
         object.__setattr__(
@@ -563,19 +571,19 @@ class SNetMeshReceipt(ContractRecord):
     evidence_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "receipt_id", _require_text(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "receipt_id", _require_exact_text(self.receipt_id, "receipt_id"))
         if not _is_snet_mesh_receipt_id(self.receipt_id):
             raise ValueError("receipt_id must match snet-mesh-[0-9a-f]{16}")
-        object.__setattr__(self, "snet_version", _require_text(self.snet_version, "snet_version"))
+        object.__setattr__(self, "snet_version", _require_exact_text(self.snet_version, "snet_version"))
         if self.snet_version != SNET_VERSION:
             raise ValueError("snet_version must match runtime SNet version")
-        object.__setattr__(self, "semantics_hash", _require_text(self.semantics_hash, "semantics_hash"))
+        object.__setattr__(self, "semantics_hash", _require_exact_text(self.semantics_hash, "semantics_hash"))
         if self.semantics_hash != SNET_SEMANTICS_HASH:
             raise ValueError("semantics_hash must match runtime SNet semantics")
-        object.__setattr__(self, "mesh_digest", _require_text(self.mesh_digest, "mesh_digest"))
+        object.__setattr__(self, "mesh_digest", _require_exact_text(self.mesh_digest, "mesh_digest"))
         if not _is_sha256_digest(self.mesh_digest):
             raise ValueError("mesh_digest must be a sha256 digest")
-        object.__setattr__(self, "surface", _require_text(self.surface, "surface"))
+        object.__setattr__(self, "surface", _require_exact_text(self.surface, "surface"))
         if self.surface != SNET_READ_ONLY_SURFACE:
             raise ValueError("surface must be the read-only SNet operator surface")
         object.__setattr__(self, "symbol_count", _require_non_negative_int(self.symbol_count, "symbol_count"))
