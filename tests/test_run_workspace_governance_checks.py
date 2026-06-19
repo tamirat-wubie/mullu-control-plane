@@ -68,6 +68,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_github_pr_effect_reconciliation_witness",
         "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
         "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+        "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
         "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",

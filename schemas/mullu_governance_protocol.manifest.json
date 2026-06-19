@@ -2547,6 +2547,12 @@
       "schema_id": "world-substrate-replay-witness",
       "surface": "world",
       "urn": "urn:mullusi:schema:world-substrate-replay-witness:1"
+    },
+    {
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-candidate",
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_candidate.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-candidate:1",
+      "surface": "runtime"
     }
   ],
   "uri_schemes": [

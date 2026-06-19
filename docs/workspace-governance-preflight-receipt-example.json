@@ -1,5 +1,5 @@
 {
-  "check_count": 250,
+  "check_count": 251,
   "checks": [
     {
       "args": [
@@ -325,6 +325,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate.py"
+      ],
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE CERTIFICATE CANDIDATE VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

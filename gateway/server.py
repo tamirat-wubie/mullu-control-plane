@@ -939,21 +939,64 @@ def _gateway_personal_assistant_draft_approval_proposal(
 ) -> ApprovalPlanProposal:
     """Return a no-effect approval proposal from a redacted draft reference."""
     draft_payload = _pydantic_payload(draft)
-    action = ApprovalProposedAction.from_mapping(
-        {
+    target_by_draft_type = {
+        "email_response": {
+            "source_skill_id": "email.response.draft",
             "action_id": "send_prepared_email_draft",
             "skill_id": "email.send.with_approval",
             "risk_level": "P4",
             "effect_boundary": "external_email_send",
-            "summary": f"Send prepared email draft after explicit approval: {draft_payload['summary']}",
-        }
-    )
-    if draft_payload["draft_type"] != "email_response":
-        raise PersonalAssistantInvariantError("only email_response draft approval proposals are registered")
-    if draft_payload["draft_skill_id"] != "email.response.draft":
-        raise PersonalAssistantInvariantError("email_response approval proposals require email.response.draft source")
+            "summary_prefix": "Send prepared email draft after explicit approval",
+            "forbidden_without_approval": (
+                "send",
+                "send_without_approval",
+                "recipient_unapproved",
+                "connector_mutation_without_receipt",
+            ),
+        },
+        "calendar_event": {
+            "source_skill_id": "calendar.event.draft",
+            "action_id": "create_prepared_calendar_event",
+            "skill_id": "calendar.event.create.with_approval",
+            "risk_level": "P3",
+            "effect_boundary": "calendar_event_create",
+            "summary_prefix": "Create prepared calendar event after explicit approval",
+            "forbidden_without_approval": (
+                "create_event",
+                "invite_people",
+                "connector_mutation",
+            ),
+        },
+        "task": {
+            "source_skill_id": "task.create_draft",
+            "action_id": "create_prepared_task",
+            "skill_id": "task.create.with_approval",
+            "risk_level": "P3",
+            "effect_boundary": "task_system_write",
+            "summary_prefix": "Create prepared task after explicit approval",
+            "forbidden_without_approval": (
+                "system_of_record_write",
+                "connector_mutation",
+            ),
+        },
+    }
+    target = target_by_draft_type.get(draft_payload["draft_type"])
+    if target is None:
+        raise PersonalAssistantInvariantError("draft_type does not have a registered approval proposal target")
+    if draft_payload["draft_skill_id"] != target["source_skill_id"]:
+        raise PersonalAssistantInvariantError("draft approval proposal source skill does not match draft_type")
     if not draft_payload["draft_ref"].startswith("pa_draft_projection_item_"):
         raise PersonalAssistantInvariantError("draft_ref must reference a draft projection item")
+
+    action = ApprovalProposedAction.from_mapping(
+        {
+            "action_id": target["action_id"],
+            "skill_id": target["skill_id"],
+            "risk_level": target["risk_level"],
+            "effect_boundary": target["effect_boundary"],
+            "summary": f"{target['summary_prefix']}: {draft_payload['summary']}",
+        }
+    )
 
     registry = load_default_skill_registry()
     target_skill = registry.get(action.skill_id)
@@ -963,12 +1006,7 @@ def _gateway_personal_assistant_draft_approval_proposal(
         raise PersonalAssistantInvariantError("approval target must require approval")
 
     matrix = load_default_personal_assistant_approval_matrix()
-    forbidden = (
-        "send",
-        "send_without_approval",
-        "recipient_unapproved",
-        "connector_mutation_without_receipt",
-    )
+    forbidden = target["forbidden_without_approval"]
     matrix.assert_action_admitted(
         risk_level=action.risk_level,
         execution_mode="execute_with_approval",
