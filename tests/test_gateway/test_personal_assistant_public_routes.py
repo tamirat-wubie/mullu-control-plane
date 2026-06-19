@@ -590,6 +590,7 @@ def test_gateway_personal_assistant_approval_proposal_preview_does_not_enqueue()
     )
     payload = response.json()
     proposal = payload["approval_proposal"]
+    review_packet = payload["approval_review_packet"]
     queue = payload["approval_queue"]
     console = payload["console_read_model"]
 
@@ -603,6 +604,13 @@ def test_gateway_personal_assistant_approval_proposal_preview_does_not_enqueue()
     assert proposal["risk_level"] == "P4"
     assert proposal["proposed_actions"][0]["skill_id"] == "email.send.with_approval"
     assert "send" in proposal["forbidden_without_approval"]
+    assert review_packet["review_state"] == "preview_only"
+    assert review_packet["reviewer_ref"] == "operator"
+    assert review_packet["risk_level"] == proposal["risk_level"]
+    assert review_packet["proposed_actions"] == proposal["proposed_actions"]
+    assert review_packet["effect_boundary"]["execution_allowed"] is False
+    assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert "confirm_external_recipient_or_target_scope" in review_packet["required_operator_checks"]
     assert queue["approval_count"] == 0
     assert queue["records"] == []
     assert payload["effect_boundary"]["approval_enqueued"] is False
@@ -666,6 +674,7 @@ def test_gateway_personal_assistant_draft_approval_proposal_preview_does_not_enq
     )
     payload = response.json()
     proposal = payload["approval_proposal"]
+    review_packet = payload["approval_review_packet"]
     queue = payload["approval_queue"]
     console = payload["console_read_model"]
 
@@ -682,6 +691,15 @@ def test_gateway_personal_assistant_draft_approval_proposal_preview_does_not_enq
     assert proposal["proposed_actions"][0]["risk_level"] == "P4"
     assert "send_without_approval" in proposal["forbidden_without_approval"]
     assert "pa_draft_projection_item_gateway_email_001" in proposal["evidence_refs"]
+    assert review_packet["reviewer_ref"] == "operator:tamirat"
+    assert review_packet["risk_level"] == "P4"
+    assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert review_packet["effect_boundary"]["external_send_allowed"] is False
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "execution",
+        "approval_enqueue",
+        "external_send",
+    }
     assert queue["approval_count"] == 0
     assert queue["records"] == []
     assert payload["effect_boundary"]["approval_enqueued"] is False
@@ -706,6 +724,7 @@ def test_gateway_personal_assistant_calendar_draft_approval_proposal_preview_doe
     )
     payload = response.json()
     proposal = payload["approval_proposal"]
+    review_packet = payload["approval_review_packet"]
     queue = payload["approval_queue"]
 
     assert response.status_code == 200
@@ -716,6 +735,10 @@ def test_gateway_personal_assistant_calendar_draft_approval_proposal_preview_doe
     assert proposal["proposed_actions"][0]["effect_boundary"] == "calendar_event_create"
     assert "create_event" in proposal["forbidden_without_approval"]
     assert "invite_people" in proposal["forbidden_without_approval"]
+    assert review_packet["risk_level"] == "P3"
+    assert review_packet["effect_boundary"]["connector_mutation_allowed"] is False
+    assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert "confirm_external_recipient_or_target_scope" not in review_packet["required_operator_checks"]
     assert queue["approval_count"] == 0
     assert payload["effect_boundary"]["approval_enqueued"] is False
     assert payload["effect_boundary"]["external_send_allowed"] is False
@@ -736,6 +759,7 @@ def test_gateway_personal_assistant_task_draft_approval_proposal_preview_does_no
     )
     payload = response.json()
     proposal = payload["approval_proposal"]
+    review_packet = payload["approval_review_packet"]
     queue = payload["approval_queue"]
 
     assert response.status_code == 200
@@ -746,6 +770,15 @@ def test_gateway_personal_assistant_task_draft_approval_proposal_preview_does_no
     assert proposal["proposed_actions"][0]["effect_boundary"] == "task_system_write"
     assert "system_of_record_write" in proposal["forbidden_without_approval"]
     assert "connector_mutation" in proposal["forbidden_without_approval"]
+    assert review_packet["risk_level"] == "P3"
+    assert review_packet["effect_boundary"]["system_of_record_write_allowed"] is False
+    assert review_packet["effect_boundary"]["memory_write_allowed"] is False
+    assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
+        "execution",
+        "approval_enqueue",
+        "connector_mutation",
+        "memory_write",
+    }
     assert queue["approval_count"] == 0
     assert payload["effect_boundary"]["system_of_record_write_allowed"] is False
     assert payload["effect_boundary"]["memory_write_allowed"] is False

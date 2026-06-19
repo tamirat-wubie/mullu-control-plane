@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-coherence-ledger-57674e3c55c52fa3",
+  "receipt_id": "personal-assistant-coherence-ledger-8c41be9862803f39",
   "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
-  "generated_at": "2026-06-19T16:42:29Z",
+  "generated_at": "2026-06-19T18:45:36Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -22,7 +22,7 @@
     "coherence_ledger_closed": true,
     "readiness_index_closed": true,
     "lane_count": 12,
-    "dependency_edge_count": 65,
+    "dependency_edge_count": 69,
     "blocked_authority_count": 8,
     "next_action_count": 12,
     "all_lanes_bound_to_sources": true,
@@ -115,19 +115,23 @@
       "route_refs": [
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
+        "/api/v1/personal-assistant/approval-proposals/preview",
         "/api/v1/personal-assistant/approval-proposals/from-draft/preview"
       ],
       "schema_refs": [
         "schemas/personal_assistant_approval.schema.json",
         "schemas/personal_assistant_approval_queue.schema.json",
-        "schemas/personal_assistant_approval_decision.schema.json"
+        "schemas/personal_assistant_approval_decision.schema.json",
+        "schemas/personal_assistant_approval_review_packet.schema.json"
       ],
       "validator_refs": [
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
-        "tests/test_personal_assistant_approval_queue.py"
+        "scripts/validate_personal_assistant_approval_review_packet.py",
+        "tests/test_personal_assistant_approval_queue.py",
+        "tests/test_validate_personal_assistant_approval_review_packet.py"
       ],
-      "dependency_edge_count": 9,
+      "dependency_edge_count": 13,
       "blocked_authority_refs": [
         "live_execution_blocked",
         "connector_mutation_blocked",

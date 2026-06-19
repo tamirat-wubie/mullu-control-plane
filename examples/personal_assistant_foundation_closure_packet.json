@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-cd5a4b3f571a2002",
+  "packet_id": "personal-assistant-foundation-closure-c1eb054d75c37fd3",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-19T16:42:50Z",
+  "generated_at": "2026-06-19T18:45:54Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -50,8 +50,8 @@
     {
       "source_kind": "coherence_ledger",
       "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
-      "source_sha256": "393fb2160eed6e7268bff84b73e87bd5fbdb87d2f84e5f26c4311439692b321d",
-      "receipt_id": "personal-assistant-coherence-ledger-57674e3c55c52fa3",
+      "source_sha256": "724cc2eb8fd3a1baf4314cd679701526eedec22279fe8c9657ea82456249c8c8",
+      "receipt_id": "personal-assistant-coherence-ledger-8c41be9862803f39",
       "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -64,13 +64,13 @@
       "effect_violations": [],
       "bound": true,
       "payload_digest_only": true,
-      "serialized_length": 16183
+      "serialized_length": 16439
     },
     {
       "source_kind": "authority_coverage",
       "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
-      "source_sha256": "8d87b90f4fdcfdcc05648f21d559343a9fc1620bea2215e1334464a50f604ace",
-      "receipt_id": "personal-assistant-authority-coverage-e65886963c80beaa",
+      "source_sha256": "048bb9521fa1020ea427f9722ee1bf04ab8900a4091c0dc41d8fc122b0a6e968",
+      "receipt_id": "personal-assistant-authority-coverage-ff6ddef1e2a65362",
       "schema_version": "personal_assistant.authority_coverage_receipt.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
