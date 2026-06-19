@@ -20,6 +20,7 @@
     "memory",
     "teamops",
     "lane_status",
+    "assistant_readiness",
     "assurance",
     "blocked_actions",
     "effect_boundary",
@@ -36,7 +37,17 @@
     "sections": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["chat", "tasks", "approvals", "receipts", "skills", "memory", "teamops", "lane_status"],
+      "required": [
+        "chat",
+        "tasks",
+        "approvals",
+        "receipts",
+        "skills",
+        "memory",
+        "teamops",
+        "assistant_readiness",
+        "lane_status"
+      ],
       "properties": {
         "chat": {"$ref": "#/$defs/chat_section"},
         "tasks": {"$ref": "#/$defs/task_section"},
@@ -45,6 +56,7 @@
         "skills": {"$ref": "#/$defs/skill_section"},
         "memory": {"$ref": "#/$defs/memory_section"},
         "teamops": {"$ref": "#/$defs/teamops_section"},
+        "assistant_readiness": {"$ref": "#/$defs/assistant_readiness_section"},
         "lane_status": {"$ref": "#/$defs/lane_status_section"}
       }
     },
@@ -111,6 +123,7 @@
       }
     },
     "lane_status": {"$ref": "#/$defs/lane_status"},
+    "assistant_readiness": {"$ref": "#/$defs/assistant_readiness"},
     "assurance": {"$ref": "#/$defs/assurance"},
     "blocked_actions": {
       "type": "array",
@@ -184,6 +197,15 @@
       "properties": {
         "item_count": {"type": "integer", "minimum": 0},
         "live_probe_allowed": {"const": false}
+      }
+    },
+    "assistant_readiness_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "execution_allowed"],
+      "properties": {
+        "item_count": {"const": 1},
+        "execution_allowed": {"const": false}
       }
     },
     "lane_status_section": {
@@ -279,6 +301,192 @@
             "secret_value_storage_allowed": {"const": false}
           }
         }
+      }
+    },
+    "assistant_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_id",
+        "user_prompt",
+        "mode",
+        "foundation_only",
+        "governed",
+        "outcome",
+        "inbox_projection_status",
+        "calendar_projection_status",
+        "available_skills",
+        "blocked_actions",
+        "required_approvals",
+        "receipts",
+        "effect_boundary",
+        "private_payload_policy",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "customer_readiness_claim_allowed"
+      ],
+      "properties": {
+        "readiness_id": {"const": "personal_assistant_read_only_readiness_demo"},
+        "user_prompt": {"const": "Show my assistant readiness."},
+        "mode": {"const": "read_only"},
+        "foundation_only": {"const": true},
+        "governed": {"const": true},
+        "outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+        "inbox_projection_status": {"$ref": "#/$defs/readiness_projection_status"},
+        "calendar_projection_status": {"$ref": "#/$defs/readiness_projection_status"},
+        "available_skills": {"$ref": "#/$defs/readiness_available_skills"},
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "required_approvals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/readiness_required_approval"}
+        },
+        "receipts": {"$ref": "#/$defs/readiness_receipts"},
+        "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+        "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "mailbox_read_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "readiness_projection_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_state",
+        "projection_kind",
+        "skill_id",
+        "lane_id",
+        "route_refs",
+        "schema_refs",
+        "validator_refs",
+        "receipt_required",
+        "live_connector_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "calendar_write_allowed",
+        "external_send_allowed",
+        "raw_private_payload_serialized"
+      ],
+      "properties": {
+        "projection_state": {"const": "available_from_redacted_preview"},
+        "projection_kind": {"type": "string", "minLength": 1},
+        "skill_id": {"type": "string", "minLength": 1},
+        "lane_id": {"const": "read_only_projection"},
+        "route_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "schema_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "receipt_required": {"const": true},
+        "live_connector_execution_allowed": {"const": false},
+        "mailbox_read_allowed": {"const": false},
+        "mailbox_mutation_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "raw_private_payload_serialized": {"const": false}
+      }
+    },
+    "readiness_available_skills": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_count",
+        "skill_ids",
+        "read_only_skill_ids",
+        "draft_only_skill_ids",
+        "approval_required_skill_ids"
+      ],
+      "properties": {
+        "skill_count": {"type": "integer", "minimum": 1},
+        "skill_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "read_only_skill_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "draft_only_skill_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "approval_required_skill_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "readiness_required_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "required_for_skill_id",
+        "risk_level",
+        "approval_scope",
+        "receipt_required",
+        "execution_allowed",
+        "approval_is_execution",
+        "external_send_allowed",
+        "connector_mutation_allowed"
+      ],
+      "properties": {
+        "approval_id": {"type": "string", "minLength": 1},
+        "required_for_skill_id": {"type": "string", "minLength": 1},
+        "risk_level": {"type": "string", "minLength": 1},
+        "approval_scope": {"type": "string", "minLength": 1},
+        "receipt_required": {"const": true},
+        "execution_allowed": {"const": false},
+        "approval_is_execution": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false}
+      }
+    },
+    "readiness_receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_count",
+        "receipt_ids",
+        "source_receipt_refs",
+        "receipt_required_for_actions",
+        "runtime_dispatch_allowed",
+        "external_effect_allowed",
+        "connector_call_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "receipt_count": {"type": "integer", "minimum": 0},
+        "receipt_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "source_receipt_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "receipt_required_for_actions": {"const": true},
+        "runtime_dispatch_allowed": {"const": false},
+        "external_effect_allowed": {"const": false},
+        "connector_call_allowed": {"const": false},
+        "success_claim_allowed": {"const": false}
       }
     },
     "assurance": {

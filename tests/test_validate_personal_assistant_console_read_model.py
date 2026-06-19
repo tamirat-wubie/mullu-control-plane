@@ -40,8 +40,10 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
     viewer_binding = payload["receipts"]["viewer_binding"]
     receipt_item = payload["receipts"]["items"][0]
     lane_status = payload["lane_status"]
+    readiness = payload["assistant_readiness"]
 
     assert payload["sections"]["receipts"]["item_count"] == 1
+    assert payload["sections"]["assistant_readiness"]["item_count"] == 1
     assert payload["receipts"]["receipt_count"] == 1
     assert viewer_binding["read_only_worker_rehearsal_bound"] is True
     assert viewer_binding["runtime_dispatch_allowed"] is False
@@ -54,9 +56,9 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
     assert "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614" in payload["receipt_refs"]
     assert payload["sections"]["lane_status"]["item_count"] == lane_status["lane_count"]
     assert lane_status["lane_count"] == 12
-    assert lane_status["runtime_preview_lane_count"] == 7
+    assert lane_status["runtime_preview_lane_count"] == 9
     assert lane_status["read_model_lane_count"] == 2
-    assert lane_status["projection_only_lane_count"] == 3
+    assert lane_status["projection_only_lane_count"] == 1
     assert lane_status["execution_allowed"] is False
     assert lane_status["live_connector_execution_allowed"] is False
     assert lane_status["customer_readiness_claim_allowed"] is False
@@ -65,6 +67,28 @@ def test_personal_assistant_console_fixture_binds_rehearsal_receipt_viewer() -> 
         "/api/v1/console/personal-assistant",
         "/api/v1/console/personal-assistant/view",
     ]
+    assert readiness["user_prompt"] == "Show my assistant readiness."
+    assert readiness["mode"] == "read_only"
+    assert readiness["inbox_projection_status"]["route_refs"] == [
+        "/api/v1/personal-assistant/read-only/inbox/preview"
+    ]
+    assert readiness["calendar_projection_status"]["route_refs"] == [
+        "/api/v1/personal-assistant/read-only/calendar/preview"
+    ]
+    assert readiness["available_skills"]["skill_count"] == payload["skills"]["skill_count"]
+    assert "email.send.with_approval" in readiness["available_skills"]["approval_required_skill_ids"]
+    assert readiness["required_approvals"][0]["approval_id"] == "external_email_send_approval"
+    assert readiness["required_approvals"][0]["approval_is_execution"] is False
+    assert readiness["receipts"]["receipt_ids"] == [
+        "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
+    ]
+    assert readiness["receipts"]["runtime_dispatch_allowed"] is False
+    assert readiness["live_connector_execution_allowed"] is False
+    assert readiness["mailbox_read_allowed"] is False
+    assert readiness["mailbox_mutation_allowed"] is False
+    assert readiness["calendar_write_allowed"] is False
+    assert readiness["external_send_allowed"] is False
+    assert readiness["customer_readiness_claim_allowed"] is False
 
 
 def test_personal_assistant_console_validator_rejects_execution_authority(tmp_path: Path) -> None:
@@ -107,6 +131,10 @@ def test_personal_assistant_console_validator_rejects_memory_and_readiness_overc
     payload["memory"]["live_memory_write_allowed"] = True
     payload["memory"]["metadata"]["nested_mind_live_activation_allowed"] = True
     payload["assurance"]["ready_for_customer_readiness_claim"] = True
+    payload["assistant_readiness"]["live_connector_execution_allowed"] = True
+    payload["assistant_readiness"]["inbox_projection_status"]["route_refs"] = []
+    payload["assistant_readiness"]["required_approvals"][0]["approval_is_execution"] = True
+    payload["assistant_readiness"]["receipts"]["success_claim_allowed"] = True
     candidate = tmp_path / "unsafe_memory_console.json"
     candidate.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -116,6 +144,13 @@ def test_personal_assistant_console_validator_rejects_memory_and_readiness_overc
     assert "memory.live_memory_write_allowed must be false" in result.errors
     assert "memory.metadata.nested_mind_live_activation_allowed must be false" in result.errors
     assert "assurance.ready_for_customer_readiness_claim must be false" in result.errors
+    assert "assistant_readiness.live_connector_execution_allowed must be false" in result.errors
+    assert (
+        "assistant_readiness.inbox_projection_status.route_refs must include "
+        "/api/v1/personal-assistant/read-only/inbox/preview"
+    ) in result.errors
+    assert "assistant_readiness.required_approvals[0].approval_is_execution must be false" in result.errors
+    assert "assistant_readiness.receipts.success_claim_allowed must be false" in result.errors
     assert result.assurance_outcome == "SolvedVerified"
 
 

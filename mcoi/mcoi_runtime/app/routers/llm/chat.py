@@ -1,9 +1,18 @@
 """Conversation-aware chat, streaming chat, and chat-triggered workflow endpoints."""
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
+from mcoi_runtime.app.inceptadive_assistant_response_embedding import (
+    build_assistant_response_shadow_advisory,
+)
+from mcoi_runtime.app.inceptadive_shadow_integration import (
+    InceptaDiveShadowRuntime,
+    build_inceptadive_shadow_runtime,
+)
 from mcoi_runtime.app.routers.llm._common import (
     _raise_governed_http_error,
     _raise_llm_service_unavailable,
@@ -11,6 +20,7 @@ from mcoi_runtime.app.routers.llm._common import (
 )
 from mcoi_runtime.app.routers.llm._models import ChatRequest, ChatWorkflowRequest
 from mcoi_runtime.core.agent_protocol import AgentCapability
+from mcoi_runtime.core.invariants import stable_identifier
 
 router = APIRouter()
 _MAX_CHAT_WORKFLOW_HISTORY_READ_LIMIT = 500
@@ -79,6 +89,23 @@ def chat_completion(req: ChatRequest):
     else:
         deps.metrics.inc("llm_calls_failed")
 
+    shadow_advisory = build_assistant_response_shadow_advisory(
+        _shadow_runtime(),
+        request_id=_assistant_response_shadow_request_id(
+            route="/api/v1/chat",
+            conversation_id=conv.conversation_id,
+            response_ref=str(conv.message_count),
+            model_or_capability=result.model_name,
+        ),
+        user_input=req.message,
+        assistant_content=result.content,
+        route="/api/v1/chat",
+        tenant_id=req.tenant_id,
+        model_name=result.model_name,
+        succeeded=result.succeeded,
+        created_at=_created_at(),
+    )
+
     return {
         "conversation_id": conv.conversation_id,
         "content": result.content,
@@ -87,6 +114,7 @@ def chat_completion(req: ChatRequest):
         "cost": result.cost,
         "succeeded": result.succeeded,
         "message_count": conv.message_count,
+        "inceptadive_shadow_advisory": shadow_advisory,
         "governed": True,
     }
 
@@ -175,6 +203,22 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
             target=req.capability,
             exc=exc,
         )
+    shadow_advisory = build_assistant_response_shadow_advisory(
+        _shadow_runtime(),
+        request_id=_assistant_response_shadow_request_id(
+            route="/api/v1/chat/workflow",
+            conversation_id=result.conversation_id,
+            response_ref=result.workflow_id,
+            model_or_capability=req.capability,
+        ),
+        user_input=req.message,
+        assistant_content=result.response_content,
+        route="/api/v1/chat/workflow",
+        tenant_id=req.tenant_id,
+        model_name=req.capability,
+        succeeded=result.status == "completed",
+        created_at=_created_at(),
+    )
     return {
         "conversation_id": result.conversation_id,
         "workflow_id": result.workflow_id,
@@ -184,6 +228,7 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
         "trace_id": result.trace_id,
         "message_count": result.message_count,
         "cost": result.cost,
+        "inceptadive_shadow_advisory": shadow_advisory,
         "governed": True,
     }
 
@@ -209,3 +254,45 @@ def chat_workflow_history(limit: str = "50"):
         ],
         "summary": deps.chat_workflow.summary(),
     }
+
+
+def _shadow_runtime() -> InceptaDiveShadowRuntime:
+    """Return the registered shadow runtime or an env-derived fallback."""
+
+    try:
+        runtime = deps.get("inceptadive_shadow_runtime")
+    except RuntimeError:
+        return build_inceptadive_shadow_runtime(os.environ)
+    if isinstance(runtime, InceptaDiveShadowRuntime):
+        return runtime
+    return build_inceptadive_shadow_runtime(os.environ)
+
+
+def _created_at() -> str:
+    try:
+        clock = deps.get("clock")
+    except RuntimeError:
+        return "1970-01-01T00:00:00+00:00"
+    try:
+        value = clock() if callable(clock) else clock
+    except (TypeError, ValueError):
+        return "1970-01-01T00:00:00+00:00"
+    return str(value or "1970-01-01T00:00:00+00:00")
+
+
+def _assistant_response_shadow_request_id(
+    *,
+    route: str,
+    conversation_id: str,
+    response_ref: str,
+    model_or_capability: str,
+) -> str:
+    return "assistant_response_shadow_" + stable_identifier(
+        "assistant-response-shadow",
+        {
+            "route": route,
+            "conversation_id": conversation_id,
+            "response_ref": response_ref,
+            "model_or_capability": model_or_capability,
+        },
+    )

@@ -67,6 +67,7 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     post_response = client.post("/api/v1/console/personal-assistant", json={})
     payload = response.json()
     lane_status = payload["lane_status"]
+    readiness = payload["assistant_readiness"]
     lane_ids = [lane["lane_id"] for lane in lane_status["lanes"]]
 
     assert response.status_code == 200
@@ -75,6 +76,15 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert payload["status"] == "foundation_read_only"
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["governed"] is True
+    assert payload["sections"]["assistant_readiness"]["item_count"] == 1
+    assert readiness["user_prompt"] == "Show my assistant readiness."
+    assert readiness["inbox_projection_status"]["skill_id"] == "email.inbox.summarize"
+    assert readiness["calendar_projection_status"]["skill_id"] == "calendar.day.brief"
+    assert readiness["available_skills"]["skill_count"] == payload["skills"]["skill_count"]
+    assert readiness["live_connector_execution_allowed"] is False
+    assert readiness["mailbox_mutation_allowed"] is False
+    assert readiness["calendar_write_allowed"] is False
+    assert readiness["external_send_allowed"] is False
     assert lane_status["lane_count"] == 12
     assert lane_ids == [
         "request_intake_whqr",
@@ -115,6 +125,8 @@ def test_gateway_personal_assistant_console_html_view_is_read_only() -> None:
     assert response.status_code == 200
     assert post_response.status_code == 405
     assert "Mullu Personal Assistant Console" in body
+    assert "Assistant Readiness" in body
+    assert "Show my assistant readiness." in body
     assert "Foundation Lanes" in body
     assert "foundation_read_only" in body
     assert "/api/v1/console/personal-assistant" in body
