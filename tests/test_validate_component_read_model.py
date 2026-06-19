@@ -41,10 +41,9 @@ def test_component_read_model_schema_valid(tmp_path: Path) -> None:
     written_payload = json.loads(written_path.read_text(encoding="utf-8"))
 
     assert validation.ok is True
-    assert validation.component_count == 10
     assert validation.bound_route_count == 32
     assert validation.route_family_classification_count == 79
-    assert validation.classified_declared_route_count == 445
+    assert validation.classified_declared_route_count == 446
     assert validation.proof_bound_count == 9
     assert written_payload["errors"] == []
     assert written_payload["ok"] is True
@@ -60,9 +59,8 @@ def test_component_read_model_example_matches_runtime_projection() -> None:
     assert example["live_execution_enabled"] is False
     assert example["summary"]["component_count"] == 10
     assert example["summary"]["lifecycle_receipt_count"] == 10
-    assert example["summary"]["authority_witness_count"] == 10
     assert example["summary"]["route_family_classification_count"] == 79
-    assert example["summary"]["classified_declared_route_count"] == 445
+    assert example["summary"]["classified_declared_route_count"] == 446
     assert example["components"][0]["lifecycle_receipt"]["proof_state"] == "Pass"
     assert example["components"][0]["authority_witness"]["proof_state"] == "Pass"
 

@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 285,
+      "proven": 286,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 445,
+    "route_count": 446,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2766,6 +2766,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/partitions",
         "surface_id": "tenant_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+        "surface_id": "assistant_kernel_planning"
       },
       {
         "coverage_state": "proven",
@@ -6019,6 +6024,7 @@
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
         "/api/v1/personal-assistant/approval-proposals/preview",
+        "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
         "/api/v1/personal-assistant/read-only/inbox/preview",
         "/api/v1/personal-assistant/read-only/calendar/preview",
         "/api/v1/personal-assistant/drafts/email/preview",
@@ -6076,6 +6082,11 @@
           "personal_assistant_approval_queue_read_model_is_public_safe",
           "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
           "gateway_personal_assistant_approval_queue_preview_records_pending_packet"
+        ],
+        "personal_assistant_draft_approval_proposal_preview_no_effect": [
+          "gateway_personal_assistant_draft_approval_proposal_preview_does_not_enqueue",
+          "gateway_personal_assistant_draft_approval_proposal_rejects_mismatched_source",
+          "gateway_personal_assistant_draft_approval_proposal_rejects_raw_payload"
         ],
         "personal_assistant_draft_projection_public_safe": [
           "personal_assistant_draft_projection_fixture_validates",
@@ -6202,6 +6213,7 @@
         "personal_assistant_approval_queue_decision_deferred",
         "personal_assistant_approval_decision_public_safe",
         "personal_assistant_approval_proposal_preview_no_effect",
+        "personal_assistant_draft_approval_proposal_preview_no_effect",
         "personal_assistant_read_only_projection_public_safe",
         "personal_assistant_draft_projection_public_safe",
         "personal_assistant_memory_observation_read_model_public_safe",
@@ -15358,8 +15370,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1945,
-    "runtime_witness_count": 1945,
+    "exact_test_anchor_count": 1946,
+    "runtime_witness_count": 1946,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17876,6 +17888,14 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_draft_approval_proposal_preview_does_not_enqueue",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_draft_approval_proposal_rejects_mismatched_source",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_draft_approval_proposal_rejects_raw_payload"
+            ],
+            "witness": "personal_assistant_draft_approval_proposal_preview_no_effect"
+          },
+          {
+            "anchors": [
               "tests/test_validate_personal_assistant_read_only_projection.py::test_personal_assistant_read_only_projection_fixture_validates",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_runtime_read_only_projection_blocks_all_effect_boundaries",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_read_only_projection_validator_rejects_execution_authority",
@@ -18000,8 +18020,8 @@
             "witness": "personal_assistant_planning_schedule_no_effect"
           }
         ],
-        "exact_test_anchor_count": 23,
-        "runtime_witness_count": 23,
+        "exact_test_anchor_count": 24,
+        "runtime_witness_count": 24,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
