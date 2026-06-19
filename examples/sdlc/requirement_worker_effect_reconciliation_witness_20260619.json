@@ -1,0 +1,61 @@
+{
+  "requirement_id": "sdlc_req_worker_effect_reconciliation_witness_20260619",
+  "request_id": "platform_worker_effect_reconciliation_witness_20260619",
+  "problem_statement": "ReadOnlyWorkerPhiGovDispatchAuthorizationWitness requires effect reconciliation before terminal closure, but the selected read-only worker path lacks a schema-backed witness request that names the reconciliation evidence without enabling runtime authority.",
+  "success_criteria": [
+    "ReadOnlyWorkerEffectReconciliationWitness validates against a JSON schema and Foundation Mode example",
+    "the witness binds the upstream Phi_gov dispatch authorization witness and runtime dispatch admission witness",
+    "the witness requires reconciliation of runtime dispatch state, worker invocation state, runtime receipt state, WorkerFailureReceipt state, and receipt append state before terminal closure",
+    "the witness keeps effect reconciliation uncollected and keeps runtime dispatch, worker invocation, receipt emission, receipt append, filesystem writes, connector calls, network calls, secrets, success claims, and terminal closure denied",
+    "focused tests reject authority drift, effect-boundary drift, remaining-witness drift, missing evidence refs, mutation-route payloads, credential-like payloads, malformed payloads, and CLI JSON drift"
+  ],
+  "non_goals": [
+    "do not perform effect reconciliation",
+    "do not observe an active runtime lease",
+    "do not perform UAO dispatch authorization",
+    "do not perform Phi_gov dispatch authorization",
+    "do not admit runtime dispatch",
+    "do not invoke a worker",
+    "do not emit or append runtime receipts",
+    "do not grant filesystem, connector, network, terminal closure, or success-claim authority"
+  ],
+  "constraints": [
+    "Foundation Mode remains local-first and witness-only",
+    "Mfidel atomicity must remain preserved",
+    "terminal closure remains blocked until governed worker effect reconciliation evidence exists",
+    "all new artifacts must remain deterministic and read-only"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    ".github/workflows/ci.yml",
+    "docs/00_platform_overview.md",
+    "docs/52_mullu_governance_protocol.md",
+    "docs/80_read_only_worker_binding_contract.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/read_only_worker_effect_reconciliation_witness.foundation.json",
+    "examples/sdlc/design_worker_effect_reconciliation_witness_20260619.json",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_effect_reconciliation_witness.schema.json",
+    "scripts/validate_read_only_worker_effect_reconciliation_witness.py",
+    "tests/test_validate_protocol_manifest.py",
+    "tests/test_validate_read_only_worker_effect_reconciliation_witness.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_effect_reconciliation_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_effect_reconciliation_witness.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "schema-backed effect reconciliation witness fixture",
+    "upstream Phi_gov dispatch authorization witness validation",
+    "upstream runtime dispatch admission witness validation",
+    "protocol manifest registration",
+    "focused pytest coverage"
+  ],
+  "uao_ref": "uao://read-only-worker-effect-reconciliation-witness/requirement/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-effect-reconciliation-witness/requirement/20260619",
+  "receipt_ref": "receipt://read-only-worker-effect-reconciliation-witness/requirement/20260619"
+}
