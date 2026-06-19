@@ -227,6 +227,48 @@ replay or rollback, does not authorize runtime promotion, and leaves terminal
 closure certificate evidence as `AwaitingEvidence`. Execution, dispatch,
 runtime replanning, success, and terminal closure authority remain hard false.
 
+## Terminal Closure Certificate
+
+The local terminal-closure slice is
+`examples/governed_planning_profile_terminal_closure_certificate.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_terminal_closure_certificate.py`
+and governed by
+`schemas/governed_planning_profile_terminal_closure_certificate.schema.json`.
+
+This certificate binds the replay/recovery witness and records that every
+promotion-evidence gate in the local no-effect ladder is now satisfied:
+operator shadow-pilot observation, runtime-promotion approval,
+replay/recovery witness, and terminal closure certificate. Each covered plan
+class receives a `ClosedNoEffect` terminal record that preserves zero replay
+mismatches, rollback documentation, and incident-handoff documentation.
+
+The certificate closes only the local evidence ladder. It does not authorize
+runtime promotion or activate any runtime path. Runtime promotion remains a
+separate authority-changing action that must be explicitly submitted and
+governed before activation. Execution, dispatch, runtime replanning, success,
+and terminal closure authority remain hard false.
+
+## Runtime Authorization Request
+
+The local runtime-authorization request slice is
+`examples/governed_planning_profile_runtime_authorization_request.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_runtime_authorization_request.py`
+and governed by
+`schemas/governed_planning_profile_runtime_authorization_request.schema.json`.
+
+This request binds the terminal closure certificate and records that the
+operator authorization question has been submitted as a no-effect governance
+artifact. It preserves the completed evidence ladder while making the next
+authority dependency explicit: a separate signed runtime-authorization response
+witness is still required.
+
+The request does not authorize runtime promotion. It records
+`operator_response_required = true`, `operator_response_collected = false`, and
+`runtime_authorization_gate_satisfied = false`. Execution, dispatch, runtime
+replanning, success, and terminal closure authority remain hard false.
+
 ## Validation
 
 ```text
@@ -242,6 +284,10 @@ python scripts/validate_governed_planning_profile_runtime_promotion_approval_pac
 python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py --json
 python scripts/validate_governed_planning_profile_replay_recovery_witness.py
 python scripts/validate_governed_planning_profile_replay_recovery_witness.py --json
+python scripts/validate_governed_planning_profile_terminal_closure_certificate.py
+python scripts/validate_governed_planning_profile_terminal_closure_certificate.py --json
+python scripts/validate_governed_planning_profile_runtime_authorization_request.py
+python scripts/validate_governed_planning_profile_runtime_authorization_request.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
@@ -249,10 +295,12 @@ python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_p
 python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py -q
 python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_witness.py -q
+python -m pytest tests/test_validate_governed_planning_profile_terminal_closure_certificate.py -q
+python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_request.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, and replay/recovery witness defined
-  Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, or closure authority
-  Open issues: terminal closure certificate remains AwaitingEvidence
-  Next action: obtain terminal closure certificate before any runtime promotion
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, and runtime authorization request defined
+  Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, runtime promotion, or closure authority
+  Open issues: signed runtime authorization response witness remains absent
+  Next action: record separate signed runtime authorization response witness before activation

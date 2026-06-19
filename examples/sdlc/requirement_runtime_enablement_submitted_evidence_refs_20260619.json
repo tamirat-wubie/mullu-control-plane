@@ -1,0 +1,49 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_enablement_submitted_evidence_refs",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-enable-submitted-evidence-refs/20260619",
+  "constraints": [
+    "Submitted evidence refs must not be treated as accepted evidence.",
+    "Runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector authority, filesystem writes, network access, secret serialization, and success claims remain denied.",
+    "Missing operator runtime enablement approval, runtime disablement rollback plan, and trusted runtime clock evidence must remain explicit.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json",
+    "examples/read_only_worker_runtime_enablement_submitted_evidence_refs.foundation.json",
+    "scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py"
+  ],
+  "non_goals": [
+    "Do not accept submitted evidence.",
+    "Do not grant runtime enablement authority.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not claim terminal closure."
+  ],
+  "problem_statement": "Runtime enablement evidence was requested and status-ledgered, but there was no bounded artifact that submitted existing repo-local witness refs for review while preserving the missing evidence boundary.",
+  "receipt_ref": "examples/read_only_worker_runtime_enablement_submitted_evidence_refs.foundation.json",
+  "request_id": "runtime_enablement_submitted_evidence_refs_20260619",
+  "requirement_id": "sdlc_req_runtime_enablement_submitted_evidence_refs_20260619",
+  "risk_class": "high",
+  "success_criteria": [
+    "The submitted evidence refs artifact derives from the runtime enablement status ledger.",
+    "The artifact contains twelve submitted records, nine repo-local refs submitted for review, and three missing operator/runtime inputs.",
+    "Accepted evidence, rejected evidence, authority grants, runtime enablement, dispatch, worker invocation, receipt emission, receipt append, and terminal closure counts remain zero.",
+    "Focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-enable-submitted-evidence-refs/20260619"
+}

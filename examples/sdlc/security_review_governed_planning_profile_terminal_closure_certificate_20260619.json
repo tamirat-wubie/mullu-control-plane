@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-terminal-closure-certificate-20260619",
+  "change_id": "governed-planning-profile-terminal-closure-certificate-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A terminal closure certificate could be mistaken for runtime promotion, runtime activation, or terminal closure authority if it permits authority flags or runtime execution claims. The mitigation is a schema-backed local-only certificate with hard false authority fields, zero remaining promotion evidence gates, and an explicit requirement for a separate runtime-promotion authorization action before activation.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the certificate keeps runtime promotion, execution, dispatch, runtime replanning, success claims, terminal closure, and runtime execution false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_certificate_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "promotion gate check proves the certificate records all promotion evidence gates as satisfied while runtime activation remains separately governed",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_certificate_records_all_gates_without_authority"
+    },
+    {
+      "category": "receipts",
+      "check": "certificate integrity check proves the checked-in fixture matches the deterministic produced certificate and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_schema_accepts_fixture_and_produced_certificate"
+    },
+    {
+      "category": "audit",
+      "check": "certificate-boundary check proves source witness binding, prior gate satisfaction, terminal certificate collection, runtime authorization requirement, and denied authority remain explicit",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_certificate_rejects_boundary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-terminal-closure-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, terminal_closure, and runtime execution fields.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_terminal_closure_certificate.schema.json",
+        "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_certificate_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-terminal-closure-gate-collapse",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The certificate separates evidence closure from runtime activation by requiring a separate runtime promotion authorization action before activation.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_terminal_closure_certificate.local.json",
+        "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py::test_terminal_closure_certificate_records_all_gates_without_authority"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the terminal closure certificate local, deterministic, and read-only",
+    "hard-deny all runtime promotion, execution, dispatch, runtime replanning, success, terminal closure, and runtime execution fields in the schema",
+    "bind the certificate to the deterministic replay/recovery witness id and hash",
+    "record zero remaining promotion evidence gates without claiming runtime activation"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_terminal_closure_certificate.schema.json",
+    "scripts/validate_governed_planning_profile_terminal_closure_certificate.py",
+    "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py",
+    "receipt://governed-planning-profile/terminal-closure-certificate/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/terminal-closure-certificate/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/terminal-closure-certificate/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/terminal-closure-certificate/security/20260619"
+}

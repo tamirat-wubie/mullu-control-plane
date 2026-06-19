@@ -1,0 +1,64 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_authorization_request_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile sequence has collected terminal closure certificate evidence and now needs a schema-backed runtime authorization request that submits the operator authorization question without granting runtime promotion, activation, execution, dispatch, replanning, success, or terminal closure authority.",
+  "success_criteria": [
+    "a deterministic validator emits the runtime authorization request from the current terminal closure certificate",
+    "the checked-in local runtime authorization request matches the deterministic produced request",
+    "the schema records the authorization request as submitted while keeping operator response absent and runtime authorization gate unsatisfied",
+    "the request binds the terminal closure certificate id and hash and records all promotion evidence gates as satisfied",
+    "the request records that a separate signed runtime authorization response witness is required before activation",
+    "focused tests cover schema compatibility, fixture parity, source certificate binding, awaiting-response evidence, authority-drift rejection, collected-response drift rejection, unsatisfied source rejection, and boundary drift rejection"
+  ],
+  "non_goals": [
+    "do not authorize runtime promotion",
+    "do not record a signed operator response witness",
+    "do not execute, dispatch, replan, replay, or rollback",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim live runtime activation",
+    "do not replace the terminal closure certificate"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the runtime authorization request is local, read-only, deterministic, and reversible",
+    "operator response collection remains false until a separate signed response witness exists",
+    "runtime promotion activation remains denied until a separate authority-changing response and activation action are governed",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_request.py",
+    "schemas/governed_planning_profile_runtime_authorization_request.schema.json",
+    "examples/governed_planning_profile_runtime_authorization_request.local.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_request.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_runtime_authorization_request_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_runtime_authorization_request_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_runtime_authorization_request.py",
+    "python scripts/validate_governed_planning_profile_runtime_authorization_request.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_request.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "evidence_required": [
+    "schema-backed local runtime authorization request fixture",
+    "deterministic validator and produced request parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-request/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-request/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-request/requirement/20260619"
+}

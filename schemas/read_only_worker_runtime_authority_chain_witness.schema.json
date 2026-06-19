@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-authority-chain-witness:1",
+  "title": "Read-Only Worker runtime authority chain Witness",
+  "description": "Foundation Mode witness that binds the read_only_repo_inspection lease admission, dispatch authorization, receipt emission, receipt-store, failure, recovery, and replay evidence into one denied-until-complete runtime authority chain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "selected_worker_path",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "chain_decision",
+    "authority_scope",
+    "chain_stage_refs",
+    "required_evidence_refs",
+    "chain_evaluation",
+    "recovery_and_replay",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^read-only-worker-runtime-authority-chain-witness-[a-z0-9-]+$"
+    },
+    "receipt_version": {
+      "type": "string",
+      "const": "read_only_worker_runtime_authority_chain_witness.v1"
+    },
+    "selected_worker_path": {
+      "type": "string",
+      "const": "read_only_repo_inspection"
+    },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "chain_decision": {
+      "type": "string",
+      "const": "RUNTIME_AUTHORITY_CHAIN_BLOCKED_AWAITING_COMPLETE_LIVE_EVIDENCE"
+    },
+    "authority_scope": { "$ref": "#/$defs/authority_scope" },
+    "chain_stage_refs": { "$ref": "#/$defs/string_map" },
+    "required_evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "chain_evaluation": { "$ref": "#/$defs/string_boolean_map" },
+    "recovery_and_replay": { "$ref": "#/$defs/string_boolean_map" },
+    "receipt_refs": { "$ref": "#/$defs/string_map" },
+    "contract_summary": { "$ref": "#/$defs/non_negative_integer_map" },
+    "governance_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "minLength": 1 },
+        "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+        "receipt_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "foundation_witness_only",
+        "runtime_authority_chain_defined",
+        "active_runtime_lease_admitted",
+        "uao_dispatch_authorized",
+        "phi_gov_dispatch_authorized",
+        "runtime_dispatch_admitted",
+        "worker_invocation_allowed",
+        "runtime_receipt_emission_allowed",
+        "receipt_append_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean", "const": true },
+        "foundation_witness_only": { "type": "boolean", "const": true },
+        "runtime_authority_chain_defined": { "type": "boolean", "const": true },
+        "active_runtime_lease_admitted": { "type": "boolean", "const": false },
+        "uao_dispatch_authorized": { "type": "boolean", "const": false },
+        "phi_gov_dispatch_authorized": { "type": "boolean", "const": false },
+        "runtime_dispatch_admitted": { "type": "boolean", "const": false },
+        "worker_invocation_allowed": { "type": "boolean", "const": false },
+        "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+        "receipt_append_allowed": { "type": "boolean", "const": false },
+        "external_network_allowed": { "type": "boolean", "const": false },
+        "secret_access_allowed": { "type": "boolean", "const": false },
+        "filesystem_write_allowed": { "type": "boolean", "const": false },
+        "connector_authority_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "string_map": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "string_boolean_map": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "non_negative_integer_map": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    }
+  }
+}

@@ -74,6 +74,12 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     replay_recovery_entry = entries[
         "governed-planning-profile-replay-recovery-witness"
     ]
+    terminal_closure_entry = entries[
+        "governed-planning-profile-terminal-closure-certificate"
+    ]
+    runtime_authorization_request_entry = entries[
+        "governed-planning-profile-runtime-authorization-request"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -113,6 +119,20 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
     )
     assert replay_recovery_entry["surface"] == "planning"
+    assert terminal_closure_entry["path"] == (
+        "schemas/governed_planning_profile_terminal_closure_certificate.schema.json"
+    )
+    assert terminal_closure_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-terminal-closure-certificate:1"
+    )
+    assert terminal_closure_entry["surface"] == "planning"
+    assert runtime_authorization_request_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_request.schema.json"
+    )
+    assert runtime_authorization_request_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-request:1"
+    )
+    assert runtime_authorization_request_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:
@@ -1870,6 +1890,17 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_active_lease_admissi
     assert witness_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_authority_chain_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-runtime-authority-chain-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_runtime_authority_chain_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-authority-chain-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_runtime_dispatch_admission_witness_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -2085,6 +2116,21 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_evidence_
         "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-request-status-ledger:1"
     )
     assert ledger_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_submitted_evidence_refs_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    evidence_refs_entry = entries["read-only-worker-runtime-enablement-submitted-evidence-refs"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert evidence_refs_entry["path"] == (
+        "schemas/read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json"
+    )
+    assert evidence_refs_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-enablement-submitted-evidence-refs:1"
+    )
+    assert evidence_refs_entry["surface"] == "worker"
 
 
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:

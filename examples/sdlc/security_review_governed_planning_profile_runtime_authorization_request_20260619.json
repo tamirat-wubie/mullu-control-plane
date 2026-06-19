@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-runtime-authorization-request-20260619",
+  "change_id": "governed-planning-profile-runtime-authorization-request-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A runtime authorization request could be mistaken for a signed authorization response or runtime activation if it permits response-collected flags, authorization-gate satisfaction, or runtime authority fields. The mitigation is a schema-backed local-only request with hard false authority fields, an unknown response ref, and an explicit requirement for a separate signed response witness before activation.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the request keeps runtime promotion, execution, dispatch, runtime replanning, success claims, terminal closure, and runtime execution false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_request_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "response-boundary check proves the request keeps operator response absent and runtime authorization gate unsatisfied",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_request_rejects_collected_response_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "request integrity check proves the checked-in fixture matches the deterministic produced request and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_schema_accepts_fixture_and_produced_request"
+    },
+    {
+      "category": "audit",
+      "check": "request-boundary check proves source certificate binding, prior gate satisfaction, request submission, response requirement, and denied authority remain explicit",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_request_rejects_boundary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-runtime-authorization-request-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, terminal_closure, and runtime execution fields.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_runtime_authorization_request.schema.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_request_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-runtime-authorization-response-collapse",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The request separates request submission from response collection by requiring an unknown response ref, response_record_collected=false, and runtime_authorization_gate_satisfied=false.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_runtime_authorization_request.local.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_request.py::test_runtime_authorization_request_rejects_collected_response_drift"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the runtime authorization request local, deterministic, and read-only",
+    "hard-deny all runtime promotion, execution, dispatch, runtime replanning, success, terminal closure, and runtime execution fields in the schema",
+    "bind the request to the deterministic terminal closure certificate id and hash",
+    "record the operator response as absent and require a separate signed response witness before activation"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_runtime_authorization_request.schema.json",
+    "scripts/validate_governed_planning_profile_runtime_authorization_request.py",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_request.py",
+    "receipt://governed-planning-profile/runtime-authorization-request/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-request/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-request/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-request/security/20260619"
+}
