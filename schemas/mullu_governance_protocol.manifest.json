@@ -95,6 +95,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-candidate:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-operator-approval-gate",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-approval-gate:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
       "surface": "runtime",
