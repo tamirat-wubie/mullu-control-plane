@@ -6981,6 +6981,54 @@ def test_universal_symbol_lane_runtime_authority_evidence_receipt_surface_blocks
     assert closure_actions["publish_universal_symbol_lane_runtime_authority_evidence_receipt"]["status"] == "closed"
 
 
+def test_universal_symbol_lane_runtime_authority_evidence_value_receipt_surface_blocks_lane_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_lane_runtime_authority_evidence_value_receipt"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json" in surface[
+        "representative_paths"
+    ]
+    assert "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json" in surface[
+        "representative_paths"
+    ]
+    assert "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py" in surface[
+        "evidence_files"
+    ]
+    assert "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py" in surface[
+        "evidence_files"
+    ]
+    assert "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates" in witnesses
+    assert "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref" in witnesses
+    assert "lane_value_producer_builds_ref_only_blocked_receipt" in witnesses
+    assert "lane_value_cli_stdout_receipt_validates" in witnesses
+    assert (
+        witness_surfaces["universal_symbol_lane_runtime_authority_evidence_value_receipt"][
+            "exact_test_anchor_count"
+        ]
+        == 11
+    )
+    assert (
+        witness_surfaces["universal_symbol_lane_runtime_authority_evidence_value_receipt"][
+            "unanchored_witness_count"
+        ]
+        == 0
+    )
+    assert (
+        closure_actions["publish_universal_symbol_lane_runtime_authority_evidence_value_receipt"]["status"]
+        == "closed"
+    )
+
+
 def test_universal_symbol_runtime_authority_witness_surface_blocks_runtime_authority() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

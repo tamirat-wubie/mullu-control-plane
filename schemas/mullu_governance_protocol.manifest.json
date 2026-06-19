@@ -1859,6 +1859,12 @@
       "urn": "urn:mullusi:schema:universal-symbol-lane-runtime-authority-evidence-receipt:1"
     },
     {
+      "path": "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
+      "schema_id": "universal-symbol-lane-runtime-authority-evidence-value-receipt",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-lane-runtime-authority-evidence-value-receipt:1"
+    },
+    {
       "path": "schemas/universal_symbol_runtime_authority_witness.schema.json",
       "schema_id": "universal-symbol-runtime-authority-witness",
       "surface": "symbol",

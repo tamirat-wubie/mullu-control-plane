@@ -168,6 +168,12 @@ from scripts.validate_universal_symbol_lane_runtime_authority_evidence_receipt i
     UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError,
     validate_universal_symbol_lane_runtime_authority_evidence_receipt,
 )
+from scripts.validate_universal_symbol_lane_runtime_authority_evidence_value_receipt import (
+    DEFAULT_RECEIPT_PATH as DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
+    UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError,
+    validate_universal_symbol_lane_runtime_authority_evidence_value_receipt,
+)
 from scripts.validate_universal_symbol_runtime_authority_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH,
@@ -205,7 +211,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 114
+    assert report["evidence_ref_count"] == 119
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
@@ -258,6 +264,21 @@ def test_foundation_universal_symbol_lane_runtime_authority_evidence_receipt_val
     assert report["authority_denial_count"] == 13
     assert report["lane_evidence_constraint_count"] == 8
     assert report["evidence_ref_count"] == 23
+
+
+def test_foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates() -> None:
+    report = validate_universal_symbol_lane_runtime_authority_evidence_value_receipt()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["value_receipt_decision"]
+        == "blocked_pending_lane_evidence_value_verification_runtime_authority_and_admission"
+    )
+    assert report["lane_count"] == 4
+    assert report["evidence_value_kind_count"] == 6
+    assert report["evidence_value_item_count"] == 24
+    assert report["authority_denial_count"] == 13
+    assert report["evidence_ref_count"] == 18
 
 
 def test_foundation_universal_symbol_runtime_authority_witness_validates() -> None:
@@ -868,6 +889,63 @@ def test_lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drif
         validate_universal_symbol_lane_runtime_authority_evidence_receipt(
             _write_policy_case(tmp_path, changed),
             DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_value_receipt_rejects_authority_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["receipt_is_not_lane_authority"] = False
+    changed["authority_denials"]["lane_runtime_authority_granted"] = True
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError, match="lane authority"):
+        validate_universal_symbol_lane_runtime_authority_evidence_value_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_value_receipt_rejects_missing_value(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_value_items"] = changed["lane_value_items"][1:]
+    changed["contract_summary"]["evidence_value_item_count"] = len(changed["lane_value_items"])
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError, match="teamops-shared-inbox"):
+        validate_universal_symbol_lane_runtime_authority_evidence_value_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_value_items"][0]["supplied_evidence_ref"] = "token=raw-secret"
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError, match="raw secret"):
+        validate_universal_symbol_lane_runtime_authority_evidence_value_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_value_items"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError, match="delta_reject_ref"):
+        validate_universal_symbol_lane_runtime_authority_evidence_value_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceValueReceiptError, match="evidence_ref_count drift"):
+        validate_universal_symbol_lane_runtime_authority_evidence_value_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_VALUE_SCHEMA_PATH,
         )
 
 

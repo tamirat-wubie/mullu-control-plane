@@ -185,7 +185,7 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 114
+    "evidence_ref_count": 119
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
@@ -219,6 +219,7 @@
     "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
     "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
     "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+    "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
     "examples/universal_symbol_kernel.foundation.json",
     "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
     "examples/universal_symbol_append_audit_witness.foundation.json",
@@ -250,6 +251,7 @@
     "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
     "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
     "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+    "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json",
     "docs/40_proof_coverage_matrix.md",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
@@ -300,7 +302,10 @@
     "scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py",
     "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
     "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
+    "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+    "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
     "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py",
+    "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
     "tests/test_validate_universal_symbol_kernel.py"
   ]
 }

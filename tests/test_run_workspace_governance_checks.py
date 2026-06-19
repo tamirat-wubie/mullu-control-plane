@@ -11,11 +11,13 @@ Invariants:
 from __future__ import annotations
 
 import ast
+import io
 import json
 import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TextIO
 
 import pytest
 
@@ -133,6 +135,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_runtime_admission_evidence_receipt",
         "universal_symbol_runtime_live_witness_input_receipt",
         "universal_symbol_lane_runtime_authority_evidence_receipt",
+        "universal_symbol_lane_runtime_authority_evidence_value_receipt",
         "universal_symbol_runtime_authority_witness",
         "universal_symbol_runtime_authority_read_model",
         "universal_symbol_skill_runtime_authority_witness",
@@ -573,6 +576,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_lane_runtime_authority_evidence_receipt",
+        "universal_symbol_lane_runtime_authority_evidence_value_receipt",
+    )
+    assert_ordered(
+        "universal_symbol_lane_runtime_authority_evidence_value_receipt",
         "universal_symbol_runtime_authority_witness",
     )
     assert_ordered("universal_symbol_runtime_authority_witness", "universal_symbol_runtime_authority_read_model")
@@ -1109,6 +1116,29 @@ def test_select_check_commands_filters_and_shards() -> None:
         runner.select_check_commands(commands, selected_names=("missing",))
 
 
+def test_run_checks_emits_progress_without_changing_result_order(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands = (
+        runner.CheckCommand("alpha", ("python", "alpha.py")),
+        runner.CheckCommand("omega", ("python", "omega.py")),
+    )
+
+    def fake_run_check(
+        observed_command: runner.CheckCommand,
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        timeout_seconds: float | None = None,
+    ) -> runner.CheckResult:
+        return runner.CheckResult(observed_command.name, observed_command.args, 0, "ok\n", "")
+
+    progress_stream = io.StringIO()
+    monkeypatch.setattr(runner, "run_check", fake_run_check)
+
+    results = runner.run_checks(commands, progress_stream=progress_stream)
+
+    assert [result.name for result in results] == ["alpha", "omega"]
+    assert "[RUN] 1/2 alpha" in progress_stream.getvalue()
+    assert "[PASS] 2/2 omega" in progress_stream.getvalue()
+
+
 def test_build_receipt_records_pass_and_failure() -> None:
     pass_result = runner.CheckResult("pass_check", ("python", "--version"), 0, "ok\n", "")
     fail_result = runner.CheckResult("fail_check", ("python", "-c", "fail"), 1, "", "bad\n")
@@ -1156,6 +1186,7 @@ def test_canonical_receipt_refresh_bootstraps_self_validating_example(
         workspace_root: Path = runner.WORKSPACE_ROOT,
         max_workers: int = 1,
         timeout_seconds: float | None = None,
+        progress_stream: TextIO | None = None,
     ) -> tuple[runner.CheckResult, ...]:
         assert [command.name for command in observed_commands] == ["alpha", "omega"]
         return (
@@ -1203,6 +1234,7 @@ def test_canonical_receipt_refresh_does_not_mask_prior_failure(monkeypatch: pyte
         workspace_root: Path = runner.WORKSPACE_ROOT,
         max_workers: int = 1,
         timeout_seconds: float | None = None,
+        progress_stream: TextIO | None = None,
     ) -> tuple[runner.CheckResult, ...]:
         return (runner.CheckResult("alpha", ("python", "alpha.py"), 1, "", "alpha failed\n"),)
 

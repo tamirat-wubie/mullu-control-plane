@@ -899,6 +899,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py"),
         ),
         CheckCommand(
+            "universal_symbol_lane_runtime_authority_evidence_value_receipt",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "universal_symbol_runtime_authority_witness",
             (python_executable, "scripts/validate_universal_symbol_runtime_authority_witness.py"),
         ),
@@ -1349,6 +1356,7 @@ def run_checks(
     workspace_root: Path = WORKSPACE_ROOT,
     max_workers: int = 1,
     timeout_seconds: float | None = None,
+    progress_stream: TextIO | None = None,
 ) -> tuple[CheckResult, ...]:
     """Run governance checks and preserve the declared result order."""
 
@@ -1356,8 +1364,22 @@ def run_checks(
         raise ValueError("max_workers must be at least 1")
     if timeout_seconds is not None and timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive when provided")
+    total_commands = len(commands)
+
+    def emit_progress(message: str) -> None:
+        if progress_stream is not None:
+            progress_stream.write(message + "\n")
+            progress_stream.flush()
+
     if max_workers == 1:
-        return tuple(run_check(command, workspace_root, timeout_seconds) for command in commands)
+        results: list[CheckResult] = []
+        for index, command in enumerate(commands, start=1):
+            emit_progress(f"[RUN] {index}/{total_commands} {command.name}")
+            result = run_check(command, workspace_root, timeout_seconds)
+            outcome = "PASS" if result.passed else "FAIL"
+            emit_progress(f"[{outcome}] {index}/{total_commands} {command.name}")
+            results.append(result)
+        return tuple(results)
 
     results_by_index: list[CheckResult | None] = [None] * len(commands)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1365,8 +1387,14 @@ def run_checks(
             executor.submit(run_check, command, workspace_root, timeout_seconds): index
             for index, command in enumerate(commands)
         }
+        for index, command in enumerate(commands, start=1):
+            emit_progress(f"[RUN] {index}/{total_commands} {command.name}")
         for future in as_completed(future_by_index):
-            results_by_index[future_by_index[future]] = future.result()
+            result_index = future_by_index[future]
+            result = future.result()
+            results_by_index[result_index] = result
+            outcome = "PASS" if result.passed else "FAIL"
+            emit_progress(f"[{outcome}] {result_index + 1}/{total_commands} {result.name}")
     return tuple(result for result in results_by_index if result is not None)
 
 
@@ -1376,6 +1404,7 @@ def run_checks_for_canonical_receipt_refresh(
     workspace_root: Path = WORKSPACE_ROOT,
     max_workers: int = 1,
     timeout_seconds: float | None = None,
+    progress_stream: TextIO | None = None,
 ) -> tuple[CheckResult, ...]:
     """Run checks while safely refreshing the self-validating receipt example."""
 
@@ -1395,6 +1424,7 @@ def run_checks_for_canonical_receipt_refresh(
         workspace_root,
         max_workers=max_workers,
         timeout_seconds=timeout_seconds,
+        progress_stream=progress_stream,
     )
     if not all(result.passed for result in non_receipt_results):
         placeholder_result = CheckResult(
@@ -1587,6 +1617,7 @@ def main(argv: list[str] | None = None) -> int:
         canonical_receipt_refresh = (
             args.receipt_path is not None and is_canonical_receipt_refresh_path(args.receipt_path)
         )
+        progress_stream = sys.stderr if args.receipt_path is not None else None
         with maybe_full_preflight_lock(requires_full_preflight_lock(selected_names, shard_count)):
             if canonical_receipt_refresh:
                 results = run_checks_for_canonical_receipt_refresh(
@@ -1595,6 +1626,7 @@ def main(argv: list[str] | None = None) -> int:
                     WORKSPACE_ROOT,
                     max_workers=int(args.max_workers),
                     timeout_seconds=args.per_check_timeout_seconds,
+                    progress_stream=progress_stream,
                 )
             else:
                 results = run_checks(
@@ -1602,6 +1634,7 @@ def main(argv: list[str] | None = None) -> int:
                     WORKSPACE_ROOT,
                     max_workers=int(args.max_workers),
                     timeout_seconds=args.per_check_timeout_seconds,
+                    progress_stream=progress_stream,
                 )
     except PreflightLockError as exc:
         sys.stderr.write(f"[FAIL] preflight-lock: {exc}\nSTATUS: failed\n")

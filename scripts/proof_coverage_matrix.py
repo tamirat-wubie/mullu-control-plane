@@ -660,6 +660,88 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_lane_runtime_authority_evidence_value_receipt",
+            [
+                "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
+                "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json",
+                "validate_universal_symbol_lane_runtime_authority_evidence_value_receipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
+                "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json",
+                "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+                "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+                "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+                "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+                "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+                "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+                "schemas/universal_symbol.schema.json",
+                "docs/91_universal_symbol_kernel.md",
+                "docs/92_universal_symbol_kernel_audit.md",
+                "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+                "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+                "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol lane runtime authority evidence value receipt records operator-supplied reference values for lane approval, receipt-store authority, recovery, audit, live runtime witness, and blocked actions while denying lane authority, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
+            [
+                "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates",
+                "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift",
+                "lane_runtime_authority_evidence_value_receipt_rejects_missing_value",
+                "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref",
+                "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject",
+                "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift",
+                "lane_value_producer_builds_ref_only_blocked_receipt",
+                "lane_value_producer_accepts_ref_overrides_without_authority",
+                "lane_value_producer_rejects_unknown_empty_or_secret_refs",
+                "lane_value_cli_stdout_receipt_validates",
+                "lane_value_cli_output_write_reports_summary",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates": [
+                    "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates"
+                ],
+                "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift": [
+                    "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift"
+                ],
+                "lane_runtime_authority_evidence_value_receipt_rejects_missing_value": [
+                    "lane_runtime_authority_evidence_value_receipt_rejects_missing_value"
+                ],
+                "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref": [
+                    "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref"
+                ],
+                "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject": [
+                    "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject"
+                ],
+                "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift": [
+                    "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift"
+                ],
+                "lane_value_producer_builds_ref_only_blocked_receipt": [
+                    "lane_value_producer_builds_ref_only_blocked_receipt"
+                ],
+                "lane_value_producer_accepts_ref_overrides_without_authority": [
+                    "lane_value_producer_accepts_ref_overrides_without_authority"
+                ],
+                "lane_value_producer_rejects_unknown_empty_or_secret_refs": [
+                    "lane_value_producer_rejects_unknown_empty_or_secret_refs"
+                ],
+                "lane_value_cli_stdout_receipt_validates": [
+                    "lane_value_cli_stdout_receipt_validates"
+                ],
+                "lane_value_cli_output_write_reports_summary": [
+                    "lane_value_cli_output_write_reports_summary"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_runtime_authority_witness",
             [
                 "schemas/universal_symbol_runtime_authority_witness.schema.json",
@@ -13284,6 +13366,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_lane_runtime_authority_evidence_receipt",
             "surfaces": ["universal_symbol_lane_runtime_authority_evidence_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_lane_runtime_authority_evidence_value_receipt",
+            "surfaces": ["universal_symbol_lane_runtime_authority_evidence_value_receipt"],
             "status": "closed",
         },
         {

@@ -86,6 +86,13 @@
       ]
     },
     {
+      "action_id": "publish_universal_symbol_lane_runtime_authority_evidence_value_receipt",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_lane_runtime_authority_evidence_value_receipt"
+      ]
+    },
+    {
       "action_id": "publish_universal_symbol_runtime_authority_witness",
       "status": "closed",
       "surfaces": [
@@ -1644,7 +1651,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 161,
+      "action_proof": 162,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
@@ -1652,7 +1659,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 215,
+      "audit_chain": 216,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1660,21 +1667,21 @@
     "by_coverage_state": {
       "proven": 78,
       "unproven": 0,
-      "witnessed": 140
+      "witnessed": 141
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 56,
-      "request_proof": 160
+      "request_proof": 161
     },
-    "surface_count": 218
+    "surface_count": 219
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 218,
+      "strong": 219,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4521,6 +4528,88 @@
         "lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift"
       ],
       "surface_id": "universal_symbol_lane_runtime_authority_evidence_receipt"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
+        "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+        "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+        "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+        "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+        "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+        "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+        "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+        "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol lane runtime authority evidence value receipt records operator-supplied reference values for lane approval, receipt-store authority, recovery, audit, live runtime witness, and blocked actions while denying lane authority, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_lane_runtime_authority_evidence_value_receipt.schema.json",
+        "examples/universal_symbol_lane_runtime_authority_evidence_value_receipt.foundation.json",
+        "validate_universal_symbol_lane_runtime_authority_evidence_value_receipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates": [
+          "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates"
+        ],
+        "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift": [
+          "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift"
+        ],
+        "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift": [
+          "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift"
+        ],
+        "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject": [
+          "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject"
+        ],
+        "lane_runtime_authority_evidence_value_receipt_rejects_missing_value": [
+          "lane_runtime_authority_evidence_value_receipt_rejects_missing_value"
+        ],
+        "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref": [
+          "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref"
+        ],
+        "lane_value_cli_output_write_reports_summary": [
+          "lane_value_cli_output_write_reports_summary"
+        ],
+        "lane_value_cli_stdout_receipt_validates": [
+          "lane_value_cli_stdout_receipt_validates"
+        ],
+        "lane_value_producer_accepts_ref_overrides_without_authority": [
+          "lane_value_producer_accepts_ref_overrides_without_authority"
+        ],
+        "lane_value_producer_builds_ref_only_blocked_receipt": [
+          "lane_value_producer_builds_ref_only_blocked_receipt"
+        ],
+        "lane_value_producer_rejects_unknown_empty_or_secret_refs": [
+          "lane_value_producer_rejects_unknown_empty_or_secret_refs"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates",
+        "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift",
+        "lane_runtime_authority_evidence_value_receipt_rejects_missing_value",
+        "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref",
+        "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject",
+        "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift",
+        "lane_value_producer_builds_ref_only_blocked_receipt",
+        "lane_value_producer_accepts_ref_overrides_without_authority",
+        "lane_value_producer_rejects_unknown_empty_or_secret_refs",
+        "lane_value_cli_stdout_receipt_validates",
+        "lane_value_cli_output_write_reports_summary"
+      ],
+      "surface_id": "universal_symbol_lane_runtime_authority_evidence_value_receipt"
     },
     {
       "action_proof": "action_proof",
@@ -17188,8 +17277,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2099,
-    "runtime_witness_count": 2099,
+    "exact_test_anchor_count": 2110,
+    "runtime_witness_count": 2110,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17735,6 +17824,81 @@
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
         "surface_id": "universal_symbol_lane_runtime_authority_evidence_receipt",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates"
+            ],
+            "witness": "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_value_receipt_rejects_authority_drift"
+            ],
+            "witness": "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_value_receipt_rejects_missing_value"
+            ],
+            "witness": "lane_runtime_authority_evidence_value_receipt_rejects_missing_value"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref"
+            ],
+            "witness": "lane_runtime_authority_evidence_value_receipt_rejects_raw_secret_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject"
+            ],
+            "witness": "lane_runtime_authority_evidence_value_receipt_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "lane_runtime_authority_evidence_value_receipt_rejects_evidence_ref_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py::test_lane_value_producer_builds_ref_only_blocked_receipt"
+            ],
+            "witness": "lane_value_producer_builds_ref_only_blocked_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py::test_lane_value_producer_accepts_ref_overrides_without_authority"
+            ],
+            "witness": "lane_value_producer_accepts_ref_overrides_without_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py::test_lane_value_producer_rejects_unknown_empty_or_secret_refs"
+            ],
+            "witness": "lane_value_producer_rejects_unknown_empty_or_secret_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py::test_lane_value_cli_stdout_receipt_validates"
+            ],
+            "witness": "lane_value_cli_stdout_receipt_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py::test_lane_value_cli_output_write_reports_summary"
+            ],
+            "witness": "lane_value_cli_output_write_reports_summary"
+          }
+        ],
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
+        "surface_id": "universal_symbol_lane_runtime_authority_evidence_value_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
