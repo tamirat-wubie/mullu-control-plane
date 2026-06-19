@@ -1,0 +1,53 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_20260619",
+  "request_id": "platform_governed_planning_profile_20260619",
+  "problem_statement": "Mullu Control Plane has multiple mature planning, simulation, execution, closure, and learning lineages, but it lacks one canonical reference-only profile that proves how those lineages interoperate without introducing a second planner or execution spine.",
+  "success_criteria": [
+    "GovernedPlanningProfile validates against a JSON schema and Foundation Mode example",
+    "the profile binds the existing ProblemStar, Phi-GPS, planning compiler, simulator, capability plan, plan executor, plan ledger, OrgOS, WHQR/MIL, holistic loop, UAO, and learning-admission lineages by reference",
+    "the profile represents goals, constraints, evidence, assumptions, unknowns, contradictions, candidate plans, risk, budget, authority, approvals, rollback, compensation, safe stops, closure, and learning refs",
+    "the profile requires local repair first, hysteresis, cooldown, change budgets, and Phi_gov review for goal, policy, or authority changes",
+    "the profile keeps planner replacement, parallel execution spines, execution, dispatch, connector calls, writes, system-of-record migration, runtime replanning, success claims, and terminal closure denied",
+    "focused tests reject authority drift, source-binding drift, missing planning refs, adaptation drift, malformed payloads, missing repository paths, and summary drift"
+  ],
+  "non_goals": [
+    "do not register a new planner",
+    "do not replace Phi-GPS, WHQR/MIL, OrgOS, Workflow, UAO, or Phi_gov",
+    "do not bind the simulation goal compiler into router or live execution paths",
+    "do not dispatch workers or call connectors",
+    "do not write files, memory, policy, or system-of-record state",
+    "do not enable autonomous replanning or grant terminal closure"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the first slice is additive, deterministic, read-only, and reversible",
+    "all source lineages preserve their existing identities and authority rules",
+    "Mfidel atomicity must remain preserved",
+    "missing adapter, shadow, runtime, or operator evidence remains AwaitingEvidence"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/governed_planning_profile.foundation.json",
+    "examples/sdlc/design_governed_planning_profile_20260619.json",
+    "schemas/governed_planning_profile.schema.json",
+    "scripts/validate_governed_planning_profile.py",
+    "tests/test_validate_governed_planning_profile.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile.py",
+    "python -m pytest tests/test_validate_governed_planning_profile.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "schema-backed Foundation profile",
+    "exact source-lineage bindings",
+    "authority-denial guards",
+    "repository-path validation",
+    "focused positive and negative pytest coverage"
+  ],
+  "uao_ref": "uao://governed-planning-profile/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/requirement/20260619"
+}

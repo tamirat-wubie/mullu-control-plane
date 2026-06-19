@@ -809,6 +809,12 @@
       "surface": "search"
     },
     {
+      "schema_id": "research-epistemics-profile",
+      "path": "schemas/research_epistemics_profile.schema.json",
+      "urn": "urn:mullusi:schema:research-epistemics-profile:1",
+      "surface": "research"
+    },
+    {
       "schema_id": "durable-gmail-oauth-operator-handoff",
       "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
@@ -1473,6 +1479,12 @@
       "path": "schemas/sdlc_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:sdlc-closure-receipt:1",
       "surface": "software_delivery"
+    },
+    {
+      "schema_id": "governed-planning-profile",
+      "path": "schemas/governed_planning_profile.schema.json",
+      "urn": "urn:mullusi:schema:governed-planning-profile:1",
+      "surface": "planning"
     },
     {
       "schema_id": "supervisor-tick",
