@@ -5545,18 +5545,59 @@ def bind_case_closure_drift_remediation(case_id: str, req: ClosureDriftRemediati
             detail=_error_detail("closure drift evidence mismatch", "closure_drift_evidence_mismatch"),
         )
     try:
+        disposition = TerminalClosureDisposition(req.terminal_disposition)
+        policy = _closure_drift_remediation_policy(disposition)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure drift remediation policy rejected", "closure_drift_remediation_policy_rejected"),
+        ) from exc
+    metadata = {
+        **req.metadata,
+        "policy_action_kind": policy["action_kind"],
+        "policy_required_evidence_types": list(policy["required_evidence_types"]),
+    }
+    if disposition in {TerminalClosureDisposition.COMPENSATED, TerminalClosureDisposition.ACCEPTED_RISK}:
+        evidence_by_ref = _case_evidence_by_ref(kernel, case_id)
+        approval_refs = _case_approval_refs(kernel, case_id)
+        readiness = _closure_drift_action_readiness(
+            disposition=disposition,
+            evidence_by_ref=evidence_by_ref,
+            approval_refs=approval_refs,
+            evidence_refs=req.evidence_refs,
+            authority_ref=req.authority_ref,
+        )
+        runbook_binding = _closure_drift_runbook_binding_projection(disposition)
+        if isinstance(runbook_binding, dict) and runbook_binding.get("binding_valid") is not True:
+            detail = _error_detail(
+                "closure drift remediation runbook binding invalid",
+                "closure_drift_runbook_binding_invalid",
+            )
+            detail["validation_errors"] = runbook_binding.get("validation_errors", [])
+            raise HTTPException(400, detail=detail)
+        if not readiness["ready"]:
+            detail = _error_detail(
+                "closure drift remediation policy unmet",
+                "closure_drift_remediation_policy_unmet",
+            )
+            detail["missing_evidence_types"] = readiness["missing_evidence_types"]
+            detail["missing_authority_refs"] = readiness["missing_authority_refs"]
+            raise HTTPException(400, detail=detail)
+        if runbook_binding is not None:
+            metadata["runbook_binding"] = runbook_binding
+    try:
         binding = kernel.bind_closure_drift_remediation(
             ClosureDriftRemediationBinding(
                 remediation_id=req.remediation_id,
                 case_id=case_id,
                 closure_id=req.closure_id,
-                terminal_disposition=TerminalClosureDisposition(req.terminal_disposition),
+                terminal_disposition=disposition,
                 drift_evidence_refs=tuple(req.drift_evidence_refs),
                 superseded_evidence_refs=tuple(req.superseded_evidence_refs),
                 authority_ref=req.authority_ref,
                 evidence_refs=tuple(req.evidence_refs),
                 created_at=_clock_now(),
-                metadata=req.metadata,
+                metadata=metadata,
             )
         )
     except (RuntimeCoreInvariantError, ValueError) as exc:
