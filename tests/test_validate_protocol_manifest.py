@@ -1970,6 +1970,17 @@ def test_protocol_manifest_indexes_read_only_worker_receipt_append_witness_contr
     assert witness_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_terminal_closure_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-terminal-closure-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_terminal_closure_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
