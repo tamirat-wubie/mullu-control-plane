@@ -93,6 +93,8 @@ from mcoi_runtime.personal_assistant import (
     summarize_calendar_day_read_only,
     summarize_inbox_read_only,
 )
+from mcoi_runtime.personal_assistant.approval import ApprovalPlanProposal
+from mcoi_runtime.personal_assistant.approval_matrix import load_default_personal_assistant_approval_matrix
 
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.phone import PhoneAdapter
@@ -467,6 +469,32 @@ class GatewayPersonalAssistantApprovalProposalPreviewRequest(BaseModel):
     approval_scope: str = ApprovalScope.PER_PLAN.value
     thread_id: str = "thread-personal-assistant-approval-proposal-preview"
     requested_from_id: str = "operator"
+    include_console_read_model: bool = False
+
+
+class GatewayPersonalAssistantDraftApprovalSource(BaseModel):
+    """Redacted draft reference that can be converted into an approval proposal."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    draft_ref: str
+    draft_type: str
+    draft_skill_id: str
+    summary: str
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class GatewayPersonalAssistantDraftApprovalPreviewRequest(BaseModel):
+    """No-effect bridge from draft-only preview to approval proposal preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str
+    draft: GatewayPersonalAssistantDraftApprovalSource
+    plan_id: str = ""
+    created_at: str = ""
+    approval_scope: str = ApprovalScope.PER_ACTION.value
+    approver_ref: str = "operator:gateway"
     include_console_read_model: bool = False
 
 
@@ -900,6 +928,64 @@ def _gateway_personal_assistant_draft_projection_set(
             "connector_count": len(connectors_used),
         },
     }
+
+
+def _gateway_personal_assistant_draft_approval_proposal(
+    *,
+    request_id: str,
+    plan_id: str,
+    approval_scope: str,
+    draft: GatewayPersonalAssistantDraftApprovalSource,
+) -> ApprovalPlanProposal:
+    """Return a no-effect approval proposal from a redacted draft reference."""
+    draft_payload = _pydantic_payload(draft)
+    action = ApprovalProposedAction.from_mapping(
+        {
+            "action_id": "send_prepared_email_draft",
+            "skill_id": "email.send.with_approval",
+            "risk_level": "P4",
+            "effect_boundary": "external_email_send",
+            "summary": f"Send prepared email draft after explicit approval: {draft_payload['summary']}",
+        }
+    )
+    if draft_payload["draft_type"] != "email_response":
+        raise PersonalAssistantInvariantError("only email_response draft approval proposals are registered")
+    if draft_payload["draft_skill_id"] != "email.response.draft":
+        raise PersonalAssistantInvariantError("email_response approval proposals require email.response.draft source")
+    if not draft_payload["draft_ref"].startswith("pa_draft_projection_item_"):
+        raise PersonalAssistantInvariantError("draft_ref must reference a draft projection item")
+
+    registry = load_default_skill_registry()
+    target_skill = registry.get(action.skill_id)
+    if target_skill.risk_level.value != action.risk_level.value:
+        raise PersonalAssistantInvariantError("approval target risk does not match registry")
+    if target_skill.requires_approval is not True:
+        raise PersonalAssistantInvariantError("approval target must require approval")
+
+    matrix = load_default_personal_assistant_approval_matrix()
+    forbidden = (
+        "send",
+        "send_without_approval",
+        "recipient_unapproved",
+        "connector_mutation_without_receipt",
+    )
+    matrix.assert_action_admitted(
+        risk_level=action.risk_level,
+        execution_mode="execute_with_approval",
+        forbidden_without_approval=forbidden,
+    )
+    evidence_refs = tuple(dict.fromkeys((draft_payload["draft_ref"], *draft_payload["evidence_refs"])))
+    return ApprovalPlanProposal(
+        request_id=request_id,
+        plan_id=plan_id,
+        approval_scope=approval_scope,
+        risk_level=action.risk_level,
+        proposed_actions=(action,),
+        forbidden_without_approval=forbidden,
+        evidence_refs=evidence_refs,
+        approval_matrix_ref=matrix.matrix_id,
+        execution_allowed=False,
+    )
 
 
 def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
@@ -2847,6 +2933,69 @@ def create_gateway_app(
                 generated_at=now,
                 recent_requests=(request_row,),
                 receipts=(envelope_payload["receipt"],) if envelope_payload.get("receipt") else (),
+                approval_proposals=(proposal_payload,),
+            )
+        return response
+
+    @app.post("/api/v1/personal-assistant/approval-proposals/from-draft/preview")
+    def preview_personal_assistant_draft_approval_proposal(
+        req: GatewayPersonalAssistantDraftApprovalPreviewRequest,
+    ):
+        try:
+            now = req.created_at or _clock()
+            request_id = req.request_id
+            plan_id = req.plan_id or _gateway_personal_assistant_plan_id(request_id)
+            proposal = _gateway_personal_assistant_draft_approval_proposal(
+                request_id=request_id,
+                plan_id=plan_id,
+                approval_scope=req.approval_scope,
+                draft=req.draft,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant draft approval proposal preview",
+                    "error_code": "invalid_personal_assistant_draft_approval_proposal_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        proposal_payload = proposal.as_dict()
+        response: dict[str, Any] = {
+            "approval_proposal": proposal_payload,
+            "approval_queue": PersonalAssistantApprovalQueue().read_model(),
+            "draft_ref": req.draft.draft_ref,
+            "source_draft": {
+                "draft_ref": req.draft.draft_ref,
+                "draft_type": req.draft.draft_type,
+                "draft_skill_id": req.draft.draft_skill_id,
+            },
+            "outcome": "AwaitingEvidence",
+            "effect_boundary": {
+                "execution_allowed": False,
+                "approval_is_execution": False,
+                "approval_enqueued": False,
+                "live_connector_execution_allowed": False,
+                "external_send_allowed": False,
+                "connector_mutation_allowed": False,
+                "memory_write_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=now,
+                recent_requests=(
+                    {
+                        "request_id": request_id,
+                        "summary": req.draft.summary,
+                        "status": "draft_approval_preview",
+                    },
+                ),
                 approval_proposals=(proposal_payload,),
             )
         return response
