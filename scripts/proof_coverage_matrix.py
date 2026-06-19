@@ -1774,6 +1774,67 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_lifecycle_audit_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_lifecycle_audit_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_audit_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store lifecycle audit read model exposes blocked audit status and bounded requirement rows while remaining read-only and denying lifecycle audit authority, raw detail exposure, receipt append, mutation, terminal closure, and production readiness.",
+            [
+                "foundation_lifecycle_audit_read_model_validates",
+                "lifecycle_audit_read_model_rejects_authority_drift",
+                "lifecycle_audit_read_model_rejects_raw_detail_visibility",
+                "lifecycle_audit_read_model_rejects_missing_requirement",
+                "lifecycle_audit_read_model_rejects_duplicate_requirement_row",
+                "lifecycle_audit_read_model_rejects_missing_delta_reject_log",
+                "lifecycle_audit_read_model_rejects_receipt_projection_drift",
+                "lifecycle_audit_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_lifecycle_audit_read_model_validates": [
+                    "foundation_lifecycle_audit_read_model_validates"
+                ],
+                "lifecycle_audit_read_model_rejects_authority_drift": [
+                    "lifecycle_audit_read_model_rejects_authority_drift"
+                ],
+                "lifecycle_audit_read_model_rejects_raw_detail_visibility": [
+                    "lifecycle_audit_read_model_rejects_raw_detail_visibility"
+                ],
+                "lifecycle_audit_read_model_rejects_missing_requirement": [
+                    "lifecycle_audit_read_model_rejects_missing_requirement"
+                ],
+                "lifecycle_audit_read_model_rejects_duplicate_requirement_row": [
+                    "lifecycle_audit_read_model_rejects_duplicate_requirement_row"
+                ],
+                "lifecycle_audit_read_model_rejects_missing_delta_reject_log": [
+                    "lifecycle_audit_read_model_rejects_missing_delta_reject_log"
+                ],
+                "lifecycle_audit_read_model_rejects_receipt_projection_drift": [
+                    "lifecycle_audit_read_model_rejects_receipt_projection_drift"
+                ],
+                "lifecycle_audit_read_model_rejects_evidence_ref_count_drift": [
+                    "lifecycle_audit_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_replacement_decision_receipt",
             [
                 "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
@@ -1832,6 +1893,67 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_replacement_decision_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_replacement_decision_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
+                "tests/test_validate_universal_symbol_receipt_store_replacement_decision_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store replacement decision read model exposes blocked replacement status and bounded requirement rows while remaining read-only and denying decision authority, raw detail exposure, receipt append, mutation, terminal closure, and production readiness.",
+            [
+                "foundation_replacement_decision_read_model_validates",
+                "replacement_decision_read_model_rejects_authority_drift",
+                "replacement_decision_read_model_rejects_raw_detail_visibility",
+                "replacement_decision_read_model_rejects_missing_requirement",
+                "replacement_decision_read_model_rejects_duplicate_requirement_row",
+                "replacement_decision_read_model_rejects_missing_delta_reject_log",
+                "replacement_decision_read_model_rejects_receipt_projection_drift",
+                "replacement_decision_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_replacement_decision_read_model_validates": [
+                    "foundation_replacement_decision_read_model_validates"
+                ],
+                "replacement_decision_read_model_rejects_authority_drift": [
+                    "replacement_decision_read_model_rejects_authority_drift"
+                ],
+                "replacement_decision_read_model_rejects_raw_detail_visibility": [
+                    "replacement_decision_read_model_rejects_raw_detail_visibility"
+                ],
+                "replacement_decision_read_model_rejects_missing_requirement": [
+                    "replacement_decision_read_model_rejects_missing_requirement"
+                ],
+                "replacement_decision_read_model_rejects_duplicate_requirement_row": [
+                    "replacement_decision_read_model_rejects_duplicate_requirement_row"
+                ],
+                "replacement_decision_read_model_rejects_missing_delta_reject_log": [
+                    "replacement_decision_read_model_rejects_missing_delta_reject_log"
+                ],
+                "replacement_decision_read_model_rejects_receipt_projection_drift": [
+                    "replacement_decision_read_model_rejects_receipt_projection_drift"
+                ],
+                "replacement_decision_read_model_rejects_evidence_ref_count_drift": [
+                    "replacement_decision_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
             [
                 "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
@@ -1884,6 +2006,67 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "replacement_replay_idempotency_witness_rejects_evidence_ref_count_drift": [
                     "replacement_replay_idempotency_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
+                "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store replacement decision replay/idempotency read model exposes blocked replay status and bounded requirement rows while remaining read-only and denying replay authority, idempotency acceptance, replay state commit, duplicate effects, raw detail exposure, receipt append, mutation, and terminal closure.",
+            [
+                "foundation_replacement_replay_read_model_validates",
+                "replacement_replay_read_model_rejects_authority_drift",
+                "replacement_replay_read_model_rejects_raw_detail_visibility",
+                "replacement_replay_read_model_rejects_missing_requirement",
+                "replacement_replay_read_model_rejects_duplicate_requirement_row",
+                "replacement_replay_read_model_rejects_missing_delta_reject_log",
+                "replacement_replay_read_model_rejects_witness_projection_drift",
+                "replacement_replay_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_replacement_replay_read_model_validates": [
+                    "foundation_replacement_replay_read_model_validates"
+                ],
+                "replacement_replay_read_model_rejects_authority_drift": [
+                    "replacement_replay_read_model_rejects_authority_drift"
+                ],
+                "replacement_replay_read_model_rejects_raw_detail_visibility": [
+                    "replacement_replay_read_model_rejects_raw_detail_visibility"
+                ],
+                "replacement_replay_read_model_rejects_missing_requirement": [
+                    "replacement_replay_read_model_rejects_missing_requirement"
+                ],
+                "replacement_replay_read_model_rejects_duplicate_requirement_row": [
+                    "replacement_replay_read_model_rejects_duplicate_requirement_row"
+                ],
+                "replacement_replay_read_model_rejects_missing_delta_reject_log": [
+                    "replacement_replay_read_model_rejects_missing_delta_reject_log"
+                ],
+                "replacement_replay_read_model_rejects_witness_projection_drift": [
+                    "replacement_replay_read_model_rejects_witness_projection_drift"
+                ],
+                "replacement_replay_read_model_rejects_evidence_ref_count_drift": [
+                    "replacement_replay_read_model_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -1952,6 +2135,65 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "tenant_scope_witness_rejects_evidence_ref_count_drift": [
                     "tenant_scope_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_tenant_scope_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_tenant_scope_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_tenant_scope_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_tenant_scope_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_tenant_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_tenant_scope_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_tenant_scope_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store tenant scope read model projects blocked tenant scope status, tenant requirement rows, Delta_reject logging state, raw-detail visibility denial, and effective denial fields while denying tenant authority, tenant binding, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_tenant_scope_read_model_validates",
+                "tenant_scope_read_model_rejects_authority_drift",
+                "tenant_scope_read_model_rejects_raw_detail_visibility",
+                "tenant_scope_read_model_rejects_missing_requirement",
+                "tenant_scope_read_model_rejects_duplicate_requirement_row",
+                "tenant_scope_read_model_rejects_missing_delta_reject_log",
+                "tenant_scope_read_model_rejects_witness_projection_drift",
+                "tenant_scope_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_tenant_scope_read_model_validates": ["foundation_tenant_scope_read_model_validates"],
+                "tenant_scope_read_model_rejects_authority_drift": [
+                    "tenant_scope_read_model_rejects_authority_drift"
+                ],
+                "tenant_scope_read_model_rejects_raw_detail_visibility": [
+                    "tenant_scope_read_model_rejects_raw_detail_visibility"
+                ],
+                "tenant_scope_read_model_rejects_missing_requirement": [
+                    "tenant_scope_read_model_rejects_missing_requirement"
+                ],
+                "tenant_scope_read_model_rejects_duplicate_requirement_row": [
+                    "tenant_scope_read_model_rejects_duplicate_requirement_row"
+                ],
+                "tenant_scope_read_model_rejects_missing_delta_reject_log": [
+                    "tenant_scope_read_model_rejects_missing_delta_reject_log"
+                ],
+                "tenant_scope_read_model_rejects_witness_projection_drift": [
+                    "tenant_scope_read_model_rejects_witness_projection_drift"
+                ],
+                "tenant_scope_read_model_rejects_evidence_ref_count_drift": [
+                    "tenant_scope_read_model_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -2026,6 +2268,67 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_writer_duty_scope_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_writer_duty_scope_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_writer_duty_scope_witness.schema.json",
+                "examples/universal_symbol_receipt_store_writer_duty_scope_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store writer duty scope read model projects blocked writer duty scope status, duty requirement rows, Delta_reject logging state, raw-detail visibility denial, and effective denial fields while denying duty authority, duty binding, tenant binding, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_writer_duty_scope_read_model_validates",
+                "writer_duty_scope_read_model_rejects_authority_drift",
+                "writer_duty_scope_read_model_rejects_raw_detail_visibility",
+                "writer_duty_scope_read_model_rejects_missing_requirement",
+                "writer_duty_scope_read_model_rejects_duplicate_requirement_row",
+                "writer_duty_scope_read_model_rejects_missing_delta_reject_log",
+                "writer_duty_scope_read_model_rejects_witness_projection_drift",
+                "writer_duty_scope_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_writer_duty_scope_read_model_validates": [
+                    "foundation_writer_duty_scope_read_model_validates"
+                ],
+                "writer_duty_scope_read_model_rejects_authority_drift": [
+                    "writer_duty_scope_read_model_rejects_authority_drift"
+                ],
+                "writer_duty_scope_read_model_rejects_raw_detail_visibility": [
+                    "writer_duty_scope_read_model_rejects_raw_detail_visibility"
+                ],
+                "writer_duty_scope_read_model_rejects_missing_requirement": [
+                    "writer_duty_scope_read_model_rejects_missing_requirement"
+                ],
+                "writer_duty_scope_read_model_rejects_duplicate_requirement_row": [
+                    "writer_duty_scope_read_model_rejects_duplicate_requirement_row"
+                ],
+                "writer_duty_scope_read_model_rejects_missing_delta_reject_log": [
+                    "writer_duty_scope_read_model_rejects_missing_delta_reject_log"
+                ],
+                "writer_duty_scope_read_model_rejects_witness_projection_drift": [
+                    "writer_duty_scope_read_model_rejects_witness_projection_drift"
+                ],
+                "writer_duty_scope_read_model_rejects_evidence_ref_count_drift": [
+                    "writer_duty_scope_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_path_confinement_witness",
             [
                 "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
@@ -2090,6 +2393,71 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "path_confinement_witness_rejects_evidence_ref_count_drift": [
                     "path_confinement_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_path_confinement_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_path_confinement_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_path_confinement_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_path_confinement_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+                "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_path_confinement_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_path_confinement_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store path confinement read model projects blocked path confinement status, confinement requirement rows, Delta_reject logging state, raw-detail visibility denial, filesystem escape denial, and effective denial fields while denying path authority, path confinement binding, path custody registration, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_path_confinement_read_model_validates",
+                "path_confinement_read_model_rejects_authority_drift",
+                "path_confinement_read_model_rejects_filesystem_escape_drift",
+                "path_confinement_read_model_rejects_raw_detail_visibility",
+                "path_confinement_read_model_rejects_missing_requirement",
+                "path_confinement_read_model_rejects_duplicate_requirement_row",
+                "path_confinement_read_model_rejects_missing_delta_reject_log",
+                "path_confinement_read_model_rejects_witness_projection_drift",
+                "path_confinement_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_path_confinement_read_model_validates": [
+                    "foundation_path_confinement_read_model_validates"
+                ],
+                "path_confinement_read_model_rejects_authority_drift": [
+                    "path_confinement_read_model_rejects_authority_drift"
+                ],
+                "path_confinement_read_model_rejects_filesystem_escape_drift": [
+                    "path_confinement_read_model_rejects_filesystem_escape_drift"
+                ],
+                "path_confinement_read_model_rejects_raw_detail_visibility": [
+                    "path_confinement_read_model_rejects_raw_detail_visibility"
+                ],
+                "path_confinement_read_model_rejects_missing_requirement": [
+                    "path_confinement_read_model_rejects_missing_requirement"
+                ],
+                "path_confinement_read_model_rejects_duplicate_requirement_row": [
+                    "path_confinement_read_model_rejects_duplicate_requirement_row"
+                ],
+                "path_confinement_read_model_rejects_missing_delta_reject_log": [
+                    "path_confinement_read_model_rejects_missing_delta_reject_log"
+                ],
+                "path_confinement_read_model_rejects_witness_projection_drift": [
+                    "path_confinement_read_model_rejects_witness_projection_drift"
+                ],
+                "path_confinement_read_model_rejects_evidence_ref_count_drift": [
+                    "path_confinement_read_model_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -13570,8 +13938,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_receipt_store_lifecycle_audit_read_model",
+            "surfaces": ["universal_symbol_receipt_store_lifecycle_audit_read_model"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_receipt_store_replacement_decision_receipt",
             "surfaces": ["universal_symbol_receipt_store_replacement_decision_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_replacement_decision_read_model",
+            "surfaces": ["universal_symbol_receipt_store_replacement_decision_read_model"],
             "status": "closed",
         },
         {
@@ -13580,8 +13958,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+            "surfaces": ["universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_receipt_store_tenant_scope_witness",
             "surfaces": ["universal_symbol_receipt_store_tenant_scope_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_tenant_scope_read_model",
+            "surfaces": ["universal_symbol_receipt_store_tenant_scope_read_model"],
             "status": "closed",
         },
         {
@@ -13590,8 +13978,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_receipt_store_writer_duty_scope_read_model",
+            "surfaces": ["universal_symbol_receipt_store_writer_duty_scope_read_model"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_receipt_store_path_confinement_witness",
             "surfaces": ["universal_symbol_receipt_store_path_confinement_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_path_confinement_read_model",
+            "surfaces": ["universal_symbol_receipt_store_path_confinement_read_model"],
             "status": "closed",
         },
         {

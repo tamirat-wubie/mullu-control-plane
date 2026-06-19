@@ -147,15 +147,21 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
         "universal_symbol_receipt_store_operator_revocation_witness",
         "universal_symbol_receipt_store_replacement_decision_receipt",
+        "universal_symbol_receipt_store_replacement_decision_read_model",
         "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
         "universal_symbol_receipt_store_reapproval_revocation_witness",
         "universal_symbol_receipt_store_lifecycle_evidence_receipt",
         "universal_symbol_receipt_store_lifecycle_evidence_bundle",
         "universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model",
         "universal_symbol_receipt_store_lifecycle_audit_receipt",
+        "universal_symbol_receipt_store_lifecycle_audit_read_model",
         "universal_symbol_receipt_store_tenant_scope_witness",
+        "universal_symbol_receipt_store_tenant_scope_read_model",
         "universal_symbol_receipt_store_writer_duty_scope_witness",
+        "universal_symbol_receipt_store_writer_duty_scope_read_model",
         "universal_symbol_receipt_store_path_confinement_witness",
+        "universal_symbol_receipt_store_path_confinement_read_model",
         "universal_symbol_receipt_store_write_path_idempotency_witness",
         "universal_symbol_receipt_store_durability_replay_witness",
         "universal_symbol_receipt_store_recovery_witness",
@@ -643,19 +649,55 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_lifecycle_audit_receipt",
     )
     assert_ordered(
+        "universal_symbol_receipt_store_lifecycle_audit_receipt",
+        "universal_symbol_receipt_store_lifecycle_audit_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_lifecycle_audit_read_model",
+        "universal_symbol_receipt_store_tenant_scope_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_receipt",
+        "universal_symbol_receipt_store_replacement_decision_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_read_model",
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+        "universal_symbol_receipt_store_reapproval_revocation_witness",
+    )
+    assert_ordered(
         "universal_symbol_receipt_store_replacement_decision_receipt",
         "universal_symbol_receipt_store_tenant_scope_witness",
     )
     assert_ordered(
         "universal_symbol_receipt_store_tenant_scope_witness",
+        "universal_symbol_receipt_store_tenant_scope_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_tenant_scope_read_model",
         "universal_symbol_receipt_store_writer_duty_scope_witness",
     )
     assert_ordered(
         "universal_symbol_receipt_store_writer_duty_scope_witness",
+        "universal_symbol_receipt_store_writer_duty_scope_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_writer_duty_scope_read_model",
         "universal_symbol_receipt_store_path_confinement_witness",
     )
     assert_ordered(
         "universal_symbol_receipt_store_path_confinement_witness",
+        "universal_symbol_receipt_store_path_confinement_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_path_confinement_read_model",
         "universal_symbol_receipt_store_write_path_idempotency_witness",
     )
     assert_ordered(

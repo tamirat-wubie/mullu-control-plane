@@ -1775,6 +1775,91 @@ def test_protocol_manifest_indexes_universal_symbol_receipt_store_lifecycle_evid
     assert read_model_entry["surface"] == "symbol"
 
 
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_lifecycle_audit_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-lifecycle-audit-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert (
+        read_model_entry["path"]
+        == "schemas/universal_symbol_receipt_store_lifecycle_audit_read_model.schema.json"
+    )
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-audit-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_replacement_decision_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-replacement-decision-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert (
+        read_model_entry["path"]
+        == "schemas/universal_symbol_receipt_store_replacement_decision_read_model.schema.json"
+    )
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-replacement-decision-replay-idempotency-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == (
+        "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.schema.json"
+    )
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:"
+        "universal-symbol-receipt-store-replacement-decision-replay-idempotency-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_tenant_scope_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-tenant-scope-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_receipt_store_tenant_scope_read_model.schema.json"
+    assert read_model_entry["urn"] == "urn:mullusi:schema:universal-symbol-receipt-store-tenant-scope-read-model:1"
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_writer_duty_scope_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-writer-duty-scope-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_receipt_store_writer_duty_scope_read_model.schema.json"
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-writer-duty-scope-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_path_confinement_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-path-confinement-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_receipt_store_path_confinement_read_model.schema.json"
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-path-confinement-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
 def test_protocol_manifest_indexes_universal_symbol_runtime_authority_witness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

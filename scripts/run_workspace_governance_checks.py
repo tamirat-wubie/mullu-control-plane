@@ -956,10 +956,21 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_replacement_decision_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_replacement_decision_read_model.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
             (
                 python_executable,
                 "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+            (
+                python_executable,
+                "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.py",
             ),
         ),
         CheckCommand(
@@ -986,16 +997,32 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_audit_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_read_model.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_tenant_scope_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_tenant_scope_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_tenant_scope_read_model.py"),
         ),
         CheckCommand(
             "universal_symbol_receipt_store_writer_duty_scope_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_writer_duty_scope_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_path_confinement_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_path_confinement_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_path_confinement_read_model.py"),
         ),
         CheckCommand(
             "universal_symbol_receipt_store_write_path_idempotency_witness",

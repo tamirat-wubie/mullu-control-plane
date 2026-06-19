@@ -96,17 +96,32 @@ from scripts.validate_universal_symbol_receipt_store_tenant_scope_witness import
     UniversalSymbolReceiptStoreTenantScopeWitnessError,
     validate_universal_symbol_receipt_store_tenant_scope_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_tenant_scope_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_TENANT_SCOPE_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_TENANT_SCOPE_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_tenant_scope_read_model,
+)
 from scripts.validate_universal_symbol_receipt_store_writer_duty_scope_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_WRITER_DUTY_SCOPE_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_WRITER_DUTY_SCOPE_WITNESS_PATH,
     UniversalSymbolReceiptStoreWriterDutyScopeWitnessError,
     validate_universal_symbol_receipt_store_writer_duty_scope_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_writer_duty_scope_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_WRITER_DUTY_SCOPE_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_WRITER_DUTY_SCOPE_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_writer_duty_scope_read_model,
+)
 from scripts.validate_universal_symbol_receipt_store_path_confinement_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_PATH_CONFINEMENT_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_PATH_CONFINEMENT_WITNESS_PATH,
     UniversalSymbolReceiptStorePathConfinementWitnessError,
     validate_universal_symbol_receipt_store_path_confinement_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_path_confinement_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_PATH_CONFINEMENT_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_PATH_CONFINEMENT_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_path_confinement_read_model,
 )
 from scripts.validate_universal_symbol_receipt_store_write_path_idempotency_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_IDEMPOTENCY_SCHEMA_PATH,
@@ -191,6 +206,21 @@ from scripts.validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_r
     DEFAULT_SCHEMA_PATH as DEFAULT_LIFECYCLE_EVIDENCE_BUNDLE_READ_MODEL_SCHEMA_PATH,
     validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model,
 )
+from scripts.validate_universal_symbol_receipt_store_lifecycle_audit_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_LIFECYCLE_AUDIT_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_LIFECYCLE_AUDIT_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_lifecycle_audit_read_model,
+)
+from scripts.validate_universal_symbol_receipt_store_replacement_decision_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_REPLACEMENT_DECISION_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_REPLACEMENT_DECISION_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_replacement_decision_read_model,
+)
+from scripts.validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_REPLACEMENT_REPLAY_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_REPLACEMENT_REPLAY_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model,
+)
 from scripts.validate_universal_symbol_skill_runtime_authority_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH,
@@ -216,7 +246,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 127
+    assert report["evidence_ref_count"] == 151
 
 
 def test_lifecycle_evidence_bundle_read_model_validates_from_kernel_evidence() -> None:
@@ -231,6 +261,96 @@ def test_lifecycle_evidence_bundle_read_model_validates_from_kernel_evidence() -
     assert report["evidence_kind_row_count"] == 7
     assert report["effective_denial_count"] == 11
     assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_lifecycle_audit_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_lifecycle_audit_read_model(
+        DEFAULT_LIFECYCLE_AUDIT_READ_MODEL_PATH,
+        DEFAULT_LIFECYCLE_AUDIT_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Lifecycle audit blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 12
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_replacement_decision_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_replacement_decision_read_model(
+        DEFAULT_REPLACEMENT_DECISION_READ_MODEL_PATH,
+        DEFAULT_REPLACEMENT_DECISION_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Replacement decision blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 13
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_replacement_replay_idempotency_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model(
+        DEFAULT_REPLACEMENT_REPLAY_READ_MODEL_PATH,
+        DEFAULT_REPLACEMENT_REPLAY_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Replacement replay blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 12
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_tenant_scope_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_tenant_scope_read_model(
+        DEFAULT_TENANT_SCOPE_READ_MODEL_PATH,
+        DEFAULT_TENANT_SCOPE_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Tenant scope blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 12
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_writer_duty_scope_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_writer_duty_scope_read_model(
+        DEFAULT_WRITER_DUTY_SCOPE_READ_MODEL_PATH,
+        DEFAULT_WRITER_DUTY_SCOPE_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Writer duty scope blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 13
+    assert report["read_model_constraint_count"] == 7
+    assert report["evidence_ref_count"] == 10
+
+
+def test_path_confinement_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_path_confinement_read_model(
+        DEFAULT_PATH_CONFINEMENT_READ_MODEL_PATH,
+        DEFAULT_PATH_CONFINEMENT_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Path confinement blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 11
+    assert report["read_model_constraint_count"] == 8
     assert report["evidence_ref_count"] == 10
 
 

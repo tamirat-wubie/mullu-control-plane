@@ -1,5 +1,5 @@
 {
-  "check_count": 249,
+  "check_count": 255,
   "checks": [
     {
       "args": [
@@ -12,7 +12,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] local_assurance_plan\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -25,7 +25,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agents_policy\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -38,7 +38,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] trusted_local_control_studio\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -51,7 +51,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_mode\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -64,7 +64,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_source_control_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -77,7 +77,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_source_control_review_checklist_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -90,7 +90,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_local_release_packet_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -103,7 +103,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_python_dependency_visibility_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -116,7 +116,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -129,7 +129,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_models\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -142,7 +142,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_model_projections\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -155,7 +155,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_model_integrity\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -168,7 +168,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_model_persistence\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -181,7 +181,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_github_repo_task_service\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -194,7 +194,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_github_task_receipt_emitter_dry_run\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -207,7 +207,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_github_pr_admission_preflight\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -220,7 +220,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_github_pr_operator_approval_request\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -233,7 +233,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_only_status_route_design\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -246,7 +246,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_read_only_status_route\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -259,7 +259,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_authority_transitions\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -272,7 +272,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] channel_approval_strength_policy\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -285,7 +285,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_registry\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -298,7 +298,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_lifecycle_transition_receipts\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -311,7 +311,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_authority_envelope_witnesses\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -324,7 +324,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_router_inventory\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -337,7 +337,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_proof_binding\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -350,7 +350,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_ownership\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -363,7 +363,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_preflight\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -376,7 +376,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_witness_requirements\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -389,7 +389,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_witness_evidence\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -402,7 +402,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_approval_candidates\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -415,7 +415,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_approval_intake\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -428,7 +428,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_submitted_evidence_verifier\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -441,7 +441,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_submitted_evidence_records\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -454,7 +454,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_submitted_evidence_payload_examples\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -467,7 +467,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_operator_submitted_evidence_records\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -480,7 +480,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_gate_satisfaction_evaluator\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -493,7 +493,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_authority_decision_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -506,7 +506,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_route_binding_decision_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -519,7 +519,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_lifecycle_transition_decision_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -532,7 +532,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_authority_upgrade_witness_decision_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -545,7 +545,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_product_ownership_decision_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -558,7 +558,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_terminal_closure_denial_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -571,7 +571,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_missing_evidence_ledger\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -584,7 +584,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_candidate\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -597,7 +597,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_requirements\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -610,7 +610,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_minting_preflight\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -623,7 +623,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_minting_denial_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -636,7 +636,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_plan\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -649,7 +649,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -662,7 +662,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -675,7 +675,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -688,7 +688,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_autopsy\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -701,7 +701,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_request_simulation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -714,7 +714,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_bundle_compiler\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -727,7 +727,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_graph\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -740,7 +740,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] component_dead_detector\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -753,7 +753,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] read_only_first_worker_path\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -766,7 +766,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] read_only_document_worker_path\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -779,7 +779,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] read_only_search_worker_path\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -792,7 +792,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] worker_failure_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -805,7 +805,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_task_run_producer_evidence\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -818,7 +818,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_task_run_producer_rehearsal\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -831,7 +831,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_admission_gate\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -844,7 +844,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_witness_requirements\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -857,7 +857,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_approval_request\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -870,7 +870,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_response_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -883,7 +883,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_evidence\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -896,7 +896,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_record\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -909,7 +909,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_absence\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -922,7 +922,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_pending_status\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -935,7 +935,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_intake_preflight\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -948,7 +948,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -961,7 +961,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_request\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -974,7 +974,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_template\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -987,7 +987,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_collection_gate\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1000,7 +1000,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_record_path\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1013,7 +1013,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_operator_readiness_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1026,7 +1026,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_solo_daily_loop_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1039,7 +1039,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_learning_path_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1052,7 +1052,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_learning_loop_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1065,7 +1065,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_concept_glossary_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1078,7 +1078,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_life_meaning_doctrine_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1091,7 +1091,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_architecture_map_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1104,7 +1104,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_system_boundary_inventory_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1117,7 +1117,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_module_inventory_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1130,7 +1130,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_component_contract_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1143,7 +1143,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_interface_map_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1156,7 +1156,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_dependency_graph_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1169,7 +1169,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_invariant_map_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1182,7 +1182,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_hazard_map_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1195,7 +1195,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_proof_reference_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1208,7 +1208,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gap_register_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1221,7 +1221,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_diff_review_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1234,7 +1234,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_change_handoff_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1247,7 +1247,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_local_workstation_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1260,7 +1260,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_documentation_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1273,7 +1273,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_plain_language_status_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1286,7 +1286,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_accessibility_language_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1299,7 +1299,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_claim_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1312,7 +1312,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_website_posture_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1325,7 +1325,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_research_notebook_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1338,7 +1338,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_evidence_ledger_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1351,7 +1351,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_decision_journal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1364,7 +1364,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_next_action_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1377,7 +1377,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_test_evidence_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1390,7 +1390,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_local_proof_thread\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1403,7 +1403,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_private_recovery_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1416,7 +1416,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_private_recovery_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1429,7 +1429,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_secrets_credentials_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1442,7 +1442,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_security_baseline_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1455,7 +1455,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_cost_budget_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1468,7 +1468,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_payment_provider_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1481,7 +1481,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_runtime_environment_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1494,7 +1494,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_backup_export_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1507,7 +1507,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1520,7 +1520,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_external_infrastructure_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1533,7 +1533,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_runtime_secret_handoff_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1546,7 +1546,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_runtime_witness_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1559,7 +1559,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_production_dependency_evidence_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1572,7 +1572,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_external_evidence_acceptance_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1585,7 +1585,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_upstream_api_gate_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1598,7 +1598,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gateway_dns_target_binding_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1611,7 +1611,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gateway_dns_publication_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1624,7 +1624,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gateway_dns_resolution_receipt_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1637,7 +1637,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gateway_endpoint_reachability_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1650,7 +1650,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1663,7 +1663,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_public_health_declaration_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1676,7 +1676,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_input_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1689,7 +1689,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_preflight_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1702,7 +1702,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_dispatch_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1715,7 +1715,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_artifact_validation_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1728,7 +1728,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_evidence_handoff_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1741,7 +1741,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_deployment_witness_evidence_ledger_routing_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1754,7 +1754,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_domain_email_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1767,7 +1767,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_legal_business_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1780,7 +1780,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_legal_business_question_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1793,7 +1793,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_legal_review_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1806,7 +1806,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_company_formation_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1819,7 +1819,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_patent_disclosure_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1832,7 +1832,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_product_scope_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1845,7 +1845,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_capability_roadmap_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1858,7 +1858,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_agentic_management_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1871,7 +1871,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_operations_runbook_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1884,7 +1884,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_market_research_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1897,7 +1897,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_pilot_deferral_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1910,7 +1910,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_pilot_deferral_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1923,7 +1923,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_reassessment_gate_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1936,7 +1936,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_support_readiness_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1949,7 +1949,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_support_triage_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1962,7 +1962,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_intake_onboarding_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1975,7 +1975,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_intake_questionnaire_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -1988,7 +1988,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_customer_access_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2001,7 +2001,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_customer_access_policy_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2014,7 +2014,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_github_app_token_format_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2027,7 +2027,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_privacy_data_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2040,7 +2040,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_privacy_minimization_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2053,7 +2053,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_funding_team_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2066,7 +2066,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_funding_team_obligation_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2079,7 +2079,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_community_network_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2092,7 +2092,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] foundation_community_network_no_outreach_rehearsal_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2105,7 +2105,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] protocol_manifest\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2118,7 +2118,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] simple_assistant_ui_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2131,7 +2131,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_runtime_admission_policy\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2144,7 +2144,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_runtime_admission_evidence_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2157,7 +2157,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_runtime_live_witness_input_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2170,7 +2170,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_lane_runtime_authority_evidence_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2183,7 +2183,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_lane_runtime_authority_evidence_value_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2196,7 +2196,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_runtime_authority_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2209,7 +2209,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_runtime_authority_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2222,7 +2222,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_skill_runtime_authority_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2235,7 +2235,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_adapter_receipt_persistence_policy\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2248,7 +2248,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_append_audit_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2261,7 +2261,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_operator_approval_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2274,7 +2274,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_operator_identity_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2287,7 +2287,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_operator_approval_decision_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2300,7 +2300,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_operator_reapproval_expiry_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2313,7 +2313,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_operator_revocation_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2326,7 +2326,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_receipt\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_replacement_decision_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_replacement_decision_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2339,7 +2352,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2352,7 +2378,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_reapproval_revocation_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2365,7 +2391,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_evidence_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2378,7 +2404,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_evidence_bundle\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2391,7 +2417,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2404,7 +2430,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_audit_receipt\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_lifecycle_audit_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_audit_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2417,7 +2456,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_tenant_scope_witness\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_tenant_scope_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_tenant_scope_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_tenant_scope_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2430,7 +2482,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_writer_duty_scope_witness\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_writer_duty_scope_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_writer_duty_scope_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2443,7 +2508,20 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_path_confinement_witness\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_path_confinement_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_path_confinement_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_path_confinement_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2456,7 +2534,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_write_path_idempotency_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2469,7 +2547,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_durability_replay_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2482,7 +2560,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_recovery_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2495,7 +2573,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_writer_identity_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2508,7 +2586,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_writer_registration_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2521,7 +2599,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_path_custody_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2534,7 +2612,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_write_path_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2547,7 +2625,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_receipt_store_authority_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2560,7 +2638,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_symbol_kernel\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2573,7 +2651,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] logic_governance_application\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2586,7 +2664,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] life_meaning_governance\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2599,7 +2677,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] phi_gps_v3_platform_spec\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2613,7 +2691,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] public_repository_surface\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2626,7 +2704,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] proprietary_boundary\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2639,7 +2717,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] company_boundary_kernel\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2652,7 +2730,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] release_status\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2665,7 +2743,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_preflight_receipt_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2678,7 +2756,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_preflight_receipt_example\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2691,7 +2769,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_witness_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2704,7 +2782,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_inventory_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2717,7 +2795,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_inventory_report_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2730,7 +2808,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_integrity_report\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2743,7 +2821,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] workspace_governance_integrity_report_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2758,7 +2836,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] governed_code_change_loop_sandbox_probe_example\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2771,7 +2849,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] governed_code_change_loop_sandbox_readiness_runbook\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2784,7 +2862,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] code_change_physics_packet\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2797,7 +2875,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] search_decision_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2810,7 +2888,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] intelligence_coordination_episode_receipt\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2825,7 +2903,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] engineering_puzzle_universality_witness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2841,7 +2919,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] mil_audit_runbook_operator_checklist\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2857,7 +2935,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] general_agent_promotion_handoff_packet\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2873,7 +2951,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] general_agent_promotion_operator_checklist\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2891,7 +2969,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] general_agent_promotion_environment_bindings\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2907,7 +2985,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] general_agent_promotion_handoff_preflight\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2926,7 +3004,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] general_agent_promotion_closure_chain\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2942,7 +3020,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] finance_approval_live_handoff_closure_run\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2958,7 +3036,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] finance_approval_live_handoff_chain\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2972,7 +3050,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] route_receipt_coverage\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2986,7 +3064,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] route_guard_chain_coverage\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2999,7 +3077,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] reflective_contract_guard\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3012,7 +3090,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] doc_code_consistency\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3025,7 +3103,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] tenant_scope_coverage\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3038,7 +3116,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] persistence_tenant_guard_coverage\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3054,7 +3132,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] mcp_capability_manifest\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3070,7 +3148,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] mcp_operator_checklist\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3083,7 +3161,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] public_naming_readiness\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3098,7 +3176,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] public_demo_surfaces\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3113,7 +3191,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] snet_episode_replay\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3126,7 +3204,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] cdg_rccm_architecture_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3140,7 +3218,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] strict_schema_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3154,7 +3232,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] strict_artifact_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3168,7 +3246,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] terminal_closure_certificate\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3181,7 +3259,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_action_orchestration_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3194,7 +3272,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_action_orchestration_validation_receipt_contract\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3207,7 +3285,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] universal_action_orchestration_validation_receipt_example\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3220,7 +3298,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_artifact_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3233,7 +3311,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_route_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3246,7 +3324,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_state_machine_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3260,7 +3338,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_release_readiness_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3274,7 +3352,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_security_review_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3287,12 +3365,12 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "STATUS: passed\n",
+      "stdout": "[PASS] sdlc_pr_enforcement_validation\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     }
   ],
-  "generated_at_epoch": 1781817309.907508,
+  "generated_at_epoch": 1893456000.0,
   "receipt_id": "workspace_governance_preflight_receipt",
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
