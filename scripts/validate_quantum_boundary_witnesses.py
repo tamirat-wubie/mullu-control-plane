@@ -48,6 +48,12 @@ from scripts.validate_non_live_quantum_fixture_serializer_boundary_witness impor
 from scripts.validate_non_live_quantum_fixture_serializer_boundary_witness import (  # noqa: E402
     validate_payload as validate_fixture_serializer_boundary_payload,
 )
+from scripts.validate_non_live_quantum_fixture_serializer_authority_requirements_witness import (  # noqa: E402
+    DEFAULT_EXAMPLE as FIXTURE_SERIALIZER_AUTHORITY_REQUIREMENTS_EXAMPLE,
+)
+from scripts.validate_non_live_quantum_fixture_serializer_authority_requirements_witness import (  # noqa: E402
+    validate_payload as validate_fixture_serializer_authority_requirements_payload,
+)
 from scripts.validate_universal_symbolic_quantum_capability_boundary import (  # noqa: E402
     DEFAULT_EXAMPLE as UNIVERSAL_BOUNDARY_EXAMPLE,
 )
@@ -60,6 +66,9 @@ OPENQASM_PLANNING_ID = "non_live_openqasm_export_planning_witness"
 LOCAL_SIMULATOR_BOUNDARY_ID = "non_live_local_quantum_simulator_boundary_witness"
 FIXTURE_CATALOG_ID = "non_live_quantum_fixture_catalog_witness"
 FIXTURE_SERIALIZER_BOUNDARY_ID = "non_live_quantum_fixture_serializer_boundary_witness"
+FIXTURE_SERIALIZER_AUTHORITY_REQUIREMENTS_ID = (
+    "non_live_quantum_fixture_serializer_authority_requirements_witness"
+)
 
 QUANTUM_DENIAL_INVARIANTS = (
     "no live QPU execution",
@@ -69,6 +78,7 @@ QUANTUM_DENIAL_INVARIANTS = (
     "no fixture serializer execution",
     "no serialized fixture artifact emission",
     "no canonical runtime bytes materialization",
+    "no serializer implementation authority",
     "no simulator input generation",
     "no simulator input serialization",
     "no simulator engine selection",
@@ -118,6 +128,11 @@ TARGETS = (
         binding_id=FIXTURE_SERIALIZER_BOUNDARY_ID,
         default_path=FIXTURE_SERIALIZER_BOUNDARY_EXAMPLE,
         validate_payload=validate_fixture_serializer_boundary_payload,
+    ),
+    WitnessValidationTarget(
+        binding_id=FIXTURE_SERIALIZER_AUTHORITY_REQUIREMENTS_ID,
+        default_path=FIXTURE_SERIALIZER_AUTHORITY_REQUIREMENTS_EXAMPLE,
+        validate_payload=validate_fixture_serializer_authority_requirements_payload,
     ),
 )
 
@@ -194,6 +209,10 @@ def _build_path_overrides(args: argparse.Namespace) -> dict[str, pathlib.Path]:
         overrides[FIXTURE_CATALOG_ID] = pathlib.Path(args.fixture_catalog)
     if args.fixture_serializer_boundary:
         overrides[FIXTURE_SERIALIZER_BOUNDARY_ID] = pathlib.Path(args.fixture_serializer_boundary)
+    if args.fixture_serializer_authority_requirements:
+        overrides[FIXTURE_SERIALIZER_AUTHORITY_REQUIREMENTS_ID] = pathlib.Path(
+            args.fixture_serializer_authority_requirements
+        )
     return overrides
 
 
@@ -205,6 +224,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-simulator-boundary", help="override the local simulator boundary witness path")
     parser.add_argument("--fixture-catalog", help="override the fixture catalog witness path")
     parser.add_argument("--fixture-serializer-boundary", help="override the fixture serializer boundary witness path")
+    parser.add_argument(
+        "--fixture-serializer-authority-requirements",
+        help="override the fixture serializer authority requirements witness path",
+    )
     args = parser.parse_args(argv)
 
     result = validate_witnesses(_build_path_overrides(args))

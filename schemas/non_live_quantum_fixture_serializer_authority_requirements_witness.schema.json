@@ -1,0 +1,581 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:non-live-quantum-fixture-serializer-authority-requirements-witness:1",
+  "title": "Non-Live Quantum Fixture Serializer Authority Requirements Witness",
+  "description": "Foundation Mode witness for future quantum fixture serializer implementation authority requirements without implementation, serializer execution, serialized artifacts, canonical bytes, simulator inputs, runtime invocation, credentials, or result claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "parent_boundary_ref",
+    "related_witness_refs",
+    "architecture_name",
+    "authority_status",
+    "authority_granted",
+    "requirements_only",
+    "planning_only",
+    "read_only",
+    "parent_boundary_required",
+    "fixture_catalog_witness_required",
+    "serializer_boundary_witness_required",
+    "non_live_witness_required",
+    "authority_requirements_boundary",
+    "allowed_requirement_categories",
+    "denied_current_authorities",
+    "required_authority_gates",
+    "denied_authorities",
+    "effect_boundary",
+    "authority_requirement_constraints",
+    "authority_requirements",
+    "witness_requirements",
+    "constructive_deltas",
+    "fracture_deltas",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "non_live_quantum_fixture_serializer_authority_requirements_witness"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "FoundationModeOnly"
+    },
+    "parent_boundary_ref": {
+      "type": "string",
+      "const": "universal_symbolic_quantum_capability_boundary"
+    },
+    "related_witness_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "non_live_openqasm_export_planning_witness"
+          }
+        },
+        {
+          "contains": {
+            "const": "non_live_local_quantum_simulator_boundary_witness"
+          }
+        },
+        {
+          "contains": {
+            "const": "non_live_quantum_fixture_catalog_witness"
+          }
+        },
+        {
+          "contains": {
+            "const": "non_live_quantum_fixture_serializer_boundary_witness"
+          }
+        }
+      ],
+      "minItems": 4,
+      "uniqueItems": true
+    },
+    "architecture_name": {
+      "type": "string",
+      "const": "USQCA-PQE"
+    },
+    "authority_status": {
+      "type": "string",
+      "const": "NonLiveSerializerImplementationAuthorityRequirementsOnly"
+    },
+    "authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "requirements_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "planning_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "parent_boundary_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "fixture_catalog_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "serializer_boundary_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "non_live_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "authority_requirements_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_family",
+        "requirements_only",
+        "implementation_allowed",
+        "serializer_execution_allowed",
+        "artifact_writes_allowed",
+        "runtime_payload_allowed",
+        "operator_authorization_granted",
+        "implementation_file_path",
+        "output_path",
+        "requires_separate_pr",
+        "requires_explicit_operator_authorization",
+        "requires_isolation_profile",
+        "requires_output_path_policy",
+        "requires_runtime_denial_guard",
+        "requires_receipt_schema",
+        "requires_rollback_plan",
+        "requires_result_claim_policy"
+      ],
+      "properties": {
+        "boundary_family": {
+          "type": "string",
+          "const": "quantum fixture serializer implementation authority requirements"
+        },
+        "requirements_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "implementation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "serializer_execution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "artifact_writes_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_payload_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "operator_authorization_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "implementation_file_path": {
+          "type": "null"
+        },
+        "output_path": {
+          "type": "null"
+        },
+        "requires_separate_pr": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_explicit_operator_authorization": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_isolation_profile": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_output_path_policy": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_runtime_denial_guard": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_receipt_schema": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_rollback_plan": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_result_claim_policy": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "allowed_requirement_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 9,
+      "uniqueItems": true
+    },
+    "denied_current_authorities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 12,
+      "uniqueItems": true
+    },
+    "required_authority_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 14,
+      "uniqueItems": true
+    },
+    "denied_authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "serializer_implementation_enabled",
+        "fixture_serializer_execution_enabled",
+        "serialized_fixture_artifact_generation_enabled",
+        "executable_fixture_serialization_enabled",
+        "canonical_runtime_bytes_emission_enabled",
+        "openqasm_source_serialization_enabled",
+        "qir_source_serialization_enabled",
+        "simulator_input_serialization_enabled",
+        "runtime_payload_generation_enabled",
+        "simulator_runtime_invocation_enabled",
+        "state_vector_materialization_enabled",
+        "shot_execution_enabled",
+        "measurement_histogram_emission_enabled",
+        "backend_execution_enabled",
+        "hardware_credentials_access_enabled",
+        "quantum_job_submission_enabled",
+        "cryptanalysis_execution_enabled",
+        "quantum_advantage_claim_enabled",
+        "production_readiness_claim_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "serializer_implementation_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "fixture_serializer_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "serialized_fixture_artifact_generation_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "executable_fixture_serialization_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "canonical_runtime_bytes_emission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "openqasm_source_serialization_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "qir_source_serialization_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_input_serialization_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_payload_generation_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_runtime_invocation_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "state_vector_materialization_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "shot_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "measurement_histogram_emission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "backend_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_access_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "cryptanalysis_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_advantage_claim_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_readiness_claim_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_file_written",
+        "serializer_executed",
+        "serialized_artifact_written",
+        "canonical_json_emitted",
+        "canonical_bytes_materialized",
+        "executable_fixture_serialized",
+        "openqasm_source_text_serialized",
+        "qir_source_text_serialized",
+        "simulator_input_serialized",
+        "runtime_payload_written",
+        "simulator_runtime_invoked",
+        "state_vector_materialized",
+        "amplitude_table_materialized",
+        "measurement_shots_executed",
+        "measurement_histogram_emitted",
+        "backend_called",
+        "hardware_credentials_read",
+        "quantum_job_submitted",
+        "result_distribution_observed",
+        "production_claim_made"
+      ],
+      "properties": {
+        "implementation_file_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "serializer_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "serialized_artifact_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "canonical_json_emitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "canonical_bytes_materialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "executable_fixture_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "openqasm_source_text_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "qir_source_text_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_input_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_payload_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_runtime_invoked": {
+          "type": "boolean",
+          "const": false
+        },
+        "state_vector_materialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "amplitude_table_materialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "measurement_shots_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "measurement_histogram_emitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "backend_called": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_read": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "result_distribution_observed": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_claim_made": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "authority_requirement_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires_serializer_boundary_ref",
+        "requires_requirement_id",
+        "requires_future_evidence_ref",
+        "requires_denial_if_missing",
+        "requires_no_current_authority_satisfaction",
+        "requires_no_implementation_effect",
+        "requires_no_runtime_payload",
+        "requires_operator_authorization_before_future_implementation"
+      ],
+      "properties": {
+        "requires_serializer_boundary_ref": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_requirement_id": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_future_evidence_ref": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_denial_if_missing": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_no_current_authority_satisfaction": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_no_implementation_effect": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_no_runtime_payload": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_operator_authorization_before_future_implementation": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "authority_requirements": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement_id",
+          "category",
+          "requirement",
+          "required_evidence",
+          "denial_if_missing",
+          "future_evidence_required",
+          "current_witness_satisfies_authority"
+        ],
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string"
+          },
+          "requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required_evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "denial_if_missing": {
+            "type": "string",
+            "minLength": 1
+          },
+          "future_evidence_required": {
+            "type": "boolean",
+            "const": true
+          },
+          "current_witness_satisfies_authority": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    },
+    "witness_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 10,
+      "uniqueItems": true
+    },
+    "constructive_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3
+    },
+    "fracture_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 6
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
