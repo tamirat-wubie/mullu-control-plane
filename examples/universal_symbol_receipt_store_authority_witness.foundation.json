@@ -1,0 +1,296 @@
+{
+  "witness_id": "universal-symbol-receipt-store-authority-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-authority",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "authority_decision": "blocked_pending_append_audit_and_store_authority",
+  "authority_is_granted": false,
+  "authority_requirements": [
+    {
+      "requirement_id": "requirement://append-audit-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-append-audit",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://receipt-store-writer-registration",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "authority://universal-symbol/receipt-store-writer",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://receipt-store-write-path",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "authority://universal-symbol/receipt-store-write-path",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://operator-approval",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval://universal-symbol/receipt-store-authority",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://operator-identity",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store-operator-identity",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://operator-approval-decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store-operator-approval-decision",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://operator-reapproval-expiry",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store-operator-reapproval-expiry",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://operator-revocation",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/receipt-store-operator-revocation",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://lifecycle-evidence-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/receipt-store-lifecycle-evidence",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://lifecycle-audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/receipt-store-lifecycle-audit",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://replacement-decision-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/receipt-store-replacement-decision",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://rollback-recovery",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "recovery://universal-symbol/receipt-store-authority",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://idempotency",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "proof://universal-symbol/receipt-store-idempotency",
+      "current_decision": "authority_blocked"
+    },
+    {
+      "requirement_id": "requirement://durability-replay",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "proof://universal-symbol/receipt-store-durability-replay",
+      "current_decision": "authority_blocked"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_authority_granted": false,
+    "receipt_store_writer_registered": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "append_preconditions": [
+    {
+      "precondition_id": "precondition://authority-granted",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/receipt-store-authority-missing"
+    },
+    {
+      "precondition_id": "precondition://append-audit",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/append-audit-missing"
+    },
+    {
+      "precondition_id": "precondition://writer-registration",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/writer-registration-missing"
+    },
+    {
+      "precondition_id": "precondition://write-path-registration",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/write-path-registration-missing"
+    },
+    {
+      "precondition_id": "precondition://operator-identity",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-identity-missing"
+    },
+    {
+      "precondition_id": "precondition://operator-approval-decision",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-approval-decision-missing"
+    },
+    {
+      "precondition_id": "precondition://operator-reapproval-expiry",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-reapproval-expiry-missing"
+    },
+    {
+      "precondition_id": "precondition://operator-revocation",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-revocation-missing"
+    },
+    {
+      "precondition_id": "precondition://lifecycle-evidence-receipt",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-evidence-receipt-missing"
+    },
+    {
+      "precondition_id": "precondition://lifecycle-audit-receipt",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/lifecycle-audit-receipt-missing"
+    },
+    {
+      "precondition_id": "precondition://replacement-decision-receipt",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-decision-receipt-missing"
+    },
+    {
+      "precondition_id": "precondition://idempotency-key",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-missing"
+    },
+    {
+      "precondition_id": "precondition://rollback-recovery",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/rollback-recovery-missing"
+    },
+    {
+      "precondition_id": "precondition://raw-payload-secret-denial",
+      "proof_state": "Unknown",
+      "append_decision": "block_append",
+      "delta_reject_ref": "delta-reject://universal-symbol/raw-payload-secret-denial-missing"
+    }
+  ],
+  "rejection_policy": {
+    "unknown_hard_constraint_blocks_append": true,
+    "budget_unknown_escalates_to_phi_gov": true,
+    "failed_precondition_logs_delta_reject": true,
+    "raw_payload_rejected": true,
+    "raw_secret_rejected": true,
+    "terminal_closure_rejected": true
+  },
+  "blocked_reasons": [
+    "append_audit_witness_not_admitted",
+    "receipt_store_writer_registration_missing",
+    "receipt_store_write_path_missing",
+    "operator_approval_missing",
+    "operator_identity_missing",
+    "operator_approval_decision_missing",
+    "operator_reapproval_expiry_missing",
+    "operator_revocation_missing",
+    "lifecycle_evidence_receipt_missing",
+    "lifecycle_audit_receipt_missing",
+    "replacement_decision_receipt_missing",
+    "rollback_recovery_witness_missing",
+    "idempotency_witness_missing",
+    "durability_replay_witness_missing",
+    "raw_payload_storage_forbidden",
+    "raw_secret_storage_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_live_runtime_authority_evidence",
+    "collect_live_lifecycle_evidence_values",
+    "validate_operator_approval_reapproval_revocation_chain"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_identity_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_decision_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_reapproval_expiry_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
+    "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
+    "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
+    "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
+    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_append_audit_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
+  ],
+  "contract_summary": {
+    "authority_requirement_count": 14,
+    "authority_denial_count": 10,
+    "append_precondition_count": 14,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 17,
+    "evidence_ref_count": 60
+  }
+}

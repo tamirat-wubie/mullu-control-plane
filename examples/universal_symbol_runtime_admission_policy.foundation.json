@@ -1,0 +1,211 @@
+{
+  "policy_id": "universal-symbol-runtime-admission-policy-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "policy_scope": "foundation-mode-universal-symbol-runtime-admission",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "policy_is_not_runtime_authority": true,
+  "admission_decision": "blocked",
+  "symbolization_scope": [
+    "skill",
+    "component",
+    "receipt",
+    "action",
+    "question",
+    "answer",
+    "metadata",
+    "relation",
+    "trace",
+    "proof",
+    "failure",
+    "unknown",
+    "policy",
+    "boundary",
+    "artifact"
+  ],
+  "required_gates": {
+    "universal_symbol_schema_ref": "schemas/universal_symbol.schema.json",
+    "symbol_skill_adapter_ref": "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+    "uao_ref": "policy://universal-action-orchestration/no-bypass",
+    "phi_gov_ref": "policy://phi-gov/state-write-only",
+    "life_meaning_judgment_ref": "policy://life-meaning-judgment/effect-bearing-required",
+    "runtime_authority_witness_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "receipt_persistence_policy_ref": "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "rollback_recovery_ref": "recovery://universal-symbol/runtime-admission",
+    "operator_approval_ref": "approval://universal-symbol/runtime-admission",
+    "proof_coverage_ref": "surface://universal_symbol_runtime_admission_policy"
+  },
+  "authority_denials": {
+    "runtime_registration_performed": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "state_mutation_enabled": false,
+    "receipt_store_append_enabled": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "admission_conditions": [
+    {
+      "condition_id": "condition://runtime-authority-witness",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json"
+    },
+    {
+      "condition_id": "condition://receipt-persistence-policy",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "policy://universal-symbol/receipt-persistence"
+    },
+    {
+      "condition_id": "condition://operator-approval",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "approval://universal-symbol/runtime-admission"
+    },
+    {
+      "condition_id": "condition://rollback-recovery-witness",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "recovery://universal-symbol/runtime-admission"
+    },
+    {
+      "condition_id": "condition://life-meaning-judgment",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "policy://life-meaning-judgment/effect-bearing-required"
+    },
+    {
+      "condition_id": "condition://proof-coverage",
+      "required_before": "runtime_registration",
+      "proof_state": "Unknown",
+      "decision": "block",
+      "evidence_ref": "surface://universal_symbol_runtime_admission_policy"
+    }
+  ],
+  "skill_admission_matrix": [
+    {
+      "skill_ref": "skill://teamops-shared-inbox",
+      "symbol_kind": "skill",
+      "admission_state": "blocked_pending_runtime_witness",
+      "required_witness_refs": [
+        "witness://teamops/universal-symbol-runtime-admission"
+      ],
+      "blocked_action_refs": [
+        "blocked://connector-call",
+        "blocked://external-send",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "skill_ref": "skill://software-dev",
+      "symbol_kind": "skill",
+      "admission_state": "blocked_pending_runtime_witness",
+      "required_witness_refs": [
+        "witness://software-dev/universal-symbol-runtime-admission"
+      ],
+      "blocked_action_refs": [
+        "blocked://filesystem-write-through-symbol-runtime",
+        "blocked://runtime-dispatch",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "skill_ref": "component://governance-core",
+      "symbol_kind": "component",
+      "admission_state": "blocked_pending_runtime_witness",
+      "required_witness_refs": [
+        "witness://component/governance-core/universal-symbol-runtime-admission"
+      ],
+      "blocked_action_refs": [
+        "blocked://runtime-registration",
+        "blocked://state-mutation",
+        "blocked://terminal-closure"
+      ]
+    },
+    {
+      "skill_ref": "receipt://worker-ledger",
+      "symbol_kind": "receipt",
+      "admission_state": "blocked_pending_runtime_witness",
+      "required_witness_refs": [
+        "witness://worker-ledger/universal-symbol-runtime-admission"
+      ],
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://raw-payload-storage",
+        "blocked://terminal-closure"
+      ]
+    }
+  ],
+  "receipt_policy": {
+    "append_allowed": false,
+    "raw_payload_allowed": false,
+    "raw_secret_allowed": false,
+    "digest_and_ref_only": true,
+    "receipt_store_authority_ref": "authority://universal-symbol/receipt-store/not-granted",
+    "persistence_decision": "blocked_pending_receipt_store_authority"
+  },
+  "blocked_reasons": [
+    "runtime_authority_witness_missing",
+    "receipt_store_authority_missing",
+    "operator_approval_missing",
+    "rollback_recovery_witness_missing",
+    "life_meaning_judgment_missing",
+    "proof_coverage_incomplete",
+    "skill_admission_witness_missing",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_receipt_store_authority_witness",
+    "collect_live_runtime_authority_evidence",
+    "add_skill_by_skill_runtime_witnesses_before_admission"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_identity_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_identity_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "mcoi/mcoi_runtime/core/symbol_skill_adapter.py",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
+    "scripts/validate_universal_symbol_append_audit_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "symbolization_scope_count": 15,
+    "admission_condition_count": 6,
+    "skill_admission_count": 4,
+    "authority_denial_count": 9,
+    "evidence_ref_count": 31
+  }
+}

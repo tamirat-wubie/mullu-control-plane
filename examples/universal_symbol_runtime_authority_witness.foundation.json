@@ -1,0 +1,169 @@
+{
+  "witness_id": "universal-symbol-runtime-authority-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-runtime-authority",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "runtime_authority_decision": "blocked_pending_runtime_admission_operator_receipt_recovery_and_audit_evidence",
+  "runtime_authority_witness_is_not_runtime_authority": true,
+  "authority_requirements": [
+    {
+      "requirement_id": "requirement://runtime-admission-policy",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-policy-missing"
+    },
+    {
+      "requirement_id": "requirement://uao-decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://universal-action-orchestration/no-bypass",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/uao-decision-missing"
+    },
+    {
+      "requirement_id": "requirement://phi-gov-decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://phi-gov/state-write-only",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/phi-gov-decision-missing"
+    },
+    {
+      "requirement_id": "requirement://life-meaning-judgment",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://life-meaning-judgment/effect-bearing-required",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/life-meaning-judgment-missing"
+    },
+    {
+      "requirement_id": "requirement://operator-approval",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "approval://universal-symbol/runtime-authority",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-authority-operator-approval-missing"
+    },
+    {
+      "requirement_id": "requirement://receipt-store-authority",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/receipt-store-authority-missing"
+    },
+    {
+      "requirement_id": "requirement://rollback-recovery",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "recovery://universal-symbol/runtime-authority",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-authority-rollback-recovery-missing"
+    },
+    {
+      "requirement_id": "requirement://skill-admission-witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "witness://universal-symbol/skill-admission",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/skill-admission-witness-missing"
+    },
+    {
+      "requirement_id": "requirement://proof-coverage",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "surface://universal_symbol_runtime_authority_witness",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-authority-proof-coverage-missing"
+    },
+    {
+      "requirement_id": "requirement://terminal-closure-denial",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "closure://universal-symbol/runtime-authority-denial",
+      "current_decision": "runtime_authority_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-authority-terminal-closure-forbidden"
+    }
+  ],
+  "authority_denials": {
+    "runtime_authority_granted": false,
+    "runtime_registration_performed": false,
+    "skill_admission_recorded": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "runtime_constraints": {
+    "runtime_admission_policy_required": true,
+    "uao_decision_required": true,
+    "phi_gov_decision_required": true,
+    "life_meaning_judgment_required": true,
+    "operator_approval_required": true,
+    "receipt_store_authority_required": true,
+    "rollback_recovery_required": true,
+    "skill_admission_witness_required": true,
+    "proof_coverage_required": true,
+    "terminal_closure_denial_required": true
+  },
+  "rejection_policy": {
+    "missing_runtime_admission_blocks_authority": true,
+    "missing_uao_blocks_authority": true,
+    "missing_phi_gov_blocks_authority": true,
+    "missing_life_meaning_blocks_authority": true,
+    "missing_operator_approval_blocks_authority": true,
+    "missing_receipt_store_authority_blocks_authority": true,
+    "unknown_hard_constraint_blocks_authority": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "runtime_admission_policy_missing",
+    "uao_decision_missing",
+    "phi_gov_decision_missing",
+    "life_meaning_judgment_missing",
+    "operator_approval_missing",
+    "receipt_store_authority_missing",
+    "rollback_recovery_missing",
+    "skill_admission_witness_missing",
+    "proof_coverage_missing",
+    "runtime_authority_binding_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_operator_runtime_authority_approval_request",
+    "bind_skill_by_skill_runtime_admission_witnesses",
+    "collect_rollback_recovery_handoff_before_runtime_registration"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "authority_requirement_count": 10,
+    "authority_denial_count": 13,
+    "runtime_constraint_count": 10,
+    "rejection_check_count": 8,
+    "blocked_reason_count": 11,
+    "evidence_ref_count": 22
+  }
+}

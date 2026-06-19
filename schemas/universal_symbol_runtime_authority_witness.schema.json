@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1",
+  "title": "Universal Symbol Runtime Authority Witness",
+  "description": "Foundation Mode witness for future UniversalSymbol runtime authority. This witness defines authority evidence obligations while denying runtime authority, runtime registration, skill admission, live dispatch, connector calls, filesystem writes, external writes, receipt-store append, raw payload storage, raw secret storage, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "generated_at",
+    "witness_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "runtime_authority_decision",
+    "runtime_authority_witness_is_not_runtime_authority",
+    "authority_requirements",
+    "authority_denials",
+    "runtime_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "witness_id": { "type": "string", "const": "universal-symbol-runtime-authority-witness-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "witness_scope": { "type": "string", "const": "foundation-mode-universal-symbol-runtime-authority" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "runtime_authority_decision": { "type": "string", "const": "blocked_pending_runtime_admission_operator_receipt_recovery_and_audit_evidence" },
+    "runtime_authority_witness_is_not_runtime_authority": { "type": "boolean", "const": true },
+    "authority_requirements": {
+      "type": "array",
+      "minItems": 10,
+      "items": { "$ref": "#/$defs/authority_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "runtime_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_admission_policy_required",
+        "uao_decision_required",
+        "phi_gov_decision_required",
+        "life_meaning_judgment_required",
+        "operator_approval_required",
+        "receipt_store_authority_required",
+        "rollback_recovery_required",
+        "skill_admission_witness_required",
+        "proof_coverage_required",
+        "terminal_closure_denial_required"
+      ],
+      "properties": {
+        "runtime_admission_policy_required": { "type": "boolean", "const": true },
+        "uao_decision_required": { "type": "boolean", "const": true },
+        "phi_gov_decision_required": { "type": "boolean", "const": true },
+        "life_meaning_judgment_required": { "type": "boolean", "const": true },
+        "operator_approval_required": { "type": "boolean", "const": true },
+        "receipt_store_authority_required": { "type": "boolean", "const": true },
+        "rollback_recovery_required": { "type": "boolean", "const": true },
+        "skill_admission_witness_required": { "type": "boolean", "const": true },
+        "proof_coverage_required": { "type": "boolean", "const": true },
+        "terminal_closure_denial_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_runtime_admission_blocks_authority",
+        "missing_uao_blocks_authority",
+        "missing_phi_gov_blocks_authority",
+        "missing_life_meaning_blocks_authority",
+        "missing_operator_approval_blocks_authority",
+        "missing_receipt_store_authority_blocks_authority",
+        "unknown_hard_constraint_blocks_authority",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_runtime_admission_blocks_authority": { "type": "boolean", "const": true },
+        "missing_uao_blocks_authority": { "type": "boolean", "const": true },
+        "missing_phi_gov_blocks_authority": { "type": "boolean", "const": true },
+        "missing_life_meaning_blocks_authority": { "type": "boolean", "const": true },
+        "missing_operator_approval_blocks_authority": { "type": "boolean", "const": true },
+        "missing_receipt_store_authority_blocks_authority": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_authority": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string",
+        "enum": [
+          "runtime_admission_policy_missing",
+          "uao_decision_missing",
+          "phi_gov_decision_missing",
+          "life_meaning_judgment_missing",
+          "operator_approval_missing",
+          "receipt_store_authority_missing",
+          "rollback_recovery_missing",
+          "skill_admission_witness_missing",
+          "proof_coverage_missing",
+          "runtime_authority_binding_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_requirement_count",
+        "authority_denial_count",
+        "runtime_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "authority_requirement_count": { "type": "integer", "minimum": 10 },
+        "authority_denial_count": { "type": "integer", "const": 13 },
+        "runtime_constraint_count": { "type": "integer", "const": 10 },
+        "rejection_check_count": { "type": "integer", "const": 8 },
+        "blocked_reason_count": { "type": "integer", "minimum": 10 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "authority_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "runtime_authority_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_authority_granted",
+        "runtime_registration_performed",
+        "skill_admission_recorded",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "receipt_store_append_enabled",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "runtime_authority_granted": { "type": "boolean", "const": false },
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "skill_admission_recorded": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

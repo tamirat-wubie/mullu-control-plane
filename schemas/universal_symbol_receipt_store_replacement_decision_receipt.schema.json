@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-receipt:1",
+  "title": "Universal Symbol Receipt Store Replacement Decision Receipt",
+  "description": "Foundation Mode contract for a future UniversalSymbol receipt-store replacement decision receipt. This receipt contract defines superseded approval decision, replacement approval decision, replacement reason, scope equivalence, tenant continuity, revocation linkage, lifecycle audit linkage, and Delta_reject ledger obligations while denying replacement decision recording, approval decision recording, revocation recording, lifecycle audit recording, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "receipt_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "replacement_decision",
+    "replacement_decision_receipt_is_not_decision_authority",
+    "replacement_requirements",
+    "authority_denials",
+    "replacement_constraints",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "const": "universal-symbol-receipt-store-replacement-decision-receipt-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "receipt_scope": { "type": "string", "const": "foundation-mode-universal-symbol-receipt-store-replacement-decision" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "replacement_decision": { "type": "string", "const": "blocked_pending_superseded_decision_replacement_decision_scope_revocation_audit_and_delta_reject_evidence" },
+    "replacement_decision_receipt_is_not_decision_authority": { "type": "boolean", "const": true },
+    "replacement_requirements": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/replacement_requirement" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "replacement_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "superseded_approval_decision_required",
+        "replacement_approval_decision_required",
+        "replacement_reason_required",
+        "scope_equivalence_required",
+        "tenant_continuity_required",
+        "revocation_link_required",
+        "lifecycle_audit_link_required",
+        "delta_reject_ledger_required"
+      ],
+      "properties": {
+        "superseded_approval_decision_required": { "type": "boolean", "const": true },
+        "replacement_approval_decision_required": { "type": "boolean", "const": true },
+        "replacement_reason_required": { "type": "boolean", "const": true },
+        "scope_equivalence_required": { "type": "boolean", "const": true },
+        "tenant_continuity_required": { "type": "boolean", "const": true },
+        "revocation_link_required": { "type": "boolean", "const": true },
+        "lifecycle_audit_link_required": { "type": "boolean", "const": true },
+        "delta_reject_ledger_required": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_superseded_decision_blocks_replacement",
+        "missing_replacement_decision_blocks_replacement",
+        "missing_scope_or_tenant_blocks_replacement",
+        "missing_revocation_or_audit_link_blocks_replacement",
+        "unknown_hard_constraint_blocks_replacement",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_superseded_decision_blocks_replacement": { "type": "boolean", "const": true },
+        "missing_replacement_decision_blocks_replacement": { "type": "boolean", "const": true },
+        "missing_scope_or_tenant_blocks_replacement": { "type": "boolean", "const": true },
+        "missing_revocation_or_audit_link_blocks_replacement": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_replacement": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "superseded_approval_decision_missing",
+          "replacement_approval_decision_missing",
+          "replacement_reason_missing",
+          "scope_equivalence_missing",
+          "tenant_continuity_missing",
+          "revocation_link_missing",
+          "lifecycle_audit_link_missing",
+          "delta_reject_ledger_missing",
+          "replacement_decision_recording_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replacement_requirement_count",
+        "authority_denial_count",
+        "replacement_constraint_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "replacement_requirement_count": { "type": "integer", "minimum": 8 },
+        "authority_denial_count": { "type": "integer", "const": 13 },
+        "replacement_constraint_count": { "type": "integer", "const": 8 },
+        "rejection_check_count": { "type": "integer", "const": 6 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "replacement_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "requirement_id": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "replacement_decision_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replacement_decision_recorded",
+        "receipt_store_approval_decision_recorded",
+        "receipt_store_revocation_recorded",
+        "receipt_store_lifecycle_audit_recorded",
+        "receipt_store_append_performed",
+        "receipt_store_write_path_registered",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "replacement_decision_recorded": { "type": "boolean", "const": false },
+        "receipt_store_approval_decision_recorded": { "type": "boolean", "const": false },
+        "receipt_store_revocation_recorded": { "type": "boolean", "const": false },
+        "receipt_store_lifecycle_audit_recorded": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "receipt_store_write_path_registered": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

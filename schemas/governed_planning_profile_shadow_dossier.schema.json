@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile-shadow-dossier:1",
+  "title": "Governed Planning Profile Shadow Dossier",
+  "description": "Deterministic no-effect dossier of GovernedPlanningProfile shadow admission reports across representative plan classes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dossier_id",
+    "dossier_version",
+    "profile_id",
+    "generated_at",
+    "status",
+    "solver_outcome",
+    "read_only",
+    "mutation_route",
+    "runtime_behavior_change",
+    "execution_allowed",
+    "dispatch_allowed",
+    "runtime_replanning_enabled",
+    "terminal_closure",
+    "success_claim_allowed",
+    "scenario_count",
+    "report_count",
+    "blocked_report_count",
+    "shadow_parity_ready_count",
+    "promotion_blocker_count",
+    "shadow_mismatch_count",
+    "expected_plan_classes",
+    "plan_classes_covered",
+    "missing_plan_classes",
+    "scenarios",
+    "admission_reports",
+    "closure_conditions",
+    "evidence_refs",
+    "next_action",
+    "dossier_hash"
+  ],
+  "properties": {
+    "dossier_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-shadow-dossier-[a-f0-9]{16}$"
+    },
+    "dossier_version": {
+      "type": "string",
+      "const": "governed_planning_profile_shadow_dossier.v1"
+    },
+    "profile_id": {
+      "type": "string",
+      "const": "governed-planning-profile-foundation-v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "const": "2026-06-19T00:00:00Z"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["verified", "blocked"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "read_only": { "type": "boolean", "const": true },
+    "mutation_route": { "type": "boolean", "const": false },
+    "runtime_behavior_change": { "type": "boolean", "const": false },
+    "execution_allowed": { "type": "boolean", "const": false },
+    "dispatch_allowed": { "type": "boolean", "const": false },
+    "runtime_replanning_enabled": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "scenario_count": { "type": "integer", "const": 5 },
+    "report_count": { "type": "integer", "const": 5 },
+    "blocked_report_count": { "type": "integer", "minimum": 0 },
+    "shadow_parity_ready_count": { "type": "integer", "minimum": 0 },
+    "promotion_blocker_count": { "type": "integer", "minimum": 0 },
+    "shadow_mismatch_count": { "type": "integer", "minimum": 0 },
+    "expected_plan_classes": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "uncompiled_conversation" },
+        { "const": "read_only_search" },
+        { "const": "compound_search_notification" },
+        { "const": "high_risk_payment" },
+        { "const": "world_contradiction_search" }
+      ],
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "plan_classes_covered": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "compound_search_notification",
+          "high_risk_payment",
+          "read_only_search",
+          "uncompiled_conversation",
+          "world_contradiction_search"
+        ]
+      },
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "missing_plan_classes": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/scenario" }
+    },
+    "admission_reports": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/admission_report_summary" }
+    },
+    "closure_conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "all_expected_plan_classes_covered",
+        "all_reports_read_only",
+        "no_execution_authority",
+        "no_terminal_closure",
+        "all_reports_awaiting_evidence",
+        "no_shadow_mismatches"
+      ],
+      "properties": {
+        "all_expected_plan_classes_covered": { "type": "boolean", "const": true },
+        "all_reports_read_only": { "type": "boolean", "const": true },
+        "no_execution_authority": { "type": "boolean", "const": true },
+        "no_terminal_closure": { "type": "boolean", "const": true },
+        "all_reports_awaiting_evidence": { "type": "boolean", "const": true },
+        "no_shadow_mismatches": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "next_action": {
+      "type": "string",
+      "const": "collect operator shadow-pilot evidence before runtime promotion"
+    },
+    "dossier_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "plan_class",
+        "message_hash",
+        "world_state_mode",
+        "source_plan_id",
+        "simulation_receipt_id",
+        "admission_report_id",
+        "admission_decision",
+        "shadow_parity_status",
+        "solver_outcome",
+        "risk_tier",
+        "step_count",
+        "promotion_blocker_count",
+        "shadow_mismatch_count",
+        "required_control_count",
+        "failure_mode_count",
+        "execution_allowed",
+        "dispatch_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "pattern": "^scenario-[a-z0-9-]+$" },
+        "plan_class": {
+          "type": "string",
+          "enum": [
+            "uncompiled_conversation",
+            "read_only_search",
+            "compound_search_notification",
+            "high_risk_payment",
+            "world_contradiction_search"
+          ]
+        },
+        "message_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "world_state_mode": {
+          "type": "string",
+          "enum": ["none", "bound", "open_contradiction"]
+        },
+        "source_plan_id": { "type": "string", "minLength": 1 },
+        "simulation_receipt_id": { "type": "string", "minLength": 1 },
+        "admission_report_id": {
+          "type": "string",
+          "pattern": "^governed-planning-profile-admission-[a-f0-9]{16}$"
+        },
+        "admission_decision": {
+          "type": "string",
+          "enum": ["blocked", "shadow_parity_ready"]
+        },
+        "shadow_parity_status": {
+          "type": "string",
+          "enum": ["matched", "blocked"]
+        },
+        "solver_outcome": {
+          "type": "string",
+          "const": "AwaitingEvidence"
+        },
+        "risk_tier": { "type": "string", "minLength": 1 },
+        "step_count": { "type": "integer", "minimum": 0 },
+        "promotion_blocker_count": { "type": "integer", "minimum": 0 },
+        "shadow_mismatch_count": { "type": "integer", "minimum": 0 },
+        "required_control_count": { "type": "integer", "minimum": 0 },
+        "failure_mode_count": { "type": "integer", "minimum": 0 },
+        "execution_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "admission_report_summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "report_id",
+        "report_version",
+        "profile_id",
+        "source_plan_id",
+        "admission_decision",
+        "solver_outcome",
+        "shadow_parity_status",
+        "projection",
+        "promotion_blockers",
+        "shadow_mismatches",
+        "report_hash"
+      ],
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "pattern": "^governed-planning-profile-admission-[a-f0-9]{16}$"
+        },
+        "report_version": {
+          "type": "string",
+          "const": "governed_planning_profile_admission_report.v1"
+        },
+        "profile_id": {
+          "type": "string",
+          "const": "governed-planning-profile-foundation-v1"
+        },
+        "source_plan_id": { "type": "string", "minLength": 1 },
+        "admission_decision": {
+          "type": "string",
+          "enum": ["blocked", "shadow_parity_ready"]
+        },
+        "solver_outcome": {
+          "type": "string",
+          "const": "AwaitingEvidence"
+        },
+        "shadow_parity_status": {
+          "type": "string",
+          "enum": ["matched", "blocked"]
+        },
+        "projection": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "read_only",
+            "execution_allowed",
+            "dispatch_allowed",
+            "runtime_replanning_enabled",
+            "terminal_closure_allowed",
+            "success_claim_allowed"
+          ],
+          "properties": {
+            "read_only": { "type": "boolean", "const": true },
+            "execution_allowed": { "type": "boolean", "const": false },
+            "dispatch_allowed": { "type": "boolean", "const": false },
+            "runtime_replanning_enabled": { "type": "boolean", "const": false },
+            "terminal_closure_allowed": { "type": "boolean", "const": false },
+            "success_claim_allowed": { "type": "boolean", "const": false }
+          }
+        },
+        "promotion_blockers": { "type": "array" },
+        "shadow_mismatches": { "type": "array" },
+        "report_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

@@ -58,6 +58,33 @@ def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     assert loop_entry["surface"] == "governance"
 
 
+def test_protocol_manifest_indexes_governed_planning_profile() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    profile_entry = entries["governed-planning-profile"]
+    report_entry = entries["governed-planning-profile-admission-report"]
+    dossier_entry = entries["governed-planning-profile-shadow-dossier"]
+    operator_evidence_entry = entries["governed-planning-profile-operator-shadow-pilot-evidence"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
+    assert profile_entry["urn"] == "urn:mullusi:schema:governed-planning-profile:1"
+    assert profile_entry["surface"] == "planning"
+    assert report_entry["path"] == "schemas/governed_planning_profile_admission_report.schema.json"
+    assert report_entry["urn"] == "urn:mullusi:schema:governed-planning-profile-admission-report:1"
+    assert report_entry["surface"] == "planning"
+    assert dossier_entry["path"] == "schemas/governed_planning_profile_shadow_dossier.schema.json"
+    assert dossier_entry["urn"] == "urn:mullusi:schema:governed-planning-profile-shadow-dossier:1"
+    assert dossier_entry["surface"] == "planning"
+    assert operator_evidence_entry["path"] == (
+        "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json"
+    )
+    assert operator_evidence_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-evidence:1"
+    )
+    assert operator_evidence_entry["surface"] == "planning"
+
+
 def test_protocol_manifest_indexes_search_decision() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -78,6 +105,17 @@ def test_protocol_manifest_indexes_search_receipt() -> None:
     assert search_entry["path"] == "schemas/search_receipt.schema.json"
     assert search_entry["urn"] == "urn:mullusi:schema:search-receipt:1"
     assert search_entry["surface"] == "search"
+
+
+def test_protocol_manifest_indexes_research_epistemics_profile() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    profile_entry = entries["research-epistemics-profile"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert profile_entry["path"] == "schemas/research_epistemics_profile.schema.json"
+    assert profile_entry["urn"] == "urn:mullusi:schema:research-epistemics-profile:1"
+    assert profile_entry["surface"] == "research"
 
 
 def test_protocol_manifest_indexes_capture_policy_decision_ledger() -> None:
@@ -1834,6 +1872,34 @@ def test_protocol_manifest_indexes_read_only_worker_uao_dispatch_authorization_w
         == "urn:mullusi:schema:read-only-worker-uao-dispatch-authorization-witness:1"
     )
     assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_universal_symbol_runtime_authority_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["universal-symbol-runtime-authority-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/universal_symbol_runtime_authority_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1"
+    assert witness_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_replacement_replay_idempotency_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries[
+        "universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == (
+        "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json"
+    )
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness:1"
+    )
+    assert witness_entry["surface"] == "symbol"
 
 
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
