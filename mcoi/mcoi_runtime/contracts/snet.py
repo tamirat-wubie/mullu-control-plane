@@ -181,9 +181,7 @@ def _require_metadata_scalar(value: object, field_name: str) -> object:
 
 
 def _require_text_key(key: object, field_name: str) -> str:
-    if type(key) is not str:
-        raise ValueError(f"{field_name} must be a non-empty string")
-    return require_non_empty_text(key, field_name)
+    return _require_exact_text(key, field_name)
 
 
 def _require_text(value: object, field_name: str) -> str:

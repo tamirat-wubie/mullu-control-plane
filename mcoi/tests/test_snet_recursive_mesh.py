@@ -1149,8 +1149,21 @@ def test_mesh_receipt_rejects_settlement_counts_map_boundary_drift() -> None:
 
 
 def test_direct_snet_contracts_reject_nested_metadata_key_shape_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={" outer": "whitespace key"})
+    with pytest.raises(ValueError, match="metadata.key"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"outer ": "whitespace key"},
+        )
     with pytest.raises(ValueError, match="metadata.outer.key"):
         SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"outer": {1: "numeric nested key"}})
+    with pytest.raises(ValueError, match="metadata.outer.key"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"outer": {" inner": "whitespace nested key"}})
     with pytest.raises(ValueError, match="metadata.outer.key"):
         SNetAnswer(
             answer_id="answer:1",
