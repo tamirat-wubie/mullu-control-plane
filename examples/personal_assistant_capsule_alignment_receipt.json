@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-capsule-alignment-e187e1d6ec5bf133",
+  "receipt_id": "personal-assistant-capsule-alignment-4a7a102220b0ce4d",
   "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
-  "generated_at": "2026-06-16T20:30:54Z",
+  "generated_at": "2026-06-19T16:42:30Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -354,7 +354,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-capsule-alignment-2026-06-16",
+        "delta_id": "delta-personal-assistant-capsule-alignment-2026-06-19",
         "reason": "Capsule alignment closed for no-effect Foundation Mode hardening without granting execution authority.",
         "logged_in_lineage": true
       }

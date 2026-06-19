@@ -11,7 +11,7 @@ Invariants:
   - Read-only skills cannot declare mutation authority.
   - Draft-only skills cannot send externally.
   - Math skills stay connector-free, planning/read-only, and non-mutating.
-  - P4/P5 skills require explicit approval.
+  - P3/P4/P5 skills require explicit approval.
   - Capability pack entries remain candidate-only and non-production.
 """
 
@@ -37,12 +37,14 @@ def test_personal_assistant_skill_registry_accepts_foundation_fixture() -> None:
     result = validate_personal_assistant_skill_registry()
 
     assert result.valid is True
-    assert result.skill_count == 15
+    assert result.skill_count == 17
     assert "email.inbox.summarize" in result.skill_ids
     assert "math.reasoning.plan" in result.skill_ids
     assert "planning.optimize_schedule" in result.skill_ids
     assert "task.create_draft" in result.skill_ids
     assert "email.send.with_approval" in result.skill_ids
+    assert "calendar.event.create.with_approval" in result.skill_ids
+    assert "task.create.with_approval" in result.skill_ids
     assert "deployment.publish.review" in result.skill_ids
     assert result.errors == ()
 
@@ -58,7 +60,7 @@ def test_read_only_skills_cannot_declare_mutation_authority(tmp_path: Path) -> N
     result = validate_personal_assistant_skill_registry(registry_path=registry_path)
 
     assert result.valid is False
-    assert result.skill_count == 15
+    assert result.skill_count == 17
     assert any("read-only skill allows mutating actions" in error for error in result.errors)
     assert any("external_write_allowed=true" in error for error in result.errors)
 
@@ -121,8 +123,10 @@ def test_planning_skills_remain_preview_only_and_non_mutating(tmp_path: Path) ->
     assert any("planning skill must be planning_only or read_only" in error for error in result.errors)
 
 
-def test_p4_p5_skills_require_explicit_approval(tmp_path: Path) -> None:
+def test_p3_p4_p5_skills_require_explicit_approval(tmp_path: Path) -> None:
     registry = _load_json(REGISTRY_PATH)
+    _skill_by_id(registry, "calendar.event.create.with_approval")["requires_approval"] = False
+    _skill_by_id(registry, "task.create.with_approval")["requires_approval"] = False
     _skill_by_id(registry, "email.send.with_approval")["requires_approval"] = False
     _skill_by_id(registry, "deployment.publish.review")["requires_approval"] = False
     registry_path = tmp_path / "registry.json"
@@ -131,9 +135,14 @@ def test_p4_p5_skills_require_explicit_approval(tmp_path: Path) -> None:
     result = validate_personal_assistant_skill_registry(registry_path=registry_path)
 
     assert result.valid is False
+    assert any(
+        "calendar.event.create.with_approval" in error and "requires explicit approval" in error
+        for error in result.errors
+    )
+    assert any("task.create.with_approval" in error and "requires explicit approval" in error for error in result.errors)
     assert any("email.send.with_approval" in error and "requires explicit approval" in error for error in result.errors)
     assert any("deployment.publish.review" in error and "requires explicit approval" in error for error in result.errors)
-    assert sum("requires explicit approval" in error for error in result.errors) >= 2
+    assert sum("requires explicit approval" in error for error in result.errors) >= 4
 
 
 def test_personal_assistant_capability_pack_and_capsule_are_schema_valid() -> None:

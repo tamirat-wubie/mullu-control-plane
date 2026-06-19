@@ -667,6 +667,66 @@ def test_gateway_personal_assistant_draft_approval_proposal_preview_does_not_enq
     assert console["approval_queue"]["proposal_execution_allowed"] is False
 
 
+def test_gateway_personal_assistant_calendar_draft_approval_proposal_preview_does_not_enqueue() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+        json=_draft_approval_proposal_payload(
+            draft_ref="pa_draft_projection_item_gateway_calendar_001",
+            draft_type="calendar_event",
+            draft_skill_id="calendar.event.draft",
+            summary="Prepared customer check-in calendar event without invites.",
+            evidence_ref="proof://personal-assistant/draft/gateway-calendar-001",
+        ),
+    )
+    payload = response.json()
+    proposal = payload["approval_proposal"]
+    queue = payload["approval_queue"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert proposal["risk_level"] == "P3"
+    assert proposal["approval_is_execution"] is False
+    assert proposal["proposed_actions"][0]["skill_id"] == "calendar.event.create.with_approval"
+    assert proposal["proposed_actions"][0]["effect_boundary"] == "calendar_event_create"
+    assert "create_event" in proposal["forbidden_without_approval"]
+    assert "invite_people" in proposal["forbidden_without_approval"]
+    assert queue["approval_count"] == 0
+    assert payload["effect_boundary"]["approval_enqueued"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+
+
+def test_gateway_personal_assistant_task_draft_approval_proposal_preview_does_not_enqueue() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+        json=_draft_approval_proposal_payload(
+            draft_ref="pa_draft_projection_item_gateway_task_001",
+            draft_type="task",
+            draft_skill_id="task.create_draft",
+            summary="Prepared follow-up task from redacted operator request.",
+            evidence_ref="proof://personal-assistant/draft/gateway-task-001",
+        ),
+    )
+    payload = response.json()
+    proposal = payload["approval_proposal"]
+    queue = payload["approval_queue"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert proposal["risk_level"] == "P3"
+    assert proposal["approval_is_execution"] is False
+    assert proposal["proposed_actions"][0]["skill_id"] == "task.create.with_approval"
+    assert proposal["proposed_actions"][0]["effect_boundary"] == "task_system_write"
+    assert "system_of_record_write" in proposal["forbidden_without_approval"]
+    assert "connector_mutation" in proposal["forbidden_without_approval"]
+    assert queue["approval_count"] == 0
+    assert payload["effect_boundary"]["system_of_record_write_allowed"] is False
+    assert payload["effect_boundary"]["memory_write_allowed"] is False
+
+
 def test_gateway_personal_assistant_draft_approval_proposal_rejects_mismatched_source() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
     request_payload = _draft_approval_proposal_payload()
@@ -703,6 +763,23 @@ def test_gateway_personal_assistant_draft_approval_proposal_rejects_raw_payload(
     assert "raw_private_connector_payload" in serialized
     assert "private email thread body" not in serialized
     assert "email.send.with_approval" not in serialized
+
+
+def test_gateway_personal_assistant_draft_approval_proposal_rejects_unknown_draft_type() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = _draft_approval_proposal_payload(
+        draft_type="document_draft",
+        draft_skill_id="document.draft",
+    )
+
+    response = client.post(
+        "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+        json=request_payload,
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_draft_approval_proposal_preview"
 
 
 def test_gateway_personal_assistant_approval_queue_preview_records_pending_packet() -> None:
@@ -1529,7 +1606,14 @@ def _approval_proposal_plan() -> dict[str, object]:
     return dict(envelope.plan)
 
 
-def _draft_approval_proposal_payload() -> dict[str, object]:
+def _draft_approval_proposal_payload(
+    *,
+    draft_ref: str = "pa_draft_projection_item_gateway_email_001",
+    draft_type: str = "email_response",
+    draft_skill_id: str = "email.response.draft",
+    summary: str = "Prepared email reply to Daniel using redacted thread evidence.",
+    evidence_ref: str = "proof://personal-assistant/draft/gateway-email-001",
+) -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_draft_approval_001",
         "plan_id": "pa_plan_gateway_draft_approval_001",
@@ -1538,11 +1622,11 @@ def _draft_approval_proposal_payload() -> dict[str, object]:
         "approver_ref": "operator:tamirat",
         "include_console_read_model": True,
         "draft": {
-            "draft_ref": "pa_draft_projection_item_gateway_email_001",
-            "draft_type": "email_response",
-            "draft_skill_id": "email.response.draft",
-            "summary": "Prepared email reply to Daniel using redacted thread evidence.",
-            "evidence_refs": ["proof://personal-assistant/draft/gateway-email-001"],
+            "draft_ref": draft_ref,
+            "draft_type": draft_type,
+            "draft_skill_id": draft_skill_id,
+            "summary": summary,
+            "evidence_refs": [evidence_ref],
         },
     }
 
