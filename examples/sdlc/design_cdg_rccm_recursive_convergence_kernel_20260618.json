@@ -12,9 +12,9 @@
     "mcoi/mcoi_runtime/convergence/effects.py",
     "mcoi/mcoi_runtime/convergence/adapters/snet.py",
     "mcoi/mcoi_runtime/convergence/adapters/universal_action.py",
+    "mcoi/mcoi_runtime/convergence/cdg_rccm_component_contract.schema.json",
     "mcoi/tests/test_recursive_convergence_kernel.py",
     "mcoi/tests/test_cdg_rccm_component_contract.py",
-    "schemas/cdg_rccm_component_contract.schema.json",
     "examples/cdg_rccm_component_contract.foundation.json",
     "scripts/validate_cdg_rccm_component_contract.py",
     "docs/CDG_RCCM_RECURSIVE_CONVERGENCE_KERNEL.md"
@@ -30,27 +30,10 @@
     "add closure-gated external-effect plans and receipts"
   ],
   "schema_changes": [
-    "schemas/cdg_rccm_component_contract.schema.json",
-    "schemas/sdlc_change_request.schema.json",
-    "schemas/sdlc_requirement.schema.json",
-    "schemas/sdlc_design_decision.schema.json",
-    "schemas/sdlc_work_plan.schema.json",
-    "schemas/sdlc_implementation_receipt.schema.json",
-    "schemas/sdlc_transition_receipt.schema.json",
-    "schemas/sdlc_verification_receipt.schema.json",
-    "schemas/sdlc_security_review.schema.json",
-    "schemas/sdlc_release_candidate.schema.json",
-    "schemas/sdlc_deployment_candidate.schema.json",
-    "schemas/sdlc_recovery_handoff_receipt.schema.json",
-    "schemas/sdlc_closure_receipt.schema.json"
+    "mcoi/mcoi_runtime/convergence/cdg_rccm_component_contract.schema.json"
   ],
   "validator_changes": [
-    "scripts/validate_cdg_rccm_component_contract.py",
-    "scripts/validate_sdlc_artifact.py",
-    "scripts/validate_sdlc_state_machine.py",
-    "scripts/validate_sdlc_release_readiness.py",
-    "scripts/validate_sdlc_security_review.py",
-    "scripts/validate_sdlc_pr_enforcement.py"
+    "scripts/validate_cdg_rccm_component_contract.py"
   ],
   "security_model": {
     "raw_reasoning_rejected": true,
@@ -58,8 +41,8 @@
     "effect_bearing_requires_receipt": true,
     "tenant_scope_reviewed": true
   },
-  "rollback_plan": "Remove the convergence package, focused tests, component schema, Foundation example, validator, documentation, and SDLC requirement/design artifacts. Rerun import compilation, focused runtime tests, schema validation, SDLC validation, proof coverage checks, and workspace governance preflight before claiming rollback closure.",
-  "migration_plan": "No existing runtime is replaced. The new package is additive and unregistered by default. Existing SNet, workflow, cognitive-loop, and Universal Action surfaces continue unchanged unless a caller explicitly constructs the convergence kernel or adapter. No persistent store migration, public endpoint, connector binding, or deployment change is included.",
+  "rollback_plan": "Remove the convergence package, focused tests, private component schema, Foundation example, validator, documentation, and SDLC requirement/design artifacts. Rerun import compilation, focused runtime tests, contract validation, SDLC validation, proof coverage checks, and workspace governance preflight before claiming rollback closure.",
+  "migration_plan": "No existing runtime is replaced. The new package is additive and unregistered by default. Existing SNet, workflow, cognitive-loop, and Universal Action surfaces continue unchanged unless a caller explicitly constructs the convergence kernel or adapter. No persistent store migration, public protocol schema registration, public endpoint, connector binding, or deployment change is included.",
   "test_plan": [
     "python -m py_compile mcoi/mcoi_runtime/convergence/*.py mcoi/mcoi_runtime/convergence/adapters/*.py scripts/validate_cdg_rccm_component_contract.py",
     "python -m pytest mcoi/tests/test_recursive_convergence_kernel.py mcoi/tests/test_cdg_rccm_component_contract.py -q",
