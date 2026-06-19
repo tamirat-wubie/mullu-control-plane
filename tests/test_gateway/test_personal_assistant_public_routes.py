@@ -1216,6 +1216,7 @@ def test_gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence
     assert response.status_code == 200
     assert payload["governed"] is True
     assert payload["execution_allowed"] is False
+    assert payload["outcome"] == "AwaitingEvidence"
     assert payload["effect_boundary"]["external_provider_call_allowed"] is False
     assert payload["effect_boundary"]["full_mailbox_read_allowed"] is False
     assert payload["effect_boundary"]["draft_creation_allowed"] is False
@@ -1224,6 +1225,7 @@ def test_gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence
     assert payload["effect_boundary"]["archive_allowed"] is False
     assert projection["skill_id"] == "teamops.shared_inbox.plan"
     assert probe["status"] == "ready_for_live_probe"
+    assert probe["solver_outcome"] == "AwaitingEvidence"
     assert probe["connector_readiness"]["ready"] is True
     assert probe["connector_readiness"]["external_provider_call_performed"] is False
     assert probe["token_presence"]["ready"] is True
@@ -1237,6 +1239,12 @@ def test_gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence
     assert probe["mailbox_access_boundary"]["delete_allowed"] is False
     assert probe["mailbox_access_boundary"]["archive_allowed"] is False
     assert probe["provider_call_performed"] is False
+    assert receipt["decision"] == "preview_ready"
+    assert receipt["outcome"] == "AwaitingEvidence"
+    assert receipt["metadata"]["ready_for_live_probe"] is True
+    assert receipt["metadata"]["live_receipt_required"] is True
+    assert receipt["metadata"]["live_receipt_validated"] is False
+    assert receipt["metadata"]["live_connector_execution_allowed"] is False
     assert "gmail_full_mailbox_not_read" in receipt["actions_not_taken"]
     assert "gmail_send_not_called" in receipt["actions_not_taken"]
     assert "gmail_draft_not_created" in receipt["actions_not_taken"]

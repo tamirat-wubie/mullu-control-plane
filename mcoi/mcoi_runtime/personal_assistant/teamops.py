@@ -231,7 +231,7 @@ def preview_teamops_gmail_live_probe(
     probe = {
         "probe_type": "teamops_gmail_presence_only_live_probe",
         "status": "ready_for_live_probe" if probe_ready else "awaiting_evidence",
-        "solver_outcome": "SolvedVerified" if probe_ready else "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
         "provider": "gmail",
         "connector_readiness": {
             "connector_id": connector_ref.connector_id,
@@ -415,7 +415,7 @@ def _teamops_live_probe_receipt(
             "operator_handoff_projection",
         ],
         "connectors_used": ["gmail"],
-        "decision": "allowed" if ready else "deferred",
+        "decision": "preview_ready" if ready else "deferred",
         "approval_required": False,
         "approval_ref": "",
         "actions_taken": [
@@ -442,12 +442,15 @@ def _teamops_live_probe_receipt(
         "evidence_refs": _evidence_refs(intent, handoff),
         "memory_observation_refs": [],
         "replay_refs": [f"replay://personal-assistant/teamops/gmail-live-probe/{suffix}"],
-        "outcome": "SolvedVerified" if ready else "AwaitingEvidence",
+        "outcome": "AwaitingEvidence",
         "metadata": {
             "probe_status": probe.get("status", "awaiting_evidence"),
             "connector_ready": _nested_bool(probe, "connector_readiness", "ready"),
             "token_presence_ready": _nested_bool(probe, "token_presence", "ready"),
             "mailbox_access_boundary_ready": _nested_bool(probe, "mailbox_access_boundary", "ready"),
+            "ready_for_live_probe": ready,
+            "live_receipt_required": True,
+            "live_receipt_validated": False,
             "live_connector_execution_allowed": False,
             "external_provider_call_performed": False,
             "full_mailbox_read_allowed": False,
