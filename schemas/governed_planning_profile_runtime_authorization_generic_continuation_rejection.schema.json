@@ -1,0 +1,419 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-generic-continuation-rejection:1",
+  "title": "Governed Planning Profile Runtime Authorization Generic Continuation Rejection",
+  "description": "Read-only rejection witness proving generic continuation does not satisfy GovernedPlanningProfile runtime authorization. This schema does not authorize runtime promotion, execution, dispatch, replanning, success claims, or terminal closure authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "profile_id",
+    "recorded_at",
+    "solver_outcome",
+    "runtime_authorization_response_status",
+    "runtime_authorization_response_kind",
+    "generic_continuation_rejected",
+    "operator_response_recorded",
+    "operator_approval_collected",
+    "signed_approval_present",
+    "runtime_authorization_gate_satisfied",
+    "local_witness_only",
+    "read_only",
+    "mutation_route",
+    "runtime_behavior_change",
+    "runtime_activation_allowed",
+    "runtime_promotion_authorized",
+    "execution_allowed",
+    "dispatch_allowed",
+    "runtime_replanning_enabled",
+    "success_claim_allowed",
+    "terminal_closure",
+    "source_runtime_authorization_request",
+    "expected_plan_classes",
+    "rejection_controls",
+    "scenario_rejections",
+    "operator_response_boundary",
+    "promotion_gate_summary",
+    "authority_denials",
+    "evidence_refs",
+    "validators",
+    "next_action",
+    "witness_hash"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-runtime-authorization-generic-continuation-rejection-[a-f0-9]{16}$"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "governed_planning_profile_runtime_authorization_generic_continuation_rejection.v1"
+    },
+    "profile_id": {
+      "type": "string",
+      "const": "governed-planning-profile-foundation-v1"
+    },
+    "recorded_at": {
+      "type": "string",
+      "const": "2026-06-19T00:00:00Z"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "GovernanceBlocked"
+    },
+    "runtime_authorization_response_status": {
+      "type": "string",
+      "const": "RejectedNoEffect"
+    },
+    "runtime_authorization_response_kind": {
+      "type": "string",
+      "const": "record_governed_planning_profile_runtime_authorization_rejection_witness"
+    },
+    "generic_continuation_rejected": { "type": "boolean", "const": true },
+    "operator_response_recorded": { "type": "boolean", "const": true },
+    "operator_approval_collected": { "type": "boolean", "const": false },
+    "signed_approval_present": { "type": "boolean", "const": false },
+    "runtime_authorization_gate_satisfied": { "type": "boolean", "const": false },
+    "local_witness_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "mutation_route": { "type": "boolean", "const": false },
+    "runtime_behavior_change": { "type": "boolean", "const": false },
+    "runtime_activation_allowed": { "type": "boolean", "const": false },
+    "runtime_promotion_authorized": { "type": "boolean", "const": false },
+    "execution_allowed": { "type": "boolean", "const": false },
+    "dispatch_allowed": { "type": "boolean", "const": false },
+    "runtime_replanning_enabled": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "source_runtime_authorization_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "request_hash",
+        "runtime_authorization_request_status",
+        "runtime_authorization_request_submitted",
+        "operator_response_required",
+        "operator_response_collected",
+        "runtime_authorization_gate_satisfied"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^governed-planning-profile-runtime-authorization-request-[a-f0-9]{16}$"
+        },
+        "request_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runtime_authorization_request_status": {
+          "type": "string",
+          "const": "SubmittedNoEffect"
+        },
+        "runtime_authorization_request_submitted": { "type": "boolean", "const": true },
+        "operator_response_required": { "type": "boolean", "const": true },
+        "operator_response_collected": { "type": "boolean", "const": false },
+        "runtime_authorization_gate_satisfied": { "type": "boolean", "const": false }
+      }
+    },
+    "expected_plan_classes": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "uncompiled_conversation" },
+        { "const": "read_only_search" },
+        { "const": "compound_search_notification" },
+        { "const": "high_risk_payment" },
+        { "const": "world_contradiction_search" }
+      ],
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "rejection_controls": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/control_source_runtime_authorization_request_valid" },
+        { "$ref": "#/$defs/control_generic_continuation_not_valid_authorization" },
+        { "$ref": "#/$defs/control_signed_approval_absent" },
+        { "$ref": "#/$defs/control_rejection_witness_recorded" },
+        { "$ref": "#/$defs/control_runtime_authorization_gate_blocked" },
+        { "$ref": "#/$defs/control_authority_denials_preserved" },
+        { "$ref": "#/$defs/control_foundation_no_effect_boundary_preserved" },
+        { "$ref": "#/$defs/control_rejection_witness_hash_bound" }
+      ],
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "scenario_rejections": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/scenario_rejection" }
+    },
+    "operator_response_boundary": { "$ref": "#/$defs/operator_response_boundary" },
+    "promotion_gate_summary": { "$ref": "#/$defs/promotion_gate_summary" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "const": "record explicit signed runtime authorization approval witness before activation"
+    },
+    "witness_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "rejection_control_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "status", "evidence_ref", "blocks_runtime_authorization"],
+      "properties": {
+        "control_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "const": "Pass" },
+        "evidence_ref": { "type": "string", "minLength": 1 },
+        "blocks_runtime_authorization": { "type": "boolean" }
+      }
+    },
+    "control_source_runtime_authorization_request_valid": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "source_runtime_authorization_request_valid" },
+            "blocks_runtime_authorization": { "const": false }
+          }
+        }
+      ]
+    },
+    "control_generic_continuation_not_valid_authorization": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "generic_continuation_not_valid_authorization" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_signed_approval_absent": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "signed_approval_absent" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_rejection_witness_recorded": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "rejection_witness_recorded" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_runtime_authorization_gate_blocked": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "runtime_authorization_gate_blocked" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_authority_denials_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "authority_denials_preserved" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_foundation_no_effect_boundary_preserved": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "foundation_no_effect_boundary_preserved" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "control_rejection_witness_hash_bound": {
+      "allOf": [
+        { "$ref": "#/$defs/rejection_control_base" },
+        {
+          "type": "object",
+          "properties": {
+            "control_id": { "const": "rejection_witness_hash_bound" },
+            "blocks_runtime_authorization": { "const": true }
+          }
+        }
+      ]
+    },
+    "scenario_rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "plan_class",
+        "source_authorization_request_status",
+        "observed_input_kind",
+        "rejection_status",
+        "runtime_authorization_response_approved",
+        "runtime_promotion_authorized",
+        "runtime_execution_performed"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "minLength": 1 },
+        "plan_class": {
+          "type": "string",
+          "enum": [
+            "uncompiled_conversation",
+            "read_only_search",
+            "compound_search_notification",
+            "high_risk_payment",
+            "world_contradiction_search"
+          ]
+        },
+        "source_authorization_request_status": {
+          "type": "string",
+          "const": "SubmittedNoEffect"
+        },
+        "observed_input_kind": {
+          "type": "string",
+          "const": "generic_continuation"
+        },
+        "rejection_status": {
+          "type": "string",
+          "const": "RejectedNoEffect"
+        },
+        "runtime_authorization_response_approved": { "type": "boolean", "const": false },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "runtime_execution_performed": { "type": "boolean", "const": false }
+      }
+    },
+    "operator_response_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_input",
+        "observed_input_kind",
+        "explicit_signed_authorization_required",
+        "generic_continuation_satisfies_authorization",
+        "rejection_witness_records_non_authorization",
+        "future_signed_approval_still_allowed",
+        "runtime_activation_performed"
+      ],
+      "properties": {
+        "observed_input": { "type": "string", "const": "continue" },
+        "observed_input_kind": { "type": "string", "const": "generic_continuation" },
+        "explicit_signed_authorization_required": { "type": "boolean", "const": true },
+        "generic_continuation_satisfies_authorization": { "type": "boolean", "const": false },
+        "rejection_witness_records_non_authorization": { "type": "boolean", "const": true },
+        "future_signed_approval_still_allowed": { "type": "boolean", "const": true },
+        "runtime_activation_performed": { "type": "boolean", "const": false }
+      }
+    },
+    "promotion_gate_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "satisfied_promotion_gate_ids",
+        "remaining_promotion_gate_ids",
+        "rejection_control_count",
+        "scenario_rejection_count",
+        "runtime_authorization_request_submitted",
+        "runtime_authorization_response_recorded",
+        "runtime_authorization_response_approved",
+        "runtime_promotion_authorized"
+      ],
+      "properties": {
+        "satisfied_promotion_gate_ids": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "operator_shadow_pilot_observation" },
+            { "const": "runtime_promotion_approval_packet" },
+            { "const": "replay_recovery_witness" },
+            { "const": "terminal_closure_certificate" }
+          ],
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "remaining_promotion_gate_ids": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "signed_runtime_authorization_approval_witness" }
+          ],
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "rejection_control_count": { "type": "integer", "const": 8 },
+        "scenario_rejection_count": { "type": "integer", "const": 5 },
+        "runtime_authorization_request_submitted": { "type": "boolean", "const": true },
+        "runtime_authorization_response_recorded": { "type": "boolean", "const": true },
+        "runtime_authorization_response_approved": { "type": "boolean", "const": false },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_promotion_authorized",
+        "execution_allowed",
+        "dispatch_allowed",
+        "runtime_replanning_enabled",
+        "success_claim_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "execution_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "runtime_replanning_enabled": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

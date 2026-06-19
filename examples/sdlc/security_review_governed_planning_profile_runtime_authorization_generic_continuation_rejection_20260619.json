@@ -1,0 +1,79 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-runtime-authorization-generic-continuation-rejection-20260619",
+  "change_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A generic continuation input could be mistaken for signed authorization if the response witness permits approval flags, runtime authorization gate satisfaction, or runtime authority fields. The mitigation is a schema-backed local-only rejection witness with GovernanceBlocked, RejectedNoEffect, hard false authority fields, and an explicit remaining gate for a signed runtime authorization approval witness.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the rejection witness keeps runtime promotion, execution, dispatch, runtime replanning, success claims, terminal closure, and runtime execution false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "approval-drift check proves generic continuation cannot set signed approval, runtime authorization gate satisfaction, or runtime activation allowance",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_signed_approval_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "witness integrity check proves the checked-in fixture matches the deterministic produced witness and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_schema_accepts_fixture_and_produced_witness"
+    },
+    {
+      "category": "audit",
+      "check": "response-boundary check proves observed input remains generic continuation, explicit signed approval remains required, and runtime activation is not performed",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_boundary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-generic-continuation-authorization-collapse",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny operator_approval_collected, signed_approval_present, runtime_authorization_gate_satisfied, runtime_activation_allowed, runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, terminal_closure, and runtime execution fields.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_runtime_authorization_generic_continuation_rejection.schema.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_signed_approval_drift",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-rejection-source-drift",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The rejection witness binds the source runtime authorization request id and hash and rejects drift in submitted, response-required, response-collected, and authorization-gate fields.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_runtime_authorization_generic_continuation_rejection.local.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py::test_generic_continuation_rejection_rejects_unsatisfied_source_request"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the generic continuation rejection witness local, deterministic, and read-only",
+    "hard-deny all runtime promotion, execution, dispatch, runtime replanning, success, terminal closure, activation, and runtime execution fields in the schema",
+    "bind the rejection witness to the deterministic runtime authorization request id and hash",
+    "record explicit signed approval as the remaining authorization gate before activation"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_runtime_authorization_generic_continuation_rejection.schema.json",
+    "scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+    "receipt://governed-planning-profile/runtime-authorization-generic-continuation-rejection/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-generic-continuation-rejection/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-generic-continuation-rejection/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-generic-continuation-rejection/security/20260619"
+}
