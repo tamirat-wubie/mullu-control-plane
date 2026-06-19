@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -9,6 +12,8 @@ from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_sh
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.shadow import router
 from mcoi_runtime.app.server_http import include_default_routers
+
+_FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 class _Metrics:
@@ -122,6 +127,61 @@ def test_shadow_inspect_route_runs_runtime_and_redacts_raw_text() -> None:
     assert payload["recent_activity"]["receipt_count"] == 1
     assert "deploy it with secret-token" not in str(payload)
     assert "secret-token" not in str(payload)
+
+
+def test_shadow_inspect_route_matches_replay_contract_fixture() -> None:
+    fixture = json.loads(
+        (_FIXTURES / "inceptadive_shadow_inspect_replay.json").read_text(encoding="utf-8")
+    )
+    previous_store = dict(deps._store)
+    deps._store.clear()
+    deps.set(
+        "inceptadive_shadow_runtime",
+        build_inceptadive_shadow_runtime(fixture["runtime_env"]),
+    )
+    try:
+        response = _client().post(fixture["route"], json=fixture["request"])
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    expected = fixture["expected_response"]
+    result = payload["result"]
+    receipt = payload["receipt"]
+    assert response.status_code == 200
+    assert payload["governed"] == expected["governed"]
+    assert payload["registered"] == expected["registered"]
+    assert payload["execution_authority"] == expected["execution_authority"]
+    assert payload["raw_request_text_exposed"] == expected["raw_request_text_exposed"]
+    assert payload["private_memory_exposed"] == expected["private_memory_exposed"]
+    assert payload["recent_activity"] == expected["recent_activity"]
+    assert result["request_id"] == expected["result"]["request_id"]
+    assert result["result_id"] == expected["result"]["result_id"]
+    assert result["mode"] == expected["result"]["mode"]
+    assert result["stage"] == expected["result"]["stage"]
+    assert result["verdict"] == expected["result"]["verdict"]
+    assert result["finding_count"] == expected["result"]["finding_count"]
+    assert result["fracture_delta_count"] == expected["result"]["fracture_delta_count"]
+    assert result["needs_repair"] == expected["result"]["needs_repair"]
+    assert result["needs_deep_pass"] == expected["result"]["needs_deep_pass"]
+    assert result["block_recommended"] == expected["result"]["block_recommended"]
+    assert result["execution_authority"] == expected["result"]["execution_authority"]
+    assert [finding["kind"] for finding in result["findings"]] == expected["result"]["finding_kinds"]
+    assert [finding["evidence_ref_count"] for finding in result["findings"]] == (
+        expected["result"]["finding_evidence_ref_counts"]
+    )
+    assert receipt["receipt_id"] == expected["receipt"]["receipt_id"]
+    assert receipt["context_hash"] == expected["receipt"]["context_hash"]
+    assert receipt["mode"] == expected["receipt"]["mode"]
+    assert receipt["stage"] == expected["receipt"]["stage"]
+    assert receipt["retrieval_receipt_count"] == expected["receipt"]["retrieval_receipt_count"]
+    assert receipt["shadow_verdict"] == expected["receipt"]["shadow_verdict"]
+    assert receipt["governance_verdict"] == expected["receipt"]["governance_verdict"]
+    assert receipt["execution_authority"] == expected["receipt"]["execution_authority"]
+    assert "secret-token" in fixture["request"]["user_input"]
+    for token in fixture["absent_tokens"]:
+        assert token not in str(payload)
 
 
 def test_shadow_inspect_route_rejects_invalid_request_bounded() -> None:
