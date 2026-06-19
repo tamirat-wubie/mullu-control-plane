@@ -53,6 +53,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-ci-gate-before-ready-for-review-witness:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-effect-reconciliation-evidence-contract",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-effect-reconciliation-evidence-contract:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-effect-reconciliation-witness",
       "surface": "runtime",
