@@ -193,6 +193,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_runtime_admission_policy",
         "universal_symbol_runtime_admission_evidence_receipt",
         "universal_symbol_runtime_live_witness_input_receipt",
+        "universal_symbol_lane_runtime_authority_evidence_receipt",
         "universal_symbol_runtime_authority_witness",
         "universal_symbol_runtime_authority_read_model",
         "universal_symbol_skill_runtime_authority_witness",

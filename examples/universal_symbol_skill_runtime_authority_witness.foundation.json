@@ -16,6 +16,7 @@
       "required_evidence_refs": [
         "schemas/universal_symbol_runtime_admission_policy.schema.json",
         "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
         "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
         "approval://skill/teamops-shared-inbox/runtime-authority",
         "recovery://skill/teamops-shared-inbox/runtime-authority",
@@ -36,6 +37,7 @@
       "required_evidence_refs": [
         "schemas/universal_symbol_runtime_admission_policy.schema.json",
         "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
         "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
         "approval://skill/software-dev/runtime-authority",
         "recovery://skill/software-dev/runtime-authority",
@@ -56,6 +58,7 @@
       "required_evidence_refs": [
         "schemas/universal_symbol_runtime_admission_policy.schema.json",
         "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
         "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
         "approval://component/governance-core/runtime-authority",
         "recovery://component/governance-core/runtime-authority",
@@ -76,6 +79,7 @@
       "required_evidence_refs": [
         "schemas/universal_symbol_runtime_admission_policy.schema.json",
         "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
         "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
         "approval://receipt/worker-ledger/runtime-authority",
         "recovery://receipt/worker-ledger/runtime-authority",
@@ -146,6 +150,8 @@
     "examples/universal_symbol_runtime_admission_policy.foundation.json",
     "schemas/universal_symbol_runtime_authority_witness.schema.json",
     "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+    "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
     "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
@@ -154,6 +160,7 @@
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
     "scripts/validate_universal_symbol_runtime_admission_policy.py",
     "scripts/validate_universal_symbol_runtime_authority_witness.py",
     "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
@@ -168,6 +175,6 @@
     "lane_constraint_count": 8,
     "rejection_check_count": 7,
     "blocked_reason_count": 9,
-    "evidence_ref_count": 21
+    "evidence_ref_count": 24
   }
 }
