@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:cdg-rccm-component-contract:1",
+  "title": "CDG-RCCM Component Contract",
+  "description": "Foundation Mode contract for one component participating in the Causal Dependency-Gated Recursive Component Convergence Mesh.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "protocol_version",
+    "surface",
+    "component_id",
+    "purpose",
+    "schema_version",
+    "rule_version",
+    "output_projections",
+    "immutable_invariants",
+    "local_invariants",
+    "boundary_contracts",
+    "convergence_policy",
+    "budgets",
+    "evidence_scope",
+    "runtime_guards",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract_version": {
+      "const": "cdg_rccm_component_contract.v1"
+    },
+    "protocol_version": {
+      "const": "cdg-rccm.v1"
+    },
+    "surface": {
+      "const": "foundation_cdg_rccm_component_contract"
+    },
+    "component_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_projections": {
+      "$ref": "#/$defs/uniqueNonEmptyStrings"
+    },
+    "output_projections": {
+      "$ref": "#/$defs/nonEmptyUniqueNonEmptyStrings"
+    },
+    "immutable_invariants": {
+      "$ref": "#/$defs/nonEmptyUniqueNonEmptyStrings"
+    },
+    "local_invariants": {
+      "$ref": "#/$defs/nonEmptyUniqueNonEmptyStrings"
+    },
+    "boundary_contracts": {
+      "$ref": "#/$defs/nonEmptyUniqueNonEmptyStrings"
+    },
+    "convergence_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "maximum_iterations",
+        "stable_iterations",
+        "oscillation_detection"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "finite_monotone",
+            "well_founded_descent",
+            "contractive",
+            "bounded_search",
+            "streaming",
+            "external_adjudication"
+          ]
+        },
+        "maximum_iterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tolerance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stable_iterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "oscillation_detection": {
+          "type": "boolean"
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_depth",
+        "maximum_frames"
+      ],
+      "properties": {
+        "maximum_depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_frames": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "evidence_scope": {
+      "enum": [
+        "model_only",
+        "simulated",
+        "lab_observed",
+        "field_observed",
+        "physically_verified"
+      ]
+    },
+    "runtime_guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_self_certification_denied",
+        "hidden_dependency_reads_denied",
+        "direct_external_effects_denied",
+        "cross_epoch_reads_denied",
+        "stale_certificate_consumption_denied",
+        "runtime_route_registration_claimed",
+        "connector_authority_granted",
+        "deployment_claimed"
+      ],
+      "properties": {
+        "component_self_certification_denied": {
+          "const": true
+        },
+        "hidden_dependency_reads_denied": {
+          "const": true
+        },
+        "direct_external_effects_denied": {
+          "const": true
+        },
+        "cross_epoch_reads_denied": {
+          "const": true
+        },
+        "stale_certificate_consumption_denied": {
+          "const": true
+        },
+        "runtime_route_registration_claimed": {
+          "const": false
+        },
+        "connector_authority_granted": {
+          "const": false
+        },
+        "deployment_claimed": {
+          "const": false
+        }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uao_ref",
+        "causal_decision_trace_ref",
+        "receipt_ref"
+      ],
+      "properties": {
+        "uao_ref": {
+          "type": "string",
+          "pattern": "^uao://"
+        },
+        "causal_decision_trace_ref": {
+          "type": "string",
+          "pattern": "^trace://"
+        },
+        "receipt_ref": {
+          "type": "string",
+          "pattern": "^receipt://"
+        }
+      }
+    },
+    "evidence_refs": {
+      "$ref": "#/$defs/nonEmptyUniqueNonEmptyStrings"
+    }
+  },
+  "$defs": {
+    "uniqueNonEmptyStrings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "nonEmptyUniqueNonEmptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
