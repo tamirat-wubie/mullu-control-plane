@@ -1,0 +1,144 @@
+"""Test GitHub PR terminal closure certificate candidate validation.
+
+Purpose: verify live effect reconciliation evidence can be bound into a
+terminal closure candidate without minting terminal closure.
+Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
+Dependencies: scripts.validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate.
+Invariants:
+  - Live evidence binding remains explicit.
+  - Terminal closure stays AwaitingEvidence.
+  - Mutation authority and secret-like payloads fail closed.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from scripts import validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate as validator
+
+
+def test_github_pr_terminal_closure_certificate_candidate_passes() -> None:
+    validation = validator.validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate()
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.example_count == 1
+    assert validation.source_live_evidence_ref == validator.EXPECTED_SOURCE_LIVE_EVIDENCE_REF
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_terminal_closure_overclaim() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        terminal_closure=True,
+        terminal_closure_certificate_minted=True,
+        terminal_closure_authorized=True,
+        certificate_candidate__terminal_closure_certificate_minted=True,
+        certificate_candidate__terminal_closure_authorized=True,
+        authority_denials__terminal_closure=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "terminal_closure expected False" in serialized_errors
+    assert "terminal_closure_certificate_minted must be false" in serialized_errors
+    assert "terminal_closure_authorized must be false" in serialized_errors
+    assert "certificate_candidate.terminal_closure_certificate_minted must be false" in serialized_errors
+    assert "certificate_candidate.terminal_closure_authorized must be false" in serialized_errors
+    assert "authority_denials.terminal_closure must be false" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_live_evidence_binding_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        source_live_evidence_ref="examples/other-live-evidence.json",
+        certificate_candidate__source_live_evidence_binding_id="other_binding",
+        certificate_candidate__source_effect_reconciliation_evidence_ref="evidence://other",
+        effect_reconciliation_collected=False,
+        certificate_candidate__effect_reconciliation_collected=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "source_live_evidence_ref expected" in serialized_errors
+    assert "certificate_candidate.source_live_evidence_binding_id expected" in serialized_errors
+    assert "certificate_candidate.source_effect_reconciliation_evidence_ref expected" in serialized_errors
+    assert "effect_reconciliation_collected must be true" in serialized_errors
+    assert "certificate_candidate.effect_reconciliation_collected must be true" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_authority() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        authority_granted=True,
+        authority_denials__repository_write_enabled=True,
+        authority_denials__pull_request_merge_enabled=True,
+        effect_boundary__repository_written_by_candidate=True,
+        effect_boundary__connector_called_by_candidate=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "authority_granted must be false" in serialized_errors
+    assert "authority_denials.repository_write_enabled must be false" in serialized_errors
+    assert "authority_denials.pull_request_merge_enabled must be false" in serialized_errors
+    assert "effect_boundary.repository_written_by_candidate must be false" in serialized_errors
+    assert "effect_boundary.connector_called_by_candidate must be false" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_remaining_witness_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        remaining_witnesses=[
+            {
+                "witness_kind": "effect_reconciliation_live_evidence",
+                "status": "SolvedVerified",
+                "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+                "authority_granted": False,
+            }
+        ],
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "remaining_witnesses must contain only the terminal closure certificate witness" in serialized_errors
+    assert len(errors) >= 1
+    assert payload["remaining_witnesses"][0]["witness_kind"] == "effect_reconciliation_live_evidence"
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_route_and_secret_like_payload() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        requested_certificate_ref="POST /api/github/terminal-closure certificate",
+    )
+    payload["certificate_candidate"]["serialized_token_value"] = "github_pat_forbiddencredential"
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "mutation route string" in serialized_errors
+    assert "forbidden secret-bearing key" in serialized_errors
+    assert "credential-like value" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_cli_writes_report(tmp_path: Path, capsys) -> None:
+    output_path = tmp_path / "github-pr-terminal-closure-certificate-candidate-validation.json"
+
+    exit_code = validator.main(["--output", str(output_path), "--json", "--strict"])
+    stdout_payload = json.loads(capsys.readouterr().out)
+    file_payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert output_path.exists()
+    assert stdout_payload["ok"] is True
+    assert file_payload["ok"] is True
+    assert stdout_payload["errors"] == []
+    assert file_payload["source_live_evidence_ref"] == validator.EXPECTED_SOURCE_LIVE_EVIDENCE_REF
+
+
+def _source_live_evidence() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_SOURCE_LIVE_EVIDENCE_EXAMPLES[0].read_text(encoding="utf-8"))
