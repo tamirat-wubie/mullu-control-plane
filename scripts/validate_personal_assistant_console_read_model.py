@@ -109,6 +109,47 @@ FALSE_LANE_STATUS_FIELDS = frozenset(
         "nested_mind_live_activation_allowed",
     }
 )
+FALSE_READINESS_FIELDS = frozenset(
+    {
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "customer_readiness_claim_allowed",
+    }
+)
+FALSE_READINESS_PROJECTION_FIELDS = frozenset(
+    {
+        "live_connector_execution_allowed",
+        "mailbox_read_allowed",
+        "mailbox_mutation_allowed",
+        "calendar_write_allowed",
+        "external_send_allowed",
+        "raw_private_payload_serialized",
+    }
+)
+FALSE_READINESS_APPROVAL_FIELDS = frozenset(
+    {
+        "execution_allowed",
+        "approval_is_execution",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+    }
+)
+FALSE_READINESS_RECEIPT_FIELDS = frozenset(
+    {
+        "runtime_dispatch_allowed",
+        "external_effect_allowed",
+        "connector_call_allowed",
+        "success_claim_allowed",
+    }
+)
 EXPECTED_LANE_IDS = (
     "request_intake_whqr",
     "skill_registry",
@@ -127,6 +168,7 @@ READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
 READ_ONLY_WORKER_REHEARSAL_RECEIPT_ID = "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
 READ_ONLY_WORKER_REHEARSAL_RECEIPT_REF = "examples/read_only_worker_rehearsal_receipt.foundation.json"
 READ_ONLY_WORKER_REHEARSAL_SCHEMA_REF = "schemas/read_only_worker_rehearsal_receipt.schema.json"
+READINESS_PROMPT = "Show my assistant readiness."
 SECRET_VALUE_PATTERNS = (
     re.compile(r"sk_live_[A-Za-z0-9]+"),
     re.compile(r"ghp_[A-Za-z0-9]+"),
@@ -246,6 +288,7 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     _require_false_fields(read_model.get("teamops"), FALSE_TEAMOPS_FIELDS, "teamops", errors)
     _validate_lane_status(read_model, errors)
     _validate_receipt_viewer(read_model, errors)
+    _validate_assistant_readiness(read_model, errors)
 
     memory = _mapping(read_model.get("memory"))
     if memory.get("candidate_only") is not True:
@@ -272,6 +315,169 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     if private_policy.get("secret_values_serialized") is not False:
         errors.append("private_payload_policy.secret_values_serialized must be false")
     return tuple(errors)
+
+
+def _validate_assistant_readiness(read_model: dict[str, Any], errors: list[str]) -> None:
+    readiness = _mapping(read_model.get("assistant_readiness"))
+    if not readiness:
+        errors.append("assistant_readiness must be an object")
+        return
+    _require_false_fields(readiness, FALSE_READINESS_FIELDS, "assistant_readiness", errors)
+    if readiness.get("user_prompt") != READINESS_PROMPT:
+        errors.append(f"assistant_readiness.user_prompt must be {READINESS_PROMPT}")
+    if readiness.get("mode") != "read_only":
+        errors.append("assistant_readiness.mode must be read_only")
+    if readiness.get("foundation_only") is not True:
+        errors.append("assistant_readiness.foundation_only must be true")
+    if readiness.get("outcome") != read_model.get("solver_outcome"):
+        errors.append("assistant_readiness.outcome must match solver_outcome")
+    readiness_section = _mapping(_mapping(read_model.get("sections")).get("assistant_readiness"))
+    if readiness_section.get("item_count") != 1:
+        errors.append("sections.assistant_readiness.item_count must be 1")
+    if readiness_section.get("execution_allowed") is not False:
+        errors.append("sections.assistant_readiness.execution_allowed must be false")
+
+    _require_false_fields(
+        readiness.get("effect_boundary"),
+        FALSE_EFFECT_BOUNDARY_FIELDS,
+        "assistant_readiness.effect_boundary",
+        errors,
+    )
+    private_policy = _mapping(readiness.get("private_payload_policy"))
+    if private_policy.get("raw_private_payload_serialized") is not False:
+        errors.append("assistant_readiness.private_payload_policy.raw_private_payload_serialized must be false")
+    if private_policy.get("secret_values_serialized") is not False:
+        errors.append("assistant_readiness.private_payload_policy.secret_values_serialized must be false")
+
+    _validate_readiness_projection(
+        readiness.get("inbox_projection_status"),
+        label="assistant_readiness.inbox_projection_status",
+        expected_skill_id="email.inbox.summarize",
+        expected_route="/api/v1/personal-assistant/read-only/inbox/preview",
+        errors=errors,
+    )
+    _validate_readiness_projection(
+        readiness.get("calendar_projection_status"),
+        label="assistant_readiness.calendar_projection_status",
+        expected_skill_id="calendar.day.brief",
+        expected_route="/api/v1/personal-assistant/read-only/calendar/preview",
+        errors=errors,
+    )
+    _validate_readiness_skills(read_model, readiness, errors)
+    _validate_readiness_approvals(readiness, errors)
+    _validate_readiness_receipts(read_model, readiness, errors)
+
+
+def _validate_readiness_projection(
+    payload: Any,
+    *,
+    label: str,
+    expected_skill_id: str,
+    expected_route: str,
+    errors: list[str],
+) -> None:
+    projection = _mapping(payload)
+    if not projection:
+        errors.append(f"{label} must be an object")
+        return
+    _require_false_fields(projection, FALSE_READINESS_PROJECTION_FIELDS, label, errors)
+    if projection.get("projection_state") != "available_from_redacted_preview":
+        errors.append(f"{label}.projection_state must be available_from_redacted_preview")
+    if projection.get("skill_id") != expected_skill_id:
+        errors.append(f"{label}.skill_id must be {expected_skill_id}")
+    if projection.get("lane_id") != "read_only_projection":
+        errors.append(f"{label}.lane_id must be read_only_projection")
+    if expected_route not in _string_list_unsorted(projection.get("route_refs")):
+        errors.append(f"{label}.route_refs must include {expected_route}")
+    if not _string_list_unsorted(projection.get("schema_refs")):
+        errors.append(f"{label}.schema_refs must be non-empty")
+    if not _string_list_unsorted(projection.get("validator_refs")):
+        errors.append(f"{label}.validator_refs must be non-empty")
+    if projection.get("receipt_required") is not True:
+        errors.append(f"{label}.receipt_required must be true")
+
+
+def _validate_readiness_skills(
+    read_model: dict[str, Any],
+    readiness: dict[str, Any],
+    errors: list[str],
+) -> None:
+    readiness_skills = _mapping(readiness.get("available_skills"))
+    skill_ids = _string_list(_mapping(read_model.get("skills")).get("skill_ids"))
+    readiness_skill_ids = _string_list(readiness_skills.get("skill_ids"))
+    if readiness_skills.get("skill_count") != len(readiness_skill_ids):
+        errors.append("assistant_readiness.available_skills.skill_count must match skill_ids length")
+    if readiness_skill_ids != skill_ids:
+        errors.append("assistant_readiness.available_skills.skill_ids must match skills.skill_ids")
+    for required_skill_id, field_name in (
+        ("email.inbox.summarize", "read_only_skill_ids"),
+        ("calendar.day.brief", "read_only_skill_ids"),
+        ("email.response.draft", "draft_only_skill_ids"),
+        ("email.send.with_approval", "approval_required_skill_ids"),
+    ):
+        if required_skill_id not in _string_list_unsorted(readiness_skills.get(field_name)):
+            errors.append(f"assistant_readiness.available_skills.{field_name} must include {required_skill_id}")
+
+
+def _validate_readiness_approvals(readiness: dict[str, Any], errors: list[str]) -> None:
+    approvals = readiness.get("required_approvals")
+    if not isinstance(approvals, list) or not approvals:
+        errors.append("assistant_readiness.required_approvals must be a non-empty list")
+        return
+    approval_skill_ids: list[str] = []
+    for index, approval in enumerate(approvals):
+        label = f"assistant_readiness.required_approvals[{index}]"
+        if not isinstance(approval, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        _require_false_fields(approval, FALSE_READINESS_APPROVAL_FIELDS, label, errors)
+        if approval.get("receipt_required") is not True:
+            errors.append(f"{label}.receipt_required must be true")
+        skill_id = approval.get("required_for_skill_id")
+        if isinstance(skill_id, str) and skill_id:
+            approval_skill_ids.append(skill_id)
+    for expected_skill_id in (
+        "email.send.with_approval",
+        "calendar.event.create.with_approval",
+        "task.create.with_approval",
+    ):
+        if expected_skill_id not in approval_skill_ids:
+            errors.append(f"assistant_readiness.required_approvals must include {expected_skill_id}")
+
+
+def _validate_readiness_receipts(
+    read_model: dict[str, Any],
+    readiness: dict[str, Any],
+    errors: list[str],
+) -> None:
+    receipts = _mapping(readiness.get("receipts"))
+    if not receipts:
+        errors.append("assistant_readiness.receipts must be an object")
+        return
+    _require_false_fields(receipts, FALSE_READINESS_RECEIPT_FIELDS, "assistant_readiness.receipts", errors)
+    if receipts.get("receipt_required_for_actions") is not True:
+        errors.append("assistant_readiness.receipts.receipt_required_for_actions must be true")
+    receipt_items = _mapping(read_model.get("receipts")).get("items")
+    if not isinstance(receipt_items, list):
+        receipt_items = []
+    item_ids = sorted(
+        str(item["receipt_id"])
+        for item in receipt_items
+        if isinstance(item, dict) and isinstance(item.get("receipt_id"), str) and item.get("receipt_id")
+    )
+    item_source_refs = sorted(
+        str(item["source_receipt_ref"])
+        for item in receipt_items
+        if isinstance(item, dict)
+        and isinstance(item.get("source_receipt_ref"), str)
+        and item.get("source_receipt_ref")
+    )
+    if receipts.get("receipt_count") != len(item_ids):
+        errors.append("assistant_readiness.receipts.receipt_count must match receipt item count")
+    if _string_list(receipts.get("receipt_ids")) != item_ids:
+        errors.append("assistant_readiness.receipts.receipt_ids must match receipt item ids")
+    if _string_list(receipts.get("source_receipt_refs")) != item_source_refs:
+        errors.append("assistant_readiness.receipts.source_receipt_refs must match receipt item source refs")
 
 
 def _validate_lane_status(read_model: dict[str, Any], errors: list[str]) -> None:
@@ -454,6 +660,12 @@ def _string_list(payload: Any) -> list[str]:
     if not isinstance(payload, list):
         return []
     return sorted(str(item) for item in payload if isinstance(item, str) and item)
+
+
+def _string_list_unsorted(payload: Any) -> list[str]:
+    if not isinstance(payload, list):
+        return []
+    return [str(item) for item in payload if isinstance(item, str) and item]
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
