@@ -35,6 +35,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness:1"
     },
     {
+      "path": "schemas/agentic_service_harness_agent_run_receipt_emitter_dry_run.schema.json",
+      "schema_id": "agentic-service-harness-agent-run-receipt-emitter-dry-run",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-agent-run-receipt-emitter-dry-run:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
