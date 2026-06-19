@@ -2391,6 +2391,12 @@
       "path": "schemas/read_only_worker_effect_reconciliation_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-effect-reconciliation-witness:1",
       "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-receipt-append-witness",
+      "path": "schemas/read_only_worker_receipt_append_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-receipt-append-witness:1",
+      "surface": "worker"
     }
   ],
   "uri_schemes": [
