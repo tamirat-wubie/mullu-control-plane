@@ -1,0 +1,82 @@
+{
+  "profile_id": "wre-a2-foundation-profile-20260619",
+  "profile_version": "wre_a2_research_epistemics.v1",
+  "generated_at": "2026-06-19T00:00:00Z",
+  "maturity": "specified",
+  "operating_mode": "foundation_no_effect",
+  "compatibility": {
+    "whqr_contract_ref": "mcoi/mcoi_runtime/contracts/whqr.py",
+    "claim_verification_ref": "gateway/claim_verification.py",
+    "universal_evidence_graph_ref": "mcoi/mcoi_runtime/contracts/universal_evidence_graph.py",
+    "research_runtime_ref": "mcoi/mcoi_runtime/contracts/research_runtime.py",
+    "memory_mesh_ref": "mcoi/mcoi_runtime/contracts/memory_mesh.py",
+    "source_conflict_map_ref": "schemas/research_source_conflict_map.schema.json",
+    "truth_kernel_ref": "mcoi/mcoi_runtime/truth_kernel_adapter.py"
+  },
+  "epistemic_contract": {
+    "truth_action_separation": true,
+    "claim_types": [
+      "empirical",
+      "causal",
+      "predictive",
+      "historical",
+      "normative",
+      "ontological",
+      "symbolic_structural"
+    ],
+    "dispositions": [
+      "validated_conclusion",
+      "supported_hypothesis",
+      "speculative_hypothesis",
+      "competing_model",
+      "unresolved_contradiction",
+      "partial_result",
+      "abstention",
+      "safety_escalation"
+    ],
+    "confidence_dimensions": [
+      "evidential",
+      "logical",
+      "provenance",
+      "empirical",
+      "temporal_applicability",
+      "calibration",
+      "action_safety"
+    ],
+    "scalar_confidence_is_canonical": false,
+    "contradiction_preservation": true,
+    "abstention_required": true,
+    "source_lineage_required": true,
+    "truth_kernel_auto_promotion": false
+  },
+  "authority_boundary": {
+    "runtime_research_execution_allowed": false,
+    "external_retrieval_allowed": false,
+    "connector_calls_allowed": false,
+    "answer_synthesis_authority": false,
+    "memory_write_allowed": false,
+    "truth_mutation_allowed": false,
+    "publication_allowed": false,
+    "medical_decision_authority": false,
+    "autonomous_self_modification_allowed": false
+  },
+  "next_gate": {
+    "prerequisite": "cdg_rccm_pr_1960_green_and_merged",
+    "runtime_contracts_allowed": false,
+    "operator_review_required": true
+  },
+  "evidence_refs": [
+    "docs/WRE_A2_RESEARCH_EPISTEMICS_PROFILE.md",
+    "schemas/research_epistemics_profile.schema.json",
+    "examples/research_epistemics_profile.foundation.json",
+    "scripts/validate_research_epistemics_profile.py",
+    "tests/test_validate_research_epistemics_profile.py",
+    "mcoi/mcoi_runtime/contracts/whqr.py",
+    "gateway/claim_verification.py",
+    "mcoi/mcoi_runtime/contracts/universal_evidence_graph.py",
+    "mcoi/mcoi_runtime/contracts/research_runtime.py",
+    "mcoi/mcoi_runtime/contracts/memory_mesh.py",
+    "schemas/research_source_conflict_map.schema.json",
+    "mcoi/mcoi_runtime/truth_kernel_adapter.py"
+  ]
+}
