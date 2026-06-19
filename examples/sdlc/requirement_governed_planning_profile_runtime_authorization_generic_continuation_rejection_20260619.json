@@ -1,0 +1,64 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_authorization_generic_continuation_rejection_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile runtime authorization request has been submitted, but a generic continuation input must not be interpreted as signed runtime authorization. The system needs a schema-backed no-effect rejection witness that records generic continuation as non-authorizing while preserving the path for a future explicit signed approval witness.",
+  "success_criteria": [
+    "a deterministic validator emits a generic continuation rejection witness from the current runtime authorization request",
+    "the checked-in local rejection witness matches the deterministic produced witness",
+    "the schema records GovernanceBlocked and RejectedNoEffect for generic continuation",
+    "the witness binds the source runtime authorization request id and hash",
+    "the witness records that signed approval remains absent and runtime authorization gate remains unsatisfied",
+    "focused tests cover schema compatibility, fixture parity, source request binding, blocked-response evidence, authority-drift rejection, signed-approval drift rejection, unsatisfied source rejection, and boundary drift rejection"
+  ],
+  "non_goals": [
+    "do not authorize runtime promotion",
+    "do not record a signed operator approval witness",
+    "do not execute, dispatch, replan, replay, or rollback",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim live runtime activation",
+    "do not replace the runtime authorization request"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the rejection witness is local, read-only, deterministic, and reversible",
+    "generic continuation is classified as non-authorization",
+    "runtime promotion activation remains denied until a separate explicit signed approval and activation action are governed",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+    "schemas/governed_planning_profile_runtime_authorization_generic_continuation_rejection.schema.json",
+    "examples/governed_planning_profile_runtime_authorization_generic_continuation_rejection.local.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_runtime_authorization_generic_continuation_rejection_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_runtime_authorization_generic_continuation_rejection_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+    "python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "evidence_required": [
+    "schema-backed local generic continuation rejection fixture",
+    "deterministic validator and produced witness parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-generic-continuation-rejection/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-generic-continuation-rejection/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-generic-continuation-rejection/requirement/20260619"
+}

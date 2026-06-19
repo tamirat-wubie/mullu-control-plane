@@ -269,6 +269,28 @@ The request does not authorize runtime promotion. It records
 `runtime_authorization_gate_satisfied = false`. Execution, dispatch, runtime
 replanning, success, and terminal closure authority remain hard false.
 
+## Runtime Authorization Generic Continuation Rejection
+
+The local generic-continuation rejection slice is
+`examples/governed_planning_profile_runtime_authorization_generic_continuation_rejection.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py`
+and governed by
+`schemas/governed_planning_profile_runtime_authorization_generic_continuation_rejection.schema.json`.
+
+This witness binds the runtime authorization request and records that generic
+`continue` input is not a signed runtime authorization approval. It records
+`solver_outcome = GovernanceBlocked`,
+`runtime_authorization_response_status = RejectedNoEffect`, and
+`generic_continuation_rejected = true`.
+
+The witness does not authorize runtime promotion. It keeps
+`operator_approval_collected = false`, `signed_approval_present = false`, and
+`runtime_authorization_gate_satisfied = false`. Execution, dispatch, runtime
+replanning, success, runtime activation, and terminal closure authority remain
+hard false. A future explicit signed runtime authorization approval witness
+remains the next required gate before activation.
+
 ## Validation
 
 ```text
@@ -288,6 +310,8 @@ python scripts/validate_governed_planning_profile_terminal_closure_certificate.p
 python scripts/validate_governed_planning_profile_terminal_closure_certificate.py --json
 python scripts/validate_governed_planning_profile_runtime_authorization_request.py
 python scripts/validate_governed_planning_profile_runtime_authorization_request.py --json
+python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py
+python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
@@ -297,10 +321,11 @@ python -m pytest tests/test_validate_governed_planning_profile_runtime_promotion
 python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_witness.py -q
 python -m pytest tests/test_validate_governed_planning_profile_terminal_closure_certificate.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_request.py -q
+python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, and runtime authorization request defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, runtime authorization request, and generic continuation rejection witness defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, runtime promotion, or closure authority
-  Open issues: signed runtime authorization response witness remains absent
-  Next action: record separate signed runtime authorization response witness before activation
+  Open issues: explicit signed runtime authorization approval witness remains absent
+  Next action: record explicit signed runtime authorization approval witness before activation
