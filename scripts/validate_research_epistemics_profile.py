@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate the WRE-A2 Research Epistemics Profile.
+"""Validate the Research Epistemics Profile v1 contract.
 
 The validator is deterministic and read-only. It proves only the Foundation Mode
 contract shape; it grants no research execution, retrieval, synthesis, memory,
-truth-mutation, publication, medical, or self-modification authority.
+truth-mutation, publication, medical, connector, external-action, or
+architecture-modification authority.
 """
 
 from __future__ import annotations
@@ -24,9 +25,28 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 DEFAULT_SCHEMA_PATH = WORKSPACE_ROOT / "schemas" / "research_epistemics_profile.schema.json"
 DEFAULT_PROFILE_PATH = WORKSPACE_ROOT / "examples" / "research_epistemics_profile.foundation.json"
 EXPECTED_SCHEMA_ID = "urn:mullusi:schema:research-epistemics-profile:1"
-EXPECTED_SCHEMA_TITLE = "WRE-A2 Research Epistemics Profile"
-EXPECTED_PROFILE_VERSION = "wre_a2_research_epistemics.v1"
+EXPECTED_SCHEMA_TITLE = "Research Epistemics Profile v1"
+EXPECTED_PROFILE_VERSION = "research_epistemics_profile.v1"
 
+EXPECTED_CANONICAL_NAMES = {
+    "public_capability": "Mullu Govern Research",
+    "internal_architecture": "MCOI Governed Research Architecture",
+    "epistemic_configuration": "Research Epistemics Profile v1",
+    "workflow_runtime": "ResearchRuntimeEngine",
+    "legacy_migration_name": "WRE-A2",
+    "legacy_migration_status": "legacy_reference_only",
+}
+EXPECTED_MCOI_RESEARCH_TUPLE = {
+    "symbol": "R_MCOI",
+    "G": "governance",
+    "Q": "question_and_scope",
+    "E": "epistemics_and_evidence",
+    "W": "workflow_and_convergence",
+    "V": "validation",
+    "M": "memory_and_revision",
+    "A": "authority_and_effect_boundary",
+    "H": "provenance_and_causal_history",
+}
 EXPECTED_COMPATIBILITY = {
     "whqr_contract_ref": "mcoi/mcoi_runtime/contracts/whqr.py",
     "claim_verification_ref": "gateway/claim_verification.py",
@@ -36,24 +56,14 @@ EXPECTED_COMPATIBILITY = {
     "source_conflict_map_ref": "schemas/research_source_conflict_map.schema.json",
     "truth_kernel_ref": "mcoi/mcoi_runtime/truth_kernel_adapter.py",
 }
-EXPECTED_CLAIM_TYPES = (
-    "empirical",
-    "causal",
-    "predictive",
-    "historical",
-    "normative",
-    "ontological",
-    "symbolic_structural",
-)
-EXPECTED_DISPOSITIONS = (
-    "validated_conclusion",
-    "supported_hypothesis",
-    "speculative_hypothesis",
-    "competing_model",
-    "unresolved_contradiction",
-    "partial_result",
-    "abstention",
-    "safety_escalation",
+EXPECTED_EPISTEMIC_CLAIM_TYPES = (
+    "EMPIRICAL",
+    "CAUSAL",
+    "PREDICTIVE",
+    "HISTORICAL",
+    "NORMATIVE",
+    "ONTOLOGICAL",
+    "SYMBOLIC_STRUCTURAL",
 )
 EXPECTED_CONFIDENCE_DIMENSIONS = (
     "evidential",
@@ -63,6 +73,59 @@ EXPECTED_CONFIDENCE_DIMENSIONS = (
     "temporal_applicability",
     "calibration",
     "action_safety",
+)
+EXPECTED_DISPOSITIONS = (
+    "VALIDATED_CONCLUSION",
+    "SUPPORTED_HYPOTHESIS",
+    "SPECULATIVE_HYPOTHESIS",
+    "COMPETING_MODEL",
+    "UNRESOLVED_CONTRADICTION",
+    "PARTIAL_RESULT",
+    "ABSTENTION",
+    "SAFETY_ESCALATION",
+)
+EXPECTED_ABSTENTION_RECORD_FIELDS = (
+    "blocked_claim_ref",
+    "reason",
+    "missing_requirements",
+    "safe_partial_result_refs",
+    "required_next_evidence",
+)
+EXPECTED_SOURCE_LINEAGE_RECORD_FIELDS = (
+    "source_id",
+    "origin_digest",
+    "parent_source_refs",
+    "citation_ancestry",
+    "derivative_status",
+    "independence_group",
+    "retrieved_at",
+    "integrity_status",
+)
+EXPECTED_CONTRADICTION_RECORD_FIELDS = (
+    "contradiction_id",
+    "claim_refs",
+    "contradiction_class",
+    "scope_overlap",
+    "temporal_overlap",
+    "severity",
+    "cause_candidates",
+    "resolution_attempts",
+    "branch_status",
+)
+EXPECTED_CONTRADICTION_CLASSES = (
+    "FACTUAL",
+    "DEFINITIONAL",
+    "TEMPORAL",
+    "SCOPE",
+    "METHODOLOGICAL",
+    "STATISTICAL",
+    "ONTOLOGICAL",
+    "NORMATIVE",
+    "MODEL_DEPENDENT",
+    "EXECUTION_FAILURE",
+)
+EXPECTED_SOURCE_IDENTITY_INDEPENDENCE_RULE = (
+    "distinct_source_ids_do_not_prove_independent_origin"
 )
 DENIED_AUTHORITY_FIELDS = (
     "runtime_research_execution_allowed",
@@ -75,8 +138,13 @@ DENIED_AUTHORITY_FIELDS = (
     "medical_decision_authority",
     "autonomous_self_modification_allowed",
 )
+EXPECTED_NEXT_GATE = {
+    "prerequisite": "cdg_rccm_stable_and_operator_reviewed",
+    "runtime_contracts_allowed": False,
+    "operator_review_required": True,
+}
 REQUIRED_EVIDENCE_REFS = (
-    "docs/WRE_A2_RESEARCH_EPISTEMICS_PROFILE.md",
+    "docs/RESEARCH_EPISTEMICS_PROFILE_V1.md",
     "schemas/research_epistemics_profile.schema.json",
     "examples/research_epistemics_profile.foundation.json",
     "scripts/validate_research_epistemics_profile.py",
@@ -127,24 +195,58 @@ def validate_research_epistemics_profile_record(
     if record.get("operating_mode") != "foundation_no_effect":
         errors.append("operating_mode must remain foundation_no_effect")
 
-    compatibility = record.get("compatibility")
-    if compatibility != EXPECTED_COMPATIBILITY:
+    if record.get("canonical_names") != EXPECTED_CANONICAL_NAMES:
+        errors.append("canonical_names must match Research Epistemics Profile v1 names")
+    if record.get("mcoi_research_tuple") != EXPECTED_MCOI_RESEARCH_TUPLE:
+        errors.append("mcoi_research_tuple must match R_MCOI component projection")
+    if record.get("compatibility") != EXPECTED_COMPATIBILITY:
         errors.append("compatibility refs must match existing repository substrates")
 
     epistemic = record.get("epistemic_contract")
     if not isinstance(epistemic, dict):
         errors.append("epistemic_contract must be an object")
     else:
-        _require_exact_sequence(epistemic, "claim_types", EXPECTED_CLAIM_TYPES, errors)
-        _require_exact_sequence(epistemic, "dispositions", EXPECTED_DISPOSITIONS, errors)
+        _require_exact_sequence(
+            epistemic,
+            "epistemic_claim_types",
+            EXPECTED_EPISTEMIC_CLAIM_TYPES,
+            errors,
+        )
         _require_exact_sequence(
             epistemic,
             "confidence_dimensions",
             EXPECTED_CONFIDENCE_DIMENSIONS,
             errors,
         )
+        _require_exact_sequence(epistemic, "dispositions", EXPECTED_DISPOSITIONS, errors)
+        _require_exact_sequence(
+            epistemic,
+            "abstention_record_fields",
+            EXPECTED_ABSTENTION_RECORD_FIELDS,
+            errors,
+        )
+        _require_exact_sequence(
+            epistemic,
+            "source_lineage_record_fields",
+            EXPECTED_SOURCE_LINEAGE_RECORD_FIELDS,
+            errors,
+        )
+        _require_exact_sequence(
+            epistemic,
+            "contradiction_record_fields",
+            EXPECTED_CONTRADICTION_RECORD_FIELDS,
+            errors,
+        )
+        _require_exact_sequence(
+            epistemic,
+            "contradiction_classes",
+            EXPECTED_CONTRADICTION_CLASSES,
+            errors,
+        )
         required_true = (
             "truth_action_separation",
+            "claim_kind_separation",
+            "scalar_confidence_projection_allowed",
             "contradiction_preservation",
             "abstention_required",
             "source_lineage_required",
@@ -152,9 +254,19 @@ def validate_research_epistemics_profile_record(
         for field_name in required_true:
             if epistemic.get(field_name) is not True:
                 errors.append(f"epistemic_contract.{field_name} must be true")
-        for field_name in ("scalar_confidence_is_canonical", "truth_kernel_auto_promotion"):
+        required_false = (
+            "scalar_confidence_is_canonical",
+            "failed_experiment_is_factual_contradiction",
+            "truth_kernel_auto_promotion",
+        )
+        for field_name in required_false:
             if epistemic.get(field_name) is not False:
                 errors.append(f"epistemic_contract.{field_name} must be false")
+        if (
+            epistemic.get("source_identity_independence_rule")
+            != EXPECTED_SOURCE_IDENTITY_INDEPENDENCE_RULE
+        ):
+            errors.append("epistemic_contract.source_identity_independence_rule is invalid")
 
     authority = record.get("authority_boundary")
     if not isinstance(authority, dict):
@@ -164,14 +276,8 @@ def validate_research_epistemics_profile_record(
             if authority.get(field_name) is not False:
                 errors.append(f"authority_boundary.{field_name} must be false")
 
-    next_gate = record.get("next_gate")
-    expected_gate = {
-        "prerequisite": "cdg_rccm_pr_1960_green_and_merged",
-        "runtime_contracts_allowed": False,
-        "operator_review_required": True,
-    }
-    if next_gate != expected_gate:
-        errors.append("next_gate must defer runtime contracts until PR #1960 is green and merged")
+    if record.get("next_gate") != EXPECTED_NEXT_GATE:
+        errors.append("next_gate must defer runtime contracts until CDG-RCCM is stable")
 
     evidence_refs = record.get("evidence_refs")
     if not isinstance(evidence_refs, list):
@@ -189,12 +295,15 @@ def validate_research_epistemics_profile(
     profile_path: Path = DEFAULT_PROFILE_PATH,
 ) -> list[str]:
     schema = _load_schema(schema_path)
-    profile = load_json_object(profile_path, "WRE-A2 Research Epistemics Profile")
-    return validate_schema_artifact(schema) + validate_research_epistemics_profile_record(profile, schema)
+    profile = load_json_object(profile_path, "Research Epistemics Profile v1")
+    return validate_schema_artifact(schema) + validate_research_epistemics_profile_record(
+        profile,
+        schema,
+    )
 
 
 def build_mutated_research_epistemics_profile(**updates: Any) -> dict[str, Any]:
-    profile = deepcopy(load_json_object(DEFAULT_PROFILE_PATH, "WRE-A2 Research Epistemics Profile"))
+    profile = deepcopy(load_json_object(DEFAULT_PROFILE_PATH, "Research Epistemics Profile v1"))
     for dotted_key, value in updates.items():
         target: Any = profile
         parts = dotted_key.split("__")

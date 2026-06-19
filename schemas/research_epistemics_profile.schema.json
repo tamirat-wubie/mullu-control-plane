@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:research-epistemics-profile:1",
-  "title": "WRE-A2 Research Epistemics Profile",
+  "title": "Research Epistemics Profile v1",
   "description": "Foundation Mode, no-effect contract separating factual evaluation from action governance before any research-runtime expansion.",
   "type": "object",
   "additionalProperties": false,
@@ -11,6 +11,8 @@
     "generated_at",
     "maturity",
     "operating_mode",
+    "canonical_names",
+    "mcoi_research_tuple",
     "compatibility",
     "epistemic_contract",
     "authority_boundary",
@@ -19,10 +21,46 @@
   ],
   "properties": {
     "profile_id": {"type": "string", "minLength": 1},
-    "profile_version": {"const": "wre_a2_research_epistemics.v1"},
+    "profile_version": {"const": "research_epistemics_profile.v1"},
     "generated_at": {"type": "string", "format": "date-time"},
     "maturity": {"const": "specified"},
     "operating_mode": {"const": "foundation_no_effect"},
+    "canonical_names": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_capability",
+        "internal_architecture",
+        "epistemic_configuration",
+        "workflow_runtime",
+        "legacy_migration_name",
+        "legacy_migration_status"
+      ],
+      "properties": {
+        "public_capability": {"const": "Mullu Govern Research"},
+        "internal_architecture": {"const": "MCOI Governed Research Architecture"},
+        "epistemic_configuration": {"const": "Research Epistemics Profile v1"},
+        "workflow_runtime": {"const": "ResearchRuntimeEngine"},
+        "legacy_migration_name": {"const": "WRE-A2"},
+        "legacy_migration_status": {"const": "legacy_reference_only"}
+      }
+    },
+    "mcoi_research_tuple": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "G", "Q", "E", "W", "V", "M", "A", "H"],
+      "properties": {
+        "symbol": {"const": "R_MCOI"},
+        "G": {"const": "governance"},
+        "Q": {"const": "question_and_scope"},
+        "E": {"const": "epistemics_and_evidence"},
+        "W": {"const": "workflow_and_convergence"},
+        "V": {"const": "validation"},
+        "M": {"const": "memory_and_revision"},
+        "A": {"const": "authority_and_effect_boundary"},
+        "H": {"const": "provenance_and_causal_history"}
+      }
+    },
     "compatibility": {
       "type": "object",
       "additionalProperties": false,
@@ -50,10 +88,18 @@
       "additionalProperties": false,
       "required": [
         "truth_action_separation",
-        "claim_types",
-        "dispositions",
+        "claim_kind_separation",
+        "epistemic_claim_types",
         "confidence_dimensions",
+        "scalar_confidence_projection_allowed",
         "scalar_confidence_is_canonical",
+        "dispositions",
+        "abstention_record_fields",
+        "source_lineage_record_fields",
+        "source_identity_independence_rule",
+        "contradiction_record_fields",
+        "contradiction_classes",
+        "failed_experiment_is_factual_contradiction",
         "contradiction_preservation",
         "abstention_required",
         "source_lineage_required",
@@ -61,25 +107,130 @@
       ],
       "properties": {
         "truth_action_separation": {"const": true},
-        "claim_types": {
+        "claim_kind_separation": {"const": true},
+        "epistemic_claim_types": {
           "type": "array",
           "minItems": 7,
           "uniqueItems": true,
-          "items": {"enum": ["empirical", "causal", "predictive", "historical", "normative", "ontological", "symbolic_structural"]}
-        },
-        "dispositions": {
-          "type": "array",
-          "minItems": 8,
-          "uniqueItems": true,
-          "items": {"enum": ["validated_conclusion", "supported_hypothesis", "speculative_hypothesis", "competing_model", "unresolved_contradiction", "partial_result", "abstention", "safety_escalation"]}
+          "items": {
+            "enum": [
+              "EMPIRICAL",
+              "CAUSAL",
+              "PREDICTIVE",
+              "HISTORICAL",
+              "NORMATIVE",
+              "ONTOLOGICAL",
+              "SYMBOLIC_STRUCTURAL"
+            ]
+          }
         },
         "confidence_dimensions": {
           "type": "array",
           "minItems": 7,
           "uniqueItems": true,
-          "items": {"enum": ["evidential", "logical", "provenance", "empirical", "temporal_applicability", "calibration", "action_safety"]}
+          "items": {
+            "enum": [
+              "evidential",
+              "logical",
+              "provenance",
+              "empirical",
+              "temporal_applicability",
+              "calibration",
+              "action_safety"
+            ]
+          }
         },
+        "scalar_confidence_projection_allowed": {"const": true},
         "scalar_confidence_is_canonical": {"const": false},
+        "dispositions": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "VALIDATED_CONCLUSION",
+              "SUPPORTED_HYPOTHESIS",
+              "SPECULATIVE_HYPOTHESIS",
+              "COMPETING_MODEL",
+              "UNRESOLVED_CONTRADICTION",
+              "PARTIAL_RESULT",
+              "ABSTENTION",
+              "SAFETY_ESCALATION"
+            ]
+          }
+        },
+        "abstention_record_fields": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "blocked_claim_ref",
+              "reason",
+              "missing_requirements",
+              "safe_partial_result_refs",
+              "required_next_evidence"
+            ]
+          }
+        },
+        "source_lineage_record_fields": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "source_id",
+              "origin_digest",
+              "parent_source_refs",
+              "citation_ancestry",
+              "derivative_status",
+              "independence_group",
+              "retrieved_at",
+              "integrity_status"
+            ]
+          }
+        },
+        "source_identity_independence_rule": {
+          "const": "distinct_source_ids_do_not_prove_independent_origin"
+        },
+        "contradiction_record_fields": {
+          "type": "array",
+          "minItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "contradiction_id",
+              "claim_refs",
+              "contradiction_class",
+              "scope_overlap",
+              "temporal_overlap",
+              "severity",
+              "cause_candidates",
+              "resolution_attempts",
+              "branch_status"
+            ]
+          }
+        },
+        "contradiction_classes": {
+          "type": "array",
+          "minItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "FACTUAL",
+              "DEFINITIONAL",
+              "TEMPORAL",
+              "SCOPE",
+              "METHODOLOGICAL",
+              "STATISTICAL",
+              "ONTOLOGICAL",
+              "NORMATIVE",
+              "MODEL_DEPENDENT",
+              "EXECUTION_FAILURE"
+            ]
+          }
+        },
+        "failed_experiment_is_factual_contradiction": {"const": false},
         "contradiction_preservation": {"const": true},
         "abstention_required": {"const": true},
         "source_lineage_required": {"const": true},
@@ -117,7 +268,7 @@
       "additionalProperties": false,
       "required": ["prerequisite", "runtime_contracts_allowed", "operator_review_required"],
       "properties": {
-        "prerequisite": {"const": "cdg_rccm_pr_1960_green_and_merged"},
+        "prerequisite": {"const": "cdg_rccm_stable_and_operator_reviewed"},
         "runtime_contracts_allowed": {"const": false},
         "operator_review_required": {"const": true}
       }
