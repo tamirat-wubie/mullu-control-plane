@@ -1,0 +1,153 @@
+{
+  "witness_id": "universal-symbol-receipt-store-write-path-idempotency-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-write-path-idempotency",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "idempotency_decision": "blocked_pending_key_derivation_digest_replay_and_collision_evidence",
+  "idempotency_witness_is_not_append_authority": true,
+  "idempotency_requirements": [
+    {
+      "requirement_id": "requirement://deterministic-key-derivation",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "idempotency://universal-symbol/receipt-store/key-derivation",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-key-derivation-missing"
+    },
+    {
+      "requirement_id": "requirement://canonical-input",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "canonical-input://universal-symbol/receipt-store/idempotency",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-canonical-input-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-actor-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "tenant-actor://universal-symbol/receipt-store/idempotency",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-tenant-actor-binding-missing"
+    },
+    {
+      "requirement_id": "requirement://write-path-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "write-path://universal-symbol/receipt-store/idempotency",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-write-path-binding-missing"
+    },
+    {
+      "requirement_id": "requirement://payload-digest-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "digest://universal-symbol/receipt-store/idempotency-payload",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-payload-digest-binding-missing"
+    },
+    {
+      "requirement_id": "requirement://replay-collision-check",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "replay://universal-symbol/receipt-store/idempotency-collision-check",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-replay-collision-check-missing"
+    },
+    {
+      "requirement_id": "requirement://duplicate-effect-denial",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "deny://universal-symbol/receipt-store/duplicate-effect",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-duplicate-effect-denial-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/write-path-idempotency-audit",
+      "current_decision": "idempotency_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/idempotency-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "receipt_store_write_path_idempotency_bound": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_path_custody_registered": false,
+    "receipt_store_append_performed": false,
+    "duplicate_append_allowed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "idempotency_constraints": {
+    "deterministic_key_derivation_required": true,
+    "canonical_input_required": true,
+    "tenant_actor_binding_required": true,
+    "write_path_binding_required": true,
+    "payload_digest_binding_required": true,
+    "replay_collision_check_required": true,
+    "duplicate_effect_denial_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_key_derivation_blocks_idempotency": true,
+    "missing_canonical_input_blocks_idempotency": true,
+    "missing_digest_binding_blocks_idempotency": true,
+    "missing_replay_collision_check_blocks_idempotency": true,
+    "unknown_hard_constraint_blocks_idempotency": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "deterministic_key_derivation_missing",
+    "canonical_input_missing",
+    "tenant_actor_binding_missing",
+    "write_path_binding_missing",
+    "payload_digest_binding_missing",
+    "replay_collision_check_missing",
+    "duplicate_effect_denial_missing",
+    "audit_receipt_missing",
+    "receipt_store_write_path_idempotency_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_live_operator_identity_witness"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_write_path_idempotency_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_idempotency_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_write_path_witness.schema.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_custody_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_custody_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_path_confinement_witness.schema.json",
+    "examples/universal_symbol_receipt_store_path_confinement_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_writer_registration_witness.schema.json",
+    "examples/universal_symbol_receipt_store_writer_registration_witness.foundation.json",
+    "schemas/universal_symbol_append_audit_witness.schema.json",
+    "examples/universal_symbol_append_audit_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
+  ],
+  "contract_summary": {
+    "idempotency_requirement_count": 8,
+    "authority_denial_count": 11,
+    "idempotency_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 29
+  }
+}
