@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-runtime-promotion-approval-packet-20260619",
+  "change_id": "governed-planning-profile-runtime-promotion-approval-packet-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A runtime-promotion approval packet could be mistaken for runtime promotion authorization if it permits authority flags, promotion-ready scenario claims, or closure claims. The mitigation is a schema-backed local-only packet with hard false authority fields, remaining AwaitingEvidence replay/recovery and terminal closure gates, and focused tests for authority, gate, criteria, and source-receipt drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the approval packet keeps runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "promotion gate check proves replay/recovery and terminal closure gates remain required after approval evidence is collected",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_rejects_missing_remaining_gate"
+    },
+    {
+      "category": "receipts",
+      "check": "packet integrity check proves the checked-in fixture matches the deterministic produced packet and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_schema_accepts_fixture_and_produced_packet"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check records passed approval criteria and one no-effect scenario approval for every expected plan class",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_records_passed_criteria_without_authority"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-runtime-approval-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, and terminal_closure.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+        "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-runtime-approval-gate-collapse",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The packet requires replay/recovery and terminal closure gates to remain AwaitingEvidence after runtime-promotion approval evidence is collected.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_runtime_promotion_approval_packet.local.json",
+        "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py::test_runtime_promotion_approval_rejects_missing_remaining_gate"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the approval packet local, deterministic, and read-only",
+    "hard-deny all runtime promotion and terminal closure fields in the schema",
+    "bind the packet to the deterministic observation receipt id and hash",
+    "record passed approval criteria without claiming runtime promotion readiness"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json",
+    "scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py",
+    "receipt://governed-planning-profile/runtime-promotion-approval-packet/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-promotion-approval-packet/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-promotion-approval-packet/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-promotion-approval-packet/security/20260619"
+}
