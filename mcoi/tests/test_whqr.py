@@ -775,6 +775,20 @@ def test_evaluator_bounds_malformed_non_unary_logical_arity() -> None:
     )
 
 
+def test_evaluator_rejects_malformed_not_arity_explicitly() -> None:
+    ctx = WHQREvaluationContext(
+        node_results={
+            "left": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
+            "right": GateResult(TruthGate.FALSE, evidence=EvidenceGate.PROVEN),
+        }
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="not requires exactly one"):
+        evaluate(_forged_logical_expr(LogicalOp.NOT, ()), ctx)
+    with pytest.raises(RuntimeCoreInvariantError, match="not requires exactly one"):
+        evaluate(_forged_logical_expr(LogicalOp.NOT, (_node("left"), _node("right"))), ctx)
+
+
 def test_logical_expr_contract_rejects_empty_args_before_evaluation() -> None:
     with pytest.raises(ValueError, match="args must contain"):
         LogicalExpr(op=LogicalOp.AND, args=())
