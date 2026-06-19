@@ -63,6 +63,12 @@ from scripts.validate_read_only_worker_runtime_receipt_schema_binding_witness im
     load_json_object as load_schema_binding_json_object,
     validate_schema_binding_witness_record,
 )
+from scripts.validate_read_only_worker_runtime_active_lease_admission_witness import (  # noqa: E402
+    DEFAULT_RECEIPT_PATH as DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_SCHEMA_PATH,
+    load_json_object as load_active_lease_admission_json_object,
+    validate_active_lease_admission_witness_record,
+)
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
@@ -99,6 +105,9 @@ EXPECTED_EMITTER_DRY_RUN_REF = "examples/read_only_worker_runtime_receipt_emitte
 EXPECTED_HANDOFF_REF = "examples/read_only_worker_runtime_receipt_handoff.foundation.json"
 EXPECTED_BINDING_REF = "examples/read_only_worker_binding.foundation.json"
 EXPECTED_PREFLIGHT_REF = "examples/read_only_worker_lease_preflight.foundation.json"
+EXPECTED_ACTIVE_LEASE_ADMISSION_WITNESS_REF = (
+    "examples/read_only_worker_runtime_active_lease_admission_witness.foundation.json"
+)
 EXPECTED_REHEARSAL_REF = "examples/read_only_worker_rehearsal_receipt.foundation.json"
 EXPECTED_OPERATION_FAMILY = "local_repo_inspection"
 EXPECTED_WITNESS_MODE = "LIVE_RUNTIME_DISPATCH_ADMISSION_WITNESS_ONLY"
@@ -128,6 +137,7 @@ REQUIRED_SOURCE_RECEIPT_REFS = (
     EXPECTED_HANDOFF_REF,
     EXPECTED_BINDING_REF,
     EXPECTED_PREFLIGHT_REF,
+    EXPECTED_ACTIVE_LEASE_ADMISSION_WITNESS_REF,
     EXPECTED_REHEARSAL_REF,
 )
 REQUIRED_ACTIVATION_INPUT_REFS = (
@@ -146,6 +156,7 @@ REQUIRED_ACTIVATION_INPUT_REFS = (
     "evidence://tenant-actor-boundary",
     "evidence://receipt-store-write-path-witness",
     "evidence://active-temporal-lease-window",
+    "evidence://runtime-active-lease-admission-witness",
     "evidence://uao-effect-admission",
     "evidence://phi-gov-dispatch-authorization",
     "evidence://worker-failure-receipt-on-error",
@@ -177,6 +188,7 @@ REQUIRED_REMAINING_DENIED_UNTIL_REFS = (
     "evidence://schema-registry-write-boundary/read-only-repo-inspection",
     "evidence://receipt-store-write-path-witness",
     "evidence://active-temporal-lease-window",
+    "evidence://runtime-active-lease-admission-witness",
     "evidence://uao-effect-admission",
     "evidence://phi-gov-dispatch-authorization",
     "evidence://effect-reconciliation-passed",
@@ -196,6 +208,7 @@ REQUIRED_BLOCKED_REASON_REFS = (
     "blocked://runtime-receipt-store/append-not-authorized",
     "blocked://receipt-store/write-path-not-registered",
     "blocked://temporal-lease/not-active",
+    "blocked://runtime-active-lease/admission-witness-missing",
     "blocked://phi-gov/dispatch-not-authorized",
     "blocked://effect-reconciliation/not-proven",
 )
@@ -236,6 +249,9 @@ REQUIRED_RECEIPT_REFS = {
     "read_only_worker_runtime_receipt_handoff_schema": "schemas/read_only_worker_runtime_receipt_handoff.schema.json",
     "read_only_worker_binding_schema": "schemas/read_only_worker_binding.schema.json",
     "read_only_worker_lease_preflight_schema": "schemas/read_only_worker_lease_preflight.schema.json",
+    "read_only_worker_runtime_active_lease_admission_witness_schema": (
+        "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json"
+    ),
     "read_only_worker_rehearsal_receipt_schema": "schemas/read_only_worker_rehearsal_receipt.schema.json",
     "temporal_lease_window_receipt_schema": "schemas/temporal_lease_window_receipt.schema.json",
     "worker_failure_receipt_schema": "schemas/worker_failure_receipt.schema.json",
@@ -251,6 +267,10 @@ REQUIRED_EVIDENCE_REFS = (
     "examples/read_only_worker_runtime_receipt_emission_admission_witness.foundation.json",
     "scripts/validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
     "tests/test_validate_read_only_worker_runtime_receipt_emission_admission_witness.py",
+    "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json",
+    EXPECTED_ACTIVE_LEASE_ADMISSION_WITNESS_REF,
+    "scripts/validate_read_only_worker_runtime_active_lease_admission_witness.py",
+    "tests/test_validate_read_only_worker_runtime_active_lease_admission_witness.py",
     "schemas/read_only_worker_runtime_receipt_schema_binding_activation_witness.schema.json",
     EXPECTED_SCHEMA_BINDING_ACTIVATION_WITNESS_REF,
     "scripts/validate_read_only_worker_runtime_receipt_schema_binding_activation_witness.py",
@@ -389,6 +409,7 @@ def validate_runtime_dispatch_admission_witness_record(
     store_write_path_witness: dict[str, Any] | None = None,
     store_activation_witness: dict[str, Any] | None = None,
     schema_binding_witness: dict[str, Any] | None = None,
+    active_lease_admission_witness: dict[str, Any] | None = None,
 ) -> list[str]:
     """Return deterministic validation errors for one dispatch admission witness."""
 
@@ -444,12 +465,26 @@ def validate_runtime_dispatch_admission_witness_record(
         for error in validate_schema_binding_witness_record(schema_binding_payload, schema_binding_schema)
     )
 
+    active_lease_admission_payload = active_lease_admission_witness or load_active_lease_admission_json_object(
+        DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_PATH,
+        "ReadOnlyWorkerRuntimeActiveLeaseAdmissionWitness",
+    )
+    active_lease_admission_schema = _load_schema(DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_SCHEMA_PATH)
+    errors.extend(
+        f"active lease admission witness: {error}"
+        for error in validate_active_lease_admission_witness_record(
+            active_lease_admission_payload,
+            active_lease_admission_schema,
+        )
+    )
+
     _validate_top_level_refs(
         record,
         schema_binding_activation_payload,
         store_write_path_payload,
         store_activation_payload,
         schema_binding_payload,
+        active_lease_admission_payload,
         errors,
     )
     _validate_authority_scope(record.get("authority_scope"), errors)
@@ -459,6 +494,7 @@ def validate_runtime_dispatch_admission_witness_record(
         store_write_path_payload,
         store_activation_payload,
         schema_binding_payload,
+        active_lease_admission_payload,
         errors,
     )
     _validate_activation_evaluation(record.get("activation_evaluation"), errors)
@@ -476,6 +512,7 @@ def validate_runtime_dispatch_admission_witness(
     store_write_path_witness_path: Path = DEFAULT_STORE_WRITE_PATH_WITNESS_PATH,
     store_activation_witness_path: Path = DEFAULT_STORE_ACTIVATION_WITNESS_PATH,
     schema_binding_witness_path: Path = DEFAULT_SCHEMA_BINDING_WITNESS_PATH,
+    active_lease_admission_witness_path: Path = DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_PATH,
 ) -> list[str]:
     """Validate the schema artifact and default Foundation Mode witness."""
 
@@ -497,6 +534,10 @@ def validate_runtime_dispatch_admission_witness(
         schema_binding_witness_path,
         "ReadOnlyWorkerRuntimeReceiptSchemaBindingWitness",
     )
+    active_lease_admission_witness = load_active_lease_admission_json_object(
+        active_lease_admission_witness_path,
+        "ReadOnlyWorkerRuntimeActiveLeaseAdmissionWitness",
+    )
     errors = validate_schema_artifact(schema)
     errors.extend(
         validate_runtime_dispatch_admission_witness_record(
@@ -506,6 +547,7 @@ def validate_runtime_dispatch_admission_witness(
             store_write_path_witness,
             store_activation_witness,
             schema_binding_witness,
+            active_lease_admission_witness,
         )
     )
     return errors
@@ -545,6 +587,7 @@ def _validate_top_level_refs(
     store_write_path_witness: dict[str, Any],
     store_activation_witness: dict[str, Any],
     schema_binding_witness: dict[str, Any],
+    active_lease_admission_witness: dict[str, Any],
     errors: list[str],
 ) -> None:
     if record.get("receipt_version") != EXPECTED_RECEIPT_VERSION:
@@ -563,6 +606,7 @@ def _validate_top_level_refs(
         "handoff_ref": EXPECTED_HANDOFF_REF,
         "binding_ref": EXPECTED_BINDING_REF,
         "lease_preflight_ref": EXPECTED_PREFLIGHT_REF,
+        "active_lease_admission_witness_ref": EXPECTED_ACTIVE_LEASE_ADMISSION_WITNESS_REF,
         "rehearsal_receipt_ref": EXPECTED_REHEARSAL_REF,
     }
     for field_name, expected_ref in expected_refs.items():
@@ -580,6 +624,8 @@ def _validate_top_level_refs(
         errors.append("dispatch admission witness selected_worker_path must match store activation witness")
     if record.get("selected_worker_path") != schema_binding_witness.get("selected_worker_path"):
         errors.append("dispatch admission witness selected_worker_path must match schema binding witness")
+    if record.get("selected_worker_path") != active_lease_admission_witness.get("selected_worker_path"):
+        errors.append("dispatch admission witness selected_worker_path must match active lease admission witness")
 
 
 def _validate_authority_scope(scope: Any, errors: list[str]) -> None:
@@ -605,6 +651,7 @@ def _validate_activation_contract(
     store_write_path_witness: dict[str, Any],
     store_activation_witness: dict[str, Any],
     schema_binding_witness: dict[str, Any],
+    active_lease_admission_witness: dict[str, Any],
     errors: list[str],
 ) -> None:
     if not isinstance(contract, dict):
@@ -617,6 +664,7 @@ def _validate_activation_contract(
     store_write_path_contract = store_write_path_witness.get("write_path_witness_contract", {})
     store_activation_contract = store_activation_witness.get("runtime_receipt_store_activation_witness_contract", {})
     schema_binding_contract = schema_binding_witness.get("schema_binding_witness_contract", {})
+    active_lease_contract = active_lease_admission_witness.get("active_lease_admission_contract", {})
     if contract.get("worker_id") != EXPECTED_WORKER_ID:
         errors.append(
             "runtime_dispatch_admission_witness_contract.worker_id must select "
@@ -637,6 +685,10 @@ def _validate_activation_contract(
     if contract.get("worker_id") != schema_binding_contract.get("worker_id"):
         errors.append(
             "runtime_dispatch_admission_witness_contract.worker_id must match schema binding witness"
+        )
+    if contract.get("worker_id") != active_lease_contract.get("worker_id"):
+        errors.append(
+            "runtime_dispatch_admission_witness_contract.worker_id must match active lease admission witness"
         )
     if contract.get("capability") != EXPECTED_WORKER_PATH:
         errors.append(
@@ -674,6 +726,10 @@ def _validate_activation_contract(
     if contract.get("source_schema_binding_witness_ref") != EXPECTED_SCHEMA_BINDING_WITNESS_REF:
         errors.append(
             "runtime_dispatch_admission_witness_contract.source_schema_binding_witness_ref is invalid"
+        )
+    if contract.get("source_active_lease_admission_witness_ref") != EXPECTED_ACTIVE_LEASE_ADMISSION_WITNESS_REF:
+        errors.append(
+            "runtime_dispatch_admission_witness_contract.source_active_lease_admission_witness_ref is invalid"
         )
     if contract.get("target_runtime_dispatch_admission_ref") != EXPECTED_TARGET_DISPATCH_ADMISSION_REF:
         errors.append(
@@ -816,6 +872,11 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_STORE_ACTIVATION_WITNESS_PATH,
     )
     parser.add_argument("--schema-binding-witness", type=Path, default=DEFAULT_SCHEMA_BINDING_WITNESS_PATH)
+    parser.add_argument(
+        "--active-lease-admission-witness",
+        type=Path,
+        default=DEFAULT_ACTIVE_LEASE_ADMISSION_WITNESS_PATH,
+    )
     parser.add_argument("--json", action="store_true", help="emit a machine-readable receipt")
     args = parser.parse_args(argv)
     errors = validate_runtime_dispatch_admission_witness(
@@ -825,6 +886,7 @@ def main(argv: list[str] | None = None) -> int:
         args.store_write_path_witness,
         args.store_activation_witness,
         args.schema_binding_witness,
+        args.active_lease_admission_witness,
     )
     if args.json:
         print(
@@ -839,6 +901,9 @@ def main(argv: list[str] | None = None) -> int:
                     "store_write_path_witness_path": workspace_display_path(args.store_write_path_witness),
                     "store_activation_witness_path": workspace_display_path(args.store_activation_witness),
                     "schema_binding_witness_path": workspace_display_path(args.schema_binding_witness),
+                    "active_lease_admission_witness_path": workspace_display_path(
+                        args.active_lease_admission_witness
+                    ),
                     "status": "passed" if not errors else "failed",
                     "errors": errors,
                 },
