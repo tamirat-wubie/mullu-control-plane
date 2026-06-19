@@ -56,7 +56,7 @@
     },
     "required_live_evidence": {
       "type": "array",
-      "minItems": 9,
+      "minItems": 10,
       "items": { "$ref": "#/$defs/live_evidence_requirement" },
       "uniqueItems": true
     },
@@ -159,7 +159,7 @@
         "evidence_ref_count"
       ],
       "properties": {
-        "live_evidence_requirement_count": { "type": "integer", "const": 9 },
+        "live_evidence_requirement_count": { "type": "integer", "const": 10 },
         "consistency_constraint_count": { "type": "integer", "const": 10 },
         "authority_denial_count": { "type": "integer", "const": 12 },
         "rejection_check_count": { "type": "integer", "const": 8 },
@@ -199,6 +199,7 @@
             "life_meaning_judgment",
             "receipt_store_authority",
             "skill_lane_witness",
+            "lane_runtime_authority_evidence",
             "rollback_recovery_handoff"
           ]
         },

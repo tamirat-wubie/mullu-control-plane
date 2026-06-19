@@ -1768,6 +1768,17 @@ def test_protocol_manifest_indexes_universal_symbol_runtime_admission_evidence_r
     assert receipt_entry["surface"] == "symbol"
 
 
+def test_protocol_manifest_indexes_universal_symbol_lane_runtime_authority_evidence_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["universal-symbol-lane-runtime-authority-evidence-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:universal-symbol-lane-runtime-authority-evidence-receipt:1"
+    assert receipt_entry["surface"] == "symbol"
+
+
 def test_protocol_manifest_indexes_universal_symbol_runtime_authority_read_model() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

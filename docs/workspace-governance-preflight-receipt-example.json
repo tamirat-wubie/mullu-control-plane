@@ -1,5 +1,5 @@
 {
-  "check_count": 245,
+  "check_count": 246,
   "checks": [
     {
       "args": [
@@ -2154,6 +2154,19 @@
         "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py"
       ],
       "name": "universal_symbol_runtime_live_witness_input_receipt",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py"
+      ],
+      "name": "universal_symbol_lane_runtime_authority_evidence_receipt",
       "passed": true,
       "return_code": 0,
       "stderr": "",

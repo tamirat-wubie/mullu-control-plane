@@ -79,6 +79,13 @@
       ]
     },
     {
+      "action_id": "publish_universal_symbol_lane_runtime_authority_evidence_receipt",
+      "status": "closed",
+      "surfaces": [
+        "universal_symbol_lane_runtime_authority_evidence_receipt"
+      ]
+    },
+    {
       "action_id": "publish_universal_symbol_runtime_authority_witness",
       "status": "closed",
       "surfaces": [
@@ -1637,7 +1644,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 160,
+      "action_proof": 161,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 54,
@@ -1645,7 +1652,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 214,
+      "audit_chain": 215,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1653,21 +1660,21 @@
     "by_coverage_state": {
       "proven": 78,
       "unproven": 0,
-      "witnessed": 139
+      "witnessed": 140
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 56,
-      "request_proof": 159
+      "request_proof": 160
     },
-    "surface_count": 217
+    "surface_count": 218
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 217,
+      "strong": 218,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4381,9 +4388,11 @@
         "schemas/universal_symbol.schema.json",
         "docs/91_universal_symbol_kernel.md",
         "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py",
         "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
         "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
         "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+        "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py",
         "tests/test_validate_universal_symbol_kernel.py",
         "scripts/proof_coverage_matrix.py",
         "tests/test_proof_coverage_matrix.py"
@@ -4396,8 +4405,23 @@
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
+        "cli_output_write_reports_bounded_summary": [
+          "cli_output_write_reports_bounded_summary"
+        ],
+        "cli_stdout_receipt_validates_without_writing": [
+          "cli_stdout_receipt_validates_without_writing"
+        ],
         "foundation_universal_symbol_runtime_live_witness_input_receipt_validates": [
           "foundation_universal_symbol_runtime_live_witness_input_receipt_validates"
+        ],
+        "producer_accepts_reference_overrides_without_accepting_live_witness": [
+          "producer_accepts_reference_overrides_without_accepting_live_witness"
+        ],
+        "producer_builds_foundation_receipt_without_authority": [
+          "producer_builds_foundation_receipt_without_authority"
+        ],
+        "producer_rejects_empty_or_unknown_input_refs": [
+          "producer_rejects_empty_or_unknown_input_refs"
         ],
         "runtime_live_witness_input_receipt_rejects_authority_drift": [
           "runtime_live_witness_input_receipt_rejects_authority_drift"
@@ -4421,9 +4445,82 @@
         "runtime_live_witness_input_receipt_rejects_missing_input_kind",
         "runtime_live_witness_input_receipt_rejects_missing_delta_reject",
         "runtime_live_witness_input_receipt_rejects_consistency_drift",
-        "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift"
+        "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift",
+        "producer_builds_foundation_receipt_without_authority",
+        "producer_accepts_reference_overrides_without_accepting_live_witness",
+        "producer_rejects_empty_or_unknown_input_refs",
+        "cli_stdout_receipt_validates_without_writing",
+        "cli_output_write_reports_bounded_summary"
       ],
       "surface_id": "universal_symbol_runtime_live_witness_input_receipt"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+        "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+        "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+        "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+        "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+        "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "examples/universal_symbol_runtime_admission_policy.foundation.json",
+        "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "examples/universal_symbol_runtime_authority_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+        "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+        "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+        "schemas/universal_symbol.schema.json",
+        "docs/91_universal_symbol_kernel.md",
+        "docs/92_universal_symbol_kernel_audit.md",
+        "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
+        "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
+        "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+        "tests/test_validate_universal_symbol_kernel.py",
+        "scripts/proof_coverage_matrix.py",
+        "tests/test_proof_coverage_matrix.py"
+      ],
+      "notes": "UniversalSymbol lane runtime authority evidence receipt records missing operator approval, receipt-store authority, recovery, audit, live runtime witness, and blocked-action evidence for teamops-shared-inbox, software-dev, governance-core, and worker-ledger while denying lane authority, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
+      "representative_paths": [
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+        "validate_universal_symbol_lane_runtime_authority_evidence_receipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates": [
+          "foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates"
+        ],
+        "lane_runtime_authority_evidence_receipt_rejects_authority_drift": [
+          "lane_runtime_authority_evidence_receipt_rejects_authority_drift"
+        ],
+        "lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift": [
+          "lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift"
+        ],
+        "lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject": [
+          "lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject"
+        ],
+        "lane_runtime_authority_evidence_receipt_rejects_missing_lane": [
+          "lane_runtime_authority_evidence_receipt_rejects_missing_lane"
+        ],
+        "lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift": [
+          "lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift"
+        ]
+      },
+      "runtime_witnesses": [
+        "foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates",
+        "lane_runtime_authority_evidence_receipt_rejects_authority_drift",
+        "lane_runtime_authority_evidence_receipt_rejects_missing_lane",
+        "lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift",
+        "lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject",
+        "lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift"
+      ],
+      "surface_id": "universal_symbol_lane_runtime_authority_evidence_receipt"
     },
     {
       "action_proof": "action_proof",
@@ -5188,15 +5285,17 @@
         "docs/92_universal_symbol_kernel_audit.md",
         "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
         "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+        "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
         "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
         "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
         "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
         "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
         "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+        "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
         "scripts/proof_coverage_matrix.py",
         "tests/test_proof_coverage_matrix.py"
       ],
-      "notes": "UniversalSymbol receipt-store lifecycle evidence receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence requirements, with deterministic non-authorizing reference intake, while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+      "notes": "UniversalSymbol receipt-store lifecycle evidence receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence requirements, with deterministic non-authorizing reference intake and structural ref verification, while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
       "representative_paths": [
         "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
         "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
@@ -5236,6 +5335,21 @@
         ],
         "lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref": [
           "lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref"
+        ],
+        "verifier_accepts_complete_refs_without_authority": [
+          "verifier_accepts_complete_refs_without_authority"
+        ],
+        "verifier_blocks_template_placeholder_refs": [
+          "verifier_blocks_template_placeholder_refs"
+        ],
+        "verifier_rejects_authority_drift": [
+          "verifier_rejects_authority_drift"
+        ],
+        "verifier_rejects_missing_repository_relative_ref": [
+          "verifier_rejects_missing_repository_relative_ref"
+        ],
+        "verifier_rejects_secret_like_ref": [
+          "verifier_rejects_secret_like_ref"
         ]
       },
       "runtime_witnesses": [
@@ -5249,7 +5363,12 @@
         "lifecycle_evidence_producer_collects_refs_without_authority",
         "lifecycle_evidence_producer_reports_missing_refs",
         "lifecycle_evidence_producer_rejects_unknown_evidence_kind",
-        "lifecycle_evidence_producer_rejects_raw_secret_like_ref"
+        "lifecycle_evidence_producer_rejects_raw_secret_like_ref",
+        "verifier_accepts_complete_refs_without_authority",
+        "verifier_blocks_template_placeholder_refs",
+        "verifier_rejects_missing_repository_relative_ref",
+        "verifier_rejects_authority_drift",
+        "verifier_rejects_secret_like_ref"
       ],
       "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_receipt"
     },
@@ -17069,8 +17188,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2083,
-    "runtime_witness_count": 2083,
+    "exact_test_anchor_count": 2099,
+    "runtime_witness_count": 2099,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17536,11 +17655,86 @@
               "tests/test_validate_universal_symbol_kernel.py::test_runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift"
             ],
             "witness": "runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py::test_producer_builds_foundation_receipt_without_authority"
+            ],
+            "witness": "producer_builds_foundation_receipt_without_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py::test_producer_accepts_reference_overrides_without_accepting_live_witness"
+            ],
+            "witness": "producer_accepts_reference_overrides_without_accepting_live_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py::test_producer_rejects_empty_or_unknown_input_refs"
+            ],
+            "witness": "producer_rejects_empty_or_unknown_input_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py::test_cli_stdout_receipt_validates_without_writing"
+            ],
+            "witness": "cli_stdout_receipt_validates_without_writing"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py::test_cli_output_write_reports_bounded_summary"
+            ],
+            "witness": "cli_output_write_reports_bounded_summary"
+          }
+        ],
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
+        "surface_id": "universal_symbol_runtime_live_witness_input_receipt",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates"
+            ],
+            "witness": "foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_receipt_rejects_authority_drift"
+            ],
+            "witness": "lane_runtime_authority_evidence_receipt_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_receipt_rejects_missing_lane"
+            ],
+            "witness": "lane_runtime_authority_evidence_receipt_rejects_missing_lane"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift"
+            ],
+            "witness": "lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject"
+            ],
+            "witness": "lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_universal_symbol_kernel.py::test_lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift"
+            ],
+            "witness": "lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift"
           }
         ],
         "exact_test_anchor_count": 6,
         "runtime_witness_count": 6,
-        "surface_id": "universal_symbol_runtime_live_witness_input_receipt",
+        "surface_id": "universal_symbol_lane_runtime_authority_evidence_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
@@ -18139,10 +18333,40 @@
               "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py::test_lifecycle_evidence_producer_rejects_raw_secret_like_ref"
             ],
             "witness": "lifecycle_evidence_producer_rejects_raw_secret_like_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py::test_verifier_accepts_complete_refs_without_authority"
+            ],
+            "witness": "verifier_accepts_complete_refs_without_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py::test_verifier_blocks_template_placeholder_refs"
+            ],
+            "witness": "verifier_blocks_template_placeholder_refs"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py::test_verifier_rejects_missing_repository_relative_ref"
+            ],
+            "witness": "verifier_rejects_missing_repository_relative_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py::test_verifier_rejects_authority_drift"
+            ],
+            "witness": "verifier_rejects_authority_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py::test_verifier_rejects_secret_like_ref"
+            ],
+            "witness": "verifier_rejects_secret_like_ref"
           }
         ],
-        "exact_test_anchor_count": 11,
-        "runtime_witness_count": 11,
+        "exact_test_anchor_count": 16,
+        "runtime_witness_count": 16,
         "surface_id": "universal_symbol_receipt_store_lifecycle_evidence_receipt",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

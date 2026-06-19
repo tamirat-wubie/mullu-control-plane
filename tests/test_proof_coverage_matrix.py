@@ -6933,12 +6933,52 @@ def test_universal_symbol_runtime_live_witness_input_receipt_surface_blocks_live
     assert "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py" in surface[
         "evidence_files"
     ]
+    assert "scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py" in surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py" in surface[
+        "evidence_files"
+    ]
     assert "foundation_universal_symbol_runtime_live_witness_input_receipt_validates" in witnesses
     assert "runtime_live_witness_input_receipt_rejects_authority_drift" in witnesses
     assert "runtime_live_witness_input_receipt_rejects_missing_delta_reject" in witnesses
-    assert witness_surfaces["universal_symbol_runtime_live_witness_input_receipt"]["exact_test_anchor_count"] == 6
+    assert "producer_builds_foundation_receipt_without_authority" in witnesses
+    assert "producer_accepts_reference_overrides_without_accepting_live_witness" in witnesses
+    assert "cli_stdout_receipt_validates_without_writing" in witnesses
+    assert witness_surfaces["universal_symbol_runtime_live_witness_input_receipt"]["exact_test_anchor_count"] == 11
     assert witness_surfaces["universal_symbol_runtime_live_witness_input_receipt"]["unanchored_witness_count"] == 0
     assert closure_actions["publish_universal_symbol_runtime_live_witness_input_receipt"]["status"] == "closed"
+
+
+def test_universal_symbol_lane_runtime_authority_evidence_receipt_surface_blocks_lane_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_lane_runtime_authority_evidence_receipt"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json" in surface[
+        "representative_paths"
+    ]
+    assert "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json" in surface[
+        "representative_paths"
+    ]
+    assert "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py" in surface[
+        "evidence_files"
+    ]
+    assert "foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates" in witnesses
+    assert "lane_runtime_authority_evidence_receipt_rejects_authority_drift" in witnesses
+    assert "lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift" in witnesses
+    assert witness_surfaces["universal_symbol_lane_runtime_authority_evidence_receipt"]["exact_test_anchor_count"] == 6
+    assert witness_surfaces["universal_symbol_lane_runtime_authority_evidence_receipt"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_universal_symbol_lane_runtime_authority_evidence_receipt"]["status"] == "closed"
 
 
 def test_universal_symbol_runtime_authority_witness_surface_blocks_runtime_authority() -> None:
@@ -7331,15 +7371,20 @@ def test_universal_symbol_receipt_store_lifecycle_evidence_receipt_surface_block
     assert "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py" in surface[
         "evidence_files"
     ]
+    assert "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py" in surface[
+        "evidence_files"
+    ]
     assert "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates" in witnesses
     assert "lifecycle_evidence_receipt_rejects_lifecycle_authority_drift" in witnesses
     assert "lifecycle_evidence_receipt_rejects_missing_delta_reject" in witnesses
     assert "lifecycle_evidence_receipt_rejects_missing_upstream_contract_ref" in witnesses
     assert "lifecycle_evidence_producer_collects_refs_without_authority" in witnesses
     assert "lifecycle_evidence_producer_rejects_raw_secret_like_ref" in witnesses
+    assert "verifier_accepts_complete_refs_without_authority" in witnesses
+    assert "verifier_rejects_secret_like_ref" in witnesses
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "exact_test_anchor_count"
-    ] == 11
+    ] == 16
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "unanchored_witness_count"
     ] == 0

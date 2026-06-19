@@ -108,10 +108,12 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py",
     "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
     "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
     "scripts/validate_universal_symbol_runtime_authority_read_model.py",
     "scripts/proof_coverage_matrix.py",
+    "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "tests/test_proof_coverage_matrix.py",
 )
