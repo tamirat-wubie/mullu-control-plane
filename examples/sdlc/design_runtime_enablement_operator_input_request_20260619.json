@@ -1,0 +1,59 @@
+{
+  "design_id": "sdlc_design_runtime_enablement_operator_input_request_20260619",
+  "requirement_id": "sdlc_req_runtime_enablement_operator_input_request_20260619",
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerRuntimeEnablementOperatorInputRequest contract, emitter, validator, docs updates, manifest registration, CI target, SDLC artifacts, and focused tests that translate runtime enablement witness blockers into operator-safe missing evidence names while keeping runtime enablement and all worker effects denied.",
+  "affected_modules": [
+    "read_only_worker_runtime_admission_witnesses",
+    "operator_input_request_validation",
+    "workspace_governance_protocol_manifest",
+    "sdlc_artifact_examples",
+    "ci_worker_witness_tests"
+  ],
+  "data_model_changes": [
+    "Introduce ReadOnlyWorkerRuntimeEnablementOperatorInputRequest fields for witness receipt id, readiness, runtime enablement allowance, witness validation state, required evidence inputs, blocked actions, source artifacts, runtime enablement summary, no-secret proof, effect-denial flags, and next action."
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_runtime_enablement_operator_input_request.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/emit_read_only_worker_runtime_enablement_operator_input_request.py",
+    "scripts/validate_read_only_worker_runtime_enablement_operator_input_request.py",
+    "tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py",
+    "tests/test_validate_protocol_manifest.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the runtime enablement operator input request schema, emitter, validator, focused tests, docs updates, manifest entry, SDLC artifacts, and CI test target, then rerun schema validation, protocol manifest validation, SDLC validation, and focused operator request tests before claiming rollback closure.",
+  "migration_plan": "No runtime migration. The change adds static Foundation Mode request artifacts only and does not alter live worker execution, receipt stores, connector authority, filesystem write authority, runtime enablement, or success-claim authority.",
+  "test_plan": [
+    "python -m pytest tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "uao_ref": "uao://read-only-worker-runtime-enablement-operator-input-request/design/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-runtime-enablement-operator-input-request/design/20260619",
+  "receipt_ref": "receipt://read-only-worker-runtime-enablement-operator-input-request/design/20260619"
+}
