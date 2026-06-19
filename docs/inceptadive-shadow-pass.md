@@ -76,6 +76,10 @@ Shadow path:
 - Replay fixture in
   `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json` proving redacted
   response and receipt-count behavior.
+- Live non-streaming assistant response embedding through
+  `mcoi_runtime.app.inceptadive_assistant_response_embedding`, covering
+  `POST /api/v1/chat` and `POST /api/v1/chat/workflow` with a dedicated
+  contract in `docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md`.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis
@@ -105,6 +109,8 @@ The full external-effect InceptaDive-M engine remains a dedicated later module.
 The current integration deliberately returns `deep_required` when the gate
 selects deep mode outside the repository-local bridge instead of silently
 pretending the full deep engine has run.
+Streaming assistant response embedding remains deferred because SSE event
+envelopes need a separate compatibility contract.
 
 STATUS:
   Completeness: v1 foundation complete; repository-local Phi-GPS bridge added
