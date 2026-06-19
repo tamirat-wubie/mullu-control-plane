@@ -437,6 +437,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-producer-secret-handoff-preflight",
+      "path": "schemas/agentic_service_harness_live_producer_secret_handoff_preflight.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-secret-handoff-preflight:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
