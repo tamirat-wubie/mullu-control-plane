@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:non-live-openqasm-export-planning-witness:1",
+  "title": "Non-Live OpenQASM Export Planning Witness",
+  "description": "Foundation Mode witness for planning a future OpenQASM export path without source emission, simulator execution, backend calls, credentials, quantum job submission, or result claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "parent_boundary_ref",
+    "architecture_name",
+    "planning_status",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "parent_boundary_required",
+    "non_live_witness_required",
+    "openqasm_target",
+    "allowed_planning_outputs",
+    "denied_outputs",
+    "required_planning_gates",
+    "denied_authorities",
+    "effect_boundary",
+    "planning_constraints",
+    "resource_projection_obligations",
+    "witness_requirements",
+    "constructive_deltas",
+    "fracture_deltas",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "non_live_openqasm_export_planning_witness"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "FoundationModeOnly"
+    },
+    "parent_boundary_ref": {
+      "type": "string",
+      "const": "universal_symbolic_quantum_capability_boundary"
+    },
+    "architecture_name": {
+      "type": "string",
+      "const": "USQCA-PQE"
+    },
+    "planning_status": {
+      "type": "string",
+      "const": "NonLiveOpenQasmPlanningOnly"
+    },
+    "authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "planning_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "parent_boundary_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "non_live_witness_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "openqasm_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_version",
+        "source_text_embedded",
+        "source_file_path",
+        "backend_independent",
+        "backend_specific_pragmas_allowed",
+        "requires_future_exporter_witness"
+      ],
+      "properties": {
+        "target_version": {
+          "type": "string",
+          "const": "OpenQASM 3.0 planning target"
+        },
+        "source_text_embedded": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_file_path": {
+          "type": "null"
+        },
+        "backend_independent": {
+          "type": "boolean",
+          "const": true
+        },
+        "backend_specific_pragmas_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "requires_future_exporter_witness": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "allowed_planning_outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 6,
+      "uniqueItems": true
+    },
+    "denied_outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 8,
+      "uniqueItems": true
+    },
+    "required_planning_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 10,
+      "uniqueItems": true
+    },
+    "denied_authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openqasm_source_emission_enabled",
+        "qir_source_emission_enabled",
+        "simulator_runtime_execution_enabled",
+        "backend_execution_enabled",
+        "hardware_credentials_access_enabled",
+        "quantum_job_submission_enabled",
+        "cryptanalysis_execution_enabled",
+        "quantum_advantage_claim_enabled",
+        "production_readiness_claim_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "openqasm_source_emission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "qir_source_emission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_runtime_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "backend_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_access_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "cryptanalysis_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_advantage_claim_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_readiness_claim_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openqasm_source_text_emitted",
+        "openqasm_file_written",
+        "qir_file_written",
+        "simulator_invoked",
+        "backend_called",
+        "hardware_credentials_read",
+        "quantum_job_submitted",
+        "result_distribution_observed",
+        "secret_values_serialized",
+        "production_claim_made"
+      ],
+      "properties": {
+        "openqasm_source_text_emitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "openqasm_file_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "qir_file_written": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_invoked": {
+          "type": "boolean",
+          "const": false
+        },
+        "backend_called": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_read": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "result_distribution_observed": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_claim_made": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "planning_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires_symbolic_circuit_intent",
+        "requires_register_declarations",
+        "requires_measurement_mapping",
+        "requires_resource_projection",
+        "requires_no_backend_profile",
+        "requires_future_exporter_schema",
+        "requires_no_execution_result"
+      ],
+      "properties": {
+        "requires_symbolic_circuit_intent": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_register_declarations": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_measurement_mapping": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_resource_projection": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_no_backend_profile": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_future_exporter_schema": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_no_execution_result": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "resource_projection_obligations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 5,
+      "uniqueItems": true
+    },
+    "witness_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 6,
+      "uniqueItems": true
+    },
+    "constructive_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3
+    },
+    "fracture_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 5
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

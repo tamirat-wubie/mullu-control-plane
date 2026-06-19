@@ -105,4 +105,4 @@ WitnessLedgerGate
 
 ## Next Valid Action
 
-Create a separate planning witness for a small local simulator or OpenQASM export path. That later witness must remain non-live until backend authority, resource evidence, result-statistics policy, and security gates are satisfied.
+Use `docs/94_non_live_openqasm_export_planning_witness.md` as the separate non-live OpenQASM export planning witness. Any later exporter implementation must remain separate and must prove source-emission authority, resource evidence, result-statistics policy, and security gates before it can emit artifacts.

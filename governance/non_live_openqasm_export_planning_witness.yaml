@@ -1,0 +1,46 @@
+id: non_live_openqasm_export_planning_witness
+version: 1
+parent_boundary: universal_symbolic_quantum_capability_boundary
+architecture_name: USQCA-PQE
+decision: FitsAsNonLiveExportPlanningWitness
+posture: FoundationModeOnly
+governance_scope:
+  - OCE
+  - RAG
+  - CDCV
+  - CQTE
+  - UWMA
+  - SRCA
+  - PRS
+allowed_scope:
+  - symbolic_circuit_intent_capture
+  - openqasm_target_version_declaration
+  - register_sizing_plan
+  - gate_set_plan
+  - measurement_mapping_plan
+  - resource_projection_plan
+  - export_precondition_list
+  - future_exporter_witness_requirement
+denied_authority:
+  openqasm_source_emission: true
+  qir_source_emission: true
+  simulator_runtime_execution: true
+  backend_execution: true
+  hardware_backend_credential_access: true
+  quantum_job_submission: true
+  cryptanalysis_execution: true
+  quantum_advantage_claim: true
+  production_readiness_claim: true
+  terminal_closure: true
+required_gates:
+  - ParentQuantumBoundaryGate
+  - OpenQasmVersionDeclarationGate
+  - SymbolicCircuitIntentGate
+  - RegisterSizingGate
+  - GateSetDeclarationGate
+  - MeasurementMappingGate
+  - ResourceProjectionGate
+  - BackendIndependenceGate
+  - NoExecutionAuthorityGate
+  - WitnessLedgerGate
+next_action: Review the non-live OpenQASM export planning witness before any exporter implementation.
