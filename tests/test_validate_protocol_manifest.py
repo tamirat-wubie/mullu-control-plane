@@ -65,6 +65,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     report_entry = entries["governed-planning-profile-admission-report"]
     dossier_entry = entries["governed-planning-profile-shadow-dossier"]
     operator_evidence_entry = entries["governed-planning-profile-operator-shadow-pilot-evidence"]
+    operator_observation_entry = entries[
+        "governed-planning-profile-operator-shadow-pilot-observation-receipt"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -83,6 +86,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-evidence:1"
     )
     assert operator_evidence_entry["surface"] == "planning"
+    assert operator_observation_entry["path"] == (
+        "schemas/governed_planning_profile_operator_shadow_pilot_observation_receipt.schema.json"
+    )
+    assert operator_observation_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-observation-receipt:1"
+    )
+    assert operator_observation_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:

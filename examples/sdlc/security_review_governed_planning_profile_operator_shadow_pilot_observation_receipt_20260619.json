@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-operator-shadow-pilot-observation-receipt-20260619",
+  "change_id": "governed-planning-profile-operator-shadow-pilot-observation-receipt-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A collected operator shadow-pilot observation receipt could be mistaken for runtime promotion approval if it permits authority flags, promotion-ready scenario claims, or closure claims. The mitigation is a schema-backed local-only receipt with hard false authority fields, remaining AwaitingEvidence promotion gates, and focused tests for authority, gate, and collection-state drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the observation receipt keeps runtime promotion, execution, dispatch, runtime replanning, success claims, and terminal closure false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "promotion gate check proves runtime approval, replay/recovery, and terminal closure gates remain required after local observations are collected",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_rejects_missing_remaining_gate"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity check proves the checked-in fixture matches the deterministic produced receipt and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_schema_accepts_fixture_and_produced_receipt"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility check records one collected local observation for every expected shadow dossier plan class",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_binds_all_expected_plan_classes"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-observation-receipt-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, and terminal_closure.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_operator_shadow_pilot_observation_receipt.schema.json",
+        "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-observation-receipt-gate-collapse",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The receipt requires three remaining AwaitingEvidence promotion gates after local observations are collected.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_operator_shadow_pilot_observation_receipt.local.json",
+        "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py::test_operator_shadow_pilot_observation_rejects_missing_remaining_gate"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the observation receipt local, deterministic, and read-only",
+    "hard-deny all runtime promotion and terminal closure fields in the schema",
+    "bind the receipt to the deterministic evidence request id and shadow dossier id",
+    "record collected scenario observations without claiming runtime promotion readiness"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_operator_shadow_pilot_observation_receipt.schema.json",
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py",
+    "receipt://governed-planning-profile/operator-shadow-pilot-observation-receipt/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/operator-shadow-pilot-observation-receipt/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/operator-shadow-pilot-observation-receipt/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/operator-shadow-pilot-observation-receipt/security/20260619"
+}
