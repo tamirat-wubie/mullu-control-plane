@@ -1799,6 +1799,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "non-live-quantum-fixture-catalog-witness",
+      "path": "schemas/non_live_quantum_fixture_catalog_witness.schema.json",
+      "urn": "urn:mullusi:schema:non-live-quantum-fixture-catalog-witness:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "life-meaning-judgment",
       "path": "schemas/life_meaning_judgment.schema.json",
       "urn": "urn:mullusi:schema:life-meaning-judgment:1",

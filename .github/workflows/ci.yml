@@ -513,6 +513,9 @@ jobs:
       - name: Run worker receipt emitter registration witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emitter_registration_witness.py -q
 
+      - name: Run quantum fixture catalog witness tests
+        run: python -m pytest tests/test_validate_non_live_quantum_fixture_catalog_witness.py -q
+
       - name: Run resilience rehearsal umbrella tests
         run: python -m pytest tests/test_validate_resilience_rehearsal_reports.py -q
 

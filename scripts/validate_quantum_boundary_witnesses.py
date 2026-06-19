@@ -4,7 +4,7 @@
 Purpose: compose the Foundation Mode quantum boundary validators into one
 reviewable witness index.
 Governance scope: OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS.
-Dependencies: stdlib JSON parsing and the three focused quantum validators.
+Dependencies: stdlib JSON parsing and the focused quantum validators.
 Invariants: planning only, read only, no source emission, no simulator or
 backend execution, no credential access, no job submission, no result claim,
 and no terminal closure.
@@ -36,6 +36,12 @@ from scripts.validate_non_live_openqasm_export_planning_witness import (  # noqa
 from scripts.validate_non_live_openqasm_export_planning_witness import (  # noqa: E402
     validate_payload as validate_openqasm_planning_payload,
 )
+from scripts.validate_non_live_quantum_fixture_catalog_witness import (  # noqa: E402
+    DEFAULT_EXAMPLE as FIXTURE_CATALOG_EXAMPLE,
+)
+from scripts.validate_non_live_quantum_fixture_catalog_witness import (  # noqa: E402
+    validate_payload as validate_fixture_catalog_payload,
+)
 from scripts.validate_universal_symbolic_quantum_capability_boundary import (  # noqa: E402
     DEFAULT_EXAMPLE as UNIVERSAL_BOUNDARY_EXAMPLE,
 )
@@ -46,11 +52,14 @@ from scripts.validate_universal_symbolic_quantum_capability_boundary import (  #
 UNIVERSAL_BOUNDARY_ID = "universal_symbolic_quantum_capability_boundary"
 OPENQASM_PLANNING_ID = "non_live_openqasm_export_planning_witness"
 LOCAL_SIMULATOR_BOUNDARY_ID = "non_live_local_quantum_simulator_boundary_witness"
+FIXTURE_CATALOG_ID = "non_live_quantum_fixture_catalog_witness"
 
 QUANTUM_DENIAL_INVARIANTS = (
     "no live QPU execution",
     "no simulator runtime execution",
     "no OpenQASM or QIR source emission",
+    "no executable fixture generation",
+    "no simulator input generation",
     "no simulator engine selection",
     "no state-vector materialization",
     "no measurement shot execution",
@@ -88,6 +97,11 @@ TARGETS = (
         binding_id=LOCAL_SIMULATOR_BOUNDARY_ID,
         default_path=LOCAL_SIMULATOR_EXAMPLE,
         validate_payload=validate_local_simulator_payload,
+    ),
+    WitnessValidationTarget(
+        binding_id=FIXTURE_CATALOG_ID,
+        default_path=FIXTURE_CATALOG_EXAMPLE,
+        validate_payload=validate_fixture_catalog_payload,
     ),
 )
 
@@ -160,6 +174,8 @@ def _build_path_overrides(args: argparse.Namespace) -> dict[str, pathlib.Path]:
         overrides[OPENQASM_PLANNING_ID] = pathlib.Path(args.openqasm_planning)
     if args.local_simulator_boundary:
         overrides[LOCAL_SIMULATOR_BOUNDARY_ID] = pathlib.Path(args.local_simulator_boundary)
+    if args.fixture_catalog:
+        overrides[FIXTURE_CATALOG_ID] = pathlib.Path(args.fixture_catalog)
     return overrides
 
 
@@ -169,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--universal-boundary", help="override the universal boundary witness path")
     parser.add_argument("--openqasm-planning", help="override the OpenQASM planning witness path")
     parser.add_argument("--local-simulator-boundary", help="override the local simulator boundary witness path")
+    parser.add_argument("--fixture-catalog", help="override the fixture catalog witness path")
     args = parser.parse_args(argv)
 
     result = validate_witnesses(_build_path_overrides(args))
