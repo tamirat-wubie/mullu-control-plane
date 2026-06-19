@@ -14,6 +14,15 @@ from mcoi_runtime.contracts.whqr import ConnectorExpr, EvidenceGate, GateResult,
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
+_INVALID_LOGICAL_ARITY_REASONS: Mapping[LogicalOp, str] = {
+    LogicalOp.AND: "invalid_logical_arity:and",
+    LogicalOp.OR: "invalid_logical_arity:or",
+    LogicalOp.IMPLIES: "invalid_logical_arity:implies",
+    LogicalOp.IFF: "invalid_logical_arity:iff",
+    LogicalOp.XOR: "invalid_logical_arity:xor",
+}
+
+
 def _validate_node_result_key(key: object) -> str:
     if not isinstance(key, str):
         raise ValueError("WHQR evaluation context node result key must be a string")
@@ -67,6 +76,9 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
         if value.truth is TruthGate.UNKNOWN:
             raise RuntimeCoreInvariantError("not cannot apply to unresolved WHQR expression")
         return GateResult(TruthGate.FALSE if value.truth is TruthGate.TRUE else TruthGate.TRUE, value.norm, value.evidence, value.reason)
+    arity_issue = _logical_arity_issue(expr.op, len(args))
+    if arity_issue is not None:
+        return _invalid_logical_arity(arity_issue)
     values = tuple(evaluate(arg, context) for arg in args)
     if expr.op is LogicalOp.AND:
         result = values[0]
@@ -83,12 +95,6 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
             return GateResult(TruthGate.FALSE, _norm(values), _evidence(values), _reasons(values))
         return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))
     if expr.op is LogicalOp.IMPLIES:
-        if len(values) != 2:
-            return GateResult(
-                TruthGate.UNKNOWN,
-                evidence=EvidenceGate.UNPROVEN,
-                reason="invalid_logical_arity:implies",
-            )
         antecedent, consequent = values
         if antecedent.truth is TruthGate.TRUE and consequent.truth is TruthGate.FALSE:
             return GateResult(TruthGate.FALSE, _norm(values), _evidence(values), _reasons(values))
@@ -111,6 +117,22 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
         truth = TruthGate.TRUE if true_count == 1 else TruthGate.FALSE
         return GateResult(truth, _norm(values), _evidence(values), _reasons(values))
     return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), f"unsupported_logical:{expr.op.value}")
+
+
+def _logical_arity_issue(op: LogicalOp, arg_count: int) -> str | None:
+    if op is LogicalOp.IMPLIES and arg_count != 2:
+        return _INVALID_LOGICAL_ARITY_REASONS[op]
+    if op in {LogicalOp.AND, LogicalOp.OR, LogicalOp.IFF, LogicalOp.XOR} and arg_count < 2:
+        return _INVALID_LOGICAL_ARITY_REASONS[op]
+    return None
+
+
+def _invalid_logical_arity(reason: str) -> GateResult:
+    return GateResult(
+        TruthGate.UNKNOWN,
+        evidence=EvidenceGate.UNPROVEN,
+        reason=reason,
+    )
 
 
 def _and(left: GateResult, right: GateResult, relation: str, metadata: Mapping[str, str] | None = None) -> GateResult:
