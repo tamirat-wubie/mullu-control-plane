@@ -1,0 +1,56 @@
+{
+  "requirement_id": "sdlc_req_runtime_enablement_operator_input_request_20260619",
+  "request_id": "platform_runtime_enablement_operator_input_request_20260619",
+  "problem_statement": "ReadOnlyWorkerRuntimeEnablementWitness defines the runtime enablement evidence boundary, but operators still need a public-safe request that names missing evidence without serializing secrets or enabling runtime authority.",
+  "success_criteria": [
+    "the operator input request schema validates with required input and blocked action lists",
+    "the emitter derives required evidence names from the runtime enablement witness remaining-denied refs",
+    "the validator rejects runtime enablement authority drift, execution drift, secret marker drift, malformed payloads, and invalid witness-state drift",
+    "runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector calls, and success claims remain denied"
+  ],
+  "non_goals": [
+    "do not perform runtime enablement",
+    "do not admit runtime dispatch",
+    "do not invoke a worker",
+    "do not emit or append runtime receipts",
+    "do not serialize secret values or external account credentials",
+    "do not claim terminal closure or runtime success"
+  ],
+  "constraints": [
+    "Foundation Mode remains local-first and witness-only",
+    "Mfidel atomicity must remain preserved",
+    "the request may serialize evidence names and next actions only",
+    "all effect-bearing worker runtime actions remain blocked"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    ".github/workflows/ci.yml",
+    "docs/00_platform_overview.md",
+    "docs/maps/MULLUSI_GAP_REGISTER.md",
+    "examples/sdlc/design_runtime_enablement_operator_input_request_20260619.json",
+    "schemas/README.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_runtime_enablement_operator_input_request.schema.json",
+    "scripts/emit_read_only_worker_runtime_enablement_operator_input_request.py",
+    "scripts/validate_read_only_worker_runtime_enablement_operator_input_request.py",
+    "tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py",
+    "tests/test_validate_protocol_manifest.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py"
+  ],
+  "acceptance_tests": [
+    "python -m pytest tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "evidence_required": [
+    "schema-backed operator input request",
+    "runtime enablement witness validation",
+    "public-safe evidence-name mapping",
+    "protocol manifest registration",
+    "focused pytest coverage"
+  ],
+  "uao_ref": "uao://read-only-worker-runtime-enablement-operator-input-request/requirement/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-runtime-enablement-operator-input-request/requirement/20260619",
+  "receipt_ref": "receipt://read-only-worker-runtime-enablement-operator-input-request/requirement/20260619"
+}
