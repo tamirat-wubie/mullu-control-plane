@@ -559,6 +559,70 @@ def test_evaluator_resolves_and_preserves_gates() -> None:
     assert denied_implication.truth == TruthGate.FALSE
 
 
+def test_evaluation_context_freezes_node_results_snapshot() -> None:
+    mutable_node_results = {
+        "approval": GateResult(
+            truth=TruthGate.TRUE,
+            norm=NormGate.PERMITTED,
+            evidence=EvidenceGate.PROVEN,
+            reason="initial_approval",
+        )
+    }
+    ctx = WHQREvaluationContext(node_results=mutable_node_results)
+    mutable_node_results["approval"] = GateResult(
+        truth=TruthGate.FALSE,
+        norm=NormGate.FORBIDDEN,
+        evidence=EvidenceGate.CONTRADICTED,
+        reason="mutated_approval",
+    )
+    mutable_node_results["budget"] = GateResult(truth=TruthGate.TRUE, evidence=EvidenceGate.PROVEN)
+    approval_result = evaluate(_node("approval"), ctx)
+    budget_result = evaluate(_node("budget"), ctx)
+
+    assert isinstance(ctx.node_results, MappingProxyType)
+    assert approval_result.truth is TruthGate.TRUE
+    assert approval_result.norm is NormGate.PERMITTED
+    assert approval_result.evidence is EvidenceGate.PROVEN
+    assert approval_result.reason == "initial_approval"
+    assert budget_result.truth is TruthGate.UNKNOWN
+    assert budget_result.reason == "unresolved_whqr_node"
+
+
+def test_evaluation_context_preserves_bindings_alias_without_mutable_exposure() -> None:
+    ctx = WHQREvaluationContext(
+        bindings={
+            "invoice": GateResult(
+                truth=TruthGate.TRUE,
+                norm=NormGate.PERMITTED,
+                evidence=EvidenceGate.PROVEN,
+                reason="invoice_verified",
+            )
+        }
+    )
+    result = evaluate(_node("invoice"), ctx)
+
+    assert ctx.bindings is ctx.node_results
+    assert isinstance(ctx.bindings, MappingProxyType)
+    assert result.truth is TruthGate.TRUE
+    assert result.norm is NormGate.PERMITTED
+    assert result.reason == "invoice_verified"
+    with pytest.raises(TypeError):
+        ctx.node_results["invoice"] = GateResult(TruthGate.FALSE)  # type: ignore[index]
+
+
+def test_evaluation_context_rejects_ambiguous_or_invalid_bindings() -> None:
+    valid_result = GateResult(truth=TruthGate.TRUE, evidence=EvidenceGate.PROVEN)
+
+    with pytest.raises(ValueError, match="not both"):
+        WHQREvaluationContext(node_results={"approval": valid_result}, bindings={"budget": valid_result})
+    with pytest.raises(ValueError, match="key must be a string"):
+        WHQREvaluationContext(node_results={1: valid_result})  # type: ignore[dict-item]
+    with pytest.raises(ValueError, match="cannot be blank"):
+        WHQREvaluationContext(node_results={" ": valid_result})
+    with pytest.raises(ValueError, match="value must be GateResult"):
+        WHQREvaluationContext(node_results={"approval": TruthGate.TRUE})  # type: ignore[dict-item]
+
+
 def test_or_evaluator_does_not_escalate_when_true_branch_is_proven() -> None:
     ctx = WHQREvaluationContext(
         node_results={

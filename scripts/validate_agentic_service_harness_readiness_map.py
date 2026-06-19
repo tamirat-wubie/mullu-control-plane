@@ -66,6 +66,10 @@ REQUIRED_DENIALS = (
     "Do not integrate Claude Code or OpenClaw yet.",
     "Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted automation, or email-send authority by default.",
 )
+REQUIRED_REFRESH_FIELDS = (
+    "Current `origin/main`:",
+    "Open PRs after readiness-map refresh:",
+)
 REQUIRED_REPOSITORY_CONNECTION_TERMS = (
     "durable GitHub App installation",
     "revocation",
@@ -149,6 +153,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _require_all(map_text, REQUIRED_READY_SYMBOLS, "ready_symbol", errors)
     _require_all(map_text, REQUIRED_PARTIAL_SYMBOLS, "partial_symbol", errors)
     _require_all(map_text, REQUIRED_DENIALS, "denial", errors)
+    _require_all(map_text, REQUIRED_REFRESH_FIELDS, "refresh_field", errors)
     _require_all(
         map_text,
         REQUIRED_REPOSITORY_CONNECTION_TERMS,
@@ -163,6 +168,8 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_approval_request_ready(map_text, errors)
     _validate_receipt_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
+    _validate_current_main_ref(map_text, errors)
+    _validate_open_pr_queue_boundary(map_text, errors)
 
     return ReadinessMapValidation(
         ok=not errors,
@@ -249,6 +256,26 @@ def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
             positions.append(position)
     if positions and positions != sorted(positions):
         errors.append("next PR sequence is not ordered")
+
+
+def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
+    current_main = re.search(
+        r"^Current `origin/main`: `[0-9a-f]{40}`$",
+        map_text,
+        re.MULTILINE,
+    )
+    if current_main is None:
+        errors.append("missing current origin main ref")
+
+
+def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
+    open_pr_queue = re.search(
+        r"^Open PRs after readiness-map refresh: .+ outside this map-only closure\.$",
+        map_text,
+        re.MULTILINE,
+    )
+    if open_pr_queue is None:
+        errors.append("missing open PR queue map-only boundary")
 
 
 def _path_label(path: Path) -> str:

@@ -1,0 +1,61 @@
+{
+  "design_id": "sdlc_design_receipt_append_witness_20260619",
+  "requirement_id": "sdlc_req_receipt_append_witness_20260619",
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerReceiptAppendWitness contract, Foundation Mode example, validator, documentation updates, manifest registration, CI target, and focused tests that define the future receipt append evidence boundary after effect reconciliation while keeping UAO authorization, Phi_gov authorization, receipt append, runtime dispatch admission, runtime dispatch, worker invocation, receipt emission, writes, connector calls, success claims, and terminal closure denied.",
+  "affected_modules": [
+    "read_only_worker_runtime_admission_witnesses",
+    "workspace_governance_protocol_manifest",
+    "sdlc_artifact_examples",
+    "ci_worker_witness_tests"
+  ],
+  "data_model_changes": [
+    "Introduce ReadOnlyWorkerReceiptAppendWitness receipt fields for authority scope, Receipt Append contract, activation evaluation, admission decision, receipt refs, contract summary, governance refs, and evidence refs."
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/read_only_worker_receipt_append_witness.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_read_only_worker_receipt_append_witness.py",
+    "tests/test_validate_read_only_worker_receipt_append_witness.py",
+    "tests/test_validate_protocol_manifest.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+    ".github/workflows/ci.yml"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the ReadOnlyWorkerReceiptAppendWitness schema, example, validator, focused tests, docs updates, manifest entry, SDLC artifacts, and CI test target, then rerun schema validation, protocol manifest validation, SDLC validation, and focused worker witness tests before claiming rollback closure.",
+  "migration_plan": "No runtime migration. The change adds static Foundation Mode witness artifacts only and does not alter live worker execution, receipt stores, connector authority, or filesystem write authority.",
+  "test_plan": [
+    "python scripts/validate_read_only_worker_receipt_append_witness.py",
+    "python -m pytest tests/test_validate_read_only_worker_receipt_append_witness.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "uao_ref": "uao://read-only-worker-receipt-append-witness/design/20260619",
+  "causal_decision_trace_ref": "trace://read-only-worker-receipt-append-witness/design/20260619",
+  "receipt_ref": "receipt://read-only-worker-receipt-append-witness/design/20260619"
+}

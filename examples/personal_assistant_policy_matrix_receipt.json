@@ -1,7 +1,7 @@
 {
-  "receipt_id": "personal-assistant-policy-matrix-c24d862b17dc5444",
+  "receipt_id": "personal-assistant-policy-matrix-7aecfbe83ddf4338",
   "schema_version": "personal_assistant.policy_matrix_receipt.v1",
-  "generated_at": "2026-06-17T22:37:27Z",
+  "generated_at": "2026-06-19T16:42:40Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -394,7 +394,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-policy-matrix-2026-06-17",
+        "delta_id": "delta-personal-assistant-policy-matrix-2026-06-19",
         "reason": "Policy matrix consistency closed for no-effect Foundation Mode hardening without granting execution authority.",
         "logged_in_lineage": true
       }

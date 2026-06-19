@@ -7,15 +7,15 @@ Invariants: no dashboard creation; no mutation endpoint admission; no Claude Cod
 
 # Mullusi Agentic Service Harness Readiness Map
 
-Date: 2026-06-18
+Date: 2026-06-19
 
 Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `b78592f97542`
+Current `origin/main`: `6b7367a2f58070212f9c668524f8d23d4f2bc377`
 
-Open PRs after closure pass: none.
+Open PRs after readiness-map refresh: the live open PR queue remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -24,9 +24,11 @@ Open PRs after closure pass: none.
 | Scheduler safety PR | READY | PR #1532 was closed earlier as a read-only scheduler history validation fix. Invalid limits are governed `422` errors; `limit=0` remains a valid empty read. |
 | Receipt evidence PR | READY | PR #1865 merged at `2026-06-18T03:58:19Z`, merge commit `ddddcd91dd3c8ddfc9f21d95235e7104ce4ad1bd`. |
 | Resilience rehearsal PR | READY | PR #1850 was marked ready after local and remote validation, then merged at `2026-06-18T04:01:50Z`, merge commit `b78592f97542cc3c6a9adf2b7c93cd104c029363`. |
+| Active lease witness PR | READY | PR #1979 merged at `2026-06-19T16:06:08Z`, merge commit `b849663f9e5e4a2f0d0c6992bedad735e61fb6a8`. |
+| Worker effect reconciliation witness PR | READY | PR #1983 merged at `2026-06-19T16:32:05Z`, merge commit `92c0bf83841253ca395cf3d35259bab82715b79d`. |
 | Remote CI | READY | Build Verification, SDLC Governance Gate, Schema Validation, Gateway Closure and Witness Tests, Rust, TypeScript, Python compatibility, Python soak, MCOI shards, and GitHub App token boundary checks were green before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | READY | `gh pr list --state open` returned `[]` after fetching `origin/main`. |
+| Open PR queue | PARTIAL | `gh pr list --state open` returned PR #1992, PR #1991, PR #1986, and PR #1984 after fetching `origin/main` at refresh time; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
@@ -183,6 +185,6 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 
 STATUS:
   Completeness: 100%
-  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; no open PRs before this readiness-map branch
-  Open issues: Receipt, EvidenceBundle, WorkspaceSandbox, and UI data contracts remain partial or missing
+  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority
+  Open issues: Receipt, EvidenceBundle, WorkspaceSandbox, UI data contracts, and the current open PR queue remain partial, missing, or outside this map-only closure
   Next action: start the smallest next PR sequence with dry-run AgentRunReceipt emitter

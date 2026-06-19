@@ -1,0 +1,141 @@
+{
+  "witness_id": "universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-receipt-store-replacement-decision-replay-idempotency",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "replay_idempotency_decision": "blocked_pending_replacement_receipt_key_digest_cursor_duplicate_denial_and_audit_evidence",
+  "replay_idempotency_witness_is_not_replay_authority": true,
+  "replay_requirements": [
+    {
+      "requirement_id": "requirement://replacement-decision-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "receipt://universal-symbol/receipt-store/replacement-decision",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-receipt-missing"
+    },
+    {
+      "requirement_id": "requirement://deterministic-idempotency-key",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "idempotency://universal-symbol/receipt-store/replacement-decision",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-idempotency-key-missing"
+    },
+    {
+      "requirement_id": "requirement://canonical-replay-input",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "replay://universal-symbol/receipt-store/replacement-canonical-input",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-canonical-input-missing"
+    },
+    {
+      "requirement_id": "requirement://decision-digest-binding",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "digest://universal-symbol/receipt-store/replacement-decisions",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-decision-digest-missing"
+    },
+    {
+      "requirement_id": "requirement://tenant-scope-digest",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "digest://universal-symbol/receipt-store/replacement-tenant-scope",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-tenant-scope-digest-missing"
+    },
+    {
+      "requirement_id": "requirement://replay-cursor",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "cursor://universal-symbol/receipt-store/replacement-replay",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-cursor-missing"
+    },
+    {
+      "requirement_id": "requirement://duplicate-effect-denial",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "effect-boundary://universal-symbol/receipt-store/replacement-duplicate-denial",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-duplicate-effect-denial-missing"
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "audit://universal-symbol/receipt-store/replacement-replay",
+      "current_decision": "replacement_replay_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/replacement-replay-audit-receipt-missing"
+    }
+  ],
+  "authority_denials": {
+    "replacement_replay_bound": false,
+    "idempotency_key_accepted": false,
+    "replacement_decision_recorded": false,
+    "receipt_store_append_performed": false,
+    "replay_state_committed": false,
+    "duplicate_effect_allowed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "replay_constraints": {
+    "replacement_decision_receipt_required": true,
+    "deterministic_idempotency_key_required": true,
+    "canonical_replay_input_required": true,
+    "decision_digest_binding_required": true,
+    "tenant_scope_digest_required": true,
+    "replay_cursor_required": true,
+    "duplicate_effect_denial_required": true,
+    "audit_receipt_required": true
+  },
+  "rejection_policy": {
+    "missing_replacement_receipt_blocks_replay": true,
+    "missing_key_or_canonical_input_blocks_replay": true,
+    "missing_digest_binding_blocks_replay": true,
+    "missing_cursor_or_duplicate_denial_blocks_replay": true,
+    "unknown_hard_constraint_blocks_replay": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "replacement_decision_receipt_missing",
+    "deterministic_idempotency_key_missing",
+    "canonical_replay_input_missing",
+    "decision_digest_binding_missing",
+    "tenant_scope_digest_missing",
+    "replay_cursor_missing",
+    "duplicate_effect_denial_missing",
+    "audit_receipt_missing",
+    "replacement_replay_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "define_replacement_replay_cursor_receipt",
+    "bind_replacement_idempotency_key_derivation",
+    "define_duplicate_effect_observation_receipt",
+    "define_replacement_replay_audit_receipt"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "replay_requirement_count": 8,
+    "authority_denial_count": 12,
+    "replay_constraint_count": 8,
+    "rejection_check_count": 6,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 13
+  }
+}

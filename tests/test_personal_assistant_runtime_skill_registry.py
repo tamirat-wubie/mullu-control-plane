@@ -41,12 +41,14 @@ def test_default_registry_loads_foundation_skills() -> None:
     skill_ids = registry.skill_ids()
     inbox_summary = registry.get("email.inbox.summarize")
 
-    assert registry.count == 15
+    assert registry.count == 17
     assert skill_ids == tuple(sorted(skill_ids))
     assert "email.inbox.summarize" in skill_ids
     assert "math.reasoning.plan" in skill_ids
     assert "planning.optimize_schedule" in skill_ids
     assert "task.create_draft" in skill_ids
+    assert "calendar.event.create.with_approval" in skill_ids
+    assert "task.create.with_approval" in skill_ids
     assert inbox_summary.mode is SkillMode.READ_ONLY
     assert inbox_summary.risk_level is SkillRiskLevel.P1
     assert inbox_summary.receipt_required is True
@@ -59,6 +61,11 @@ def test_registry_queries_by_connector_and_capability_are_deterministic() -> Non
     draft_matches = registry.skills_for_capabilities(("email.reply_suggest",), max_risk_level="P2")
     send_below_risk = registry.skills_for_capabilities(("email.send.with_approval",), max_risk_level="P3")
     send_with_risk = registry.skills_for_capabilities(("email.send.with_approval",), max_risk_level=SkillRiskLevel.P4)
+    calendar_create = registry.skills_for_capabilities(
+        ("calendar.event.create.with_approval",),
+        max_risk_level=SkillRiskLevel.P3,
+    )
+    task_create = registry.skills_for_capabilities(("task.create.with_approval",), max_risk_level=SkillRiskLevel.P3)
     math_matches = registry.skills_for_capabilities(("personal_assistant.skill_plan.build",), max_risk_level="P2")
 
     assert gmail_skill_ids == (
@@ -70,6 +77,8 @@ def test_registry_queries_by_connector_and_capability_are_deterministic() -> Non
     assert tuple(skill.skill_id for skill in draft_matches) == ("email.response.draft",)
     assert send_below_risk == ()
     assert tuple(skill.skill_id for skill in send_with_risk) == ("email.send.with_approval",)
+    assert tuple(skill.skill_id for skill in calendar_create) == ("calendar.event.create.with_approval",)
+    assert tuple(skill.skill_id for skill in task_create) == ("task.create.with_approval",)
     assert "math.reasoning.plan" in tuple(skill.skill_id for skill in math_matches)
     assert all(skill.risk_level.order <= SkillRiskLevel.P2.order for skill in math_matches)
 
@@ -98,7 +107,7 @@ def test_duplicate_skill_id_is_rejected() -> None:
 
     assert "duplicate skill_id" in str(exc_info.value)
     assert "email.inbox.summarize" in str(exc_info.value)
-    assert len(registry_payload["skills"]) == 16
+    assert len(registry_payload["skills"]) == 18
 
 
 def test_read_only_mutation_is_rejected_by_runtime_contract() -> None:
@@ -194,16 +203,24 @@ def test_planning_skill_mutation_is_rejected_by_runtime_contract() -> None:
 
 
 def test_high_risk_or_write_capable_skill_requires_approval() -> None:
-    registry_payload = _load_registry_payload()
-    skill = _skill_by_id(registry_payload, "email.send.with_approval")
-    skill["requires_approval"] = False
+    email_payload = _load_registry_payload()
+    _skill_by_id(email_payload, "email.send.with_approval")["requires_approval"] = False
 
-    with pytest.raises(PersonalAssistantInvariantError) as exc_info:
-        PersonalAssistantSkillRegistry.from_mapping(registry_payload)
+    with pytest.raises(PersonalAssistantInvariantError) as email_exc:
+        PersonalAssistantSkillRegistry.from_mapping(email_payload)
 
-    assert "email.send.with_approval" in str(exc_info.value)
-    assert "P4" in str(exc_info.value)
-    assert "requires approval" in str(exc_info.value)
+    calendar_payload = _load_registry_payload()
+    _skill_by_id(calendar_payload, "calendar.event.create.with_approval")["requires_approval"] = False
+
+    with pytest.raises(PersonalAssistantInvariantError) as calendar_exc:
+        PersonalAssistantSkillRegistry.from_mapping(calendar_payload)
+
+    assert "email.send.with_approval" in str(email_exc.value)
+    assert "P4" in str(email_exc.value)
+    assert "requires approval" in str(email_exc.value)
+    assert "calendar.event.create.with_approval" in str(calendar_exc.value)
+    assert "P3" in str(calendar_exc.value)
+    assert "requires approval" in str(calendar_exc.value)
 
 
 def test_read_model_preserves_non_execution_boundary() -> None:
@@ -211,12 +228,17 @@ def test_read_model_preserves_non_execution_boundary() -> None:
     read_model = registry.read_model()
     skills_by_id = {skill["skill_id"]: skill for skill in read_model["skills"]}
     send_skill = skills_by_id["email.send.with_approval"]
+    calendar_skill = skills_by_id["calendar.event.create.with_approval"]
+    task_skill = skills_by_id["task.create.with_approval"]
     memory_skill = skills_by_id["memory.observe"]
 
-    assert read_model["skill_count"] == 15
+    assert read_model["skill_count"] == 17
+    assert read_model["risk_levels"]["P3"] == 2
     assert read_model["risk_levels"]["P4"] == 1
     assert read_model["risk_levels"]["P5"] == 1
     assert send_skill["metadata"]["execution_enabled"] is False
+    assert calendar_skill["metadata"]["execution_enabled"] is False
+    assert task_skill["metadata"]["execution_enabled"] is False
     assert memory_skill["metadata"]["nested_mind_status"] == "staging_only"
     assert all(skill["receipt_required"] is True for skill in read_model["skills"])
     assert all(skill["uao_required"] is True for skill in read_model["skills"])

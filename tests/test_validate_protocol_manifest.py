@@ -68,6 +68,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     operator_observation_entry = entries[
         "governed-planning-profile-operator-shadow-pilot-observation-receipt"
     ]
+    runtime_approval_entry = entries[
+        "governed-planning-profile-runtime-promotion-approval-packet"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -93,6 +96,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-operator-shadow-pilot-observation-receipt:1"
     )
     assert operator_observation_entry["surface"] == "planning"
+    assert runtime_approval_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_promotion_approval_packet.schema.json"
+    )
+    assert runtime_approval_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
+    )
+    assert runtime_approval_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:
@@ -1909,6 +1919,65 @@ def test_protocol_manifest_indexes_read_only_worker_phi_gov_dispatch_authorizati
         witness_entry["urn"]
         == "urn:mullusi:schema:read-only-worker-phi-gov-dispatch-authorization-witness:1"
     )
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_universal_symbol_runtime_authority_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["universal-symbol-runtime-authority-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/universal_symbol_runtime_authority_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1"
+    assert witness_entry["surface"] == "symbol"
+
+def test_protocol_manifest_indexes_universal_symbol_replacement_replay_idempotency_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries[
+        "universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == (
+        "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json"
+    )
+    assert witness_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-replay-idempotency-witness:1"
+    )
+    assert witness_entry["surface"] == "symbol"
+
+def test_protocol_manifest_indexes_read_only_worker_effect_reconciliation_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-effect-reconciliation-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_effect_reconciliation_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-effect-reconciliation-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_receipt_append_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-receipt-append-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_receipt_append_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-receipt-append-witness:1"
+    assert witness_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_terminal_closure_witness_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["read-only-worker-terminal-closure-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/read_only_worker_terminal_closure_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
     assert witness_entry["surface"] == "worker"
 
 

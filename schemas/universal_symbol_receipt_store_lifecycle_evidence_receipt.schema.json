@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-receipt:1",
+  "title": "Universal Symbol Receipt Store Lifecycle Evidence Receipt",
+  "description": "Foundation Mode receipt contract for UniversalSymbol receipt-store lifecycle evidence. This receipt defines active grant identity, reapproval window, expiry evidence, revocation request, revocation effect boundary, replacement decision, and lifecycle audit evidence obligations while denying lifecycle recording, grant extension, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, state mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "receipt_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "lifecycle_evidence_decision",
+    "lifecycle_evidence_receipt_is_not_lifecycle_authority",
+    "lifecycle_subject",
+    "required_live_evidence",
+    "evidence_consistency_constraints",
+    "authority_denials",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "universal-symbol-receipt-store-lifecycle-evidence-receipt-foundation"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "receipt_scope": {
+      "type": "string",
+      "const": "foundation-mode-universal-symbol-receipt-store-lifecycle-evidence"
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "lifecycle_evidence_decision": {
+      "type": "string",
+      "const": "blocked_pending_live_grant_temporal_revocation_replacement_and_audit_evidence"
+    },
+    "lifecycle_evidence_receipt_is_not_lifecycle_authority": { "type": "boolean", "const": true },
+    "lifecycle_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol_ref",
+        "approval_decision_witness_ref",
+        "reapproval_revocation_witness_ref",
+        "operator_reapproval_expiry_witness_ref",
+        "operator_revocation_witness_ref",
+        "replacement_decision_receipt_ref",
+        "tenant_scope_ref",
+        "authority_scope"
+      ],
+      "properties": {
+        "symbol_ref": { "$ref": "#/$defs/ref" },
+        "approval_decision_witness_ref": { "$ref": "#/$defs/ref" },
+        "reapproval_revocation_witness_ref": { "$ref": "#/$defs/ref" },
+        "operator_reapproval_expiry_witness_ref": { "$ref": "#/$defs/ref" },
+        "operator_revocation_witness_ref": { "$ref": "#/$defs/ref" },
+        "replacement_decision_receipt_ref": { "$ref": "#/$defs/ref" },
+        "tenant_scope_ref": { "$ref": "#/$defs/ref" },
+        "authority_scope": { "type": "string", "const": "receipt-store-lifecycle-evidence-only" }
+      }
+    },
+    "required_live_evidence": {
+      "type": "array",
+      "minItems": 7,
+      "items": { "$ref": "#/$defs/live_evidence_requirement" },
+      "uniqueItems": true
+    },
+    "evidence_consistency_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_grant_matches_approval_decision_required",
+        "reapproval_window_after_decision_required",
+        "expiry_after_grant_required",
+        "revocation_effect_boundary_required",
+        "replacement_decision_links_revoked_grant_required",
+        "lifecycle_audit_receipt_required",
+        "all_live_evidence_required_before_lifecycle_recording"
+      ],
+      "properties": {
+        "active_grant_matches_approval_decision_required": { "type": "boolean", "const": true },
+        "reapproval_window_after_decision_required": { "type": "boolean", "const": true },
+        "expiry_after_grant_required": { "type": "boolean", "const": true },
+        "revocation_effect_boundary_required": { "type": "boolean", "const": true },
+        "replacement_decision_links_revoked_grant_required": { "type": "boolean", "const": true },
+        "lifecycle_audit_receipt_required": { "type": "boolean", "const": true },
+        "all_live_evidence_required_before_lifecycle_recording": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_reapproval_recorded",
+        "receipt_store_revocation_recorded",
+        "approval_grant_extended",
+        "replacement_decision_recorded",
+        "lifecycle_audit_committed",
+        "receipt_store_append_performed",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "receipt_store_reapproval_recorded": { "type": "boolean", "const": false },
+        "receipt_store_revocation_recorded": { "type": "boolean", "const": false },
+        "approval_grant_extended": { "type": "boolean", "const": false },
+        "replacement_decision_recorded": { "type": "boolean", "const": false },
+        "lifecycle_audit_committed": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_active_grant_blocks_lifecycle_recording",
+        "missing_reapproval_window_blocks_lifecycle_recording",
+        "missing_expiry_evidence_blocks_lifecycle_recording",
+        "missing_revocation_request_blocks_lifecycle_recording",
+        "missing_replacement_decision_blocks_lifecycle_recording",
+        "missing_lifecycle_audit_blocks_lifecycle_recording",
+        "unknown_hard_constraint_blocks_lifecycle_recording",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_active_grant_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "missing_reapproval_window_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "missing_expiry_evidence_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "missing_revocation_request_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "missing_replacement_decision_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "missing_lifecycle_audit_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_lifecycle_recording": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "active_grant_identity_missing",
+          "reapproval_window_missing",
+          "expiry_evidence_missing",
+          "revocation_request_missing",
+          "revocation_effect_boundary_missing",
+          "replacement_decision_path_missing",
+          "lifecycle_audit_receipt_missing",
+          "receipt_store_lifecycle_recording_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_evidence_requirement_count",
+        "consistency_constraint_count",
+        "authority_denial_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "live_evidence_requirement_count": { "type": "integer", "const": 7 },
+        "consistency_constraint_count": { "type": "integer", "const": 7 },
+        "authority_denial_count": { "type": "integer", "const": 12 },
+        "rejection_check_count": { "type": "integer", "const": 8 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "live_evidence_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "evidence_kind",
+        "proof_state",
+        "required_evidence_ref",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "evidence_id": { "$ref": "#/$defs/ref" },
+        "evidence_kind": {
+          "type": "string",
+          "enum": [
+            "active_grant_identity",
+            "reapproval_window",
+            "expiry_evidence",
+            "revocation_request",
+            "revocation_effect_boundary",
+            "replacement_decision",
+            "lifecycle_audit_receipt"
+          ]
+        },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "required_evidence_ref": { "$ref": "#/$defs/ref" },
+        "current_decision": { "type": "string", "const": "lifecycle_recording_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    }
+  }
+}

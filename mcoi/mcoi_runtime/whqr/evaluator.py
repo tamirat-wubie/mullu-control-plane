@@ -7,10 +7,19 @@ Invariants: no side effects, no tool calls, unresolved negation fails closed.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Mapping
 
 from mcoi_runtime.contracts.whqr import ConnectorExpr, EvidenceGate, GateResult, LogicalExpr, LogicalOp, NormGate, TruthGate, WHQRExpr, WHQRNode
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+
+def _validate_node_result_key(key: object) -> str:
+    if not isinstance(key, str):
+        raise ValueError("WHQR evaluation context node result key must be a string")
+    if not key.strip():
+        raise ValueError("WHQR evaluation context node result key cannot be blank")
+    return key
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,7 +27,20 @@ class WHQREvaluationContext:
     node_results: Mapping[str, GateResult] = field(default_factory=dict)
 
     def __init__(self, node_results: Mapping[str, GateResult] | None = None, bindings: Mapping[str, GateResult] | None = None) -> None:
-        object.__setattr__(self, "node_results", node_results if node_results is not None else (bindings or {}))
+        if node_results is not None and bindings is not None:
+            raise ValueError("WHQR evaluation context accepts node_results or bindings, not both")
+        source = node_results if node_results is not None else bindings
+        frozen_node_results: dict[str, GateResult] = {}
+        if source is not None:
+            validated_pairs: list[tuple[str, GateResult]] = []
+            for key, value in source.items():
+                validated_key = _validate_node_result_key(key)
+                if not isinstance(value, GateResult):
+                    raise ValueError("WHQR evaluation context node result value must be GateResult")
+                validated_pairs.append((validated_key, value))
+            for validated_key, value in sorted(validated_pairs):
+                frozen_node_results[validated_key] = value
+        object.__setattr__(self, "node_results", MappingProxyType(frozen_node_results))
 
     @property
     def bindings(self) -> Mapping[str, GateResult]:
