@@ -1,0 +1,136 @@
+{
+  "report_id": "agentic_service_harness_agent_run_receipt_emitter_dry_run",
+  "schema_version": 1,
+  "generated_at": "2026-06-16T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_contract_ref": "examples/agentic_service_harness_read_models.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "run-read-model-foundation",
+    "agent_run_mode": "read_only",
+    "foundation_phase": "foundation_dry_run_only",
+    "read_only": true,
+    "dry_run_only": true,
+    "receipt_store_append_enabled": false,
+    "external_adapter_integrated": false,
+    "secret_values_serialized": false
+  },
+  "dry_run_contract": {
+    "emitter_id": "agent-run-receipt-emitter-dry-run-foundation",
+    "emitter_mode": "EMITTER_DRY_RUN_ONLY",
+    "source_task_ref": "task://agentic-service-harness/agent-run-read-model-foundation",
+    "allowed_action_classes": [
+      "dry_run"
+    ],
+    "forbidden_action_classes": [
+      "execute_adapter",
+      "write_to_branch",
+      "open_pr",
+      "append_receipt_store",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "required_source_refs": [
+      "schemas/agentic_service_harness.schema.json",
+      "examples/agentic_service_harness_read_models.foundation.json",
+      "schemas/agentic_service_harness_read_models.schema.json"
+    ],
+    "required_gate_refs": [
+      "gate://harness/no-live-adapter-execution",
+      "gate://harness/no-branch-write",
+      "gate://harness/no-pr-creation",
+      "gate://harness/no-receipt-store-append",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "emission_obligations_checked": [
+      "obligation://record-dry-run-envelope",
+      "obligation://deny-runtime-receipt-emission",
+      "obligation://deny-receipt-store-append",
+      "obligation://deny-runtime-effects",
+      "obligation://deny-secret-material",
+      "obligation://bind-append-admission-blocker"
+    ],
+    "validation_refs": [
+      "scripts/validate_agentic_service_harness_agent_run_receipt_emitter_dry_run.py",
+      "scripts/validate_agentic_service_harness_read_models.py"
+    ],
+    "read_only": true
+  },
+  "simulated_receipt_emission": {
+    "result_state": "DRY_RUN_RECORDED",
+    "simulated_receipt_kind": "future_agent_run_receipt",
+    "dry_run_receipt_recorded": true,
+    "runtime_receipt_emitted": false,
+    "receipt_store_appended": false,
+    "adapter_executed": false,
+    "branch_created": false,
+    "pull_request_opened": false,
+    "runtime_state_written": false,
+    "mutation_route_called": false,
+    "external_effects_observed": false,
+    "filesystem_writes_observed": false,
+    "connector_calls_observed": false,
+    "raw_output_included": false,
+    "raw_secret_material_included": false,
+    "output_digest": "sha256:7ef21a0f2fb7c3db5dd3e2abef6d7db3652b48f7828e2fd823580a9f0c79f42d",
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "append_admission_gate": {
+    "decision": "APPEND_BLOCKED_AWAITING_APPROVAL_AND_STORE_BINDING",
+    "append_admitted": false,
+    "append_target_ref": "receipt-store://agentic-service-harness/agent-run",
+    "required_before_append_refs": [
+      "evidence://receipt-store-write-path-binding",
+      "evidence://uao-append-admission",
+      "evidence://operator-approval-for-append",
+      "evidence://append-rollback-plan",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ],
+    "blocked_reason_refs": [
+      "blocked://receipt-store/write-path-not-bound",
+      "blocked://uao/append-not-admitted",
+      "blocked://operator-approval/not-present",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "terminal_closure_allowed": false
+  },
+  "authority_denials": {
+    "live_adapter_execution_enabled": false,
+    "receipt_store_append_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "agent_run_receipt_emitter_dry_run_schema": "schemas/agentic_service_harness_agent_run_receipt_emitter_dry_run.schema.json",
+    "read_models_schema": "schemas/agentic_service_harness_read_models.schema.json",
+    "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
+    "agentic_service_harness_read_models_schema": "schemas/agentic_service_harness_read_models.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-agent-run-receipt-emitter-dry-run",
+      "command": "python scripts/validate_agentic_service_harness_agent_run_receipt_emitter_dry_run.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add append-store write-path witness and UAO append-admission preflight; keep append disabled until approval evidence exists.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
