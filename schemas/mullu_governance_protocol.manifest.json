@@ -1661,6 +1661,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
     },
     {
+      "path": "schemas/read_only_worker_runtime_enablement_witness.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-witness:1"
+    },
+    {
       "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
       "schema_id": "read-only-worker-rehearsal-receipt",
       "surface": "worker",
