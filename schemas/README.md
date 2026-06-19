@@ -195,6 +195,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_runtime_enablement_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker runtime enablement evidence |
 | `read_only_worker_runtime_enablement_operator_input_request.schema.json` | Public-safe request contract for missing read-only worker runtime enablement evidence names |
 | `read_only_worker_runtime_enablement_evidence_request_status_ledger.schema.json` | Read-only status ledger for unresolved read-only worker runtime enablement evidence requests |
+| `read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json` | Submitted-for-review repo-local evidence refs for read-only worker runtime enablement, without acceptance or authority |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |

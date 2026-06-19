@@ -1,0 +1,54 @@
+{
+  "affected_modules": [
+    "read_only_worker_runtime_enablement_submitted_evidence_refs",
+    "read_only_worker_runtime_enablement_status_ledger",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add a schema-backed ReadOnlyWorkerRuntimeEnablementSubmittedEvidenceRefs contract that consumes the status ledger, submits repo-local witness refs for review, preserves missing operator/runtime inputs, and blocks evidence acceptance, authority, runtime enablement, dispatch, worker invocation, receipt emission, receipt append, and terminal closure.",
+  "data_model_changes": [
+    "Introduce submitted evidence ref records linked to source status records and source operator input ids.",
+    "Track repo-local refs submitted for review separately from missing operator evidence names.",
+    "Keep accepted/rejected evidence refs, authority grant refs, and all runtime/effect counts empty or zero."
+  ],
+  "design_id": "sdlc_design_runtime_enablement_submitted_evidence_refs_20260619",
+  "implementation_plan": [
+    "Add submitted evidence refs schema.",
+    "Add deterministic validator and builder derived from the status ledger projection.",
+    "Generate the Foundation Mode submitted evidence refs fixture.",
+    "Add focused tests for fixture parity, validation receipt writing, authority overclaim rejection, acceptance drift rejection, missing input overclaim rejection, missing record rejection, and CLI JSON output.",
+    "Register the schema in the protocol manifest and CI worker runtime enablement lane.",
+    "Update worker docs, schema README, gap register, and SDLC artifacts."
+  ],
+  "invariants": [
+    "Submitted refs are not accepted evidence.",
+    "Foundation witness refs do not satisfy runtime enablement input names by themselves.",
+    "Runtime enablement remains denied.",
+    "Dispatch, worker invocation, receipt emission, receipt append, and terminal closure remain denied.",
+    "Connector, filesystem, network, secret, and success-claim authority remain denied."
+  ],
+  "requirement_id": "sdlc_req_runtime_enablement_submitted_evidence_refs_20260619",
+  "rollback_plan": [
+    "Remove the submitted evidence refs schema, fixture, validator, tests, manifest entry, CI inclusion, docs updates, and SDLC artifacts.",
+    "Keep the prior status ledger artifact as the active unresolved evidence boundary."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_read_only_worker_runtime_enablement_submitted_evidence_refs_contract -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The artifact advances evidence handling from unresolved status to submitted-for-review refs without changing runtime authority.",
+    "Repository-local witness refs are useful for review but intentionally remain insufficient for runtime enablement acceptance."
+  ]
+}
