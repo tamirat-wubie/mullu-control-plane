@@ -24,7 +24,7 @@ def _context(user_input: str, **overrides: object) -> ShadowContext:
 
 
 def test_deep_engine_runs_when_gate_selects_deep_and_records_receipt() -> None:
-    runtime = build_inceptadive_shadow_runtime({})
+    runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1"})
     context = _context("deploy it", risk_level=ShadowSeverity.HIGH, external_side_effect=True)
 
     result, receipt = runtime.inspect_request(context)
