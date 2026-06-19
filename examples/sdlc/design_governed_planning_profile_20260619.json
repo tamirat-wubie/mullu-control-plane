@@ -1,0 +1,45 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_20260619",
+  "architecture_summary": "Add a schema-backed GovernedPlanningProfile, Foundation Mode example, deterministic validator, focused tests, and explanatory documentation. The profile references existing planning and execution lineages without normalizing them into a new runtime type, granting authority, or altering live behavior.",
+  "affected_modules": [
+    "phi_gps_problem_and_solver_lineage",
+    "gateway_planning_and_simulation_lineage",
+    "whqr_mil_live_execution_lineage",
+    "orgos_case_governance_lineage",
+    "universal_action_orchestration_lineage",
+    "holistic_loop_and_learning_admission_lineage"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfile fields for fail-closed scope, source bindings, planning refs, adaptation policy, validation refs, count-based drift checks, governance refs, evidence refs, and receipt envelope."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile.schema.json",
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_governed_planning_profile.py",
+    "tests/test_validate_governed_planning_profile.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the GovernedPlanningProfile schema, Foundation example, validator, focused tests, documentation, and SDLC artifacts, then rerun schema and SDLC validation. No runtime rollback is required because the first slice performs no runtime registration, dispatch, connector call, write, migration, or authority change.",
+  "migration_plan": "No runtime migration. Existing ProblemStar, Phi-GPS, gateway planning, WHQR/MIL, OrgOS, holistic loop, UAO, closure, recovery, and learning records retain their current identities. Future adapters must project references without mutating source objects.",
+  "test_plan": [
+    "python scripts/validate_governed_planning_profile.py",
+    "python scripts/validate_governed_planning_profile.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_sdlc_artifact.py"
+  ],
+  "uao_ref": "uao://governed-planning-profile/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/design/20260619"
+}
