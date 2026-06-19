@@ -42,6 +42,11 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Embeds compact `inceptadive_shadow_advisory` metadata in assistant preview and assistant planning responses.
    - Keeps the advisory separate from the plan outcome, operator queue state, consent gate, and dispatch authority.
 
+9. `mcoi_runtime.app.inceptadive_assistant_response_embedding`
+   - Embeds redacted `inceptadive_shadow_advisory` metadata in live non-streaming assistant response envelopes.
+   - Covers `POST /api/v1/chat` and `POST /api/v1/chat/workflow`.
+   - Route contract: `docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md`.
+
 ## Runtime path
 
 ```text
@@ -61,6 +66,9 @@ request or candidate action
 - Learning output stays `governance_pending` until a separate governed write path accepts it.
 - Phi-GPS advisory output does not close proof obligations by itself.
 - Assistant response embedding is metadata-only and does not change assistant plan outcomes.
+- Live assistant response embedding is metadata-only and does not change content,
+  conversation state, workflow status, cost accounting, connector dispatch, or
+  governance verdicts.
 - `POST /api/v1/shadow/inspect` is advisory-only and cannot execute candidate actions.
 
 ## Route slice closure
@@ -84,6 +92,7 @@ Focused tests cover:
 - redacted inspection route execution without raw request text exposure;
 - inspection route replay fixture alignment with redacted response and receipt counts;
 - assistant response advisory embedding without execution authority.
+- live chat and chat-workflow response embedding without raw request or assistant content exposure.
 
 ## Status
 
