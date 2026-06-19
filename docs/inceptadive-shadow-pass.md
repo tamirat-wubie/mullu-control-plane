@@ -71,6 +71,11 @@ Shadow path:
 - Suppression scoring with Mesh denominator guard.
 - Deterministic shadow receipts.
 - Feature-flagged application integration facade.
+- Read-only `POST /api/v1/shadow/inspect` route with a dedicated contract in
+  `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
+- Replay fixture in
+  `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json` proving redacted
+  response and receipt-count behavior.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis

@@ -35,6 +35,8 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
 7. `mcoi_runtime.app.routers.shadow`
    - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
    - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
+   - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
+   - Replay fixture: `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json`.
 
 8. `mcoi_runtime.app.routers.assistant`
    - Embeds compact `inceptadive_shadow_advisory` metadata in assistant preview and assistant planning responses.
@@ -80,6 +82,7 @@ Focused tests cover:
 - post-outcome learning candidates remaining governance-pending;
 - Phi/InceptaDive solver advisory remaining non-executing.
 - redacted inspection route execution without raw request text exposure;
+- inspection route replay fixture alignment with redacted response and receipt counts;
 - assistant response advisory embedding without execution authority.
 
 ## Status
