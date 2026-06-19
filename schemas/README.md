@@ -188,6 +188,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_active_runtime_lease_admission_witness.schema.json` | Canonical Foundation Mode witness for future active read-only worker runtime lease admission evidence |
 | `read_only_worker_uao_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker UAO dispatch authorization evidence |
 | `read_only_worker_phi_gov_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker Phi_gov dispatch authorization evidence |
+| `read_only_worker_effect_reconciliation_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker effect reconciliation evidence |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
