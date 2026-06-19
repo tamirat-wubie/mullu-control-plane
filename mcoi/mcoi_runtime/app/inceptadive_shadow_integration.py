@@ -44,7 +44,7 @@ class InceptaDiveShadowRuntime:
     config: ShadowInterrogationConfig
     receipts_enabled: bool = True
     dependency_available: bool = True
-    deep_engine_available: bool = True
+    deep_engine_available: bool = False
     receipt_store: ShadowReceiptStore | None = None
 
     def inspect_request(self, context: ShadowContext) -> tuple[ShadowPassResult, ShadowReceipt | None]:
@@ -142,7 +142,7 @@ def build_inceptadive_shadow_runtime(env: Mapping[str, str]) -> InceptaDiveShado
         config=config,
         receipts_enabled=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_RECEIPTS_ENABLED", "1")),
         dependency_available=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEPENDENCY_AVAILABLE", "1")),
-        deep_engine_available=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE", "1")),
+        deep_engine_available=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE", "0")),
         receipt_store=select_shadow_receipt_store(env),
     )
 
