@@ -2369,6 +2369,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "read-only-worker-runtime-authority-chain-witness",
+      "path": "schemas/read_only_worker_runtime_authority_chain_witness.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-authority-chain-witness:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "read-only-worker-active-runtime-lease-admission-witness",
       "path": "schemas/read_only_worker_active_runtime_lease_admission_witness.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-active-runtime-lease-admission-witness:1",

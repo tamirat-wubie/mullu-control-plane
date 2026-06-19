@@ -538,6 +538,9 @@ jobs:
       - name: Run worker runtime dispatch admission witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_dispatch_admission_witness.py -q
 
+      - name: Run worker runtime authority chain witness tests
+        run: python -m pytest tests/test_validate_read_only_worker_runtime_authority_chain_witness.py -q
+
       - name: Run worker active runtime lease admission witness tests
         run: python -m pytest tests/test_validate_read_only_worker_active_runtime_lease_admission_witness.py -q
 
