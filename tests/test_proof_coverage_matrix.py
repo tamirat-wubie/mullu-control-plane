@@ -7430,14 +7430,61 @@ def test_universal_symbol_receipt_store_lifecycle_evidence_receipt_surface_block
     assert "lifecycle_evidence_producer_rejects_raw_secret_like_ref" in witnesses
     assert "verifier_accepts_complete_refs_without_authority" in witnesses
     assert "verifier_rejects_secret_like_ref" in witnesses
+    assert "verifier_rejects_wrong_scheme_for_evidence_kind" in witnesses
+    assert "verifier_rejects_local_json_authority_drift" in witnesses
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "exact_test_anchor_count"
-    ] == 16
+    ] == 19
     assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_receipt"][
         "unanchored_witness_count"
     ] == 0
     assert (
         closure_actions["publish_universal_symbol_receipt_store_lifecycle_evidence_receipt"]["status"]
+        == "closed"
+    )
+
+
+def test_universal_symbol_receipt_store_lifecycle_evidence_bundle_surface_blocks_authority() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["universal_symbol_receipt_store_lifecycle_evidence_bundle"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert surface["request_proof"] == "request_proof"
+    assert surface["action_proof"] == "action_proof"
+    assert "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json" in surface[
+        "representative_paths"
+    ]
+    assert "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json" in surface[
+        "representative_paths"
+    ]
+    assert "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py" in surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py" in surface[
+        "evidence_files"
+    ]
+    assert "foundation_lifecycle_evidence_bundle_validates" in witnesses
+    assert "build_lifecycle_evidence_bundle_from_verifier_report" in witnesses
+    assert "lifecycle_evidence_bundle_rejects_authority_drift" in witnesses
+    assert "lifecycle_evidence_bundle_rejects_missing_evidence_kind" in witnesses
+    assert "lifecycle_evidence_bundle_rejects_placeholder_content_verified" in witnesses
+    assert "lifecycle_evidence_bundle_rejects_scheme_content_verified" in witnesses
+    assert "lifecycle_evidence_bundle_rejects_evidence_ref_count_drift" in witnesses
+    assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_bundle"][
+        "exact_test_anchor_count"
+    ] == 7
+    assert witness_surfaces["universal_symbol_receipt_store_lifecycle_evidence_bundle"][
+        "unanchored_witness_count"
+    ] == 0
+    assert (
+        closure_actions["publish_universal_symbol_receipt_store_lifecycle_evidence_bundle"]["status"]
         == "closed"
     )
 

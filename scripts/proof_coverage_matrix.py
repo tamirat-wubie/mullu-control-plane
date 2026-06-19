@@ -1495,6 +1495,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
                 "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
                 "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
                 "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
                 "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
@@ -1512,12 +1514,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
                 "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
                 "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
                 "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
                 "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
                 "scripts/proof_coverage_matrix.py",
                 "tests/test_proof_coverage_matrix.py",
             ],
@@ -1539,6 +1543,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "verifier_rejects_missing_repository_relative_ref",
                 "verifier_rejects_authority_drift",
                 "verifier_rejects_secret_like_ref",
+                "verifier_rejects_wrong_scheme_for_evidence_kind",
+                "verifier_accepts_matching_local_json_ref_without_authority",
+                "verifier_rejects_local_json_authority_drift",
             ],
             runtime_witness_anchor_aliases={
                 "foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_validates": [
@@ -1588,6 +1595,72 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "verifier_rejects_secret_like_ref": [
                     "verifier_rejects_secret_like_ref"
+                ],
+                "verifier_rejects_wrong_scheme_for_evidence_kind": [
+                    "verifier_rejects_wrong_scheme_for_evidence_kind"
+                ],
+                "verifier_accepts_matching_local_json_ref_without_authority": [
+                    "verifier_accepts_matching_local_json_ref_without_authority"
+                ],
+                "verifier_rejects_local_json_authority_drift": [
+                    "verifier_rejects_local_json_authority_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_lifecycle_evidence_bundle",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+                "validate_universal_symbol_receipt_store_lifecycle_evidence_bundle",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+                "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+                "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+                "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+                "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+                "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store lifecycle evidence bundle carries the seven lifecycle evidence refs and verifier outcomes as a non-authorizing packet while denying lifecycle recording, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, and terminal closure.",
+            [
+                "foundation_lifecycle_evidence_bundle_validates",
+                "build_lifecycle_evidence_bundle_from_verifier_report",
+                "lifecycle_evidence_bundle_rejects_authority_drift",
+                "lifecycle_evidence_bundle_rejects_missing_evidence_kind",
+                "lifecycle_evidence_bundle_rejects_placeholder_content_verified",
+                "lifecycle_evidence_bundle_rejects_scheme_content_verified",
+                "lifecycle_evidence_bundle_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_lifecycle_evidence_bundle_validates": [
+                    "foundation_lifecycle_evidence_bundle_validates"
+                ],
+                "build_lifecycle_evidence_bundle_from_verifier_report": [
+                    "build_lifecycle_evidence_bundle_from_verifier_report"
+                ],
+                "lifecycle_evidence_bundle_rejects_authority_drift": [
+                    "lifecycle_evidence_bundle_rejects_authority_drift"
+                ],
+                "lifecycle_evidence_bundle_rejects_missing_evidence_kind": [
+                    "lifecycle_evidence_bundle_rejects_missing_evidence_kind"
+                ],
+                "lifecycle_evidence_bundle_rejects_placeholder_content_verified": [
+                    "lifecycle_evidence_bundle_rejects_placeholder_content_verified"
+                ],
+                "lifecycle_evidence_bundle_rejects_scheme_content_verified": [
+                    "lifecycle_evidence_bundle_rejects_scheme_content_verified"
+                ],
+                "lifecycle_evidence_bundle_rejects_evidence_ref_count_drift": [
+                    "lifecycle_evidence_bundle_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -13426,6 +13499,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_receipt",
             "surfaces": ["universal_symbol_receipt_store_lifecycle_evidence_receipt"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_lifecycle_evidence_bundle",
+            "surfaces": ["universal_symbol_receipt_store_lifecycle_evidence_bundle"],
             "status": "closed",
         },
         {

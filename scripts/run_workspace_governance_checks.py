@@ -971,6 +971,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_lifecycle_evidence_bundle",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_lifecycle_audit_receipt",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py"),
         ),

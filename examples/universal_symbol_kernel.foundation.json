@@ -185,7 +185,7 @@
     "everything_symbolizable": true,
     "authority_denial_count": 9,
     "symbolizable_surface_count": 16,
-    "evidence_ref_count": 119
+    "evidence_ref_count": 123
   },
   "evidence_refs": [
     "schemas/universal_symbol.schema.json",
@@ -198,6 +198,7 @@
     "schemas/universal_symbol_receipt_store_operator_revocation_witness.schema.json",
     "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
     "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
     "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
     "schemas/universal_symbol_receipt_store_replacement_decision_receipt.schema.json",
     "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.schema.json",
@@ -230,6 +231,7 @@
     "examples/universal_symbol_receipt_store_operator_revocation_witness.foundation.json",
     "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
     "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
     "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
     "examples/universal_symbol_receipt_store_replacement_decision_receipt.foundation.json",
     "examples/universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.foundation.json",
@@ -269,6 +271,7 @@
     "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
     "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py",
     "scripts/validate_universal_symbol_append_audit_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py",
@@ -280,6 +283,7 @@
     "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
     "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py",
     "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
     "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py",

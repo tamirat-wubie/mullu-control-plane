@@ -130,6 +130,8 @@
   "evidence_refs": [
     "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
     "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
     "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
     "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
@@ -153,6 +155,8 @@
     "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py"
   ],
@@ -162,6 +166,6 @@
     "authority_denial_count": 12,
     "rejection_check_count": 8,
     "blocked_reason_count": 9,
-    "evidence_ref_count": 27
+    "evidence_ref_count": 31
   }
 }

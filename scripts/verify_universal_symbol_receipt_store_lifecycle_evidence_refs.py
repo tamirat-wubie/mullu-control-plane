@@ -41,6 +41,27 @@ from scripts.validate_universal_symbol_receipt_store_lifecycle_evidence_receipt 
 )
 
 
+EXPECTED_REF_SCHEMES: Mapping[str, tuple[str, ...]] = {
+    "active_grant_identity": ("grant://",),
+    "reapproval_window": ("temporal://",),
+    "expiry_evidence": ("expiry://",),
+    "revocation_request": ("revocation://",),
+    "revocation_effect_boundary": ("effect-boundary://",),
+    "replacement_decision": ("approval-decision://", "receipt://"),
+    "lifecycle_audit_receipt": ("audit://", "receipt://"),
+}
+
+LOCAL_CONTENT_KIND_MARKERS: Mapping[str, tuple[str, ...]] = {
+    "active_grant_identity": ("active-grant", "active_approval", "operator-approval"),
+    "reapproval_window": ("reapproval", "temporal"),
+    "expiry_evidence": ("expiry", "expiration"),
+    "revocation_request": ("revocation",),
+    "revocation_effect_boundary": ("effect-boundary", "effect_boundary", "revocation"),
+    "replacement_decision": ("replacement", "approval-decision"),
+    "lifecycle_audit_receipt": ("lifecycle-audit", "lifecycle_audit", "audit"),
+}
+
+
 class UniversalSymbolLifecycleEvidenceRefVerificationError(ValueError):
     """Raised when lifecycle evidence refs fail structural verification."""
 
@@ -75,7 +96,7 @@ def verify_lifecycle_evidence_refs(
             raise UniversalSymbolLifecycleEvidenceRefVerificationError(
                 f"{evidence_kind}: evidence kind is not registered"
             )
-        _verify_ref_shape(evidence_kind, evidence_ref)
+        content_verified = _verify_ref_shape(evidence_kind, evidence_ref)
         is_placeholder = evidence_ref == template_refs.get(evidence_kind, "")
         if is_placeholder:
             placeholder_kinds.append(evidence_kind)
@@ -87,6 +108,7 @@ def verify_lifecycle_evidence_refs(
                 "evidence_ref": evidence_ref,
                 "placeholder_ref": is_placeholder,
                 "local_file_ref": "://" not in evidence_ref,
+                "content_verified": content_verified and not is_placeholder,
                 "structurally_verified": not is_placeholder,
             }
         )
@@ -142,7 +164,7 @@ def _verify_authority_denied(receipt: Mapping[str, Any]) -> None:
         raise UniversalSymbolLifecycleEvidenceRefVerificationError("lifecycle evidence receipt claims authority")
 
 
-def _verify_ref_shape(evidence_kind: str, evidence_ref: str) -> None:
+def _verify_ref_shape(evidence_kind: str, evidence_ref: str) -> bool:
     if not evidence_ref or len(evidence_ref) > 256 or not REF_PATTERN.fullmatch(evidence_ref):
         raise UniversalSymbolLifecycleEvidenceRefVerificationError(
             f"{evidence_kind}: evidence ref shape is invalid"
@@ -163,6 +185,13 @@ def _verify_ref_shape(evidence_kind: str, evidence_ref: str) -> None:
         )
     if "://" not in evidence_ref:
         _verify_repo_relative_ref(evidence_kind, evidence_ref)
+        return True
+    expected_prefixes = EXPECTED_REF_SCHEMES.get(evidence_kind, ())
+    if expected_prefixes and not evidence_ref.startswith(expected_prefixes):
+        raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+            f"{evidence_kind}: evidence ref scheme does not match evidence kind"
+        )
+    return False
 
 
 def _verify_repo_relative_ref(evidence_kind: str, evidence_ref: str) -> None:
@@ -181,6 +210,77 @@ def _verify_repo_relative_ref(evidence_kind: str, evidence_ref: str) -> None:
         raise UniversalSymbolLifecycleEvidenceRefVerificationError(
             f"{evidence_kind}: repository-relative evidence ref missing: {evidence_ref}"
         )
+    _verify_local_json_content(evidence_kind, evidence_ref, resolved)
+
+
+def _verify_local_json_content(evidence_kind: str, evidence_ref: str, resolved: Path) -> None:
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+            f"{evidence_kind}: repository-relative evidence ref must be JSON: {evidence_ref}"
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+            f"{evidence_kind}: repository-relative evidence ref must contain a JSON object"
+        )
+    content_index = _content_index(payload)
+    if not any(marker in content_index for marker in LOCAL_CONTENT_KIND_MARKERS.get(evidence_kind, ())):
+        raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+            f"{evidence_kind}: repository-relative evidence content does not match evidence kind"
+        )
+    denials = payload.get("authority_denials")
+    if isinstance(denials, Mapping):
+        drifted = sorted(field_name for field_name, field_value in denials.items() if field_value is not False)
+        if drifted:
+            raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+                f"{evidence_kind}: local evidence authority denial drift: " + ", ".join(drifted)
+            )
+    forbidden_keys = _forbidden_payload_keys(payload)
+    if forbidden_keys:
+        raise UniversalSymbolLifecycleEvidenceRefVerificationError(
+            f"{evidence_kind}: local evidence contains forbidden raw material keys: "
+            + ", ".join(forbidden_keys)
+        )
+
+
+def _content_index(payload: Mapping[str, Any]) -> str:
+    fields = (
+        "receipt_id",
+        "witness_id",
+        "grant_id",
+        "evidence_id",
+        "receipt_scope",
+        "witness_scope",
+        "evidence_kind",
+    )
+    values = [str(payload.get(field_name, "")).lower() for field_name in fields]
+    return " ".join(values)
+
+
+def _forbidden_payload_keys(value: Any, prefix: str = "") -> list[str]:
+    forbidden_names = {
+        "raw_payload",
+        "raw_payload_value",
+        "raw_secret",
+        "secret_value",
+        "access_token",
+        "refresh_token",
+        "private_key",
+        "password",
+    }
+    found: list[str] = []
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            key_name = str(key)
+            key_path = f"{prefix}.{key_name}" if prefix else key_name
+            if key_name.lower() in forbidden_names:
+                found.append(key_path)
+            found.extend(_forbidden_payload_keys(child, key_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            found.extend(_forbidden_payload_keys(child, f"{prefix}[{index}]"))
+    return found
 
 
 def _repo_relative(path: Path) -> str:

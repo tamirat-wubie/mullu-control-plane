@@ -1746,6 +1746,19 @@ def test_protocol_manifest_indexes_universal_symbol_receipt_store_replacement_de
     assert witness_entry["surface"] == "symbol"
 
 
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_lifecycle_evidence_bundle() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    bundle_entry = entries["universal-symbol-receipt-store-lifecycle-evidence-bundle"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert bundle_entry["path"] == "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json"
+    assert bundle_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle:1"
+    )
+    assert bundle_entry["surface"] == "symbol"
+
+
 def test_protocol_manifest_indexes_universal_symbol_runtime_authority_witness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

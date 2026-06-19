@@ -99,6 +99,8 @@ REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
     "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
     "schemas/universal_symbol_receipt_store_reapproval_revocation_witness.schema.json",
     "examples/universal_symbol_receipt_store_reapproval_revocation_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_operator_reapproval_expiry_witness.schema.json",
@@ -122,6 +124,8 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
     "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
     "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py",
 )

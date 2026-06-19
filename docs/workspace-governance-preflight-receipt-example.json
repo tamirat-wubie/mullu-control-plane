@@ -1,5 +1,5 @@
 {
-  "check_count": 247,
+  "check_count": 248,
   "checks": [
     {
       "args": [
@@ -2362,6 +2362,19 @@
         "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py"
       ],
       "name": "universal_symbol_receipt_store_lifecycle_evidence_receipt",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py"
+      ],
+      "name": "universal_symbol_receipt_store_lifecycle_evidence_bundle",
       "passed": true,
       "return_code": 0,
       "stderr": "",

@@ -194,6 +194,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 164. Universal symbol kernel records are public contracts when they bind platform objects into symbol identity, boundary, metadata, relations, causality, lineage, governance, proof, skill projection, authority-denial, and evidence-reference fields while denying connector access, filesystem writes, runtime dispatch, state mutation, terminal closure, product readiness, customer readiness, public SaaS readiness, and success claims.
 165. Personal-assistant runtime boundary receipts are public contracts when they bind runtime module source hashes, parsed imports, public entry points, capability runtime records, policy matrix refs, no-effect flags, and authority-denial evidence while denying live connector execution, connector mutation, external writes, memory writes, deployment mutation, system-of-record writes, customer-readiness claims, and live Nested Mind activation.
 166. Invariant fuzz execution reports are public contracts when they bind deterministic seed refs, case-bank digest refs, mutation-class refs, oracle refs, expected accept and reject counts, mutation-free rejection counts, projection probe counts, public projection leak checks, result-bank digest refs, UAO refs, LifeMeaningJudgment refs, EffectAssurance refs, SimulationReceipt refs, WorkerFailureReceipt refs, SDLC recovery refs, safety guards, and authority-denial flags before any runtime-hardening or invariant-fuzz claim can affect staging, production, or canonical runtime state while denying live runtime execution, staging targets, production targets, canonical state mutation, event-chain mutation, runtime lawbook migration, connector calls, secret access, filesystem writes, rollback execution, raw case payload retention, raw secret retention, terminal closure, and success claims.
+167. Universal Symbol receipt-store lifecycle evidence bundles are public contracts when they carry lifecycle evidence refs and verifier outcomes as non-authorizing packets while denying lifecycle recording, receipt append, raw payload storage, raw secret storage, runtime dispatch, connector calls, mutation, terminal closure, and success claims.
 ## Verification
 
 Run:
@@ -205,7 +206,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 390 schemas
+protocol manifest ok: 391 schemas
 ```
 
 STATUS:

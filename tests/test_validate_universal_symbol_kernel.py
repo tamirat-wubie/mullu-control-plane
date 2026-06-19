@@ -211,7 +211,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 119
+    assert report["evidence_ref_count"] == 123
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
