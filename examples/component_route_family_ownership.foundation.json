@@ -1992,6 +1992,51 @@
       "surface_id": "hosted_demo_sandbox"
     },
     {
+      "binding_level": "selected_component_bound",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "candidate_proof_bound_component_ids": [
+        "inceptadive_shadow"
+      ],
+      "component_ids": [
+        "inceptadive_shadow"
+      ],
+      "component_lane": "assistant_product_core",
+      "component_route_binding_states": [
+        {
+          "binding_state": "bound",
+          "component_id": "inceptadive_shadow",
+          "proof_surface_present_in_route_binding": true,
+          "route_binding_is_bound": true
+        }
+      ],
+      "declared_route_count": 1,
+      "notes": "Route family already has selected component ownership, but ownership does not grant execution authority.",
+      "ownership_is_not_execution_authority": true,
+      "promotion_blockers": [],
+      "readiness_state": "selected_component_bound",
+      "required_next_evidence": [
+        "preserve_non_execution_route_binding",
+        "preserve_terminal_closure_denial"
+      ],
+      "sample_routes": [
+        "/api/v1/shadow/inspect"
+      ],
+      "selected_bound_component_ids": [
+        "inceptadive_shadow"
+      ],
+      "surface_id": "inceptadive_shadow_inspection_routes"
+    },
+    {
       "binding_level": "platform_family_classified",
       "blocked_actions": [
         "autonomous_execution",
@@ -4020,15 +4065,15 @@
     "router_inventory": "examples/component_router_inventory.foundation.json"
   },
   "summary": {
-    "declared_route_count": 444,
+    "declared_route_count": 445,
     "generic_connector_boundary_count": 1,
     "live_action_enabled_count": 0,
     "platform_family_classified_count": 66,
     "promotion_blocked_count": 66,
     "proof_binding_gap_count": 64,
     "route_binding_gap_count": 66,
-    "route_family_count": 78,
-    "selected_component_bound_count": 12,
+    "route_family_count": 79,
+    "selected_component_bound_count": 13,
     "terminal_closure_claim_count": 0
   },
   "terminal_closure_required": true,

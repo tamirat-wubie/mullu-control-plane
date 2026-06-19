@@ -560,7 +560,7 @@
       "proof_binding_state": "proof_bound",
       "request_path_count": 1,
       "route_binding_state": "bound",
-      "route_count": 1,
+      "route_count": 2,
       "state": "mounted",
       "type": "reasoning_symbolic_core",
       "wiring_state": "mounted"

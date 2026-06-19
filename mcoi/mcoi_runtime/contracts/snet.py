@@ -181,9 +181,7 @@ def _require_metadata_scalar(value: object, field_name: str) -> object:
 
 
 def _require_text_key(key: object, field_name: str) -> str:
-    if type(key) is not str:
-        raise ValueError(f"{field_name} must be a non-empty string")
-    return require_non_empty_text(key, field_name)
+    return _require_exact_text(key, field_name)
 
 
 def _require_text(value: object, field_name: str) -> str:
@@ -363,11 +361,11 @@ class SNetAnswer(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "answer_id", _require_text(self.answer_id, "answer_id"))
         object.__setattr__(self, "question_id", _require_text(self.question_id, "question_id"))
-        object.__setattr__(self, "raw_answer", _require_text(self.raw_answer, "raw_answer"))
+        object.__setattr__(self, "raw_answer", _require_exact_text(self.raw_answer, "raw_answer"))
         object.__setattr__(
             self,
             "ascii_folded_answer",
-            _require_text(self.ascii_folded_answer, "ascii_folded_answer"),
+            _require_exact_text(self.ascii_folded_answer, "ascii_folded_answer"),
         )
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         if not isinstance(self.validation_state, SNetValidationState):

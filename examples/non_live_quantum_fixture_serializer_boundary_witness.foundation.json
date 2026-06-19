@@ -1,0 +1,288 @@
+{
+  "binding_id": "non_live_quantum_fixture_serializer_boundary_witness",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "solver_outcome": "FoundationModeOnly",
+  "parent_boundary_ref": "universal_symbolic_quantum_capability_boundary",
+  "related_witness_refs": [
+    "non_live_openqasm_export_planning_witness",
+    "non_live_local_quantum_simulator_boundary_witness",
+    "non_live_quantum_fixture_catalog_witness"
+  ],
+  "architecture_name": "USQCA-PQE",
+  "serializer_status": "NonLiveFixtureSerializerBoundaryOnly",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "parent_boundary_required": true,
+  "fixture_catalog_witness_required": true,
+  "non_live_witness_required": true,
+  "serializer_boundary": {
+    "boundary_family": "quantum fixture serializer admission planning boundary",
+    "descriptor_only": true,
+    "deterministic_order_required": true,
+    "symbolic_metadata_only": true,
+    "serializer_execution_allowed": false,
+    "serialized_artifact_allowed": false,
+    "canonical_bytes_allowed": false,
+    "runtime_payload_allowed": false,
+    "output_path": null,
+    "requires_future_serializer_schema": true,
+    "requires_no_runtime_payload": true
+  },
+  "allowed_serializer_roles": [
+    "fixture_serializer_boundary_planning",
+    "canonical_field_order_planning",
+    "metadata_field_allowlist_planning",
+    "payload_field_denylist_planning",
+    "deterministic_serializer_profile_review",
+    "denial_case_serializer_profile",
+    "future_serializer_authority_requirement"
+  ],
+  "denied_serializer_payloads": [
+    "executable_fixture_json",
+    "canonical_runtime_bytes",
+    "openqasm_source_text",
+    "qir_source_text",
+    "simulator_input_blob",
+    "runtime_payload",
+    "state_vector_snapshot",
+    "amplitude_table",
+    "shot_count_sample",
+    "measurement_histogram",
+    "backend_job_id",
+    "credential_material",
+    "result_distribution",
+    "quantum_advantage_claim",
+    "production_readiness_claim"
+  ],
+  "required_serializer_gates": [
+    "ParentQuantumBoundaryGate",
+    "FixtureCatalogWitnessGate",
+    "SerializerBoundaryDeclarationGate",
+    "DescriptorOnlyGate",
+    "DeterministicFieldOrderGate",
+    "MetadataAllowlistGate",
+    "PayloadDenylistGate",
+    "NullOutputPathGate",
+    "NoCanonicalBytesGate",
+    "NoExecutableSerializationGate",
+    "NoRuntimeExecutionGate",
+    "WitnessLedgerGate"
+  ],
+  "denied_authorities": {
+    "fixture_serializer_execution_enabled": false,
+    "serialized_fixture_artifact_generation_enabled": false,
+    "executable_fixture_serialization_enabled": false,
+    "canonical_runtime_bytes_emission_enabled": false,
+    "openqasm_source_serialization_enabled": false,
+    "qir_source_serialization_enabled": false,
+    "simulator_input_serialization_enabled": false,
+    "simulator_runtime_invocation_enabled": false,
+    "state_vector_materialization_enabled": false,
+    "shot_execution_enabled": false,
+    "measurement_histogram_emission_enabled": false,
+    "backend_execution_enabled": false,
+    "hardware_credentials_access_enabled": false,
+    "quantum_job_submission_enabled": false,
+    "cryptanalysis_execution_enabled": false,
+    "quantum_advantage_claim_enabled": false,
+    "production_readiness_claim_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "serializer_executed": false,
+    "serialized_artifact_written": false,
+    "canonical_json_emitted": false,
+    "canonical_bytes_materialized": false,
+    "executable_fixture_serialized": false,
+    "openqasm_source_text_serialized": false,
+    "qir_source_text_serialized": false,
+    "simulator_input_serialized": false,
+    "runtime_payload_written": false,
+    "simulator_runtime_invoked": false,
+    "state_vector_materialized": false,
+    "amplitude_table_materialized": false,
+    "measurement_shots_executed": false,
+    "measurement_histogram_emitted": false,
+    "backend_called": false,
+    "hardware_credentials_read": false,
+    "quantum_job_submitted": false,
+    "result_distribution_observed": false,
+    "production_claim_made": false
+  },
+  "serializer_constraints": {
+    "requires_fixture_catalog_ref": true,
+    "requires_serializer_profile_id": true,
+    "requires_canonical_field_order_plan": true,
+    "requires_allowed_metadata_field_list": true,
+    "requires_denied_payload_field_list": true,
+    "requires_null_output_path": true,
+    "requires_no_canonical_bytes": true,
+    "requires_no_runtime_payload": true,
+    "requires_future_execution_authority": true
+  },
+  "serializer_profiles": [
+    {
+      "profile_id": "serializer_profile_001_identity_descriptor",
+      "source_fixture_category_ref": "identity_circuit_fixture_plan",
+      "target_format_class": "symbolic_descriptor_only",
+      "canonical_field_order_plan": [
+        "profile_id",
+        "source_fixture_category_ref",
+        "canonical_field_order_plan",
+        "allowed_metadata_fields",
+        "denied_payload_fields",
+        "future_authority_required"
+      ],
+      "allowed_metadata_fields": [
+        "fixture_id",
+        "category",
+        "symbolic_intent",
+        "gate_subset_ref",
+        "resource_ceiling_ref",
+        "expected_invariant"
+      ],
+      "denied_payload_fields": [
+        "openqasm_source_text",
+        "qir_source_text",
+        "simulator_input_blob",
+        "runtime_payload",
+        "state_vector_snapshot",
+        "measurement_histogram",
+        "credential_material",
+        "result_distribution"
+      ],
+      "output_path": null,
+      "future_authority_required": true,
+      "denied_serialized_output": true
+    },
+    {
+      "profile_id": "serializer_profile_002_measurement_mapping_descriptor",
+      "source_fixture_category_ref": "measurement_mapping_fixture_plan",
+      "target_format_class": "review_metadata_only",
+      "canonical_field_order_plan": [
+        "profile_id",
+        "source_fixture_category_ref",
+        "allowed_metadata_fields",
+        "denied_payload_fields",
+        "output_path",
+        "denied_serialized_output"
+      ],
+      "allowed_metadata_fields": [
+        "fixture_id",
+        "category",
+        "measurement_plan",
+        "resource_ceiling_ref",
+        "expected_invariant",
+        "denied_runtime_result"
+      ],
+      "denied_payload_fields": [
+        "shot_count_sample",
+        "measurement_histogram",
+        "result_distribution",
+        "runtime_payload",
+        "simulator_input_blob",
+        "backend_job_id",
+        "credential_material"
+      ],
+      "output_path": null,
+      "future_authority_required": true,
+      "denied_serialized_output": true
+    },
+    {
+      "profile_id": "serializer_profile_003_denial_case_descriptor",
+      "source_fixture_category_ref": "denial_case_fixture_plan",
+      "target_format_class": "denial_case_descriptor_only",
+      "canonical_field_order_plan": [
+        "profile_id",
+        "source_fixture_category_ref",
+        "denied_payload_fields",
+        "future_authority_required",
+        "denied_serialized_output"
+      ],
+      "allowed_metadata_fields": [
+        "fixture_id",
+        "category",
+        "symbolic_intent",
+        "expected_invariant",
+        "denied_runtime_result"
+      ],
+      "denied_payload_fields": [
+        "executable_fixture_json",
+        "canonical_runtime_bytes",
+        "openqasm_source_text",
+        "qir_source_text",
+        "simulator_input_blob",
+        "runtime_payload",
+        "production_readiness_claim"
+      ],
+      "output_path": null,
+      "future_authority_required": true,
+      "denied_serialized_output": true
+    },
+    {
+      "profile_id": "serializer_profile_004_future_authority_descriptor",
+      "source_fixture_category_ref": "future_execution_admission_fixture_plan",
+      "target_format_class": "future_authority_descriptor_only",
+      "canonical_field_order_plan": [
+        "profile_id",
+        "source_fixture_category_ref",
+        "target_format_class",
+        "allowed_metadata_fields",
+        "denied_payload_fields",
+        "future_authority_required",
+        "denied_serialized_output"
+      ],
+      "allowed_metadata_fields": [
+        "fixture_id",
+        "category",
+        "symbolic_intent",
+        "resource_ceiling_ref",
+        "expected_invariant",
+        "future_authority_required"
+      ],
+      "denied_payload_fields": [
+        "canonical_runtime_bytes",
+        "simulator_input_blob",
+        "runtime_payload",
+        "backend_job_id",
+        "credential_material",
+        "quantum_advantage_claim",
+        "production_readiness_claim"
+      ],
+      "output_path": null,
+      "future_authority_required": true,
+      "denied_serialized_output": true
+    }
+  ],
+  "witness_requirements": [
+    "parent_quantum_boundary_witness",
+    "fixture_catalog_witness",
+    "serializer_boundary_declaration_witness",
+    "descriptor_only_witness",
+    "deterministic_field_order_witness",
+    "metadata_allowlist_witness",
+    "payload_denylist_witness",
+    "null_output_path_witness",
+    "no_runtime_payload_witness",
+    "future_serializer_authority_witness"
+  ],
+  "constructive_deltas": [
+    "Adds a descriptor-only fixture serializer boundary witness under the quantum boundary stack.",
+    "Defines deterministic serializer profile metadata without serializer execution.",
+    "Extends aggregate witness validation toward future serializer review while preserving no-runtime authority."
+  ],
+  "fracture_deltas": [
+    "No serializer implementation is added.",
+    "No serialized fixture artifact is generated.",
+    "No canonical runtime bytes are emitted.",
+    "No OpenQASM or QIR source is serialized.",
+    "No simulator input is serialized.",
+    "No simulator runtime is invoked.",
+    "No backend is called.",
+    "No hardware credentials are read.",
+    "No quantum result or advantage is claimed."
+  ],
+  "next_action": "Review this serializer boundary witness before proposing fixture serializer implementation or executable artifact authority."
+}

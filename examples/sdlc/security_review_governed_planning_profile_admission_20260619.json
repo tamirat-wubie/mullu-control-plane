@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-admission-20260619",
+  "change_id": "governed-planning-profile-admission-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A planning-profile adapter could accidentally become a second planner, router input, dispatch path, or runtime promotion gate if its report were treated as authority instead of evidence. The mitigation is a read-only structural adapter, a schema that hard-denies execution and closure fields, tests that prove import-boundary and drift detection, and SDLC evidence that keeps runtime promotion AwaitingEvidence.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "admission report projection keeps execution, dispatch, runtime replanning, terminal closure, and success claims false",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_governed_planning_profile_adapter.py::test_planning_profile_adapter_projects_high_risk_plan_without_authority"
+    },
+    {
+      "category": "policy",
+      "check": "adapter does not import goal compiler, causal simulator, plan executor, routers, or workers",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_governed_planning_profile_adapter.py::test_planning_profile_adapter_preserves_goal_compiler_import_boundary"
+    },
+    {
+      "category": "receipts",
+      "check": "admission report carries UAO, causal decision trace, receipt refs, evidence refs, and report hash",
+      "status": "passed",
+      "evidence_ref": "schemas/governed_planning_profile_admission_report.schema.json"
+    },
+    {
+      "category": "audit",
+      "check": "identity mismatch, topology drift, and blocked plan evidence are explicit findings",
+      "status": "passed",
+      "evidence_ref": "tests/test_gateway/test_governed_planning_profile_adapter.py"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-adapter-authority-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The admission report schema hard-denies execution_allowed, dispatch_allowed, runtime_replanning_enabled, terminal_closure_allowed, and success_claim_allowed.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_admission_report.schema.json",
+        "tests/test_gateway/test_governed_planning_profile_adapter.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-adapter-second-consumer",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The adapter uses structural inputs and tests assert it does not import gateway.goal_compiler or gateway.causal_simulator.",
+      "evidence_refs": [
+        "gateway/governed_planning_profile_adapter.py",
+        "tests/test_gateway/test_governed_planning_profile_adapter.py::test_planning_profile_adapter_preserves_goal_compiler_import_boundary"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the adapter structural and read-only",
+    "keep runtime promotion blocked until operator shadow-pilot, replay, recovery, and closure evidence exists",
+    "validate admission reports against a schema with hard false authority fields",
+    "retain focused tests for identity, topology, blocked-plan, and import-boundary drift"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_admission_report.schema.json",
+    "gateway/governed_planning_profile_adapter.py",
+    "tests/test_gateway/test_governed_planning_profile_adapter.py",
+    "receipt://governed-planning-profile/admission/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/admission/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/admission/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/admission/security/20260619"
+}

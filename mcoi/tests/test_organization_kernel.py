@@ -514,6 +514,99 @@ def test_closure_drift_remediation_restore_rejects_forged_authority_ref() -> Non
     assert binding.authority_ref == approval.approval_id
 
 
+def test_closure_drift_remediation_requires_closure_packet_superseded_evidence() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    approval = _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, _terminal_closure_evidence_refs(kernel, plan.case_id)),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id=TERMINAL_CERTIFICATE_EVIDENCE_REF,
+    )
+    for evidence_ref, requirement_id in (
+        ("evidence:engineering_health_endpoint:v2", "engineering_health_endpoint"),
+        ("evidence:closure_drift_review", "security_public_claim_boundary"),
+    ):
+        kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=evidence_ref,
+                case_id=plan.case_id,
+                requirement_id=requirement_id,
+                submitted_by="test-harness",
+                submitted_at="2026-05-27T17:04:00+00:00",
+            )
+        )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="superseded evidence unavailable"):
+        kernel.bind_closure_drift_remediation(
+            ClosureDriftRemediationBinding(
+                remediation_id="remediation.gateway-pilot.forged-supersession",
+                case_id=plan.case_id,
+                closure_id=closure.closure_id,
+                terminal_disposition=TerminalClosureDisposition.REQUIRES_REVIEW,
+                drift_evidence_refs=("evidence:engineering_health_endpoint:v2",),
+                superseded_evidence_refs=("evidence:engineering_health_endpoint:v2",),
+                authority_ref=approval.approval_id,
+                evidence_refs=("evidence:closure_drift_review",),
+                created_at="2026-05-27T17:05:00+00:00",
+            )
+        )
+
+    assert kernel.snapshot_state().closure_drift_remediations == ()
+    assert "evidence:engineering_health_endpoint:v2" not in closure.evidence_refs
+    assert "evidence:engineering_health_endpoint" in closure.evidence_refs
+
+
+def test_closure_drift_remediation_restore_rejects_forged_superseded_evidence_ref() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    approval = _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, _terminal_closure_evidence_refs(kernel, plan.case_id)),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id=TERMINAL_CERTIFICATE_EVIDENCE_REF,
+    )
+    for evidence_ref, requirement_id in (
+        ("evidence:engineering_health_endpoint:v2", "engineering_health_endpoint"),
+        ("evidence:closure_drift_review", "security_public_claim_boundary"),
+    ):
+        kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=evidence_ref,
+                case_id=plan.case_id,
+                requirement_id=requirement_id,
+                submitted_by="test-harness",
+                submitted_at="2026-05-27T17:04:00+00:00",
+            )
+        )
+    binding = kernel.bind_closure_drift_remediation(
+        ClosureDriftRemediationBinding(
+            remediation_id="remediation.gateway-pilot.review",
+            case_id=plan.case_id,
+            closure_id=closure.closure_id,
+            terminal_disposition=TerminalClosureDisposition.REQUIRES_REVIEW,
+            drift_evidence_refs=("evidence:engineering_health_endpoint:v2",),
+            superseded_evidence_refs=("evidence:engineering_health_endpoint",),
+            authority_ref=approval.approval_id,
+            evidence_refs=("evidence:closure_drift_review",),
+            created_at="2026-05-27T17:05:00+00:00",
+        )
+    )
+    forged_state = replace(
+        kernel.snapshot_state(),
+        closure_drift_remediations=(replace(binding, superseded_evidence_refs=("evidence:closure_drift_review",)),),
+    )
+    restored = OrganizationKernel(clock=_clock())
+
+    with pytest.raises(RuntimeCoreInvariantError, match="superseded evidence unavailable"):
+        restored.restore_state(forged_state)
+
+    assert restored.snapshot_state().closure_drift_remediations == ()
+    assert binding.superseded_evidence_refs == ("evidence:engineering_health_endpoint",)
+
+
 def test_organization_plan_rejects_cycles() -> None:
     first = PlanStep(
         step_id="first",

@@ -1,0 +1,111 @@
+{
+  "binding_id": "universal_symbolic_quantum_capability_boundary",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "solver_outcome": "FoundationModeOnly",
+  "architecture_name": "USQCA-PQE",
+  "full_name": "Universal Symbolic Quantum Computing Architecture with Proof-Carrying Execution",
+  "integration_decision": "FitsAsGovernedPlanningSurface",
+  "capability_status": "PlanningOnly",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "runtime_quantum_execution_enabled": false,
+  "hardware_backend_authority_granted": false,
+  "quantum_hardware_claim_made": false,
+  "fault_tolerant_claim_made": false,
+  "quantum_advantage_claim_made": false,
+  "governance_scope": [
+    "OCE",
+    "RAG",
+    "CDCV",
+    "CQTE",
+    "UWMA",
+    "SRCA",
+    "PRS"
+  ],
+  "symbolic_control_plane_role": {
+    "allowed_roles": [
+      "symbolic_problem_formulation",
+      "quantum_eligibility_judgment",
+      "quantum_semantic_validation",
+      "proof_carrying_compiler_planning",
+      "resource_estimation",
+      "backend_capability_profile_planning",
+      "witness_requirement_definition",
+      "post_quantum_security_boundary_definition"
+    ],
+    "denied_roles": [
+      "live_qpu_execution",
+      "simulator_runtime_execution",
+      "hardware_backend_credential_access",
+      "quantum_job_submission",
+      "cryptanalysis_execution",
+      "fault_tolerant_readiness_claim",
+      "quantum_advantage_claim",
+      "production_customer_promise"
+    ]
+  },
+  "physical_boundary": {
+    "requires_declared_qubit_substrate": true,
+    "requires_initialization_model": true,
+    "requires_coherence_or_noise_model": true,
+    "requires_backend_capability_profile": true,
+    "requires_statistical_result_validation": true,
+    "requires_fault_tolerance_evidence_for_logical_claims": true
+  },
+  "required_gates": [
+    "QuantumEligibilityGate",
+    "QuantumSemanticLawGate",
+    "ProofCarryingCompilerGate",
+    "ResourceHonestyGate",
+    "BackendCapabilityProfileGate",
+    "NoiseAndCalibrationGate",
+    "StatisticalResultConfidenceGate",
+    "PostQuantumSecurityGate",
+    "WitnessLedgerGate"
+  ],
+  "denied_authorities": {
+    "live_qpu_execution_enabled": false,
+    "simulator_runtime_execution_enabled": false,
+    "hardware_credentials_access_enabled": false,
+    "quantum_job_submission_enabled": false,
+    "cryptanalysis_execution_enabled": false,
+    "external_backend_network_calls_enabled": false,
+    "production_readiness_claim_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "backend_called": false,
+    "quantum_job_submitted": false,
+    "simulator_executed": false,
+    "hardware_credentials_read": false,
+    "result_distribution_observed": false,
+    "repository_runtime_mutated": false,
+    "secret_values_serialized": false
+  },
+  "witness_requirements": [
+    "quantum_eligibility_witness",
+    "quantum_semantic_law_witness",
+    "proof_carrying_compiler_witness",
+    "resource_estimate_witness",
+    "backend_capability_profile_witness",
+    "statistical_result_policy_witness",
+    "post_quantum_security_witness",
+    "operator_authorization_witness"
+  ],
+  "constructive_deltas": [
+    "Adds a quantum capability boundary without granting runtime execution authority.",
+    "Defines required gates for future simulator, NISQ, or fault-tolerant planning.",
+    "Separates symbolic validity, quantum mathematical validity, backend feasibility, and result confidence.",
+    "Prevents quantum advantage, hardware, and fault-tolerant readiness overclaims."
+  ],
+  "fracture_deltas": [
+    "No simulator is wired.",
+    "No quantum hardware backend is wired.",
+    "No OpenQASM or QIR exporter is active.",
+    "No quantum result distribution has been observed.",
+    "No quantum advantage is claimed."
+  ],
+  "next_action": "Review the separate non-live OpenQASM and local simulator planning witnesses before any exporter or simulator implementation."
+}

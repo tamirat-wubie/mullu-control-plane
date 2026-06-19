@@ -1,0 +1,56 @@
+id: non_live_quantum_fixture_catalog_witness
+version: 1
+parent_boundary: universal_symbolic_quantum_capability_boundary
+related_witness:
+  - non_live_openqasm_export_planning_witness
+  - non_live_local_quantum_simulator_boundary_witness
+architecture_name: USQCA-PQE
+decision: FitsAsNonLiveDeterministicFixtureCatalogWitness
+posture: FoundationModeOnly
+governance_scope:
+  - OCE
+  - RAG
+  - CDCV
+  - CQTE
+  - UWMA
+  - SRCA
+  - PRS
+allowed_scope:
+  - deterministic_fixture_catalog_planning
+  - symbolic_circuit_intent_fixture
+  - gate_subset_reference_fixture
+  - register_plan_fixture
+  - measurement_plan_fixture
+  - resource_ceiling_fixture
+  - expected_invariant_statement
+  - future_executable_fixture_authority_requirement
+denied_authority:
+  executable_fixture_generation: true
+  openqasm_source_emission: true
+  qir_source_emission: true
+  simulator_input_generation: true
+  simulator_runtime_invocation: true
+  state_vector_materialization: true
+  shot_execution: true
+  measurement_histogram_emission: true
+  backend_execution: true
+  hardware_backend_credential_access: true
+  quantum_job_submission: true
+  cryptanalysis_execution: true
+  quantum_advantage_claim: true
+  production_readiness_claim: true
+  terminal_closure: true
+required_gates:
+  - ParentQuantumBoundaryGate
+  - OpenQasmPlanningBoundaryGate
+  - LocalSimulatorBoundaryGate
+  - FixtureCatalogDeclarationGate
+  - DeterministicFixtureShapeGate
+  - SymbolicCircuitIntentFixtureGate
+  - RegisterAndMeasurementPlanGate
+  - ResourceCeilingFixtureGate
+  - ExpectedInvariantOnlyGate
+  - NoExecutableArtifactGate
+  - NoRuntimeExecutionGate
+  - WitnessLedgerGate
+next_action: Review the fixture catalog witness before any executable fixture catalog implementation.

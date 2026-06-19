@@ -1,0 +1,140 @@
+{
+  "authority_denials": {
+    "dispatch_allowed": false,
+    "execution_allowed": false,
+    "runtime_promotion_authorized": false,
+    "runtime_replanning_enabled": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false
+  },
+  "dispatch_allowed": false,
+  "evidence_hash": "6c49c3d5cdd5114f17e59a9b86a7f964721a7bbba38419294010a4bcfb5e8055",
+  "evidence_id": "governed-planning-profile-operator-shadow-pilot-evidence-6c49c3d5cdd5114f",
+  "evidence_refs": [
+    "scripts/report_governed_planning_profile_shadow_dossier.py",
+    "scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+    "schemas/governed_planning_profile_operator_shadow_pilot_evidence.schema.json",
+    "examples/governed_planning_profile_operator_shadow_pilot_evidence.awaiting_evidence.json",
+    "tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py"
+  ],
+  "execution_allowed": false,
+  "expected_plan_classes": [
+    "uncompiled_conversation",
+    "read_only_search",
+    "compound_search_notification",
+    "high_risk_payment",
+    "world_contradiction_search"
+  ],
+  "generated_at": "2026-06-19T00:00:00Z",
+  "mutation_route": false,
+  "next_action": "record concrete operator shadow-pilot observations before runtime promotion",
+  "operator_evidence_status": "AwaitingEvidence",
+  "operator_observation_collected": false,
+  "profile_id": "governed-planning-profile-foundation-v1",
+  "promotion_gates": [
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "operator_shadow_pilot_observation",
+      "required_evidence_ref": "unknown://governed-planning-profile/operator-shadow-pilot",
+      "status": "AwaitingEvidence"
+    },
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "runtime_promotion_approval",
+      "required_evidence_ref": "unknown://governed-planning-profile/runtime-promotion-approval",
+      "status": "AwaitingEvidence"
+    },
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "replay_recovery_witness",
+      "required_evidence_ref": "unknown://governed-planning-profile/replay-recovery-witness",
+      "status": "AwaitingEvidence"
+    },
+    {
+      "blocks_runtime_promotion": true,
+      "gate_id": "terminal_closure_certificate",
+      "required_evidence_ref": "unknown://governed-planning-profile/terminal-closure-certificate",
+      "status": "AwaitingEvidence"
+    }
+  ],
+  "read_only": true,
+  "runtime_behavior_change": false,
+  "runtime_promotion_authorized": false,
+  "runtime_replanning_enabled": false,
+  "scenario_observations": [
+    {
+      "admission_report_id": "governed-planning-profile-admission-0a673585a51ddacf",
+      "observed_behavior_matches_projection": false,
+      "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/uncompiled_conversation",
+      "operator_observation_status": "AwaitingEvidence",
+      "parity_confirmed": false,
+      "plan_class": "uncompiled_conversation",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-uncompiled-conversation",
+      "source_plan_id": "plan-blocked-de0e63771c6e4f48"
+    },
+    {
+      "admission_report_id": "governed-planning-profile-admission-a8fec2d2a03ba3b1",
+      "observed_behavior_matches_projection": false,
+      "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/read_only_search",
+      "operator_observation_status": "AwaitingEvidence",
+      "parity_confirmed": false,
+      "plan_class": "read_only_search",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-read-only-search",
+      "source_plan_id": "plan-0cf90f4c59f58dde"
+    },
+    {
+      "admission_report_id": "governed-planning-profile-admission-f46fcabf6303e8d2",
+      "observed_behavior_matches_projection": false,
+      "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/compound_search_notification",
+      "operator_observation_status": "AwaitingEvidence",
+      "parity_confirmed": false,
+      "plan_class": "compound_search_notification",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-compound-search-notification",
+      "source_plan_id": "plan-0cacccba21de5359"
+    },
+    {
+      "admission_report_id": "governed-planning-profile-admission-20e67043dfda01cd",
+      "observed_behavior_matches_projection": false,
+      "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/high_risk_payment",
+      "operator_observation_status": "AwaitingEvidence",
+      "parity_confirmed": false,
+      "plan_class": "high_risk_payment",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-high-risk-payment",
+      "source_plan_id": "plan-c9cdd311124cb63b"
+    },
+    {
+      "admission_report_id": "governed-planning-profile-admission-26920541cf0ec091",
+      "observed_behavior_matches_projection": false,
+      "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/world_contradiction_search",
+      "operator_observation_status": "AwaitingEvidence",
+      "parity_confirmed": false,
+      "plan_class": "world_contradiction_search",
+      "runtime_promotion_ready": false,
+      "scenario_id": "scenario-world-contradiction-search",
+      "source_plan_id": "plan-0cf90f4c59f58dde"
+    }
+  ],
+  "schema_version": "governed_planning_profile_operator_shadow_pilot_evidence.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "source_dossier": {
+    "dossier_hash": "0ed56d34df4eb629dc52200e00dd5d5879a604f208a24e4fc3b28614cbb0cc73",
+    "dossier_id": "governed-planning-profile-shadow-dossier-0ed56d34df4eb629",
+    "promotion_blocker_count": 17,
+    "report_count": 5,
+    "scenario_count": 5,
+    "shadow_mismatch_count": 0,
+    "status": "verified"
+  },
+  "success_claim_allowed": false,
+  "terminal_closure": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
+      "validator_id": "governed-planning-profile-operator-shadow-pilot-evidence"
+    }
+  ]
+}

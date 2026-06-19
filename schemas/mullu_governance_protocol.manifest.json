@@ -1217,6 +1217,30 @@
       "urn": "urn:mullusi:schema:multimodal-operation-receipt:1"
     },
     {
+      "path": "schemas/non_live_local_quantum_simulator_boundary_witness.schema.json",
+      "schema_id": "non-live-local-quantum-simulator-boundary-witness",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:non-live-local-quantum-simulator-boundary-witness:1"
+    },
+    {
+      "path": "schemas/non_live_openqasm_export_planning_witness.schema.json",
+      "schema_id": "non-live-openqasm-export-planning-witness",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:non-live-openqasm-export-planning-witness:1"
+    },
+    {
+      "path": "schemas/non_live_quantum_fixture_catalog_witness.schema.json",
+      "schema_id": "non-live-quantum-fixture-catalog-witness",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:non-live-quantum-fixture-catalog-witness:1"
+    },
+    {
+      "path": "schemas/non_live_quantum_fixture_serializer_boundary_witness.schema.json",
+      "schema_id": "non-live-quantum-fixture-serializer-boundary-witness",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:non-live-quantum-fixture-serializer-boundary-witness:1"
+    },
+    {
       "path": "schemas/operational_case.schema.json",
       "schema_id": "operational-case",
       "surface": "case_management",
@@ -1581,6 +1605,12 @@
       "schema_id": "read-only-worker-lease-preflight",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1"
+    },
+    {
+      "path": "schemas/read_only_worker_phi_gov_dispatch_authorization_witness.schema.json",
+      "schema_id": "read-only-worker-phi-gov-dispatch-authorization-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-phi-gov-dispatch-authorization-witness:1"
     },
     {
       "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
@@ -2391,6 +2421,12 @@
       "schema_id": "universal-symbol-runtime-authority-witness",
       "surface": "symbol",
       "urn": "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1"
+    },
+    {
+      "path": "schemas/universal_symbolic_quantum_capability_boundary.schema.json",
+      "schema_id": "universal-symbolic-quantum-capability-boundary",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:universal-symbolic-quantum-capability-boundary:1"
     },
     {
       "path": "schemas/verification_result.schema.json",

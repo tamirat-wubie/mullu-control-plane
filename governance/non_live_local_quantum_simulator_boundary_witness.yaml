@@ -1,0 +1,50 @@
+id: non_live_local_quantum_simulator_boundary_witness
+version: 1
+parent_boundary: universal_symbolic_quantum_capability_boundary
+related_witness:
+  - non_live_openqasm_export_planning_witness
+architecture_name: USQCA-PQE
+decision: FitsAsNonLiveLocalSimulatorBoundaryWitness
+posture: FoundationModeOnly
+governance_scope:
+  - OCE
+  - RAG
+  - CDCV
+  - CQTE
+  - UWMA
+  - SRCA
+  - PRS
+allowed_scope:
+  - tiny_simulator_eligibility_planning
+  - deterministic_fixture_plan
+  - qubit_ceiling_declaration
+  - gate_subset_declaration
+  - measurement_plan_boundary
+  - resource_budget_plan
+  - result_claim_denial_policy
+  - future_simulator_witness_requirement
+denied_authority:
+  simulator_engine_selection: true
+  simulator_runtime_invocation: true
+  state_vector_materialization: true
+  shot_execution: true
+  measurement_histogram_emission: true
+  backend_execution: true
+  hardware_backend_credential_access: true
+  quantum_job_submission: true
+  quantum_advantage_claim: true
+  production_readiness_claim: true
+  terminal_closure: true
+required_gates:
+  - ParentQuantumBoundaryGate
+  - SimulatorBoundaryDeclarationGate
+  - DeterministicFixturePlanGate
+  - QubitCountCeilingGate
+  - GateSetSubsetGate
+  - MeasurementPlanBoundaryGate
+  - NoRuntimeExecutionGate
+  - NoBackendCredentialGate
+  - ResourceBudgetGate
+  - ResultClaimDenialGate
+  - WitnessLedgerGate
+next_action: Review the non-live local quantum simulator boundary witness before any simulator implementation.

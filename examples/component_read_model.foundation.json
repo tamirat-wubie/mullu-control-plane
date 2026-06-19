@@ -495,14 +495,16 @@
       "name": "InceptaDive Shadow",
       "owner_surface": "reasoning",
       "proof_binding": {
-        "evidence_file_count": 2,
+        "evidence_file_count": 7,
         "inventory_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
           "operator_console_read_models"
         ],
         "required_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
           "operator_console_read_models"
         ],
-        "runtime_witness_count": 1,
+        "runtime_witness_count": 6,
         "state": "proof_bound"
       },
       "proof_surface": {
@@ -512,9 +514,10 @@
       "receipt_required": true,
       "route_binding": {
         "proof_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
           "operator_console_read_models"
         ],
-        "route_count": 1,
+        "route_count": 2,
         "state": "bound"
       },
       "state": "mounted",
@@ -1179,13 +1182,13 @@
     "authority_witness_count": 10,
     "awaiting_binding_count": 1,
     "blocked_component_count": 1,
-    "bound_route_count": 31,
+    "bound_route_count": 32,
     "bundle_count": 3,
-    "classified_declared_route_count": 444,
+    "classified_declared_route_count": 445,
     "component_count": 10,
     "lifecycle_receipt_count": 10,
     "proof_bound_count": 9,
-    "route_family_classification_count": 78
+    "route_family_classification_count": 79
   },
   "terminal_closure_required": true,
   "validators": [

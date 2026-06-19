@@ -1,0 +1,99 @@
+{
+  "absent_tokens": [
+    "deploy it with secret-token",
+    "secret-token",
+    "retrieval-secret-ref-1",
+    "prod-change-ticket-7"
+  ],
+  "contract_id": "inceptadive-shadow-inspect-route-replay-v1",
+  "expected_response": {
+    "execution_authority": false,
+    "governed": true,
+    "private_memory_exposed": false,
+    "raw_request_text_exposed": false,
+    "receipt": {
+      "context_hash": "8f1f61682065c87f28db263e2be87bb25bb1fdee568653da817eba2288753b22",
+      "execution_authority": false,
+      "governance_verdict": "not_evaluated",
+      "mode": "strict_preflight",
+      "receipt_id": "shadow-receipt-dec1f1711f8d",
+      "retrieval_receipt_count": 1,
+      "shadow_verdict": "block_recommended",
+      "stage": "preflight"
+    },
+    "recent_activity": {
+      "receipt_count": 1,
+      "result_count": 1
+    },
+    "registered": true,
+    "result": {
+      "block_recommended": true,
+      "execution_authority": false,
+      "finding_count": 7,
+      "finding_evidence_ref_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "finding_kinds": [
+        "missing_target",
+        "missing_scope",
+        "missing_evidence",
+        "missing_precondition",
+        "missing_precondition",
+        "risk_detected",
+        "memory_contradiction"
+      ],
+      "fracture_delta_count": 7,
+      "mode": "strict_preflight",
+      "needs_deep_pass": false,
+      "needs_repair": true,
+      "request_id": "shadow-replay-contract-001",
+      "result_id": "shadow-result-3029e16acf9d",
+      "stage": "preflight",
+      "verdict": "block_recommended"
+    }
+  },
+  "invariants": [
+    "governed_true",
+    "execution_authority_false",
+    "raw_request_text_exposed_false",
+    "private_memory_exposed_false",
+    "raw_request_text_absent_from_response",
+    "raw_retrieval_refs_absent_from_response",
+    "raw_evidence_refs_absent_from_response",
+    "recent_activity_count_only"
+  ],
+  "method": "POST",
+  "request": {
+    "candidate_action": "deploy production dashboard",
+    "created_at": "2026-06-19T00:00:00+00:00",
+    "explicit_target": "",
+    "external_side_effect": true,
+    "memory_contradiction": true,
+    "normal_intent": "deploy ambiguous target",
+    "normal_plan": [
+      "prepare deployment",
+      "run deploy"
+    ],
+    "request_id": "shadow-replay-contract-001",
+    "required_evidence_refs": [
+      "prod-change-ticket-7"
+    ],
+    "retrieval_receipt_ids": [
+      "retrieval-secret-ref-1"
+    ],
+    "risk_level": "high",
+    "scope": "",
+    "stage": "interpretation",
+    "user_input": "deploy it with secret-token"
+  },
+  "route": "/api/v1/shadow/inspect",
+  "runtime_env": {
+    "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1"
+  }
+}
