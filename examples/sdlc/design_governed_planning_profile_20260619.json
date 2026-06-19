@@ -14,15 +14,29 @@
     "Introduce GovernedPlanningProfile fields for fail-closed scope, source bindings, planning refs, adaptation policy, validation refs, count-based drift checks, governance refs, evidence refs, and receipt envelope."
   ],
   "schema_changes": [
-    "schemas/governed_planning_profile.schema.json",
+    "schemas/sdlc_change_request.schema.json",
     "schemas/sdlc_requirement.schema.json",
-    "schemas/sdlc_design_decision.schema.json"
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json",
+    "schemas/governed_planning_profile.schema.json"
   ],
   "validator_changes": [
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
     "scripts/validate_governed_planning_profile.py",
     "tests/test_validate_governed_planning_profile.py",
-    "scripts/validate_schemas.py",
-    "scripts/validate_sdlc_artifact.py"
+    "scripts/validate_schemas.py"
   ],
   "security_model": {
     "raw_reasoning_rejected": true,
