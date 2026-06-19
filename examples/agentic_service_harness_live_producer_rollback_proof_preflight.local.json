@@ -1,0 +1,146 @@
+{
+  "preflight_id": "agentic-service-harness-live-producer-rollback-proof-preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_secret_handoff_preflight_ref": "preflight://agentic-service-harness/live-producer-secret-handoff-preflight",
+  "source_secret_handoff_status": "AwaitingEvidence",
+  "operator_approval_status": "Satisfied",
+  "target_witness_kind": "rollback_proof",
+  "rollback_proof_status": "AwaitingEvidence",
+  "preflight_decision": "blocked_until_rollback_proof_exists",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "live_effect_observed": false,
+  "effect_receipt_collected": false,
+  "external_adapter_integrated": false,
+  "adapter_credentials_present": false,
+  "adapter_credentials_serialized": false,
+  "secret_values_present": false,
+  "secret_values_read": false,
+  "secret_values_serialized": false,
+  "secret_values_printed": false,
+  "rollback_executed": false,
+  "recovery_verified": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "required_rollback_proof": {
+    "proof_ref": "rollback-proof://agentic-service-harness/live-producer-required",
+    "required_rollback_plan_ref": "rollback-plan://agentic-service-harness/live-producer-required",
+    "required_state_snapshot_ref": "snapshot://agentic-service-harness/live-producer-state-required",
+    "required_inverse_delta_ref": "delta://agentic-service-harness/live-producer-inverse-required",
+    "required_replay_receipt_ref": "replay://agentic-service-harness/live-producer-rollback-required",
+    "required_recovery_verification_ref": "verification://agentic-service-harness/live-producer-recovery-required",
+    "required_secret_handoff_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+    "status": "AwaitingEvidence",
+    "blocks_live_producer": true,
+    "rollback_executed": false,
+    "recovery_verified": false,
+    "authority_granted": false
+  },
+  "missing_evidence": [
+    {
+      "evidence_id": "rollback_proof_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "rollback_plan_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "state_snapshot_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "inverse_delta_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "replay_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "recovery_verification_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "secret_handoff_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "remaining_witnesses": [
+    {
+      "witness_kind": "effect_receipt",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "external_adapter_evidence",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "secret_handoff",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "rollback_proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-rollback-proof-preflight",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_rollback_proof_preflight.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Keep rollback proof AwaitingEvidence until a rollback plan, state snapshot, inverse delta, replay receipt, recovery verification proof, and secret handoff linkage exist without executing rollback or granting live producer authority."
+}

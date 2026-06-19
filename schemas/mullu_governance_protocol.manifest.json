@@ -443,6 +443,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-producer-rollback-proof-preflight",
+      "path": "schemas/agentic_service_harness_live_producer_rollback_proof_preflight.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-rollback-proof-preflight:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
