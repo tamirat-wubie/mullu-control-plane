@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile:1",
+  "title": "Governed Planning Profile",
+  "description": "Foundation Mode reference-only interoperability profile that binds existing Mullu problem framing, planning, simulation, execution, effect-governance, closure, recovery, and learning lineages without registering a planner, granting execution authority, dispatching work, replacing a runtime spine, or claiming terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "profile_version",
+    "created_at",
+    "tenant_id",
+    "actor_id",
+    "status",
+    "solver_outcome",
+    "profile_scope",
+    "source_bindings",
+    "planning_contract",
+    "adaptation_policy",
+    "validation_refs",
+    "profile_summary",
+    "governance_refs",
+    "evidence_refs",
+    "receipt_envelope"
+  ],
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-[a-z0-9-]+$"
+    },
+    "profile_version": {
+      "type": "string",
+      "const": "governed_planning_profile.v1"
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "const": "AwaitingEvidence"},
+    "solver_outcome": {"type": "string", "const": "AwaitingEvidence"},
+    "profile_scope": {"$ref": "#/$defs/profile_scope"},
+    "source_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source_binding"}
+    },
+    "planning_contract": {"$ref": "#/$defs/planning_contract"},
+    "adaptation_policy": {"$ref": "#/$defs/adaptation_policy"},
+    "validation_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "profile_summary": {"$ref": "#/$defs/profile_summary"},
+    "governance_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "receipt_envelope": {"$ref": "#/$defs/receipt_envelope"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "profile_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "foundation_profile_only",
+        "planning_projection_defined",
+        "existing_lineages_preserved",
+        "mfidel_atomicity_preserved",
+        "runtime_registration_claimed",
+        "planner_replacement_claimed",
+        "parallel_execution_spine_allowed",
+        "execution_authority_granted",
+        "dispatch_allowed",
+        "connector_authority_granted",
+        "filesystem_write_allowed",
+        "external_network_allowed",
+        "memory_write_allowed",
+        "system_of_record_migration_allowed",
+        "runtime_replanning_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "read_only": {"type": "boolean", "const": true},
+        "foundation_profile_only": {"type": "boolean", "const": true},
+        "planning_projection_defined": {"type": "boolean", "const": true},
+        "existing_lineages_preserved": {"type": "boolean", "const": true},
+        "mfidel_atomicity_preserved": {"type": "boolean", "const": true},
+        "runtime_registration_claimed": {"type": "boolean", "const": false},
+        "planner_replacement_claimed": {"type": "boolean", "const": false},
+        "parallel_execution_spine_allowed": {"type": "boolean", "const": false},
+        "execution_authority_granted": {"type": "boolean", "const": false},
+        "dispatch_allowed": {"type": "boolean", "const": false},
+        "connector_authority_granted": {"type": "boolean", "const": false},
+        "filesystem_write_allowed": {"type": "boolean", "const": false},
+        "external_network_allowed": {"type": "boolean", "const": false},
+        "memory_write_allowed": {"type": "boolean", "const": false},
+        "system_of_record_migration_allowed": {"type": "boolean", "const": false},
+        "runtime_replanning_allowed": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false},
+        "success_claim_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "source_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "source_ref",
+        "target_role",
+        "binding_mode",
+        "authority_effect",
+        "read_only",
+        "execution_allowed"
+      ],
+      "properties": {
+        "binding_id": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1},
+        "target_role": {"type": "string", "minLength": 1},
+        "binding_mode": {"type": "string", "const": "reference_only"},
+        "authority_effect": {"type": "string", "const": "none"},
+        "read_only": {"type": "boolean", "const": true},
+        "execution_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "planning_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal_refs",
+        "constraint_refs",
+        "evidence_refs",
+        "assumption_refs",
+        "unknown_refs",
+        "contradiction_refs",
+        "candidate_plan_refs",
+        "selected_plan_ref",
+        "plan_dag_ref",
+        "risk_refs",
+        "budget_refs",
+        "authority_refs",
+        "approval_refs",
+        "rollback_refs",
+        "compensation_refs",
+        "safe_stop_refs",
+        "closure_condition_refs",
+        "learning_refs"
+      ],
+      "properties": {
+        "goal_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "constraint_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "assumption_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "unknown_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "contradiction_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "candidate_plan_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "selected_plan_ref": {"type": "string", "minLength": 1},
+        "plan_dag_ref": {"type": "string", "minLength": 1},
+        "risk_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "budget_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "authority_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "approval_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "rollback_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "compensation_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "safe_stop_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "closure_condition_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "learning_refs": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "adaptation_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repair_order",
+        "enter_threshold_ref",
+        "exit_threshold_ref",
+        "cooldown_ref",
+        "change_budget_ref",
+        "local_repair_first",
+        "hysteresis_required",
+        "cooldown_required",
+        "change_budget_required",
+        "goal_rewrite_requires_phi_gov",
+        "policy_rewrite_requires_phi_gov",
+        "authority_expansion_requires_phi_gov",
+        "live_replanning_enabled",
+        "automatic_goal_rewrite_allowed",
+        "automatic_policy_rewrite_allowed",
+        "automatic_authority_expansion_allowed"
+      ],
+      "properties": {
+        "repair_order": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "observe",
+              "retry_safely",
+              "adjust_parameters",
+              "reallocate_resources",
+              "activate_contingency",
+              "repair_local_branch",
+              "replan_phase",
+              "replan_mission",
+              "suspend_or_terminate"
+            ]
+          }
+        },
+        "enter_threshold_ref": {"type": "string", "minLength": 1},
+        "exit_threshold_ref": {"type": "string", "minLength": 1},
+        "cooldown_ref": {"type": "string", "minLength": 1},
+        "change_budget_ref": {"type": "string", "minLength": 1},
+        "local_repair_first": {"type": "boolean", "const": true},
+        "hysteresis_required": {"type": "boolean", "const": true},
+        "cooldown_required": {"type": "boolean", "const": true},
+        "change_budget_required": {"type": "boolean", "const": true},
+        "goal_rewrite_requires_phi_gov": {"type": "boolean", "const": true},
+        "policy_rewrite_requires_phi_gov": {"type": "boolean", "const": true},
+        "authority_expansion_requires_phi_gov": {"type": "boolean", "const": true},
+        "live_replanning_enabled": {"type": "boolean", "const": false},
+        "automatic_goal_rewrite_allowed": {"type": "boolean", "const": false},
+        "automatic_policy_rewrite_allowed": {"type": "boolean", "const": false},
+        "automatic_authority_expansion_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "profile_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_binding_count",
+        "planning_reference_count",
+        "repair_stage_count",
+        "validation_ref_count",
+        "governance_ref_count",
+        "evidence_ref_count",
+        "scope_true_guard_count",
+        "scope_denied_guard_count",
+        "adaptation_true_guard_count",
+        "adaptation_denied_guard_count"
+      ],
+      "properties": {
+        "source_binding_count": {"type": "integer", "minimum": 1},
+        "planning_reference_count": {"type": "integer", "minimum": 1},
+        "repair_stage_count": {"type": "integer", "minimum": 1},
+        "validation_ref_count": {"type": "integer", "minimum": 1},
+        "governance_ref_count": {"type": "integer", "minimum": 1},
+        "evidence_ref_count": {"type": "integer", "minimum": 1},
+        "scope_true_guard_count": {"type": "integer", "minimum": 1},
+        "scope_denied_guard_count": {"type": "integer", "minimum": 1},
+        "adaptation_true_guard_count": {"type": "integer", "minimum": 1},
+        "adaptation_denied_guard_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": {"type": "string", "minLength": 1},
+        "causal_decision_trace_ref": {"type": "string", "minLength": 1},
+        "receipt_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
