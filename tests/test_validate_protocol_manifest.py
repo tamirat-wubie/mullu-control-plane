@@ -58,6 +58,17 @@ def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     assert loop_entry["surface"] == "governance"
 
 
+def test_protocol_manifest_indexes_governed_planning_profile() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    profile_entry = entries["governed-planning-profile"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
+    assert profile_entry["urn"] == "urn:mullusi:schema:governed-planning-profile:1"
+    assert profile_entry["surface"] == "planning"
+
+
 def test_protocol_manifest_indexes_search_decision() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
