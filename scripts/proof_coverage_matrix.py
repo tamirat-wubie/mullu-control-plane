@@ -3187,6 +3187,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "inceptadive_shadow_inspection_routes",
+            [
+                "/api/v1/shadow/inspect",
+            ],
+            "request_proof",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/routers/shadow.py",
+                "mcoi/mcoi_runtime/app/routers/assistant.py",
+                "mcoi/mcoi_runtime/app/inceptadive_shadow_integration.py",
+                "mcoi/mcoi_runtime/core/inceptadive_deep_engine.py",
+                "mcoi/mcoi_runtime/core/inceptadive_shadow_receipt_store.py",
+                "mcoi/tests/test_inceptadive_shadow_routes.py",
+                "mcoi/tests/test_assistant_router.py",
+            ],
+            "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
+            [
+                "shadow_inspect_route_runs_runtime_and_redacts_raw_text",
+                "shadow_inspect_route_rejects_invalid_request_bounded",
+                "default_routers_include_shadow_inspect_path",
+                "personal_assistant_preview_compiles_inbox_request_without_execution",
+                "finance_ops_plan_records_inceptadive_shadow_advisory_history",
+            ],
+        ),
+        _surface(
             "agent_adapter_protocol",
             [
                 "/api/v1/agent/register",

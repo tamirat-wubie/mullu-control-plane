@@ -32,6 +32,14 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Converts Phi/InceptaDive reports into compact solver-routing advisories.
    - Exposes proof gaps, hidden assumptions, fracture count, and suggested solver modes without approval authority.
 
+7. `mcoi_runtime.app.routers.shadow`
+   - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
+   - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
+
+8. `mcoi_runtime.app.routers.assistant`
+   - Embeds compact `inceptadive_shadow_advisory` metadata in assistant preview and assistant planning responses.
+   - Keeps the advisory separate from the plan outcome, operator queue state, consent gate, and dispatch authority.
+
 ## Runtime path
 
 ```text
@@ -40,7 +48,7 @@ request or candidate action
 -> light, strict preflight, or bounded deep pass
 -> deterministic result and receipt
 -> optional redacted receipt store
--> console summary / solver advisory / governance repair path
+-> console summary / inspect route / assistant advisory / solver advisory / governance repair path
 ```
 
 ## Authority invariants
@@ -50,15 +58,17 @@ request or candidate action
 - Console state is redacted and count-oriented.
 - Learning output stays `governance_pending` until a separate governed write path accepts it.
 - Phi-GPS advisory output does not close proof obligations by itself.
+- Assistant response embedding is metadata-only and does not change assistant plan outcomes.
+- `POST /api/v1/shadow/inspect` is advisory-only and cannot execute candidate actions.
 
-## Deferred live route slice
+## Route slice closure
 
-Two route-level extensions were intentionally left for a follow-up PR because the current tool session blocked those file rewrites:
+The previously deferred route-level extensions are now applied:
 
-1. Attach redacted InceptaDive hook summaries directly to assistant planning route responses.
-2. Add a dedicated redacted `POST /api/v1/shadow/inspect` route.
+1. Redacted InceptaDive hook summaries are attached directly to assistant route responses.
+2. A dedicated redacted `POST /api/v1/shadow/inspect` route is available.
 
-The core runtime now supports those surfaces through `InceptaDiveShadowRuntime.inspect_request`, `preflight_action`, `console_summary`, and `recent_activity`.
+Both surfaces continue to use `InceptaDiveShadowRuntime.inspect_request`, `preflight_action`, `console_summary`, and `recent_activity`.
 
 ## Verification added
 
@@ -69,11 +79,13 @@ Focused tests cover:
 - receipt-backed console summary counts;
 - post-outcome learning candidates remaining governance-pending;
 - Phi/InceptaDive solver advisory remaining non-executing.
+- redacted inspection route execution without raw request text exposure;
+- assistant response advisory embedding without execution authority.
 
 ## Status
 
-Completeness: core runtime activation applied.
+Completeness: core runtime activation and route-level embedding applied.
 
-Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, and focused tests.
+Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, and focused tests.
 
-Fracture delta: direct assistant-route response embedding and dedicated inspection route still need a separate route PR.
+Fracture delta: live execution authority, memory write authority, connector dispatch authority, and governance verdict replacement remain intentionally absent.

@@ -1465,18 +1465,18 @@
       "action_proof": 137,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 53,
+      "read_model": 54,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 190,
+      "audit_chain": 191,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 77,
+      "proven": 78,
       "unproven": 0,
       "witnessed": 116
     },
@@ -1485,14 +1485,14 @@
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 136
+      "request_proof": 137
     },
-    "surface_count": 193
+    "surface_count": 194
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 193,
+      "strong": 194,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 284,
+      "proven": 285,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 444,
+    "route_count": 445,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -3156,6 +3156,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/session",
         "surface_id": "workflow_execution_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/shadow/inspect",
+        "surface_id": "inceptadive_shadow_inspection_routes"
       },
       {
         "coverage_state": "proven",
@@ -6941,6 +6946,33 @@
         "console_personal_assistant_html_view_renders_read_only_panel"
       ],
       "surface_id": "operator_console_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/shadow.py",
+        "mcoi/mcoi_runtime/app/routers/assistant.py",
+        "mcoi/mcoi_runtime/app/inceptadive_shadow_integration.py",
+        "mcoi/mcoi_runtime/core/inceptadive_deep_engine.py",
+        "mcoi/mcoi_runtime/core/inceptadive_shadow_receipt_store.py",
+        "mcoi/tests/test_inceptadive_shadow_routes.py",
+        "mcoi/tests/test_assistant_router.py"
+      ],
+      "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
+      "representative_paths": [
+        "/api/v1/shadow/inspect"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "shadow_inspect_route_runs_runtime_and_redacts_raw_text",
+        "shadow_inspect_route_rejects_invalid_request_bounded",
+        "default_routers_include_shadow_inspect_path",
+        "personal_assistant_preview_compiles_inbox_request_without_execution",
+        "finance_ops_plan_records_inceptadive_shadow_advisory_history"
+      ],
+      "surface_id": "inceptadive_shadow_inspection_routes"
     },
     {
       "action_proof": "action_proof",
@@ -15325,8 +15357,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1939,
-    "runtime_witness_count": 1939,
+    "exact_test_anchor_count": 1944,
+    "runtime_witness_count": 1944,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18966,6 +18998,45 @@
         "exact_test_anchor_count": 18,
         "runtime_witness_count": 18,
         "surface_id": "operator_console_read_models",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_shadow_inspect_route_runs_runtime_and_redacts_raw_text"
+            ],
+            "witness": "shadow_inspect_route_runs_runtime_and_redacts_raw_text"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_shadow_inspect_route_rejects_invalid_request_bounded"
+            ],
+            "witness": "shadow_inspect_route_rejects_invalid_request_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_default_routers_include_shadow_inspect_path"
+            ],
+            "witness": "default_routers_include_shadow_inspect_path"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_compiles_inbox_request_without_execution"
+            ],
+            "witness": "personal_assistant_preview_compiles_inbox_request_without_execution"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_records_inceptadive_shadow_advisory_history"
+            ],
+            "witness": "finance_ops_plan_records_inceptadive_shadow_advisory_history"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "inceptadive_shadow_inspection_routes",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
