@@ -205,7 +205,7 @@ class SNetRecursiveMesh:
         self._require_question(question_id)
         confidence_value = _require_confidence(confidence)
         validation_state = _require_validation_state(validation_state)
-        raw_answer_text = _require_text(raw_answer, "raw_answer")
+        raw_answer_text = _require_id_text(raw_answer, "raw_answer")
         ascii_folded_answer = _ascii_lower_stripped(raw_answer_text)
         evidence_ref_values = _require_text_tuple(evidence_refs, "evidence_refs")
         answer_id = _stable_id(
