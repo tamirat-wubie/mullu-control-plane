@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 286,
+      "proven": 287,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 446,
+    "route_count": 447,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2855,6 +2855,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/skills",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -6018,7 +6023,7 @@
         "scripts/validate_personal_assistant_math_projection.py",
         "scripts/validate_personal_assistant_planning_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, TeamOps Gmail live-probe readiness, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -6037,6 +6042,7 @@
         "/api/v1/personal-assistant/memory-observations",
         "/api/v1/personal-assistant/memory-observations/preview",
         "/api/v1/personal-assistant/memory-observations/review/preview",
+        "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
         "/api/v1/personal-assistant/teamops/shared-inbox/plan/preview",
         "/api/v1/personal-assistant/github-codex/review/preview",
         "/api/v1/personal-assistant/research/source-compare/preview",
@@ -6200,6 +6206,10 @@
         "personal_assistant_skill_read_model_deployed_read_only": [
           "personal_assistant_skill_read_model_is_deployed_read_only"
         ],
+        "personal_assistant_teamops_gmail_live_probe_no_effect": [
+          "gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence_only",
+          "gateway_personal_assistant_teamops_gmail_live_probe_rejects_raw_credential_value"
+        ],
         "personal_assistant_teamops_shared_inbox_plan_no_effect": [
           "personal_assistant_teamops_projection_fixture_validates",
           "runtime_teamops_projection_blocks_effect_boundaries",
@@ -6234,6 +6244,7 @@
         "personal_assistant_memory_observation_read_model_public_safe",
         "personal_assistant_memory_observation_preview_candidate_only",
         "personal_assistant_memory_observation_review_no_effect",
+        "personal_assistant_teamops_gmail_live_probe_no_effect",
         "personal_assistant_teamops_shared_inbox_plan_no_effect",
         "personal_assistant_github_codex_review_no_effect",
         "personal_assistant_research_source_compare_no_effect",
@@ -15385,8 +15396,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1947,
-    "runtime_witness_count": 1947,
+    "exact_test_anchor_count": 1948,
+    "runtime_witness_count": 1948,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17972,6 +17983,13 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence_only",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_teamops_gmail_live_probe_rejects_raw_credential_value"
+            ],
+            "witness": "personal_assistant_teamops_gmail_live_probe_no_effect"
+          },
+          {
+            "anchors": [
               "tests/test_validate_personal_assistant_teamops_projection.py::test_personal_assistant_teamops_projection_fixture_validates",
               "tests/test_validate_personal_assistant_teamops_projection.py::test_runtime_teamops_projection_blocks_effect_boundaries",
               "tests/test_validate_personal_assistant_teamops_projection.py::test_teamops_projection_validator_rejects_live_execution_authority",
@@ -18043,8 +18061,8 @@
             "witness": "personal_assistant_planning_schedule_no_effect"
           }
         ],
-        "exact_test_anchor_count": 25,
-        "runtime_witness_count": 25,
+        "exact_test_anchor_count": 26,
+        "runtime_witness_count": 26,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
