@@ -512,6 +512,11 @@ class OrganizationKernel:
         if binding.terminal_disposition not in _NON_COMMITTED_TERMINAL_DISPOSITIONS:
             raise RuntimeCoreInvariantError("closure drift remediation requires non-committed disposition")
         self._validate_closure_drift_authority(binding.case_id, binding.authority_ref)
+        self._validate_closure_drift_superseded_evidence(
+            binding.case_id,
+            closure.evidence_refs,
+            binding.superseded_evidence_refs,
+        )
         for evidence_ref in (*binding.drift_evidence_refs, *binding.evidence_refs):
             evidence = self._case_evidence.get(evidence_ref)
             if evidence is None or evidence.case_id != binding.case_id:
@@ -1015,6 +1020,12 @@ class OrganizationKernel:
             if closure is None or closure.case_id != remediation.case_id:
                 raise RuntimeCoreInvariantError("restored closure drift remediation closure mismatch")
             self._validate_closure_drift_authority(remediation.case_id, remediation.authority_ref)
+            self._validate_closure_drift_superseded_evidence(
+                remediation.case_id,
+                closure.evidence_refs,
+                remediation.superseded_evidence_refs,
+                error_prefix="restored ",
+            )
             for evidence_ref in (*remediation.drift_evidence_refs, *remediation.evidence_refs):
                 evidence = self._case_evidence.get(evidence_ref)
                 if evidence is None or evidence.case_id != remediation.case_id:
@@ -1431,6 +1442,26 @@ class OrganizationKernel:
         approval = self._approvals.get(authority_ref)
         if approval is None or approval.case_id != case_id:
             raise RuntimeCoreInvariantError("closure drift remediation authority unavailable")
+
+    def _validate_closure_drift_superseded_evidence(
+        self,
+        case_id: str,
+        closure_evidence_refs: tuple[str, ...],
+        superseded_evidence_refs: tuple[str, ...],
+        *,
+        error_prefix: str = "",
+    ) -> None:
+        closure_evidence_ref_set = set(closure_evidence_refs)
+        for evidence_ref in superseded_evidence_refs:
+            evidence = self._case_evidence.get(evidence_ref)
+            if (
+                evidence is None
+                or evidence.case_id != case_id
+                or evidence_ref not in closure_evidence_ref_set
+            ):
+                raise RuntimeCoreInvariantError(
+                    f"{error_prefix}closure drift remediation superseded evidence unavailable"
+                )
 
     def _all_plan_steps_allowed(self, case_id: str) -> bool:
         plan = self._require_case_plan(case_id)

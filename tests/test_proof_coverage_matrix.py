@@ -2018,6 +2018,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "closure_packet_drift_accepts_remediation_routing" in witnesses
     assert "closure_packet_drift_remediation_rejects_mismatched_refs" in witnesses
     assert "closure_packet_drift_remediation_rejects_unrecorded_authority_ref" in witnesses
+    assert "closure_packet_drift_remediation_rejects_unbound_superseded_evidence_refs" in witnesses
     assert "closure_packet_drift_operator_actions_report_policy_requirements" in witnesses
     assert "closure_packet_drift_operator_action_binds_review_remediation" in witnesses
     assert "closure_packet_drift_operator_action_binds_compensation_runbook_remediation" in witnesses
@@ -2148,7 +2149,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 75
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 76
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

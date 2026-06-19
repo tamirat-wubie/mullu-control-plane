@@ -9143,6 +9143,7 @@
         "closure_packet_drift_accepts_remediation_routing",
         "closure_packet_drift_remediation_rejects_mismatched_refs",
         "closure_packet_drift_remediation_rejects_unrecorded_authority_ref",
+        "closure_packet_drift_remediation_rejects_unbound_superseded_evidence_refs",
         "closure_packet_drift_operator_actions_report_policy_requirements",
         "closure_packet_drift_operator_action_binds_review_remediation",
         "closure_packet_drift_operator_action_binds_compensation_runbook_remediation",
@@ -15357,8 +15358,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1944,
-    "runtime_witness_count": 1944,
+    "exact_test_anchor_count": 1945,
+    "runtime_witness_count": 1945,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21768,6 +21769,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_closure_packet_drift_remediation_rejects_unbound_superseded_evidence_refs"
+            ],
+            "witness": "closure_packet_drift_remediation_rejects_unbound_superseded_evidence_refs"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_closure_packet_drift_operator_actions_report_policy_requirements"
             ],
             "witness": "closure_packet_drift_operator_actions_report_policy_requirements"
@@ -21894,8 +21901,8 @@
             "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 75,
-        "runtime_witness_count": 75,
+        "exact_test_anchor_count": 76,
+        "runtime_witness_count": 76,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
