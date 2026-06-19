@@ -2042,6 +2042,21 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_evidence_
     assert ledger_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_submitted_evidence_refs_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    evidence_refs_entry = entries["read-only-worker-runtime-enablement-submitted-evidence-refs"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert evidence_refs_entry["path"] == (
+        "schemas/read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json"
+    )
+    assert evidence_refs_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-enablement-submitted-evidence-refs:1"
+    )
+    assert evidence_refs_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

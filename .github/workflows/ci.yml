@@ -553,7 +553,7 @@ jobs:
         run: python -m pytest tests/test_validate_read_only_worker_receipt_append_witness.py tests/test_validate_read_only_worker_terminal_closure_witness.py -q
 
       - name: Run worker runtime enablement witness tests
-        run: python -m pytest tests/test_validate_read_only_worker_runtime_enablement_witness.py tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py -q
+        run: python -m pytest tests/test_validate_read_only_worker_runtime_enablement_witness.py tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py -q
 
       - name: Upload SDLC validation receipt
         uses: actions/upload-artifact@v6
