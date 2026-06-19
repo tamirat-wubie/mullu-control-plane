@@ -136,6 +136,7 @@ def test_protocol_manifest_is_valid() -> None:
     capability_plan_preview_entry = entries["capability-plan-preview"]
     governed_planning_profile_entry = entries["governed-planning-profile"]
     governed_planning_profile_report_entry = entries["governed-planning-profile-admission-report"]
+    governed_planning_profile_dossier_entry = entries["governed-planning-profile-shadow-dossier"]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
 
@@ -173,6 +174,13 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:governed-planning-profile-admission-report:1"
     )
     assert governed_planning_profile_report_entry["surface"] == "planning"
+    assert governed_planning_profile_dossier_entry["path"] == (
+        "schemas/governed_planning_profile_shadow_dossier.schema.json"
+    )
+    assert governed_planning_profile_dossier_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-shadow-dossier:1"
+    )
+    assert governed_planning_profile_dossier_entry["surface"] == "planning"
     assert governed_symbolic_loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
     assert governed_symbolic_loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
     assert governed_symbolic_loop_entry["surface"] == "governance"

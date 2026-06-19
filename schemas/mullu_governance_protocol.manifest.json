@@ -1493,6 +1493,12 @@
       "surface": "planning"
     },
     {
+      "schema_id": "governed-planning-profile-shadow-dossier",
+      "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
+      "urn": "urn:mullusi:schema:governed-planning-profile-shadow-dossier:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "supervisor-tick",
       "path": "schemas/supervisor_tick.schema.json",
       "urn": "urn:mullusi:schema:supervisor-tick:1",
