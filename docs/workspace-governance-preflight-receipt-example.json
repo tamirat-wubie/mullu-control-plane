@@ -1,5 +1,5 @@
 {
-  "check_count": 223,
+  "check_count": 224,
   "checks": [
     {
       "args": [
@@ -312,6 +312,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR EFFECT RECONCILIATION EVIDENCE CONTRACT VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_live_evidence.py"
+      ],
+      "name": "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR EFFECT RECONCILIATION LIVE EVIDENCE VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
