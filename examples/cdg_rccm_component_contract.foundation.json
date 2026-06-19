@@ -53,7 +53,7 @@
     "receipt_ref": "receipt://platform/cdg-rccm/component-contract/20260618"
   },
   "evidence_refs": [
-    "schemas/cdg_rccm_component_contract.schema.json",
+    "mcoi/mcoi_runtime/convergence/cdg_rccm_component_contract.schema.json",
     "examples/cdg_rccm_component_contract.foundation.json",
     "scripts/validate_cdg_rccm_component_contract.py",
     "mcoi/tests/test_cdg_rccm_component_contract.py",
