@@ -1,0 +1,60 @@
+id: non_live_quantum_fixture_serializer_boundary_witness
+version: 1
+parent_boundary: universal_symbolic_quantum_capability_boundary
+related_witness:
+  - non_live_openqasm_export_planning_witness
+  - non_live_local_quantum_simulator_boundary_witness
+  - non_live_quantum_fixture_catalog_witness
+architecture_name: USQCA-PQE
+decision: FitsAsNonLiveQuantumFixtureSerializerBoundaryWitness
+posture: FoundationModeOnly
+governance_scope:
+  - OCE
+  - RAG
+  - CDCV
+  - CQTE
+  - UWMA
+  - SRCA
+  - PRS
+allowed_scope:
+  - fixture_serializer_boundary_planning
+  - canonical_field_order_planning
+  - metadata_field_allowlist_planning
+  - payload_field_denylist_planning
+  - deterministic_serializer_profile_review
+  - denial_case_serializer_profile
+  - future_serializer_authority_requirement
+denied_authority:
+  fixture_serializer_execution: true
+  serialized_fixture_artifact_generation: true
+  executable_fixture_serialization: true
+  canonical_runtime_bytes_emission: true
+  openqasm_source_serialization: true
+  qir_source_serialization: true
+  simulator_input_serialization: true
+  runtime_payload_generation: true
+  simulator_runtime_invocation: true
+  state_vector_materialization: true
+  shot_execution: true
+  measurement_histogram_emission: true
+  backend_execution: true
+  hardware_backend_credential_access: true
+  quantum_job_submission: true
+  cryptanalysis_execution: true
+  quantum_advantage_claim: true
+  production_readiness_claim: true
+  terminal_closure: true
+required_gates:
+  - ParentQuantumBoundaryGate
+  - FixtureCatalogWitnessGate
+  - SerializerBoundaryDeclarationGate
+  - DescriptorOnlyGate
+  - DeterministicFieldOrderGate
+  - MetadataAllowlistGate
+  - PayloadDenylistGate
+  - NullOutputPathGate
+  - NoCanonicalBytesGate
+  - NoExecutableSerializationGate
+  - NoRuntimeExecutionGate
+  - WitnessLedgerGate
+next_action: Review the serializer boundary witness before any fixture serializer implementation.

@@ -516,6 +516,9 @@ jobs:
       - name: Run quantum fixture catalog witness tests
         run: python -m pytest tests/test_validate_non_live_quantum_fixture_catalog_witness.py -q
 
+      - name: Run quantum fixture serializer boundary witness tests
+        run: python -m pytest tests/test_validate_non_live_quantum_fixture_serializer_boundary_witness.py -q
+
       - name: Run resilience rehearsal umbrella tests
         run: python -m pytest tests/test_validate_resilience_rehearsal_reports.py -q
 
