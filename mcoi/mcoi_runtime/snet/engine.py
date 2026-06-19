@@ -85,11 +85,11 @@ class SNetRecursiveMesh:
         """Add or return a symbol using label, sense, type, and parent context."""
         label_text = _require_text(label, "label")
         symbol_type_text = _require_text(symbol_type, "symbol_type")
-        sense_id_text = _optional_text(sense_id, "sense_id")
+        sense_id_text = _optional_id_text(sense_id, "sense_id")
         definition_text = _optional_text(definition, "definition")
         ontology_status_value = _require_ontology_status(ontology_status)
         parent_context_text = _optional_text(parent_context, "parent_context")
-        created_from_metadata_id_text = _optional_text(created_from_metadata_id, "created_from_metadata_id")
+        created_from_metadata_id_text = _optional_id_text(created_from_metadata_id, "created_from_metadata_id")
         depth_value = _require_depth(depth)
         if created_from_metadata_id_text:
             self._require_metadata_symbol_provenance(
@@ -137,7 +137,7 @@ class SNetRecursiveMesh:
         symbol = self._require_symbol(symbol_id)
         perspective = _require_text(perspective, "perspective")
         context = _require_text(context, "context")
-        parent_question_id = _optional_text(parent_question_id, "parent_question_id")
+        parent_question_id = _optional_id_text(parent_question_id, "parent_question_id")
         if parent_question_id:
             self._require_parent_question_scope(symbol, self._require_question(parent_question_id))
         tick_id = _stable_id("snet-tick", symbol_id, perspective, context, str(symbol.depth))
@@ -670,6 +670,14 @@ def _optional_text(value: str, field_name: str) -> str:
     if value == "":
         return ""
     return _require_text(value, field_name)
+
+
+def _optional_id_text(value: str, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be an exact non-empty string or empty")
+    if value == "":
+        return ""
+    return _require_id_text(value, field_name)
 
 
 def _require_ontology_status(ontology_status: SNetOntologyStatus) -> SNetOntologyStatus:

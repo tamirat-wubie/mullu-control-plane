@@ -560,6 +560,16 @@ def test_parent_question_id_must_exist_before_wh_tick_mutation() -> None:
 
     parent_tick = mesh.generate_wh_tick(seed.symbol_id, perspective="root")
     parent_question_id = parent_tick.generated_question_ids[0]
+    before_padded_parent_question_count = len(mesh.questions)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        mesh.generate_wh_tick(
+            seed.symbol_id,
+            perspective="padded-child",
+            parent_question_id=f"{parent_question_id} ",
+        )
+
+    assert len(mesh.questions) == before_padded_parent_question_count
+
     child_tick = mesh.generate_wh_tick(
         seed.symbol_id,
         perspective="child",
@@ -624,6 +634,8 @@ def test_created_from_metadata_id_must_exist_before_symbol_mutation() -> None:
 
     with pytest.raises(KeyError, match="unknown SNet metadata_id"):
         mesh.add_symbol("Forged child", created_from_metadata_id="snet-metadata:missing")
+    with pytest.raises(ValueError, match="created_from_metadata_id"):
+        mesh.add_symbol("Forged child", created_from_metadata_id=" snet-metadata:missing")
 
     assert mesh.symbols == {}
     assert mesh._symbol_identity_index == {}
@@ -754,6 +766,8 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
         mesh.add_symbol("Seed", sense_id=AlwaysEqualToEmpty())
     with pytest.raises(ValueError, match="sense_id"):
         mesh.add_symbol("Seed", sense_id=RaisingEquality())
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=" seed#1")
     with pytest.raises(ValueError, match="created_from_metadata_id"):
         mesh.add_symbol("Seed", created_from_metadata_id=None)
     assert mesh.symbols == {}
