@@ -1,0 +1,45 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_admission_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_admission_20260619",
+  "architecture_summary": "Add a pure structural adapter that projects CompiledGoalPlan and CausalSimulationReceipt evidence into a GovernedPlanningProfileAdmissionReport. The adapter does not import the goal compiler or simulator, does not wire into routers or workers, and keeps all effect authority denied by schema.",
+  "affected_modules": [
+    "gateway_planning_and_simulation_lineage",
+    "governed_planning_profile_lineage",
+    "mullu_governance_protocol_manifest",
+    "sdlc_artifact_lineage"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileAdmissionReport fields for projection summary, shadow mismatches, promotion blockers, missing evidence refs, evidence refs, receipt envelope, and deterministic report hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_admission_report.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "tests/test_gateway/test_governed_planning_profile_adapter.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove gateway/governed_planning_profile_adapter.py, schemas/governed_planning_profile_admission_report.schema.json, focused adapter tests, manifest entries, documentation additions, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because the adapter has no router, worker, dispatch, write, connector, or registration surface.",
+  "migration_plan": "No runtime migration. Existing compiled plans, simulation receipts, profile fixtures, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The adapter only reads structural fields supplied by tests or future explicit callers.",
+  "test_plan": [
+    "python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q",
+    "python -m pytest tests/test_validate_governed_planning_profile.py tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "uao_ref": "uao://governed-planning-profile/admission/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/admission/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/admission/design/20260619"
+}

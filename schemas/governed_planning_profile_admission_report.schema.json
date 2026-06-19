@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile-admission-report:1",
+  "title": "Governed Planning Profile Admission Report",
+  "description": "No-effect shadow admission report for a compiled plan projected into the GovernedPlanningProfile boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "report_version",
+    "profile_id",
+    "source_plan_id",
+    "plan_certificate_id",
+    "simulation_receipt_id",
+    "admission_decision",
+    "solver_outcome",
+    "shadow_parity_status",
+    "projection",
+    "shadow_mismatches",
+    "promotion_blockers",
+    "missing_evidence_refs",
+    "evidence_refs",
+    "receipt_envelope",
+    "report_hash",
+    "metadata"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-admission-[a-f0-9]{16}$"
+    },
+    "report_version": {
+      "type": "string",
+      "const": "governed_planning_profile_admission_report.v1"
+    },
+    "profile_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-[a-z0-9-]+$"
+    },
+    "source_plan_id": {"type": "string", "minLength": 1},
+    "plan_certificate_id": {"type": "string", "minLength": 1},
+    "simulation_receipt_id": {"type": "string", "minLength": 1},
+    "admission_decision": {
+      "type": "string",
+      "enum": ["blocked", "shadow_parity_ready"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "shadow_parity_status": {
+      "type": "string",
+      "enum": ["matched", "blocked"]
+    },
+    "projection": {"$ref": "#/$defs/projection"},
+    "shadow_mismatches": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "promotion_blockers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "missing_evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "receipt_envelope": {"$ref": "#/$defs/receipt_envelope"},
+    "report_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["adapter", "adapter_mode", "runtime_registration", "authority_effect", "read_only"],
+      "properties": {
+        "adapter": {"type": "string", "const": "governed_planning_profile_adapter"},
+        "adapter_mode": {"type": "string", "const": "reference_only_shadow_projection"},
+        "runtime_registration": {"type": "string", "const": "not_performed"},
+        "authority_effect": {"type": "string", "const": "none"},
+        "read_only": {"type": "boolean", "const": true}
+      }
+    }
+  },
+  "$defs": {
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "profile_version",
+        "source_plan_id",
+        "goal_id",
+        "tenant_id",
+        "actor_id",
+        "goal_status",
+        "source_plan_status",
+        "risk_tier",
+        "step_count",
+        "dag_step_count",
+        "edge_count",
+        "evidence_obligation_count",
+        "rollback_obligation_count",
+        "approval_obligation_count",
+        "terminal_condition_count",
+        "simulation_receipt_id",
+        "simulation_would_execute",
+        "simulation_required_control_count",
+        "simulation_failure_mode_count",
+        "read_only",
+        "execution_allowed",
+        "dispatch_allowed",
+        "runtime_replanning_enabled",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "profile_id": {"type": "string", "minLength": 1},
+        "profile_version": {"type": "string", "const": "governed_planning_profile.v1"},
+        "source_plan_id": {"type": "string", "minLength": 1},
+        "goal_id": {"type": "string", "minLength": 1},
+        "tenant_id": {"type": "string", "minLength": 1},
+        "actor_id": {"type": "string", "minLength": 1},
+        "goal_status": {"type": "string", "minLength": 1},
+        "source_plan_status": {"type": "string", "minLength": 1},
+        "risk_tier": {"type": "string", "minLength": 1},
+        "step_count": {"type": "integer", "minimum": 0},
+        "dag_step_count": {"type": "integer", "minimum": 0},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "evidence_obligation_count": {"type": "integer", "minimum": 0},
+        "rollback_obligation_count": {"type": "integer", "minimum": 0},
+        "approval_obligation_count": {"type": "integer", "minimum": 0},
+        "terminal_condition_count": {"type": "integer", "minimum": 0},
+        "simulation_receipt_id": {"type": "string", "minLength": 1},
+        "simulation_would_execute": {"type": "boolean"},
+        "simulation_required_control_count": {"type": "integer", "minimum": 0},
+        "simulation_failure_mode_count": {"type": "integer", "minimum": 0},
+        "read_only": {"type": "boolean", "const": true},
+        "execution_allowed": {"type": "boolean", "const": false},
+        "dispatch_allowed": {"type": "boolean", "const": false},
+        "runtime_replanning_enabled": {"type": "boolean", "const": false},
+        "terminal_closure_allowed": {"type": "boolean", "const": false},
+        "success_claim_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "category",
+        "expected_ref",
+        "observed_ref",
+        "severity",
+        "proof_state"
+      ],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^planning-profile-shadow-[a-f0-9]{16}$"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["identity", "topology", "authority", "rollback", "evidence", "closure", "simulation", "profile_scope"]
+        },
+        "expected_ref": {"type": "string", "minLength": 1},
+        "observed_ref": {"type": "string", "minLength": 1},
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"]
+        }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": {"type": "string", "pattern": "^uao://governed-planning-profile/admission/.+$"},
+        "causal_decision_trace_ref": {"type": "string", "pattern": "^trace://governed-planning-profile/admission/.+$"},
+        "receipt_ref": {"type": "string", "pattern": "^receipt://governed-planning-profile/admission/.+$"}
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}
