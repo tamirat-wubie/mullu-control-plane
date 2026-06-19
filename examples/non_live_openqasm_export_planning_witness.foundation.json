@@ -1,0 +1,122 @@
+{
+  "binding_id": "non_live_openqasm_export_planning_witness",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "solver_outcome": "FoundationModeOnly",
+  "parent_boundary_ref": "universal_symbolic_quantum_capability_boundary",
+  "architecture_name": "USQCA-PQE",
+  "planning_status": "NonLiveOpenQasmPlanningOnly",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "parent_boundary_required": true,
+  "non_live_witness_required": true,
+  "openqasm_target": {
+    "target_version": "OpenQASM 3.0 planning target",
+    "source_text_embedded": false,
+    "source_file_path": null,
+    "backend_independent": true,
+    "backend_specific_pragmas_allowed": false,
+    "requires_future_exporter_witness": true
+  },
+  "allowed_planning_outputs": [
+    "symbolic_circuit_intent",
+    "openqasm_target_version_declaration",
+    "register_sizing_plan",
+    "gate_set_plan",
+    "measurement_mapping_plan",
+    "resource_projection_plan",
+    "export_precondition_list",
+    "future_exporter_witness_requirement"
+  ],
+  "denied_outputs": [
+    "openqasm_source_text",
+    "openqasm_source_file",
+    "qir_source_file",
+    "simulator_result",
+    "backend_job_id",
+    "hardware_calibration_record",
+    "credential_material",
+    "cryptanalysis_workflow",
+    "quantum_advantage_claim",
+    "production_readiness_claim"
+  ],
+  "required_planning_gates": [
+    "ParentQuantumBoundaryGate",
+    "OpenQasmVersionDeclarationGate",
+    "SymbolicCircuitIntentGate",
+    "RegisterSizingGate",
+    "GateSetDeclarationGate",
+    "MeasurementMappingGate",
+    "ResourceProjectionGate",
+    "BackendIndependenceGate",
+    "NoExecutionAuthorityGate",
+    "WitnessLedgerGate"
+  ],
+  "denied_authorities": {
+    "openqasm_source_emission_enabled": false,
+    "qir_source_emission_enabled": false,
+    "simulator_runtime_execution_enabled": false,
+    "backend_execution_enabled": false,
+    "hardware_credentials_access_enabled": false,
+    "quantum_job_submission_enabled": false,
+    "cryptanalysis_execution_enabled": false,
+    "quantum_advantage_claim_enabled": false,
+    "production_readiness_claim_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "openqasm_source_text_emitted": false,
+    "openqasm_file_written": false,
+    "qir_file_written": false,
+    "simulator_invoked": false,
+    "backend_called": false,
+    "hardware_credentials_read": false,
+    "quantum_job_submitted": false,
+    "result_distribution_observed": false,
+    "secret_values_serialized": false,
+    "production_claim_made": false
+  },
+  "planning_constraints": {
+    "requires_symbolic_circuit_intent": true,
+    "requires_register_declarations": true,
+    "requires_measurement_mapping": true,
+    "requires_resource_projection": true,
+    "requires_no_backend_profile": true,
+    "requires_future_exporter_schema": true,
+    "requires_no_execution_result": true
+  },
+  "resource_projection_obligations": [
+    "declared_qubit_register_count",
+    "declared_classical_register_count",
+    "gate_count_projection",
+    "depth_projection",
+    "measurement_count_projection",
+    "oracle_and_data_loading_obligation"
+  ],
+  "witness_requirements": [
+    "parent_quantum_boundary_witness",
+    "symbolic_circuit_intent_witness",
+    "openqasm_version_target_witness",
+    "register_and_measurement_mapping_witness",
+    "resource_projection_witness",
+    "no_execution_effect_witness",
+    "future_exporter_authority_witness"
+  ],
+  "constructive_deltas": [
+    "Adds a non-live OpenQASM export planning witness under the quantum boundary.",
+    "Defines planning gates for a future exporter without emitting source.",
+    "Preserves backend independence and no-execution authority limits."
+  ],
+  "fracture_deltas": [
+    "No OpenQASM source text is emitted.",
+    "No OpenQASM source file is written.",
+    "No QIR source file is written.",
+    "No simulator is invoked.",
+    "No backend is called.",
+    "No hardware credentials are read.",
+    "No quantum job is submitted.",
+    "No result distribution or quantum advantage is claimed."
+  ],
+  "next_action": "Review alongside the non-live local quantum simulator boundary witness before proposing a separate governed exporter implementation."
+}

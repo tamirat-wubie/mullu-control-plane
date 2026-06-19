@@ -1,0 +1,130 @@
+{
+  "binding_id": "non_live_local_quantum_simulator_boundary_witness",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "solver_outcome": "FoundationModeOnly",
+  "parent_boundary_ref": "universal_symbolic_quantum_capability_boundary",
+  "related_witness_refs": [
+    "non_live_openqasm_export_planning_witness"
+  ],
+  "architecture_name": "USQCA-PQE",
+  "boundary_status": "NonLiveLocalSimulatorBoundaryOnly",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "parent_boundary_required": true,
+  "non_live_witness_required": true,
+  "simulator_boundary": {
+    "simulator_family": "tiny local simulator planning boundary",
+    "engine_selected": false,
+    "engine_name": null,
+    "runtime_invocation_allowed": false,
+    "state_vector_materialization_allowed": false,
+    "shot_execution_allowed": false,
+    "measurement_histogram_allowed": false,
+    "backend_independent": true,
+    "requires_future_simulator_witness": true
+  },
+  "allowed_planning_outputs": [
+    "tiny_simulator_eligibility_plan",
+    "deterministic_fixture_plan",
+    "qubit_ceiling_declaration",
+    "gate_subset_declaration",
+    "measurement_plan_boundary",
+    "resource_budget_plan",
+    "result_claim_denial_policy",
+    "future_simulator_witness_requirement"
+  ],
+  "denied_outputs": [
+    "simulator_engine_selection",
+    "simulator_result",
+    "state_vector_snapshot",
+    "amplitude_table",
+    "measurement_shot_counts",
+    "measurement_histogram",
+    "backend_job_id",
+    "credential_material",
+    "quantum_advantage_claim",
+    "production_readiness_claim"
+  ],
+  "required_boundary_gates": [
+    "ParentQuantumBoundaryGate",
+    "SimulatorBoundaryDeclarationGate",
+    "DeterministicFixturePlanGate",
+    "QubitCountCeilingGate",
+    "GateSetSubsetGate",
+    "MeasurementPlanBoundaryGate",
+    "NoRuntimeExecutionGate",
+    "NoBackendCredentialGate",
+    "ResourceBudgetGate",
+    "ResultClaimDenialGate",
+    "WitnessLedgerGate"
+  ],
+  "denied_authorities": {
+    "simulator_engine_selection_enabled": false,
+    "simulator_runtime_invocation_enabled": false,
+    "state_vector_materialization_enabled": false,
+    "shot_execution_enabled": false,
+    "measurement_histogram_emission_enabled": false,
+    "backend_execution_enabled": false,
+    "hardware_credentials_access_enabled": false,
+    "quantum_job_submission_enabled": false,
+    "quantum_advantage_claim_enabled": false,
+    "production_readiness_claim_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "simulator_engine_selected": false,
+    "simulator_runtime_invoked": false,
+    "state_vector_materialized": false,
+    "amplitude_table_materialized": false,
+    "measurement_shots_executed": false,
+    "measurement_histogram_emitted": false,
+    "backend_called": false,
+    "hardware_credentials_read": false,
+    "quantum_job_submitted": false,
+    "result_distribution_observed": false,
+    "secret_values_serialized": false,
+    "production_claim_made": false
+  },
+  "resource_ceiling_plan": {
+    "requires_qubit_count_ceiling": true,
+    "requires_gate_count_ceiling": true,
+    "requires_depth_ceiling": true,
+    "requires_memory_ceiling": true,
+    "requires_timeout_ceiling": true,
+    "requires_no_runtime_benchmark_claim": true
+  },
+  "fixture_obligations": [
+    "deterministic_circuit_fixture_definition",
+    "declared_gate_subset_fixture",
+    "declared_measurement_mapping_fixture",
+    "declared_resource_ceiling_fixture",
+    "no_observed_result_fixture"
+  ],
+  "witness_requirements": [
+    "parent_quantum_boundary_witness",
+    "simulator_boundary_declaration_witness",
+    "deterministic_fixture_plan_witness",
+    "resource_ceiling_plan_witness",
+    "no_runtime_execution_effect_witness",
+    "result_claim_denial_witness",
+    "future_simulator_authority_witness"
+  ],
+  "constructive_deltas": [
+    "Adds a non-live local quantum simulator boundary witness under the quantum boundary.",
+    "Defines fixture, resource, and result-claim boundaries for a future tiny simulator.",
+    "Preserves no runtime execution while preparing admission criteria."
+  ],
+  "fracture_deltas": [
+    "No simulator engine is selected.",
+    "No simulator runtime is invoked.",
+    "No state vector or amplitude table is materialized.",
+    "No measurement shots are executed.",
+    "No measurement histogram is emitted.",
+    "No backend is called.",
+    "No hardware credentials are read.",
+    "No quantum result or advantage is claimed."
+  ],
+  "next_action": "Review this boundary witness before proposing a separate governed tiny local simulator implementation."
+}

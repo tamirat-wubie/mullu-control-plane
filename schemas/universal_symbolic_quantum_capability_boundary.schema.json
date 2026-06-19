@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbolic-quantum-capability-boundary:1",
+  "title": "Universal Symbolic Quantum Capability Boundary",
+  "description": "Foundation Mode boundary for representing USQCA-PQE as a governed planning, validation, resource, and witness surface without live quantum execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "architecture_name",
+    "full_name",
+    "integration_decision",
+    "capability_status",
+    "authority_granted",
+    "planning_only",
+    "read_only",
+    "runtime_quantum_execution_enabled",
+    "hardware_backend_authority_granted",
+    "quantum_hardware_claim_made",
+    "fault_tolerant_claim_made",
+    "quantum_advantage_claim_made",
+    "governance_scope",
+    "symbolic_control_plane_role",
+    "physical_boundary",
+    "required_gates",
+    "denied_authorities",
+    "effect_boundary",
+    "witness_requirements",
+    "constructive_deltas",
+    "fracture_deltas",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "universal_symbolic_quantum_capability_boundary"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "FoundationModeOnly"
+    },
+    "architecture_name": {
+      "type": "string",
+      "const": "USQCA-PQE"
+    },
+    "full_name": {
+      "type": "string",
+      "const": "Universal Symbolic Quantum Computing Architecture with Proof-Carrying Execution"
+    },
+    "integration_decision": {
+      "type": "string",
+      "const": "FitsAsGovernedPlanningSurface"
+    },
+    "capability_status": {
+      "type": "string",
+      "const": "PlanningOnly"
+    },
+    "authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "planning_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "const": true
+    },
+    "runtime_quantum_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "hardware_backend_authority_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "quantum_hardware_claim_made": {
+      "type": "boolean",
+      "const": false
+    },
+    "fault_tolerant_claim_made": {
+      "type": "boolean",
+      "const": false
+    },
+    "quantum_advantage_claim_made": {
+      "type": "boolean",
+      "const": false
+    },
+    "governance_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "contains": {
+        "const": "OCE"
+      },
+      "minItems": 7,
+      "uniqueItems": true
+    },
+    "symbolic_control_plane_role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_roles",
+        "denied_roles"
+      ],
+      "properties": {
+        "allowed_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 5,
+          "uniqueItems": true
+        },
+        "denied_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 5,
+          "uniqueItems": true
+        }
+      }
+    },
+    "physical_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires_declared_qubit_substrate",
+        "requires_initialization_model",
+        "requires_coherence_or_noise_model",
+        "requires_backend_capability_profile",
+        "requires_statistical_result_validation",
+        "requires_fault_tolerance_evidence_for_logical_claims"
+      ],
+      "properties": {
+        "requires_declared_qubit_substrate": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_initialization_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_coherence_or_noise_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_backend_capability_profile": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_statistical_result_validation": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_fault_tolerance_evidence_for_logical_claims": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "required_gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 9,
+      "uniqueItems": true
+    },
+    "denied_authorities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_qpu_execution_enabled",
+        "simulator_runtime_execution_enabled",
+        "hardware_credentials_access_enabled",
+        "quantum_job_submission_enabled",
+        "cryptanalysis_execution_enabled",
+        "external_backend_network_calls_enabled",
+        "production_readiness_claim_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_qpu_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_runtime_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_access_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submission_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "cryptanalysis_execution_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_backend_network_calls_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_readiness_claim_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "backend_called",
+        "quantum_job_submitted",
+        "simulator_executed",
+        "hardware_credentials_read",
+        "result_distribution_observed",
+        "repository_runtime_mutated",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "backend_called": {
+          "type": "boolean",
+          "const": false
+        },
+        "quantum_job_submitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "simulator_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "hardware_credentials_read": {
+          "type": "boolean",
+          "const": false
+        },
+        "result_distribution_observed": {
+          "type": "boolean",
+          "const": false
+        },
+        "repository_runtime_mutated": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "witness_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 6,
+      "uniqueItems": true
+    },
+    "constructive_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3
+    },
+    "fracture_deltas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
