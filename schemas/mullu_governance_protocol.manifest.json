@@ -1655,18 +1655,6 @@
       "urn": "urn:mullusi:schema:read-only-worker-receipt-append-witness:1"
     },
     {
-      "path": "schemas/read_only_worker_terminal_closure_witness.schema.json",
-      "schema_id": "read-only-worker-terminal-closure-witness",
-      "surface": "worker",
-      "urn": "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
-    },
-    {
-      "path": "schemas/read_only_worker_runtime_enablement_witness.schema.json",
-      "schema_id": "read-only-worker-runtime-enablement-witness",
-      "surface": "worker",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-witness:1"
-    },
-    {
       "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
       "schema_id": "read-only-worker-rehearsal-receipt",
       "surface": "worker",
@@ -1689,6 +1677,12 @@
       "schema_id": "read-only-worker-runtime-dispatch-endpoint-registration-witness",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-dispatch-endpoint-registration-witness:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_witness.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-witness:1"
     },
     {
       "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
@@ -1761,6 +1755,12 @@
       "schema_id": "read-only-worker-runtime-runner-registration-witness",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1"
+    },
+    {
+      "path": "schemas/read_only_worker_terminal_closure_witness.schema.json",
+      "schema_id": "read-only-worker-terminal-closure-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
     },
     {
       "path": "schemas/read_only_worker_uao_dispatch_authorization_witness.schema.json",
