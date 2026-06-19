@@ -21,8 +21,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_default_component_contract_validates() -> None:
-    assert DEFAULT_SCHEMA_PATH == REPO_ROOT / "schemas" / "cdg_rccm_component_contract.schema.json"
-    assert DEFAULT_CONTRACT_PATH == REPO_ROOT / "examples" / "cdg_rccm_component_contract.foundation.json"
+    assert DEFAULT_SCHEMA_PATH == (
+        REPO_ROOT
+        / "mcoi"
+        / "mcoi_runtime"
+        / "convergence"
+        / "cdg_rccm_component_contract.schema.json"
+    )
+    assert DEFAULT_CONTRACT_PATH == (
+        REPO_ROOT / "examples" / "cdg_rccm_component_contract.foundation.json"
+    )
     assert validate_contract() == []
 
 
@@ -31,9 +39,13 @@ def test_schema_is_closed_and_versioned() -> None:
 
     assert validate_schema_artifact(schema) == []
     assert schema["additionalProperties"] is False
-    assert schema["properties"]["contract_version"]["const"] == "cdg_rccm_component_contract.v1"
+    assert schema["properties"]["contract_version"]["const"] == (
+        "cdg_rccm_component_contract.v1"
+    )
     assert schema["properties"]["protocol_version"]["const"] == "cdg-rccm.v1"
-    assert schema["properties"]["surface"]["const"] == "foundation_cdg_rccm_component_contract"
+    assert schema["properties"]["surface"]["const"] == (
+        "foundation_cdg_rccm_component_contract"
+    )
 
 
 def test_runtime_authority_guards_fail_closed() -> None:
@@ -62,12 +74,23 @@ def test_required_safety_guards_cannot_be_disabled() -> None:
 
 def test_convergence_budget_and_oscillation_guards_are_required() -> None:
     zero_iterations = build_mutated_contract(convergence_policy__maximum_iterations=0)
-    no_oscillation_guard = build_mutated_contract(convergence_policy__oscillation_detection=False)
+    no_oscillation_guard = build_mutated_contract(
+        convergence_policy__oscillation_detection=False
+    )
     zero_frames = build_mutated_contract(budgets__maximum_frames=0)
 
-    assert any("maximum_iterations" in error for error in validate_contract_record(zero_iterations))
-    assert any("oscillation_detection" in error for error in validate_contract_record(no_oscillation_guard))
-    assert any("maximum_frames" in error for error in validate_contract_record(zero_frames))
+    assert any(
+        "maximum_iterations" in error
+        for error in validate_contract_record(zero_iterations)
+    )
+    assert any(
+        "oscillation_detection" in error
+        for error in validate_contract_record(no_oscillation_guard)
+    )
+    assert any(
+        "maximum_frames" in error
+        for error in validate_contract_record(zero_frames)
+    )
 
 
 def test_evidence_refs_cover_runtime_schema_tests_docs_and_sdlc() -> None:
@@ -87,7 +110,10 @@ def test_receipt_prefixes_are_enforced() -> None:
 
 def test_duplicate_projection_and_invariant_labels_are_rejected() -> None:
     payload = json.loads(DEFAULT_CONTRACT_PATH.read_text(encoding="utf-8"))
-    payload["output_projections"] = ["component_result_projection", "component_result_projection"]
+    payload["output_projections"] = [
+        "component_result_projection",
+        "component_result_projection",
+    ]
     payload["immutable_invariants"] = ["same", "same"]
     errors = validate_contract_record(payload)
 
