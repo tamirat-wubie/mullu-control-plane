@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-runtime-authority-read-model:1",
+  "title": "Universal Symbol Runtime Authority Read Model",
+  "description": "Foundation Mode read-only projection for UniversalSymbol runtime authority status. This model exposes simple operator-facing status while proving runtime authority, dispatch, connector calls, filesystem writes, receipt-store append, state mutation, terminal closure, and production readiness remain denied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "schema_version",
+    "generated_at",
+    "read_model_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "read_model_is_not_runtime_authority",
+    "operator_status_summary",
+    "authority_chain_projection",
+    "effective_denials",
+    "read_model_constraints",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "read_model_id": { "type": "string", "const": "universal-symbol-runtime-authority-read-model-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "read_model_scope": { "type": "string", "const": "foundation-mode-universal-symbol-runtime-authority-read-model" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "read_model_is_not_runtime_authority": { "type": "boolean", "const": true },
+    "operator_status_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_status",
+        "approval_status",
+        "dispatch_status",
+        "receipt_store_status",
+        "audit_detail_visibility"
+      ],
+      "properties": {
+        "primary_status": { "type": "string", "const": "Blocked for safety" },
+        "approval_status": { "type": "string", "const": "Needs approval" },
+        "dispatch_status": { "type": "string", "const": "Not active" },
+        "receipt_store_status": { "type": "string", "const": "Evidence saved" },
+        "audit_detail_visibility": { "type": "string", "const": "hidden_by_default" }
+      }
+    },
+    "authority_chain_projection": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/projected_authority_link" },
+      "uniqueItems": true
+    },
+    "effective_denials": { "$ref": "#/$defs/effective_denials" },
+    "read_model_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_projection",
+        "no_state_mutation",
+        "no_connector_call",
+        "no_runtime_dispatch",
+        "no_receipt_store_append",
+        "no_raw_payload",
+        "no_raw_secret",
+        "audit_details_hidden_by_default",
+        "audit_details_link_allowed"
+      ],
+      "properties": {
+        "read_only_projection": { "type": "boolean", "const": true },
+        "no_state_mutation": { "type": "boolean", "const": true },
+        "no_connector_call": { "type": "boolean", "const": true },
+        "no_runtime_dispatch": { "type": "boolean", "const": true },
+        "no_receipt_store_append": { "type": "boolean", "const": true },
+        "no_raw_payload": { "type": "boolean", "const": true },
+        "no_raw_secret": { "type": "boolean", "const": true },
+        "audit_details_hidden_by_default": { "type": "boolean", "const": true },
+        "audit_details_link_allowed": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_chain_projection_count",
+        "effective_denial_count",
+        "read_model_constraint_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "authority_chain_projection_count": { "type": "integer", "minimum": 8 },
+        "effective_denial_count": { "type": "integer", "const": 10 },
+        "read_model_constraint_count": { "type": "integer", "const": 9 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "projected_authority_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "link_id",
+        "source_ref",
+        "proof_state",
+        "operator_status",
+        "activation_allowed"
+      ],
+      "properties": {
+        "link_id": { "$ref": "#/$defs/ref" },
+        "source_ref": { "$ref": "#/$defs/ref" },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "operator_status": {
+          "type": "string",
+          "enum": [
+            "Blocked for safety",
+            "Needs approval",
+            "Evidence required"
+          ]
+        },
+        "activation_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "effective_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_authority_granted",
+        "runtime_registration_performed",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "receipt_store_append_enabled",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "runtime_authority_granted": { "type": "boolean", "const": false },
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

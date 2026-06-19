@@ -1932,6 +1932,50 @@ def test_protocol_manifest_indexes_universal_symbol_runtime_authority_witness() 
     assert witness_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1"
     assert witness_entry["surface"] == "symbol"
 
+
+def test_protocol_manifest_indexes_universal_symbol_runtime_admission_evidence_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["universal-symbol-runtime-admission-evidence-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-admission-evidence-receipt:1"
+    assert receipt_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_runtime_live_witness_input_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["universal-symbol-runtime-live-witness-input-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-live-witness-input-receipt:1"
+    assert receipt_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_runtime_authority_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-runtime-authority-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_runtime_authority_read_model.schema.json"
+    assert read_model_entry["urn"] == "urn:mullusi:schema:universal-symbol-runtime-authority-read-model:1"
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_skill_runtime_authority_witness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    witness_entry = entries["universal-symbol-skill-runtime-authority-witness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert witness_entry["path"] == "schemas/universal_symbol_skill_runtime_authority_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:universal-symbol-skill-runtime-authority-witness:1"
+    assert witness_entry["surface"] == "symbol"
+
 def test_protocol_manifest_indexes_universal_symbol_replacement_replay_idempotency_witness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

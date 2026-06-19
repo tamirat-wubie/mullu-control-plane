@@ -97,7 +97,8 @@
       "symbol_kind": "skill",
       "admission_state": "blocked_pending_runtime_witness",
       "required_witness_refs": [
-        "witness://teamops/universal-symbol-runtime-admission"
+        "witness://teamops/universal-symbol-runtime-admission",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json"
       ],
       "blocked_action_refs": [
         "blocked://connector-call",
@@ -110,7 +111,8 @@
       "symbol_kind": "skill",
       "admission_state": "blocked_pending_runtime_witness",
       "required_witness_refs": [
-        "witness://software-dev/universal-symbol-runtime-admission"
+        "witness://software-dev/universal-symbol-runtime-admission",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json"
       ],
       "blocked_action_refs": [
         "blocked://filesystem-write-through-symbol-runtime",
@@ -123,7 +125,8 @@
       "symbol_kind": "component",
       "admission_state": "blocked_pending_runtime_witness",
       "required_witness_refs": [
-        "witness://component/governance-core/universal-symbol-runtime-admission"
+        "witness://component/governance-core/universal-symbol-runtime-admission",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json"
       ],
       "blocked_action_refs": [
         "blocked://runtime-registration",
@@ -136,7 +139,8 @@
       "symbol_kind": "receipt",
       "admission_state": "blocked_pending_runtime_witness",
       "required_witness_refs": [
-        "witness://worker-ledger/universal-symbol-runtime-admission"
+        "witness://worker-ledger/universal-symbol-runtime-admission",
+        "examples/universal_symbol_skill_runtime_authority_witness.foundation.json"
       ],
       "blocked_action_refs": [
         "blocked://receipt-store-append",
@@ -166,7 +170,7 @@
   "next_actions": [
     "define_receipt_store_authority_witness",
     "collect_live_runtime_authority_evidence",
-    "add_skill_by_skill_runtime_witnesses_before_admission"
+    "collect_live_lane_runtime_authority_evidence"
   ],
   "evidence_refs": [
     "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
@@ -183,6 +187,8 @@
     "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
     "schemas/universal_symbol_runtime_authority_witness.schema.json",
     "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "examples/universal_symbol_runtime_admission_policy.foundation.json",
     "schemas/universal_symbol.schema.json",
@@ -196,6 +202,7 @@
     "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py",
     "scripts/validate_universal_symbol_receipt_store_write_path_witness.py",
     "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
     "scripts/validate_universal_symbol_runtime_admission_policy.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "scripts/proof_coverage_matrix.py",
@@ -206,6 +213,6 @@
     "admission_condition_count": 6,
     "skill_admission_count": 4,
     "authority_denial_count": 9,
-    "evidence_ref_count": 31
+    "evidence_ref_count": 34
   }
 }
