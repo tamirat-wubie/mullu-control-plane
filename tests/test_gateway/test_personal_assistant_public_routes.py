@@ -1194,6 +1194,79 @@ def test_gateway_personal_assistant_teamops_preview_rejects_raw_payload() -> Non
     assert "teamops_handoff_plan_prepared" not in serialized
 
 
+def test_gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence_only() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
+        json={
+            "request_id": "pa_request_gateway_teamops_gmail_probe_001",
+            "submitted_at": "2026-06-15T11:10:00+00:00",
+            "generated_at": "2026-06-15T11:11:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "environment": _teamops_gmail_live_probe_environment(),
+            "operator_approval_ref": "approval:teamops-gmail-live-probe-preview",
+        },
+    )
+    payload = response.json()
+    projection = payload["teamops_gmail_live_probe"]
+    probe = projection["probe"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["effect_boundary"]["external_provider_call_allowed"] is False
+    assert payload["effect_boundary"]["full_mailbox_read_allowed"] is False
+    assert payload["effect_boundary"]["draft_creation_allowed"] is False
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["delete_allowed"] is False
+    assert payload["effect_boundary"]["archive_allowed"] is False
+    assert projection["skill_id"] == "teamops.shared_inbox.plan"
+    assert probe["status"] == "ready_for_live_probe"
+    assert probe["connector_readiness"]["ready"] is True
+    assert probe["connector_readiness"]["external_provider_call_performed"] is False
+    assert probe["token_presence"]["ready"] is True
+    assert probe["token_presence"]["raw_token_value_serialized"] is False
+    assert probe["token_presence"]["raw_token_value_inspected"] is False
+    assert probe["mailbox_access_boundary"]["ready"] is True
+    assert probe["mailbox_access_boundary"]["full_mailbox_read_allowed"] is False
+    assert probe["mailbox_access_boundary"]["message_body_read_allowed"] is False
+    assert probe["mailbox_access_boundary"]["send_allowed"] is False
+    assert probe["mailbox_access_boundary"]["draft_allowed"] is False
+    assert probe["mailbox_access_boundary"]["delete_allowed"] is False
+    assert probe["mailbox_access_boundary"]["archive_allowed"] is False
+    assert probe["provider_call_performed"] is False
+    assert "gmail_full_mailbox_not_read" in receipt["actions_not_taken"]
+    assert "gmail_send_not_called" in receipt["actions_not_taken"]
+    assert "gmail_draft_not_created" in receipt["actions_not_taken"]
+    assert "gmail_delete_not_called" in receipt["actions_not_taken"]
+    assert "gmail_archive_not_called" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_teamops_gmail_live_probe_rejects_raw_credential_value() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    environment = _teamops_gmail_live_probe_environment()
+    environment["GMAIL_REFRESH_TOKEN"] = "real-refresh-token-value"
+
+    response = client.post(
+        "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
+        json={
+            "request_id": "pa_request_gateway_teamops_gmail_probe_raw_001",
+            "submitted_at": "2026-06-15T11:10:00+00:00",
+            "connector_refs": [_gmail_connector_ref()],
+            "environment": environment,
+            "operator_approval_ref": "approval:teamops-gmail-live-probe-preview",
+        },
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 400
+    assert "real-refresh-token-value" not in serialized
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_teamops_gmail_live_probe_preview"
+
+
 def test_gateway_personal_assistant_github_codex_preview_reviews_without_github_call() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
@@ -1734,6 +1807,38 @@ def _gmail_connector_ref() -> dict[str, object]:
         "proof_state": "Pass",
         "private_data_allowed": True,
         "scopes": ["gmail.readonly"],
+    }
+
+
+def _teamops_gmail_live_probe_environment() -> dict[str, str]:
+    return {
+        "MULLU_TEAM_OPS_ASSISTANT_PROFILE": "team_ops.default",
+        "MULLU_TEAM_OPS_SHARED_INBOX_PROVIDER": "gmail",
+        "MULLU_TEAM_OPS_CONNECTOR_OPERATION_MODE": "shared_inbox_triage",
+        "MULLU_TEAM_OPS_EXTERNAL_SEND_POLICY": "approval_required",
+        "MULLU_TEAM_OPS_TENANT_SCOPE_WITNESS_REF": "witness:teamops-tenant-scope",
+        "MULLU_TEAM_OPS_SHARED_INBOX_WITNESS_REF": "witness:teamops-shared-inbox",
+        "MULLU_TEAM_OPS_DIRECTORY_WITNESS_REF": "witness:teamops-directory",
+        "MULLU_TEAM_OPS_OWNER_QUEUE_WITNESS_REF": "witness:teamops-owner-queue",
+        "MULLU_TEAM_OPS_EXTERNAL_SEND_APPROVAL_POLICY_REF": "policy:teamops-external-send-approval",
+        "MULLU_TEAM_OPS_IDEMPOTENCY_POLICY_REF": "policy:teamops-idempotency",
+        "MULLU_TEAM_OPS_REVOCATION_RECOVERY_RECEIPT_REF": "receipt:teamops-revocation-recovery",
+        "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER": "google",
+        "EMAIL_CALENDAR_CONNECTOR_ID": "gmail",
+        "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY": "read_and_send_with_approval",
+        "GMAIL_SCOPE_ID": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send",
+        "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID": (
+            "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send"
+        ),
+        "GMAIL_OAUTH_CLIENT_ID": "present",
+        "GMAIL_OAUTH_CLIENT_SECRET": "present",
+        "GMAIL_REFRESH_TOKEN": "present",
+        "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF": "witness:gmail-consent",
+        "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF": "witness:gmail-client",
+        "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF": "receipt:gmail-scope",
+        "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF": "receipt:gmail-token-storage",
+        "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF": "receipt:gmail-revocation",
+        "MULLU_GMAIL_CONNECTOR_TENANT_WITNESS_REF": "witness:gmail-tenant",
     }
 
 
