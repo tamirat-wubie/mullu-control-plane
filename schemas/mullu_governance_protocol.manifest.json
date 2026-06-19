@@ -95,6 +95,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-candidate:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-operator-approval-gate",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-approval-gate:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
       "surface": "runtime",
@@ -1037,6 +1043,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
     },
     {
+      "path": "schemas/governed_planning_profile_replay_recovery_witness.schema.json",
+      "schema_id": "governed-planning-profile-replay-recovery-witness",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",
@@ -1661,18 +1673,6 @@
       "urn": "urn:mullusi:schema:read-only-worker-receipt-append-witness:1"
     },
     {
-      "path": "schemas/read_only_worker_terminal_closure_witness.schema.json",
-      "schema_id": "read-only-worker-terminal-closure-witness",
-      "surface": "worker",
-      "urn": "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
-    },
-    {
-      "path": "schemas/read_only_worker_runtime_enablement_witness.schema.json",
-      "schema_id": "read-only-worker-runtime-enablement-witness",
-      "surface": "worker",
-      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-witness:1"
-    },
-    {
       "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
       "schema_id": "read-only-worker-rehearsal-receipt",
       "surface": "worker",
@@ -1695,6 +1695,18 @@
       "schema_id": "read-only-worker-runtime-dispatch-endpoint-registration-witness",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-dispatch-endpoint-registration-witness:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_witness.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-witness:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_operator_input_request.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-operator-input-request",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-operator-input-request:1"
     },
     {
       "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
@@ -1767,6 +1779,12 @@
       "schema_id": "read-only-worker-runtime-runner-registration-witness",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-runner-registration-witness:1"
+    },
+    {
+      "path": "schemas/read_only_worker_terminal_closure_witness.schema.json",
+      "schema_id": "read-only-worker-terminal-closure-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-terminal-closure-witness:1"
     },
     {
       "path": "schemas/read_only_worker_uao_dispatch_authorization_witness.schema.json",

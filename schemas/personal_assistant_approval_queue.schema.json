@@ -10,6 +10,7 @@
     "approval_ids",
     "state_counts",
     "receipt_ids",
+    "workflow_v0",
     "execution_allowed",
     "live_connector_execution_allowed",
     "external_send_allowed",
@@ -44,6 +45,7 @@
       "items": { "type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$" },
       "uniqueItems": true
     },
+    "workflow_v0": { "$ref": "#/$defs/workflow_v0" },
     "execution_allowed": { "const": false },
     "live_connector_execution_allowed": { "const": false },
     "external_send_allowed": { "const": false },
@@ -83,6 +85,232 @@
         "persistence_boundary": { "type": "string", "minLength": 1 },
         "live_connector_execution_allowed": { "const": false },
         "approval_decision_executes_action": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "workflow_v0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_id",
+        "workflow_state",
+        "stage_order",
+        "decision_controls",
+        "approval_decision_records_allowed",
+        "approval_decision_executes_action",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "draft_action_count",
+        "requested_approval_count",
+        "pending_decision_count",
+        "terminal_decision_count",
+        "receipt_count",
+        "items"
+      ],
+      "properties": {
+        "workflow_id": { "const": "personal_assistant_approval_queue_v0" },
+        "workflow_state": { "const": "read_model" },
+        "stage_order": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "draft_action" },
+            { "const": "risk_class" },
+            { "const": "requested_approval" },
+            { "const": "operator_decision" },
+            { "const": "receipt" }
+          ],
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "decision_controls": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "approve" },
+            { "const": "reject" },
+            { "const": "revise" }
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "approval_decision_records_allowed": { "const": true },
+        "approval_decision_executes_action": { "const": false },
+        "execution_allowed": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "external_send_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "system_of_record_write_allowed": { "const": false },
+        "draft_action_count": { "type": "integer", "minimum": 0 },
+        "requested_approval_count": { "type": "integer", "minimum": 0 },
+        "pending_decision_count": { "type": "integer", "minimum": 0 },
+        "terminal_decision_count": { "type": "integer", "minimum": 0 },
+        "receipt_count": { "type": "integer", "minimum": 0 },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workflow_item" }
+        }
+      }
+    },
+    "workflow_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "draft_action_count",
+        "draft_actions",
+        "risk_class",
+        "requested_approval",
+        "decision",
+        "receipt",
+        "receipt_count",
+        "effect_boundary"
+      ],
+      "properties": {
+        "approval_id": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+        "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
+        "plan_id": { "type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$" },
+        "draft_action_count": { "type": "integer", "minimum": 1 },
+        "draft_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/workflow_draft_action" }
+        },
+        "risk_class": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["risk_level", "explicit_approval_required", "forbidden_without_approval"],
+          "properties": {
+            "risk_level": { "enum": ["P3", "P4", "P5"] },
+            "explicit_approval_required": { "const": true },
+            "forbidden_without_approval": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "requested_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_state",
+            "approver_ref",
+            "approval_scope",
+            "evidence_refs",
+            "approval_request_recorded"
+          ],
+          "properties": {
+            "approval_state": { "enum": ["requested", "approved", "rejected", "revised", "expired", "blocked"] },
+            "approver_ref": { "type": "string", "minLength": 1 },
+            "approval_scope": {
+              "enum": ["per_request", "per_plan", "per_skill", "per_action", "per_recipient"]
+            },
+            "evidence_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "approval_request_recorded": { "const": true }
+          }
+        },
+        "decision": { "$ref": "#/$defs/workflow_decision" },
+        "receipt": { "$ref": "#/$defs/workflow_receipt" },
+        "receipt_count": { "type": "integer", "minimum": 1 },
+        "effect_boundary": { "$ref": "#/$defs/workflow_effect_boundary" }
+      }
+    },
+    "workflow_draft_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "skill_id", "summary", "effect_boundary", "execution_allowed"],
+      "properties": {
+        "action_id": { "type": "string", "minLength": 1 },
+        "skill_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+        "summary": { "type": "string", "minLength": 1 },
+        "effect_boundary": { "type": "string", "minLength": 1 },
+        "execution_allowed": { "const": false }
+      }
+    },
+    "workflow_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_decision",
+        "available_decisions",
+        "reason_codes",
+        "decided_at",
+        "approval_is_execution",
+        "execution_allowed"
+      ],
+      "properties": {
+        "current_decision": { "enum": ["pending", "approved", "rejected", "revised", "expired", "blocked"] },
+        "available_decisions": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "approved" },
+            { "const": "rejected" },
+            { "const": "revised" }
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "decided_at": { "type": "string" },
+        "revision_request": { "type": "string", "minLength": 1 },
+        "approval_is_execution": { "const": false },
+        "execution_allowed": { "const": false }
+      }
+    },
+    "workflow_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_ids",
+        "latest_receipt_id",
+        "latest_receipt_decision",
+        "latest_receipt_outcome",
+        "receipt_required"
+      ],
+      "properties": {
+        "receipt_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$" }
+        },
+        "latest_receipt_id": { "type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$" },
+        "latest_receipt_decision": { "enum": ["approval_required", "deferred", "blocked"] },
+        "latest_receipt_outcome": { "enum": ["AwaitingEvidence", "SolvedVerified", "GovernanceBlocked"] },
+        "receipt_required": { "const": true }
+      }
+    },
+    "workflow_effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_decision_records_allowed",
+        "approval_decision_executes_action",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed"
+      ],
+      "properties": {
+        "approval_decision_records_allowed": { "const": true },
+        "approval_decision_executes_action": { "const": false },
+        "execution_allowed": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "external_send_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "system_of_record_write_allowed": { "const": false }
       }
     }
   }

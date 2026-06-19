@@ -518,6 +518,7 @@ class PersonalAssistantApprovalQueue:
             "approval_ids": [record.approval_id for record in records],
             "state_counts": state_counts,
             "receipt_ids": receipt_ids,
+            "workflow_v0": _approval_queue_workflow_v0(records),
             "execution_allowed": False,
             "live_connector_execution_allowed": False,
             "external_send_allowed": False,
@@ -533,6 +534,119 @@ class PersonalAssistantApprovalQueue:
                 "approval_decision_executes_action": False,
             },
         }
+
+
+def _approval_queue_workflow_v0(records: Sequence[ApprovalQueueRecord]) -> dict[str, Any]:
+    items = [_approval_queue_workflow_item(record) for record in records]
+    pending_count = sum(1 for item in items if item["decision"]["current_decision"] == "pending")
+    terminal_count = len(items) - pending_count
+    return {
+        "workflow_id": "personal_assistant_approval_queue_v0",
+        "workflow_state": "read_model",
+        "stage_order": [
+            "draft_action",
+            "risk_class",
+            "requested_approval",
+            "operator_decision",
+            "receipt",
+        ],
+        "decision_controls": ["approve", "reject", "revise"],
+        "approval_decision_records_allowed": True,
+        "approval_decision_executes_action": False,
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+        "draft_action_count": sum(int(item["draft_action_count"]) for item in items),
+        "requested_approval_count": len(items),
+        "pending_decision_count": pending_count,
+        "terminal_decision_count": terminal_count,
+        "receipt_count": sum(int(item["receipt_count"]) for item in items),
+        "items": items,
+    }
+
+
+def _approval_queue_workflow_item(record: ApprovalQueueRecord) -> dict[str, Any]:
+    packet = dict(record.packet)
+    proposed_actions = _sequence_of_mappings(packet.get("proposed_actions", ()))
+    receipts = [dict(receipt) for receipt in record.receipts]
+    latest_receipt = receipts[-1] if receipts else {}
+    decision_record = dict(packet.get("decision_record", {})) if isinstance(packet.get("decision_record"), Mapping) else {}
+    metadata = dict(packet.get("metadata", {})) if isinstance(packet.get("metadata"), Mapping) else {}
+    revision_request = str(metadata.get("revision_request", ""))
+    decision: dict[str, Any] = {
+        "current_decision": str(decision_record.get("decision", "pending")),
+        "available_decisions": ["approved", "rejected", "revised"],
+        "reason_codes": _string_list(decision_record.get("reason_codes", ())),
+        "decided_at": str(decision_record.get("decided_at", "")),
+        "approval_is_execution": False,
+        "execution_allowed": False,
+    }
+    if revision_request:
+        decision["revision_request"] = revision_request
+    return {
+        "approval_id": record.approval_id,
+        "request_id": str(packet.get("request_id", "")),
+        "plan_id": str(packet.get("plan_id", "")),
+        "draft_action_count": len(proposed_actions),
+        "draft_actions": [
+            {
+                "action_id": str(action.get("action_id", "")),
+                "skill_id": str(action.get("skill_id", "")),
+                "summary": str(action.get("summary", "")),
+                "effect_boundary": str(action.get("effect_boundary", "")),
+                "execution_allowed": False,
+            }
+            for action in proposed_actions
+        ],
+        "risk_class": {
+            "risk_level": str(packet.get("risk_level", "")),
+            "explicit_approval_required": bool(packet.get("explicit_approval_required", False)),
+            "forbidden_without_approval": _string_list(packet.get("forbidden_without_approval", ())),
+        },
+        "requested_approval": {
+            "approval_state": str(packet.get("approval_state", "")),
+            "approver_ref": str(packet.get("approver_ref", "")),
+            "approval_scope": str(packet.get("approval_scope", "")),
+            "evidence_refs": _string_list(packet.get("evidence_refs", ())),
+            "approval_request_recorded": True,
+        },
+        "decision": decision,
+        "receipt": {
+            "receipt_ids": [
+                str(receipt["receipt_id"])
+                for receipt in receipts
+                if isinstance(receipt.get("receipt_id"), str)
+            ],
+            "latest_receipt_id": str(latest_receipt.get("receipt_id", "")),
+            "latest_receipt_decision": str(latest_receipt.get("decision", "")),
+            "latest_receipt_outcome": str(latest_receipt.get("outcome", "")),
+            "receipt_required": True,
+        },
+        "receipt_count": len(receipts),
+        "effect_boundary": {
+            "approval_decision_records_allowed": True,
+            "approval_decision_executes_action": False,
+            "execution_allowed": False,
+            "live_connector_execution_allowed": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "system_of_record_write_allowed": False,
+        },
+    }
+
+
+def _sequence_of_mappings(values: Any) -> list[dict[str, Any]]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        return []
+    return [dict(value) for value in values if isinstance(value, Mapping)]
+
+
+def _string_list(values: Any) -> list[str]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        return []
+    return [str(value) for value in values if isinstance(value, str) and value]
 
 
 def _assert_actions_match_registry(

@@ -1,6 +1,8 @@
 {
   "approval_count": 1,
-  "approval_ids": ["pa_approval_email_send_001"],
+  "approval_ids": [
+    "pa_approval_email_send_001"
+  ],
   "state_counts": {
     "requested": 1,
     "approved": 0,
@@ -9,7 +11,106 @@
     "expired": 0,
     "blocked": 0
   },
-  "receipt_ids": ["pa_receipt_email_send_001_request"],
+  "receipt_ids": [
+    "pa_receipt_email_send_001_request"
+  ],
+  "workflow_v0": {
+    "workflow_id": "personal_assistant_approval_queue_v0",
+    "workflow_state": "read_model",
+    "stage_order": [
+      "draft_action",
+      "risk_class",
+      "requested_approval",
+      "operator_decision",
+      "receipt"
+    ],
+    "decision_controls": [
+      "approve",
+      "reject",
+      "revise"
+    ],
+    "approval_decision_records_allowed": true,
+    "approval_decision_executes_action": false,
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "external_send_allowed": false,
+    "connector_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
+    "draft_action_count": 1,
+    "requested_approval_count": 1,
+    "pending_decision_count": 1,
+    "terminal_decision_count": 0,
+    "receipt_count": 1,
+    "items": [
+      {
+        "approval_id": "pa_approval_email_send_001",
+        "request_id": "pa_request_inbox_summary_001",
+        "plan_id": "pa_plan_email_send_001",
+        "draft_action_count": 1,
+        "draft_actions": [
+          {
+            "action_id": "send_prepared_email_draft",
+            "skill_id": "email.send.with_approval",
+            "summary": "Send one approved email draft to the named recipient only.",
+            "effect_boundary": "external_email_send",
+            "execution_allowed": false
+          }
+        ],
+        "risk_class": {
+          "risk_level": "P4",
+          "explicit_approval_required": true,
+          "forbidden_without_approval": [
+            "send",
+            "forward",
+            "recipient_unapproved",
+            "connector_mutation"
+          ]
+        },
+        "requested_approval": {
+          "approval_state": "requested",
+          "approver_ref": "operator:tamirat",
+          "approval_scope": "per_recipient",
+          "evidence_refs": [
+            "proof://personal-assistant/approval/email-send-001"
+          ],
+          "approval_request_recorded": true
+        },
+        "decision": {
+          "current_decision": "pending",
+          "available_decisions": [
+            "approved",
+            "rejected",
+            "revised"
+          ],
+          "reason_codes": [
+            "effect_bearing_action_requires_explicit_approval"
+          ],
+          "decided_at": "",
+          "approval_is_execution": false,
+          "execution_allowed": false
+        },
+        "receipt": {
+          "receipt_ids": [
+            "pa_receipt_email_send_001_request"
+          ],
+          "latest_receipt_id": "pa_receipt_email_send_001_request",
+          "latest_receipt_decision": "approval_required",
+          "latest_receipt_outcome": "AwaitingEvidence",
+          "receipt_required": true
+        },
+        "receipt_count": 1,
+        "effect_boundary": {
+          "approval_decision_records_allowed": true,
+          "approval_decision_executes_action": false,
+          "execution_allowed": false,
+          "live_connector_execution_allowed": false,
+          "external_send_allowed": false,
+          "connector_mutation_allowed": false,
+          "system_of_record_write_allowed": false
+        }
+      }
+    ]
+  },
   "execution_allowed": false,
   "live_connector_execution_allowed": false,
   "external_send_allowed": false,
@@ -38,14 +139,23 @@
             "summary": "Send one approved email draft to the named recipient only."
           }
         ],
-        "forbidden_without_approval": ["send", "forward", "recipient_unapproved", "connector_mutation"],
+        "forbidden_without_approval": [
+          "send",
+          "forward",
+          "recipient_unapproved",
+          "connector_mutation"
+        ],
         "decision_record": {
           "decision": "pending",
-          "reason_codes": ["effect_bearing_action_requires_explicit_approval"],
+          "reason_codes": [
+            "effect_bearing_action_requires_explicit_approval"
+          ],
           "decided_at": ""
         },
         "receipt_ref": "pa_receipt_email_send_001_request",
-        "evidence_refs": ["proof://personal-assistant/approval/email-send-001"],
+        "evidence_refs": [
+          "proof://personal-assistant/approval/email-send-001"
+        ],
         "metadata": {
           "foundation_only": true,
           "approval_decision": "pending",
@@ -56,7 +166,8 @@
           "connector_mutation_allowed": false,
           "external_write_allowed": false,
           "system_of_record_write_allowed": false,
-          "money_legal_public_action_allowed": false
+          "money_legal_public_action_allowed": false,
+          "approval_matrix_ref": "personal_assistant_approval_matrix.foundation.v1"
         }
       },
       "receipts": [
@@ -66,12 +177,21 @@
           "skill_id": "email.send.with_approval",
           "mode": "execute_with_approval",
           "risk_level": "P4",
-          "inputs_used": ["approval_packet", "operator_decision_record"],
-          "connectors_used": ["gmail"],
+          "inputs_used": [
+            "approval_packet",
+            "operator_decision_record"
+          ],
+          "connectors_used": [
+            "gmail"
+          ],
           "decision": "approval_required",
           "approval_required": true,
           "approval_ref": "pa_approval_email_send_001",
-          "actions_taken": ["approval_request_enqueued", "approval_packet_created", "receipt_created"],
+          "actions_taken": [
+            "approval_request_enqueued",
+            "approval_packet_created",
+            "receipt_created"
+          ],
           "actions_not_taken": [
             "proposed_action_not_executed",
             "external_message_not_sent",
@@ -79,7 +199,10 @@
             "system_of_record_not_written",
             "money_legal_public_action_not_performed"
           ],
-          "redactions": ["approval_refs_only", "private_connector_payload_not_serialized"],
+          "redactions": [
+            "approval_refs_only",
+            "private_connector_payload_not_serialized"
+          ],
           "private_payload_policy": {
             "raw_private_payload_serialized": false,
             "secret_values_serialized": false,
@@ -87,14 +210,19 @@
             "body_projection": "none"
           },
           "timestamp": "2026-06-14T00:00:00+00:00",
-          "evidence_refs": ["proof://personal-assistant/approval/email-send-001"],
+          "evidence_refs": [
+            "proof://personal-assistant/approval/email-send-001"
+          ],
           "memory_observation_refs": [],
-          "replay_refs": ["replay://personal-assistant/approval/email_send_001"],
+          "replay_refs": [
+            "replay://personal-assistant/approval/email_send_001"
+          ],
           "outcome": "AwaitingEvidence",
           "metadata": {
             "approval_decision": "pending",
             "queue_state": "requested",
             "execution_allowed": false,
+            "approval_matrix_ref": "personal_assistant_approval_matrix.foundation.v1",
             "live_connector_execution_allowed": false,
             "connector_mutation_allowed": false,
             "external_write_allowed": false,

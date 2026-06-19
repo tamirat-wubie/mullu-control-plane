@@ -558,6 +558,18 @@ def test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe(
     assert queue["approval_count"] == 0
     assert queue["approval_ids"] == []
     assert queue["records"] == []
+    assert queue["workflow_v0"]["workflow_id"] == "personal_assistant_approval_queue_v0"
+    assert queue["workflow_v0"]["stage_order"] == [
+        "draft_action",
+        "risk_class",
+        "requested_approval",
+        "operator_decision",
+        "receipt",
+    ]
+    assert queue["workflow_v0"]["decision_controls"] == ["approve", "reject", "revise"]
+    assert queue["workflow_v0"]["requested_approval_count"] == 0
+    assert queue["workflow_v0"]["approval_decision_executes_action"] is False
+    assert queue["workflow_v0"]["execution_allowed"] is False
     assert queue["execution_allowed"] is False
     assert queue["approval_is_execution"] is False
     assert queue["metadata"]["approval_decision_executes_action"] is False
@@ -847,6 +859,12 @@ def test_gateway_personal_assistant_approval_queue_preview_records_pending_packe
     assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
     assert queue["approval_count"] == 1
     assert queue["state_counts"]["requested"] == 1
+    assert queue["workflow_v0"]["draft_action_count"] == 1
+    assert queue["workflow_v0"]["pending_decision_count"] == 1
+    assert queue["workflow_v0"]["items"][0]["draft_actions"][0]["skill_id"] == "email.send.with_approval"
+    assert queue["workflow_v0"]["items"][0]["risk_class"]["risk_level"] == "P4"
+    assert queue["workflow_v0"]["items"][0]["decision"]["current_decision"] == "pending"
+    assert queue["workflow_v0"]["items"][0]["effect_boundary"]["external_send_allowed"] is False
     assert queue["execution_allowed"] is False
     assert payload["effect_boundary"]["approval_is_execution"] is False
     assert payload["effect_boundary"]["connector_mutation_allowed"] is False
@@ -873,6 +891,16 @@ def test_gateway_personal_assistant_approval_queue_approved_still_defers_executi
     assert payload["receipt"]["decision"] == "deferred"
     assert payload["receipt"]["metadata"]["approval_is_execution"] is False
     assert payload["approval_queue"]["state_counts"]["approved"] == 1
+    assert payload["approval_queue"]["workflow_v0"]["pending_decision_count"] == 0
+    assert payload["approval_queue"]["workflow_v0"]["terminal_decision_count"] == 1
+    assert payload["approval_queue"]["workflow_v0"]["items"][0]["decision"]["current_decision"] == "approved"
+    assert payload["approval_queue"]["workflow_v0"]["items"][0]["receipt"]["latest_receipt_decision"] == "deferred"
+    assert (
+        payload["approval_queue"]["workflow_v0"]["items"][0]["effect_boundary"][
+            "approval_decision_executes_action"
+        ]
+        is False
+    )
     assert "approval_decision_recorded" in payload["receipt"]["actions_taken"]
     assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
     assert payload["effect_boundary"]["execution_allowed"] is False
@@ -900,6 +928,9 @@ def test_gateway_personal_assistant_approval_queue_expired_blocks_execution() ->
     assert payload["receipt"]["decision"] == "blocked"
     assert payload["receipt"]["metadata"]["approval_is_execution"] is False
     assert payload["approval_queue"]["state_counts"]["expired"] == 1
+    assert payload["approval_queue"]["workflow_v0"]["items"][0]["decision"]["current_decision"] == "expired"
+    assert payload["approval_queue"]["workflow_v0"]["items"][0]["receipt"]["latest_receipt_decision"] == "blocked"
+    assert payload["approval_queue"]["workflow_v0"]["items"][0]["effect_boundary"]["execution_allowed"] is False
     assert "approval_expiration_recorded" in payload["receipt"]["actions_taken"]
     assert "external_message_not_sent" in payload["receipt"]["actions_not_taken"]
     assert payload["effect_boundary"]["execution_allowed"] is False
