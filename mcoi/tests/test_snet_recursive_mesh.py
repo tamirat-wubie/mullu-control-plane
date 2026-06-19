@@ -380,6 +380,8 @@ def test_direct_answer_and_score_validation_fail_closed() -> None:
     with pytest.raises(ValueError, match="raw_answer"):
         mesh.ingest_answer(question_id, "   ")
     with pytest.raises(ValueError, match="raw_answer"):
+        mesh.ingest_answer(question_id, " Seed")
+    with pytest.raises(ValueError, match="raw_answer"):
         mesh.ingest_answer(question_id, TextSubclass("Seed"))
     with pytest.raises(ValueError, match="validation_state"):
         mesh.ingest_answer(question_id, "Seed", validation_state="supported")
@@ -1241,6 +1243,22 @@ def test_direct_snet_contracts_reject_text_shape_drift() -> None:
             question_id="question:1",
             raw_answer=SNetWHType.WHAT,
             ascii_folded_answer="what",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="raw_answer"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer=" Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="ascii_folded_answer"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer=" seed",
             confidence=0.5,
         )
     with pytest.raises(ValueError, match="promoted_symbol_id"):
