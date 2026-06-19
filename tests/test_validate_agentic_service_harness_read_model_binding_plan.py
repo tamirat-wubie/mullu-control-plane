@@ -139,6 +139,46 @@ def test_readiness_map_rejects_missing_receipt_first_pr(tmp_path: Path) -> None:
     assert "missing first next PR: dry-run run receipt emitter" in serialized_errors
 
 
+def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "Current `origin/main`: `b849663f9e5e4a2f0d0c6992bedad735e61fb6a8`",
+            "Current `origin/main`: `short-ref`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "missing current origin main ref" in serialized_errors
+
+
+def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "Open PRs after readiness-map refresh: PR #1983 (`codex/worker-effect-reconciliation-witness-20260619`) remains outside this map-only closure.",
+            "Open PRs after readiness-map refresh: none.",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "missing open PR queue map-only boundary" in serialized_errors
+
+
 def test_readiness_map_rejects_mutation_route_string(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
