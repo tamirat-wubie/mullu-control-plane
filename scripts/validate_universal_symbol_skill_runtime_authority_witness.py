@@ -1,17 +1,16 @@
-"""Validate the Universal Symbol runtime authority witness.
+"""Validate the Universal Symbol skill runtime authority witness.
 
-Purpose: prove UniversalSymbol runtime authority remains blocked until runtime
-admission, operator approval, receipt-store authority, recovery, audit, and
-skill admission evidence exist.
+Purpose: prove skill-by-skill UniversalSymbol runtime authority remains blocked
+until lane-level operator, receipt-store, recovery, and audit evidence exists.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: runtime authority witness schema/example, runtime admission
-policy, receipt-store authority witness, UniversalSymbol schema, docs, and
+Dependencies: skill runtime authority witness schema/example, runtime admission
+policy, runtime authority witness, receipt-store authority witness, docs, and
 tests.
 Invariants:
-  - The witness does not grant runtime authority.
-  - Runtime registration, skill admission, dispatch, connector calls, writes,
-    mutation, append, terminal closure, and production readiness are denied.
-  - Unknown hard preconditions block authority and log Delta_reject references.
+  - The witness does not grant skill runtime authority.
+  - Every declared runtime admission lane remains blocked.
+  - Runtime registration, live dispatch, connector calls, writes, append,
+    mutation, terminal closure, and production readiness remain denied.
 """
 
 from __future__ import annotations
@@ -28,11 +27,18 @@ except ImportError:  # pragma: no cover - dependency is expected in CI/dev envs.
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_runtime_authority_witness.schema.json"
-DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_runtime_authority_witness.foundation.json"
+DEFAULT_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_symbol_skill_runtime_authority_witness.schema.json"
+DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "universal_symbol_skill_runtime_authority_witness.foundation.json"
+
+REQUIRED_LANE_REFS: tuple[str, ...] = (
+    "skill://teamops-shared-inbox",
+    "skill://software-dev",
+    "component://governance-core",
+    "receipt://worker-ledger",
+)
 
 AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
-    "runtime_authority_granted",
+    "skill_runtime_authority_granted",
     "runtime_registration_performed",
     "skill_admission_recorded",
     "live_dispatch_enabled",
@@ -47,78 +53,59 @@ AUTHORITY_DENIAL_FIELDS: tuple[str, ...] = (
     "production_readiness_claimed",
 )
 
-RUNTIME_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
+LANE_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
     "runtime_admission_policy_required",
-    "uao_decision_required",
-    "phi_gov_decision_required",
-    "life_meaning_judgment_required",
+    "runtime_authority_witness_required",
     "operator_approval_required",
     "receipt_store_authority_required",
     "rollback_recovery_required",
-    "skill_admission_witness_required",
-    "proof_coverage_required",
+    "lane_audit_receipt_required",
+    "blocked_action_refs_required",
     "terminal_closure_denial_required",
 )
 
 REJECTION_POLICY_TRUE_FIELDS: tuple[str, ...] = (
-    "missing_runtime_admission_blocks_authority",
-    "missing_uao_blocks_authority",
-    "missing_phi_gov_blocks_authority",
-    "missing_life_meaning_blocks_authority",
-    "missing_operator_approval_blocks_authority",
-    "missing_receipt_store_authority_blocks_authority",
-    "unknown_hard_constraint_blocks_authority",
+    "missing_lane_authority_blocks_admission",
+    "missing_operator_approval_blocks_admission",
+    "missing_receipt_store_authority_blocks_admission",
+    "missing_recovery_blocks_admission",
+    "missing_audit_receipt_blocks_admission",
+    "unknown_hard_constraint_blocks_admission",
     "failed_precondition_logs_delta_reject",
-)
-
-REQUIRED_REQUIREMENT_IDS: tuple[str, ...] = (
-    "requirement://runtime-admission-policy",
-    "requirement://uao-decision",
-    "requirement://phi-gov-decision",
-    "requirement://life-meaning-judgment",
-    "requirement://operator-approval",
-    "requirement://receipt-store-authority",
-    "requirement://rollback-recovery",
-    "requirement://skill-admission-witness",
-    "requirement://proof-coverage",
-    "requirement://terminal-closure-denial",
 )
 
 REQUIRED_BLOCKED_REASONS: tuple[str, ...] = (
     "runtime_admission_policy_missing",
-    "uao_decision_missing",
-    "phi_gov_decision_missing",
-    "life_meaning_judgment_missing",
-    "operator_approval_missing",
+    "runtime_authority_witness_missing",
+    "lane_operator_approval_missing",
     "receipt_store_authority_missing",
     "rollback_recovery_missing",
-    "skill_admission_witness_missing",
-    "proof_coverage_missing",
-    "runtime_authority_binding_forbidden",
+    "lane_audit_receipt_missing",
+    "blocked_action_refs_missing",
+    "skill_runtime_authority_binding_forbidden",
     "terminal_closure_not_allowed",
 )
 
 REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
-    "schemas/universal_symbol_runtime_authority_witness.schema.json",
-    "examples/universal_symbol_runtime_authority_witness.foundation.json",
     "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
     "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
     "schemas/universal_symbol_runtime_admission_policy.schema.json",
     "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+    "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
     "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
     "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
-    "schemas/universal_symbol_adapter_receipt_persistence_policy.schema.json",
-    "examples/universal_symbol_adapter_receipt_persistence_policy.foundation.json",
-    "schemas/universal_symbol_append_audit_witness.schema.json",
-    "examples/universal_symbol_append_audit_witness.foundation.json",
     "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
     "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
     "schemas/universal_symbol.schema.json",
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
-    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
     "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
     "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
     "scripts/validate_universal_symbol_receipt_store_recovery_witness.py",
     "scripts/proof_coverage_matrix.py",
@@ -127,8 +114,8 @@ REQUIRED_EVIDENCE_REFS: tuple[str, ...] = (
 )
 
 
-class UniversalSymbolRuntimeAuthorityWitnessError(ValueError):
-    """Raised when the runtime authority witness violates Foundation Mode."""
+class UniversalSymbolSkillRuntimeAuthorityWitnessError(ValueError):
+    """Raised when the skill runtime authority witness violates Foundation Mode."""
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -137,19 +124,19 @@ def load_json_object(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
-        raise UniversalSymbolRuntimeAuthorityWitnessError(f"missing file: {path}") from exc
+        raise UniversalSymbolSkillRuntimeAuthorityWitnessError(f"missing file: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise UniversalSymbolRuntimeAuthorityWitnessError(f"invalid json: {path}: {exc}") from exc
+        raise UniversalSymbolSkillRuntimeAuthorityWitnessError(f"invalid json: {path}: {exc}") from exc
     if not isinstance(value, dict):
-        raise UniversalSymbolRuntimeAuthorityWitnessError(f"expected object: {path}")
+        raise UniversalSymbolSkillRuntimeAuthorityWitnessError(f"expected object: {path}")
     return value
 
 
-def validate_universal_symbol_runtime_authority_witness(
+def validate_universal_symbol_skill_runtime_authority_witness(
     witness_path: Path = DEFAULT_WITNESS_PATH,
     schema_path: Path = DEFAULT_SCHEMA_PATH,
 ) -> dict[str, Any]:
-    """Validate schema shape, denied authority, and blocking evidence."""
+    """Validate schema shape, lane requirements, and denied authority."""
 
     schema = load_json_object(schema_path)
     witness = load_json_object(witness_path)
@@ -158,9 +145,9 @@ def validate_universal_symbol_runtime_authority_witness(
     _validate_schema_boundary(schema, errors)
     _validate_json_schema(witness, schema, errors)
     _validate_witness_boundary(witness, errors)
-    _validate_authority_requirements(witness, errors)
+    _validate_lane_requirements(witness, errors)
     _validate_authority_denials(witness, errors)
-    _validate_runtime_constraints(witness, errors)
+    _validate_lane_constraints(witness, errors)
     _validate_rejection_policy(witness, errors)
     _validate_blocked_reasons(witness, errors)
     _validate_contract_summary(witness, errors)
@@ -173,26 +160,26 @@ def validate_universal_symbol_runtime_authority_witness(
         "valid": not errors,
         "witness_id": witness.get("witness_id", ""),
         "solver_outcome": witness.get("solver_outcome", ""),
-        "runtime_authority_decision": witness.get("runtime_authority_decision", ""),
+        "skill_authority_decision": witness.get("skill_authority_decision", ""),
+        "lane_requirement_count": _list_len(witness.get("lane_requirements")) or 0,
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "authority_requirement_count": _list_len(witness.get("authority_requirements")) or 0,
-        "runtime_constraint_count": len(RUNTIME_CONSTRAINT_TRUE_FIELDS),
+        "lane_constraint_count": len(LANE_CONSTRAINT_TRUE_FIELDS),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")) or 0,
         "errors": errors,
     }
     if errors:
-        raise UniversalSymbolRuntimeAuthorityWitnessError("; ".join(errors))
+        raise UniversalSymbolSkillRuntimeAuthorityWitnessError("; ".join(errors))
     return result
 
 
 def _validate_schema_boundary(schema: Mapping[str, Any], errors: list[str]) -> None:
-    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-runtime-authority-witness:1":
+    if schema.get("$id") != "urn:mullusi:schema:universal-symbol-skill-runtime-authority-witness:1":
         errors.append("schema id drift")
     if schema.get("additionalProperties") is not False:
         errors.append("schema must reject additional properties")
     required = schema.get("required")
-    if not isinstance(required, list) or "authority_denials" not in required:
-        errors.append("schema must require authority_denials")
+    if not isinstance(required, list) or "lane_requirements" not in required:
+        errors.append("schema must require lane_requirements")
 
 
 def _validate_json_schema(witness: Mapping[str, Any], schema: Mapping[str, Any], errors: list[str]) -> None:
@@ -211,32 +198,40 @@ def _validate_witness_boundary(witness: Mapping[str, Any], errors: list[str]) ->
         errors.append("foundation_mode must remain true")
     if witness.get("solver_outcome") != "AwaitingEvidence":
         errors.append("solver_outcome must remain AwaitingEvidence")
-    if witness.get("runtime_authority_decision") != (
-        "blocked_pending_runtime_admission_operator_receipt_recovery_and_audit_evidence"
+    if witness.get("skill_authority_decision") != (
+        "blocked_pending_lane_operator_receipt_recovery_and_audit_evidence"
     ):
-        errors.append("runtime_authority_decision must remain blocked")
-    if witness.get("runtime_authority_witness_is_not_runtime_authority") is not True:
-        errors.append("runtime authority witness must not be runtime authority")
+        errors.append("skill_authority_decision must remain blocked")
+    if witness.get("skill_runtime_authority_witness_is_not_skill_authority") is not True:
+        errors.append("skill runtime authority witness must not be skill authority")
 
 
-def _validate_authority_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
-    requirements = witness.get("authority_requirements")
+def _validate_lane_requirements(witness: Mapping[str, Any], errors: list[str]) -> None:
+    requirements = witness.get("lane_requirements")
     if not isinstance(requirements, list) or not requirements:
-        errors.append("authority_requirements must be non-empty")
+        errors.append("lane_requirements must be non-empty")
         return
-    requirement_ids: list[str] = []
+    lane_refs: list[str] = []
     for requirement in requirements:
         if not isinstance(requirement, dict):
-            errors.append("authority requirement entries must be objects")
+            errors.append("lane requirement entries must be objects")
             continue
-        requirement_ids.append(str(requirement.get("requirement_id")))
+        lane_ref = str(requirement.get("lane_ref"))
+        lane_refs.append(lane_ref)
         if requirement.get("proof_state") not in {"Unknown", "BudgetUnknown", "Fail"}:
-            errors.append(f"{requirement.get('requirement_id')}: proof_state must block authority")
-        if requirement.get("current_decision") != "runtime_authority_blocked":
-            errors.append(f"{requirement.get('requirement_id')}: current_decision must block authority")
+            errors.append(f"{lane_ref}: proof_state must block authority")
+        if requirement.get("admission_state") != "blocked_pending_live_runtime_authority":
+            errors.append(f"{lane_ref}: admission_state must remain blocked")
+        if len(_string_list(requirement.get("required_evidence_refs"))) < 6:
+            errors.append(f"{lane_ref}: required_evidence_refs must include lane evidence")
+        blocked_actions = set(_string_list(requirement.get("blocked_action_refs")))
+        if len(blocked_actions) < 3:
+            errors.append(f"{lane_ref}: blocked_action_refs must include at least three actions")
+        if not any("terminal-closure" in action or "terminal_closure" in action for action in blocked_actions):
+            errors.append(f"{lane_ref}: terminal closure must be blocked")
         if not str(requirement.get("delta_reject_ref", "")).startswith("delta-reject://"):
-            errors.append(f"{requirement.get('requirement_id')}: delta_reject_ref must be logged")
-    _require_members("authority_requirements", requirement_ids, REQUIRED_REQUIREMENT_IDS, errors)
+            errors.append(f"{lane_ref}: delta_reject_ref must be logged")
+    _require_members("lane_requirements", lane_refs, REQUIRED_LANE_REFS, errors)
 
 
 def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -246,11 +241,11 @@ def _validate_authority_denials(witness: Mapping[str, Any], errors: list[str]) -
             errors.append(f"authority_denials.{field_name} must remain false")
 
 
-def _validate_runtime_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
-    constraints = _mapping(witness.get("runtime_constraints"))
-    for field_name in RUNTIME_CONSTRAINT_TRUE_FIELDS:
+def _validate_lane_constraints(witness: Mapping[str, Any], errors: list[str]) -> None:
+    constraints = _mapping(witness.get("lane_constraints"))
+    for field_name in LANE_CONSTRAINT_TRUE_FIELDS:
         if constraints.get(field_name) is not True:
-            errors.append(f"runtime_constraints.{field_name} must remain true")
+            errors.append(f"lane_constraints.{field_name} must remain true")
 
 
 def _validate_rejection_policy(witness: Mapping[str, Any], errors: list[str]) -> None:
@@ -265,15 +260,16 @@ def _validate_blocked_reasons(witness: Mapping[str, Any], errors: list[str]) -> 
     if not isinstance(blocked_reasons, list):
         errors.append("blocked_reasons must be a list")
         return
-    _require_members("blocked_reasons", [item for item in blocked_reasons if isinstance(item, str)], REQUIRED_BLOCKED_REASONS, errors)
+    observed = [item for item in blocked_reasons if isinstance(item, str)]
+    _require_members("blocked_reasons", observed, REQUIRED_BLOCKED_REASONS, errors)
 
 
 def _validate_contract_summary(witness: Mapping[str, Any], errors: list[str]) -> None:
     summary = _mapping(witness.get("contract_summary"))
     observed_counts = {
-        "authority_requirement_count": _list_len(witness.get("authority_requirements")),
+        "lane_requirement_count": _list_len(witness.get("lane_requirements")),
         "authority_denial_count": len(AUTHORITY_DENIAL_FIELDS),
-        "runtime_constraint_count": len(RUNTIME_CONSTRAINT_TRUE_FIELDS),
+        "lane_constraint_count": len(LANE_CONSTRAINT_TRUE_FIELDS),
         "rejection_check_count": len(REJECTION_POLICY_TRUE_FIELDS),
         "blocked_reason_count": _list_len(witness.get("blocked_reasons")),
         "evidence_ref_count": _list_len(witness.get("evidence_refs")),
@@ -316,6 +312,12 @@ def _mapping(value: Any) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
 
 
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
+
+
 def _list_len(value: Any) -> int | None:
     return len(value) if isinstance(value, list) else None
 
@@ -347,19 +349,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        report = validate_universal_symbol_runtime_authority_witness(args.witness, args.schema)
-    except UniversalSymbolRuntimeAuthorityWitnessError as exc:
+        report = validate_universal_symbol_skill_runtime_authority_witness(args.witness, args.schema)
+    except UniversalSymbolSkillRuntimeAuthorityWitnessError as exc:
         if args.json:
             print(json.dumps({"valid": False, "errors": str(exc).split("; ")}, indent=2, sort_keys=True))
         else:
-            print(f"[FAIL] universal_symbol_runtime_authority_witness: {exc}")
+            print(f"[FAIL] universal_symbol_skill_runtime_authority_witness: {exc}")
             print("STATUS: failed")
         return 1
 
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print("[PASS] universal_symbol_runtime_authority_witness")
+        print("[PASS] universal_symbol_skill_runtime_authority_witness")
         print("STATUS: passed")
     return 0
 

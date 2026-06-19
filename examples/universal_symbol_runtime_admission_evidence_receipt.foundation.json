@@ -1,0 +1,196 @@
+{
+  "receipt_id": "universal-symbol-runtime-admission-evidence-receipt-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "receipt_scope": "foundation-mode-universal-symbol-runtime-admission-evidence",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "admission_evidence_decision": "blocked_pending_live_runtime_admission_operator_orchestration_receipt_store_skill_recovery_and_proof_evidence",
+  "receipt_is_not_runtime_authority": true,
+  "runtime_subject": {
+    "runtime_admission_policy_ref": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "runtime_authority_witness_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "runtime_authority_read_model_ref": "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "skill_runtime_authority_witness_ref": "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    "authority_scope": "runtime-admission-evidence-only"
+  },
+  "required_live_evidence": [
+    {
+      "evidence_id": "runtime-admission-evidence://live-runtime-witness",
+      "evidence_kind": "live_runtime_witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/live-runtime-witness-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://runtime-authority-witness",
+      "evidence_kind": "runtime_authority_witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-authority-witness-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://operator-approval",
+      "evidence_kind": "operator_approval",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-operator-approval-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://uao-decision",
+      "evidence_kind": "uao_decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://universal-action-orchestration/no-bypass",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-uao-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://phi-gov-decision",
+      "evidence_kind": "phi_gov_decision",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://phi-gov/state-write-only",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-phi-gov-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://life-meaning-judgment",
+      "evidence_kind": "life_meaning_judgment",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "policy://life-meaning-judgment/effect-bearing-required",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-life-meaning-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://receipt-store-authority",
+      "evidence_kind": "receipt_store_authority",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-receipt-store-authority-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://skill-lane-witness",
+      "evidence_kind": "skill_lane_witness",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-skill-lane-witness-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://lane-runtime-authority-evidence",
+      "evidence_kind": "lane_runtime_authority_evidence",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-lane-runtime-authority-evidence-missing"
+    },
+    {
+      "evidence_id": "runtime-admission-evidence://rollback-recovery-handoff",
+      "evidence_kind": "rollback_recovery_handoff",
+      "proof_state": "Unknown",
+      "required_evidence_ref": "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+      "current_decision": "runtime_admission_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-admission-rollback-recovery-handoff-missing"
+    }
+  ],
+  "evidence_consistency_constraints": {
+    "runtime_authority_witness_matches_policy_required": true,
+    "operator_approval_matches_authority_scope_required": true,
+    "uao_decision_matches_effect_boundary_required": true,
+    "phi_gov_decision_matches_state_write_required": true,
+    "life_meaning_judgment_matches_effect_required": true,
+    "receipt_store_authority_denial_respected": true,
+    "skill_lane_witnesses_match_admission_matrix_required": true,
+    "rollback_recovery_handoff_required": true,
+    "proof_coverage_surface_closed_required": true,
+    "all_live_evidence_required_before_runtime_admission": true
+  },
+  "authority_denials": {
+    "runtime_admission_granted": false,
+    "runtime_registration_performed": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "rejection_policy": {
+    "missing_live_runtime_witness_blocks_admission": true,
+    "missing_operator_approval_blocks_admission": true,
+    "missing_orchestration_decision_blocks_admission": true,
+    "missing_receipt_store_authority_blocks_admission": true,
+    "missing_skill_lane_witness_blocks_admission": true,
+    "missing_rollback_recovery_blocks_admission": true,
+    "unknown_hard_constraint_blocks_admission": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "live_runtime_witness_missing",
+    "runtime_authority_witness_missing",
+    "operator_approval_missing",
+    "uao_decision_missing",
+    "phi_gov_decision_missing",
+    "life_meaning_judgment_missing",
+    "receipt_store_authority_missing",
+    "skill_lane_witness_missing",
+    "rollback_recovery_handoff_missing",
+    "proof_coverage_missing",
+    "runtime_admission_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_live_runtime_witness",
+    "collect_operator_runtime_admission_approval",
+    "collect_runtime_rollback_recovery_handoff"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+    "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+    "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+    "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+    "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+    "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+    "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "live_evidence_requirement_count": 10,
+    "consistency_constraint_count": 10,
+    "authority_denial_count": 12,
+    "rejection_check_count": 8,
+    "blocked_reason_count": 12,
+    "evidence_ref_count": 32
+  }
+}

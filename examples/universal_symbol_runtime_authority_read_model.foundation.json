@@ -1,0 +1,131 @@
+{
+  "read_model_id": "universal-symbol-runtime-authority-read-model-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "read_model_scope": "foundation-mode-universal-symbol-runtime-authority-read-model",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "read_model_is_not_runtime_authority": true,
+  "operator_status_summary": {
+    "primary_status": "Blocked for safety",
+    "approval_status": "Needs approval",
+    "dispatch_status": "Not active",
+    "receipt_store_status": "Evidence saved",
+    "audit_detail_visibility": "hidden_by_default"
+  },
+  "authority_chain_projection": [
+    {
+      "link_id": "runtime-authority-read-model://runtime-admission-policy",
+      "source_ref": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Blocked for safety",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://runtime-authority-witness",
+      "source_ref": "schemas/universal_symbol_runtime_authority_witness.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Evidence required",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://receipt-store-authority",
+      "source_ref": "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Blocked for safety",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://operator-approval",
+      "source_ref": "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Needs approval",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://lifecycle-evidence",
+      "source_ref": "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Evidence required",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://lifecycle-audit",
+      "source_ref": "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Evidence required",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://rollback-recovery",
+      "source_ref": "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+      "proof_state": "Unknown",
+      "operator_status": "Evidence required",
+      "activation_allowed": false
+    },
+    {
+      "link_id": "runtime-authority-read-model://proof-coverage",
+      "source_ref": "surface://universal_symbol_runtime_authority_read_model",
+      "proof_state": "Unknown",
+      "operator_status": "Evidence required",
+      "activation_allowed": false
+    }
+  ],
+  "effective_denials": {
+    "runtime_authority_granted": false,
+    "runtime_registration_performed": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "read_model_constraints": {
+    "read_only_projection": true,
+    "no_state_mutation": true,
+    "no_connector_call": true,
+    "no_runtime_dispatch": true,
+    "no_receipt_store_append": true,
+    "no_raw_payload": true,
+    "no_raw_secret": true,
+    "audit_details_hidden_by_default": true,
+    "audit_details_link_allowed": true
+  },
+  "evidence_refs": [
+    "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_operator_approval_witness.schema.json",
+    "examples/universal_symbol_receipt_store_operator_approval_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_audit_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_audit_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "authority_chain_projection_count": 8,
+    "effective_denial_count": 10,
+    "read_model_constraint_count": 9,
+    "evidence_ref_count": 26
+  }
+}

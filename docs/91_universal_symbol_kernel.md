@@ -253,6 +253,116 @@ terminal-closure denial
 
 It remains a Foundation Mode denial. It does not grant runtime authority, register runtime symbols, record skill admission, enable live dispatch, call connectors, write files, write externally, append receipts, store raw payloads, store raw secrets, mutate state, allow terminal closure, or claim production readiness.
 
+## Runtime authority read model
+
+The first operator-facing runtime authority read model is:
+
+```text
+schemas/universal_symbol_runtime_authority_read_model.schema.json
+examples/universal_symbol_runtime_authority_read_model.foundation.json
+```
+
+It is a read-only projection over blocked authority state. It exposes simple operator status while denying runtime authority, runtime registration, live dispatch, connector calls, filesystem writes, external writes, receipt-store append, state mutation, terminal closure, and production readiness.
+
+It performs no state mutation and does not grant authority. Audit details remain hidden by default and are reachable only by explicit audit link.
+
+## Runtime admission evidence receipt
+
+The first runtime admission evidence receipt is:
+
+```text
+schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json
+examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json
+```
+
+It records the live evidence still required before runtime admission can be considered:
+
+```text
+live runtime witness
+runtime authority witness
+operator approval
+UAO decision
+Phi_gov decision
+LifeMeaningJudgment
+receipt-store authority
+skill-lane witness
+rollback/recovery handoff
+```
+
+The receipt is not runtime authority. It keeps runtime admission, registration, dispatch, connector calls, receipt-store append, mutation, terminal closure, and production readiness blocked until all live evidence is present.
+
+## Runtime live witness input receipt
+
+The runtime live witness input receipt is:
+
+```text
+schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json
+examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json
+```
+
+It names the concrete inputs required before a live runtime witness can be evaluated:
+
+```text
+runtime endpoint
+runtime process identity
+runtime health probe
+no-effect dry run
+receipt-store append denial
+operator observation
+freshness window
+proof coverage binding
+```
+
+`scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py`
+materializes this blocked receipt from operator-supplied input references. It
+does not probe endpoints, start processes, call connectors, append receipts, or
+grant runtime authority; all produced channels remain `Unknown` and
+`live_runtime_witness_blocked`.
+
+The receipt does not accept a live witness and does not grant runtime admission. It keeps dispatch, connector calls, receipt-store append, mutation, terminal closure, and production readiness denied.
+
+## Lane runtime authority evidence receipt
+
+The first lane-level runtime authority evidence receipt is:
+
+```text
+schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json
+examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json
+```
+
+It records the missing evidence for these lanes:
+
+```text
+skill://teamops-shared-inbox
+skill://software-dev
+component://governance-core
+receipt://worker-ledger
+```
+
+Each lane remains blocked pending operator approval, receipt-store authority, recovery evidence, audit receipt, live runtime witness, and blocked-action references. Observed lane evidence remains empty in Foundation Mode.
+
+The receipt is not lane authority. It grants no runtime authority, runtime admission, dispatch, connector call, filesystem write, external write, receipt-store append, state mutation, terminal closure, or production readiness.
+
+## Skill runtime authority witness
+
+The first lane-level runtime authority witness is:
+
+```text
+schemas/universal_symbol_skill_runtime_authority_witness.schema.json
+examples/universal_symbol_skill_runtime_authority_witness.foundation.json
+```
+
+It binds blocked runtime authority requirements for these lanes:
+
+```text
+skill://teamops-shared-inbox
+skill://software-dev
+component://governance-core
+receipt://worker-ledger
+```
+
+Each lane remains `AwaitingEvidence` until live runtime admission, root runtime authority, operator approval, receipt-store authority, recovery, audit receipt, and blocked-action evidence exist. The witness is not skill authority and does not register, admit, dispatch, call connectors, write files, append receipts, store raw payloads, store raw secrets, mutate state, allow terminal closure, or claim production readiness.
+
 ## Adapter receipt persistence policy
 
 The first adapter receipt persistence policy is:
@@ -314,6 +424,29 @@ rollback/recovery witness
 idempotency witness
 durability replay witness
 ```
+
+## Runtime authority read model
+
+The UniversalSymbol runtime authority read model is:
+
+```text
+schemas/universal_symbol_runtime_authority_read_model.schema.json
+examples/universal_symbol_runtime_authority_read_model.foundation.json
+```
+
+It exposes simple operator-facing status:
+
+```text
+Blocked for safety
+Needs approval
+Not active
+Evidence saved
+```
+
+The read model is not runtime authority. It remains a read-only projection that
+denies runtime registration, live dispatch, connector calls, filesystem writes,
+external writes, receipt-store append, state mutation, terminal closure, and
+production readiness.
 
 The witness remains a Foundation Mode denial:
 
@@ -894,9 +1027,9 @@ public SaaS readiness
 
 ## Next action
 
-The next real implementation step is the remaining authority evidence chain: live temporal evidence, live revocation evidence, skill-by-skill runtime authority witnesses, and live runtime admission before any append path exists.
+The next real implementation step is the remaining authority evidence chain: live temporal evidence, live revocation evidence, live lane-level operator/audit witness values, live lane runtime authority evidence values, and live runtime admission before any append path exists.
 
 STATUS:
-  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, runtime authority witness contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, append audit witness contract added, receipt-store operator approval witness contract added, receipt-store operator identity witness contract added, receipt-store operator approval decision witness contract added, receipt-store operator reapproval expiry witness contract added, receipt-store operator revocation witness contract added, receipt-store tenant scope witness contract added, receipt-store writer duty scope witness contract added, receipt-store writer identity witness contract added, receipt-store writer registration witness contract added, receipt-store path confinement witness contract added, receipt-store write-path idempotency witness contract added, receipt-store durability replay witness contract added, receipt-store recovery witness contract added, receipt-store path custody witness contract added, and receipt-store write-path witness contract added
-  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no tenant binding refs, no duty binding refs, no path confinement authority refs, no idempotency append authority refs, no durability replay append authority refs, no recovery execution authority refs, no runtime authority refs, no runtime registration, no live dispatch, no operator identity authority refs, no approval decision authority refs, no reapproval expiry authority refs, no revocation authority refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, proof matrix witness binding, blocked runtime admission policy, blocked runtime authority witness, blocked skill admission matrix, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, recovery requirement, UAO and LifeMeaningJudgment append preconditions, operator approval recording denial, operator identity binding denial, approval decision recording denial, reapproval expiry binding denial, revocation binding denial, live operator subject requirement, trusted control studio binding requirement, session authentication requirement, explicit approval decision requirement, approval scope requirement, action boundary requirement, expiry requirement, reapproval window requirement, revocation state requirement, revocation scope requirement, tenant identity requirement, actor identity requirement, tenant-actor binding requirement, receipt-store partition requirement, cross-tenant isolation requirement, writer role identity requirement, permitted receipt kinds requirement, permitted action scope requirement, denied action scope requirement, separation-of-duties requirement, tenant-scope link requirement, revocation or rebinding path requirement, path confinement denial, canonical root requirement, allowed namespace requirement, path traversal denial requirement, symlink resolution requirement, reserved path denial requirement, tenant partition requirement, append-only custody requirement, idempotency binding denial, deterministic key derivation requirement, canonical input requirement, payload digest binding requirement, replay collision check requirement, duplicate-effect denial requirement, durability replay binding denial, ordered replay requirement, append sequence requirement, digest chain requirement, idempotency key reuse requirement, crash-window requirement, durability receipt requirement, rollback handoff requirement, audit receipt requirement, recovery binding denial, recovery plan requirement, rollback plan requirement, compensation plan requirement, recovery snapshot requirement, durability replay binding requirement, effect boundary requirement, incident handoff requirement, post-recovery audit requirement, writer identity registration denial, unique writer identity requirement, writer registration denial, writer identity requirement, operator approval requirement, write-path requirement, tenant-scope requirement, path custody denial, canonical path identity requirement, repository-relative path requirement, write-path denial, custody requirement, confinement requirement, digest-only requirement, durability replay requirement
-  Open issues: proof-state coverage report, live recovery execution evidence, live temporal evidence, live revocation evidence, skill-by-skill runtime authority witnesses, and live runtime admission remain AwaitingEvidence
+  Completeness: foundation boundary added, audit-refined, first Symbol Skill Adapter proof thread added, software receipt read-only operator projection added, component/worker symbol projections added, proof coverage matrix binding added, runtime admission policy contract added, runtime admission evidence receipt contract added, runtime authority witness contract added, runtime authority read model contract added, lane runtime authority evidence receipt contract added, skill runtime authority witness contract added, adapter receipt persistence policy contract added, receipt-store authority witness contract added, append audit witness contract added, receipt-store operator approval witness contract added, receipt-store operator identity witness contract added, receipt-store operator approval decision witness contract added, receipt-store operator reapproval expiry witness contract added, receipt-store operator revocation witness contract added, receipt-store tenant scope witness contract added, receipt-store writer duty scope witness contract added, receipt-store writer identity witness contract added, receipt-store writer registration witness contract added, receipt-store path confinement witness contract added, receipt-store write-path idempotency witness contract added, receipt-store durability replay witness contract added, receipt-store recovery witness contract added, receipt-store path custody witness contract added, and receipt-store write-path witness contract added
+  Invariants verified by validator and tests: JSON Schema conformance, symbol-native envelope, 16 symbol kinds, everything-symbolizable flag, evidence-file presence, repository-bound evidence refs, authority denial, no raw private payload, no raw secret, no authority refs, no approval refs, no tenant binding refs, no duty binding refs, no path confinement authority refs, no idempotency append authority refs, no durability replay append authority refs, no recovery execution authority refs, no runtime authority refs, no runtime registration, no runtime admission, no live dispatch, no operator identity authority refs, no approval decision authority refs, no reapproval expiry authority refs, no revocation authority refs, no terminal closure, awaiting-evidence proof state, read-only symbol projection, read-only runtime authority projection, hidden-by-default audit details, proof matrix witness binding, blocked runtime admission policy, blocked runtime admission evidence receipt, blocked runtime authority witness, blocked lane runtime authority evidence receipt, empty observed lane evidence in Foundation Mode, lane runtime authority denial, blocked skill admission matrix, blocked skill runtime authority witness, lane-level admission denial, digest/ref-only candidate receipt policy, receipt-store append denial, receipt-store authority denial, append precondition Delta_reject refs, append audit denial, digest-ref custody requirements, idempotency requirement, durability replay requirement, recovery requirement, UAO and LifeMeaningJudgment append preconditions, operator approval recording denial, operator identity binding denial, approval decision recording denial, reapproval expiry binding denial, revocation binding denial, live operator subject requirement, trusted control studio binding requirement, session authentication requirement, explicit approval decision requirement, approval scope requirement, action boundary requirement, expiry requirement, reapproval window requirement, revocation state requirement, revocation scope requirement, tenant identity requirement, actor identity requirement, tenant-actor binding requirement, receipt-store partition requirement, cross-tenant isolation requirement, writer role identity requirement, permitted receipt kinds requirement, permitted action scope requirement, denied action scope requirement, separation-of-duties requirement, tenant-scope link requirement, revocation or rebinding path requirement, path confinement denial, canonical root requirement, allowed namespace requirement, path traversal denial requirement, symlink resolution requirement, reserved path denial requirement, tenant partition requirement, append-only custody requirement, idempotency binding denial, deterministic key derivation requirement, canonical input requirement, payload digest binding requirement, replay collision check requirement, duplicate-effect denial requirement, durability replay binding denial, ordered replay requirement, append sequence requirement, digest chain requirement, idempotency key reuse requirement, crash-window requirement, durability receipt requirement, rollback handoff requirement, audit receipt requirement, recovery binding denial, recovery plan requirement, rollback plan requirement, compensation plan requirement, recovery snapshot requirement, durability replay binding requirement, effect boundary requirement, incident handoff requirement, post-recovery audit requirement, writer identity registration denial, unique writer identity requirement, writer registration denial, writer identity requirement, operator approval requirement, write-path requirement, tenant-scope requirement, path custody denial, canonical path identity requirement, repository-relative path requirement, write-path denial, custody requirement, confinement requirement, digest-only requirement, durability replay requirement
+  Open issues: proof-state coverage report, live recovery execution evidence, live temporal evidence, live revocation evidence, live lane-level operator/audit witness values, live lane runtime authority evidence values, and live runtime admission remain AwaitingEvidence

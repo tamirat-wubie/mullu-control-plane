@@ -1,0 +1,166 @@
+{
+  "receipt_id": "universal-symbol-runtime-live-witness-input-receipt-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "receipt_scope": "foundation-mode-universal-symbol-runtime-live-witness-input",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "input_receipt_decision": "blocked_pending_live_endpoint_process_probe_dry_run_no_effect_receipt_denial_operator_and_freshness_inputs",
+  "receipt_is_not_runtime_authority": true,
+  "input_subject": {
+    "runtime_admission_evidence_receipt_ref": "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+    "runtime_admission_policy_ref": "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "runtime_authority_read_model_ref": "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "input_scope": "runtime-live-witness-inputs-only"
+  },
+  "required_input_channels": [
+    {
+      "input_id": "runtime-live-witness-input://runtime-endpoint",
+      "input_kind": "runtime_endpoint",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://runtime/endpoint-url",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-endpoint-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://runtime-process-identity",
+      "input_kind": "runtime_process_identity",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://runtime/process-identity",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-process-identity-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://runtime-health-probe",
+      "input_kind": "runtime_health_probe",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://runtime/health-probe-response",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-health-probe-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://runtime-no-effect-dry-run",
+      "input_kind": "runtime_no_effect_dry_run",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://runtime/no-effect-dry-run-receipt",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-no-effect-dry-run-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://receipt-store-append-denial",
+      "input_kind": "receipt_store_append_denial",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://receipt-store/append-denial-witness",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/receipt-store-append-denial-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://operator-observation",
+      "input_kind": "operator_observation",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://operator/runtime-observation",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/operator-observation-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://freshness-window",
+      "input_kind": "freshness_window",
+      "proof_state": "Unknown",
+      "required_input_ref": "input://runtime/freshness-window",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/freshness-window-input-missing"
+    },
+    {
+      "input_id": "runtime-live-witness-input://proof-coverage-binding",
+      "input_kind": "proof_coverage_binding",
+      "proof_state": "Unknown",
+      "required_input_ref": "surface://universal_symbol_runtime_live_witness_input_receipt",
+      "current_decision": "live_runtime_witness_blocked",
+      "delta_reject_ref": "delta-reject://universal-symbol/runtime-live-witness-proof-coverage-missing"
+    }
+  ],
+  "input_consistency_constraints": {
+    "endpoint_matches_declared_runtime_required": true,
+    "process_identity_matches_endpoint_required": true,
+    "health_probe_matches_process_required": true,
+    "dry_run_has_no_effect_required": true,
+    "receipt_store_append_denial_required": true,
+    "operator_observation_matches_probe_required": true,
+    "freshness_window_required": true,
+    "all_inputs_required_before_live_runtime_witness": true
+  },
+  "authority_denials": {
+    "live_runtime_witness_accepted": false,
+    "runtime_admission_granted": false,
+    "runtime_registration_performed": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "rejection_policy": {
+    "missing_endpoint_blocks_live_witness": true,
+    "missing_process_identity_blocks_live_witness": true,
+    "missing_health_probe_blocks_live_witness": true,
+    "missing_no_effect_dry_run_blocks_live_witness": true,
+    "missing_receipt_store_denial_blocks_live_witness": true,
+    "missing_operator_observation_blocks_live_witness": true,
+    "unknown_hard_constraint_blocks_live_witness": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "runtime_endpoint_input_missing",
+    "runtime_process_identity_input_missing",
+    "runtime_health_probe_input_missing",
+    "runtime_no_effect_dry_run_input_missing",
+    "receipt_store_append_denial_input_missing",
+    "operator_observation_input_missing",
+    "freshness_window_input_missing",
+    "live_runtime_witness_forbidden",
+    "runtime_admission_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_runtime_endpoint_input",
+    "collect_no_effect_health_probe_input",
+    "collect_operator_runtime_observation_input"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_runtime_live_witness_input_receipt.schema.json",
+    "examples/universal_symbol_runtime_live_witness_input_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_admission_evidence_receipt.schema.json",
+    "examples/universal_symbol_runtime_admission_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_read_model.schema.json",
+    "examples/universal_symbol_runtime_authority_read_model.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/produce_universal_symbol_runtime_live_witness_input_receipt.py",
+    "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py",
+    "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py",
+    "scripts/validate_universal_symbol_runtime_authority_read_model.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_produce_universal_symbol_runtime_live_witness_input_receipt.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "input_channel_count": 8,
+    "consistency_constraint_count": 8,
+    "authority_denial_count": 12,
+    "rejection_check_count": 8,
+    "blocked_reason_count": 10,
+    "evidence_ref_count": 23
+  }
+}

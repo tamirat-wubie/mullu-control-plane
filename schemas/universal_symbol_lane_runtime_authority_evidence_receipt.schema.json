@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-lane-runtime-authority-evidence-receipt:1",
+  "title": "Universal Symbol Lane Runtime Authority Evidence Receipt",
+  "description": "Foundation Mode receipt contract for lane-level UniversalSymbol runtime authority evidence. This receipt records missing live lane evidence for team operations, software development, governance core, and worker ledger lanes while denying skill authority, runtime admission, registration, dispatch, connector calls, writes, receipt-store append, mutation, terminal closure, and production readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "receipt_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "lane_evidence_decision",
+    "receipt_is_not_lane_authority",
+    "lane_evidence_items",
+    "lane_evidence_constraints",
+    "authority_denials",
+    "rejection_policy",
+    "blocked_reasons",
+    "next_actions",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "const": "universal-symbol-lane-runtime-authority-evidence-receipt-foundation" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "receipt_scope": { "type": "string", "const": "foundation-mode-universal-symbol-lane-runtime-authority-evidence" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "lane_evidence_decision": {
+      "type": "string",
+      "const": "blocked_pending_live_lane_operator_receipt_recovery_audit_and_runtime_evidence"
+    },
+    "receipt_is_not_lane_authority": { "type": "boolean", "const": true },
+    "lane_evidence_items": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/lane_evidence_item" },
+      "uniqueItems": true
+    },
+    "lane_evidence_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_approval_required",
+        "receipt_store_authority_required",
+        "rollback_recovery_required",
+        "lane_audit_receipt_required",
+        "live_runtime_witness_required",
+        "blocked_action_refs_required",
+        "all_lane_evidence_required_before_admission",
+        "terminal_closure_denial_required"
+      ],
+      "properties": {
+        "operator_approval_required": { "type": "boolean", "const": true },
+        "receipt_store_authority_required": { "type": "boolean", "const": true },
+        "rollback_recovery_required": { "type": "boolean", "const": true },
+        "lane_audit_receipt_required": { "type": "boolean", "const": true },
+        "live_runtime_witness_required": { "type": "boolean", "const": true },
+        "blocked_action_refs_required": { "type": "boolean", "const": true },
+        "all_lane_evidence_required_before_admission": { "type": "boolean", "const": true },
+        "terminal_closure_denial_required": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "rejection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "missing_operator_approval_blocks_lane_authority",
+        "missing_receipt_store_authority_blocks_lane_authority",
+        "missing_recovery_blocks_lane_authority",
+        "missing_audit_receipt_blocks_lane_authority",
+        "missing_live_runtime_witness_blocks_lane_authority",
+        "unknown_hard_constraint_blocks_lane_authority",
+        "failed_precondition_logs_delta_reject"
+      ],
+      "properties": {
+        "missing_operator_approval_blocks_lane_authority": { "type": "boolean", "const": true },
+        "missing_receipt_store_authority_blocks_lane_authority": { "type": "boolean", "const": true },
+        "missing_recovery_blocks_lane_authority": { "type": "boolean", "const": true },
+        "missing_audit_receipt_blocks_lane_authority": { "type": "boolean", "const": true },
+        "missing_live_runtime_witness_blocks_lane_authority": { "type": "boolean", "const": true },
+        "unknown_hard_constraint_blocks_lane_authority": { "type": "boolean", "const": true },
+        "failed_precondition_logs_delta_reject": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "lane_operator_approval_missing",
+          "receipt_store_authority_missing",
+          "rollback_recovery_missing",
+          "lane_audit_receipt_missing",
+          "live_runtime_witness_missing",
+          "blocked_action_refs_missing",
+          "lane_runtime_authority_forbidden",
+          "runtime_admission_forbidden",
+          "terminal_closure_not_allowed"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_evidence_item_count",
+        "lane_evidence_constraint_count",
+        "authority_denial_count",
+        "rejection_check_count",
+        "blocked_reason_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "lane_evidence_item_count": { "type": "integer", "const": 4 },
+        "lane_evidence_constraint_count": { "type": "integer", "const": 8 },
+        "authority_denial_count": { "type": "integer", "const": 13 },
+        "rejection_check_count": { "type": "integer", "const": 7 },
+        "blocked_reason_count": { "type": "integer", "minimum": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "lane_evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_ref",
+        "symbol_kind",
+        "proof_state",
+        "lane_evidence_state",
+        "blocker_classifications",
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "blocked_action_refs",
+        "current_decision",
+        "delta_reject_ref"
+      ],
+      "properties": {
+        "lane_ref": {
+          "type": "string",
+          "enum": [
+            "skill://teamops-shared-inbox",
+            "skill://software-dev",
+            "component://governance-core",
+            "receipt://worker-ledger"
+          ]
+        },
+        "symbol_kind": { "type": "string", "enum": ["skill", "component", "receipt"] },
+        "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+        "lane_evidence_state": { "type": "string", "const": "blocked_pending_live_lane_evidence" },
+        "blocker_classifications": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "operator_approval_missing",
+              "receipt_store_authority_missing",
+              "recovery_evidence_missing",
+              "audit_receipt_missing",
+              "live_runtime_witness_missing",
+              "blocked_action_refs_missing"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "required_evidence_refs": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "observed_evidence_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "blocked_action_refs": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "$ref": "#/$defs/ref" },
+          "uniqueItems": true
+        },
+        "current_decision": { "type": "string", "const": "lane_runtime_authority_blocked" },
+        "delta_reject_ref": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_runtime_authority_granted",
+        "runtime_admission_granted",
+        "runtime_registration_performed",
+        "skill_admission_recorded",
+        "live_dispatch_enabled",
+        "connector_call_enabled",
+        "filesystem_write_enabled",
+        "external_write_enabled",
+        "receipt_store_append_enabled",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "lane_runtime_authority_granted": { "type": "boolean", "const": false },
+        "runtime_admission_granted": { "type": "boolean", "const": false },
+        "runtime_registration_performed": { "type": "boolean", "const": false },
+        "skill_admission_recorded": { "type": "boolean", "const": false },
+        "live_dispatch_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "external_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

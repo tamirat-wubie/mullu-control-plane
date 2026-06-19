@@ -145,10 +145,14 @@
     "docs/91_universal_symbol_kernel.md",
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "scripts/produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
     "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py",
     "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py",
     "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py",
     "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "tests/test_produce_universal_symbol_receipt_store_lifecycle_evidence_receipt.py",
+    "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_proof_coverage_matrix.py"
   ],
@@ -158,6 +162,6 @@
     "authority_denial_count": 12,
     "rejection_check_count": 8,
     "blocked_reason_count": 9,
-    "evidence_ref_count": 23
+    "evidence_ref_count": 27
   }
 }

@@ -31,7 +31,7 @@ def test_foundation_universal_symbol_receipt_store_lifecycle_evidence_receipt_va
     )
     assert report["authority_denial_count"] == 12
     assert report["live_evidence_requirement_count"] == 7
-    assert report["evidence_ref_count"] == 23
+    assert report["evidence_ref_count"] == 27
 
 
 def test_lifecycle_evidence_receipt_rejects_lifecycle_authority_drift(tmp_path: Path) -> None:

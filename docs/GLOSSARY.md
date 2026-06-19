@@ -71,6 +71,11 @@ moved), recorded separately from what it merely intended. *(The system tracks
 intended vs actual effects so reality always wins.)* →
 [01_shared_invariants.md](01_shared_invariants.md)
 
+### Evidence packet
+A governed bundle of source-bound observations that can be checked before it is
+allowed to influence planning. *(It keeps planning tied to current evidence
+instead of assumptions.)* -> [94_observation_evidence_acquisition_architecture.md](94_observation_evidence_acquisition_architecture.md)
+
 ### Gateway
 The entry layer that receives messages from chat apps (WhatsApp, Slack, etc.)
 and hands them to the control plane. *(It's the "front desk".)* →
@@ -123,6 +128,12 @@ install and run). *(When docs say `mcoi_runtime`, that's this.)* →
 A required follow-up the system must fulfil after an action (e.g. a recovery or
 notification it now owes). *(Promises the system must keep, tracked
 explicitly.)* → [39_governed_capability_fabric.md](39_governed_capability_fabric.md)
+
+### Observation Evidence Acquisition Architecture
+The system boundary that turns read-only sensing into admitted evidence packets
+before planning, execution admission, verification, recovery, or learning can
+use them. *(It is how Mullu checks what is true before deciding what to do.)*
+-> [94_observation_evidence_acquisition_architecture.md](94_observation_evidence_acquisition_architecture.md)
 
 ### Phi traversal (spine)
 A fixed thinking order the agent applies to a problem — distinction, then

@@ -150,11 +150,41 @@ from scripts.validate_universal_symbol_runtime_admission_policy import (
     UniversalSymbolRuntimeAdmissionPolicyError,
     validate_universal_symbol_runtime_admission_policy,
 )
+from scripts.validate_universal_symbol_runtime_admission_evidence_receipt import (
+    DEFAULT_RECEIPT_PATH as DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+    UniversalSymbolRuntimeAdmissionEvidenceReceiptError,
+    validate_universal_symbol_runtime_admission_evidence_receipt,
+)
+from scripts.validate_universal_symbol_runtime_live_witness_input_receipt import (
+    DEFAULT_RECEIPT_PATH as DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+    UniversalSymbolRuntimeLiveWitnessInputReceiptError,
+    validate_universal_symbol_runtime_live_witness_input_receipt,
+)
+from scripts.validate_universal_symbol_lane_runtime_authority_evidence_receipt import (
+    DEFAULT_RECEIPT_PATH as DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+    UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError,
+    validate_universal_symbol_lane_runtime_authority_evidence_receipt,
+)
 from scripts.validate_universal_symbol_runtime_authority_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH,
     UniversalSymbolRuntimeAuthorityWitnessError,
     validate_universal_symbol_runtime_authority_witness,
+)
+from scripts.validate_universal_symbol_runtime_authority_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+    UniversalSymbolRuntimeAuthorityReadModelError,
+    validate_universal_symbol_runtime_authority_read_model,
+)
+from scripts.validate_universal_symbol_skill_runtime_authority_witness import (
+    DEFAULT_SCHEMA_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+    DEFAULT_WITNESS_PATH as DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH,
+    UniversalSymbolSkillRuntimeAuthorityWitnessError,
+    validate_universal_symbol_skill_runtime_authority_witness,
 )
 
 
@@ -175,7 +205,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 93
+    assert report["evidence_ref_count"] == 114
 
 
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
@@ -185,7 +215,49 @@ def test_foundation_universal_symbol_runtime_admission_policy_validates() -> Non
     assert report["admission_decision"] == "blocked"
     assert report["authority_denial_count"] == 9
     assert report["skill_admission_count"] == 4
-    assert report["evidence_ref_count"] == 31
+    assert report["evidence_ref_count"] == 34
+
+
+def test_foundation_universal_symbol_runtime_admission_evidence_receipt_validates() -> None:
+    report = validate_universal_symbol_runtime_admission_evidence_receipt()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["admission_evidence_decision"]
+        == "blocked_pending_live_runtime_admission_operator_orchestration_receipt_store_skill_recovery_and_proof_evidence"
+    )
+    assert report["live_evidence_requirement_count"] == 10
+    assert report["authority_denial_count"] == 12
+    assert report["consistency_constraint_count"] == 10
+    assert report["evidence_ref_count"] == 32
+
+
+def test_foundation_universal_symbol_runtime_live_witness_input_receipt_validates() -> None:
+    report = validate_universal_symbol_runtime_live_witness_input_receipt()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["input_receipt_decision"]
+        == "blocked_pending_live_endpoint_process_probe_dry_run_no_effect_receipt_denial_operator_and_freshness_inputs"
+    )
+    assert report["input_channel_count"] == 8
+    assert report["authority_denial_count"] == 12
+    assert report["consistency_constraint_count"] == 8
+    assert report["evidence_ref_count"] == 23
+
+
+def test_foundation_universal_symbol_lane_runtime_authority_evidence_receipt_validates() -> None:
+    report = validate_universal_symbol_lane_runtime_authority_evidence_receipt()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert (
+        report["lane_evidence_decision"]
+        == "blocked_pending_live_lane_operator_receipt_recovery_audit_and_runtime_evidence"
+    )
+    assert report["lane_evidence_item_count"] == 4
+    assert report["authority_denial_count"] == 13
+    assert report["lane_evidence_constraint_count"] == 8
+    assert report["evidence_ref_count"] == 23
 
 
 def test_foundation_universal_symbol_runtime_authority_witness_validates() -> None:
@@ -199,7 +271,28 @@ def test_foundation_universal_symbol_runtime_authority_witness_validates() -> No
     assert report["authority_denial_count"] == 13
     assert report["authority_requirement_count"] == 10
     assert report["runtime_constraint_count"] == 10
-    assert report["evidence_ref_count"] == 22
+    assert report["evidence_ref_count"] == 25
+
+
+def test_foundation_universal_symbol_runtime_authority_read_model_validates() -> None:
+    report = validate_universal_symbol_runtime_authority_read_model()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Blocked for safety"
+    assert report["authority_chain_projection_count"] == 8
+    assert report["effective_denial_count"] == 10
+    assert report["read_model_constraint_count"] == 9
+    assert report["evidence_ref_count"] == 26
+
+
+def test_foundation_universal_symbol_skill_runtime_authority_witness_validates() -> None:
+    report = validate_universal_symbol_skill_runtime_authority_witness()
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["skill_authority_decision"] == "blocked_pending_lane_operator_receipt_recovery_and_audit_evidence"
+    assert report["authority_denial_count"] == 13
+    assert report["lane_requirement_count"] == 4
+    assert report["evidence_ref_count"] == 24
 
 
 def test_foundation_universal_symbol_adapter_receipt_persistence_policy_validates() -> None:
@@ -607,6 +700,177 @@ def test_runtime_admission_policy_rejects_evidence_ref_count_drift(tmp_path: Pat
         )
 
 
+def test_runtime_admission_evidence_receipt_rejects_authority_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["receipt_is_not_runtime_authority"] = False
+    changed["authority_denials"]["runtime_admission_granted"] = True
+    with pytest.raises(UniversalSymbolRuntimeAdmissionEvidenceReceiptError, match="runtime authority"):
+        validate_universal_symbol_runtime_admission_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_runtime_admission_evidence_receipt_rejects_missing_live_evidence_kind(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["required_live_evidence"] = changed["required_live_evidence"][1:]
+    changed["contract_summary"]["live_evidence_requirement_count"] = len(changed["required_live_evidence"])
+    with pytest.raises(UniversalSymbolRuntimeAdmissionEvidenceReceiptError, match="live_runtime_witness"):
+        validate_universal_symbol_runtime_admission_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_runtime_admission_evidence_receipt_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["required_live_evidence"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolRuntimeAdmissionEvidenceReceiptError, match="delta_reject_ref"):
+        validate_universal_symbol_runtime_admission_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_runtime_admission_evidence_receipt_rejects_consistency_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["evidence_consistency_constraints"]["runtime_authority_witness_matches_policy_required"] = False
+    with pytest.raises(UniversalSymbolRuntimeAdmissionEvidenceReceiptError, match="runtime_authority_witness"):
+        validate_universal_symbol_runtime_admission_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_runtime_admission_evidence_receipt_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_ADMISSION_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolRuntimeAdmissionEvidenceReceiptError, match="evidence_ref_count drift"):
+        validate_universal_symbol_runtime_admission_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_runtime_live_witness_input_receipt_rejects_authority_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["receipt_is_not_runtime_authority"] = False
+    changed["authority_denials"]["live_runtime_witness_accepted"] = True
+    with pytest.raises(UniversalSymbolRuntimeLiveWitnessInputReceiptError, match="runtime authority"):
+        validate_universal_symbol_runtime_live_witness_input_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+        )
+
+
+def test_runtime_live_witness_input_receipt_rejects_missing_input_kind(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["required_input_channels"] = changed["required_input_channels"][1:]
+    changed["contract_summary"]["input_channel_count"] = len(changed["required_input_channels"])
+    with pytest.raises(UniversalSymbolRuntimeLiveWitnessInputReceiptError, match="runtime_endpoint"):
+        validate_universal_symbol_runtime_live_witness_input_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+        )
+
+
+def test_runtime_live_witness_input_receipt_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["required_input_channels"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolRuntimeLiveWitnessInputReceiptError, match="delta_reject_ref"):
+        validate_universal_symbol_runtime_live_witness_input_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+        )
+
+
+def test_runtime_live_witness_input_receipt_rejects_consistency_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["input_consistency_constraints"]["health_probe_matches_process_required"] = False
+    with pytest.raises(UniversalSymbolRuntimeLiveWitnessInputReceiptError, match="health_probe"):
+        validate_universal_symbol_runtime_live_witness_input_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+        )
+
+
+def test_runtime_live_witness_input_receipt_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolRuntimeLiveWitnessInputReceiptError, match="evidence_ref_count drift"):
+        validate_universal_symbol_runtime_live_witness_input_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_LIVE_WITNESS_INPUT_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_authority_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["receipt_is_not_lane_authority"] = False
+    changed["authority_denials"]["lane_runtime_authority_granted"] = True
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="lane authority"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_missing_lane(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_evidence_items"] = changed["lane_evidence_items"][1:]
+    changed["contract_summary"]["lane_evidence_item_count"] = len(changed["lane_evidence_items"])
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="teamops-shared-inbox"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_evidence_items"][0]["observed_evidence_refs"].append("witness://unexpected/live-lane")
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="observed_evidence_refs"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_evidence_items"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="delta_reject_ref"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="evidence_ref_count drift"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
 def test_runtime_authority_witness_rejects_runtime_authority_drift(tmp_path: Path) -> None:
     witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(witness)
@@ -661,6 +925,110 @@ def test_runtime_authority_witness_rejects_evidence_ref_count_drift(tmp_path: Pa
         validate_universal_symbol_runtime_authority_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_read_model_rejects_activation_drift(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["read_model_is_not_runtime_authority"] = False
+    changed["authority_chain_projection"][0]["activation_allowed"] = True
+    changed["effective_denials"]["runtime_authority_granted"] = True
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="runtime authority|activation_allowed"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_read_model_rejects_status_drift(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["operator_status_summary"]["primary_status"] = "Ready"
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="primary_status"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_read_model_rejects_missing_projection_link(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["authority_chain_projection"] = changed["authority_chain_projection"][1:]
+    changed["contract_summary"]["authority_chain_projection_count"] = len(changed["authority_chain_projection"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="runtime-admission-policy"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_read_model_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="evidence_ref_count drift"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_skill_authority_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["skill_runtime_authority_witness_is_not_skill_authority"] = False
+    changed["authority_denials"]["skill_runtime_authority_granted"] = True
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="skill authority"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_missing_lane(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lane_requirements"] = changed["lane_requirements"][1:]
+    changed["contract_summary"]["lane_requirement_count"] = len(changed["lane_requirements"])
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="teamops-shared-inbox"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lane_requirements"][0]["delta_reject_ref"] = "missing-delta"
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="delta_reject_ref"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_constraint_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lane_constraints"]["runtime_admission_policy_required"] = False
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="runtime_admission_policy_required"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["contract_summary"]["evidence_ref_count"] = 999
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="evidence_ref_count drift"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
         )
 
 

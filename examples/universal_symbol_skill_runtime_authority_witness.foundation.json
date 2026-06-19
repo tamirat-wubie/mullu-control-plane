@@ -1,0 +1,180 @@
+{
+  "witness_id": "universal-symbol-skill-runtime-authority-witness-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-18T00:00:00Z",
+  "witness_scope": "foundation-mode-universal-symbol-skill-runtime-authority",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "skill_authority_decision": "blocked_pending_lane_operator_receipt_recovery_and_audit_evidence",
+  "skill_runtime_authority_witness_is_not_skill_authority": true,
+  "lane_requirements": [
+    {
+      "lane_ref": "skill://teamops-shared-inbox",
+      "symbol_kind": "skill",
+      "proof_state": "Unknown",
+      "admission_state": "blocked_pending_live_runtime_authority",
+      "required_evidence_refs": [
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "approval://skill/teamops-shared-inbox/runtime-authority",
+        "recovery://skill/teamops-shared-inbox/runtime-authority",
+        "audit://skill/teamops-shared-inbox/runtime-authority"
+      ],
+      "blocked_action_refs": [
+        "blocked://connector-call",
+        "blocked://external-send",
+        "blocked://terminal-closure"
+      ],
+      "delta_reject_ref": "delta-reject://skill/teamops-shared-inbox/runtime-authority-missing"
+    },
+    {
+      "lane_ref": "skill://software-dev",
+      "symbol_kind": "skill",
+      "proof_state": "Unknown",
+      "admission_state": "blocked_pending_live_runtime_authority",
+      "required_evidence_refs": [
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "approval://skill/software-dev/runtime-authority",
+        "recovery://skill/software-dev/runtime-authority",
+        "audit://skill/software-dev/runtime-authority"
+      ],
+      "blocked_action_refs": [
+        "blocked://filesystem-write-through-symbol-runtime",
+        "blocked://runtime-dispatch",
+        "blocked://terminal-closure"
+      ],
+      "delta_reject_ref": "delta-reject://skill/software-dev/runtime-authority-missing"
+    },
+    {
+      "lane_ref": "component://governance-core",
+      "symbol_kind": "component",
+      "proof_state": "Unknown",
+      "admission_state": "blocked_pending_live_runtime_authority",
+      "required_evidence_refs": [
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "approval://component/governance-core/runtime-authority",
+        "recovery://component/governance-core/runtime-authority",
+        "audit://component/governance-core/runtime-authority"
+      ],
+      "blocked_action_refs": [
+        "blocked://runtime-registration",
+        "blocked://state-mutation",
+        "blocked://terminal-closure"
+      ],
+      "delta_reject_ref": "delta-reject://component/governance-core/runtime-authority-missing"
+    },
+    {
+      "lane_ref": "receipt://worker-ledger",
+      "symbol_kind": "receipt",
+      "proof_state": "Unknown",
+      "admission_state": "blocked_pending_live_runtime_authority",
+      "required_evidence_refs": [
+        "schemas/universal_symbol_runtime_admission_policy.schema.json",
+        "schemas/universal_symbol_runtime_authority_witness.schema.json",
+        "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+        "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+        "approval://receipt/worker-ledger/runtime-authority",
+        "recovery://receipt/worker-ledger/runtime-authority",
+        "audit://receipt/worker-ledger/runtime-authority"
+      ],
+      "blocked_action_refs": [
+        "blocked://receipt-store-append",
+        "blocked://raw-payload-storage",
+        "blocked://terminal-closure"
+      ],
+      "delta_reject_ref": "delta-reject://receipt/worker-ledger/runtime-authority-missing"
+    }
+  ],
+  "authority_denials": {
+    "skill_runtime_authority_granted": false,
+    "runtime_registration_performed": false,
+    "skill_admission_recorded": false,
+    "live_dispatch_enabled": false,
+    "connector_call_enabled": false,
+    "filesystem_write_enabled": false,
+    "external_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false,
+    "production_readiness_claimed": false
+  },
+  "lane_constraints": {
+    "runtime_admission_policy_required": true,
+    "runtime_authority_witness_required": true,
+    "operator_approval_required": true,
+    "receipt_store_authority_required": true,
+    "rollback_recovery_required": true,
+    "lane_audit_receipt_required": true,
+    "blocked_action_refs_required": true,
+    "terminal_closure_denial_required": true
+  },
+  "rejection_policy": {
+    "missing_lane_authority_blocks_admission": true,
+    "missing_operator_approval_blocks_admission": true,
+    "missing_receipt_store_authority_blocks_admission": true,
+    "missing_recovery_blocks_admission": true,
+    "missing_audit_receipt_blocks_admission": true,
+    "unknown_hard_constraint_blocks_admission": true,
+    "failed_precondition_logs_delta_reject": true
+  },
+  "blocked_reasons": [
+    "runtime_admission_policy_missing",
+    "runtime_authority_witness_missing",
+    "lane_operator_approval_missing",
+    "receipt_store_authority_missing",
+    "rollback_recovery_missing",
+    "lane_audit_receipt_missing",
+    "blocked_action_refs_missing",
+    "skill_runtime_authority_binding_forbidden",
+    "terminal_closure_not_allowed"
+  ],
+  "next_actions": [
+    "collect_lane_operator_approval_receipts",
+    "collect_lane_audit_receipts",
+    "bind_lane_runtime_authority_to_live_recovery_evidence"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_skill_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_runtime_admission_policy.schema.json",
+    "examples/universal_symbol_runtime_admission_policy.foundation.json",
+    "schemas/universal_symbol_runtime_authority_witness.schema.json",
+    "examples/universal_symbol_runtime_authority_witness.foundation.json",
+    "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+    "examples/universal_symbol_lane_runtime_authority_evidence_receipt.foundation.json",
+    "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+    "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+    "schemas/universal_symbol.schema.json",
+    "docs/91_universal_symbol_kernel.md",
+    "docs/92_universal_symbol_kernel_audit.md",
+    "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py",
+    "scripts/validate_universal_symbol_runtime_admission_policy.py",
+    "scripts/validate_universal_symbol_runtime_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_authority_witness.py",
+    "scripts/validate_universal_symbol_receipt_store_recovery_witness.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "lane_requirement_count": 4,
+    "authority_denial_count": 13,
+    "lane_constraint_count": 8,
+    "rejection_check_count": 7,
+    "blocked_reason_count": 9,
+    "evidence_ref_count": 24
+  }
+}
