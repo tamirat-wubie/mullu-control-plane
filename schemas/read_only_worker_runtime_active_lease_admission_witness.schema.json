@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-active-lease-admission-witness:1",
+  "title": "Read-Only Worker runtime active lease admission Witness",
+  "description": "Foundation Mode witness for the future live read_only_repo_inspection active runtime lease admission boundary without claiming a lease, admitting dispatch, invoking a worker, emitting a runtime receipt, appending receipts, writing files, calling connectors, claiming success, or allowing terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "binding_ref",
+    "lease_preflight_ref",
+    "selected_worker_path",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "authority_scope",
+    "active_lease_admission_contract",
+    "lease_evaluation",
+    "admission_decision",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^read-only-worker-runtime-active-lease-admission-witness-[a-z0-9-]+$"
+    },
+    "receipt_version": {
+      "type": "string",
+      "const": "read_only_worker_runtime_active_lease_admission_witness.v1"
+    },
+    "binding_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_binding.foundation.json"
+    },
+    "lease_preflight_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_lease_preflight.foundation.json"
+    },
+    "selected_worker_path": {
+      "type": "string",
+      "const": "read_only_repo_inspection"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence",
+        "GovernanceBlocked"
+      ]
+    },
+    "authority_scope": {
+      "$ref": "#/$defs/authority_scope"
+    },
+    "active_lease_admission_contract": {
+      "$ref": "#/$defs/active_lease_admission_contract"
+    },
+    "lease_evaluation": {
+      "$ref": "#/$defs/lease_evaluation"
+    },
+    "admission_decision": {
+      "$ref": "#/$defs/admission_decision"
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/receipt_refs"
+    },
+    "contract_summary": {
+      "$ref": "#/$defs/contract_summary"
+    },
+    "governance_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "receipt_envelope": {
+      "$ref": "#/$defs/receipt_envelope"
+    },
+    "evidence_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "foundation_witness_only",
+        "active_runtime_lease_admission_witness_defined",
+        "active_runtime_lease_admission_performed",
+        "lease_claim_performed",
+        "distributed_lease_claim_performed",
+        "distributed_lease_execution_performed",
+        "dispatch_admission_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "runtime_receipt_emission_allowed",
+        "receipt_append_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean", "const": true },
+        "foundation_witness_only": { "type": "boolean", "const": true },
+        "active_runtime_lease_admission_witness_defined": { "type": "boolean", "const": true },
+        "active_runtime_lease_admission_performed": { "type": "boolean", "const": false },
+        "lease_claim_performed": { "type": "boolean", "const": false },
+        "distributed_lease_claim_performed": { "type": "boolean", "const": false },
+        "distributed_lease_execution_performed": { "type": "boolean", "const": false },
+        "dispatch_admission_allowed": { "type": "boolean", "const": false },
+        "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+        "worker_invocation_allowed": { "type": "boolean", "const": false },
+        "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+        "receipt_append_allowed": { "type": "boolean", "const": false },
+        "external_network_allowed": { "type": "boolean", "const": false },
+        "secret_access_allowed": { "type": "boolean", "const": false },
+        "filesystem_write_allowed": { "type": "boolean", "const": false },
+        "connector_authority_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "active_lease_admission_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "operation_family",
+        "witness_mode",
+        "lease_policy_id",
+        "scope_id",
+        "source_binding_ref",
+        "source_lease_preflight_ref",
+        "temporal_lease_window_schema_ref",
+        "target_active_runtime_lease_ref",
+        "target_runtime_dispatch_admission_ref",
+        "required_source_receipt_refs",
+        "required_runtime_input_refs",
+        "admission_obligations_checked",
+        "validation_refs"
+      ],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "const": "worker_local_read_only_repo_inspection"
+        },
+        "capability": {
+          "type": "string",
+          "const": "read_only_repo_inspection"
+        },
+        "operation_family": {
+          "type": "string",
+          "const": "local_repo_inspection"
+        },
+        "witness_mode": {
+          "type": "string",
+          "const": "ACTIVE_RUNTIME_LEASE_ADMISSION_WITNESS_ONLY"
+        },
+        "lease_policy_id": {
+          "type": "string",
+          "const": "lease-policy-read-only-repo-inspection-foundation"
+        },
+        "scope_id": {
+          "type": "string",
+          "const": "scope-read-only-repo-inspection-local"
+        },
+        "source_binding_ref": {
+          "type": "string",
+          "const": "examples/read_only_worker_binding.foundation.json"
+        },
+        "source_lease_preflight_ref": {
+          "type": "string",
+          "const": "examples/read_only_worker_lease_preflight.foundation.json"
+        },
+        "temporal_lease_window_schema_ref": {
+          "type": "string",
+          "const": "schemas/temporal_lease_window_receipt.schema.json"
+        },
+        "target_active_runtime_lease_ref": {
+          "type": "string",
+          "const": "candidate://runtime-lease/admission/read-only-repo-inspection"
+        },
+        "target_runtime_dispatch_admission_ref": {
+          "type": "string",
+          "const": "candidate://runtime-dispatch/admission/read-only-repo-inspection"
+        },
+        "required_source_receipt_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "required_runtime_input_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "admission_obligations_checked": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "validation_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "lease_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream_binding_validated",
+        "upstream_lease_preflight_validated",
+        "lease_policy_boundary_checked",
+        "tenant_actor_boundary_required",
+        "resource_scope_boundary_required",
+        "active_temporal_lease_window_required",
+        "fencing_token_required",
+        "positive_sequence_required",
+        "distributed_lease_claim_receipt_required",
+        "distributed_lease_execution_receipt_required",
+        "uao_admission_required_before_lease",
+        "phi_gov_authorization_required_before_lease",
+        "worker_failure_receipt_required_on_error",
+        "effect_reconciliation_required",
+        "mfidel_atomicity_preserved",
+        "active_runtime_lease_admission_performed",
+        "lease_claim_performed",
+        "distributed_lease_claim_performed",
+        "distributed_lease_execution_performed",
+        "dispatch_admission_allowed",
+        "runtime_dispatch_allowed",
+        "worker_invocation_allowed",
+        "runtime_receipt_emitted",
+        "receipt_append_performed"
+      ],
+      "properties": {
+        "upstream_binding_validated": { "type": "boolean", "const": true },
+        "upstream_lease_preflight_validated": { "type": "boolean", "const": true },
+        "lease_policy_boundary_checked": { "type": "boolean", "const": true },
+        "tenant_actor_boundary_required": { "type": "boolean", "const": true },
+        "resource_scope_boundary_required": { "type": "boolean", "const": true },
+        "active_temporal_lease_window_required": { "type": "boolean", "const": true },
+        "fencing_token_required": { "type": "boolean", "const": true },
+        "positive_sequence_required": { "type": "boolean", "const": true },
+        "distributed_lease_claim_receipt_required": { "type": "boolean", "const": true },
+        "distributed_lease_execution_receipt_required": { "type": "boolean", "const": true },
+        "uao_admission_required_before_lease": { "type": "boolean", "const": true },
+        "phi_gov_authorization_required_before_lease": { "type": "boolean", "const": true },
+        "worker_failure_receipt_required_on_error": { "type": "boolean", "const": true },
+        "effect_reconciliation_required": { "type": "boolean", "const": true },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true },
+        "active_runtime_lease_admission_performed": { "type": "boolean", "const": false },
+        "lease_claim_performed": { "type": "boolean", "const": false },
+        "distributed_lease_claim_performed": { "type": "boolean", "const": false },
+        "distributed_lease_execution_performed": { "type": "boolean", "const": false },
+        "dispatch_admission_allowed": { "type": "boolean", "const": false },
+        "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+        "worker_invocation_allowed": { "type": "boolean", "const": false },
+        "runtime_receipt_emitted": { "type": "boolean", "const": false },
+        "receipt_append_performed": { "type": "boolean", "const": false }
+      }
+    },
+    "admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "active_runtime_lease_admission_witness_defined",
+        "active_runtime_lease_admitted",
+        "active_temporal_lease_receipt_present",
+        "distributed_lease_claim_admitted",
+        "distributed_lease_execution_admitted",
+        "runtime_dispatch_admitted",
+        "terminal_closure_allowed",
+        "remaining_denied_until_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "const": "ACTIVE_RUNTIME_LEASE_ADMISSION_WITNESS_BLOCKED_AWAITING_OPERATOR_APPROVAL_AND_LIVE_EVIDENCE"
+        },
+        "active_runtime_lease_admission_witness_defined": { "type": "boolean", "const": true },
+        "active_runtime_lease_admitted": { "type": "boolean", "const": false },
+        "active_temporal_lease_receipt_present": { "type": "boolean", "const": false },
+        "distributed_lease_claim_admitted": { "type": "boolean", "const": false },
+        "distributed_lease_execution_admitted": { "type": "boolean", "const": false },
+        "runtime_dispatch_admitted": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "remaining_denied_until_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "blocked_reason_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_worker_runtime_active_lease_admission_witness_schema",
+        "read_only_worker_lease_preflight_schema",
+        "temporal_lease_window_receipt_schema",
+        "distributed_lease_claim_receipt_schema",
+        "distributed_lease_execution_receipt_schema",
+        "worker_failure_receipt_schema",
+        "worker_mesh_schema",
+        "universal_action_orchestration_schema"
+      ],
+      "properties": {
+        "read_only_worker_runtime_active_lease_admission_witness_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json"
+        },
+        "read_only_worker_lease_preflight_schema": {
+          "type": "string",
+          "const": "schemas/read_only_worker_lease_preflight.schema.json"
+        },
+        "temporal_lease_window_receipt_schema": {
+          "type": "string",
+          "const": "schemas/temporal_lease_window_receipt.schema.json"
+        },
+        "distributed_lease_claim_receipt_schema": {
+          "type": "string",
+          "const": "schemas/distributed_lease_claim_receipt.schema.json"
+        },
+        "distributed_lease_execution_receipt_schema": {
+          "type": "string",
+          "const": "schemas/distributed_lease_execution_receipt.schema.json"
+        },
+        "worker_failure_receipt_schema": {
+          "type": "string",
+          "const": "schemas/worker_failure_receipt.schema.json"
+        },
+        "worker_mesh_schema": {
+          "type": "string",
+          "const": "schemas/worker_mesh.schema.json"
+        },
+        "universal_action_orchestration_schema": {
+          "type": "string",
+          "const": "schemas/universal_action_orchestration.schema.json"
+        }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_receipt_ref_count",
+        "runtime_input_ref_count",
+        "admission_obligation_count",
+        "validation_ref_count",
+        "lease_true_check_count",
+        "lease_denied_check_count",
+        "remaining_denied_until_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "source_receipt_ref_count": { "type": "integer", "minimum": 2 },
+        "runtime_input_ref_count": { "type": "integer", "minimum": 8 },
+        "admission_obligation_count": { "type": "integer", "minimum": 7 },
+        "validation_ref_count": { "type": "integer", "minimum": 5 },
+        "lease_true_check_count": { "type": "integer", "const": 15 },
+        "lease_denied_check_count": { "type": "integer", "const": 9 },
+        "remaining_denied_until_ref_count": { "type": "integer", "minimum": 8 },
+        "blocked_reason_ref_count": { "type": "integer", "minimum": 8 },
+        "receipt_ref_count": { "type": "integer", "const": 8 },
+        "evidence_ref_count": { "type": "integer", "minimum": 12 }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uao_ref",
+        "causal_decision_trace_ref",
+        "receipt_ref"
+      ],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

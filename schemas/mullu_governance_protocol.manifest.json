@@ -59,6 +59,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-effect-reconciliation-evidence-contract:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_effect_reconciliation_live_evidence.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-effect-reconciliation-live-evidence",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-effect-reconciliation-live-evidence:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-effect-reconciliation-witness",
       "surface": "runtime",
@@ -1613,6 +1619,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-binding:1"
     },
     {
+      "path": "schemas/read_only_worker_effect_reconciliation_witness.schema.json",
+      "schema_id": "read-only-worker-effect-reconciliation-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-effect-reconciliation-witness:1"
+    },
+    {
       "path": "schemas/read_only_worker_lease_preflight.schema.json",
       "schema_id": "read-only-worker-lease-preflight",
       "surface": "worker",
@@ -1629,6 +1641,12 @@
       "schema_id": "read-only-worker-rehearsal-receipt",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_active_lease_admission_witness.schema.json",
+      "schema_id": "read-only-worker-runtime-active-lease-admission-witness",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-active-lease-admission-witness:1"
     },
     {
       "path": "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json",

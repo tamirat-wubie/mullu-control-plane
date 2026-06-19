@@ -128,6 +128,7 @@ _FOUNDATION_LANES = (
         "route_refs": [
             "/api/v1/personal-assistant/approval-queue",
             "/api/v1/personal-assistant/approval-queue/preview",
+            "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
         ],
         "schema_refs": [
             "schemas/personal_assistant_approval.schema.json",

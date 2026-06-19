@@ -183,10 +183,12 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_runtime_receipt_store_activation_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt-store activation evidence |
 | `read_only_worker_runtime_receipt_store_operator_approval_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt-store operator approval evidence |
 | `read_only_worker_runtime_receipt_emission_admission_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime receipt emission admission evidence |
+| `read_only_worker_runtime_active_lease_admission_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker active runtime lease admission evidence |
 | `read_only_worker_runtime_dispatch_admission_witness.schema.json` | Canonical Foundation Mode witness for future live read-only worker runtime dispatch admission evidence |
 | `read_only_worker_active_runtime_lease_admission_witness.schema.json` | Canonical Foundation Mode witness for future active read-only worker runtime lease admission evidence |
 | `read_only_worker_uao_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker UAO dispatch authorization evidence |
 | `read_only_worker_phi_gov_dispatch_authorization_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker Phi_gov dispatch authorization evidence |
+| `read_only_worker_effect_reconciliation_witness.schema.json` | Canonical Foundation Mode witness for future read-only worker effect reconciliation evidence |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
