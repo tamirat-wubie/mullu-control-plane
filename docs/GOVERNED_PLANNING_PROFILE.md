@@ -168,6 +168,26 @@ observation, runtime promotion approval, replay/recovery witness, and terminal
 closure certificate. All execution, dispatch, runtime replanning, success, and
 terminal closure authority stays hard false.
 
+## Operator Shadow-Pilot Observation Receipt
+
+The collected local observation slice is
+`examples/governed_planning_profile_operator_shadow_pilot_observation_receipt.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py`
+and governed by
+`schemas/governed_planning_profile_operator_shadow_pilot_observation_receipt.schema.json`.
+
+This receipt closes only the local operator shadow-pilot observation gap for
+the five deterministic no-effect scenarios. It binds the prior AwaitingEvidence
+request id and hash to receipt refs for each plan class, confirms that the
+observed read-only projection matches the shadow dossier, and records zero
+shadow mismatches.
+
+The receipt does not authorize runtime promotion. The runtime promotion
+approval, replay/recovery witness, and terminal closure certificate gates
+remain `AwaitingEvidence` and continue to block promotion. Execution, dispatch,
+runtime replanning, success, and terminal closure authority remain hard false.
+
 ## Validation
 
 ```text
@@ -177,14 +197,17 @@ python scripts/report_governed_planning_profile_shadow_dossier.py
 python scripts/report_governed_planning_profile_shadow_dossier.py --json
 python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py
 python scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py --json
+python scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py
+python scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
 python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py -q
+python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, and operator evidence intake contract defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, and local operator observation receipt defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, or closure authority
-  Open issues: concrete operator shadow-pilot observations, runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
-  Next action: record concrete operator shadow-pilot observations before any runtime promotion
+  Open issues: runtime promotion approval, replay, recovery, and closure evidence remain AwaitingEvidence
+  Next action: obtain runtime promotion approval, replay/recovery witness, and terminal closure certificate before any runtime promotion
