@@ -1037,6 +1037,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
     },
     {
+      "path": "schemas/governed_planning_profile_replay_recovery_witness.schema.json",
+      "schema_id": "governed-planning-profile-replay-recovery-witness",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",

@@ -208,6 +208,25 @@ not authorize runtime promotion because replay/recovery witness and terminal
 closure certificate evidence remain `AwaitingEvidence`. Execution, dispatch,
 runtime replanning, success, and terminal closure authority remain hard false.
 
+## Replay/Recovery Witness
+
+The local replay/recovery slice is
+`examples/governed_planning_profile_replay_recovery_witness.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_replay_recovery_witness.py`
+and governed by
+`schemas/governed_planning_profile_replay_recovery_witness.schema.json`.
+
+This witness binds the runtime-promotion approval packet to one no-effect
+replay/recovery probe for each covered plan class. Each probe is digest-bound,
+records zero replay mismatches, documents rollback and incident-handoff paths,
+and preserves the Foundation Mode no-effect boundary.
+
+The witness closes only the replay/recovery evidence gap. It does not execute
+replay or rollback, does not authorize runtime promotion, and leaves terminal
+closure certificate evidence as `AwaitingEvidence`. Execution, dispatch,
+runtime replanning, success, and terminal closure authority remain hard false.
+
 ## Validation
 
 ```text
@@ -221,16 +240,19 @@ python scripts/validate_governed_planning_profile_operator_shadow_pilot_observat
 python scripts/validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py --json
 python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py
 python scripts/validate_governed_planning_profile_runtime_promotion_approval_packet.py --json
+python scripts/validate_governed_planning_profile_replay_recovery_witness.py
+python scripts/validate_governed_planning_profile_replay_recovery_witness.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
 python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_evidence.py -q
 python -m pytest tests/test_validate_governed_planning_profile_operator_shadow_pilot_observation_receipt.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_promotion_approval_packet.py -q
+python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_witness.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, and runtime-promotion approval packet defined
-  Authority: no execution, dispatch, connector, write, migration, replanning, success, or closure authority
-  Open issues: replay, recovery, and closure evidence remain AwaitingEvidence
-  Next action: obtain replay/recovery witness and terminal closure certificate before any runtime promotion
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, and replay/recovery witness defined
+  Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, or closure authority
+  Open issues: terminal closure certificate remains AwaitingEvidence
+  Next action: obtain terminal closure certificate before any runtime promotion

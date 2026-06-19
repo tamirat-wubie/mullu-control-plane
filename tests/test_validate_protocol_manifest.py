@@ -71,6 +71,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     runtime_approval_entry = entries[
         "governed-planning-profile-runtime-promotion-approval-packet"
     ]
+    replay_recovery_entry = entries[
+        "governed-planning-profile-replay-recovery-witness"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -103,6 +106,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-runtime-promotion-approval-packet:1"
     )
     assert runtime_approval_entry["surface"] == "planning"
+    assert replay_recovery_entry["path"] == (
+        "schemas/governed_planning_profile_replay_recovery_witness.schema.json"
+    )
+    assert replay_recovery_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-replay-recovery-witness:1"
+    )
+    assert replay_recovery_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:

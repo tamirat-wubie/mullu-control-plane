@@ -1,0 +1,78 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-replay-recovery-witness-20260619",
+  "change_id": "governed-planning-profile-replay-recovery-witness-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A replay/recovery witness could be mistaken for replay execution, rollback execution, runtime promotion authorization, or terminal closure if it permits authority flags, runtime-ready scenario claims, or closure claims. The mitigation is a schema-backed local-only witness with hard false authority and execution fields, one remaining AwaitingEvidence terminal closure gate, and focused tests for authority, gate, recovery-boundary, control, and source-approval drift.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the witness keeps runtime promotion, execution, dispatch, runtime replanning, success claims, terminal closure, replay execution, and rollback execution false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_witness_rejects_runtime_and_replay_authority"
+    },
+    {
+      "category": "policy",
+      "check": "promotion gate check proves terminal closure certificate remains required after replay/recovery evidence is collected",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_witness_rejects_missing_terminal_gate"
+    },
+    {
+      "category": "receipts",
+      "check": "witness integrity check proves the checked-in fixture matches the deterministic produced witness and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_schema_accepts_fixture_and_produced_witness"
+    },
+    {
+      "category": "audit",
+      "check": "recovery-boundary check proves rollback, recovery handoff, incident handoff, and terminal-closure requirements remain explicit",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_witness_rejects_recovery_boundary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-replay-recovery-overclaim",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, terminal_closure, replay_execution_performed, and rollback_execution_performed.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_replay_recovery_witness.schema.json",
+        "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_witness_rejects_runtime_and_replay_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-replay-recovery-gate-collapse",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The witness requires terminal closure certificate evidence to remain AwaitingEvidence after replay/recovery evidence is collected.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_replay_recovery_witness.local.json",
+        "tests/test_validate_governed_planning_profile_replay_recovery_witness.py::test_replay_recovery_witness_rejects_missing_terminal_gate"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the replay/recovery witness local, deterministic, and read-only",
+    "hard-deny all runtime promotion, replay execution, rollback execution, and terminal closure fields in the schema",
+    "bind the witness to the deterministic runtime-promotion approval packet id and hash",
+    "record replay/recovery controls without claiming runtime promotion readiness"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_replay_recovery_witness.schema.json",
+    "scripts/validate_governed_planning_profile_replay_recovery_witness.py",
+    "tests/test_validate_governed_planning_profile_replay_recovery_witness.py",
+    "receipt://governed-planning-profile/replay-recovery-witness/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/replay-recovery-witness/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/replay-recovery-witness/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/replay-recovery-witness/security/20260619"
+}
