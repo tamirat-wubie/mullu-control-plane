@@ -56,6 +56,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_model_integrity",
         "agentic_service_harness_read_model_persistence",
         "agentic_service_harness_github_repo_task_service",
+        "agentic_service_harness_github_repo_task_intake",
         "agentic_service_harness_github_task_receipt_emitter_dry_run",
         "agentic_service_harness_temporary_branch_workspace_preflight",
         "agentic_service_harness_workspace_sandbox_preflight",
@@ -265,6 +266,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered(
         "agentic_service_harness_read_model_persistence",
         "agentic_service_harness_github_repo_task_service",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_repo_task_service",
+        "agentic_service_harness_github_repo_task_intake",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_repo_task_intake",
+        "agentic_service_harness_github_task_receipt_emitter_dry_run",
     )
     assert_ordered(
         "agentic_service_harness_github_repo_task_service",

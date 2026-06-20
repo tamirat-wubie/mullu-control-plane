@@ -1,5 +1,5 @@
 {
-  "check_count": 263,
+  "check_count": 264,
   "checks": [
     {
       "args": [
@@ -178,6 +178,19 @@
         "scripts/validate_agentic_service_harness_github_repo_task_service.py"
       ],
       "name": "agentic_service_harness_github_repo_task_service",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_github_repo_task_intake.py"
+      ],
+      "name": "agentic_service_harness_github_repo_task_intake",
       "passed": true,
       "return_code": 0,
       "stderr": "",

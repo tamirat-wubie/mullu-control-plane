@@ -161,6 +161,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-repo-task-service:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_repo_task_intake.schema.json",
+      "schema_id": "agentic-service-harness-github-repo-task-intake",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-repo-task-intake:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
       "schema_id": "agentic-service-harness-github-task-receipt-emitter-dry-run",
       "surface": "runtime",

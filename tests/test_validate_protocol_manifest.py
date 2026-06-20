@@ -47,6 +47,17 @@ def test_protocol_manifest_indexes_agent_identity() -> None:
     assert authority_entry["surface"] == "identity"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_github_repo_task_intake() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    intake_entry = entries["agentic-service-harness-github-repo-task-intake"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert intake_entry["path"] == "schemas/agentic_service_harness_github_repo_task_intake.schema.json"
+    assert intake_entry["urn"] == "urn:mullusi:schema:agentic-service-harness-github-repo-task-intake:1"
+    assert intake_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
