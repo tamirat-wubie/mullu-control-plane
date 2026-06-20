@@ -204,6 +204,20 @@ def _require_optional_exact_text(value: object, field_name: str) -> str:
     return _require_exact_text(value, field_name)
 
 
+def _require_scope_text(value: object, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty scope string")
+    return value
+
+
+def _require_optional_scope_text(value: object, field_name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{field_name} must be an exact non-empty scope string or empty")
+    if value == "":
+        return ""
+    return _require_scope_text(value, field_name)
+
+
 def _require_optional_text(value: object, field_name: str) -> str:
     if type(value) is not str:
         raise ValueError(f"{field_name} must be a non-empty string")
@@ -302,7 +316,11 @@ class SNetSymbol(ContractRecord):
         if not isinstance(self.settlement_state, SNetSettlementState):
             raise ValueError("settlement_state must be a SNetSettlementState")
         object.__setattr__(self, "depth", _require_non_negative_int(self.depth, "depth"))
-        object.__setattr__(self, "parent_context", _require_optional_text(self.parent_context, "parent_context"))
+        object.__setattr__(
+            self,
+            "parent_context",
+            _require_optional_scope_text(self.parent_context, "parent_context"),
+        )
         object.__setattr__(
             self,
             "created_from_metadata_id",
@@ -337,8 +355,8 @@ class SNetQuestion(ContractRecord):
             raise ValueError("wh_type must be a SNetWHType")
         object.__setattr__(self, "text", _require_text(self.text, "text"))
         object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
-        object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
-        object.__setattr__(self, "context", _require_text(self.context, "context"))
+        object.__setattr__(self, "perspective", _require_scope_text(self.perspective, "perspective"))
+        object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
         object.__setattr__(self, "depth", _require_non_negative_int(self.depth, "depth"))
         object.__setattr__(
             self,
@@ -408,8 +426,8 @@ class SNetMetadata(ContractRecord):
         object.__setattr__(self, "answer_id", _require_exact_text(self.answer_id, "answer_id"))
         object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
         object.__setattr__(self, "value", _require_text(self.value, "value"))
-        object.__setattr__(self, "context", _require_text(self.context, "context"))
-        object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
+        object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
+        object.__setattr__(self, "perspective", _require_scope_text(self.perspective, "perspective"))
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         if not isinstance(self.validation_state, SNetValidationState):
             raise ValueError("validation_state must be a SNetValidationState")
@@ -443,8 +461,8 @@ class SNetRelation(ContractRecord):
         object.__setattr__(self, "relation_type", _require_text(self.relation_type, "relation_type"))
         object.__setattr__(self, "target_symbol_id", _require_exact_text(self.target_symbol_id, "target_symbol_id"))
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
-        object.__setattr__(self, "context", _require_text(self.context, "context"))
-        object.__setattr__(self, "perspective", _require_text(self.perspective, "perspective"))
+        object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
+        object.__setattr__(self, "perspective", _require_scope_text(self.perspective, "perspective"))
         object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
@@ -469,8 +487,8 @@ class SNetContradiction(ContractRecord):
         object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
         object.__setattr__(self, "metadata_a_id", _require_exact_text(self.metadata_a_id, "metadata_a_id"))
         object.__setattr__(self, "metadata_b_id", _require_exact_text(self.metadata_b_id, "metadata_b_id"))
-        object.__setattr__(self, "context_a", _require_text(self.context_a, "context_a"))
-        object.__setattr__(self, "context_b", _require_text(self.context_b, "context_b"))
+        object.__setattr__(self, "context_a", _require_scope_text(self.context_a, "context_a"))
+        object.__setattr__(self, "context_b", _require_scope_text(self.context_b, "context_b"))
         object.__setattr__(self, "reason", _require_text(self.reason, "reason"))
         if not isinstance(self.resolution_state, SNetContradictionState):
             raise ValueError("resolution_state must be a SNetContradictionState")
