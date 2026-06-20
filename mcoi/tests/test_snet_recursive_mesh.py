@@ -18,6 +18,7 @@ import pytest
 
 from mcoi_runtime.contracts.snet import (
     SNetAnswer,
+    SNetContradiction,
     SNetContradictionState,
     SNetInquiryBudget,
     SNetMeshReceipt,
@@ -1326,6 +1327,68 @@ def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     assert valid_symbol.sense_id == ""
     assert valid_question.parent_question_id == ""
     assert valid_metadata.promoted_symbol_id == ""
+
+
+def test_direct_snet_contracts_reject_scope_whitespace_drift() -> None:
+    with pytest.raises(ValueError, match="parent_context"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", parent_context=" parent")
+    with pytest.raises(ValueError, match="perspective"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="identity",
+            perspective=" child",
+        )
+    with pytest.raises(ValueError, match="context"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed",
+            context=" general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="perspective"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type="identity",
+            target_symbol_id="symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general ",
+        )
+    with pytest.raises(ValueError, match="context_a"):
+        SNetContradiction(
+            contradiction_id="contradiction:1",
+            symbol_id="symbol:1",
+            metadata_a_id="metadata:1",
+            metadata_b_id="metadata:2",
+            context_a=" general",
+            context_b="other",
+            reason="context differs",
+        )
+
+    valid_symbol = SNetSymbol(symbol_id="symbol:2", label="Seed", parent_context="parent scope")
+    valid_question = SNetQuestion(
+        question_id="question:2",
+        target_symbol_id="symbol:2",
+        wh_type=SNetWHType.WHAT,
+        text="What is Seed?",
+        facet="identity",
+        perspective="child scope",
+        context="general scope",
+    )
+
+    assert valid_symbol.parent_context == "parent scope"
+    assert valid_question.perspective == "child scope"
+    assert valid_question.context == "general scope"
 
 
 def test_direct_snet_contracts_reject_identifier_whitespace_drift() -> None:
