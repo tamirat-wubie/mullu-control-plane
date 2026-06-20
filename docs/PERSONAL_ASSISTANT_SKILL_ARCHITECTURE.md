@@ -441,6 +441,38 @@ authority coverage drift, executable skill drift, P4/P5 approval drift, effect
 boundary overclaim, secret-shaped values, and customer or production readiness
 claims.
 
+## Dry-Run Packet Contract
+
+The dry-run packet is a no-effect replay artifact that binds one representative
+inbox-to-draft request across intake, WHQR binding, skill routing, read-only
+preview, draft preview, explicit P4 approval gating, blocked external-send wait
+state, memory observation review, receipt replay, and terminal foundation
+closure. It is a workflow proof, not an executor.
+
+It must keep:
+
+```text
+execution_authority_granted = false
+live_connector_execution_allowed = false
+connector_mutation_allowed = false
+external_effect_allowed = false
+system_of_record_write_allowed = false
+memory_write_allowed = false
+memory_admission_allowed = false
+deployment_mutation_allowed = false
+customer_ready_claim_allowed = false
+live_nested_mind_activation_allowed = false
+```
+
+The packet records source artifacts as refs, SHA-256 digests, schema refs, and
+serialized lengths only. It validates acyclic stage topology, no dangling
+predecessors, no dangling source or stage bindings, approval gates before P4/P5
+paths, stage-level `execution_allowed = false`, and absence of secret-shaped
+values.
+
+The skill registry may declare future approval-gated effect models, but the
+dry-run packet must not execute them or convert them into runtime authority.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
@@ -462,13 +494,15 @@ python scripts/validate_personal_assistant_math_projection.py
 python scripts/validate_personal_assistant_planning_projection.py
 python scripts/collect_personal_assistant_skill_readiness_catalog.py
 python scripts/validate_personal_assistant_skill_readiness_catalog.py --require-closed
+python scripts/collect_personal_assistant_dry_run_packet.py --output .change_assurance/personal_assistant_dry_run_packet.json
+python scripts/validate_personal_assistant_dry_run_packet.py --packet .change_assurance/personal_assistant_dry_run_packet.json --require-closed
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_validate_personal_assistant_planning_projection.py tests/test_collect_personal_assistant_skill_readiness_catalog.py tests/test_validate_personal_assistant_skill_readiness_catalog.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_validate_personal_assistant_planning_projection.py tests/test_collect_personal_assistant_skill_readiness_catalog.py tests/test_validate_personal_assistant_skill_readiness_catalog.py tests/test_collect_personal_assistant_dry_run_packet.py tests/test_validate_personal_assistant_dry_run_packet.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py

@@ -1,8 +1,9 @@
 """Read-only InceptaDive Shadow Pass posture routes.
 
-Purpose: expose health and console posture for the shadow interrogation layer
-without exposing raw requests, private memory, or execution authority.
-Governance scope: observability only; routes cannot inspect live user input,
+Purpose: expose health, console posture, and bounded request inspection for the
+shadow interrogation layer without exposing raw requests, private memory, or
+execution authority.
+Governance scope: observability and advisory inspection only; routes cannot
 mutate memory, approve actions, or execute candidate plans.
 Dependencies: FastAPI router, dependency container, and shadow app facade.
 Invariants: responses are bounded, redacted, deterministic in shape, and always

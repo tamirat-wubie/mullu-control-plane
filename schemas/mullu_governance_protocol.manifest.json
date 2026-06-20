@@ -53,6 +53,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-workspace-sandbox-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_planned_file_change_collection_preflight.schema.json",
+      "schema_id": "agentic-service-harness-planned-file-change-collection-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-planned-file-change-collection-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
@@ -1475,6 +1481,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-draft-projection:1"
     },
     {
+      "path": "schemas/personal_assistant_dry_run_packet.schema.json",
+      "schema_id": "personal-assistant-dry-run-packet",
+      "surface": "assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-dry-run-packet:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
@@ -1833,6 +1845,12 @@
       "schema_id": "read-only-worker-runtime-enablement-promotion-decision",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-promotion-decision:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_foundation_closure_summary.schema.json",
+      "schema_id": "read-only-worker-runtime-foundation-closure-summary",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-foundation-closure-summary:1"
     },
     {
       "path": "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
