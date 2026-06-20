@@ -27,6 +27,12 @@ from gateway.world_state import (
     WorldEntity,
     WorldEvent,
     WorldRelation,
+    project_repository_observation_packet_to_world_state,
+)
+from scripts.produce_repository_observation_evidence_packet import (
+    READ_ONLY_GIT_COMMANDS,
+    RepositoryCommandObservation,
+    build_repository_observation_evidence_packet,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -171,6 +177,65 @@ def test_world_state_schema_rejects_entity_without_evidence() -> None:
     assert projection["relations"] == []
 
 
+def test_repository_observation_packet_projects_to_world_state_planning_claims() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = _repository_observation_packet()
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    planning_claims = store.planning_claims(tenant_id="foundation-local-only")
+    execution_claims = store.execution_claims(tenant_id="foundation-local-only")
+
+    assert projection.admitted is True
+    assert projection.state.entity_count == 2
+    assert projection.state.relation_count == 1
+    assert projection.state.claim_count == 8
+    assert projection.state.event_count == 1
+    assert projection.state.open_contradiction_count == 0
+    assert len(projection.admissions) == 12
+    assert projection.blocked_reasons == ()
+    assert len(planning_claims) == 8
+    assert execution_claims == ()
+    assert any(claim.predicate == "repository_proof_state" and claim.object_value == "Pass" for claim in planning_claims)
+
+
+def test_repository_observation_command_failure_projects_open_contradiction() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = _repository_observation_packet(failing_command="git_status")
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    planning_claims = store.planning_claims(tenant_id="foundation-local-only")
+    history = store.history(tenant_id="foundation-local-only")
+
+    assert projection.admitted is True
+    assert projection.state.claim_count == 8
+    assert projection.state.contradiction_count == 1
+    assert projection.state.open_contradiction_count == 1
+    assert planning_claims == ()
+    assert len(history) == 13
+    assert projection.blocked_reasons == (
+        "repository observation command contradiction blocks planning admission",
+    )
+    assert any(item.object_type == "contradiction" and item.admission.accepted for item in projection.admissions)
+
+
+def test_foundation_repository_observation_projection_blocks_without_contradiction() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = json.loads((ROOT / "examples" / "repository_observation_evidence_packet.foundation.json").read_text())
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    planning_claims = store.planning_claims(tenant_id="foundation-local-only")
+
+    assert projection.admitted is True
+    assert projection.state.claim_count == 8
+    assert projection.state.contradiction_count == 0
+    assert projection.state.open_contradiction_count == 0
+    assert planning_claims == ()
+    assert projection.blocked_reasons == (
+        "repository observation proof state Unknown blocks hard planning",
+    )
+    assert len(projection.admissions) == 12
+
+
 def _evidence() -> EvidenceRef:
     return EvidenceRef(
         evidence_id="evidence-1",
@@ -298,3 +363,29 @@ def _schema_projection() -> dict[str, Any]:
 
 def _json_object(payload: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps(payload))
+
+
+def _repository_observation_packet(failing_command: str = "") -> dict[str, Any]:
+    observations = []
+    for command_name in READ_ONLY_GIT_COMMANDS:
+        returncode = 1 if command_name == failing_command else 0
+        observations.append(
+            RepositoryCommandObservation(
+                command_name=command_name,
+                argv=READ_ONLY_GIT_COMMANDS[command_name],
+                returncode=returncode,
+                stdout_digest_ref=f"hash://sha256/{command_name}-stdout",
+                stderr_digest_ref=f"hash://sha256/{command_name}-stderr",
+            )
+        )
+    return build_repository_observation_evidence_packet(
+        workspace_root=ROOT,
+        observed_at=_repository_observation_time(),
+        command_observations=tuple(observations),
+    )
+
+
+def _repository_observation_time() -> Any:
+    from datetime import UTC, datetime
+
+    return datetime(2026, 6, 20, 12, 0, 0, tzinfo=UTC)

@@ -93,3 +93,37 @@ Maintain the canonical, queryable representation of the current environment stat
 - Verification Plane: verification status feeds confidence.
 - Memory Plane: historical state versions stored as episodic memory.
 - Persistence: snapshots MUST survive process restarts.
+
+## Repository Observation Projection
+
+Repository observation packets enter the World State Plane through:
+
+```text
+project_repository_observation_packet_to_world_state(packet, store)
+```
+
+Projection rules:
+
+1. The packet creates repository and worktree entities.
+2. The packet creates a directed `repository_has_worktree` relation.
+3. The packet creates claims for observation mode, freshness state, proof state,
+   planning admission, and repository digest refs.
+4. The packet creates a projection event that binds entities, relation, claims,
+   solver outcome, and live evidence state.
+5. Fresh live packets with `ProofState Pass` can expose planning claims.
+6. Foundation packets and failed live packets remain blocked from planning.
+7. Failed live packets create an open contradiction instead of silently choosing
+   a usable state.
+8. No projected repository observation claim is allowed for execution.
+
+The focused verification lane is:
+
+```powershell
+python -m pytest tests/test_gateway/test_world_state.py::test_repository_observation_packet_projects_to_world_state_planning_claims tests/test_gateway/test_world_state.py::test_repository_observation_command_failure_projects_open_contradiction tests/test_gateway/test_world_state.py::test_foundation_repository_observation_projection_blocks_without_contradiction -q
+```
+
+STATUS:
+  Completeness: 100%
+  Invariants verified: repository observation packet projection, expiry binding, contradiction visibility, planning-only admission, execution denial
+  Open issues: provider and connector observation projections remain future proof threads
+  Next action: bind admitted repository world-state projections into ProblemStar evidence input

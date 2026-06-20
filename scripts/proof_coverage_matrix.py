@@ -8631,6 +8631,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "governed_operational_intelligence",
             [
                 "WorldStateStore.add_entity",
+                "project_repository_observation_packet_to_world_state",
                 "GoalCompiler.compile",
                 "CausalSimulator.simulate",
                 "/api/v1/knowledge/entities",
@@ -8665,9 +8666,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_goal_compiler.py",
                 "tests/test_gateway/test_causal_simulator.py",
             ],
-            "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+            "Governed operational intelligence binds sourced world-state admission, repository observation packet projection, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
             [
                 "world_assertions_require_source_evidence",
+                "repository_observation_packets_project_to_world_state",
+                "repository_observation_failures_block_world_state_planning",
+                "foundation_repository_observation_blocks_without_contradiction",
                 "knowledge_entity_routes_governed",
                 "knowledge_link_routes_governed",
                 "knowledge_contradiction_routes_governed",
@@ -8683,6 +8687,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "world_assertions_require_source_evidence": [
                     "world_state_store_rejects_unsourced_assertion",
                     "world_state_schema_rejects_entity_without_evidence",
+                ],
+                "repository_observation_packets_project_to_world_state": [
+                    "repository_observation_packet_projects_to_world_state_planning_claims",
+                ],
+                "repository_observation_failures_block_world_state_planning": [
+                    "repository_observation_command_failure_projects_open_contradiction",
+                ],
+                "foundation_repository_observation_blocks_without_contradiction": [
+                    "foundation_repository_observation_projection_blocks_without_contradiction",
                 ],
                 "knowledge_entity_routes_governed": [
                     "add_entity_endpoint",

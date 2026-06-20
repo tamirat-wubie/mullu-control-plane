@@ -212,6 +212,31 @@ class WorldStateAdmission:
     object_hash: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class RepositoryObservationProjectionAdmission:
+    """Typed admission result for one repository-observation projection object."""
+
+    object_type: str
+    admission: WorldStateAdmission
+
+
+@dataclass(frozen=True, slots=True)
+class RepositoryObservationWorldStateProjection:
+    """World-state projection result for one repository observation packet."""
+
+    packet_id: str
+    tenant_id: str
+    state: WorldState
+    admissions: tuple[RepositoryObservationProjectionAdmission, ...]
+    blocked_reasons: tuple[str, ...] = ()
+
+    @property
+    def admitted(self) -> bool:
+        """Return whether every projected object was admitted."""
+
+        return all(item.admission.accepted for item in self.admissions)
+
+
 class WorldStateStore:
     """Persistence contract for world-state graph assertions."""
 
@@ -489,6 +514,204 @@ class InMemoryWorldStateStore(WorldStateStore):
         )
 
 
+def project_repository_observation_packet_to_world_state(
+    packet: dict[str, Any],
+    store: WorldStateStore,
+) -> RepositoryObservationWorldStateProjection:
+    """Project one repository observation evidence packet into world state.
+
+    Input contract: packet is a repository observation evidence packet shaped
+    as a dictionary and store admits existing World State assertions.
+    Output contract: returns typed admission results and a tenant projection.
+    Error contract: raises ValueError when required packet sections are absent.
+    """
+
+    packet_id = _require_text(packet, "packet_id")
+    generated_at = _require_text(packet, "generated_at")
+    scope = _require_mapping(packet, "observation_scope")
+    observed_state = _require_mapping(packet, "observed_state")
+    evidence_admission = _require_mapping(packet, "evidence_admission")
+    tenant_id = _require_text(scope, "tenant_scope")
+    repository_ref = _require_text(scope, "repository_ref")
+    worktree_ref = _require_text(scope, "worktree_ref")
+    observed_at = _require_text(observed_state, "observed_at")
+    valid_until = str(observed_state.get("fresh_until", ""))
+    proof_state = _require_text(evidence_admission, "proof_state")
+    planning_allowed = evidence_admission.get("hard_constraint_planning_allowed") is True and proof_state == "Pass"
+    evidence_ref = EvidenceRef(
+        evidence_id=packet_id,
+        evidence_type="repository_observation_evidence_packet",
+        source=_require_text(scope, "collector_ref"),
+        observed_at=observed_at,
+        uri=packet_id,
+        content_hash=_hash_payload_ref(packet),
+        metadata={
+            "observation_mode": str(scope.get("observation_mode", "")),
+            "command_set_ref": str(observed_state.get("command_set_ref", "")),
+        },
+    )
+    validity = ValidityWindow(
+        valid_from=observed_at,
+        valid_until=valid_until,
+        requires_refresh=observed_state.get("freshness_state") != "fresh",
+    )
+    repository_entity_id = f"{packet_id}:repository"
+    worktree_entity_id = f"{packet_id}:worktree"
+    relation_id = f"{packet_id}:repository-worktree"
+    repository_entity = WorldEntity(
+        entity_id=repository_entity_id,
+        tenant_id=tenant_id,
+        entity_type="repository",
+        display_name=repository_ref,
+        evidence_refs=(evidence_ref,),
+        source="repository_observation_evidence_packet",
+        observed_at=observed_at,
+        validity=validity,
+        attributes={
+            "repository_ref": repository_ref,
+            "source_kind": str(scope.get("source_kind", "")),
+        },
+        trust_class="repository_observation",
+        allowed_for_planning=planning_allowed,
+        allowed_for_execution=False,
+    )
+    worktree_entity = WorldEntity(
+        entity_id=worktree_entity_id,
+        tenant_id=tenant_id,
+        entity_type="repository_worktree",
+        display_name=worktree_ref,
+        evidence_refs=(evidence_ref,),
+        source="repository_observation_evidence_packet",
+        observed_at=observed_at,
+        validity=validity,
+        attributes={
+            "worktree_ref": worktree_ref,
+            "observation_mode": str(scope.get("observation_mode", "")),
+        },
+        trust_class="repository_observation",
+        allowed_for_planning=planning_allowed,
+        allowed_for_execution=False,
+    )
+    relation = WorldRelation(
+        relation_id=relation_id,
+        tenant_id=tenant_id,
+        relation_type="repository_has_worktree",
+        source_entity_id=repository_entity_id,
+        target_entity_id=worktree_entity_id,
+        evidence_refs=(evidence_ref,),
+        source="repository_observation_evidence_packet",
+        observed_at=observed_at,
+        validity=validity,
+        attributes={"packet_id": packet_id},
+        trust_class="repository_observation",
+        allowed_for_planning=planning_allowed,
+        allowed_for_execution=False,
+    )
+    claim_specs = (
+        ("observation_mode", str(scope.get("observation_mode", ""))),
+        ("freshness_state", str(observed_state.get("freshness_state", ""))),
+        ("proof_state", proof_state),
+        ("planning_admission", str(evidence_admission.get("planning_admission", ""))),
+        ("branch_digest_ref", str(observed_state.get("branch_digest_ref", ""))),
+        ("git_status_digest_ref", str(observed_state.get("git_status_digest_ref", ""))),
+        ("diff_digest_ref", str(observed_state.get("diff_digest_ref", ""))),
+        ("file_inventory_digest_ref", str(observed_state.get("file_inventory_digest_ref", ""))),
+    )
+    claims = tuple(
+        WorldClaim(
+            claim_id=f"{packet_id}:claim:{predicate}",
+            tenant_id=tenant_id,
+            subject_ref=worktree_entity_id,
+            predicate=f"repository_{predicate}",
+            object_value=value,
+            evidence_refs=(evidence_ref,),
+            source="repository_observation_evidence_packet",
+            observed_at=observed_at,
+            validity=validity,
+            confidence=1.0 if planning_allowed else 0.0,
+            trust_class="repository_observation",
+            freshness_window_days=1,
+            domain_risk="medium",
+            allowed_for_planning=planning_allowed,
+            allowed_for_execution=False,
+        )
+        for predicate, value in claim_specs
+    )
+    event = WorldEvent(
+        event_id=f"{packet_id}:event:observed",
+        tenant_id=tenant_id,
+        event_type="repository_observation_projected",
+        occurred_at=generated_at,
+        evidence_refs=(evidence_ref,),
+        source="repository_observation_evidence_packet",
+        entity_refs=(repository_entity_id, worktree_entity_id),
+        relation_refs=(relation_id,),
+        claim_refs=tuple(claim.claim_id for claim in claims),
+        attributes={
+            "solver_outcome": str(evidence_admission.get("solver_outcome", "")),
+            "live_evidence_state": str(evidence_admission.get("live_evidence_state", "")),
+        },
+    )
+    contradiction_refs = tuple(str(ref) for ref in observed_state.get("contradiction_refs", ()) if str(ref))
+    contradiction = None
+    if contradiction_refs or proof_state == "Fail":
+        contradiction = Contradiction(
+            contradiction_id=f"{packet_id}:contradiction:planning-block",
+            tenant_id=tenant_id,
+            refs=(
+                f"{packet_id}:claim:proof_state",
+                f"{packet_id}:claim:planning_admission",
+                *contradiction_refs,
+            ),
+            reason=_repository_observation_block_reason(proof_state, contradiction_refs),
+            evidence_refs=(evidence_ref,),
+            source="repository_observation_evidence_packet",
+            observed_at=observed_at,
+            severity="high" if proof_state == "Fail" else "medium",
+            status="open",
+        )
+
+    admissions: list[RepositoryObservationProjectionAdmission] = []
+    admissions.append(RepositoryObservationProjectionAdmission("entity", store.add_entity(repository_entity)))
+    admissions.append(RepositoryObservationProjectionAdmission("entity", store.add_entity(worktree_entity)))
+    admissions.append(RepositoryObservationProjectionAdmission("relation", store.add_relation(relation)))
+    for claim in claims:
+        admissions.append(RepositoryObservationProjectionAdmission("claim", store.add_claim(claim)))
+    admissions.append(RepositoryObservationProjectionAdmission("event", store.add_event(event)))
+    if contradiction is not None:
+        admissions.append(
+            RepositoryObservationProjectionAdmission(
+                "contradiction",
+                store.add_contradiction(contradiction),
+            )
+        )
+    blocked_reasons = tuple(
+        item.admission.reason
+        for item in admissions
+        if not item.admission.accepted
+    )
+    if not planning_allowed:
+        blocked_reasons += (_repository_observation_block_reason(proof_state, contradiction_refs),)
+    return RepositoryObservationWorldStateProjection(
+        packet_id=packet_id,
+        tenant_id=tenant_id,
+        state=store.materialize(tenant_id=tenant_id),
+        admissions=tuple(admissions),
+        blocked_reasons=blocked_reasons,
+    )
+
+
+def _repository_observation_block_reason(
+    proof_state: str,
+    contradiction_refs: tuple[str, ...],
+) -> str:
+    if contradiction_refs:
+        return "repository observation command contradiction blocks planning admission"
+    if proof_state != "Pass":
+        return f"repository observation proof state {proof_state} blocks hard planning"
+    return "repository observation planning admission blocked"
+
+
 def _validate_assertion(
     *,
     object_id: str,
@@ -534,6 +757,24 @@ def _validate_evidence(
         if not evidence.evidence_id or not evidence.evidence_type or not evidence.source:
             return WorldStateAdmission(False, "evidence_incomplete", object_id)
     return None
+
+
+def _require_mapping(payload: dict[str, Any], field_name: str) -> dict[str, Any]:
+    value = payload.get(field_name)
+    if not isinstance(value, dict):
+        raise ValueError(f"repository observation packet missing object field: {field_name}")
+    return value
+
+
+def _require_text(payload: dict[str, Any], field_name: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"repository observation packet missing text field: {field_name}")
+    return value
+
+
+def _hash_payload_ref(payload: dict[str, Any]) -> str:
+    return f"hash://sha256/{_canonical_hash(payload)}"
 
 
 def _missing_refs(

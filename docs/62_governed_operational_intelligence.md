@@ -98,6 +98,25 @@ World graph invariants:
 4. Planning may consume only world facts marked `allowed_for_planning`.
 5. Execution may consume only world facts marked `allowed_for_execution`.
 
+Repository observation projection:
+
+```text
+RepositoryObservationEvidencePacket
+  -> project_repository_observation_packet_to_world_state
+  -> WorldEntity(repository)
+  -> WorldEntity(repository_worktree)
+  -> WorldRelation(repository_has_worktree)
+  -> WorldClaim(digest/freshness/proof/admission)
+  -> WorldEvent(repository_observation_projected)
+  -> Contradiction only when packet proof fails or command contradictions exist
+```
+
+The projection stores digest refs and admission facts only. It does not store
+raw git status, raw diff, file inventory text, file contents, or secret values.
+`ProofState Pass` admits planning claims; `Unknown` blocks planning without
+creating a contradiction; `Fail` or explicit command contradictions create an
+open contradiction and block planning.
+
 ## Planning Plane
 
 The Planning Plane compiles user intent into governed executable structure.

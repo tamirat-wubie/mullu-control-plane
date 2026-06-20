@@ -12751,9 +12751,10 @@
         "tests/test_gateway/test_goal_compiler.py",
         "tests/test_gateway/test_causal_simulator.py"
       ],
-      "notes": "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "notes": "Governed operational intelligence binds sourced world-state admission, repository observation packet projection, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
       "representative_paths": [
         "WorldStateStore.add_entity",
+        "project_repository_observation_packet_to_world_state",
         "GoalCompiler.compile",
         "CausalSimulator.simulate",
         "/api/v1/knowledge/entities",
@@ -12768,6 +12769,9 @@
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
+        "foundation_repository_observation_blocks_without_contradiction": [
+          "foundation_repository_observation_projection_blocks_without_contradiction"
+        ],
         "goal_plan_certificate_hash_bound": [
           "goal_compiler_compiles_high_risk_payment_with_controls",
           "goal_schema_accepts_compiled_goal_plan"
@@ -12802,6 +12806,12 @@
         "policy_simulation_routes_governed": [
           "simulate_endpoint"
         ],
+        "repository_observation_failures_block_world_state_planning": [
+          "repository_observation_command_failure_projects_open_contradiction"
+        ],
+        "repository_observation_packets_project_to_world_state": [
+          "repository_observation_packet_projects_to_world_state_planning_claims"
+        ],
         "simulation_receipt_schema_valid": [
           "simulation_receipt_schema_accepts_dry_run_receipt"
         ],
@@ -12812,6 +12822,9 @@
       },
       "runtime_witnesses": [
         "world_assertions_require_source_evidence",
+        "repository_observation_packets_project_to_world_state",
+        "repository_observation_failures_block_world_state_planning",
+        "foundation_repository_observation_blocks_without_contradiction",
         "knowledge_entity_routes_governed",
         "knowledge_link_routes_governed",
         "knowledge_contradiction_routes_governed",
@@ -18156,8 +18169,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2220,
-    "runtime_witness_count": 2220,
+    "exact_test_anchor_count": 2223,
+    "runtime_witness_count": 2223,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -27583,6 +27596,24 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_world_state.py::test_repository_observation_packet_projects_to_world_state_planning_claims"
+            ],
+            "witness": "repository_observation_packets_project_to_world_state"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_world_state.py::test_repository_observation_command_failure_projects_open_contradiction"
+            ],
+            "witness": "repository_observation_failures_block_world_state_planning"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_world_state.py::test_foundation_repository_observation_projection_blocks_without_contradiction"
+            ],
+            "witness": "foundation_repository_observation_blocks_without_contradiction"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_knowledge_graph.py::test_add_entity_endpoint",
               "mcoi/tests/test_knowledge_graph.py::test_query_entities_endpoint",
               "mcoi/tests/test_knowledge_graph.py::test_query_entities_invalid_type_fails_closed_without_leakage"
@@ -27649,8 +27680,8 @@
             "witness": "high_risk_controls_projected_before_execution"
           }
         ],
-        "exact_test_anchor_count": 11,
-        "runtime_witness_count": 11,
+        "exact_test_anchor_count": 14,
+        "runtime_witness_count": 14,
         "surface_id": "governed_operational_intelligence",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

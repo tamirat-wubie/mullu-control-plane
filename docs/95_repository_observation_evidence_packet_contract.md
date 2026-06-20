@@ -121,4 +121,4 @@ STATUS:
   Completeness: 100%
   Invariants verified: digest-only repository observation, Foundation fixture blocks live-read claims, live producer uses allowlisted read-only git commands, no raw output serialization, no source filesystem mutation, no file-content payload serialization, no secret read, no connector call, no runtime dispatch, no deployment mutation, no terminal closure, hard-constraint planning blocked unless live proof state is Pass
   Open issues: provider and connector observation packets remain future proof threads
-  Next action: project admitted repository packets into the World State Plane with expiry and contradiction handling
+  Next action: bind admitted repository world-state projections into ProblemStar evidence input

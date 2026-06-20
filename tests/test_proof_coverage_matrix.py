@@ -455,7 +455,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["agentic_control_capability_pack"]["unanchored_witness_count"] == 0
     assert surfaces["agentic_control_capability_pack"]["exact_test_anchor_count"] == 5
     assert surfaces["governed_operational_intelligence"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_operational_intelligence"]["exact_test_anchor_count"] == 11
+    assert surfaces["governed_operational_intelligence"]["exact_test_anchor_count"] == 14
     assert surfaces["runbook_learning_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["runbook_learning_lifecycle"]["exact_test_anchor_count"] == 11
     assert surfaces["temporal_accepted_risk_expiry"]["unanchored_witness_count"] == 0
@@ -3430,6 +3430,7 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert operational_surface["request_proof"] == "request_proof"
     assert operational_surface["action_proof"] == "action_proof"
     assert "WorldStateStore.add_entity" in operational_surface["representative_paths"]
+    assert "project_repository_observation_packet_to_world_state" in operational_surface["representative_paths"]
     assert "GoalCompiler.compile" in operational_surface["representative_paths"]
     assert "CausalSimulator.simulate" in operational_surface["representative_paths"]
     assert "/api/v1/knowledge/entities" in operational_surface["representative_paths"]
@@ -3453,6 +3454,9 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert "tests/test_gateway/test_goal_compiler.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_causal_simulator.py" in operational_surface["evidence_files"]
     assert "world_assertions_require_source_evidence" in witnesses
+    assert "repository_observation_packets_project_to_world_state" in witnesses
+    assert "repository_observation_failures_block_world_state_planning" in witnesses
+    assert "foundation_repository_observation_blocks_without_contradiction" in witnesses
     assert "knowledge_entity_routes_governed" in witnesses
     assert "knowledge_link_routes_governed" in witnesses
     assert "knowledge_contradiction_routes_governed" in witnesses

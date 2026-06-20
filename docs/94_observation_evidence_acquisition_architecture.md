@@ -311,4 +311,4 @@ STATUS:
   Completeness: 100%
   Invariants verified: observation is not execution, evidence packet is not truth commit, evidence packet is not terminal closure, hard-constraint planning blocks on Unknown evidence, local repository observation has a digest-only read witness path, live provider observation remains AwaitingEvidence without witness, raw secret promotion denied, Mfidel atomicity preserved
   Open issues: live provider read witnesses, provider-specific evidence schemas, runtime evidence ledger append, and observation benchmarks remain future proof threads
-  Next action: project admitted repository packets into the World State Plane with expiry and contradiction handling
+  Next action: bind admitted repository world-state projections into ProblemStar evidence input
