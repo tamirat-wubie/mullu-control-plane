@@ -407,6 +407,40 @@ evidence, runtime lane routes without route refs, raw private payload fields,
 secret-like values, and any lane status that claims execution, connector,
 external-effect, customer-readiness, or live Nested Mind authority.
 
+## Skill Readiness Catalog Contract
+
+The skill readiness catalog is a no-effect evidence artifact that binds every
+registered skill to a known foundation readiness lane, authority coverage
+record, approval posture, and capability reference. It is designed for operator
+review and future console composition; it is not a skill executor, approval
+grant, connector proof, customer-readiness claim, or production-readiness claim.
+
+The catalog exposes:
+
+```text
+skill_id
+group
+mode
+risk_level
+readiness_lane_id
+readiness_lane_state
+approval_policy_ref
+requires_approval
+p4_p5_approval_guarded
+foundation_only
+execution_enabled = false
+authority_covered
+receipt_required
+uao_required
+capability_refs
+readiness_bound
+```
+
+The catalog validator rejects missing lane bindings, unsolved lane state,
+authority coverage drift, executable skill drift, P4/P5 approval drift, effect
+boundary overclaim, secret-shaped values, and customer or production readiness
+claims.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.
@@ -426,13 +460,15 @@ python scripts/validate_personal_assistant_github_codex_projection.py
 python scripts/validate_personal_assistant_research_projection.py
 python scripts/validate_personal_assistant_math_projection.py
 python scripts/validate_personal_assistant_planning_projection.py
+python scripts/collect_personal_assistant_skill_readiness_catalog.py
+python scripts/validate_personal_assistant_skill_readiness_catalog.py --require-closed
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py
 python scripts/validate_personal_assistant_console_read_model.py
 python scripts/validate_personal_assistant_receipt.py
 python scripts/validate_personal_assistant_receipt.py --receipt examples/personal_assistant_receipt_math_reasoning.json
-python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_validate_personal_assistant_planning_projection.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
+python -m pytest tests/test_personal_assistant_skill_registry.py tests/test_personal_assistant_runtime_skill_registry.py tests/test_personal_assistant_approval.py tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_receipts.py tests/test_personal_assistant_memory.py tests/test_personal_assistant_memory_runtime.py tests/test_validate_personal_assistant_memory_review.py tests/test_validate_personal_assistant_teamops_projection.py tests/test_validate_personal_assistant_github_codex_projection.py tests/test_validate_personal_assistant_research_projection.py tests/test_validate_personal_assistant_math_projection.py tests/test_validate_personal_assistant_planning_projection.py tests/test_collect_personal_assistant_skill_readiness_catalog.py tests/test_validate_personal_assistant_skill_readiness_catalog.py tests/test_personal_assistant_teamops.py tests/test_gateway/test_personal_assistant_public_routes.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 python scripts/validate_public_repository_surface.py
