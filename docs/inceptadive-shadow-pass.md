@@ -88,6 +88,12 @@ Shadow path:
   for external-effect, high-risk, or memory-contradicted candidate actions.
   The returned result remains `strict_preflight` and does not gain execution
   authority.
+- External-effect boundary advisory through
+  `mcoi_runtime.core.inceptadive_external_effect_boundary` and
+  `InceptaDiveShadowRuntime.external_effect_advisory`. This derives missing
+  evidence and authority obligations for effect-bearing candidates without
+  dispatching connectors, approving execution, writing memory, or replacing a
+  governance verdict.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis
@@ -113,15 +119,17 @@ claim, bypass `Phi_gov`, or replace the Phi-GPS proof receipt.
 
 ## Deferred surfaces
 
-The full external-effect InceptaDive-M engine remains a dedicated later module
-for live effect-bearing adapter integration. The current integration now applies
-bounded repository-local deep advisory findings to strict preflight only when
-the deep engine is explicitly enabled. It still returns `deep_required` when the
-gate selects deep mode and the bounded deep engine is unavailable, instead of
-silently pretending that a full deep engine has run.
+The live external-effect InceptaDive-M adapter engine remains a dedicated later
+module for effect-bearing integration. The current integration applies bounded
+repository-local deep advisory findings to strict preflight only when the deep
+engine is explicitly enabled, and now exposes a redacted external-effect
+boundary advisory for authority/evidence obligations. It still returns
+`deep_required` when the gate selects deep mode and the bounded deep engine is
+unavailable, instead of silently pretending that a full live adapter engine has
+run.
 
 STATUS:
-  Completeness: v1 foundation complete; repository-local Phi-GPS bridge and bounded preflight deep advisory added
-  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard
-  Open issues: full live external-effect engine remains intentionally deferred
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, and external-effect boundary advisory added
+  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority
+  Open issues: live external-effect adapter engine remains intentionally deferred
   Next action: keep full effect-bearing integration behind explicit governance and live adapter evidence

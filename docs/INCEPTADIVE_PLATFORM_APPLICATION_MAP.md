@@ -34,17 +34,22 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Converts Phi/InceptaDive reports into compact solver-routing advisories.
    - Exposes proof gaps, hidden assumptions, fracture count, and suggested solver modes without approval authority.
 
-7. `mcoi_runtime.app.routers.shadow`
+7. `mcoi_runtime.core.inceptadive_external_effect_boundary`
+   - Derives redacted authority and evidence obligations for effect-bearing candidates.
+   - Returns `AwaitingEvidence`, `GovernanceBlocked`, or `SolvedUnverified` advisory status without execution authority.
+   - Does not dispatch connectors, write memory, approve actions, or replace governance verdicts.
+
+8. `mcoi_runtime.app.routers.shadow`
    - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
    - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
    - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
    - Replay fixture: `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json`.
 
-8. `mcoi_runtime.app.routers.assistant`
+9. `mcoi_runtime.app.routers.assistant`
    - Embeds compact `inceptadive_shadow_advisory` metadata in assistant preview and assistant planning responses.
    - Keeps the advisory separate from the plan outcome, operator queue state, consent gate, and dispatch authority.
 
-9. `mcoi_runtime.app.inceptadive_assistant_response_embedding`
+10. `mcoi_runtime.app.inceptadive_assistant_response_embedding`
    - Embeds redacted `inceptadive_shadow_advisory` metadata in live assistant response envelopes.
    - Covers `POST /api/v1/chat`, `POST /api/v1/chat/stream`, and `POST /api/v1/chat/workflow`.
    - Streaming chat emits a side SSE event named `inceptadive_shadow_advisory` without changing existing `meta`, `token`, or `done` events.
@@ -57,6 +62,7 @@ request or candidate action
 -> shadow gate
 -> light, strict preflight, or bounded deep pass
 -> deterministic result and receipt
+-> optional external-effect boundary advisory
 -> optional redacted receipt store
 -> console summary / inspect route / assistant advisory / solver advisory / governance repair path
 ```
@@ -76,6 +82,8 @@ request or candidate action
 - External-effect preflight deep advisories supplement strict preflight findings
   only; they do not grant execution, connector dispatch, memory write, approval,
   or governance verdict authority.
+- External-effect boundary advisories expose obligation status only; they do not
+  call live adapters or close Mullu governance.
 
 ## Route slice closure
 
@@ -102,11 +110,13 @@ Focused tests cover:
 - streaming chat advisory SSE event insertion without raw request or assistant content exposure.
 - external-effect strict preflight receiving bounded deep advisory findings only
   when the deep engine is explicitly enabled.
+- external-effect boundary advisory exposing missing and satisfied
+  authority/evidence obligations without raw receipt refs or authority flags.
 
 ## Status
 
 Completeness: core runtime activation and route-level embedding applied.
 
-Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, and focused tests.
+Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, external-effect boundary advisory, and focused tests.
 
 Fracture delta: live execution authority, memory write authority, connector dispatch authority, and governance verdict replacement remain intentionally absent.
