@@ -159,7 +159,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 28
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 29
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
     assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 18
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
