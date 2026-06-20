@@ -99,7 +99,7 @@ proposal over unknown state, not an executable decision.
 | `acceptance_tests` | Markdown contract review, platform overview link check, governance preflight receipt. |
 | `required_evidence_refs` | This document, platform overview reference, glossary entries, workspace governance preflight receipt. |
 | `blocked_unknowns` | Live provider read witnesses, read-only connector authority, provider-specific evidence schemas, and runtime evidence ledger append remain future proof threads. |
-| `next_state` | `AwaitingEvidence` for live observation; `SolvedVerified` only for the local documentation contract after validators pass. |
+| `next_state` | `SolvedVerified` for local read-only repository observation after producer and validators pass; `AwaitingEvidence` for provider and connector observation. |
 
 ## Evidence Packet Contract
 
@@ -247,12 +247,13 @@ Observation quality is benchmarked by:
 ## Implementation Sequence
 
 1. Keep this document as the cross-platform architecture contract.
-2. Keep existing narrow receipts as source-specific packets: repository, search, browser
-   observation, trusted capture, worker failure, connector promotion, and
-   ProblemStar compilation.
+2. Keep existing narrow receipts as source-specific packets: repository, search,
+   browser observation, trusted capture, worker failure, connector promotion,
+   and ProblemStar compilation.
 3. Add provider-specific evidence packet schemas only when a concrete read path
    needs them.
-4. Add read-only adapter witnesses before claiming live observation.
+4. Add read-only adapter witnesses before claiming provider or connector live
+   observation.
 5. Project admitted packets into the World State Plane with expiry and
    contradiction handling.
 6. Feed planning only through ProblemStar evidence fields.
@@ -281,6 +282,7 @@ python scripts/validate_observation_evidence_acquisition_architecture.py
 python -m pytest tests/test_validate_observation_evidence_acquisition_architecture.py -q
 python scripts/validate_repository_observation_evidence_packet.py
 python -m pytest tests/test_validate_repository_observation_evidence_packet.py -q
+python scripts/produce_repository_observation_evidence_packet.py --json
 python scripts/validate_agents_governance.py
 python scripts/validate_workspace_governance_witness.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-observation-evidence-architecture-20260619.json
@@ -307,6 +309,6 @@ python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp
 
 STATUS:
   Completeness: 100%
-  Invariants verified: observation is not execution, evidence packet is not truth commit, evidence packet is not terminal closure, hard-constraint planning blocks on Unknown evidence, live provider observation remains AwaitingEvidence without witness, raw secret promotion denied, Mfidel atomicity preserved
+  Invariants verified: observation is not execution, evidence packet is not truth commit, evidence packet is not terminal closure, hard-constraint planning blocks on Unknown evidence, local repository observation has a digest-only read witness path, live provider observation remains AwaitingEvidence without witness, raw secret promotion denied, Mfidel atomicity preserved
   Open issues: live provider read witnesses, provider-specific evidence schemas, runtime evidence ledger append, and observation benchmarks remain future proof threads
-  Next action: add source-specific schemas only after one concrete read-only adapter proof thread is selected
+  Next action: project admitted repository packets into the World State Plane with expiry and contradiction handling

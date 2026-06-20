@@ -14,6 +14,7 @@ examples/repository_observation_evidence_packet.foundation.json.
 Invariants:
   - Validation is read-only and deterministic.
   - The Foundation example performs no live repository read.
+  - Live local observations may claim read-only repository observation only.
   - Hard-constraint planning remains blocked while ProofState is Unknown.
 """
 
@@ -49,11 +50,27 @@ REQUIRED_RECEIPT_REFS = {
 REQUIRED_ARTIFACT_REFS = (
     "schemas/repository_observation_evidence_packet.schema.json",
     "examples/repository_observation_evidence_packet.foundation.json",
+    "scripts/produce_repository_observation_evidence_packet.py",
     "scripts/validate_repository_observation_evidence_packet.py",
     "tests/test_validate_repository_observation_evidence_packet.py",
     "docs/95_repository_observation_evidence_packet_contract.md",
     "docs/94_observation_evidence_acquisition_architecture.md",
     "schemas/universal_action_orchestration.schema.json",
+)
+FOUNDATION_OBSERVATION_MODE = "foundation_digest_example"
+LIVE_OBSERVATION_MODE = "local_read_only_git_status"
+SUPPORTED_OBSERVATION_MODES = (FOUNDATION_OBSERVATION_MODE, LIVE_OBSERVATION_MODE)
+LIVE_READ_AUTHORITY_FIELD = "live_repository_read_performed"
+MUTATING_DENIED_AUTHORITY_FIELDS = (
+    "filesystem_write_performed",
+    "file_content_read_performed",
+    "secret_read_performed",
+    "connector_call_performed",
+    "external_write_performed",
+    "runtime_dispatch_performed",
+    "deployment_mutation_allowed",
+    "terminal_closure_allowed",
+    "success_claim_allowed",
 )
 DENIED_AUTHORITY_FIELDS = (
     "live_repository_read_performed",
@@ -150,11 +167,17 @@ def validate_repository_observation_evidence_packet_record(
         errors.append("repository observation evidence packet must be a JSON object")
         return errors
 
+    observation_mode = _observation_mode(record)
     _validate_top_level(record, errors)
     _validate_observation_scope(record.get("observation_scope"), errors)
-    _validate_observed_state(record.get("observed_state"), errors)
-    _validate_evidence_admission(record.get("evidence_admission"), errors)
-    _validate_authority_boundary(record.get("authority_boundary"), errors)
+    _validate_observed_state(record.get("observed_state"), observation_mode, errors)
+    _validate_evidence_admission(
+        record.get("evidence_admission"),
+        record.get("observed_state"),
+        observation_mode,
+        errors,
+    )
+    _validate_authority_boundary(record.get("authority_boundary"), observation_mode, errors)
     _validate_privacy_guard(record.get("privacy_guard"), errors)
     _validate_receipt_refs(record.get("receipt_refs"), errors)
     _validate_contract_summary(record, errors)
@@ -212,29 +235,50 @@ def _validate_top_level(record: dict[str, Any], errors: list[str]) -> None:
         _validate_digest_ref(f"{parent_name}.{field_name}", value, errors)
 
 
+def _observation_mode(record: dict[str, Any]) -> str:
+    scope = record.get("observation_scope")
+    mode = scope.get("observation_mode") if isinstance(scope, dict) else ""
+    return str(mode) if isinstance(mode, str) else ""
+
+
 def _validate_observation_scope(scope: Any, errors: list[str]) -> None:
     if not isinstance(scope, dict):
         errors.append("observation_scope must be an object")
         return
-    expected_values = {
-        "observation_mode": "foundation_digest_example",
-        "source_kind": "repository",
-        "tenant_scope": "foundation-local-only",
-    }
-    for field_name, expected_value in expected_values.items():
-        if scope.get(field_name) != expected_value:
-            errors.append(f"observation_scope.{field_name} must be {expected_value}")
+    if scope.get("observation_mode") not in SUPPORTED_OBSERVATION_MODES:
+        errors.append(
+            "observation_scope.observation_mode must be foundation_digest_example or local_read_only_git_status"
+        )
+    if scope.get("source_kind") != "repository":
+        errors.append("observation_scope.source_kind must be repository")
+    if scope.get("tenant_scope") != "foundation-local-only":
+        errors.append("observation_scope.tenant_scope must be foundation-local-only")
+    if scope.get("observation_mode") == LIVE_OBSERVATION_MODE:
+        expected_live_refs = {
+            "collector_ref": "collector://repository-observation/local-read-only-git-status",
+            "uao_ref": "uao://repository-observation/local-read-only-git-status",
+            "life_meaning_judgment_ref": "life-meaning://repository-observation/local-read-only-git-status",
+        }
+        for field_name, expected_value in expected_live_refs.items():
+            if scope.get(field_name) != expected_value:
+                errors.append(f"observation_scope.{field_name} must be {expected_value}")
     for field_name in ("repository_ref", "worktree_ref", "collector_ref", "uao_ref", "life_meaning_judgment_ref"):
         if not isinstance(scope.get(field_name), str) or scope.get(field_name) == "":
             errors.append(f"observation_scope.{field_name} must be non-empty")
 
 
-def _validate_observed_state(state: Any, errors: list[str]) -> None:
+def _validate_observed_state(state: Any, observation_mode: str, errors: list[str]) -> None:
     if not isinstance(state, dict):
         errors.append("observed_state must be an object")
         return
-    if state.get("freshness_state") != "awaiting_live_observation":
+    if observation_mode == FOUNDATION_OBSERVATION_MODE and state.get("freshness_state") != "awaiting_live_observation":
         errors.append("observed_state.freshness_state must be awaiting_live_observation")
+    if observation_mode == LIVE_OBSERVATION_MODE:
+        contradiction_refs = state.get("contradiction_refs")
+        has_contradictions = isinstance(contradiction_refs, list) and bool(contradiction_refs)
+        expected_freshness = "stale" if has_contradictions else "fresh"
+        if state.get("freshness_state") != expected_freshness:
+            errors.append(f"observed_state.freshness_state must be {expected_freshness}")
     if not isinstance(state.get("command_set_ref"), str) or state.get("command_set_ref") == "":
         errors.append("observed_state.command_set_ref must be non-empty")
     recovery_actions = state.get("recovery_actions")
@@ -242,19 +286,37 @@ def _validate_observed_state(state: Any, errors: list[str]) -> None:
         errors.append("observed_state.recovery_actions must be a non-empty list")
 
 
-def _validate_evidence_admission(admission: Any, errors: list[str]) -> None:
+def _validate_evidence_admission(
+    admission: Any,
+    observed_state: Any,
+    observation_mode: str,
+    errors: list[str],
+) -> None:
     if not isinstance(admission, dict):
         errors.append("evidence_admission must be an object")
         return
-    expected_values = {
-        "planning_admission": "defer",
-        "proof_state": "Unknown",
-        "solver_outcome": "AwaitingEvidence",
-        "hard_constraint_planning_allowed": False,
-        "soft_utility_planning_allowed": True,
-        "live_evidence_required": True,
-        "live_evidence_state": "AwaitingEvidence",
-    }
+    if observation_mode == LIVE_OBSERVATION_MODE:
+        contradiction_refs = observed_state.get("contradiction_refs") if isinstance(observed_state, dict) else None
+        has_contradictions = isinstance(contradiction_refs, list) and bool(contradiction_refs)
+        expected_values = {
+            "planning_admission": "reject" if has_contradictions else "admit",
+            "proof_state": "Fail" if has_contradictions else "Pass",
+            "solver_outcome": "GovernanceBlocked" if has_contradictions else "SolvedVerified",
+            "hard_constraint_planning_allowed": False if has_contradictions else True,
+            "soft_utility_planning_allowed": False if has_contradictions else True,
+            "live_evidence_required": True,
+            "live_evidence_state": "AwaitingEvidence" if has_contradictions else "SolvedVerified",
+        }
+    else:
+        expected_values = {
+            "planning_admission": "defer",
+            "proof_state": "Unknown",
+            "solver_outcome": "AwaitingEvidence",
+            "hard_constraint_planning_allowed": False,
+            "soft_utility_planning_allowed": True,
+            "live_evidence_required": True,
+            "live_evidence_state": "AwaitingEvidence",
+        }
     for field_name, expected_value in expected_values.items():
         if admission.get(field_name) != expected_value:
             errors.append(f"evidence_admission.{field_name} must be {expected_value!r}")
@@ -263,11 +325,14 @@ def _validate_evidence_admission(admission: Any, errors: list[str]) -> None:
         errors.append("evidence_admission.admission_reason_refs must be a non-empty list")
 
 
-def _validate_authority_boundary(boundary: Any, errors: list[str]) -> None:
+def _validate_authority_boundary(boundary: Any, observation_mode: str, errors: list[str]) -> None:
     if not isinstance(boundary, dict):
         errors.append("authority_boundary must be an object")
         return
-    for field_name in DENIED_AUTHORITY_FIELDS:
+    expected_live_read = observation_mode == LIVE_OBSERVATION_MODE
+    if boundary.get(LIVE_READ_AUTHORITY_FIELD) is not expected_live_read:
+        errors.append(f"authority_boundary.{LIVE_READ_AUTHORITY_FIELD} must be {str(expected_live_read).lower()}")
+    for field_name in MUTATING_DENIED_AUTHORITY_FIELDS:
         if boundary.get(field_name) is not False:
             errors.append(f"authority_boundary.{field_name} must be false")
 
@@ -304,11 +369,18 @@ def _validate_contract_summary(record: dict[str, Any], errors: list[str]) -> Non
     if not isinstance(boundary, dict) or not isinstance(guard, dict) or not isinstance(refs, dict) or not isinstance(summary, dict):
         errors.append("authority_boundary, privacy_guard, receipt_refs, and contract_summary must be typed")
         return
+    admission = record.get("evidence_admission")
+    hard_constraint_allowed = (
+        admission.get("hard_constraint_planning_allowed")
+        if isinstance(admission, dict)
+        else None
+    )
+    false_authority_count = sum(1 for value in boundary.values() if value is False)
     expected_values = {
         "digest_only": True,
         "authority_denied": True,
-        "hard_constraint_blocked": True,
-        "authority_denial_count": len(DENIED_AUTHORITY_FIELDS),
+        "hard_constraint_blocked": False if hard_constraint_allowed is True else True,
+        "authority_denial_count": false_authority_count,
         "privacy_guard_count": len(guard),
         "receipt_ref_count": len(refs),
         "evidence_ref_count": _list_len(record.get("evidence_refs")),

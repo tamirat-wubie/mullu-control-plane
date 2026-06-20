@@ -6966,13 +6966,16 @@ def test_repository_observation_evidence_packet_surface_blocks_hard_planning() -
     assert surface["action_proof"] == "action_proof"
     assert "schemas/repository_observation_evidence_packet.schema.json" in surface["representative_paths"]
     assert "examples/repository_observation_evidence_packet.foundation.json" in surface["representative_paths"]
+    assert "scripts/produce_repository_observation_evidence_packet.py" in surface["evidence_files"]
     assert "scripts/validate_repository_observation_evidence_packet.py" in surface["evidence_files"]
     assert "tests/test_validate_repository_observation_evidence_packet.py" in surface["evidence_files"]
     assert "repository_observation_evidence_packet_passes" in witnesses
     assert "repository_observation_rejects_authority_drift" in witnesses
     assert "repository_observation_rejects_privacy_and_digest_drift" in witnesses
     assert "repository_observation_rejects_hard_constraint_promotion" in witnesses
-    assert witness_surfaces["repository_observation_evidence_packet"]["exact_test_anchor_count"] == 7
+    assert "live_repository_observation_producer_writes_digest_only_packet" in witnesses
+    assert "live_repository_observation_command_failure_blocks_hard_planning" in witnesses
+    assert witness_surfaces["repository_observation_evidence_packet"]["exact_test_anchor_count"] == 11
     assert witness_surfaces["repository_observation_evidence_packet"]["unanchored_witness_count"] == 0
     assert closure_actions["publish_repository_observation_evidence_packet"]["status"] == "closed"
 

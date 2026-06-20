@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:repository-observation-evidence-packet:1",
   "title": "Repository Observation Evidence Packet",
-  "description": "Foundation Mode digest-only repository observation evidence packet for read-only local repository state before planning input admission.",
+  "description": "Digest-only repository observation evidence packet for Foundation examples and live local read-only repository state before planning input admission.",
   "type": "object",
   "additionalProperties": false,
   "required": [

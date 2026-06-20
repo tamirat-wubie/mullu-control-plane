@@ -609,12 +609,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/95_repository_observation_evidence_packet_contract.md",
                 "schemas/universal_action_orchestration.schema.json",
                 "schemas/life_meaning_judgment.schema.json",
+                "scripts/produce_repository_observation_evidence_packet.py",
                 "scripts/validate_repository_observation_evidence_packet.py",
                 "tests/test_validate_repository_observation_evidence_packet.py",
                 "scripts/proof_coverage_matrix.py",
                 "tests/test_proof_coverage_matrix.py",
             ],
-            "RepositoryObservationEvidencePacket records digest-only Foundation Mode repository observation evidence while denying live repository read claims, file-content reads, secret reads, filesystem writes, connector calls, runtime dispatch, terminal closure, success claims, and hard-constraint planning on Unknown proof state.",
+            "RepositoryObservationEvidencePacket records digest-only Foundation Mode and live local read-only repository observation evidence while denying raw output retention, file-content payload serialization, secret reads, source filesystem mutation, connector calls, runtime dispatch, terminal closure, success claims, and hard-constraint planning unless live proof state is Pass.",
             [
                 "repository_observation_evidence_packet_passes",
                 "repository_observation_rejects_authority_drift",
@@ -623,6 +624,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "repository_observation_rejects_receipt_ref_and_count_drift",
                 "repository_observation_cli_json_accepts_relative_paths",
                 "malformed_repository_observation_packet_reports_errors",
+                "live_repository_observation_producer_writes_digest_only_packet",
+                "live_repository_observation_command_failure_blocks_hard_planning",
+                "live_repository_observation_command_allowlist_is_closed",
+                "live_repository_observation_output_must_stay_workspace_local",
             ],
             runtime_witness_anchor_aliases={
                 "repository_observation_evidence_packet_passes": [
@@ -645,6 +650,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "malformed_repository_observation_packet_reports_errors": [
                     "malformed_repository_observation_packet_reports_errors"
+                ],
+                "live_repository_observation_producer_writes_digest_only_packet": [
+                    "live_repository_observation_producer_writes_digest_only_packet"
+                ],
+                "live_repository_observation_command_failure_blocks_hard_planning": [
+                    "live_repository_observation_command_failure_blocks_hard_planning"
+                ],
+                "live_repository_observation_command_allowlist_is_closed": [
+                    "live_repository_observation_command_allowlist_is_closed"
+                ],
+                "live_repository_observation_output_must_stay_workspace_local": [
+                    "live_repository_observation_output_must_stay_workspace_local"
                 ],
             },
         ),

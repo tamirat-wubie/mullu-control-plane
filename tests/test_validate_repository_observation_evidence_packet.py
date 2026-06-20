@@ -12,9 +12,13 @@ read, no secret read, no connector call, no terminal closure, no success claim.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 
+import pytest
+
+from scripts import produce_repository_observation_evidence_packet as producer
 from scripts import validate_repository_observation_evidence_packet as validator
 
 
@@ -158,3 +162,127 @@ def test_malformed_repository_observation_packet_reports_errors() -> None:
     assert any("repository observation evidence packet must be a JSON object" in error for error in none_errors)
     assert any("repository observation evidence packet must be a JSON object" in error for error in list_errors)
     assert any("expected object" in error for error in none_errors + list_errors)
+
+
+def test_live_repository_observation_producer_writes_digest_only_packet(tmp_path: Path) -> None:
+    workspace_root = _git_workspace(tmp_path)
+    output_path = workspace_root / ".change_assurance" / "repository_observation_evidence_packet.live.json"
+
+    packet, result = producer.produce_repository_observation_evidence_packet(
+        workspace_root=workspace_root,
+        output_path=output_path,
+        clock=_fixed_clock,
+        command_runner=_successful_repository_command_runner,
+    )
+    serialized = output_path.read_text(encoding="utf-8")
+    persisted = json.loads(serialized)
+
+    assert result.passed is True
+    assert result.proof_state == "Pass"
+    assert result.solver_outcome == "SolvedVerified"
+    assert result.output_path == ".change_assurance/repository_observation_evidence_packet.live.json"
+    assert persisted == packet
+    assert validator.validate_repository_observation_evidence_packet_record(packet) == []
+    assert packet["observation_scope"]["observation_mode"] == "local_read_only_git_status"
+    assert packet["authority_boundary"]["live_repository_read_performed"] is True
+    assert packet["authority_boundary"]["filesystem_write_performed"] is False
+    assert packet["authority_boundary"]["file_content_read_performed"] is False
+    assert packet["evidence_admission"]["hard_constraint_planning_allowed"] is True
+    assert packet["contract_summary"]["authority_denial_count"] == 9
+    assert "## main" not in serialized
+    assert "src/secret.py" not in serialized
+    assert "BEGIN PRIVATE KEY" not in serialized
+
+
+def test_live_repository_observation_command_failure_blocks_hard_planning(tmp_path: Path) -> None:
+    workspace_root = _git_workspace(tmp_path)
+    output_path = workspace_root / ".change_assurance" / "repository_observation_evidence_packet.live.json"
+
+    packet, result = producer.produce_repository_observation_evidence_packet(
+        workspace_root=workspace_root,
+        output_path=output_path,
+        clock=_fixed_clock,
+        command_runner=_failing_status_command_runner,
+    )
+
+    assert result.passed is False
+    assert result.status == "blocked"
+    assert result.validation_errors == ()
+    assert output_path.exists()
+    assert packet["observed_state"]["freshness_state"] == "stale"
+    assert packet["observed_state"]["contradiction_refs"] == [
+        "command://repository-observation/git_status/nonzero-exit"
+    ]
+    assert packet["evidence_admission"]["planning_admission"] == "reject"
+    assert packet["evidence_admission"]["proof_state"] == "Fail"
+    assert packet["evidence_admission"]["solver_outcome"] == "GovernanceBlocked"
+    assert packet["evidence_admission"]["hard_constraint_planning_allowed"] is False
+    assert packet["contract_summary"]["hard_constraint_blocked"] is True
+    assert validator.validate_repository_observation_evidence_packet_record(packet) == []
+
+
+def test_live_repository_observation_command_allowlist_is_closed() -> None:
+    allowed_commands = tuple(producer.READ_ONLY_GIT_COMMANDS.values())
+    forbidden_commands = (
+        ("git", "show", "HEAD:README.md"),
+        ("git", "diff", "--"),
+        ("powershell", "Get-Content", "README.md"),
+    )
+
+    assert allowed_commands
+    assert all(producer.is_allowed_repository_observation_command(command) for command in allowed_commands)
+    assert not any(producer.is_allowed_repository_observation_command(command) for command in forbidden_commands)
+    assert producer.READ_ONLY_GIT_COMMANDS["diff"] == ("git", "diff", "--name-status", "--no-ext-diff", "--")
+
+
+def test_live_repository_observation_output_must_stay_workspace_local(tmp_path: Path) -> None:
+    workspace_root = _git_workspace(tmp_path / "workspace")
+    outside_output = tmp_path / "outside" / "packet.json"
+    packet = validator.build_mutated_repository_observation_evidence_packet()
+
+    with pytest.raises(ValueError, match="output must stay within workspace_root"):
+        producer.write_repository_observation_evidence_packet(
+            packet,
+            outside_output,
+            workspace_root=workspace_root,
+        )
+
+    assert not outside_output.exists()
+    assert workspace_root.exists()
+    assert (workspace_root / ".git").exists()
+
+
+def _git_workspace(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    (path / ".git").mkdir(exist_ok=True)
+    return path
+
+
+def _fixed_clock() -> datetime:
+    return datetime(2026, 6, 20, 12, 0, 0, tzinfo=UTC)
+
+
+def _successful_repository_command_runner(
+    argv: tuple[str, ...],
+    cwd: Path,
+    timeout_seconds: int,
+) -> producer.RepositoryCommandResult:
+    assert cwd.exists()
+    assert timeout_seconds == 10
+    outputs = {
+        producer.READ_ONLY_GIT_COMMANDS["branch"]: b"main\n",
+        producer.READ_ONLY_GIT_COMMANDS["git_status"]: b"## main\n M src/secret.py\n",
+        producer.READ_ONLY_GIT_COMMANDS["diff"]: b"M\tsrc/secret.py\n",
+        producer.READ_ONLY_GIT_COMMANDS["file_inventory"]: b"src/secret.py\x00README.md\x00",
+    }
+    return producer.RepositoryCommandResult(returncode=0, stdout=outputs[argv], stderr=b"")
+
+
+def _failing_status_command_runner(
+    argv: tuple[str, ...],
+    cwd: Path,
+    timeout_seconds: int,
+) -> producer.RepositoryCommandResult:
+    if argv == producer.READ_ONLY_GIT_COMMANDS["git_status"]:
+        return producer.RepositoryCommandResult(returncode=1, stdout=b"", stderr=b"not a git repository")
+    return _successful_repository_command_runner(argv, cwd, timeout_seconds)

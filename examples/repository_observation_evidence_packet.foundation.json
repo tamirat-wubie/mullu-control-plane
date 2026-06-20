@@ -74,11 +74,12 @@
     "authority_denial_count": 10,
     "privacy_guard_count": 8,
     "receipt_ref_count": 4,
-    "evidence_ref_count": 7
+    "evidence_ref_count": 8
   },
   "evidence_refs": [
     "schemas/repository_observation_evidence_packet.schema.json",
     "examples/repository_observation_evidence_packet.foundation.json",
+    "scripts/produce_repository_observation_evidence_packet.py",
     "scripts/validate_repository_observation_evidence_packet.py",
     "tests/test_validate_repository_observation_evidence_packet.py",
     "docs/95_repository_observation_evidence_packet_contract.md",
