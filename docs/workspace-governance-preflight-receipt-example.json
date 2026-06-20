@@ -1,5 +1,5 @@
 {
-  "check_count": 262,
+  "check_count": 263,
   "checks": [
     {
       "args": [
@@ -191,6 +191,19 @@
         "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"
       ],
       "name": "agentic_service_harness_github_task_receipt_emitter_dry_run",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_temporary_branch_workspace_preflight.py"
+      ],
+      "name": "agentic_service_harness_temporary_branch_workspace_preflight",
       "passed": true,
       "return_code": 0,
       "stderr": "",

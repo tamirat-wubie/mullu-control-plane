@@ -41,6 +41,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-agent-run-receipt-emitter-dry-run:1"
     },
     {
+      "path": "schemas/agentic_service_harness_temporary_branch_workspace_preflight.schema.json",
+      "schema_id": "agentic-service-harness-temporary-branch-workspace-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-temporary-branch-workspace-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json",
       "schema_id": "agentic-service-harness-workspace-sandbox-preflight",
       "surface": "runtime",
