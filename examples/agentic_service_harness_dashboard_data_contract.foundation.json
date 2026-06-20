@@ -1,0 +1,464 @@
+{
+  "report_id": "agentic_service_harness_dashboard_data_contract",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_read_model_ref": "examples/agentic_service_harness_read_models.foundation.json",
+  "source_task_intake_ref": "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "dashboard_contract_id": "dashboard-data-contract-foundation",
+    "foundation_phase": "foundation_read_only_dashboard_data_contract",
+    "read_only": true,
+    "dashboard_implemented": false,
+    "ui_created": false,
+    "route_admitted": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "adapter_executed": false,
+    "runtime_state_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "data_contract": {
+    "decision": "READ_ONLY_DASHBOARD_DATA_CONTRACT_ACCEPTED",
+    "display_surface": "future_dashboard_data_contract",
+    "binding_mode": "read_only_projection",
+    "source_collections": [
+      "accounts",
+      "projects",
+      "repositories",
+      "runs",
+      "approvals",
+      "receipts",
+      "evidence",
+      "result_summaries",
+      "workspace_allocations",
+      "permission_snapshot",
+      "github_repo_task_intake"
+    ],
+    "update_strategy": "static_foundation_snapshot",
+    "redaction_policy": "hash_or_reference_only",
+    "allowed_action_classes": [
+      "read_only"
+    ],
+    "forbidden_action_classes": [
+      "create_ui",
+      "register_route",
+      "mutation_endpoint",
+      "execute_adapter",
+      "write_to_branch",
+      "open_pr",
+      "append_receipt_store",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "required_gate_refs": [
+      "gate://harness/no-dashboard-ui-creation",
+      "gate://harness/no-dashboard-route-registration",
+      "gate://harness/no-mutation-endpoints",
+      "gate://harness/no-live-adapter-execution",
+      "gate://harness/no-branch-write",
+      "gate://harness/no-pr-creation",
+      "gate://harness/no-receipt-store-append",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "blocked_reason_refs": [
+      "blocked://dashboard-ui/not-admitted",
+      "blocked://dashboard-route/not-registered",
+      "blocked://mutation-endpoint/not-admitted",
+      "blocked://adapter-execution/not-admitted",
+      "blocked://receipt-store/append-not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "polling_enabled": false,
+    "subscription_enabled": false,
+    "route_registered": false,
+    "mutation_controls_allowed": false,
+    "approval_required_for_effects": true,
+    "read_only": true
+  },
+  "widgets": [
+    {
+      "widget_id": "account_summary",
+      "title": "Account Summary",
+      "source_collection": "accounts",
+      "required_fields": [
+        "user_id",
+        "tenant_id",
+        "organization_memberships",
+        "default_role"
+      ],
+      "empty_state": "No account projection is available; keep dashboard blocked.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#accounts"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "repository_connection",
+      "title": "Repository Connection",
+      "source_collection": "repositories",
+      "required_fields": [
+        "connection_id",
+        "repository_slug",
+        "permission_scope",
+        "revocation_state"
+      ],
+      "empty_state": "No repository connection projection is available; keep task intake blocked.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#repositories",
+        "examples/agentic_service_harness_github_repo_task_intake.foundation.json#repository_connection_check"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "run_status",
+      "title": "Run Status",
+      "source_collection": "runs",
+      "required_fields": [
+        "run_id",
+        "mode",
+        "status",
+        "lifecycle_state",
+        "transition_receipt_refs"
+      ],
+      "empty_state": "No run projection is available; keep execution authority blocked.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#runs"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "approval_gate",
+      "title": "Approval Gate",
+      "source_collection": "approvals",
+      "required_fields": [
+        "approval_request_id",
+        "approval_required",
+        "decision_required",
+        "authority_granted"
+      ],
+      "empty_state": "No approval projection is available; keep effect authority denied.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#approvals"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "receipt_evidence",
+      "title": "Receipt Evidence",
+      "source_collection": "receipts",
+      "required_fields": [
+        "receipt_id",
+        "run_id",
+        "policy_result",
+        "evidence_refs",
+        "terminal_closure"
+      ],
+      "empty_state": "No receipt projection is available; keep terminal closure unavailable.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#receipts",
+        "examples/agentic_service_harness_read_models.foundation.json#evidence"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "workspace_safety",
+      "title": "Workspace Safety",
+      "source_collection": "workspace_allocations",
+      "required_fields": [
+        "allocation_id",
+        "command_allowlist",
+        "network_policy",
+        "workspace_created",
+        "files_written"
+      ],
+      "empty_state": "No workspace safety projection is available; keep branch workspace creation blocked.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#workspace_allocations"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "widget_id": "readiness_next_action",
+      "title": "Readiness Next Action",
+      "source_collection": "github_repo_task_intake",
+      "required_fields": [
+        "intake_decision",
+        "next_required_evidence_refs",
+        "authority_denials",
+        "next_action"
+      ],
+      "empty_state": "No next-action evidence is available; keep adapter registry work blocked.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_github_repo_task_intake.foundation.json#intake_decision",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md#smallest-next-pr-sequence"
+      ],
+      "read_only": true,
+      "ui_component_created": false,
+      "action_links_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    }
+  ],
+  "data_bindings": [
+    {
+      "binding_id": "binding-account-summary",
+      "widget_id": "account_summary",
+      "source_ref": "read-model://harness/accounts",
+      "source_collection": "accounts",
+      "entity_kind": "User",
+      "identity_keys": [
+        "tenant_id",
+        "user_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#accounts"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-repository-connection",
+      "widget_id": "repository_connection",
+      "source_ref": "read-model://harness/repositories",
+      "source_collection": "repositories",
+      "entity_kind": "RepositoryConnection",
+      "identity_keys": [
+        "project_id",
+        "connection_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#repositories"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-run-status",
+      "widget_id": "run_status",
+      "source_ref": "read-model://harness/runs",
+      "source_collection": "runs",
+      "entity_kind": "AgentRun",
+      "identity_keys": [
+        "project_id",
+        "run_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#runs"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-approval-gate",
+      "widget_id": "approval_gate",
+      "source_ref": "read-model://harness/approvals",
+      "source_collection": "approvals",
+      "entity_kind": "ApprovalRequest",
+      "identity_keys": [
+        "run_id",
+        "approval_request_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#approvals"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-receipt-evidence",
+      "widget_id": "receipt_evidence",
+      "source_ref": "read-model://harness/receipts",
+      "source_collection": "receipts",
+      "entity_kind": "Receipt",
+      "identity_keys": [
+        "run_id",
+        "receipt_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#receipts"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-workspace-safety",
+      "widget_id": "workspace_safety",
+      "source_ref": "read-model://harness/workspace-allocations",
+      "source_collection": "workspace_allocations",
+      "entity_kind": "WorkspaceAllocation",
+      "identity_keys": [
+        "project_id",
+        "allocation_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#workspace_allocations"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    },
+    {
+      "binding_id": "binding-readiness-next-action",
+      "widget_id": "readiness_next_action",
+      "source_ref": "read-model://harness/github-repo-task-intake",
+      "source_collection": "github_repo_task_intake",
+      "entity_kind": "ReadinessDecision",
+      "identity_keys": [
+        "project_id",
+        "dashboard_contract_id"
+      ],
+      "freshness_state": "foundation_static",
+      "fallback_state": "show-blocked-empty-state",
+      "evidence_refs": [
+        "examples/agentic_service_harness_github_repo_task_intake.foundation.json#intake_decision"
+      ],
+      "requires_live_adapter": false,
+      "permits_mutation": false,
+      "secret_values_serialized": false,
+      "read_only": true
+    }
+  ],
+  "screen_states": [
+    {
+      "state_id": "dashboard-state-loading",
+      "status": "loading",
+      "display_rule": "Render only bounded loading text while read-model evidence is unavailable.",
+      "evidence_refs": [
+        "gate://harness/no-dashboard-route-registration"
+      ],
+      "read_only": true,
+      "action_cta_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "state_id": "dashboard-state-ready",
+      "status": "ready",
+      "display_rule": "Render read-only values from validated fixture refs only.",
+      "evidence_refs": [
+        "examples/agentic_service_harness_dashboard_data_contract.foundation.json#widgets"
+      ],
+      "read_only": true,
+      "action_cta_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "state_id": "dashboard-state-empty",
+      "status": "empty",
+      "display_rule": "Render empty states without action links when required evidence is absent.",
+      "evidence_refs": [
+        "blocked://dashboard-ui/not-admitted"
+      ],
+      "read_only": true,
+      "action_cta_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    },
+    {
+      "state_id": "dashboard-state-blocked",
+      "status": "blocked",
+      "display_rule": "Render blocked state when mutation, adapter, branch, receipt append, or terminal closure authority is requested.",
+      "evidence_refs": [
+        "blocked://mutation-endpoint/not-admitted",
+        "blocked://terminal-closure/not-authorized"
+      ],
+      "read_only": true,
+      "action_cta_allowed": false,
+      "mutation_controls_allowed": false,
+      "route_admitted": false
+    }
+  ],
+  "authority_denials": {
+    "dashboard_ui_creation_enabled": false,
+    "route_registration_enabled": false,
+    "mutation_endpoint_enabled": false,
+    "live_adapter_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "dashboard_data_contract_schema": "schemas/agentic_service_harness_dashboard_data_contract.schema.json",
+    "dashboard_data_contract_fixture": "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "harness_read_models_schema": "schemas/agentic_service_harness_read_models.schema.json",
+    "harness_read_models_fixture": "examples/agentic_service_harness_read_models.foundation.json",
+    "github_repo_task_intake_schema": "schemas/agentic_service_harness_github_repo_task_intake.schema.json",
+    "github_repo_task_intake_fixture": "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-dashboard-data-contract",
+      "command": "python scripts/validate_agentic_service_harness_dashboard_data_contract.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add contract-only GitHub/Codex adapter registry; keep dashboard UI creation, route registration, mutation endpoints, adapter execution, receipt append, and terminal closure blocked.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

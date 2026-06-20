@@ -120,15 +120,15 @@ def test_readiness_map_rejects_missing_approval_ready_row(tmp_path: Path) -> Non
     assert "missing ready row: ApprovalRequest projection binding" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_dashboard_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_adapter_registry_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(ui-contract): add dashboard data contract`",
             "1. `harness(adapter-registry): add contract-only GitHub/Codex adapter registry`",
+            "1. `harness(evidence): add EvidenceBundle projection by AgentRun id`",
         ),
         encoding="utf-8",
     )
@@ -137,7 +137,7 @@ def test_readiness_map_rejects_missing_dashboard_first_pr(tmp_path: Path) -> Non
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: dashboard data contract" in serialized_errors
+    assert "missing first next PR: adapter registry" in serialized_errors
 
 
 def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
@@ -147,7 +147,7 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Current `origin/main`: `18884dd838c62370b0d829b408b0ffc290492a2a`",
+            "Current `origin/main`: `fd792ed292a03f5fc47415daf1cc09ad525e3212`",
             "Current `origin/main`: `short-ref`",
         ),
         encoding="utf-8",
