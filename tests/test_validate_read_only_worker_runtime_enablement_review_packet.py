@@ -7,7 +7,7 @@ Dependencies: scripts.validate_read_only_worker_runtime_enablement_review_packet
 Invariants:
   - Review is not evidence acceptance.
   - Reviewed repo-local refs do not satisfy runtime input names.
-  - Missing inputs remain blockers.
+  - Evidence acceptance and runtime admission remain future blockers.
 """
 
 from __future__ import annotations
@@ -37,15 +37,15 @@ def test_runtime_enablement_review_packet_fixture_matches_generated_projection()
     assert fixture == generated
     assert fixture["solver_outcome"] == "AwaitingEvidence"
     assert fixture["proof_state"] == "Unknown"
-    assert fixture["review_packet_state"] == "reviewed_with_missing_inputs"
+    assert fixture["review_packet_state"] == "reviewed_all_inputs_not_accepted"
     assert fixture["review_state"] == "reviewed_not_accepted"
     assert fixture["evidence_accepted"] is False
     assert fixture["authority_granted"] is False
     assert fixture["runtime_enablement_allowed"] is False
     assert fixture["worker_invocation_performed"] is False
     assert fixture["summary"]["review_record_count"] == 12
-    assert fixture["summary"]["reviewed_repo_ref_count"] == 11
-    assert fixture["summary"]["missing_input_count"] == 1
+    assert fixture["summary"]["reviewed_repo_ref_count"] == 12
+    assert fixture["summary"]["missing_input_count"] == 0
     assert fixture["summary"]["accepted_evidence_count"] == 0
 
 
@@ -58,8 +58,8 @@ def test_runtime_enablement_review_packet_validator_writes_receipt(tmp_path: Pat
 
     assert validation.valid is True
     assert validation.review_record_count == 12
-    assert validation.reviewed_repo_ref_count == 11
-    assert validation.missing_input_count == 1
+    assert validation.reviewed_repo_ref_count == 12
+    assert validation.missing_input_count == 0
     assert validation.accepted_evidence_count == 0
     assert validation.runtime_enablement_allowed is False
     assert payload["errors"] == []
@@ -143,7 +143,7 @@ def test_runtime_enablement_review_packet_cli_json(tmp_path: Path, capsys) -> No
     assert stdout_payload["valid"] is True
     assert written_payload["valid"] is True
     assert stdout_payload["review_record_count"] == 12
-    assert stdout_payload["reviewed_repo_ref_count"] == 11
+    assert stdout_payload["reviewed_repo_ref_count"] == 12
     assert captured.err == ""
 
 

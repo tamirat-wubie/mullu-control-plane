@@ -61,7 +61,7 @@
     "selected_worker_path": { "const": "read_only_repo_inspection" },
     "solver_outcome": { "const": "AwaitingEvidence" },
     "proof_state": { "const": "Unknown" },
-    "submission_state": { "const": "partial_repo_refs_submitted_for_review" },
+    "submission_state": { "const": "repo_refs_submitted_for_review" },
     "review_state": { "const": "not_evaluated" },
     "evidence_submitted": { "const": true },
     "evidence_accepted": { "const": false },
@@ -105,8 +105,8 @@
     },
     "submitted_evidence_refs": {
       "type": "array",
-      "minItems": 11,
-      "maxItems": 11,
+      "minItems": 12,
+      "maxItems": 12,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/repo_ref" }
     },
@@ -227,9 +227,9 @@
       "properties": {
         "source_required_input_count": { "const": 12 },
         "submitted_record_count": { "const": 12 },
-        "records_with_repo_ref_count": { "const": 11 },
-        "records_awaiting_operator_evidence_count": { "const": 1 },
-        "submitted_evidence_ref_count": { "const": 11 },
+        "records_with_repo_ref_count": { "const": 12 },
+        "records_awaiting_operator_evidence_count": { "const": 0 },
+        "submitted_evidence_ref_count": { "const": 12 },
         "accepted_evidence_count": { "const": 0 },
         "rejected_evidence_count": { "const": 0 },
         "authority_grant_count": { "const": 0 },

@@ -16,10 +16,8 @@
   "evidence_rejected": false,
   "external_network_allowed": false,
   "filesystem_write_allowed": false,
-  "missing_evidence_names": [
-    "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF"
-  ],
-  "next_action": "Bind operator approval before any evidence acceptance or runtime enablement decision.",
+  "missing_evidence_names": [],
+  "next_action": "Create a separate evidence acceptance and runtime admission gate before any runtime enablement decision.",
   "proof_state": "Unknown",
   "receipt_append_performed": false,
   "rejected_evidence_refs": [],
@@ -33,7 +31,7 @@
   "review_packet_is_not_success_claim": true,
   "review_packet_is_not_terminal_closure": true,
   "review_packet_is_not_worker_invocation": true,
-  "review_packet_state": "reviewed_with_missing_inputs",
+  "review_packet_state": "reviewed_all_inputs_not_accepted",
   "review_packet_version": "read_only_worker_runtime_enablement_review_packet.v1",
   "review_record_refs": [
     "read-only-worker-runtime-enablement-review-d8a39558a8be",
@@ -240,9 +238,7 @@
       "authority_granted": false,
       "candidate_ref_satisfies_required_name": false,
       "input_kind": "operator_runtime_enablement_approval",
-      "missing_evidence_names": [
-        "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF"
-      ],
+      "missing_evidence_names": [],
       "next_action": "record operator runtime enablement approval as a reference, not a secret value",
       "proof_state": "Unknown",
       "receipt_append_allowed": false,
@@ -258,11 +254,13 @@
       "required_names": [
         "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF"
       ],
-      "review_note": "Required operator/runtime evidence remains missing and blocks acceptance.",
+      "review_note": "Repo-local witness ref reviewed but not accepted; it does not satisfy the required runtime input.",
       "review_record_id": "read-only-worker-runtime-enablement-review-f9c7fa37a6cc",
-      "review_state": "blocked_missing_external_evidence",
-      "reviewed": false,
-      "reviewed_evidence_refs": [],
+      "review_state": "reviewed_not_accepted",
+      "reviewed": true,
+      "reviewed_evidence_refs": [
+        "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json"
+      ],
       "runtime_dispatch_allowed": false,
       "runtime_enablement_allowed": false,
       "runtime_receipt_emission_allowed": false,
@@ -502,6 +500,7 @@
     "examples/read_only_worker_runtime_dispatch_endpoint_registration_witness.foundation.json",
     "examples/read_only_worker_runtime_receipt_emitter_registration_witness.foundation.json",
     "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
     "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
     "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
     "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
@@ -526,12 +525,12 @@
     "authority_grant_count": 0,
     "blocked_action_count": 7,
     "dispatch_count": 0,
-    "missing_input_count": 1,
+    "missing_input_count": 0,
     "receipt_append_count": 0,
     "receipt_emission_count": 0,
     "rejected_evidence_count": 0,
     "review_record_count": 12,
-    "reviewed_repo_ref_count": 11,
+    "reviewed_repo_ref_count": 12,
     "runtime_enablement_count": 0,
     "source_submitted_record_count": 12,
     "terminal_closure_count": 0,
@@ -541,6 +540,7 @@
   "validators": [
     "scripts/validate_read_only_worker_runtime_enablement_review_packet.py",
     "scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
+    "scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py",
     "tests/test_validate_read_only_worker_runtime_enablement_review_packet.py"
   ],
   "worker_invocation_performed": false
