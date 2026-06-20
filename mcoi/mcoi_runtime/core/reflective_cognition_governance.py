@@ -20,11 +20,17 @@ from hashlib import sha256
 import json
 from typing import Mapping, Sequence
 
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+from mcoi_runtime.core.invariants import (
+    RuntimeCoreInvariantError,
+    ensure_iso_timestamp,
+    stable_identifier,
+)
 
 
 KERNEL_VERSION = "0.1.0"
 _DEFAULT_CREATED_AT = "1970-01-01T00:00:00+00:00"
+_MAX_EVIDENCE_LABEL_LENGTH = 160
+_MAX_REFLECTION_BUDGET = 50
 
 
 class RiskLevel(StrEnum):
@@ -79,8 +85,12 @@ class EvidenceClaim:
     def __post_init__(self) -> None:
         if not self.claim_id.strip():
             raise RuntimeCoreInvariantError("claim_id must be non-empty")
-        if not self.label.strip():
+        compact_label = self.label.strip()
+        if not compact_label:
             raise RuntimeCoreInvariantError("claim label must be non-empty")
+        if len(compact_label) > _MAX_EVIDENCE_LABEL_LENGTH:
+            raise RuntimeCoreInvariantError("claim label must be compact and redacted")
+        object.__setattr__(self, "label", compact_label)
         object.__setattr__(self, "status", _coerce_evidence_status(self.status))
         object.__setattr__(
             self,
@@ -120,6 +130,8 @@ class ReflectionBudget:
             value = getattr(self, field_name)
             if value < 0:
                 raise RuntimeCoreInvariantError(f"{field_name} must be non-negative")
+            if value > _MAX_REFLECTION_BUDGET:
+                raise RuntimeCoreInvariantError(f"{field_name} exceeds maximum reflection budget")
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -170,8 +182,8 @@ class ReflectiveCognitionReceipt:
             raise RuntimeCoreInvariantError("receipt_id must be non-empty")
         if not self.request_id.strip():
             raise RuntimeCoreInvariantError("request_id must be non-empty")
-        if not self.request_hash.strip():
-            raise RuntimeCoreInvariantError("request_hash must be non-empty")
+        _ensure_sha256_hex("request_hash", self.request_hash)
+        ensure_iso_timestamp("created_at", self.created_at)
         if self.execution_authority:
             raise RuntimeCoreInvariantError("reflective cognition receipt cannot carry execution authority")
         if not self.governance_required:
@@ -256,8 +268,9 @@ class ReflectiveCognitionAuditInput:
             raise RuntimeCoreInvariantError("request_id must be non-empty")
         if not self.user_input.strip():
             raise RuntimeCoreInvariantError("user_input must be non-empty")
+        ensure_iso_timestamp("created_at", self.created_at)
         object.__setattr__(self, "risk_level", _coerce_risk(self.risk_level))
-        object.__setattr__(self, "evidence_claims", tuple(self.evidence_claims))
+        object.__setattr__(self, "evidence_claims", _coerce_evidence_claims(self.evidence_claims))
 
 
 HIGH_RISK_TOKENS = (
@@ -413,7 +426,7 @@ def extract_assumptions(audit_input: ReflectiveCognitionAuditInput) -> tuple[str
         assumptions.append("Scope may be broader than the available evidence or safe execution boundary.")
     if any(token in text for token in ("latest", "current", "status", "progress")):
         assumptions.append("Fresh source inspection is required before making current-state claims.")
-    if _contains_any(text, HIGH_RISK_TOKENS):
+    if audit_input.risk_level in {RiskLevel.HIGH, RiskLevel.CRITICAL} or _contains_any(text, HIGH_RISK_TOKENS):
         assumptions.append("The request may affect protected runtime, data, users, or deployment state.")
     if audit_input.stated_goal.strip():
         assumptions.append("The audit should preserve the stated goal while exposing only validated deltas.")
@@ -425,6 +438,8 @@ def extract_assumptions(audit_input: ReflectiveCognitionAuditInput) -> tuple[str
 def scan_bias_flags(audit_input: ReflectiveCognitionAuditInput) -> tuple[str, ...]:
     text = " ".join((audit_input.user_input, audit_input.candidate_output)).lower()
     flags: list[str] = []
+    if audit_input.risk_level == RiskLevel.CRITICAL:
+        flags.append("critical_risk_attention_required")
     if _contains_any(text, ABSOLUTE_SCOPE_TOKENS):
         flags.append("absolute_scope_overreach")
     if "guarantee" in text or "100%" in text or "permanent" in text:
@@ -461,6 +476,8 @@ def expand_edge_cases(
     cases: list[str] = []
     if "apply" in text:
         cases.append("Tool or repository mutation can fail after partial progress; receipt must report exact boundary.")
+    if audit_input.risk_level == RiskLevel.CRITICAL:
+        cases.append("Critical-risk requests can be safe in wording but still require explicit governance attention.")
     if _contains_any(text, HIGH_RISK_TOKENS):
         cases.append("High-impact action must stay blocked until evidence, approval, and rollback path exist.")
     if bias_flags:
@@ -481,6 +498,8 @@ def plan_corrections(
     corrections: list[str] = []
     if evidence_gaps:
         corrections.append("Attach evidence refs or downgrade unsupported claims before final output.")
+    if "critical_risk_attention_required" in bias_flags:
+        corrections.append("Preserve critical-risk attention until normal governance explicitly clears the request.")
     if "absolute_scope_overreach" in bias_flags or "scope_creep_risk" in bias_flags:
         corrections.append("Replace broad claims with bounded constructive deltas, fracture deltas, and unresolved gaps.")
     if "symbolic_inflation_risk" in bias_flags:
@@ -578,6 +597,15 @@ def _next_safe_action(status: ValidationStatus) -> str:
     return "Proceed to normal governance; reflective pass did not detect a blocking issue."
 
 
+def _coerce_evidence_claims(values: Sequence[EvidenceClaim]) -> tuple[EvidenceClaim, ...]:
+    claims: list[EvidenceClaim] = []
+    for value in values:
+        if not isinstance(value, EvidenceClaim):
+            raise RuntimeCoreInvariantError("evidence_claims must contain EvidenceClaim instances")
+        claims.append(value)
+    return tuple(claims)
+
+
 def _coerce_risk(value: RiskLevel | str) -> RiskLevel:
     if isinstance(value, RiskLevel):
         return value
@@ -614,12 +642,24 @@ def _coerce_validation_status(value: ValidationStatus | str) -> ValidationStatus
         raise RuntimeCoreInvariantError("validation_status is not recognized") from exc
 
 
+def _ensure_sha256_hex(field_name: str, value: str) -> None:
+    if len(value) != 64 or any(char not in "0123456789abcdef" for char in value.lower()):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a sha256 hex digest")
+
+
 def _request_hash(user_input: str) -> str:
     return sha256(user_input.encode("utf-8")).hexdigest()
 
 
 def _snapshot_hash(value: Mapping[str, object]) -> str:
-    encoded = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"), default=str)
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        allow_nan=False,
+        default=str,
+    )
     return sha256(encoded.encode("utf-8")).hexdigest()
 
 
