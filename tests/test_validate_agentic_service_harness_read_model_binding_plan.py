@@ -119,15 +119,15 @@ def test_readiness_map_rejects_missing_approval_ready_row(tmp_path: Path) -> Non
     assert "missing ready row: ApprovalRequest projection binding" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_github_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_dashboard_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(github): add read-only repo task intake`",
             "1. `harness(ui-contract): add dashboard data contract`",
+            "1. `harness(receipt): add receipt append preflight`",
         ),
         encoding="utf-8",
     )
@@ -136,7 +136,7 @@ def test_readiness_map_rejects_missing_github_first_pr(tmp_path: Path) -> None:
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: read-only repo task intake" in serialized_errors
+    assert "missing first next PR: dashboard data contract" in serialized_errors
 
 
 def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:

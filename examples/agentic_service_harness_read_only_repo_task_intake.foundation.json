@@ -1,0 +1,104 @@
+{
+  "authority_denials": {
+    "branch_creation": false,
+    "deployment": false,
+    "destructive_operation": false,
+    "dns_mutation": false,
+    "filesystem_write": false,
+    "live_adapter_execution": false,
+    "mutation_endpoint_admitted": false,
+    "pull_request_creation": false,
+    "secret_serialization": false,
+    "terminal_closure": false
+  },
+  "generated_at": "2026-06-20T00:00:00Z",
+  "next_action": "Keep repository task intake read-only; add dashboard data contract only after receipt and evidence projections are closed.",
+  "preflight_gates": {
+    "agent_task_matches_scope": true,
+    "approval_required_before_effects": true,
+    "branch_workspace_creation_granted": false,
+    "execution_authority_granted": false,
+    "path_allowlist_present": true,
+    "pull_request_creation_granted": false,
+    "repository_connection_verified": true,
+    "repository_slug_matches_scope": true,
+    "task_scope_bounded": true,
+    "terminal_closure_granted": false
+  },
+  "report_id": "agentic_service_harness_read_only_repo_task_intake",
+  "report_is_not_terminal_closure": true,
+  "repository_connection_binding": {
+    "connection_state": "verified_read_only",
+    "credential_binding_ref": "evidence/harness/github/credential-binding-redacted",
+    "evidence_refs": [
+      "examples/agentic_service_harness_github_repo_task_service.foundation.json",
+      "examples/agentic_service_harness_read_model_binding_plan.foundation.json"
+    ],
+    "installation_ref_redacted": true,
+    "permission_scopes": [
+      "metadata:read",
+      "contents:read",
+      "pull_requests:read",
+      "checks:read"
+    ],
+    "provider": "github",
+    "repository_connection_id": "repo-conn-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "revocation_state": "revocation_check_required",
+    "write_authority_granted": false
+  },
+  "schema_version": 1,
+  "scope": {
+    "agent_run_id": "agent-run-read-only-intake-001",
+    "agent_task_id": "agent-task-read-only-intake-001",
+    "foundation_phase": "foundation_contract_only",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "read_only": true,
+    "repository_connection_id": "repo-conn-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "tenant_id": "tenant-mullusi-foundation"
+  },
+  "solver_outcome": "AwaitingEvidence",
+  "task_intake": {
+    "agent_task_id": "agent-task-read-only-intake-001",
+    "allowed_action_classes": [
+      "read_only"
+    ],
+    "allowed_path_prefixes": [
+      "README.md",
+      "docs/",
+      "schemas/",
+      "examples/",
+      "scripts/",
+      "tests/"
+    ],
+    "approval_request_ref": "evidence/harness/approval/read-only-intake-effects-blocked",
+    "code_execution_requested": false,
+    "evidence_refs": [
+      "examples/agentic_service_harness_github_repo_task_service.foundation.json",
+      "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json"
+    ],
+    "external_adapter_requested": false,
+    "filesystem_write_requested": false,
+    "forbidden_path_prefixes": [
+      ".git/",
+      ".env",
+      ".github/secrets/",
+      "deploy/",
+      "infra/production/",
+      "secrets/"
+    ],
+    "intake_id": "repo-task-intake-read-only-001",
+    "requested_commands": [],
+    "requested_mode": "read_only",
+    "task_scope_summary_ref": "evidence/harness/task-scope/read-only-intake-001"
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "name": "agentic_service_harness_read_only_repo_task_intake",
+      "path": "scripts/validate_agentic_service_harness_read_only_repo_task_intake.py"
+    }
+  ]
+}

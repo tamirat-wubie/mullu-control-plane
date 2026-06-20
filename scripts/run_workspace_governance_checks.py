@@ -187,6 +187,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_read_only_repo_task_intake",
+            (python_executable, "scripts/validate_agentic_service_harness_read_only_repo_task_intake.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_temporary_branch_workspace_preflight",
             (
                 python_executable,

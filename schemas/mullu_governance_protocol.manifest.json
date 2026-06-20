@@ -161,6 +161,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-task-receipt-emitter-dry-run:1"
     },
     {
+      "path": "schemas/agentic_service_harness_read_only_repo_task_intake.schema.json",
+      "schema_id": "agentic-service-harness-read-only-repo-task-intake",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-read-only-repo-task-intake:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_live_producer_admission_gate.schema.json",
       "schema_id": "agentic-service-harness-live-producer-admission-gate",
       "surface": "runtime",

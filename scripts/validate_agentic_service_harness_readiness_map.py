@@ -232,17 +232,16 @@ def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
 
 def _validate_receipt_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(github\): add read-only repo task intake`$",
+        r"^1\.\s+`harness\(ui-contract\): add dashboard data contract`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: read-only repo task intake")
+        errors.append("missing first next PR: dashboard data contract")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(github): add read-only repo task intake",
         "harness(ui-contract): add dashboard data contract",
     )
     positions: list[int] = []

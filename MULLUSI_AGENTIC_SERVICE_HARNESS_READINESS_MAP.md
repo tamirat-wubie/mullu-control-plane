@@ -93,7 +93,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 a
 
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
-| GitHub repo task service | PARTIAL | GitHub repo task service schemas, examples, and validators exist. | Add a read-only repository task intake PR that validates repo connection and task scope without running code. |
+| GitHub repo task service | READY | GitHub repo task service schemas, examples, validators, and read-only repo task intake preflight now bind RepositoryConnection, AgentTask, path scope, read-only mode, and effect denials without running code. | None for read-only intake. |
 | Codex-style coding adapter | PARTIAL | Adapter concepts exist; no live coding adapter is integrated. | Add a contract-only adapter registry entry with no subprocess, connector, or external model execution. |
 | Temporary branch workspace | READY | Harness branch workspace preflight is bound to path allowlist, command allowlist, timeout, network denial, cleanup receipt, approval blocker, and no filesystem-write or branch-create authority. | None for preflight. Future creation remains blocked until approval and cleanup evidence exist. |
 | Test runner | PARTIAL | Repository validators and test-run receipts exist; harness-selected test execution is not bound. | Add dry-run test runner plan receipt that records selected commands without execution authority. |
@@ -147,8 +147,8 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | login/account | MISSING | No harness login/account screen or account persistence should be built yet. | Add account/user read model first; UI follows after persistence is validated. |
-| connect GitHub repo | PARTIAL | RepositoryConnection read model and redacted GitHub installation binding are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight and UI data contract only after AgentRun and approval read models are closed. |
-| create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
+| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, and read-only repo task intake preflight are closed for projection; no connect UI or provider mutation route is authorized. | Add UI data contract only after receipt and evidence read models are closed. |
+| create agent task | PARTIAL | AgentTask exists as a contract and read-only repo task intake validates RepositoryConnection and task scope without execution authority; no user-facing task creation route is authorized. | Add task creation admission preflight only after UI data contract and receipt/evidence projections are closed. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
 | evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
 | approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
@@ -169,8 +169,7 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(github): add read-only repo task intake`
-2. `harness(ui-contract): add dashboard data contract`
+1. `harness(ui-contract): add dashboard data contract`
 
 ## Governance Decision
 
@@ -186,4 +185,4 @@ STATUS:
   Completeness: 100%
   Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority
   Open issues: durable Receipt store append, EvidenceBundle, UI data contracts, branch workspace creation authority, and the current draft PR queue remain partial, missing, externally blocked, or outside this map-only closure
-  Next action: start the smallest next PR sequence with read-only repository task intake
+  Next action: continue the smallest next PR sequence with dashboard data contract
