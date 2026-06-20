@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1",
+  "title": "Governed Planning Profile Signed Approval Generic Continuation Rejection",
+  "description": "Read-only rejection witness proving generic continuation does not satisfy the signed approval intake contract. This schema does not collect approval, verify signatures, authorize runtime promotion, activate execution, dispatch, replanning, success claims, or terminal closure authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "schema_version",
+    "profile_id",
+    "recorded_at",
+    "solver_outcome",
+    "rejection_status",
+    "observed_input",
+    "observed_input_kind",
+    "generic_continuation_rejected",
+    "operator_response_recorded",
+    "operator_approval_collected",
+    "signed_approval_witness_collected",
+    "signed_approval_present",
+    "decision_value_present",
+    "decision_value_accepted",
+    "signature_present",
+    "signature_verified",
+    "runtime_authorization_gate_satisfied",
+    "local_witness_only",
+    "read_only",
+    "mutation_route",
+    "runtime_behavior_change",
+    "runtime_activation_allowed",
+    "runtime_promotion_authorized",
+    "execution_allowed",
+    "dispatch_allowed",
+    "runtime_replanning_enabled",
+    "success_claim_allowed",
+    "terminal_closure",
+    "source_signed_approval_intake",
+    "source_pull_request_evidence",
+    "expected_plan_classes",
+    "rejection_controls",
+    "required_witness_field_rejections",
+    "scenario_rejections",
+    "operator_response_boundary",
+    "promotion_gate_summary",
+    "authority_denials",
+    "evidence_refs",
+    "validators",
+    "next_action",
+    "witness_hash"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection-[a-f0-9]{16}$"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.v1"
+    },
+    "profile_id": { "type": "string", "const": "governed-planning-profile-foundation-v1" },
+    "recorded_at": { "type": "string", "const": "2026-06-19T00:00:00Z" },
+    "solver_outcome": { "type": "string", "const": "GovernanceBlocked" },
+    "rejection_status": { "type": "string", "const": "RejectedNoEffect" },
+    "observed_input": { "type": "string", "const": "continue" },
+    "observed_input_kind": { "type": "string", "const": "generic_continuation" },
+    "generic_continuation_rejected": { "type": "boolean", "const": true },
+    "operator_response_recorded": { "type": "boolean", "const": true },
+    "operator_approval_collected": { "type": "boolean", "const": false },
+    "signed_approval_witness_collected": { "type": "boolean", "const": false },
+    "signed_approval_present": { "type": "boolean", "const": false },
+    "decision_value_present": { "type": "boolean", "const": false },
+    "decision_value_accepted": { "type": "boolean", "const": false },
+    "signature_present": { "type": "boolean", "const": false },
+    "signature_verified": { "type": "boolean", "const": false },
+    "runtime_authorization_gate_satisfied": { "type": "boolean", "const": false },
+    "local_witness_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "mutation_route": { "type": "boolean", "const": false },
+    "runtime_behavior_change": { "type": "boolean", "const": false },
+    "runtime_activation_allowed": { "type": "boolean", "const": false },
+    "runtime_promotion_authorized": { "type": "boolean", "const": false },
+    "execution_allowed": { "type": "boolean", "const": false },
+    "dispatch_allowed": { "type": "boolean", "const": false },
+    "runtime_replanning_enabled": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "source_signed_approval_intake": { "$ref": "#/$defs/source_signed_approval_intake" },
+    "source_pull_request_evidence": { "$ref": "#/$defs/source_pull_request_evidence" },
+    "expected_plan_classes": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "uncompiled_conversation" },
+        { "const": "read_only_search" },
+        { "const": "compound_search_notification" },
+        { "const": "high_risk_payment" },
+        { "const": "world_contradiction_search" }
+      ],
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "rejection_controls": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "$ref": "#/$defs/rejection_control" }
+    },
+    "required_witness_field_rejections": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": { "$ref": "#/$defs/field_rejection" }
+    },
+    "scenario_rejections": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/scenario_rejection" }
+    },
+    "operator_response_boundary": { "$ref": "#/$defs/operator_response_boundary" },
+    "promotion_gate_summary": { "$ref": "#/$defs/promotion_gate_summary" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "const": "collect explicit signed runtime authorization approval witness values"
+    },
+    "witness_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "source_signed_approval_intake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intake_id",
+        "intake_hash",
+        "intake_status",
+        "signed_approval_witness_collected",
+        "signed_approval_present",
+        "decision_value_accepted",
+        "signature_verified",
+        "runtime_authorization_gate_satisfied"
+      ],
+      "properties": {
+        "intake_id": {
+          "type": "string",
+          "pattern": "^governed-planning-profile-runtime-authorization-signed-approval-intake-[a-f0-9]{16}$"
+        },
+        "intake_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "intake_status": { "type": "string", "const": "AwaitingSignedApproval" },
+        "signed_approval_witness_collected": { "type": "boolean", "const": false },
+        "signed_approval_present": { "type": "boolean", "const": false },
+        "decision_value_accepted": { "type": "boolean", "const": false },
+        "signature_verified": { "type": "boolean", "const": false },
+        "runtime_authorization_gate_satisfied": { "type": "boolean", "const": false }
+      }
+    },
+    "source_pull_request_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pr_number",
+        "pr_url",
+        "head_ref",
+        "head_oid",
+        "state",
+        "merged",
+        "closed_by",
+        "closed_at",
+        "checks_observed_green",
+        "operator_close_respected"
+      ],
+      "properties": {
+        "pr_number": { "type": "integer", "const": 2047 },
+        "pr_url": { "type": "string", "const": "https://github.com/tamirat-wubie/mullu-control-plane/pull/2047" },
+        "head_ref": { "type": "string", "const": "codex/planning-runtime-authorization-signed-approval-intake-20260620" },
+        "head_oid": { "type": "string", "const": "a9495425958b1755a3c5ce1866b3b8e45541565b" },
+        "state": { "type": "string", "const": "CLOSED" },
+        "merged": { "type": "boolean", "const": false },
+        "closed_by": { "type": "string", "const": "tamirat-wubie" },
+        "closed_at": { "type": "string", "const": "2026-06-20T09:44:17Z" },
+        "checks_observed_green": { "type": "boolean", "const": true },
+        "operator_close_respected": { "type": "boolean", "const": true }
+      }
+    },
+    "rejection_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "status", "evidence_ref", "blocks_authorization"],
+      "properties": {
+        "control_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "const": "Pass" },
+        "evidence_ref": { "type": "string", "minLength": 1 },
+        "blocks_authorization": { "type": "boolean", "const": true }
+      }
+    },
+    "field_rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_id",
+        "required",
+        "value_present",
+        "verified",
+        "accepted_from_generic_continuation",
+        "rejection_reason"
+      ],
+      "properties": {
+        "field_id": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean", "const": true },
+        "value_present": { "type": "boolean", "const": false },
+        "verified": { "type": "boolean", "const": false },
+        "accepted_from_generic_continuation": { "type": "boolean", "const": false },
+        "rejection_reason": {
+          "type": "string",
+          "const": "generic_continuation_is_not_signed_approval_evidence"
+        }
+      }
+    },
+    "scenario_rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "plan_class",
+        "generic_continuation_rejected",
+        "signed_approval_witness_collected",
+        "runtime_authorization_response_approved",
+        "runtime_promotion_authorized",
+        "runtime_execution_performed"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string", "minLength": 1 },
+        "plan_class": { "type": "string", "minLength": 1 },
+        "generic_continuation_rejected": { "type": "boolean", "const": true },
+        "signed_approval_witness_collected": { "type": "boolean", "const": false },
+        "runtime_authorization_response_approved": { "type": "boolean", "const": false },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "runtime_execution_performed": { "type": "boolean", "const": false }
+      }
+    },
+    "operator_response_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_input",
+        "observed_input_kind",
+        "generic_continuation_satisfies_authorization",
+        "expected_approval_decision_value",
+        "signed_witness_required",
+        "signed_witness_collected",
+        "signature_ref_required",
+        "signature_ref_present",
+        "signature_verified",
+        "future_signed_approval_still_allowed",
+        "runtime_activation_performed",
+        "runtime_activation_requires_separate_gate"
+      ],
+      "properties": {
+        "observed_input": { "type": "string", "const": "continue" },
+        "observed_input_kind": { "type": "string", "const": "generic_continuation" },
+        "generic_continuation_satisfies_authorization": { "type": "boolean", "const": false },
+        "expected_approval_decision_value": { "type": "string", "const": "approve_governed_planning_profile_runtime_authorization" },
+        "signed_witness_required": { "type": "boolean", "const": true },
+        "signed_witness_collected": { "type": "boolean", "const": false },
+        "signature_ref_required": { "type": "boolean", "const": true },
+        "signature_ref_present": { "type": "boolean", "const": false },
+        "signature_verified": { "type": "boolean", "const": false },
+        "future_signed_approval_still_allowed": { "type": "boolean", "const": true },
+        "runtime_activation_performed": { "type": "boolean", "const": false },
+        "runtime_activation_requires_separate_gate": { "type": "boolean", "const": true }
+      }
+    },
+    "promotion_gate_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "satisfied_promotion_gate_ids",
+        "remaining_promotion_gate_ids",
+        "signed_approval_intake_contract_ready",
+        "generic_continuation_rejection_recorded",
+        "rejection_control_count",
+        "required_witness_field_rejection_count",
+        "scenario_rejection_count",
+        "signed_approval_witness_collected",
+        "runtime_authorization_response_approved",
+        "runtime_promotion_authorized"
+      ],
+      "properties": {
+        "satisfied_promotion_gate_ids": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "remaining_promotion_gate_ids": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "explicit_signed_runtime_authorization_approval_witness" },
+            { "const": "separate_runtime_activation_gate" }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "signed_approval_intake_contract_ready": { "type": "boolean", "const": true },
+        "generic_continuation_rejection_recorded": { "type": "boolean", "const": true },
+        "rejection_control_count": { "type": "integer", "const": 11 },
+        "required_witness_field_rejection_count": { "type": "integer", "const": 9 },
+        "scenario_rejection_count": { "type": "integer", "const": 5 },
+        "signed_approval_witness_collected": { "type": "boolean", "const": false },
+        "runtime_authorization_response_approved": { "type": "boolean", "const": false },
+        "runtime_promotion_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_promotion_authorized",
+        "execution_allowed",
+        "dispatch_allowed",
+        "runtime_replanning_enabled",
+        "success_claim_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "runtime_promotion_authorized": { "type": "boolean", "const": false },
+        "execution_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "runtime_replanning_enabled": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -339,6 +339,27 @@ false`, `decision_value_accepted = false`, `signature_verified = false`, and
 non-authorizing. Runtime activation still requires a separate governed
 activation gate after a real signed approval witness is collected and verified.
 
+## Signed Approval Generic Continuation Rejection
+
+The local signed-approval generic-continuation rejection slice is
+`examples/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py`
+and governed by
+`schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json`.
+
+This witness binds the signed approval intake and records that a later generic
+`continue` input still does not provide signed approval values. It also records
+the closed unmerged PR #2047 evidence as a respected operator action: checks
+were observed green, the PR remained draft, and merge did not occur.
+
+The witness records `solver_outcome = GovernanceBlocked`,
+`rejection_status = RejectedNoEffect`, `generic_continuation_rejected = true`,
+`signed_approval_present = false`, `decision_value_accepted = false`,
+`signature_verified = false`, and `runtime_authorization_gate_satisfied =
+false`. Runtime activation still requires a real signed approval witness and a
+separate governed activation gate.
+
 ## Validation
 
 ```text
@@ -364,6 +385,8 @@ python scripts/validate_governed_planning_profile_runtime_authorization_approval
 python scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py --json
 python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py
 python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py --json
+python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py
+python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
@@ -376,10 +399,11 @@ python -m pytest tests/test_validate_governed_planning_profile_runtime_authoriza
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py -q
+python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, runtime authorization request, generic continuation rejection witness, runtime authorization approval witness template, and signed approval intake contract defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, runtime authorization request, generic continuation rejection witness, runtime authorization approval witness template, signed approval intake contract, and signed approval generic-continuation rejection witness defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, runtime promotion, or closure authority
   Open issues: explicit signed runtime authorization approval witness remains absent; separate runtime activation gate remains absent
   Next action: collect explicit signed runtime authorization approval witness values before activation

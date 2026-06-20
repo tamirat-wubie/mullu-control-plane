@@ -1139,6 +1139,12 @@
       "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-intake:1"
     },
     {
+      "path": "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json",
+      "schema_id": "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1"
+    },
+    {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
       "schema_id": "governed-planning-profile-shadow-dossier",
       "surface": "planning",

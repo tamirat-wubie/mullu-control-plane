@@ -1,0 +1,306 @@
+{
+  "authority_denials": {
+    "dispatch_allowed": false,
+    "execution_allowed": false,
+    "runtime_promotion_authorized": false,
+    "runtime_replanning_enabled": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false
+  },
+  "decision_value_accepted": false,
+  "decision_value_present": false,
+  "dispatch_allowed": false,
+  "evidence_refs": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py",
+    "scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py",
+    "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json",
+    "examples/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.local.json",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py"
+  ],
+  "execution_allowed": false,
+  "expected_plan_classes": [
+    "uncompiled_conversation",
+    "read_only_search",
+    "compound_search_notification",
+    "high_risk_payment",
+    "world_contradiction_search"
+  ],
+  "generic_continuation_rejected": true,
+  "local_witness_only": true,
+  "mutation_route": false,
+  "next_action": "collect explicit signed runtime authorization approval witness values",
+  "observed_input": "continue",
+  "observed_input_kind": "generic_continuation",
+  "operator_approval_collected": false,
+  "operator_response_boundary": {
+    "expected_approval_decision_value": "approve_governed_planning_profile_runtime_authorization",
+    "future_signed_approval_still_allowed": true,
+    "generic_continuation_satisfies_authorization": false,
+    "observed_input": "continue",
+    "observed_input_kind": "generic_continuation",
+    "runtime_activation_performed": false,
+    "runtime_activation_requires_separate_gate": true,
+    "signature_ref_present": false,
+    "signature_ref_required": true,
+    "signature_verified": false,
+    "signed_witness_collected": false,
+    "signed_witness_required": true
+  },
+  "operator_response_recorded": true,
+  "profile_id": "governed-planning-profile-foundation-v1",
+  "promotion_gate_summary": {
+    "generic_continuation_rejection_recorded": true,
+    "rejection_control_count": 11,
+    "remaining_promotion_gate_ids": [
+      "explicit_signed_runtime_authorization_approval_witness",
+      "separate_runtime_activation_gate"
+    ],
+    "required_witness_field_rejection_count": 9,
+    "runtime_authorization_response_approved": false,
+    "runtime_promotion_authorized": false,
+    "satisfied_promotion_gate_ids": [
+      "operator_shadow_pilot_observation",
+      "runtime_promotion_approval",
+      "replay_recovery_witness",
+      "terminal_closure_certificate"
+    ],
+    "scenario_rejection_count": 5,
+    "signed_approval_intake_contract_ready": true,
+    "signed_approval_witness_collected": false
+  },
+  "read_only": true,
+  "recorded_at": "2026-06-19T00:00:00Z",
+  "rejection_controls": [
+    {
+      "blocks_authorization": true,
+      "control_id": "source_signed_approval_intake_valid",
+      "evidence_ref": "governed-planning-profile-runtime-authorization-signed-approval-intake-996eea3fd5ba2b94",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "closed_pr_2047_evidence_bound",
+      "evidence_ref": "https://github.com/tamirat-wubie/mullu-control-plane/pull/2047",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "generic_continuation_not_signed_witness",
+      "evidence_ref": "observed_input",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "decision_value_absent",
+      "evidence_ref": "decision_value_present",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "operator_identity_absent",
+      "evidence_ref": "required_witness_fields.operator_identity_ref",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "signature_absent",
+      "evidence_ref": "signature_present",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "signature_not_verified",
+      "evidence_ref": "signature_verified",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "runtime_authorization_gate_blocked",
+      "evidence_ref": "runtime_authorization_gate_satisfied",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "activation_separate_from_approval",
+      "evidence_ref": "operator_response_boundary.runtime_activation_performed",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "authority_denials_preserved",
+      "evidence_ref": "authority_denials",
+      "status": "Pass"
+    },
+    {
+      "blocks_authorization": true,
+      "control_id": "rejection_witness_hash_bound",
+      "evidence_ref": "witness_hash",
+      "status": "Pass"
+    }
+  ],
+  "rejection_status": "RejectedNoEffect",
+  "required_witness_field_rejections": [
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "operator_identity_ref",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "explicit_decision_value",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "runtime_authorization_request_hash_acknowledgement",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "generic_continuation_rejection_hash_acknowledgement",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "authority_scope_acknowledgement",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "activation_separation_acknowledgement",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "rollback_hysteresis_acknowledgement",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "signed_at",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    },
+    {
+      "accepted_from_generic_continuation": false,
+      "field_id": "signature_ref",
+      "rejection_reason": "generic_continuation_is_not_signed_approval_evidence",
+      "required": true,
+      "value_present": false,
+      "verified": false
+    }
+  ],
+  "runtime_activation_allowed": false,
+  "runtime_authorization_gate_satisfied": false,
+  "runtime_behavior_change": false,
+  "runtime_promotion_authorized": false,
+  "runtime_replanning_enabled": false,
+  "scenario_rejections": [
+    {
+      "generic_continuation_rejected": true,
+      "plan_class": "uncompiled_conversation",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-uncompiled-conversation",
+      "signed_approval_witness_collected": false
+    },
+    {
+      "generic_continuation_rejected": true,
+      "plan_class": "read_only_search",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-read-only-search",
+      "signed_approval_witness_collected": false
+    },
+    {
+      "generic_continuation_rejected": true,
+      "plan_class": "compound_search_notification",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-compound-search-notification",
+      "signed_approval_witness_collected": false
+    },
+    {
+      "generic_continuation_rejected": true,
+      "plan_class": "high_risk_payment",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-high-risk-payment",
+      "signed_approval_witness_collected": false
+    },
+    {
+      "generic_continuation_rejected": true,
+      "plan_class": "world_contradiction_search",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-world-contradiction-search",
+      "signed_approval_witness_collected": false
+    }
+  ],
+  "schema_version": "governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.v1",
+  "signature_present": false,
+  "signature_verified": false,
+  "signed_approval_present": false,
+  "signed_approval_witness_collected": false,
+  "solver_outcome": "GovernanceBlocked",
+  "source_pull_request_evidence": {
+    "checks_observed_green": true,
+    "closed_at": "2026-06-20T09:44:17Z",
+    "closed_by": "tamirat-wubie",
+    "head_oid": "a9495425958b1755a3c5ce1866b3b8e45541565b",
+    "head_ref": "codex/planning-runtime-authorization-signed-approval-intake-20260620",
+    "merged": false,
+    "operator_close_respected": true,
+    "pr_number": 2047,
+    "pr_url": "https://github.com/tamirat-wubie/mullu-control-plane/pull/2047",
+    "state": "CLOSED"
+  },
+  "source_signed_approval_intake": {
+    "decision_value_accepted": false,
+    "intake_hash": "996eea3fd5ba2b9497c2edf09e08019635020ec803d76bbdbfbddcfea8906cdd",
+    "intake_id": "governed-planning-profile-runtime-authorization-signed-approval-intake-996eea3fd5ba2b94",
+    "intake_status": "AwaitingSignedApproval",
+    "runtime_authorization_gate_satisfied": false,
+    "signature_verified": false,
+    "signed_approval_present": false,
+    "signed_approval_witness_collected": false
+  },
+  "success_claim_allowed": false,
+  "terminal_closure": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py",
+      "validator_id": "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection"
+    }
+  ],
+  "witness_hash": "745ae60a48a74ee58767b9fc3890eec0b2c1ccdeb1b14581cbadeb89c8fe30b4",
+  "witness_id": "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection-745ae60a48a74ee5"
+}

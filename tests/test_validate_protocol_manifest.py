@@ -89,6 +89,9 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     signed_approval_intake_entry = entries[
         "governed-planning-profile-runtime-authorization-signed-approval-intake"
     ]
+    signed_approval_generic_rejection_entry = entries[
+        "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -163,6 +166,13 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-intake:1"
     )
     assert signed_approval_intake_entry["surface"] == "planning"
+    assert signed_approval_generic_rejection_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json"
+    )
+    assert signed_approval_generic_rejection_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1"
+    )
+    assert signed_approval_generic_rejection_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:
