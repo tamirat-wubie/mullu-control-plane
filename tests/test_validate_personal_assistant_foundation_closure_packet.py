@@ -54,6 +54,8 @@ def test_validate_foundation_closure_packet_accepts_checked_in_shape(tmp_path: P
     assert validation.solver_outcome == "SolvedVerified"
     assert validation.foundation_closure_packet_closed is True
     assert all(step.passed for step in validation.steps)
+    assert packet["closure_summary"]["source_receipt_count"] == 9  # type: ignore[index]
+    assert {record["source_kind"] for record in packet["source_receipts"]} >= {"skill_readiness_catalog", "dry_run_packet"}  # type: ignore[index]
 
 
 def test_validate_foundation_closure_packet_rejects_open_source(tmp_path: Path) -> None:

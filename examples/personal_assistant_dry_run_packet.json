@@ -21,7 +21,7 @@
     "source_artifact_count": 9,
     "stage_count": 10
   },
-  "generated_at": "2026-06-20T09:38:27.109340Z",
+  "generated_at": "2026-06-20T14:13:09.779286Z",
   "governed": true,
   "lineage": {
     "accepted_deltas": [
@@ -63,7 +63,7 @@
     "production_ready_claim_allowed": false,
     "system_of_record_write_allowed": false
   },
-  "packet_id": "personal-assistant-dry-run-1c23b65f0e7222c1",
+  "packet_id": "personal-assistant-dry-run-0a39b8cb3e470c7d",
   "packet_is_not_customer_readiness": true,
   "packet_is_not_execution_authority": true,
   "packet_is_not_memory_admission": true,
@@ -182,12 +182,12 @@
       "effect_violations": [],
       "payload_digest_only": true,
       "proof_state": "Pass",
-      "schema_ref": "schemas/personal_assistant_foundation_closure_packet.schema.json",
-      "serialized_length": 9944,
+      "schema_ref": "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
+      "serialized_length": 24107,
       "solver_outcome": "SolvedVerified",
-      "source_kind": "foundation_closure_packet",
-      "source_ref": "examples/personal_assistant_foundation_closure_packet.json",
-      "source_sha256": "2748c9c5519df6699b839aeef86ef39d5546e6b3db0d423a95feacfadaf1da1a"
+      "source_kind": "runtime_boundary",
+      "source_ref": "examples/personal_assistant_runtime_boundary_receipt.json",
+      "source_sha256": "aea329146c4bd43f383f29674c58054842c0973facfa3d9d56aa5827ecf3d984"
     }
   ],
   "stages": [
@@ -496,7 +496,7 @@
       "execution_allowed": false,
       "input_bindings": [
         "source:skill_readiness_catalog",
-        "source:foundation_closure_packet",
+        "source:runtime_boundary",
         "memory_observation_review.memory_review_ref"
       ],
       "outcome": "SolvedVerified",

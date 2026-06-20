@@ -59,6 +59,16 @@ SOURCE_RECEIPTS: tuple[tuple[str, Path, str], ...] = (
         REPO_ROOT / "examples" / "personal_assistant_runtime_boundary_receipt.json",
         "runtime_boundary_closed",
     ),
+    (
+        "skill_readiness_catalog",
+        REPO_ROOT / "examples" / "personal_assistant_skill_readiness_catalog.json",
+        "catalog_closed",
+    ),
+    (
+        "dry_run_packet",
+        REPO_ROOT / "examples" / "personal_assistant_dry_run_packet.json",
+        "dry_run_packet_closed",
+    ),
 )
 
 NO_EFFECT_FLAGS = (
@@ -238,7 +248,7 @@ def _source_receipt_record(source_kind: str, source_path: Path, closure_field: s
         "source_kind": source_kind,
         "source_ref": _path_label(source_path),
         "source_sha256": _file_sha256(source_path) if bound else "",
-        "receipt_id": _bounded_identifier(payload.get("receipt_id") or payload.get("packet_id")),
+        "receipt_id": _bounded_identifier(payload.get("receipt_id") or payload.get("packet_id") or payload.get("catalog_id")),
         "schema_version": _bounded_identifier(payload.get("schema_version")),
         "schema_versioned": isinstance(payload.get("schema_version"), str) and bool(payload.get("schema_version")),
         "proof_state": _bounded_outcome(payload.get("proof_state"), allowed={"Pass", "Fail"}),
@@ -266,6 +276,8 @@ def _summary_object(payload: Mapping[str, Any]) -> Mapping[str, Any]:
         "alignment_summary",
         "policy_matrix_summary",
         "runtime_boundary_summary",
+        "catalog_summary",
+        "closure_summary",
     ):
         if isinstance(payload.get(key), dict):
             return payload[key]  # type: ignore[return-value]
@@ -277,6 +289,10 @@ def _no_effect_verified(payload: Mapping[str, Any], summary: Mapping[str, Any]) 
         return True
     if summary.get("runtime_boundary_closed") is True and summary.get("no_effect_boundary_verified") is True:
         return True
+    if summary.get("all_skills_non_executable") is True and summary.get("all_skills_foundation_only") is True:
+        return True
+    if summary.get("no_effect_boundaries_clear") is True:
+        return True
     boundary = payload.get("effect_boundary") or payload.get("no_effect_boundary")
     return isinstance(boundary, dict) and not any(value is True for value in boundary.values())
 
@@ -287,6 +303,7 @@ def _receipt_non_authoritative(payload: Mapping[str, Any]) -> bool:
         payload.get("receipt_is_not_terminal_closure"),
         payload.get("packet_is_not_execution_authority"),
         payload.get("packet_is_not_terminal_closure"),
+        payload.get("catalog_is_not_execution_authority"),
     )
     return any(flag is True for flag in authority_flags) and payload.get("solver_outcome") in {
         "SolvedVerified",

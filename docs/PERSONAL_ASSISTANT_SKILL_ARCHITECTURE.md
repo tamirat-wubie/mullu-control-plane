@@ -468,10 +468,27 @@ The packet records source artifacts as refs, SHA-256 digests, schema refs, and
 serialized lengths only. It validates acyclic stage topology, no dangling
 predecessors, no dangling source or stage bindings, approval gates before P4/P5
 paths, stage-level `execution_allowed = false`, and absence of secret-shaped
-values.
+values. The dry-run packet binds runtime-boundary evidence directly and does
+not bind the aggregate foundation closure packet, so the aggregate closure can
+consume dry-run evidence without forming a causal proof cycle.
 
 The skill registry may declare future approval-gated effect models, but the
 dry-run packet must not execute them or convert them into runtime authority.
+
+## Foundation Closure Packet Contract
+
+The foundation closure packet is the aggregate no-effect evidence packet. It
+binds the foundation evidence receipt, readiness index, coherence ledger,
+authority coverage receipt, capsule alignment receipt, policy matrix receipt,
+runtime boundary receipt, skill readiness catalog, and dry-run packet. It
+requires all nine sources to be bound, schema-versioned, `SolvedVerified`,
+closed by their declared closure field, no-effect, non-authoritative, and free
+of secret-shaped values.
+
+The closure packet remains non-terminal. It does not grant execution authority,
+live connector execution, connector mutation, external effects, system-of-record
+writes, memory writes, deployment mutation, customer readiness, production
+readiness, live Nested Mind activation, or terminal closure.
 
 ## Integration Position
 
@@ -496,6 +513,8 @@ python scripts/collect_personal_assistant_skill_readiness_catalog.py
 python scripts/validate_personal_assistant_skill_readiness_catalog.py --require-closed
 python scripts/collect_personal_assistant_dry_run_packet.py --output .change_assurance/personal_assistant_dry_run_packet.json
 python scripts/validate_personal_assistant_dry_run_packet.py --packet .change_assurance/personal_assistant_dry_run_packet.json --require-closed
+python scripts/collect_personal_assistant_foundation_closure_packet.py --output .change_assurance/personal_assistant_foundation_closure_packet.json
+python scripts/validate_personal_assistant_foundation_closure_packet.py --packet .change_assurance/personal_assistant_foundation_closure_packet.json --require-closed
 python scripts/validate_personal_assistant_read_only_projection.py
 python scripts/validate_personal_assistant_draft_projection.py
 python scripts/validate_personal_assistant_approval_decision.py

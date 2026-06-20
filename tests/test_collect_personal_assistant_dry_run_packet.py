@@ -58,6 +58,8 @@ def test_collect_dry_run_packet_uses_digest_only_source_artifacts() -> None:
     source_kinds = {record["source_kind"] for record in source_artifacts}  # type: ignore[index]
 
     assert "skill_registry" in source_kinds
+    assert "runtime_boundary" in source_kinds
+    assert "foundation_closure_packet" not in source_kinds
     assert all(record["payload_digest_only"] is True for record in source_artifacts)  # type: ignore[index]
     assert all(record["source_sha256"] for record in source_artifacts)  # type: ignore[index]
     assert all(record["serialized_length"] > 0 for record in source_artifacts)  # type: ignore[index]

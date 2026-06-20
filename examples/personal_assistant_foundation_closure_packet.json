@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-c1eb054d75c37fd3",
+  "packet_id": "personal-assistant-foundation-closure-b6606695f928036b",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-19T18:45:54Z",
+  "generated_at": "2026-06-20T14:13:24Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -141,6 +141,44 @@
       "bound": true,
       "payload_digest_only": true,
       "serialized_length": 18414
+    },
+    {
+      "source_kind": "skill_readiness_catalog",
+      "source_ref": "examples/personal_assistant_skill_readiness_catalog.json",
+      "source_sha256": "d09e142cfdc7bce4a9636e4da7013c5318095a13d40a1fee19924244bb80fc3f",
+      "receipt_id": "personal-assistant-skill-readiness-catalog-8fd435fce2a6571b",
+      "schema_version": "personal_assistant.skill_readiness_catalog.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "catalog_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 12994
+    },
+    {
+      "source_kind": "dry_run_packet",
+      "source_ref": "examples/personal_assistant_dry_run_packet.json",
+      "source_sha256": "eb87d42616452eff6b382e25e61380a5048f3c557ceee3ce7df4a32661ea3f7d",
+      "receipt_id": "personal-assistant-dry-run-0a39b8cb3e470c7d",
+      "schema_version": "personal_assistant.dry_run_packet.v1",
+      "schema_versioned": true,
+      "proof_state": "Pass",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "dry_run_packet_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "receipt_non_authoritative": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "bound": true,
+      "payload_digest_only": true,
+      "serialized_length": 15321
     }
   ],
   "authority_denials": [
@@ -216,10 +254,10 @@
   },
   "closure_summary": {
     "foundation_closure_packet_closed": true,
-    "source_receipt_count": 7,
-    "bound_source_receipt_count": 7,
-    "solved_verified_source_receipt_count": 7,
-    "closed_source_receipt_count": 7,
+    "source_receipt_count": 9,
+    "bound_source_receipt_count": 9,
+    "solved_verified_source_receipt_count": 9,
+    "closed_source_receipt_count": 9,
     "effect_violation_count": 0,
     "secret_value_marker_count": 0,
     "all_sources_bound": true,
@@ -240,7 +278,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-19",
+        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-20",
         "reason": "Bound Personal Assistant Foundation Mode receipt chain without granting live authority.",
         "logged_in_lineage": true
       }

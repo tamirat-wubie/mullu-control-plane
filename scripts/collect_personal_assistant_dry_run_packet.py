@@ -33,7 +33,7 @@ SOURCE_ARTIFACTS: tuple[tuple[str, Path, str], ...] = (
     ("draft_receipt", REPO_ROOT / "examples" / "personal_assistant_receipt_draft_only.json", "schemas/personal_assistant_receipt.schema.json"),
     ("memory_review", REPO_ROOT / "examples" / "personal_assistant_memory_review_evidence.json", "schemas/personal_assistant_memory_review.schema.json"),
     ("skill_readiness_catalog", REPO_ROOT / "examples" / "personal_assistant_skill_readiness_catalog.json", "schemas/personal_assistant_skill_readiness_catalog.schema.json"),
-    ("foundation_closure_packet", REPO_ROOT / "examples" / "personal_assistant_foundation_closure_packet.json", "schemas/personal_assistant_foundation_closure_packet.schema.json"),
+    ("runtime_boundary", REPO_ROOT / "examples" / "personal_assistant_runtime_boundary_receipt.json", "schemas/personal_assistant_runtime_boundary_receipt.schema.json"),
 )
 
 NO_EFFECT_FLAGS = (
@@ -384,7 +384,7 @@ def _stage_records() -> list[dict[str, object]]:
             ["read_only_preview", "draft_preview", "approval_gate_external_send", "memory_observation_review"],
             "",
             ["personal_assistant.receipt.replay"],
-            ["source:skill_readiness_catalog", "source:foundation_closure_packet", "memory_observation_review.memory_review_ref"],
+            ["source:skill_readiness_catalog", "source:runtime_boundary", "memory_observation_review.memory_review_ref"],
             ["replay_evidence_ref"],
             "P2",
             False,

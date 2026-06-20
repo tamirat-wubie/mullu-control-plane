@@ -34,8 +34,8 @@
     "packet_is_not_customer_readiness": { "type": "boolean", "const": true },
     "source_receipts": {
       "type": "array",
-      "minItems": 7,
-      "maxItems": 7,
+      "minItems": 9,
+      "maxItems": 9,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/source_receipt" }
     },
@@ -87,7 +87,9 @@
             "authority_coverage",
             "capsule_alignment",
             "policy_matrix",
-            "runtime_boundary"
+            "runtime_boundary",
+            "skill_readiness_catalog",
+            "dry_run_packet"
           ]
         },
         "source_ref": { "type": "string", "minLength": 1 },
@@ -106,7 +108,9 @@
             "authority_coverage_closed",
             "capsule_alignment_closed",
             "policy_matrix_closed",
-            "runtime_boundary_closed"
+            "runtime_boundary_closed",
+            "catalog_closed",
+            "dry_run_packet_closed"
           ]
         },
         "closed": { "type": "boolean" },
