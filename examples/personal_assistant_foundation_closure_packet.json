@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-b6606695f928036b",
+  "packet_id": "personal-assistant-foundation-closure-9ee85a7760dc53b8",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-20T14:13:24Z",
+  "generated_at": "2026-06-20T14:59:00Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -12,7 +12,7 @@
     {
       "source_kind": "foundation_evidence",
       "source_ref": "examples/personal_assistant_foundation_evidence_receipt.json",
-      "source_sha256": "dbc387bc3fc8cefafa37bf8b047b66f0bf1a602660b6c649cb21b3c45bd5fbf9",
+      "source_sha256": "a38fc95f9209afc3da99a3f2c83d2c4a4f06408497146ca09fbf8f49ff38e330",
       "receipt_id": "personal-assistant-foundation-evidence-7892c43aefaa8bb4",
       "schema_version": "personal_assistant.foundation_evidence_receipt.v1",
       "schema_versioned": true,
@@ -31,7 +31,7 @@
     {
       "source_kind": "readiness_index",
       "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
-      "source_sha256": "a77e2abcc08a90fa92cc019e1fce6c30af6283b4fdc8e32c28579d8d9560d370",
+      "source_sha256": "3fbf9b2b99924b8c614b2dca72e2727357fe9d29472e5dd36f29f7b89cbd449a",
       "receipt_id": "personal-assistant-readiness-index-288cbaae88dce421",
       "schema_version": "personal_assistant.readiness_index_receipt.v1",
       "schema_versioned": true,
@@ -50,7 +50,7 @@
     {
       "source_kind": "coherence_ledger",
       "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
-      "source_sha256": "724cc2eb8fd3a1baf4314cd679701526eedec22279fe8c9657ea82456249c8c8",
+      "source_sha256": "554e1b678547c5c7d8c99e69aa64af74d7bb51936eaeeac69511add2f1de3765",
       "receipt_id": "personal-assistant-coherence-ledger-8c41be9862803f39",
       "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
       "schema_versioned": true,
@@ -69,7 +69,7 @@
     {
       "source_kind": "authority_coverage",
       "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
-      "source_sha256": "048bb9521fa1020ea427f9722ee1bf04ab8900a4091c0dc41d8fc122b0a6e968",
+      "source_sha256": "a6dc87c5222d8f380c7827dbac7585924bfe8b07f179a255c4d143a0a51e4095",
       "receipt_id": "personal-assistant-authority-coverage-ff6ddef1e2a65362",
       "schema_version": "personal_assistant.authority_coverage_receipt.v1",
       "schema_versioned": true,
@@ -88,7 +88,7 @@
     {
       "source_kind": "capsule_alignment",
       "source_ref": "examples/personal_assistant_capsule_alignment_receipt.json",
-      "source_sha256": "2d2f12a2eaf173c5cdca34c683936352a10bf1d26f4ffea29f8b818d9253a8aa",
+      "source_sha256": "433e029dbc1dc18ebcabdbc8cb1a7524ad372160659d2c01f270cfb100cf9817",
       "receipt_id": "personal-assistant-capsule-alignment-4a7a102220b0ce4d",
       "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
       "schema_versioned": true,
@@ -107,7 +107,7 @@
     {
       "source_kind": "policy_matrix",
       "source_ref": "examples/personal_assistant_policy_matrix_receipt.json",
-      "source_sha256": "99324c2c62d4e9d43906fac1fe3c3953435baff7d3f207559c43779adbfdeb8c",
+      "source_sha256": "6a1c6c202ad353bda2ba98d06e4df94302337ca4c14173c0535d99f0c32ae660",
       "receipt_id": "personal-assistant-policy-matrix-7aecfbe83ddf4338",
       "schema_version": "personal_assistant.policy_matrix_receipt.v1",
       "schema_versioned": true,
@@ -126,7 +126,7 @@
     {
       "source_kind": "runtime_boundary",
       "source_ref": "examples/personal_assistant_runtime_boundary_receipt.json",
-      "source_sha256": "aea329146c4bd43f383f29674c58054842c0973facfa3d9d56aa5827ecf3d984",
+      "source_sha256": "b87f85f4d4bdc0df0bf727795000593b9a18886be4c601c5fe1334bfda560c7b",
       "receipt_id": "personal-assistant-runtime-boundary-45d03b76e23dfdd3",
       "schema_version": "personal_assistant.runtime_boundary_receipt.v1",
       "schema_versioned": true,
@@ -145,7 +145,7 @@
     {
       "source_kind": "skill_readiness_catalog",
       "source_ref": "examples/personal_assistant_skill_readiness_catalog.json",
-      "source_sha256": "d09e142cfdc7bce4a9636e4da7013c5318095a13d40a1fee19924244bb80fc3f",
+      "source_sha256": "d5e60467f1dc8daf146235689cfe99fa49dc777fbcf1c860323705a0cda6e507",
       "receipt_id": "personal-assistant-skill-readiness-catalog-8fd435fce2a6571b",
       "schema_version": "personal_assistant.skill_readiness_catalog.v1",
       "schema_versioned": true,
@@ -164,7 +164,7 @@
     {
       "source_kind": "dry_run_packet",
       "source_ref": "examples/personal_assistant_dry_run_packet.json",
-      "source_sha256": "eb87d42616452eff6b382e25e61380a5048f3c557ceee3ce7df4a32661ea3f7d",
+      "source_sha256": "3aa6cd399bf3f83bf712d9c7c28b6b49274186da8a8ffb8572129205070d2495",
       "receipt_id": "personal-assistant-dry-run-0a39b8cb3e470c7d",
       "schema_version": "personal_assistant.dry_run_packet.v1",
       "schema_versioned": true,

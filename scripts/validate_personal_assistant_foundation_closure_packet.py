@@ -7,6 +7,7 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: foundation closure packet schema, collector constants, and schema helpers.
 Invariants:
   - Closure requires every source receipt to be bound, SolvedVerified, and closed.
+  - Source receipt digests must match current checked-in source refs.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
 """
@@ -30,6 +31,7 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     DEFAULT_OUTPUT,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
+    canonical_source_sha256,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -91,6 +93,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_schema_contract(payload, schema_path),
         _check_packet_id(payload),
         _check_source_receipts(payload),
+        _check_source_receipt_digests(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
         _check_closure_gate(payload),
@@ -176,6 +179,30 @@ def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundati
         passed,
         f"kinds={len(observed_kinds)}/{len(required_kinds)} closed={len(closed_records)}",
     )
+
+
+def _check_source_receipt_digests(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        expected_digest = _bounded_text(record.get("source_sha256"))
+        source_path = (REPO_ROOT / source_ref).resolve()
+        if not _path_within_repo(source_path) or not source_path.exists():
+            missing.append(source_kind)
+            continue
+        observed_digest = _file_sha256(source_path)
+        if observed_digest != expected_digest:
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "digests-current"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt digests", passed, detail)
 
 
 def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -284,6 +311,18 @@ def _bounded_packet_path(path: Path) -> str:
 
 def _bounded_text(value: object) -> str:
     return value if isinstance(value, str) else ""
+
+
+def _path_within_repo(path: Path) -> bool:
+    try:
+        path.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _file_sha256(path: Path) -> str:
+    return canonical_source_sha256(path)
 
 
 def _object(value: object) -> dict[str, Any]:
