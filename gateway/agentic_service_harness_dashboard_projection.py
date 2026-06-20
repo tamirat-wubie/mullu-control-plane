@@ -81,14 +81,18 @@ def build_agentic_service_harness_dashboard_projection(
 
     scope = _require_mapping(contract, "scope")
     data_contract = _require_mapping(contract, "data_contract")
-    _require_equal(data_contract, "decision", EXPECTED_DECISION)
-    _require_true(scope, "read_only")
+    _require_equal(data_contract, "decision", EXPECTED_DECISION, prefix="data_contract.")
+    _require_true(scope, "read_only", prefix="scope.")
     for field_name in _REQUIRED_FALSE_SCOPE_FLAGS:
-        _require_false(scope, field_name)
+        _require_false(scope, field_name, prefix="scope.")
     for field_name in _REQUIRED_FALSE_CONTRACT_FLAGS:
-        _require_false(data_contract, field_name)
-    _require_true(data_contract, "read_only")
-    _require_true(data_contract, "approval_required_for_effects")
+        _require_false(data_contract, field_name, prefix="data_contract.")
+    _require_true(data_contract, "read_only", prefix="data_contract.")
+    _require_true(
+        data_contract,
+        "approval_required_for_effects",
+        prefix="data_contract.",
+    )
 
     allowed_action_classes = _string_sequence(
         data_contract.get("allowed_action_classes"),
@@ -121,7 +125,10 @@ def build_agentic_service_harness_dashboard_projection(
     for index, raw_widget in enumerate(widgets_value):
         if not isinstance(raw_widget, Mapping):
             raise DashboardProjectionError(f"widgets[{index}] must be an object")
-        widget_id = _non_empty_text(raw_widget.get("widget_id"), f"widgets[{index}].widget_id")
+        widget_id = _non_empty_text(
+            raw_widget.get("widget_id"),
+            f"widgets[{index}].widget_id",
+        )
         if widget_id in seen_widget_ids:
             raise DashboardProjectionError(f"duplicate widget_id: {widget_id}")
         seen_widget_ids.add(widget_id)
@@ -131,7 +138,10 @@ def build_agentic_service_harness_dashboard_projection(
         widgets.append(
             {
                 "widget_id": widget_id,
-                "title": _non_empty_text(raw_widget.get("title"), f"widgets[{index}].title"),
+                "title": _non_empty_text(
+                    raw_widget.get("title"),
+                    f"widgets[{index}].title",
+                ),
                 "source_collection": _non_empty_text(
                     raw_widget.get("source_collection"),
                     f"widgets[{index}].source_collection",
@@ -185,9 +195,13 @@ def build_agentic_service_harness_dashboard_projection(
 def render_agentic_service_harness_dashboard_html(projection: Mapping[str, Any]) -> str:
     """Render static, escaped HTML for the read-only operator projection."""
     if projection.get("read_only") is not True or projection.get("no_effect") is not True:
-        raise DashboardProjectionError("dashboard projection must remain read-only and no-effect")
+        raise DashboardProjectionError(
+            "dashboard projection must remain read-only and no-effect"
+        )
     if projection.get("action_controls_present") is not False:
-        raise DashboardProjectionError("dashboard projection must not contain action controls")
+        raise DashboardProjectionError(
+            "dashboard projection must not contain action controls"
+        )
 
     widgets_value = projection.get("widgets")
     if not isinstance(widgets_value, list):
@@ -196,13 +210,33 @@ def render_agentic_service_harness_dashboard_html(projection: Mapping[str, Any])
     cards: list[str] = []
     for index, widget in enumerate(widgets_value):
         if not isinstance(widget, Mapping):
-            raise DashboardProjectionError(f"projection widgets[{index}] must be an object")
+            raise DashboardProjectionError(
+                f"projection widgets[{index}] must be an object"
+            )
+        if widget.get("read_only") is not True:
+            raise DashboardProjectionError(
+                f"projection widgets[{index}].read_only must be true"
+            )
+        if widget.get("action_controls_present") is not False:
+            raise DashboardProjectionError(
+                f"projection widgets[{index}].action_controls_present must be false"
+            )
         evidence_refs = widget.get("evidence_refs", ())
         required_fields = widget.get("required_fields", ())
-        if not isinstance(evidence_refs, Sequence) or isinstance(evidence_refs, (str, bytes)):
-            raise DashboardProjectionError(f"projection widgets[{index}].evidence_refs invalid")
-        if not isinstance(required_fields, Sequence) or isinstance(required_fields, (str, bytes)):
-            raise DashboardProjectionError(f"projection widgets[{index}].required_fields invalid")
+        if not isinstance(evidence_refs, Sequence) or isinstance(
+            evidence_refs,
+            (str, bytes),
+        ):
+            raise DashboardProjectionError(
+                f"projection widgets[{index}].evidence_refs invalid"
+            )
+        if not isinstance(required_fields, Sequence) or isinstance(
+            required_fields,
+            (str, bytes),
+        ):
+            raise DashboardProjectionError(
+                f"projection widgets[{index}].required_fields invalid"
+            )
         cards.append(
             "<article class=\"card\">"
             f"<h2>{escape(str(widget.get('title', '')))}</h2>"
@@ -216,13 +250,23 @@ def render_agentic_service_harness_dashboard_html(projection: Mapping[str, Any])
 
     blocked_effects = projection.get("blocked_effects", ())
     blocked_reasons = projection.get("blocked_reason_refs", ())
-    if not isinstance(blocked_effects, Sequence) or isinstance(blocked_effects, (str, bytes)):
+    if not isinstance(blocked_effects, Sequence) or isinstance(
+        blocked_effects,
+        (str, bytes),
+    ):
         raise DashboardProjectionError("blocked_effects must be a sequence")
-    if not isinstance(blocked_reasons, Sequence) or isinstance(blocked_reasons, (str, bytes)):
+    if not isinstance(blocked_reasons, Sequence) or isinstance(
+        blocked_reasons,
+        (str, bytes),
+    ):
         raise DashboardProjectionError("blocked_reason_refs must be a sequence")
 
-    blocked_items = "".join(f"<li>{escape(str(item))}</li>" for item in blocked_effects)
-    reason_items = "".join(f"<li>{escape(str(item))}</li>" for item in blocked_reasons)
+    blocked_items = "".join(
+        f"<li>{escape(str(item))}</li>" for item in blocked_effects
+    )
+    reason_items = "".join(
+        f"<li>{escape(str(item))}</li>" for item in blocked_reasons
+    )
     cards_html = "\n".join(cards)
 
     return f"""<!doctype html>
@@ -268,24 +312,44 @@ def _require_mapping(container: Mapping[str, Any], field_name: str) -> Mapping[s
     return value
 
 
-def _require_equal(container: Mapping[str, Any], field_name: str, expected: Any) -> None:
+def _require_equal(
+    container: Mapping[str, Any],
+    field_name: str,
+    expected: Any,
+    *,
+    prefix: str = "",
+) -> None:
     if container.get(field_name) != expected:
-        raise DashboardProjectionError(f"{field_name} must equal {expected!r}")
+        raise DashboardProjectionError(
+            f"{prefix}{field_name} must equal {expected!r}"
+        )
 
 
-def _require_true(container: Mapping[str, Any], field_name: str, *, prefix: str = "") -> None:
+def _require_true(
+    container: Mapping[str, Any],
+    field_name: str,
+    *,
+    prefix: str = "",
+) -> None:
     if container.get(field_name) is not True:
         raise DashboardProjectionError(f"{prefix}{field_name} must be true")
 
 
-def _require_false(container: Mapping[str, Any], field_name: str, *, prefix: str = "") -> None:
+def _require_false(
+    container: Mapping[str, Any],
+    field_name: str,
+    *,
+    prefix: str = "",
+) -> None:
     if container.get(field_name) is not False:
         raise DashboardProjectionError(f"{prefix}{field_name} must be false")
 
 
 def _non_empty_text(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or not value or value != value.strip():
-        raise DashboardProjectionError(f"{field_name} must be exact non-empty text")
+        raise DashboardProjectionError(
+            f"{field_name} must be exact non-empty text"
+        )
     return value
 
 
