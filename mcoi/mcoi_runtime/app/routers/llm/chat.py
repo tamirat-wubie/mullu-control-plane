@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -13,6 +14,7 @@ from mcoi_runtime.app.inceptadive_shadow_integration import (
     InceptaDiveShadowRuntime,
     build_inceptadive_shadow_runtime,
 )
+from mcoi_runtime.app.streaming import StreamEvent
 from mcoi_runtime.app.routers.llm._common import (
     _raise_governed_http_error,
     _raise_llm_service_unavailable,
@@ -156,14 +158,36 @@ def streaming_chat(req: ChatRequest):
         conv.add_assistant(result.content)
         deps.cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
 
-    # Stream as SSE
+    stream_request_id = f"chat-{req.conversation_id}"
+    shadow_advisory = build_assistant_response_shadow_advisory(
+        _shadow_runtime(),
+        request_id=_assistant_response_shadow_request_id(
+            route="/api/v1/chat/stream",
+            conversation_id=conv.conversation_id,
+            response_ref=str(conv.message_count),
+            model_or_capability=result.model_name,
+        ),
+        user_input=req.message,
+        assistant_content=result.content,
+        route="/api/v1/chat/stream",
+        tenant_id=req.tenant_id,
+        model_name=result.model_name,
+        succeeded=result.succeeded,
+        created_at=_created_at(),
+    )
+
+    # Stream as SSE. The advisory wrapper preserves existing meta/token/done
+    # events and inserts one redacted, advisory-only metadata event.
     return StreamingResponse(
-        deps.streaming_adapter.stream_to_sse(
-            result,
-            request_id=f"chat-{req.conversation_id}",
-            tenant_id=req.tenant_id,
-            budget_id=req.budget_id,
-            estimated_input_tokens=result.input_tokens,
+        _stream_with_shadow_advisory(
+            deps.streaming_adapter.stream_to_sse(
+                result,
+                request_id=stream_request_id,
+                tenant_id=req.tenant_id,
+                budget_id=req.budget_id,
+                estimated_input_tokens=result.input_tokens,
+            ),
+            shadow_advisory,
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
@@ -296,3 +320,20 @@ def _assistant_response_shadow_request_id(
             "model_or_capability": model_or_capability,
         },
     )
+
+
+def _stream_with_shadow_advisory(
+    sse_events: Iterator[str],
+    advisory: dict[str, object],
+) -> Iterator[str]:
+    """Insert one redacted advisory SSE event without changing stream payloads."""
+
+    inserted = False
+    advisory_event = StreamEvent(event_type="inceptadive_shadow_advisory", data=advisory).to_sse()
+    for event in sse_events:
+        yield event
+        if not inserted and event.startswith("event: meta"):
+            yield advisory_event
+            inserted = True
+    if not inserted:
+        yield advisory_event
