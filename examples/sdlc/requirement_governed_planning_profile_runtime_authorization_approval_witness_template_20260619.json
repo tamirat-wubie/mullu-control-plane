@@ -1,0 +1,67 @@
+{
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_authorization_approval_witness_template_20260619",
+  "request_id": "platform_governed_planning_profile_continue_20260619",
+  "problem_statement": "The GovernedPlanningProfile runtime authorization path needs a schema-backed approval witness template that defines the exact future signed approval evidence without collecting approval, accepting generic continuation, or granting runtime authority.",
+  "success_criteria": [
+    "a deterministic validator emits a runtime authorization approval witness template from the current runtime authorization request and generic continuation rejection witness",
+    "the checked-in local approval witness template matches the deterministic produced template",
+    "the schema records AwaitingEvidence and TemplateNoEffect for the approval template",
+    "the template binds the source runtime authorization request id and hash",
+    "the template binds the source generic continuation rejection id and hash",
+    "the template records that signed approval remains absent, approval witness collection remains false, and runtime authorization gate remains unsatisfied",
+    "focused tests cover schema compatibility, fixture parity, source binding, required approval fields, authority-drift rejection, approval-collection drift rejection, generic-continuation acceptance rejection, source-boundary drift rejection, and CLI JSON output"
+  ],
+  "non_goals": [
+    "do not authorize runtime promotion",
+    "do not record a signed operator approval witness",
+    "do not accept generic continuation as approval",
+    "do not execute, dispatch, replan, replay, or rollback",
+    "do not add a router, worker, scheduler, connector, or runtime registration path",
+    "do not claim live runtime activation",
+    "do not replace the runtime authorization request or generic continuation rejection witness"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "the approval witness template is local, read-only, deterministic, and reversible",
+    "the template is not accepted as approval",
+    "explicit signed approval remains required before the runtime authorization gate can be satisfied",
+    "runtime activation remains denied until a separate governed activation action is approved",
+    "Mfidel atomicity remains preserved because the validator does not normalize or decompose text"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py",
+    "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json",
+    "examples/governed_planning_profile_runtime_authorization_approval_witness_template.local.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "docs/GOVERNED_PLANNING_PROFILE.md",
+    "examples/sdlc/design_governed_planning_profile_runtime_authorization_approval_witness_template_20260619.json",
+    "examples/sdlc/security_review_governed_planning_profile_runtime_authorization_approval_witness_template_20260619.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py",
+    "python scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "evidence_required": [
+    "schema-backed local approval witness template fixture",
+    "deterministic validator and produced template parity",
+    "focused validator tests",
+    "protocol manifest registration",
+    "SDLC design and security review artifacts",
+    "documentation drift update"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-approval-witness-template/requirement/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-approval-witness-template/requirement/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-approval-witness-template/requirement/20260619"
+}
