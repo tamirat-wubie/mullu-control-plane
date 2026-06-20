@@ -135,8 +135,8 @@ class SNetRecursiveMesh:
     ) -> SNetTickResult:
         """Generate the fixed WH burst for one symbol unless budget blocks it."""
         symbol = self._require_symbol(symbol_id)
-        perspective = _require_text(perspective, "perspective")
-        context = _require_text(context, "context")
+        perspective = _require_scope_text(perspective, "perspective")
+        context = _require_scope_text(context, "context")
         parent_question_id = _optional_id_text(parent_question_id, "parent_question_id")
         if parent_question_id:
             self._require_parent_question_scope(symbol, self._require_question(parent_question_id))
@@ -662,6 +662,12 @@ def _require_text(value: str, field_name: str) -> str:
     if type(value) is not str or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value.strip()
+
+
+def _require_scope_text(value: str, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty scope string")
+    return value
 
 
 def _optional_text(value: str, field_name: str) -> str:
