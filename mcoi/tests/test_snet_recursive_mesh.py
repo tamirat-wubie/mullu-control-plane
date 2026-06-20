@@ -1391,6 +1391,95 @@ def test_direct_snet_contracts_reject_scope_whitespace_drift() -> None:
     assert valid_question.context == "general scope"
 
 
+def test_direct_snet_contracts_reject_semantic_whitespace_drift() -> None:
+    with pytest.raises(ValueError, match="facet"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet=" identity",
+        )
+    with pytest.raises(ValueError, match="facet"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity ",
+            value="Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="value"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value=" Seed",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="relation_type"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type=" identity",
+            target_symbol_id="symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general",
+        )
+    with pytest.raises(ValueError, match="missing_facet"):
+        SNetUnknown(
+            unknown_id="unknown:1",
+            symbol_id="symbol:1",
+            missing_facet=" identity",
+            question_id="question:1",
+            importance_score=0.5,
+            blocking_reason="answer missing",
+        )
+    with pytest.raises(ValueError, match="blocking_reason"):
+        SNetUnknown(
+            unknown_id="unknown:2",
+            symbol_id="symbol:1",
+            missing_facet="identity",
+            question_id="question:1",
+            importance_score=0.5,
+            blocking_reason=" answer_missing",
+        )
+
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed value",
+        context="general",
+        perspective="general",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    valid_unknown = SNetUnknown(
+        unknown_id="unknown:3",
+        symbol_id="symbol:2",
+        missing_facet="identity",
+        question_id="question:2",
+        importance_score=0.5,
+        blocking_reason="answer missing",
+    )
+
+    assert valid_metadata.value == "Seed value"
+    assert valid_unknown.blocking_reason == "answer missing"
+
+
 def test_direct_snet_contracts_reject_identifier_whitespace_drift() -> None:
     with pytest.raises(ValueError, match="symbol_id"):
         SNetSymbol(symbol_id=" symbol:1", label="Seed")
