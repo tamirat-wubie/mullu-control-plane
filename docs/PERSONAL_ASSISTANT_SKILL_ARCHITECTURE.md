@@ -490,6 +490,11 @@ live connector execution, connector mutation, external effects, system-of-record
 writes, memory writes, deployment mutation, customer readiness, production
 readiness, live Nested Mind activation, or terminal closure.
 
+The closure validator also compares every recorded source receipt digest to the
+current checked-in source ref. Digest mismatch, missing source refs, or source
+refs that escape the repository fail validation even when the packet schema is
+otherwise well formed.
+
 ## Integration Position
 
 This layer composes existing certified capabilities. It does not reimplement live Gmail, calendar, GitHub, filesystem, deployment, payment, or Nested Mind execution. Future PRs can bind each skill lane to existing capability packs through UAO after approval and receipt evidence is present.

@@ -7,6 +7,7 @@ Dependencies: scripts.validate_personal_assistant_foundation_closure_packet and
 the closure packet collector.
 Invariants:
   - Require-closed validation needs every source receipt closed.
+  - Source receipt digests must match current checked-in source refs.
   - Authority denials must remain complete.
   - Secret-shaped values cannot be serialized into closure packets.
 """
@@ -74,6 +75,35 @@ def test_validate_foundation_closure_packet_rejects_open_source(tmp_path: Path) 
     assert validation.foundation_closure_packet_closed is False
     assert any(step.name == "source receipts" and not step.passed for step in validation.steps)
     assert any(step.name == "require closed" and not step.passed for step in validation.steps)
+
+
+def test_validate_foundation_closure_packet_rejects_source_digest_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["source_receipts"][0]["source_sha256"] = "0" * 64  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.foundation_closure_packet_closed is True
+    assert any(step.name == "source receipt digests" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_foundation_closure_packet_rejects_source_ref_escape(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["source_receipts"][0]["source_ref"] = "../outside.json"  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(packet_path=packet_path)
+
+    assert validation.valid is False
+    assert any(step.name == "source receipt digests" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+    assert validation.packet_id == packet["packet_id"]
 
 
 def test_validate_foundation_closure_packet_rejects_missing_authority_denial(tmp_path: Path) -> None:
