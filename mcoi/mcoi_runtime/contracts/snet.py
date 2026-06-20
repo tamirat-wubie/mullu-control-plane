@@ -210,6 +210,12 @@ def _require_scope_text(value: object, field_name: str) -> str:
     return value
 
 
+def _require_semantic_text(value: object, field_name: str) -> str:
+    if type(value) is not str or not value.strip() or value != value.strip():
+        raise ValueError(f"{field_name} must be an exact non-empty semantic string")
+    return value
+
+
 def _require_optional_scope_text(value: object, field_name: str) -> str:
     if type(value) is not str:
         raise ValueError(f"{field_name} must be an exact non-empty scope string or empty")
@@ -354,7 +360,7 @@ class SNetQuestion(ContractRecord):
         if not isinstance(self.wh_type, SNetWHType):
             raise ValueError("wh_type must be a SNetWHType")
         object.__setattr__(self, "text", _require_text(self.text, "text"))
-        object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
+        object.__setattr__(self, "facet", _require_semantic_text(self.facet, "facet"))
         object.__setattr__(self, "perspective", _require_scope_text(self.perspective, "perspective"))
         object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
         object.__setattr__(self, "depth", _require_non_negative_int(self.depth, "depth"))
@@ -424,8 +430,8 @@ class SNetMetadata(ContractRecord):
         object.__setattr__(self, "parent_symbol_id", _require_exact_text(self.parent_symbol_id, "parent_symbol_id"))
         object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
         object.__setattr__(self, "answer_id", _require_exact_text(self.answer_id, "answer_id"))
-        object.__setattr__(self, "facet", _require_text(self.facet, "facet"))
-        object.__setattr__(self, "value", _require_text(self.value, "value"))
+        object.__setattr__(self, "facet", _require_semantic_text(self.facet, "facet"))
+        object.__setattr__(self, "value", _require_semantic_text(self.value, "value"))
         object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
         object.__setattr__(self, "perspective", _require_scope_text(self.perspective, "perspective"))
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
@@ -458,7 +464,7 @@ class SNetRelation(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "relation_id", _require_exact_text(self.relation_id, "relation_id"))
         object.__setattr__(self, "source_symbol_id", _require_exact_text(self.source_symbol_id, "source_symbol_id"))
-        object.__setattr__(self, "relation_type", _require_text(self.relation_type, "relation_type"))
+        object.__setattr__(self, "relation_type", _require_semantic_text(self.relation_type, "relation_type"))
         object.__setattr__(self, "target_symbol_id", _require_exact_text(self.target_symbol_id, "target_symbol_id"))
         object.__setattr__(self, "confidence", _require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "context", _require_scope_text(self.context, "context"))
@@ -511,10 +517,14 @@ class SNetUnknown(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "unknown_id", _require_exact_text(self.unknown_id, "unknown_id"))
         object.__setattr__(self, "symbol_id", _require_exact_text(self.symbol_id, "symbol_id"))
-        object.__setattr__(self, "missing_facet", _require_text(self.missing_facet, "missing_facet"))
+        object.__setattr__(self, "missing_facet", _require_semantic_text(self.missing_facet, "missing_facet"))
         object.__setattr__(self, "question_id", _require_exact_text(self.question_id, "question_id"))
         object.__setattr__(self, "importance_score", _require_unit_float(self.importance_score, "importance_score"))
-        object.__setattr__(self, "blocking_reason", _require_text(self.blocking_reason, "blocking_reason"))
+        object.__setattr__(
+            self,
+            "blocking_reason",
+            _require_semantic_text(self.blocking_reason, "blocking_reason"),
+        )
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
