@@ -16,7 +16,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -975,13 +974,57 @@ def test_run_check_records_timeout_diagnosis() -> None:
     assert "[TIMEOUT] intentional_timeout exceeded" in result.stderr
 
 
+def test_run_command_process_terminates_process_tree_on_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    command = runner.CheckCommand("slow_validator", ("python", "slow.py"))
+    cleanup_pids: list[int] = []
+
+    class TimeoutProcess:
+        pid = 321
+        returncode = None
+
+        def __init__(self) -> None:
+            self.communicate_calls = 0
+
+        def communicate(self, timeout: float | None = None) -> tuple[str, str]:
+            self.communicate_calls += 1
+            if self.communicate_calls == 1:
+                raise runner.subprocess.TimeoutExpired(
+                    command.args,
+                    timeout,
+                    output="partial stdout",
+                    stderr="partial stderr",
+                )
+            self.returncode = -9
+            return (" remaining stdout", " remaining stderr")
+
+    def fake_popen(*args: object, **kwargs: object) -> TimeoutProcess:
+        return TimeoutProcess()
+
+    def fake_terminate_process_tree(pid: int) -> str:
+        cleanup_pids.append(pid)
+        return "[TIMEOUT-CLEANUP] terminated child process tree\n"
+
+    monkeypatch.setattr(runner.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(runner, "terminate_process_tree", fake_terminate_process_tree)
+
+    result = runner.run_command_process(command, runner.WORKSPACE_ROOT, timeout_seconds=0.01)
+
+    assert result.return_code == runner.TIMEOUT_RETURN_CODE
+    assert result.timed_out is True
+    assert cleanup_pids == [321]
+    assert result.stdout == "partial stdout remaining stdout"
+    assert "partial stderr remaining stderr" in result.stderr
+    assert "[TIMEOUT-CLEANUP] terminated child process tree" in result.stderr
+    assert "[TIMEOUT] slow_validator exceeded" in result.stderr
+
+
 def test_run_check_records_subprocess_start_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     command = runner.CheckCommand("missing_interpreter", ("missing-python", "validator.py"))
 
-    def fake_subprocess_run(*args: object, **kwargs: object) -> SimpleNamespace:
+    def fake_command_process(*args: object, **kwargs: object) -> runner.ProcessExecution:
         raise OSError("interpreter not found")
 
-    monkeypatch.setattr(runner.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(runner, "run_command_process", fake_command_process)
 
     result = runner.run_check(command, runner.WORKSPACE_ROOT)
 
@@ -995,10 +1038,10 @@ def test_run_check_records_subprocess_start_exception(monkeypatch: pytest.Monkey
 def test_run_check_records_signal_termination_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:
     command = runner.CheckCommand("terminated_check", ("python", "terminated.py"))
 
-    def fake_subprocess_run(*args: object, **kwargs: object) -> SimpleNamespace:
-        return SimpleNamespace(returncode=-15, stdout="", stderr="terminated\n")
+    def fake_command_process(*args: object, **kwargs: object) -> runner.ProcessExecution:
+        return runner.ProcessExecution(-15, "", "terminated\n")
 
-    monkeypatch.setattr(runner.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(runner, "run_command_process", fake_command_process)
 
     result = runner.run_check(command, runner.WORKSPACE_ROOT)
 
