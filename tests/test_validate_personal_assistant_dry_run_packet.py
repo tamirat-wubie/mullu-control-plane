@@ -25,6 +25,7 @@ if str(_ROOT) not in sys.path:
 from scripts.collect_personal_assistant_dry_run_packet import (  # noqa: E402
     collect_personal_assistant_dry_run_packet,
 )
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_personal_assistant_dry_run_packet import (  # noqa: E402
     main,
     validate_personal_assistant_dry_run_packet,
@@ -64,6 +65,43 @@ def test_validate_dry_run_packet_rejects_dangling_binding(tmp_path: Path) -> Non
     assert validation.dry_run_packet_closed is True
     assert any(step.name == "bindings" and not step.passed for step in validation.steps)
     assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_dry_run_packet_rejects_source_digest_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    packet["source_artifacts"][0]["source_sha256"] = "0" * 64  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_dry_run_packet(packet_path=packet_path, require_closed=True)
+
+    assert validation.valid is False
+    assert validation.dry_run_packet_closed is True
+    assert any(step.name == "source artifact digests" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_dry_run_packet_rejects_source_ref_escape(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    packet["source_artifacts"][0]["source_ref"] = "../outside.json"  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_dry_run_packet(packet_path=packet_path)
+
+    assert validation.valid is False
+    assert any(step.name == "source artifact digests" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+    assert validation.packet_id == packet["packet_id"]
+
+
+def test_dry_run_source_digest_is_line_ending_stable(tmp_path: Path) -> None:
+    lf_source = tmp_path / "source-lf.json"
+    crlf_source = tmp_path / "source-crlf.json"
+    lf_source.write_bytes(b'{\n  "solver_outcome": "SolvedVerified"\n}\n')
+    crlf_source.write_bytes(b'{\r\n  "solver_outcome": "SolvedVerified"\r\n}\r\n')
+
+    assert canonical_source_sha256(lf_source) == canonical_source_sha256(crlf_source)
+    assert len(canonical_source_sha256(lf_source)) == 64
+    assert len(canonical_source_sha256(crlf_source)) == 64
 
 
 def test_validate_dry_run_packet_rejects_ungated_p4_path(tmp_path: Path) -> None:

@@ -17,11 +17,17 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
+
 DEFAULT_OUTPUT = REPO_ROOT / "examples" / "personal_assistant_dry_run_packet.json"
 
 SOURCE_ARTIFACTS: tuple[tuple[str, Path, str], ...] = (
@@ -236,7 +242,7 @@ def _source_artifact_record(kind: str, path: Path, schema_ref: str) -> dict[str,
         "source_kind": kind,
         "source_ref": _repo_path(path),
         "schema_ref": schema_ref,
-        "source_sha256": hashlib.sha256(raw_bytes).hexdigest(),
+        "source_sha256": canonical_source_sha256(path),
         "bound": True,
         "payload_digest_only": True,
         "serialized_length": len(raw_bytes),
