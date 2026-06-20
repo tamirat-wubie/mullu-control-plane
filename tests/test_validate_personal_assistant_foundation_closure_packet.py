@@ -27,6 +27,7 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     collect_personal_assistant_foundation_closure_packet,
 )
 from scripts.validate_personal_assistant_foundation_closure_packet import (  # noqa: E402
+    _file_sha256,
     main,
     validate_personal_assistant_foundation_closure_packet,
     write_personal_assistant_foundation_closure_validation_report,
@@ -104,6 +105,17 @@ def test_validate_foundation_closure_packet_rejects_source_ref_escape(tmp_path: 
     assert any(step.name == "source receipt digests" and not step.passed for step in validation.steps)
     assert any(step.name == "schema contract" and step.passed for step in validation.steps)
     assert validation.packet_id == packet["packet_id"]
+
+
+def test_foundation_closure_source_digest_is_line_ending_stable(tmp_path: Path) -> None:
+    lf_source = tmp_path / "source-lf.json"
+    crlf_source = tmp_path / "source-crlf.json"
+    lf_source.write_bytes(b'{\n  "proof_state": "Pass"\n}\n')
+    crlf_source.write_bytes(b'{\r\n  "proof_state": "Pass"\r\n}\r\n')
+
+    assert _file_sha256(lf_source) == _file_sha256(crlf_source)
+    assert len(_file_sha256(lf_source)) == 64
+    assert len(_file_sha256(crlf_source)) == 64
 
 
 def test_validate_foundation_closure_packet_rejects_missing_authority_denial(tmp_path: Path) -> None:

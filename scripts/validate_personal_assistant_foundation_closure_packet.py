@@ -31,6 +31,7 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     DEFAULT_OUTPUT,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
+    canonical_source_sha256,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -321,9 +322,7 @@ def _path_within_repo(path: Path) -> bool:
 
 
 def _file_sha256(path: Path) -> str:
-    import hashlib
-
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return canonical_source_sha256(path)
 
 
 def _object(value: object) -> dict[str, Any]:

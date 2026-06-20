@@ -119,6 +119,8 @@ BLOCKED_SECRET_VALUE_MARKERS = (
     "-----begin private key-----",
 )
 
+TEXT_SOURCE_SUFFIXES = frozenset({".json", ".md", ".py", ".yaml", ".yml"})
+
 
 def collect_personal_assistant_foundation_closure_packet(
     *,
@@ -352,7 +354,20 @@ def _read_json_object(path: Path, label: str) -> dict[str, Any]:
 
 
 def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return canonical_source_sha256(path)
+
+
+def canonical_source_sha256(path: Path) -> str:
+    """Return a newline-stable SHA-256 digest for checked-in text sources."""
+    raw_bytes = path.read_bytes()
+    if path.suffix.casefold() not in TEXT_SOURCE_SUFFIXES:
+        return hashlib.sha256(raw_bytes).hexdigest()
+    try:
+        source_text = raw_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise RuntimeError(f"failed to decode Personal Assistant text source: {_path_label(path)}") from exc
+    normalized_newlines = source_text.replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized_newlines.encode("utf-8")).hexdigest()
 
 
 def _packet_id(packet_without_id: Mapping[str, object]) -> str:
