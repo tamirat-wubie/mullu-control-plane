@@ -1805,6 +1805,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1"
     },
     {
+      "path": "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-promotion-decision",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-promotion-decision:1"
+    },
+    {
       "path": "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
       "schema_id": "read-only-worker-operator-runtime-enablement-approval-ref",
       "surface": "worker",

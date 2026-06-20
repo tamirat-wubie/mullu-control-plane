@@ -1,0 +1,52 @@
+{
+  "affected_modules": [
+    "read_only_worker_runtime_enablement_promotion_decision",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add a runtime enablement promotion decision contract that consumes the admission gate and records a Foundation Mode promotion denial without granting runtime authority.",
+  "data_model_changes": [
+    "Introduce a promotion decision schema and fixture with GovernanceBlocked outcome, proof_state Pass, and explicit denial reasons.",
+    "Preserve accepted evidence refs from the runtime admission gate while keeping promotion, admission, enablement, dispatch, worker invocation, receipt emission, receipt append, and terminal closure denied.",
+    "Register the schema in the protocol manifest, schema index, CI worker lane, docs, and SDLC artifacts."
+  ],
+  "design_id": "sdlc_design_runtime_enablement_promotion_decision_20260620",
+  "implementation_plan": [
+    "Add promotion decision schema, fixture, validator, and focused tests.",
+    "Register the schema in the protocol manifest and CI worker runtime enablement lane.",
+    "Update worker docs, schema README, gap register, and SDLC artifacts.",
+    "Run focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "Promotion decision is not runtime activation.",
+    "Runtime promotion remains denied.",
+    "Runtime admission remains denied.",
+    "Runtime enablement remains denied.",
+    "Dispatch, worker invocation, receipt emission, receipt append, and terminal closure remain denied.",
+    "Re-entry evidence for any future non-Foundation thread is explicit."
+  ],
+  "requirement_id": "sdlc_req_runtime_enablement_promotion_decision_20260620",
+  "rollback_plan": [
+    "Remove promotion decision schema, fixture, validator, tests, manifest entry, CI inclusion, docs updates, and SDLC artifacts.",
+    "Restore gap register next action to adding a future governed runtime promotion decision."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_enablement_promotion_decision.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_promotion_decision.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k runtime_enablement_promotion_decision -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The slice closes the promotion-decision boundary by denying runtime promotion under current Foundation Mode.",
+    "Any future live runtime promotion remains a separate, explicit non-Foundation authority thread."
+  ]
+}
