@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-foundation-closure-summary:1",
+  "title": "Read-Only Worker Runtime Foundation Closure Summary",
+  "description": "Foundation Mode closure summary for the read-only worker runtime enablement chain. The summary proves the chain is closed for Foundation Mode and blocked for live runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "closure_id",
+    "closure_version",
+    "source_promotion_decision_ref",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "closure_state",
+    "foundation_closure_complete",
+    "live_runtime_blocked",
+    "terminal_closure_claimed",
+    "runtime_promotion_allowed",
+    "runtime_admission_allowed",
+    "runtime_enablement_allowed",
+    "runtime_enablement_executed",
+    "runtime_dispatch_allowed",
+    "worker_invocation_allowed",
+    "runtime_receipt_emission_allowed",
+    "receipt_append_allowed",
+    "success_claim_allowed",
+    "secret_values_serialized",
+    "connector_authority_allowed",
+    "filesystem_write_allowed",
+    "external_network_allowed",
+    "chain_refs",
+    "accepted_evidence_refs",
+    "live_runtime_blockers",
+    "blocked_actions",
+    "summary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "closure_id": {
+      "type": "string",
+      "const": "read-only-worker-runtime-foundation-closure-summary-repo-inspection-20260620"
+    },
+    "closure_version": {
+      "type": "string",
+      "const": "read_only_worker_runtime_foundation_closure_summary.v1"
+    },
+    "source_promotion_decision_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json"
+    },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "proof_state": { "type": "string", "const": "Pass" },
+    "closure_state": { "type": "string", "const": "foundation_closed_live_runtime_blocked" },
+    "foundation_closure_complete": { "type": "boolean", "const": true },
+    "live_runtime_blocked": { "type": "boolean", "const": true },
+    "terminal_closure_claimed": { "type": "boolean", "const": false },
+    "runtime_promotion_allowed": { "type": "boolean", "const": false },
+    "runtime_admission_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_executed": { "type": "boolean", "const": false },
+    "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+    "worker_invocation_allowed": { "type": "boolean", "const": false },
+    "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+    "receipt_append_allowed": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "secret_values_serialized": { "type": "boolean", "const": false },
+    "connector_authority_allowed": { "type": "boolean", "const": false },
+    "filesystem_write_allowed": { "type": "boolean", "const": false },
+    "external_network_allowed": { "type": "boolean", "const": false },
+    "chain_refs": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "accepted_evidence_refs": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "live_runtime_blockers": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chain_ref_count",
+        "accepted_evidence_ref_count",
+        "live_runtime_blocker_count",
+        "runtime_promotion_allowed_count",
+        "runtime_enablement_count",
+        "blocked_action_count"
+      ],
+      "properties": {
+        "chain_ref_count": { "type": "integer", "const": 11 },
+        "accepted_evidence_ref_count": { "type": "integer", "const": 12 },
+        "live_runtime_blocker_count": { "type": "integer", "minimum": 3 },
+        "runtime_promotion_allowed_count": { "type": "integer", "const": 0 },
+        "runtime_enablement_count": { "type": "integer", "const": 0 },
+        "blocked_action_count": { "type": "integer", "const": 7 }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 },
+    "repo_ref": { "type": "string", "minLength": 1, "pattern": "^(examples|schemas|scripts|tests|docs)/" }
+  }
+}

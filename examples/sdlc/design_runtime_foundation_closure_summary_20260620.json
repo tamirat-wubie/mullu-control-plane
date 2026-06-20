@@ -1,0 +1,51 @@
+{
+  "affected_modules": [
+    "read_only_worker_runtime_foundation_closure_summary",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add a Foundation Mode closure summary that consumes the runtime promotion decision and records the read-only worker runtime chain as closed for Foundation Mode while live runtime remains blocked.",
+  "data_model_changes": [
+    "Introduce a closure summary schema and fixture with SolvedVerified outcome, proof_state Pass, complete chain refs, and explicit live-runtime blockers.",
+    "Preserve accepted evidence refs from the promotion decision while keeping runtime promotion, admission, enablement, dispatch, worker invocation, receipt emission, receipt append, and live terminal closure denied.",
+    "Register the schema in the protocol manifest, schema index, CI worker lane, docs, and SDLC artifacts."
+  ],
+  "design_id": "sdlc_design_runtime_foundation_closure_summary_20260620",
+  "implementation_plan": [
+    "Add closure summary schema, fixture, validator, and focused tests.",
+    "Register the schema in the protocol manifest and CI worker runtime enablement lane.",
+    "Update worker docs, schema README, gap register, and SDLC artifacts.",
+    "Run focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "Foundation closure is not live terminal closure.",
+    "Live runtime remains blocked.",
+    "Runtime enablement remains denied.",
+    "Dispatch, worker invocation, receipt emission, receipt append, and success claims remain denied.",
+    "The full Foundation runtime chain remains explicitly referenced."
+  ],
+  "requirement_id": "sdlc_req_runtime_foundation_closure_summary_20260620",
+  "rollback_plan": [
+    "Remove closure summary schema, fixture, validator, tests, manifest entry, CI inclusion, docs updates, and SDLC artifacts.",
+    "Restore the worker runtime next action to stopping after the Foundation Mode promotion denial."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_runtime_foundation_closure_summary.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_foundation_closure_summary.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_foundation_closure_summary.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k runtime_foundation_closure_summary -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The slice closes the Foundation proof thread without enabling runtime.",
+    "Any future live runtime thread remains separate and requires explicit non-Foundation authority."
+  ]
+}
