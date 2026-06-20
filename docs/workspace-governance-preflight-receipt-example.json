@@ -1,5 +1,5 @@
 {
-  "check_count": 262,
+  "check_count": 263,
   "checks": [
     {
       "args": [
@@ -230,6 +230,19 @@
         "scripts/validate_agentic_service_harness_planned_file_change_collection_preflight.py"
       ],
       "name": "agentic_service_harness_planned_file_change_collection_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_actual_file_change_summary_receipt.py"
+      ],
+      "name": "agentic_service_harness_actual_file_change_summary_receipt",
       "passed": true,
       "return_code": 0,
       "stderr": "",
