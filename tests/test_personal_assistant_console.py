@@ -64,6 +64,7 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
         "/api/v1/console/personal-assistant/view",
     ]
     readiness = payload["assistant_readiness"]
+    pilot = payload["governed_team_assistant_pilot"]
     assert readiness["readiness_id"] == "personal_assistant_read_only_readiness_demo"
     assert readiness["user_prompt"] == "Show my assistant readiness."
     assert readiness["mode"] == "read_only"
@@ -82,6 +83,27 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert readiness["external_send_allowed"] is False
     assert readiness["raw_private_payload_serialized"] is False
     assert readiness["customer_readiness_claim_allowed"] is False
+    assert payload["sections"]["pilot"]["item_count"] == 1
+    assert payload["sections"]["pilot"]["execution_allowed"] is False
+    assert payload["sections"]["pilot"]["customer_readiness_claim_allowed"] is False
+    assert pilot["pilot_id"] == "governed_team_assistant_pilot_v0"
+    assert pilot["package_name"] == "Governed Team Assistant Pilot"
+    assert pilot["stage"] == "controlled_demo_productization"
+    assert pilot["positioning"] == "Mullu is a governed assistant control plane."
+    assert pilot["operator_prompt"] == "Show my assistant readiness."
+    assert pilot["included_lane_ids"] == [lane["lane_id"] for lane in payload["lane_status"]["lanes"]]
+    assert "/api/v1/personal-assistant/send-write/eligibility/preview" in pilot["demo_surface_refs"]
+    assert "show_what_did_not_happen" in pilot["operator_promises"]
+    assert "live_gmail_send_enabled" in pilot["blocked_claims"]
+    assert pilot["pilot_readiness"]["send_write_preflight_ready"] is True
+    assert pilot["pilot_readiness"]["live_execution_ready"] is False
+    assert pilot["approval_boundary"]["approval_required_before_send"] is True
+    assert pilot["approval_boundary"]["approval_is_execution"] is False
+    assert pilot["receipt_boundary"]["receipt_required_for_actions"] is True
+    assert pilot["receipt_boundary"]["runtime_dispatch_allowed"] is False
+    assert pilot["effect_boundary"]["external_send_allowed"] is False
+    assert pilot["execution_allowed"] is False
+    assert pilot["customer_readiness_claim_allowed"] is False
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]

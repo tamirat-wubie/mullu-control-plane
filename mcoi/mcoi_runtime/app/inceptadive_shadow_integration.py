@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from mcoi_runtime.core.inceptadive_action_taxonomy import classify_shadow_action
 from mcoi_runtime.core.inceptadive_deep_engine import run_deep_shadow_pass
 from mcoi_runtime.core.inceptadive_shadow_gate import decide_shadow_mode
 from mcoi_runtime.core.inceptadive_shadow_light import run_light_shadow_pass
@@ -33,6 +34,7 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowSeverity,
     ShadowStage,
     ShadowVerdict,
+    severity_rank,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
@@ -75,10 +77,19 @@ class InceptaDiveShadowRuntime:
         required_evidence_refs: tuple[str, ...] = (),
     ) -> tuple[ShadowPassResult, ShadowReceipt | None]:
         preflight_context = _as_preflight(context)
-        result = _off_result(preflight_context) if not self.config.enabled else run_strict_preflight(
-            preflight_context,
-            required_evidence_refs=required_evidence_refs,
-        )
+        if not self.config.enabled:
+            result = _off_result(preflight_context)
+        else:
+            strict_result = run_strict_preflight(
+                preflight_context,
+                required_evidence_refs=required_evidence_refs,
+            )
+            result = _with_external_effect_deep_advisory(
+                preflight_context,
+                strict_result,
+                config=self.config,
+                deep_engine_available=self.deep_engine_available,
+            )
         receipt = create_shadow_receipt(preflight_context, result) if self.receipts_enabled else None
         self._record(result, receipt)
         return result, receipt
@@ -201,6 +212,77 @@ def _deep_required_result(context: ShadowContext, light_result: ShadowPassResult
         needs_deep_pass=True,
         needs_repair=light_result.needs_repair,
         block_recommended=light_result.block_recommended,
+        created_at=context.created_at,
+    ).with_integrity()
+
+
+def _with_external_effect_deep_advisory(
+    context: ShadowContext,
+    strict_result: ShadowPassResult,
+    *,
+    config: ShadowInterrogationConfig,
+    deep_engine_available: bool,
+) -> ShadowPassResult:
+    if not deep_engine_available or not config.deep_enabled or not _preflight_needs_deep_advisory(context):
+        return strict_result
+
+    deep_result = run_deep_shadow_pass(
+        context,
+        max_depth=config.max_depth,
+        max_findings=config.max_findings,
+    )
+    remaining = max(config.max_findings - len(strict_result.findings), 0)
+    if remaining < 1:
+        return strict_result
+    merged_findings = strict_result.findings + deep_result.findings[:remaining]
+    if merged_findings == strict_result.findings:
+        return strict_result
+    return _preflight_result_from_findings(context, merged_findings)
+
+
+def _preflight_needs_deep_advisory(context: ShadowContext) -> bool:
+    classification = classify_shadow_action(context)
+    return bool(
+        classification.deep_interrogation_required
+        or context.external_side_effect
+        or context.memory_contradiction
+        or severity_rank(context.risk_level) >= severity_rank(ShadowSeverity.HIGH)
+    )
+
+
+def _preflight_result_from_findings(
+    context: ShadowContext,
+    findings: tuple[ShadowFinding, ...],
+) -> ShadowPassResult:
+    has_critical = any(finding.severity == ShadowSeverity.CRITICAL for finding in findings)
+    has_high_repair = any(finding.repair_required and finding.severity == ShadowSeverity.HIGH for finding in findings)
+    needs_repair = any(finding.repair_required for finding in findings)
+    needs_escalation = any(finding.kind == ShadowFindingKind.ESCALATION_REQUIRED for finding in findings)
+    if has_critical or has_high_repair:
+        verdict = ShadowVerdict.BLOCK_RECOMMENDED
+        block_recommended = True
+    elif needs_escalation:
+        verdict = ShadowVerdict.ESCALATE
+        block_recommended = False
+    elif needs_repair:
+        verdict = ShadowVerdict.REPAIR_REQUIRED
+        block_recommended = False
+    elif any(finding.kind != ShadowFindingKind.SAFE_CLEAR for finding in findings):
+        verdict = ShadowVerdict.ADVISORY
+        block_recommended = False
+    else:
+        verdict = ShadowVerdict.CLEAR
+        block_recommended = False
+    return ShadowPassResult(
+        result_id="pending",
+        request_id=context.request_id,
+        mode=ShadowMode.STRICT_PREFLIGHT,
+        stage=ShadowStage.PREFLIGHT,
+        verdict=verdict,
+        findings=findings,
+        needs_repair=needs_repair,
+        needs_escalation=needs_escalation,
+        block_recommended=block_recommended,
         created_at=context.created_at,
     ).with_integrity()
 

@@ -1,0 +1,58 @@
+{
+  "affected_modules": [
+    "read_only_worker_operator_runtime_enablement_approval_ref",
+    "read_only_worker_runtime_enablement_submitted_evidence_refs",
+    "read_only_worker_runtime_enablement_review_packet",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add a review-only operator runtime enablement approval ref contract, submit it into runtime enablement review, and keep all evidence acceptance and runtime admission authority denied.",
+  "data_model_changes": [
+    "Introduce an operator approval ref with explicit non-acceptance, non-authorization, and non-runtime-enablement flags.",
+    "Update submitted evidence refs from eleven repo-local refs plus one missing input to twelve repo-local refs and zero missing inputs.",
+    "Update the review packet state to reviewed_all_inputs_not_accepted with twelve reviewed refs and zero accepted refs."
+  ],
+  "design_id": "sdlc_design_runtime_operator_approval_evidence_20260620",
+  "implementation_plan": [
+    "Add operator approval ref schema, fixture, validator, and focused tests.",
+    "Register the schema in the protocol manifest and CI worker runtime enablement lane.",
+    "Update submitted evidence refs and review packet builders, schemas, fixtures, and tests.",
+    "Update worker docs, schema README, gap register, and SDLC artifacts.",
+    "Run focused validators, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "Approval ref is not evidence acceptance.",
+    "Approval ref is not runtime authorization.",
+    "Runtime enablement remains denied.",
+    "Dispatch, worker invocation, receipt emission, receipt append, and terminal closure remain denied.",
+    "Evidence acceptance and runtime admission remain separate future gates."
+  ],
+  "requirement_id": "sdlc_req_runtime_operator_approval_evidence_20260620",
+  "rollback_plan": [
+    "Remove operator approval ref schema, fixture, validator, tests, manifest entry, CI inclusion, docs updates, and SDLC artifacts.",
+    "Restore submitted evidence refs and review packet counts to eleven repo-local refs and one missing operator approval input."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
+    "schemas/read_only_worker_runtime_enablement_submitted_evidence_refs.schema.json",
+    "schemas/read_only_worker_runtime_enablement_review_packet.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_review_packet.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py tests/test_validate_read_only_worker_runtime_enablement_review_packet.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k operator_runtime_enablement_approval_ref -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The slice removes the missing-input blocker without accepting evidence.",
+    "Runtime admission remains deliberately unresolved and must be implemented as a separate governed gate."
+  ]
+}

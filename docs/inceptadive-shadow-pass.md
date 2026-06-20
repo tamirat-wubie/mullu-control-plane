@@ -76,10 +76,18 @@ Shadow path:
 - Replay fixture in
   `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json` proving redacted
   response and receipt-count behavior.
-- Live non-streaming assistant response embedding through
+- Live assistant response embedding through
   `mcoi_runtime.app.inceptadive_assistant_response_embedding`, covering
-  `POST /api/v1/chat` and `POST /api/v1/chat/workflow` with a dedicated
-  contract in `docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md`.
+  `POST /api/v1/chat`, `POST /api/v1/chat/workflow`, and
+  `POST /api/v1/chat/stream` with a dedicated contract in
+  `docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md`. Streaming chat carries
+  the advisory as a side SSE event named `inceptadive_shadow_advisory`.
+- Bounded external-effect preflight supplementation through
+  `InceptaDiveShadowRuntime.preflight_action`: when the deep engine is
+  explicitly enabled, strict preflight can append bounded deep advisory findings
+  for external-effect, high-risk, or memory-contradicted candidate actions.
+  The returned result remains `strict_preflight` and does not gain execution
+  authority.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis
@@ -105,15 +113,15 @@ claim, bypass `Phi_gov`, or replace the Phi-GPS proof receipt.
 
 ## Deferred surfaces
 
-The full external-effect InceptaDive-M engine remains a dedicated later module.
-The current integration deliberately returns `deep_required` when the gate
-selects deep mode outside the repository-local bridge instead of silently
-pretending the full deep engine has run.
-Streaming assistant response embedding remains deferred because SSE event
-envelopes need a separate compatibility contract.
+The full external-effect InceptaDive-M engine remains a dedicated later module
+for live effect-bearing adapter integration. The current integration now applies
+bounded repository-local deep advisory findings to strict preflight only when
+the deep engine is explicitly enabled. It still returns `deep_required` when the
+gate selects deep mode and the bounded deep engine is unavailable, instead of
+silently pretending that a full deep engine has run.
 
 STATUS:
-  Completeness: v1 foundation complete; repository-local Phi-GPS bridge added
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge and bounded preflight deep advisory added
   Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard
-  Open issues: external-effect deep engine integration is intentionally deferred
-  Next action: merge after CI confirms focused and repository-wide tests
+  Open issues: full live external-effect engine remains intentionally deferred
+  Next action: keep full effect-bearing integration behind explicit governance and live adapter evidence

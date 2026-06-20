@@ -2158,6 +2158,88 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_review_pa
     assert review_packet_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_evidence_acceptance_gate_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    gate_entry = entries["read-only-worker-runtime-enablement-evidence-acceptance-gate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert gate_entry["path"] == (
+        "schemas/read_only_worker_runtime_enablement_evidence_acceptance_gate.schema.json"
+    )
+    assert gate_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-acceptance-gate:1"
+    )
+    assert gate_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_admission_gate_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    gate_entry = entries["read-only-worker-runtime-enablement-admission-gate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert gate_entry["path"] == "schemas/read_only_worker_runtime_enablement_admission_gate.schema.json"
+    assert gate_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1"
+    assert gate_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_promotion_decision_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    decision_entry = entries["read-only-worker-runtime-enablement-promotion-decision"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert decision_entry["path"] == "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json"
+    assert decision_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-enablement-promotion-decision:1"
+    assert decision_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_operator_runtime_enablement_approval_ref_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    approval_ref_entry = entries["read-only-worker-operator-runtime-enablement-approval-ref"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert approval_ref_entry["path"] == (
+        "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json"
+    )
+    assert approval_ref_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-operator-runtime-enablement-approval-ref:1"
+    )
+    assert approval_ref_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_disablement_rollback_plan_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    plan_entry = entries["read-only-worker-runtime-disablement-rollback-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert plan_entry["path"] == (
+        "schemas/read_only_worker_runtime_disablement_rollback_plan.schema.json"
+    )
+    assert plan_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-disablement-rollback-plan:1"
+    )
+    assert plan_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_trusted_runtime_clock_receipt_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["read-only-worker-trusted-runtime-clock-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == (
+        "schemas/read_only_worker_trusted_runtime_clock_receipt.schema.json"
+    )
+    assert receipt_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-trusted-runtime-clock-receipt:1"
+    )
+    assert receipt_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

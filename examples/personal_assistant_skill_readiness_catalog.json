@@ -1,0 +1,472 @@
+{
+  "catalog_id": "personal-assistant-skill-readiness-catalog-8fd435fce2a6571b",
+  "schema_version": "personal_assistant.skill_readiness_catalog.v1",
+  "generated_at": "2026-06-20T08:09:18Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "governed": true,
+  "catalog_is_not_execution_authority": true,
+  "catalog_is_not_customer_readiness": true,
+  "source_refs": [
+    {
+      "source_id": "personal_assistant_skill_registry",
+      "source_ref": "examples/personal_assistant_skill_registry.json",
+      "source_kind": "skill_registry",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_readiness_index",
+      "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
+      "source_kind": "readiness_index",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_authority_coverage",
+      "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
+      "source_kind": "authority_coverage",
+      "bound": true
+    },
+    {
+      "source_id": "personal_assistant_capability_pack",
+      "source_ref": "capabilities/personal_assistant/capability_pack.json",
+      "source_kind": "capability_pack",
+      "bound": true
+    }
+  ],
+  "catalog_summary": {
+    "catalog_closed": true,
+    "skill_count": 17,
+    "lane_count": 12,
+    "registered_skill_count": 17,
+    "readiness_index_closed": true,
+    "authority_coverage_closed": true,
+    "all_skills_lane_bound": true,
+    "all_skills_lane_solved_verified": true,
+    "all_skills_authority_covered": true,
+    "all_skills_foundation_only": true,
+    "all_skills_non_executable": true,
+    "p4_p5_skills_require_approval": true,
+    "customer_ready": false,
+    "production_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only"
+  },
+  "skill_records": [
+    {
+      "skill_id": "email.inbox.summarize",
+      "group": "inbox",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "readiness_lane_id": "read_only_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "email.read",
+        "email.search",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 6,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "email.response.draft",
+      "group": "inbox",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "draft_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "email.reply_suggest",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 5,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "email.send.with_approval",
+      "group": "inbox",
+      "mode": "approval_required",
+      "risk_level": "P4",
+      "readiness_lane_id": "approval_queue",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P4",
+      "requires_approval": true,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "email.send.with_approval",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 3,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "calendar.day.brief",
+      "group": "calendar",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "readiness_lane_id": "read_only_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "calendar.read",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 5,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "calendar.event.draft",
+      "group": "calendar",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "draft_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "calendar.conflict_check",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 5,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "task.create_draft",
+      "group": "task",
+      "mode": "draft_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "draft_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "task.draft.prepare",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 4,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "calendar.event.create.with_approval",
+      "group": "calendar",
+      "mode": "approval_required",
+      "risk_level": "P3",
+      "readiness_lane_id": "approval_queue",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+      "requires_approval": true,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "calendar.event.create.with_approval",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 3,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "task.create.with_approval",
+      "group": "task",
+      "mode": "approval_required",
+      "risk_level": "P3",
+      "readiness_lane_id": "approval_queue",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P3",
+      "requires_approval": true,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "task.create.with_approval",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 3,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "document.summarize",
+      "group": "document",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "readiness_lane_id": "read_only_projection",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "document.read",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 4,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "teamops.shared_inbox.plan",
+      "group": "teamops",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "teamops_shared_inbox",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.skill_plan.build",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 5,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "research.web_search",
+      "group": "research",
+      "mode": "read_only",
+      "risk_level": "P0",
+      "readiness_lane_id": "research_source_compare",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.skill_plan.build",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 3,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "math.reasoning.plan",
+      "group": "math",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "math_reasoning",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.skill_plan.build",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 8,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "planning.optimize_schedule",
+      "group": "planning",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "schedule_planning",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.planning.schedule_preview",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 13,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "github.pr.summarize",
+      "group": "github_codex",
+      "mode": "read_only",
+      "risk_level": "P1",
+      "readiness_lane_id": "github_codex_review",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P1",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "software_dev.repo_map.read",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 1,
+      "blocked_action_count": 4,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "memory.observe",
+      "group": "memory",
+      "mode": "planning_only",
+      "risk_level": "P2",
+      "readiness_lane_id": "memory_observation",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P2",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.memory_observation.prepare",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 3,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "personal_assistant.clarification.request",
+      "group": "planning",
+      "mode": "planning_only",
+      "risk_level": "P0",
+      "readiness_lane_id": "request_intake_whqr",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P0",
+      "requires_approval": false,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.clarification.request",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 6,
+      "readiness_bound": true
+    },
+    {
+      "skill_id": "deployment.publish.review",
+      "group": "foundation_governance",
+      "mode": "blocked",
+      "risk_level": "P5",
+      "readiness_lane_id": "approval_queue",
+      "readiness_lane_state": "SolvedVerified",
+      "approval_policy_ref": "governance/personal_assistant_approval_matrix.yaml#P5",
+      "requires_approval": true,
+      "p4_p5_approval_guarded": true,
+      "foundation_only": true,
+      "execution_enabled": false,
+      "authority_covered": true,
+      "receipt_required": true,
+      "uao_required": true,
+      "capability_refs": [
+        "personal_assistant.approval.classify",
+        "personal_assistant.receipt.project"
+      ],
+      "connector_count": 0,
+      "blocked_action_count": 4,
+      "readiness_bound": true
+    }
+  ],
+  "effect_boundary": {
+    "execution_authority_granted": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_effect_allowed": false,
+    "system_of_record_write_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "money_legal_public_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "production_readiness_claim_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "secret_values_serialized": false,
+    "raw_private_payloads_serialized": false
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-personal-assistant-skill-readiness-catalog-2026-06-20",
+        "reason": "Bound every Personal Assistant skill to a no-effect readiness lane without granting execution authority.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

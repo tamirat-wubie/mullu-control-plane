@@ -68,6 +68,7 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     payload = response.json()
     lane_status = payload["lane_status"]
     readiness = payload["assistant_readiness"]
+    pilot = payload["governed_team_assistant_pilot"]
     lane_ids = [lane["lane_id"] for lane in lane_status["lanes"]]
 
     assert response.status_code == 200
@@ -77,6 +78,9 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["governed"] is True
     assert payload["sections"]["assistant_readiness"]["item_count"] == 1
+    assert payload["sections"]["pilot"]["item_count"] == 1
+    assert payload["sections"]["pilot"]["execution_allowed"] is False
+    assert payload["sections"]["pilot"]["customer_readiness_claim_allowed"] is False
     assert readiness["user_prompt"] == "Show my assistant readiness."
     assert readiness["inbox_projection_status"]["skill_id"] == "email.inbox.summarize"
     assert readiness["calendar_projection_status"]["skill_id"] == "calendar.day.brief"
@@ -85,6 +89,17 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert readiness["mailbox_mutation_allowed"] is False
     assert readiness["calendar_write_allowed"] is False
     assert readiness["external_send_allowed"] is False
+    assert pilot["pilot_id"] == "governed_team_assistant_pilot_v0"
+    assert pilot["package_name"] == "Governed Team Assistant Pilot"
+    assert pilot["stage"] == "controlled_demo_productization"
+    assert pilot["included_lane_ids"] == lane_ids
+    assert "/api/v1/personal-assistant/send-write/eligibility/preview" in pilot["demo_surface_refs"]
+    assert pilot["pilot_readiness"]["send_write_preflight_ready"] is True
+    assert pilot["pilot_readiness"]["live_execution_ready"] is False
+    assert pilot["receipt_boundary"]["runtime_dispatch_allowed"] is False
+    assert pilot["execution_allowed"] is False
+    assert pilot["external_send_allowed"] is False
+    assert pilot["customer_readiness_claim_allowed"] is False
     assert lane_status["lane_count"] == 12
     assert lane_ids == [
         "request_intake_whqr",
@@ -837,6 +852,84 @@ def test_gateway_personal_assistant_draft_approval_proposal_rejects_unknown_draf
     assert response.status_code == 400
     assert response.json()["detail"]["governed"] is True
     assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_draft_approval_proposal_preview"
+
+
+def test_gateway_personal_assistant_send_write_eligibility_preview_keeps_runtime_gate_closed() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/send-write/eligibility/preview",
+        json=_send_write_eligibility_payload(),
+    )
+    payload = response.json()
+    eligibility = payload["send_write_eligibility"]
+    receipt = payload["receipt"]
+    effect_boundary = payload["effect_boundary"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["outcome"] == "SolvedVerified"
+    assert eligibility["ready_for_runtime_gate"] is True
+    assert eligibility["execution_allowed"] is False
+    assert eligibility["target_action"]["skill_id"] == "email.send.with_approval"
+    assert eligibility["missing_evidence"] == []
+    assert effect_boundary["ready_for_separate_runtime_gate"] is True
+    assert effect_boundary["external_send_allowed"] is False
+    assert effect_boundary["connector_mutation_allowed"] is False
+    assert effect_boundary["system_of_record_write_allowed"] is False
+    assert receipt["decision"] == "ready_for_separate_runtime_gate"
+    assert "runtime_gate_left_closed" in receipt["actions_taken"]
+    assert "provider_send_not_called" in receipt["actions_not_taken"]
+    assert "mailbox_not_mutated" in receipt["actions_not_taken"]
+
+
+def test_gateway_personal_assistant_send_write_eligibility_preview_awaits_approval_evidence() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = _send_write_eligibility_payload()
+    request_payload.update(
+        {
+            "approval_decision": "",
+            "approval_decision_ref": "",
+            "approval_receipt_ref": "",
+        }
+    )
+
+    response = client.post(
+        "/api/v1/personal-assistant/send-write/eligibility/preview",
+        json=request_payload,
+    )
+    payload = response.json()
+    eligibility = payload["send_write_eligibility"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["outcome"] == "AwaitingEvidence"
+    assert eligibility["ready_for_runtime_gate"] is False
+    assert "approved_approval_decision" in eligibility["missing_evidence"]
+    assert "approval_decision_ref" in eligibility["missing_evidence"]
+    assert "approval_receipt_ref" in eligibility["missing_evidence"]
+    assert payload["effect_boundary"]["external_send_allowed"] is False
+    assert payload["effect_boundary"]["ready_for_separate_runtime_gate"] is False
+
+
+def test_gateway_personal_assistant_send_write_eligibility_preview_rejects_secret_like_ref() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    request_payload = _send_write_eligibility_payload()
+    request_payload["connector_boundary_ref"] = "Bearer secret-token-value"
+
+    response = client.post(
+        "/api/v1/personal-assistant/send-write/eligibility/preview",
+        json=request_payload,
+    )
+    serialized = json.dumps(response.json(), sort_keys=True)
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["governed"] is True
+    assert response.json()["detail"]["error_code"] == "invalid_personal_assistant_send_write_eligibility_preview"
+    assert "secret-token-value" not in serialized
+    assert "preflight_id" not in serialized
 
 
 def test_gateway_personal_assistant_approval_queue_preview_records_pending_packet() -> None:
@@ -1785,6 +1878,27 @@ def _draft_approval_proposal_payload(
             "summary": summary,
             "evidence_refs": [evidence_ref],
         },
+    }
+
+
+def _send_write_eligibility_payload() -> dict[str, object]:
+    payload = _draft_approval_proposal_payload()
+    return {
+        "request_id": "pa_request_gateway_send_write_eligibility_001",
+        "plan_id": "pa_plan_gateway_send_write_eligibility_001",
+        "created_at": "2026-06-14T10:36:00+00:00",
+        "approval_scope": "per_action",
+        "approver_ref": "operator:tamirat",
+        "include_console_read_model": True,
+        "draft": payload["draft"],
+        "approval_proposal_ref": "approval://personal-assistant/proposal/gateway-email-send-001",
+        "approval_decision": "approved",
+        "approval_decision_ref": "approval://personal-assistant/decision/gateway-email-send-001",
+        "approval_receipt_ref": "receipt://personal-assistant/approval/gateway-email-send-001",
+        "connector_boundary_ref": "proof://personal-assistant/connector/gmail-boundary-001",
+        "live_probe_receipt_ref": "receipt://personal-assistant/teamops/gmail-live-probe-001",
+        "preparation_receipt_ref": "receipt://personal-assistant/send-preparation/gateway-email-001",
+        "post_action_receipt_plan_ref": "receipt://personal-assistant/post-action-plan/gateway-email-001",
     }
 
 

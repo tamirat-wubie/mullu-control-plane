@@ -11,7 +11,7 @@ Invariants:
   - The review packet is derived from submitted evidence refs.
   - Review is not evidence acceptance or authority.
   - Repo-local witness refs do not satisfy runtime enablement input names.
-  - Missing operator/runtime inputs remain explicit.
+  - All operator/runtime evidence refs are reviewable but remain unaccepted.
   - Mfidel atomicity is preserved.
 """
 
@@ -111,7 +111,9 @@ def build_runtime_enablement_review_packet() -> dict[str, Any]:
     submitted_records = submitted_refs["submitted_records"]
     review_records = [_review_record(record) for record in submitted_records if isinstance(record, dict)]
     reviewed_repo_ref_count = sum(1 for record in review_records if record["review_state"] == "reviewed_not_accepted")
-    missing_input_count = sum(1 for record in review_records if record["review_state"] == "blocked_missing_external_evidence")
+    missing_input_count = sum(
+        1 for record in review_records if record["review_state"] == "blocked_missing_external_evidence"
+    )
     return {
         "review_packet_id": REVIEW_PACKET_ID,
         "review_packet_version": "read_only_worker_runtime_enablement_review_packet.v1",
@@ -121,7 +123,7 @@ def build_runtime_enablement_review_packet() -> dict[str, Any]:
         "selected_worker_path": "read_only_repo_inspection",
         "solver_outcome": "AwaitingEvidence",
         "proof_state": "Unknown",
-        "review_packet_state": "reviewed_with_missing_inputs",
+        "review_packet_state": "reviewed_all_inputs_not_accepted",
         "review_state": "reviewed_not_accepted",
         **{field_name: True for field_name in TRUE_BOUNDARY_FIELDS},
         **{field_name: False for field_name in FALSE_TOP_LEVEL_FIELDS},
@@ -160,11 +162,11 @@ def build_runtime_enablement_review_packet() -> dict[str, Any]:
         "validators": [
             "scripts/validate_read_only_worker_runtime_enablement_review_packet.py",
             "scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
+            "scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py",
             "tests/test_validate_read_only_worker_runtime_enablement_review_packet.py",
         ],
         "next_action": (
-            "Bind operator approval, runtime disablement rollback plan, and trusted runtime clock evidence "
-            "before any evidence acceptance or runtime enablement decision."
+            "Create a separate evidence acceptance and runtime admission gate before any runtime enablement decision."
         ),
     }
 
@@ -274,8 +276,8 @@ def _validate_semantics(review_packet: dict[str, Any], errors: list[str]) -> Non
         errors.append("solver_outcome must be AwaitingEvidence")
     if review_packet.get("proof_state") != "Unknown":
         errors.append("proof_state must be Unknown")
-    if review_packet.get("review_packet_state") != "reviewed_with_missing_inputs":
-        errors.append("review_packet_state must be reviewed_with_missing_inputs")
+    if review_packet.get("review_packet_state") != "reviewed_all_inputs_not_accepted":
+        errors.append("review_packet_state must be reviewed_all_inputs_not_accepted")
     for field_name in TRUE_BOUNDARY_FIELDS:
         if review_packet.get(field_name) is not True:
             errors.append(f"{field_name} must be true")

@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 287,
+      "proven": 288,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 447,
+    "route_count": 448,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2850,6 +2850,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/research/source-compare/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/send-write/eligibility/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -5985,9 +5990,12 @@
         "tests/test_validate_personal_assistant_research_projection.py",
         "tests/test_validate_personal_assistant_math_projection.py",
         "tests/test_validate_personal_assistant_planning_projection.py",
+        "tests/test_collect_personal_assistant_skill_readiness_catalog.py",
+        "tests/test_validate_personal_assistant_skill_readiness_catalog.py",
         "schemas/personal_assistant_approval_queue.schema.json",
         "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_approval_review_packet.schema.json",
+        "schemas/personal_assistant_skill_readiness_catalog.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
         "schemas/personal_assistant_draft_projection.schema.json",
         "schemas/personal_assistant_memory_observation.schema.json",
@@ -6010,9 +6018,12 @@
         "examples/personal_assistant_research_projection.json",
         "examples/personal_assistant_math_projection.json",
         "examples/personal_assistant_planning_projection.json",
+        "examples/personal_assistant_skill_readiness_catalog.json",
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_approval_review_packet.py",
+        "scripts/collect_personal_assistant_skill_readiness_catalog.py",
+        "scripts/validate_personal_assistant_skill_readiness_catalog.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
         "scripts/validate_personal_assistant_draft_projection.py",
         "scripts/validate_personal_assistant_memory_observation.py",
@@ -6023,7 +6034,7 @@
         "scripts/validate_personal_assistant_math_projection.py",
         "scripts/validate_personal_assistant_planning_projection.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, memory observation, memory review, TeamOps shared-inbox plan, TeamOps Gmail live-probe readiness, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, approval proposal, send/write eligibility preflight, memory observation, memory review, TeamOps shared-inbox plan, TeamOps Gmail live-probe readiness, GitHub/Codex review plan, research source-compare plan, math reasoning plan, schedule planning preview, read-only, draft-only, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -6034,6 +6045,7 @@
         "/api/v1/personal-assistant/approval-queue/preview",
         "/api/v1/personal-assistant/approval-proposals/preview",
         "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+        "/api/v1/personal-assistant/send-write/eligibility/preview",
         "/api/v1/personal-assistant/read-only/inbox/preview",
         "/api/v1/personal-assistant/read-only/calendar/preview",
         "/api/v1/personal-assistant/drafts/email/preview",
@@ -6203,8 +6215,24 @@
           "gateway_personal_assistant_research_preview_rejects_non_research_intent",
           "gateway_personal_assistant_research_preview_rejects_raw_source_body"
         ],
+        "personal_assistant_send_write_eligibility_preflight_no_effect": [
+          "gateway_personal_assistant_send_write_eligibility_preview_keeps_runtime_gate_closed",
+          "gateway_personal_assistant_send_write_eligibility_preview_awaits_approval_evidence",
+          "gateway_personal_assistant_send_write_eligibility_preview_rejects_secret_like_ref"
+        ],
         "personal_assistant_skill_read_model_deployed_read_only": [
           "personal_assistant_skill_read_model_is_deployed_read_only"
+        ],
+        "personal_assistant_skill_readiness_catalog_no_effect": [
+          "skill_readiness_catalog_closes_from_checked_in_evidence",
+          "skill_readiness_catalog_blocks_missing_lane_binding",
+          "skill_readiness_catalog_blocks_authority_coverage_drift",
+          "skill_readiness_catalog_blocks_p4_approval_drift",
+          "validation_accepts_schema_valid_closed_catalog",
+          "validation_rejects_lane_drift",
+          "validation_rejects_execution_overclaim",
+          "validation_rejects_p4_approval_drift",
+          "validation_rejects_secret_shaped_values"
         ],
         "personal_assistant_teamops_gmail_live_probe_no_effect": [
           "gateway_personal_assistant_teamops_gmail_live_probe_preview_is_presence_only",
@@ -6239,6 +6267,7 @@
         "personal_assistant_approval_review_packet_public_safe",
         "personal_assistant_approval_proposal_preview_no_effect",
         "personal_assistant_draft_approval_proposal_preview_no_effect",
+        "personal_assistant_send_write_eligibility_preflight_no_effect",
         "personal_assistant_read_only_projection_public_safe",
         "personal_assistant_draft_projection_public_safe",
         "personal_assistant_memory_observation_read_model_public_safe",
@@ -6249,7 +6278,8 @@
         "personal_assistant_github_codex_review_no_effect",
         "personal_assistant_research_source_compare_no_effect",
         "personal_assistant_math_reasoning_no_effect",
-        "personal_assistant_planning_schedule_no_effect"
+        "personal_assistant_planning_schedule_no_effect",
+        "personal_assistant_skill_readiness_catalog_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -15396,8 +15426,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1948,
-    "runtime_witness_count": 1948,
+    "exact_test_anchor_count": 1950,
+    "runtime_witness_count": 1950,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17930,6 +17960,14 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_send_write_eligibility_preview_keeps_runtime_gate_closed",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_send_write_eligibility_preview_awaits_approval_evidence",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_send_write_eligibility_preview_rejects_secret_like_ref"
+            ],
+            "witness": "personal_assistant_send_write_eligibility_preflight_no_effect"
+          },
+          {
+            "anchors": [
               "tests/test_validate_personal_assistant_read_only_projection.py::test_personal_assistant_read_only_projection_fixture_validates",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_runtime_read_only_projection_blocks_all_effect_boundaries",
               "tests/test_validate_personal_assistant_read_only_projection.py::test_read_only_projection_validator_rejects_execution_authority",
@@ -18059,10 +18097,24 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_planning_preview_rejects_raw_private_item"
             ],
             "witness": "personal_assistant_planning_schedule_no_effect"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_personal_assistant_skill_readiness_catalog.py::test_skill_readiness_catalog_closes_from_checked_in_evidence",
+              "tests/test_collect_personal_assistant_skill_readiness_catalog.py::test_skill_readiness_catalog_blocks_missing_lane_binding",
+              "tests/test_collect_personal_assistant_skill_readiness_catalog.py::test_skill_readiness_catalog_blocks_authority_coverage_drift",
+              "tests/test_collect_personal_assistant_skill_readiness_catalog.py::test_skill_readiness_catalog_blocks_p4_approval_drift",
+              "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_accepts_schema_valid_closed_catalog",
+              "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_rejects_lane_drift",
+              "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_rejects_execution_overclaim",
+              "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_rejects_p4_approval_drift",
+              "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_rejects_secret_shaped_values"
+            ],
+            "witness": "personal_assistant_skill_readiness_catalog_no_effect"
           }
         ],
-        "exact_test_anchor_count": 26,
-        "runtime_witness_count": 26,
+        "exact_test_anchor_count": 28,
+        "runtime_witness_count": 28,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

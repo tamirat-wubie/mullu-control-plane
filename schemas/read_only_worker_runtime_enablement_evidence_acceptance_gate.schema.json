@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-acceptance-gate:1",
+  "title": "Read-Only Worker Runtime Enablement Evidence Acceptance Gate",
+  "description": "Foundation Mode evidence acceptance gate for read-only worker runtime enablement review. The gate accepts reviewed evidence refs only; it does not grant authority, admit runtime, dispatch, invoke workers, emit receipts, append receipts, serialize secrets, or claim terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate_id",
+    "gate_version",
+    "source_review_packet_ref",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "gate_state",
+    "evidence_accepted",
+    "authority_granted",
+    "runtime_admission_allowed",
+    "runtime_enablement_allowed",
+    "runtime_enablement_executed",
+    "runtime_dispatch_allowed",
+    "worker_invocation_allowed",
+    "runtime_receipt_emission_allowed",
+    "receipt_append_allowed",
+    "terminal_closure_allowed",
+    "success_claim_allowed",
+    "secret_values_serialized",
+    "connector_authority_allowed",
+    "filesystem_write_allowed",
+    "external_network_allowed",
+    "accepted_evidence_refs",
+    "rejected_evidence_refs",
+    "authority_grant_refs",
+    "blocked_actions",
+    "summary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "gate_id": {
+      "type": "string",
+      "const": "read-only-worker-runtime-enablement-evidence-acceptance-gate-foundation-repo-inspection-20260620"
+    },
+    "gate_version": {
+      "type": "string",
+      "const": "read_only_worker_runtime_enablement_evidence_acceptance_gate.v1"
+    },
+    "source_review_packet_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_runtime_enablement_review_packet.foundation.json"
+    },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "proof_state": { "type": "string", "const": "Pass" },
+    "gate_state": { "type": "string", "const": "evidence_refs_accepted_no_runtime_authority" },
+    "evidence_accepted": { "type": "boolean", "const": true },
+    "authority_granted": { "type": "boolean", "const": false },
+    "runtime_admission_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_executed": { "type": "boolean", "const": false },
+    "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+    "worker_invocation_allowed": { "type": "boolean", "const": false },
+    "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+    "receipt_append_allowed": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "secret_values_serialized": { "type": "boolean", "const": false },
+    "connector_authority_allowed": { "type": "boolean", "const": false },
+    "filesystem_write_allowed": { "type": "boolean", "const": false },
+    "external_network_allowed": { "type": "boolean", "const": false },
+    "accepted_evidence_refs": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "rejected_evidence_refs": { "type": "array", "maxItems": 0 },
+    "authority_grant_refs": { "type": "array", "maxItems": 0 },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewed_evidence_ref_count",
+        "accepted_evidence_ref_count",
+        "rejected_evidence_ref_count",
+        "authority_grant_count",
+        "runtime_admission_count",
+        "runtime_enablement_count",
+        "blocked_action_count"
+      ],
+      "properties": {
+        "reviewed_evidence_ref_count": { "type": "integer", "const": 12 },
+        "accepted_evidence_ref_count": { "type": "integer", "const": 12 },
+        "rejected_evidence_ref_count": { "type": "integer", "const": 0 },
+        "authority_grant_count": { "type": "integer", "const": 0 },
+        "runtime_admission_count": { "type": "integer", "const": 0 },
+        "runtime_enablement_count": { "type": "integer", "const": 0 },
+        "blocked_action_count": { "type": "integer", "const": 7 }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 },
+    "repo_ref": { "type": "string", "minLength": 1, "pattern": "^(examples|schemas|scripts|tests|docs)/" }
+  }
+}

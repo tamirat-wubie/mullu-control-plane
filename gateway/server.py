@@ -499,6 +499,28 @@ class GatewayPersonalAssistantDraftApprovalPreviewRequest(BaseModel):
     include_console_read_model: bool = False
 
 
+class GatewayPersonalAssistantSendWriteEligibilityPreviewRequest(BaseModel):
+    """No-effect send/write eligibility preflight over approved draft evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str
+    draft: GatewayPersonalAssistantDraftApprovalSource
+    plan_id: str = ""
+    created_at: str = ""
+    approval_scope: str = ApprovalScope.PER_ACTION.value
+    approver_ref: str = "operator:gateway"
+    approval_proposal_ref: str = ""
+    approval_decision: str = ""
+    approval_decision_ref: str = ""
+    approval_receipt_ref: str = ""
+    connector_boundary_ref: str = ""
+    live_probe_receipt_ref: str = ""
+    preparation_receipt_ref: str = ""
+    post_action_receipt_plan_ref: str = ""
+    include_console_read_model: bool = False
+
+
 class GatewayPersonalAssistantMemorySource(BaseModel):
     """Evidence source for one memory observation preview."""
 
@@ -1041,6 +1063,239 @@ def _gateway_personal_assistant_draft_approval_proposal(
         approval_matrix_ref=matrix.matrix_id,
         execution_allowed=False,
     )
+
+
+_PERSONAL_ASSISTANT_PUBLIC_REF_PREFIXES = (
+    "pa_",
+    "proof://",
+    "proof:",
+    "receipt://",
+    "receipt:",
+    "approval://",
+    "approval:",
+    "witness://",
+    "witness:",
+    "policy://",
+    "policy:",
+)
+_PERSONAL_ASSISTANT_PRIVATE_VALUE_MARKERS = (
+    "bearer ",
+    "api_key",
+    "apikey",
+    "access_token",
+    "refresh_token",
+    "secret=",
+    "token=",
+    "private key",
+    "raw_private",
+    "raw_payload",
+    "raw_body",
+)
+
+
+def _gateway_personal_assistant_assert_public_ref(value: str, field_name: str) -> None:
+    """Validate that an evidence reference is bounded and secret-free."""
+    if not value:
+        return
+    lowered = value.lower()
+    if any(marker in lowered for marker in _PERSONAL_ASSISTANT_PRIVATE_VALUE_MARKERS):
+        raise PersonalAssistantInvariantError(f"{field_name} must not contain raw private or secret-like values")
+    if len(value) > 512:
+        raise PersonalAssistantInvariantError(f"{field_name} must be bounded to 512 characters")
+    if not value.startswith(_PERSONAL_ASSISTANT_PUBLIC_REF_PREFIXES):
+        raise PersonalAssistantInvariantError(f"{field_name} must be a governed public evidence reference")
+
+
+def _gateway_personal_assistant_send_write_eligibility_preflight(
+    *,
+    request_id: str,
+    plan_id: str,
+    approval_scope: str,
+    approver_ref: str,
+    created_at: str,
+    draft: GatewayPersonalAssistantDraftApprovalSource,
+    approval_proposal_ref: str,
+    approval_decision: str,
+    approval_decision_ref: str,
+    approval_receipt_ref: str,
+    connector_boundary_ref: str,
+    live_probe_receipt_ref: str,
+    preparation_receipt_ref: str,
+    post_action_receipt_plan_ref: str,
+) -> dict[str, Any]:
+    """Return a no-effect preflight for later send/write runtime eligibility."""
+    proposal = _gateway_personal_assistant_draft_approval_proposal(
+        request_id=request_id,
+        plan_id=plan_id,
+        approval_scope=approval_scope,
+        draft=draft,
+    )
+    draft_payload = _pydantic_payload(draft)
+    reference_values = {
+        "draft_ref": draft.draft_ref,
+        "approval_proposal_ref": approval_proposal_ref,
+        "approval_decision_ref": approval_decision_ref,
+        "approval_receipt_ref": approval_receipt_ref,
+        "connector_boundary_ref": connector_boundary_ref,
+        "live_probe_receipt_ref": live_probe_receipt_ref,
+        "preparation_receipt_ref": preparation_receipt_ref,
+        "post_action_receipt_plan_ref": post_action_receipt_plan_ref,
+    }
+    for field_name, reference_value in reference_values.items():
+        _gateway_personal_assistant_assert_public_ref(reference_value, field_name)
+    for index, evidence_ref in enumerate(draft.evidence_refs):
+        _gateway_personal_assistant_assert_public_ref(evidence_ref, f"draft.evidence_refs[{index}]")
+    if any(marker in draft.summary.lower() for marker in _PERSONAL_ASSISTANT_PRIVATE_VALUE_MARKERS):
+        raise PersonalAssistantInvariantError("draft summary must not contain raw private or secret-like values")
+
+    decision_normalized = approval_decision.strip().lower()
+    required_evidence = {
+        "draft_projection_ref": draft.draft_ref,
+        "draft_projection_evidence": draft.evidence_refs[0] if draft.evidence_refs else "",
+        "approval_proposal_ref": approval_proposal_ref,
+        "approved_approval_decision": decision_normalized if decision_normalized == ApprovalDecision.APPROVED.value else "",
+        "approval_decision_ref": approval_decision_ref,
+        "approval_receipt_ref": approval_receipt_ref,
+        "connector_boundary_ref": connector_boundary_ref,
+        "live_probe_receipt_ref": live_probe_receipt_ref,
+        "preparation_receipt_ref": preparation_receipt_ref,
+        "post_action_receipt_plan_ref": post_action_receipt_plan_ref,
+    }
+    missing_evidence = [field_name for field_name, value in required_evidence.items() if not value]
+    ready_for_runtime_gate = not missing_evidence
+    outcome = "SolvedVerified" if ready_for_runtime_gate else "AwaitingEvidence"
+    preflight_id = "pa_send_write_eligibility_" + sha256(
+        json.dumps(
+            {
+                "request_id": request_id,
+                "draft_ref": draft.draft_ref,
+                "proposal_ref": approval_proposal_ref,
+                "decision_ref": approval_decision_ref,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
+    ).hexdigest()[:16]
+    action = proposal.proposed_actions[0]
+    stages = [
+        {
+            "stage_id": "draft_projection_bound",
+            "stage_type": "verification",
+            "status": "passed",
+            "evidence_refs": tuple(dict.fromkeys((draft.draft_ref, *draft.evidence_refs))),
+            "effect_bearing": False,
+        },
+        {
+            "stage_id": "approval_gate_checked",
+            "stage_type": "approval_gate",
+            "status": "passed" if decision_normalized == ApprovalDecision.APPROVED.value else "awaiting_evidence",
+            "evidence_refs": tuple(
+                ref for ref in (approval_proposal_ref, approval_decision_ref, approval_receipt_ref) if ref
+            ),
+            "effect_bearing": False,
+        },
+        {
+            "stage_id": "connector_boundary_checked",
+            "stage_type": "capability_probe",
+            "status": "passed" if connector_boundary_ref and live_probe_receipt_ref else "awaiting_evidence",
+            "evidence_refs": tuple(ref for ref in (connector_boundary_ref, live_probe_receipt_ref) if ref),
+            "effect_bearing": False,
+        },
+        {
+            "stage_id": "send_write_preparation_checked",
+            "stage_type": "verification",
+            "status": "passed" if preparation_receipt_ref else "awaiting_evidence",
+            "evidence_refs": (preparation_receipt_ref,) if preparation_receipt_ref else (),
+            "effect_bearing": False,
+        },
+        {
+            "stage_id": "runtime_gate_not_opened",
+            "stage_type": "wait_for_event",
+            "status": "blocked_in_preview",
+            "evidence_refs": (post_action_receipt_plan_ref,) if post_action_receipt_plan_ref else (),
+            "effect_bearing": False,
+        },
+    ]
+    effect_boundary = {
+        "execution_allowed": False,
+        "approval_is_execution": False,
+        "approval_enqueued": False,
+        "ready_for_separate_runtime_gate": ready_for_runtime_gate,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "mailbox_mutation_allowed": False,
+        "calendar_write_allowed": False,
+        "connector_mutation_allowed": False,
+        "memory_write_allowed": False,
+        "deployment_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+    }
+    actions_not_taken = [
+        "external_message_not_sent",
+        "provider_send_not_called",
+        "provider_draft_not_created",
+        "mailbox_not_read",
+        "mailbox_not_mutated",
+        "calendar_not_written",
+        "connector_state_not_mutated",
+        "system_of_record_not_written",
+    ]
+    receipt_payload = {
+        "receipt_id": f"{preflight_id}_receipt",
+        "receipt_type": "personal_assistant_send_write_eligibility_preflight_v0",
+        "request_id": request_id,
+        "plan_id": plan_id,
+        "generated_at": created_at,
+        "draft_ref": draft.draft_ref,
+        "action_id": action.action_id,
+        "skill_id": action.skill_id,
+        "risk_level": action.risk_level.value,
+        "action_effect_boundary": action.effect_boundary,
+        "outcome": outcome,
+        "decision": "ready_for_separate_runtime_gate" if ready_for_runtime_gate else "awaiting_required_evidence",
+        "missing_evidence": missing_evidence,
+        "actions_taken": [
+            "draft_reference_checked",
+            "approval_evidence_checked",
+            "connector_boundary_evidence_checked",
+            "runtime_gate_left_closed",
+            "preflight_receipt_created",
+        ],
+        "actions_not_taken": actions_not_taken,
+        "effect_boundary": effect_boundary,
+        "governed": True,
+    }
+    receipt_hash = sha256(json.dumps(receipt_payload, sort_keys=True).encode("utf-8")).hexdigest()
+    receipt_payload["receipt_hash"] = receipt_hash
+    return {
+        "send_write_eligibility": {
+            "preflight_id": preflight_id,
+            "request_id": request_id,
+            "plan_id": plan_id,
+            "draft_ref": draft.draft_ref,
+            "draft_type": draft.draft_type,
+            "approval_scope": approval_scope,
+            "approver_ref": approver_ref,
+            "target_action": {
+                "action_id": action.action_id,
+                "skill_id": action.skill_id,
+                "risk_level": action.risk_level.value,
+                "effect_boundary": action.effect_boundary,
+            },
+            "required_evidence": required_evidence,
+            "missing_evidence": missing_evidence,
+            "ready_for_runtime_gate": ready_for_runtime_gate,
+            "execution_allowed": False,
+            "outcome": outcome,
+        },
+        "approval_proposal": proposal.as_dict(),
+        "stages": stages,
+        "effect_boundary": effect_boundary,
+        "actions_not_taken": actions_not_taken,
+        "receipt": receipt_payload,
+        "governed": True,
+        "execution_allowed": False,
+        "outcome": outcome,
+    }
 
 
 def _pydantic_payload(model: BaseModel) -> dict[str, Any]:
@@ -3062,6 +3317,55 @@ def create_gateway_app(
                     },
                 ),
                 approval_proposals=(proposal_payload,),
+            )
+        return response
+
+    @app.post("/api/v1/personal-assistant/send-write/eligibility/preview")
+    def preview_personal_assistant_send_write_eligibility(
+        req: GatewayPersonalAssistantSendWriteEligibilityPreviewRequest,
+    ):
+        try:
+            now = req.created_at or _clock()
+            request_id = req.request_id
+            plan_id = req.plan_id or _gateway_personal_assistant_plan_id(request_id)
+            response = _gateway_personal_assistant_send_write_eligibility_preflight(
+                request_id=request_id,
+                plan_id=plan_id,
+                approval_scope=req.approval_scope,
+                approver_ref=req.approver_ref,
+                created_at=now,
+                draft=req.draft,
+                approval_proposal_ref=req.approval_proposal_ref,
+                approval_decision=req.approval_decision,
+                approval_decision_ref=req.approval_decision_ref,
+                approval_receipt_ref=req.approval_receipt_ref,
+                connector_boundary_ref=req.connector_boundary_ref,
+                live_probe_receipt_ref=req.live_probe_receipt_ref,
+                preparation_receipt_ref=req.preparation_receipt_ref,
+                post_action_receipt_plan_ref=req.post_action_receipt_plan_ref,
+            )
+        except (PersonalAssistantInvariantError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid personal assistant send/write eligibility preview",
+                    "error_code": "invalid_personal_assistant_send_write_eligibility_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        if req.include_console_read_model:
+            response["console_read_model"] = build_personal_assistant_console_read_model(
+                generated_at=now,
+                recent_requests=(
+                    {
+                        "request_id": request_id,
+                        "summary": req.draft.summary,
+                        "status": "send_write_eligibility_preview",
+                    },
+                ),
+                receipts=(response["receipt"],),
+                approval_proposals=(response["approval_proposal"],),
             )
         return response
 

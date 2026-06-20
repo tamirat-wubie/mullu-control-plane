@@ -1,5 +1,5 @@
 {
-  "check_count": 258,
+  "check_count": 260,
   "checks": [
     {
       "args": [
@@ -214,6 +214,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py"
+      ],
+      "name": "agentic_service_harness_workspace_sandbox_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"
       ],
       "name": "agentic_service_harness_github_pr_admission_preflight",
@@ -364,6 +377,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR APPROVAL GATE VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.py"
+      ],
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR DECISION CONTRACT VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

@@ -150,6 +150,28 @@ FALSE_READINESS_RECEIPT_FIELDS = frozenset(
         "success_claim_allowed",
     }
 )
+FALSE_PILOT_FIELDS = frozenset(
+    {
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "customer_readiness_claim_allowed",
+    }
+)
+FALSE_PILOT_READINESS_FIELDS = frozenset(
+    {
+        "live_execution_ready",
+        "customer_readiness_claim_allowed",
+    }
+)
+FALSE_PILOT_RECEIPT_FIELDS = frozenset(
+    {
+        "runtime_dispatch_allowed",
+        "success_claim_allowed",
+    }
+)
 EXPECTED_LANE_IDS = (
     "request_intake_whqr",
     "skill_registry",
@@ -289,6 +311,7 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     _validate_lane_status(read_model, errors)
     _validate_receipt_viewer(read_model, errors)
     _validate_assistant_readiness(read_model, errors)
+    _validate_governed_team_assistant_pilot(read_model, errors)
 
     memory = _mapping(read_model.get("memory"))
     if memory.get("candidate_only") is not True:
@@ -315,6 +338,81 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     if private_policy.get("secret_values_serialized") is not False:
         errors.append("private_payload_policy.secret_values_serialized must be false")
     return tuple(errors)
+
+
+def _validate_governed_team_assistant_pilot(read_model: dict[str, Any], errors: list[str]) -> None:
+    pilot = _mapping(read_model.get("governed_team_assistant_pilot"))
+    if not pilot:
+        errors.append("governed_team_assistant_pilot must be an object")
+        return
+    _require_false_fields(pilot, FALSE_PILOT_FIELDS, "governed_team_assistant_pilot", errors)
+    _require_false_fields(
+        pilot.get("effect_boundary"),
+        FALSE_EFFECT_BOUNDARY_FIELDS,
+        "governed_team_assistant_pilot.effect_boundary",
+        errors,
+    )
+    _require_false_fields(
+        pilot.get("pilot_readiness"),
+        FALSE_PILOT_READINESS_FIELDS,
+        "governed_team_assistant_pilot.pilot_readiness",
+        errors,
+    )
+    _require_false_fields(
+        pilot.get("receipt_boundary"),
+        FALSE_PILOT_RECEIPT_FIELDS,
+        "governed_team_assistant_pilot.receipt_boundary",
+        errors,
+    )
+    sections = _mapping(read_model.get("sections"))
+    pilot_section = _mapping(sections.get("pilot"))
+    if pilot_section.get("item_count") != 1:
+        errors.append("sections.pilot.item_count must be 1")
+    if pilot_section.get("execution_allowed") is not False:
+        errors.append("sections.pilot.execution_allowed must be false")
+    if pilot_section.get("customer_readiness_claim_allowed") is not False:
+        errors.append("sections.pilot.customer_readiness_claim_allowed must be false")
+    if pilot.get("outcome") != read_model.get("solver_outcome"):
+        errors.append("governed_team_assistant_pilot.outcome must match solver_outcome")
+    if pilot.get("operator_prompt") != READINESS_PROMPT:
+        errors.append("governed_team_assistant_pilot.operator_prompt must match readiness prompt")
+    if pilot.get("foundation_only") is not True:
+        errors.append("governed_team_assistant_pilot.foundation_only must be true")
+    if pilot.get("stage") != "controlled_demo_productization":
+        errors.append("governed_team_assistant_pilot.stage must be controlled_demo_productization")
+    lanes = _mapping(read_model.get("lane_status")).get("lanes")
+    lane_ids = [
+        str(lane["lane_id"])
+        for lane in lanes
+        if isinstance(lane, dict) and isinstance(lane.get("lane_id"), str) and lane.get("lane_id")
+    ] if isinstance(lanes, list) else []
+    if _string_list_unsorted(pilot.get("included_lane_ids")) != lane_ids:
+        errors.append("governed_team_assistant_pilot.included_lane_ids must match lane status order")
+    demo_surface_refs = _string_list_unsorted(pilot.get("demo_surface_refs"))
+    for required_route in (
+        "/api/v1/console/personal-assistant",
+        "/api/v1/personal-assistant/read-only/inbox/preview",
+        "/api/v1/personal-assistant/approval-queue/preview",
+        "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
+        "/api/v1/personal-assistant/send-write/eligibility/preview",
+    ):
+        if required_route not in demo_surface_refs:
+            errors.append(f"governed_team_assistant_pilot.demo_surface_refs must include {required_route}")
+    blocked_claims = _string_list_unsorted(pilot.get("blocked_claims"))
+    for blocked_claim in ("customer_ready", "live_gmail_send_enabled", "nested_mind_live_activation_enabled"):
+        if blocked_claim not in blocked_claims:
+            errors.append(f"governed_team_assistant_pilot.blocked_claims must include {blocked_claim}")
+    approval_boundary = _mapping(pilot.get("approval_boundary"))
+    if approval_boundary.get("approval_required_before_send") is not True:
+        errors.append("governed_team_assistant_pilot.approval_boundary.approval_required_before_send must be true")
+    if approval_boundary.get("approval_is_execution") is not False:
+        errors.append("governed_team_assistant_pilot.approval_boundary.approval_is_execution must be false")
+    receipt_boundary = _mapping(pilot.get("receipt_boundary"))
+    if receipt_boundary.get("receipt_required_for_actions") is not True:
+        errors.append("governed_team_assistant_pilot.receipt_boundary.receipt_required_for_actions must be true")
+    pilot_receipt_refs = _string_list(pilot.get("receipt_refs"))
+    if pilot_receipt_refs != _string_list(read_model.get("receipt_refs")):
+        errors.append("governed_team_assistant_pilot.receipt_refs must match console receipt_refs")
 
 
 def _validate_assistant_readiness(read_model: dict[str, Any], errors: list[str]) -> None:

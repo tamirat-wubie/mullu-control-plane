@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-skill-readiness-catalog:1",
+  "title": "Mullu Personal Assistant Skill Readiness Catalog",
+  "description": "No-effect catalog binding each registered Personal Assistant skill to a foundation readiness lane, authority posture, approval boundary, and source evidence without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "catalog_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "governed",
+    "catalog_is_not_execution_authority",
+    "catalog_is_not_customer_readiness",
+    "source_refs",
+    "catalog_summary",
+    "skill_records",
+    "effect_boundary",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "personal_assistant.skill_readiness_catalog.v1" },
+    "catalog_id": { "type": "string", "pattern": "^personal-assistant-skill-readiness-catalog-[0-9a-f]{16}$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "proof_state": { "type": "string", "enum": ["Pass", "Fail"] },
+    "solver_outcome": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+    "governed": { "type": "boolean", "const": true },
+    "catalog_is_not_execution_authority": { "type": "boolean", "const": true },
+    "catalog_is_not_customer_readiness": { "type": "boolean", "const": true },
+    "source_refs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_ref" }
+    },
+    "catalog_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalog_closed",
+        "skill_count",
+        "lane_count",
+        "registered_skill_count",
+        "readiness_index_closed",
+        "authority_coverage_closed",
+        "all_skills_lane_bound",
+        "all_skills_lane_solved_verified",
+        "all_skills_authority_covered",
+        "all_skills_foundation_only",
+        "all_skills_non_executable",
+        "p4_p5_skills_require_approval",
+        "customer_ready",
+        "production_ready",
+        "next_allowed_action"
+      ],
+      "properties": {
+        "catalog_closed": { "type": "boolean" },
+        "skill_count": { "type": "integer", "minimum": 1 },
+        "lane_count": { "type": "integer", "minimum": 1 },
+        "registered_skill_count": { "type": "integer", "minimum": 1 },
+        "readiness_index_closed": { "type": "boolean" },
+        "authority_coverage_closed": { "type": "boolean" },
+        "all_skills_lane_bound": { "type": "boolean" },
+        "all_skills_lane_solved_verified": { "type": "boolean" },
+        "all_skills_authority_covered": { "type": "boolean" },
+        "all_skills_foundation_only": { "type": "boolean" },
+        "all_skills_non_executable": { "type": "boolean" },
+        "p4_p5_skills_require_approval": { "type": "boolean" },
+        "customer_ready": { "type": "boolean", "const": false },
+        "production_ready": { "type": "boolean", "const": false },
+        "next_allowed_action": { "type": "string", "const": "continue_foundation_hardening_only" }
+      }
+    },
+    "skill_records": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/skill_record" }
+    },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_ref", "source_kind", "bound"],
+      "properties": {
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "source_kind": {
+          "type": "string",
+          "enum": ["skill_registry", "readiness_index", "authority_coverage", "capability_pack"]
+        },
+        "bound": { "type": "boolean" }
+      }
+    },
+    "skill_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_id",
+        "group",
+        "mode",
+        "risk_level",
+        "readiness_lane_id",
+        "readiness_lane_state",
+        "approval_policy_ref",
+        "requires_approval",
+        "p4_p5_approval_guarded",
+        "foundation_only",
+        "execution_enabled",
+        "authority_covered",
+        "receipt_required",
+        "uao_required",
+        "capability_refs",
+        "connector_count",
+        "blocked_action_count",
+        "readiness_bound"
+      ],
+      "properties": {
+        "skill_id": { "type": "string", "minLength": 1 },
+        "group": { "type": "string", "minLength": 1 },
+        "mode": { "type": "string", "enum": ["read_only", "draft_only", "planning_only", "approval_required", "blocked"] },
+        "risk_level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+        "readiness_lane_id": { "type": "string", "minLength": 1 },
+        "readiness_lane_state": { "type": "string", "enum": ["SolvedVerified", "AwaitingEvidence"] },
+        "approval_policy_ref": { "type": "string", "pattern": "^governance/personal_assistant_approval_matrix\\.yaml#P[0-5]$" },
+        "requires_approval": { "type": "boolean" },
+        "p4_p5_approval_guarded": { "type": "boolean" },
+        "foundation_only": { "type": "boolean" },
+        "execution_enabled": { "type": "boolean" },
+        "authority_covered": { "type": "boolean" },
+        "receipt_required": { "type": "boolean" },
+        "uao_required": { "type": "boolean" },
+        "capability_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "connector_count": { "type": "integer", "minimum": 0 },
+        "blocked_action_count": { "type": "integer", "minimum": 1 },
+        "readiness_bound": { "type": "boolean" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority_granted",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_effect_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "money_legal_public_allowed",
+        "customer_readiness_claim_allowed",
+        "production_readiness_claim_allowed",
+        "nested_mind_live_activation_allowed",
+        "secret_values_serialized",
+        "raw_private_payloads_serialized"
+      ],
+      "properties": {
+        "execution_authority_granted": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "external_effect_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "money_legal_public_allowed": { "type": "boolean", "const": false },
+        "customer_readiness_claim_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claim_allowed": { "type": "boolean", "const": false },
+        "nested_mind_live_activation_allowed": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "raw_private_payloads_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "type": "boolean", "const": true }
+            }
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "type": "boolean", "const": true }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_approval_gate_ref": "examples/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.foundation.json",
+  "witness_kind": "terminal_closure_operator_decision_contract",
+  "requested_operator_decision_ref": "approval://github-pr-terminal-closure-certificate/operator-decision",
+  "contract_status": "awaiting_explicit_operator_decision_value",
+  "operator_decision_contract_ready": true,
+  "operator_decision_collected": false,
+  "terminal_closure_certificate_minted": false,
+  "terminal_closure_authorized": false,
+  "authority_granted": false,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "decision_contract": {
+    "contract_id": "terminal-closure-operator-decision-contract.github-pr-chain",
+    "source_approval_gate_binding_id": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
+    "source_approval_gate_ref": "examples/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.foundation.json",
+    "operator_decision_ref": "approval://github-pr-terminal-closure-certificate/operator-decision",
+    "explicit_decision_value_required": true,
+    "allowed_decision_values": [
+      "approve_terminal_certificate",
+      "deny_terminal_certificate"
+    ],
+    "generic_continuation_rejected": true,
+    "decision_value_source": "operator_explicit_input_only",
+    "operator_decision_collected": false,
+    "terminal_closure_certificate_minted": false,
+    "terminal_closure_authorized": false,
+    "required_contract_result": "awaiting_explicit_operator_decision_value"
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "operator_terminal_closure_decision_value",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "approval://github-pr-terminal-closure-certificate/operator-decision",
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "terminal_closure_certificate",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://github-pr-terminal-closure-certificate",
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "repository_written_by_contract": false,
+    "connector_called_by_contract": false,
+    "mutation_route_admitted_by_contract": false,
+    "receipt_store_appended_by_contract": false,
+    "secret_values_serialized_by_contract": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_terminal_closure_operator_decision_contract_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.schema.json",
+    "github_pr_terminal_closure_operator_approval_gate_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json",
+    "github_pr_terminal_closure_certificate_candidate_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_candidate.schema.json",
+    "github_pr_terminal_closure_certificate_witness_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-terminal-closure-operator-decision-contract",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an explicit operator decision value before minting a terminal closure certificate."
+}

@@ -21,6 +21,8 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
 
 4. `mcoi_runtime.app.inceptadive_shadow_integration`
    - Invokes the bounded deep engine when deep mode is selected and enabled.
+   - Adds bounded deep advisory findings to strict preflight for external-effect
+     candidates when the deep engine is explicitly enabled.
    - Records results and receipts through the selected store.
    - Preserves the explicit `DEEP_REQUIRED` fallback when the deep engine is disabled.
 
@@ -43,8 +45,9 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Keeps the advisory separate from the plan outcome, operator queue state, consent gate, and dispatch authority.
 
 9. `mcoi_runtime.app.inceptadive_assistant_response_embedding`
-   - Embeds redacted `inceptadive_shadow_advisory` metadata in live non-streaming assistant response envelopes.
-   - Covers `POST /api/v1/chat` and `POST /api/v1/chat/workflow`.
+   - Embeds redacted `inceptadive_shadow_advisory` metadata in live assistant response envelopes.
+   - Covers `POST /api/v1/chat`, `POST /api/v1/chat/stream`, and `POST /api/v1/chat/workflow`.
+   - Streaming chat emits a side SSE event named `inceptadive_shadow_advisory` without changing existing `meta`, `token`, or `done` events.
    - Route contract: `docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md`.
 
 ## Runtime path
@@ -67,9 +70,12 @@ request or candidate action
 - Phi-GPS advisory output does not close proof obligations by itself.
 - Assistant response embedding is metadata-only and does not change assistant plan outcomes.
 - Live assistant response embedding is metadata-only and does not change content,
-  conversation state, workflow status, cost accounting, connector dispatch, or
-  governance verdicts.
+  conversation state, workflow status, streaming token events, cost accounting,
+  connector dispatch, or governance verdicts.
 - `POST /api/v1/shadow/inspect` is advisory-only and cannot execute candidate actions.
+- External-effect preflight deep advisories supplement strict preflight findings
+  only; they do not grant execution, connector dispatch, memory write, approval,
+  or governance verdict authority.
 
 ## Route slice closure
 
@@ -93,11 +99,14 @@ Focused tests cover:
 - inspection route replay fixture alignment with redacted response and receipt counts;
 - assistant response advisory embedding without execution authority.
 - live chat and chat-workflow response embedding without raw request or assistant content exposure.
+- streaming chat advisory SSE event insertion without raw request or assistant content exposure.
+- external-effect strict preflight receiving bounded deep advisory findings only
+  when the deep engine is explicitly enabled.
 
 ## Status
 
 Completeness: core runtime activation and route-level embedding applied.
 
-Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, and focused tests.
+Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, and focused tests.
 
 Fracture delta: live execution authority, memory write authority, connector dispatch authority, and governance verdict replacement remain intentionally absent.

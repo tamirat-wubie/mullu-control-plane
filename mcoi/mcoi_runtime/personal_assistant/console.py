@@ -130,6 +130,7 @@ _FOUNDATION_LANES = (
             "/api/v1/personal-assistant/approval-queue/preview",
             "/api/v1/personal-assistant/approval-proposals/preview",
             "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+            "/api/v1/personal-assistant/send-write/eligibility/preview",
         ],
         "schema_refs": [
             "schemas/personal_assistant_approval.schema.json",
@@ -352,6 +353,12 @@ def build_personal_assistant_console_read_model(
         lane_status=lane_status,
         outcome=assurance["outcome"],
     )
+    pilot_package = _build_governed_team_assistant_pilot_package(
+        lane_status=lane_status,
+        assistant_readiness=assistant_readiness,
+        receipt_refs=receipt_refs,
+        outcome=assurance["outcome"],
+    )
     return {
         "console_id": "personal_assistant_console_foundation",
         "status": "foundation_read_only",
@@ -375,6 +382,11 @@ def build_personal_assistant_console_read_model(
             "assistant_readiness": {
                 "item_count": 1,
                 "execution_allowed": False,
+            },
+            "pilot": {
+                "item_count": 1,
+                "execution_allowed": False,
+                "customer_readiness_claim_allowed": False,
             },
             "lane_status": {
                 "item_count": lane_status["lane_count"],
@@ -410,6 +422,7 @@ def build_personal_assistant_console_read_model(
         },
         "lane_status": lane_status,
         "assistant_readiness": assistant_readiness,
+        "governed_team_assistant_pilot": pilot_package,
         "assurance": assurance,
         "blocked_actions": list(_BLOCKED_ACTIONS),
         "effect_boundary": dict(_EFFECT_BOUNDARY),
@@ -759,6 +772,92 @@ def _build_assistant_readiness_demo(
         "memory_write_allowed": False,
         "raw_private_payload_serialized": False,
         "secret_values_serialized": False,
+        "customer_readiness_claim_allowed": False,
+    }
+
+
+def _build_governed_team_assistant_pilot_package(
+    *,
+    lane_status: Mapping[str, Any],
+    assistant_readiness: Mapping[str, Any],
+    receipt_refs: Sequence[str],
+    outcome: str,
+) -> dict[str, Any]:
+    """Return a no-effect pilot package read model for controlled demos."""
+    lane_ids = [str(lane["lane_id"]) for lane in _sequence_of_mappings(lane_status.get("lanes", ()))]
+    readiness = _mapping_value(assistant_readiness, "assistant_readiness")
+    required_approvals = _sequence_of_mappings(readiness.get("required_approvals", ()))
+    return {
+        "pilot_id": "governed_team_assistant_pilot_v0",
+        "package_name": "Governed Team Assistant Pilot",
+        "stage": "controlled_demo_productization",
+        "foundation_only": True,
+        "governed": True,
+        "outcome": outcome,
+        "positioning": "Mullu is a governed assistant control plane.",
+        "operator_prompt": _READINESS_PROMPT,
+        "included_lane_ids": lane_ids,
+        "demo_surface_refs": [
+            "/api/v1/console/personal-assistant",
+            "/api/v1/personal-assistant/read-only/inbox/preview",
+            "/api/v1/personal-assistant/read-only/calendar/preview",
+            "/api/v1/personal-assistant/drafts/email/preview",
+            "/api/v1/personal-assistant/approval-queue/preview",
+            "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
+            "/api/v1/personal-assistant/send-write/eligibility/preview",
+        ],
+        "operator_promises": [
+            "show_assistant_readiness",
+            "show_available_skills",
+            "show_blocked_actions",
+            "show_required_approvals",
+            "show_receipts",
+            "show_what_did_not_happen",
+        ],
+        "blocked_claims": [
+            "customer_ready",
+            "public_saas_launch_ready",
+            "live_gmail_send_enabled",
+            "live_calendar_write_enabled",
+            "live_mailbox_mutation_enabled",
+            "nested_mind_live_activation_enabled",
+        ],
+        "required_evidence_refs": [
+            "examples/personal_assistant_console_read_model.json",
+            "examples/personal_assistant_read_only_projection.json",
+            "examples/personal_assistant_draft_projection.json",
+            "examples/personal_assistant_teamops_projection.json",
+            "governance/personal_assistant_approval_matrix.yaml",
+        ],
+        "receipt_refs": list(receipt_refs),
+        "pilot_readiness": {
+            "read_only_demo_ready": True,
+            "draft_only_demo_ready": True,
+            "approval_queue_ready": True,
+            "teamops_probe_ready": True,
+            "send_write_preflight_ready": True,
+            "approval_required_skill_count": len(required_approvals),
+            "live_execution_ready": False,
+            "customer_readiness_claim_allowed": False,
+        },
+        "approval_boundary": {
+            "approval_required_before_send": True,
+            "approval_required_before_calendar_write": True,
+            "approval_required_before_system_write": True,
+            "approval_is_execution": False,
+        },
+        "receipt_boundary": {
+            "receipt_required_for_actions": True,
+            "receipt_required_before_claim": True,
+            "runtime_dispatch_allowed": False,
+            "success_claim_allowed": False,
+        },
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "execution_allowed": False,
+        "live_connector_execution_allowed": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
         "customer_readiness_claim_allowed": False,
     }
 

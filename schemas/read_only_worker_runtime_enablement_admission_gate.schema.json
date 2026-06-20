@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1",
+  "title": "Read-Only Worker Runtime Enablement Admission Gate",
+  "description": "Foundation Mode runtime enablement admission gate for the selected read-only worker path. The gate consumes accepted evidence but denies runtime admission and runtime enablement until a future non-Foundation runtime authority decision exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate_id",
+    "gate_version",
+    "source_acceptance_gate_ref",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "admission_state",
+    "evidence_accepted",
+    "runtime_admission_allowed",
+    "runtime_enablement_allowed",
+    "runtime_enablement_executed",
+    "runtime_dispatch_allowed",
+    "worker_invocation_allowed",
+    "runtime_receipt_emission_allowed",
+    "receipt_append_allowed",
+    "terminal_closure_allowed",
+    "success_claim_allowed",
+    "secret_values_serialized",
+    "connector_authority_allowed",
+    "filesystem_write_allowed",
+    "external_network_allowed",
+    "admission_blockers",
+    "accepted_evidence_refs",
+    "blocked_actions",
+    "summary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "gate_id": {
+      "type": "string",
+      "const": "read-only-worker-runtime-enablement-admission-gate-foundation-repo-inspection-20260620"
+    },
+    "gate_version": {
+      "type": "string",
+      "const": "read_only_worker_runtime_enablement_admission_gate.v1"
+    },
+    "source_acceptance_gate_ref": {
+      "type": "string",
+      "const": "examples/read_only_worker_runtime_enablement_evidence_acceptance_gate.foundation.json"
+    },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "admission_state": { "type": "string", "const": "blocked_foundation_mode_runtime_authority_missing" },
+    "evidence_accepted": { "type": "boolean", "const": true },
+    "runtime_admission_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_allowed": { "type": "boolean", "const": false },
+    "runtime_enablement_executed": { "type": "boolean", "const": false },
+    "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+    "worker_invocation_allowed": { "type": "boolean", "const": false },
+    "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+    "receipt_append_allowed": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "secret_values_serialized": { "type": "boolean", "const": false },
+    "connector_authority_allowed": { "type": "boolean", "const": false },
+    "filesystem_write_allowed": { "type": "boolean", "const": false },
+    "external_network_allowed": { "type": "boolean", "const": false },
+    "admission_blockers": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "accepted_evidence_refs": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_evidence_ref_count",
+        "runtime_admission_count",
+        "runtime_enablement_count",
+        "admission_blocker_count",
+        "blocked_action_count"
+      ],
+      "properties": {
+        "accepted_evidence_ref_count": { "type": "integer", "const": 12 },
+        "runtime_admission_count": { "type": "integer", "const": 0 },
+        "runtime_enablement_count": { "type": "integer", "const": 0 },
+        "admission_blocker_count": { "type": "integer", "minimum": 3 },
+        "blocked_action_count": { "type": "integer", "const": 7 }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 },
+    "repo_ref": { "type": "string", "minLength": 1, "pattern": "^(examples|schemas|scripts|tests|docs)/" }
+  }
+}

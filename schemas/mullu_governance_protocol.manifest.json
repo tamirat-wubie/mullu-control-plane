@@ -47,6 +47,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-temporary-branch-workspace-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json",
+      "schema_id": "agentic-service-harness-workspace-sandbox-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-workspace-sandbox-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
@@ -111,6 +117,12 @@
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-operator-approval-gate",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-approval-gate:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-operator-decision-contract",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-decision-contract:1"
     },
     {
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
@@ -1565,6 +1577,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-skill:1"
     },
     {
+      "path": "schemas/personal_assistant_skill_readiness_catalog.schema.json",
+      "schema_id": "personal-assistant-skill-readiness-catalog",
+      "surface": "assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-skill-readiness-catalog:1"
+    },
+    {
       "path": "schemas/personal_assistant_teamops_projection.schema.json",
       "schema_id": "personal-assistant-teamops-projection",
       "surface": "assistant",
@@ -1745,6 +1763,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-runtime-authority-chain-witness:1"
     },
     {
+      "path": "schemas/read_only_worker_runtime_disablement_rollback_plan.schema.json",
+      "schema_id": "read-only-worker-runtime-disablement-rollback-plan",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-disablement-rollback-plan:1"
+    },
+    {
       "path": "schemas/read_only_worker_runtime_dispatch_admission_witness.schema.json",
       "schema_id": "read-only-worker-runtime-dispatch-admission-witness",
       "surface": "worker",
@@ -1785,6 +1809,36 @@
       "schema_id": "read-only-worker-runtime-enablement-review-packet",
       "surface": "worker",
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-review-packet:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_evidence_acceptance_gate.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-evidence-acceptance-gate",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-acceptance-gate:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_admission_gate.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-admission-gate",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-promotion-decision",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-promotion-decision:1"
+    },
+    {
+      "path": "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
+      "schema_id": "read-only-worker-operator-runtime-enablement-approval-ref",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-operator-runtime-enablement-approval-ref:1"
+    },
+    {
+      "path": "schemas/read_only_worker_trusted_runtime_clock_receipt.schema.json",
+      "schema_id": "read-only-worker-trusted-runtime-clock-receipt",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-trusted-runtime-clock-receipt:1"
     },
     {
       "path": "schemas/read_only_worker_runtime_receipt_candidate.schema.json",
