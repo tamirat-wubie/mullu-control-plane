@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-workspace-sandbox-preflight:1",
+  "title": "Agentic Service Harness Workspace Sandbox Preflight",
+  "description": "Foundation Mode preflight contract for a future temporary branch workspace. This schema binds an existing harness workspace sandbox to path, command, timeout, network, cleanup, approval, and effect-denial controls without creating a branch, writing files, executing commands, opening a pull request, appending receipts, calling connectors, mutating runtime state, serializing secrets, claiming success, or issuing terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_contract_ref",
+    "scope",
+    "workspace_preflight_contract",
+    "sandbox_controls",
+    "cleanup_gate",
+    "effect_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_workspace_sandbox_preflight"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "SolvedVerified"
+    },
+    "source_contract_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness.branch_write_awaiting_approval.json"
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "workspace_preflight_contract": {
+      "$ref": "#/$defs/workspace_preflight_contract"
+    },
+    "sandbox_controls": {
+      "$ref": "#/$defs/sandbox_controls"
+    },
+    "cleanup_gate": {
+      "$ref": "#/$defs/cleanup_gate"
+    },
+    "effect_denials": {
+      "$ref": "#/$defs/effect_denials"
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/receipt_refs"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "task_id",
+        "run_id",
+        "sandbox_id",
+        "approval_gate_id",
+        "mode",
+        "foundation_phase",
+        "approval_required",
+        "approval_collected",
+        "authority_granted",
+        "preflight_only",
+        "branch_workspace_created",
+        "workspace_write_enabled",
+        "external_adapter_integrated",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "task_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "sandbox_id": { "$ref": "#/$defs/identifier" },
+        "approval_gate_id": { "$ref": "#/$defs/identifier" },
+        "mode": {
+          "type": "string",
+          "const": "branch_write"
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_contract_only"
+        },
+        "approval_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "approval_collected": {
+          "type": "boolean",
+          "const": false
+        },
+        "authority_granted": {
+          "type": "boolean",
+          "const": false
+        },
+        "preflight_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "branch_workspace_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "workspace_write_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_adapter_integrated": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "workspace_preflight_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preflight_id",
+        "preflight_mode",
+        "workspace_intent",
+        "source_sandbox_ref",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_source_refs",
+        "required_gate_refs",
+        "preflight_obligations_checked",
+        "validation_refs",
+        "preflight_only"
+      ],
+      "properties": {
+        "preflight_id": {
+          "type": "string",
+          "const": "workspace-sandbox-preflight-foundation"
+        },
+        "preflight_mode": {
+          "type": "string",
+          "const": "PREFLIGHT_ONLY"
+        },
+        "workspace_intent": {
+          "type": "string",
+          "const": "temporary_branch_workspace"
+        },
+        "source_sandbox_ref": {
+          "type": "string",
+          "const": "sandbox://agentic-service-harness/sandbox.branchwrite"
+        },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "string",
+            "const": "preflight"
+          }
+        },
+        "forbidden_action_classes": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "create_branch",
+              "write_files",
+              "execute_commands",
+              "run_tests",
+              "open_pr",
+              "append_receipt_store",
+              "call_connector",
+              "deploy",
+              "dns_mutation",
+              "secret_mutation",
+              "destructive_operation",
+              "terminal_closure"
+            ]
+          }
+        },
+        "required_source_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "preflight_obligations_checked": { "$ref": "#/$defs/evidence_ref_list" },
+        "validation_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "preflight_only": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "sandbox_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_allowlist",
+        "path_allowlist",
+        "timeout_seconds",
+        "network_policy",
+        "secret_redaction_required",
+        "production_mutation_allowed",
+        "cleanup_receipt_ref"
+      ],
+      "properties": {
+        "command_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "git.status",
+              "git.diff",
+              "python.pytest",
+              "python.validator",
+              "npm.test",
+              "cargo.test"
+            ]
+          }
+        },
+        "path_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "network_policy": {
+          "type": "string",
+          "const": "none"
+        },
+        "secret_redaction_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "production_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "cleanup_receipt_ref": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "cleanup_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cleanup_receipt_required",
+        "cleanup_receipt_emitted",
+        "cleanup_execution_allowed",
+        "required_before_workspace_write_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "cleanup_receipt_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "cleanup_receipt_emitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "cleanup_execution_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "required_before_workspace_write_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "effect_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_created",
+        "files_written",
+        "commands_executed",
+        "tests_executed",
+        "cleanup_executed",
+        "adapter_executed",
+        "pull_request_opened",
+        "runtime_state_written",
+        "receipt_store_appended",
+        "connector_calls_observed",
+        "external_effects_observed",
+        "approval_collected",
+        "authority_granted",
+        "terminal_closure",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "branch_created": { "type": "boolean", "const": false },
+        "files_written": { "type": "boolean", "const": false },
+        "commands_executed": { "type": "boolean", "const": false },
+        "tests_executed": { "type": "boolean", "const": false },
+        "cleanup_executed": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "connector_calls_observed": { "type": "boolean", "const": false },
+        "external_effects_observed": { "type": "boolean", "const": false },
+        "approval_collected": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_sandbox_preflight_schema",
+        "agentic_service_harness_schema",
+        "source_contract_example",
+        "cleanup_receipt_ref"
+      ],
+      "properties": {
+        "workspace_sandbox_preflight_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json"
+        },
+        "agentic_service_harness_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness.schema.json"
+        },
+        "source_contract_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness.branch_write_awaiting_approval.json"
+        },
+        "cleanup_receipt_ref": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

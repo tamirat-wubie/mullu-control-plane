@@ -1,0 +1,139 @@
+{
+  "cleanup_gate": {
+    "blocked_reason_refs": [
+      "blocked://workspace/write-authority-not-granted",
+      "blocked://cleanup/execution-not-admitted",
+      "blocked://operator-approval/not-collected",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "cleanup_execution_allowed": false,
+    "cleanup_receipt_emitted": false,
+    "cleanup_receipt_required": true,
+    "required_before_workspace_write_refs": [
+      "evidence://workspace-path-confinement",
+      "evidence://cleanup-receipt-emission",
+      "evidence://operator-approval-for-branch-write",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ]
+  },
+  "effect_denials": {
+    "adapter_executed": false,
+    "approval_collected": false,
+    "authority_granted": false,
+    "branch_created": false,
+    "cleanup_executed": false,
+    "commands_executed": false,
+    "connector_calls_observed": false,
+    "external_effects_observed": false,
+    "files_written": false,
+    "pull_request_opened": false,
+    "receipt_store_appended": false,
+    "runtime_state_written": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false,
+    "tests_executed": false
+  },
+  "generated_at": "2026-06-20T00:00:00Z",
+  "next_action": "Bind planned file-change collection only after workspace write authority and cleanup receipt emission are admitted.",
+  "receipt_refs": {
+    "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "source_contract_example": "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+    "workspace_sandbox_preflight_schema": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json"
+  },
+  "report_id": "agentic_service_harness_workspace_sandbox_preflight",
+  "report_is_not_terminal_closure": true,
+  "sandbox_controls": {
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "command_allowlist": [
+      "git.status",
+      "git.diff",
+      "python.pytest",
+      "python.validator"
+    ],
+    "network_policy": "none",
+    "path_allowlist": [
+      "."
+    ],
+    "production_mutation_allowed": false,
+    "secret_redaction_required": true,
+    "timeout_seconds": 300
+  },
+  "schema_version": 1,
+  "scope": {
+    "approval_collected": false,
+    "approval_gate_id": "gate.branchwrite",
+    "approval_required": true,
+    "authority_granted": false,
+    "branch_workspace_created": false,
+    "external_adapter_integrated": false,
+    "foundation_phase": "foundation_contract_only",
+    "mode": "branch_write",
+    "preflight_only": true,
+    "project_id": "project.foundation",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "secret_values_serialized": false,
+    "task_id": "task.branchwrite",
+    "workspace_write_enabled": false
+  },
+  "solver_outcome": "SolvedVerified",
+  "source_contract_ref": "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py --strict",
+      "required_for_closure": true,
+      "validator_id": "validator.agentic-service-harness-workspace-sandbox-preflight"
+    }
+  ],
+  "workspace_preflight_contract": {
+    "allowed_action_classes": [
+      "preflight"
+    ],
+    "forbidden_action_classes": [
+      "create_branch",
+      "write_files",
+      "execute_commands",
+      "run_tests",
+      "open_pr",
+      "append_receipt_store",
+      "call_connector",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "preflight_id": "workspace-sandbox-preflight-foundation",
+    "preflight_mode": "PREFLIGHT_ONLY",
+    "preflight_obligations_checked": [
+      "obligation://bind-command-allowlist",
+      "obligation://bind-path-allowlist",
+      "obligation://bind-timeout-budget",
+      "obligation://deny-network-access",
+      "obligation://require-cleanup-receipt",
+      "obligation://deny-workspace-effects"
+    ],
+    "preflight_only": true,
+    "required_gate_refs": [
+      "gate://harness/no-branch-creation",
+      "gate://harness/no-workspace-write",
+      "gate://harness/no-command-execution",
+      "gate://harness/no-cleanup-execution",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "required_source_refs": [
+      "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+      "schemas/agentic_service_harness.schema.json",
+      "scripts/validate_agentic_service_harness_contract.py"
+    ],
+    "source_sandbox_ref": "sandbox://agentic-service-harness/sandbox.branchwrite",
+    "validation_refs": [
+      "scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py",
+      "scripts/validate_agentic_service_harness_contract.py"
+    ],
+    "workspace_intent": "temporary_branch_workspace"
+  }
+}

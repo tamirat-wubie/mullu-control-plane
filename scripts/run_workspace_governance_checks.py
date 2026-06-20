@@ -187,6 +187,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_workspace_sandbox_preflight",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_pr_admission_preflight",
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"),
         ),
