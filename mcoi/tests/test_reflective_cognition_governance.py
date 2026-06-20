@@ -50,7 +50,7 @@ def test_high_risk_destructive_request_gets_high_depth_and_block_recommendation(
     assert receipt.validation_status == ValidationStatus.BLOCK_RECOMMENDED
     assert receipt.execution_authority is False
     assert receipt.governance_required is True
-    assert any("blocked" in receipt.next_safe_action.lower() for _ in [receipt.next_safe_action])
+    assert receipt.next_safe_action.startswith("Stop before action")
     assert receipt.contradictions
     assert receipt.edge_cases
     assert receipt.unresolved_gaps
