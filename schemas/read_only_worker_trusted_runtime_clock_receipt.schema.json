@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-trusted-runtime-clock-receipt:1",
+  "title": "Read-Only Worker Trusted Runtime Clock Receipt",
+  "description": "Foundation Mode trusted-clock evidence for read-only worker runtime enablement review. The receipt records a bounded local clock witness only; it does not authorize runtime enablement, dispatch, receipt emission, receipt append, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "clock_state",
+    "clock_source",
+    "observed_at",
+    "validity_window_seconds",
+    "monotonicity_required",
+    "clock_receipt_is_not_authorization",
+    "runtime_enablement_allowed",
+    "runtime_dispatch_allowed",
+    "worker_invocation_allowed",
+    "runtime_receipt_emission_allowed",
+    "receipt_append_allowed",
+    "terminal_closure_allowed",
+    "secret_values_serialized",
+    "external_network_allowed",
+    "filesystem_write_allowed",
+    "blocked_actions",
+    "governance_refs",
+    "evidence_refs",
+    "next_action"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "read-only-worker-trusted-runtime-clock-receipt-foundation-repo-inspection-20260620"
+    },
+    "receipt_version": {
+      "type": "string",
+      "const": "read_only_worker_trusted_runtime_clock_receipt.v1"
+    },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "clock_state": { "type": "string", "const": "trusted_clock_recorded_for_review" },
+    "clock_source": { "type": "string", "const": "local_foundation_workspace_clock" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "validity_window_seconds": { "type": "integer", "const": 300 },
+    "monotonicity_required": { "type": "boolean", "const": true },
+    "clock_receipt_is_not_authorization": { "type": "boolean", "const": true },
+    "runtime_enablement_allowed": { "type": "boolean", "const": false },
+    "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+    "worker_invocation_allowed": { "type": "boolean", "const": false },
+    "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+    "receipt_append_allowed": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "secret_values_serialized": { "type": "boolean", "const": false },
+    "external_network_allowed": { "type": "boolean", "const": false },
+    "filesystem_write_allowed": { "type": "boolean", "const": false },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "governance_refs": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 }
+  }
+}

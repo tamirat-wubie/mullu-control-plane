@@ -1,0 +1,43 @@
+{
+  "blocked_actions": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_dispatch_admission",
+    "read_only_worker_runtime_dispatch",
+    "read_only_worker_invocation",
+    "read_only_worker_runtime_receipt_emission",
+    "read_only_worker_receipt_append",
+    "read_only_worker_terminal_closure_claim"
+  ],
+  "clock_receipt_is_not_authorization": true,
+  "clock_source": "local_foundation_workspace_clock",
+  "clock_state": "trusted_clock_recorded_for_review",
+  "evidence_refs": [
+    "schemas/read_only_worker_trusted_runtime_clock_receipt.schema.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "scripts/validate_read_only_worker_trusted_runtime_clock_receipt.py",
+    "tests/test_validate_read_only_worker_trusted_runtime_clock_receipt.py"
+  ],
+  "external_network_allowed": false,
+  "filesystem_write_allowed": false,
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "policy://runtime-enablement/review-before-acceptance",
+    "temporal://trusted-runtime-clock-required"
+  ],
+  "monotonicity_required": true,
+  "next_action": "Review trusted runtime clock evidence with operator approval before any evidence acceptance or runtime enablement decision.",
+  "observed_at": "2026-06-20T00:00:00Z",
+  "proof_state": "Unknown",
+  "receipt_append_allowed": false,
+  "receipt_id": "read-only-worker-trusted-runtime-clock-receipt-foundation-repo-inspection-20260620",
+  "receipt_version": "read_only_worker_trusted_runtime_clock_receipt.v1",
+  "runtime_dispatch_allowed": false,
+  "runtime_enablement_allowed": false,
+  "runtime_receipt_emission_allowed": false,
+  "secret_values_serialized": false,
+  "selected_worker_path": "read_only_repo_inspection",
+  "solver_outcome": "AwaitingEvidence",
+  "terminal_closure_allowed": false,
+  "validity_window_seconds": 300,
+  "worker_invocation_allowed": false
+}
