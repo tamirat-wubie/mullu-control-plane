@@ -37,6 +37,11 @@
       "item_count": 1,
       "execution_allowed": false
     },
+    "pilot": {
+      "item_count": 1,
+      "execution_allowed": false,
+      "customer_readiness_claim_allowed": false
+    },
     "lane_status": {
       "item_count": 12,
       "execution_allowed": false
@@ -1219,7 +1224,8 @@
           "/api/v1/personal-assistant/approval-queue",
           "/api/v1/personal-assistant/approval-queue/preview",
           "/api/v1/personal-assistant/approval-proposals/preview",
-          "/api/v1/personal-assistant/approval-proposals/from-draft/preview"
+          "/api/v1/personal-assistant/approval-proposals/from-draft/preview",
+          "/api/v1/personal-assistant/send-write/eligibility/preview"
         ],
         "schema_refs": [
           "schemas/personal_assistant_approval.schema.json",
@@ -1672,6 +1678,106 @@
     "memory_write_allowed": false,
     "raw_private_payload_serialized": false,
     "secret_values_serialized": false,
+    "customer_readiness_claim_allowed": false
+  },
+  "governed_team_assistant_pilot": {
+    "pilot_id": "governed_team_assistant_pilot_v0",
+    "package_name": "Governed Team Assistant Pilot",
+    "stage": "controlled_demo_productization",
+    "foundation_only": true,
+    "governed": true,
+    "outcome": "SolvedVerified",
+    "positioning": "Mullu is a governed assistant control plane.",
+    "operator_prompt": "Show my assistant readiness.",
+    "included_lane_ids": [
+      "request_intake_whqr",
+      "skill_registry",
+      "approval_queue",
+      "memory_observation",
+      "read_only_projection",
+      "draft_projection",
+      "teamops_shared_inbox",
+      "github_codex_review",
+      "research_source_compare",
+      "math_reasoning",
+      "schedule_planning",
+      "operator_console"
+    ],
+    "demo_surface_refs": [
+      "/api/v1/console/personal-assistant",
+      "/api/v1/personal-assistant/read-only/inbox/preview",
+      "/api/v1/personal-assistant/read-only/calendar/preview",
+      "/api/v1/personal-assistant/drafts/email/preview",
+      "/api/v1/personal-assistant/approval-queue/preview",
+      "/api/v1/personal-assistant/teamops/gmail/live-probe/preview",
+      "/api/v1/personal-assistant/send-write/eligibility/preview"
+    ],
+    "operator_promises": [
+      "show_assistant_readiness",
+      "show_available_skills",
+      "show_blocked_actions",
+      "show_required_approvals",
+      "show_receipts",
+      "show_what_did_not_happen"
+    ],
+    "blocked_claims": [
+      "customer_ready",
+      "public_saas_launch_ready",
+      "live_gmail_send_enabled",
+      "live_calendar_write_enabled",
+      "live_mailbox_mutation_enabled",
+      "nested_mind_live_activation_enabled"
+    ],
+    "required_evidence_refs": [
+      "examples/personal_assistant_console_read_model.json",
+      "examples/personal_assistant_read_only_projection.json",
+      "examples/personal_assistant_draft_projection.json",
+      "examples/personal_assistant_teamops_projection.json",
+      "governance/personal_assistant_approval_matrix.yaml"
+    ],
+    "receipt_refs": [
+      "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
+    ],
+    "pilot_readiness": {
+      "read_only_demo_ready": true,
+      "draft_only_demo_ready": true,
+      "approval_queue_ready": true,
+      "teamops_probe_ready": true,
+      "send_write_preflight_ready": true,
+      "approval_required_skill_count": 0,
+      "live_execution_ready": false,
+      "customer_readiness_claim_allowed": false
+    },
+    "approval_boundary": {
+      "approval_required_before_send": true,
+      "approval_required_before_calendar_write": true,
+      "approval_required_before_system_write": true,
+      "approval_is_execution": false
+    },
+    "receipt_boundary": {
+      "receipt_required_for_actions": true,
+      "receipt_required_before_claim": true,
+      "runtime_dispatch_allowed": false,
+      "success_claim_allowed": false
+    },
+    "effect_boundary": {
+      "execution_allowed": false,
+      "live_connector_execution_allowed": false,
+      "mailbox_read_allowed": false,
+      "mailbox_mutation_allowed": false,
+      "external_send_allowed": false,
+      "calendar_write_allowed": false,
+      "task_write_allowed": false,
+      "memory_write_allowed": false,
+      "nested_mind_live_activation_allowed": false,
+      "deployment_mutation_allowed": false,
+      "public_readiness_claim_allowed": false
+    },
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "external_send_allowed": false,
+    "connector_mutation_allowed": false,
+    "system_of_record_write_allowed": false,
     "customer_readiness_claim_allowed": false
   },
   "assurance": {
