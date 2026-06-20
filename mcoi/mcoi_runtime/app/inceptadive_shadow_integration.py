@@ -8,6 +8,10 @@ from typing import Mapping, Sequence
 
 from mcoi_runtime.core.inceptadive_action_taxonomy import classify_shadow_action
 from mcoi_runtime.core.inceptadive_deep_engine import run_deep_shadow_pass
+from mcoi_runtime.core.inceptadive_external_effect_boundary import (
+    ExternalEffectBoundaryAdvisory,
+    build_external_effect_boundary_advisory,
+)
 from mcoi_runtime.core.inceptadive_shadow_gate import decide_shadow_mode
 from mcoi_runtime.core.inceptadive_shadow_light import run_light_shadow_pass
 from mcoi_runtime.core.inceptadive_shadow_posture import (
@@ -93,6 +97,21 @@ class InceptaDiveShadowRuntime:
         receipt = create_shadow_receipt(preflight_context, result) if self.receipts_enabled else None
         self._record(result, receipt)
         return result, receipt
+
+    def external_effect_advisory(
+        self,
+        context: ShadowContext,
+        *,
+        required_evidence_refs: tuple[str, ...] = (),
+        authority_receipt_refs: tuple[str, ...] = (),
+    ) -> ExternalEffectBoundaryAdvisory:
+        """Return redacted obligations for an effect-bearing candidate action."""
+
+        return build_external_effect_boundary_advisory(
+            _as_preflight(context),
+            required_evidence_refs=required_evidence_refs,
+            authority_receipt_refs=authority_receipt_refs,
+        )
 
     def health_posture(
         self,
