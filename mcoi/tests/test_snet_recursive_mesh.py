@@ -777,14 +777,20 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
         mesh.find_symbols_by_label(123)
     with pytest.raises(ValueError, match="perspective"):
         mesh.generate_wh_tick(seed.symbol_id, perspective="")
+    with pytest.raises(ValueError, match="perspective"):
+        mesh.generate_wh_tick(seed.symbol_id, perspective=" child")
     with pytest.raises(ValueError, match="context"):
         mesh.generate_wh_tick(seed.symbol_id, context=123)
     with pytest.raises(ValueError, match="context"):
         mesh.generate_wh_tick(seed.symbol_id, context=TextSubclass("general"))
+    with pytest.raises(ValueError, match="context"):
+        mesh.generate_wh_tick(seed.symbol_id, context=" general ")
     with pytest.raises(ValueError, match="parent_question_id"):
         mesh.generate_wh_tick(seed.symbol_id, parent_question_id=0)
     with pytest.raises(ValueError, match="parent_question_id"):
         mesh.generate_wh_tick(seed.symbol_id, parent_question_id=RaisingEquality())
+    assert mesh.questions == {}
+
     with pytest.raises(ValueError, match="facet"):
         mesh.score_metadata(
             facet="",
