@@ -1,0 +1,143 @@
+{
+  "authority_gates": {
+    "blocked_reason_refs": [
+      "blocked://branch-write-authority/not-collected",
+      "blocked://operator-approval/not-collected",
+      "blocked://cleanup-receipt/not-emitted",
+      "blocked://workspace-write-authority/not-granted",
+      "blocked://actual-diff-collection/not-admitted"
+    ],
+    "branch_write_authority_binding_verified": true,
+    "branch_write_authority_collected": false,
+    "cleanup_receipt_emitted": false,
+    "collection_admitted": false,
+    "operator_approval_collected": false,
+    "workspace_sandbox_preflight_verified": true,
+    "workspace_write_authority_granted": false
+  },
+  "collection_contract": {
+    "allowed_action_classes": [
+      "preflight"
+    ],
+    "allowed_file_change_kinds": [
+      "schema_patch",
+      "example_patch",
+      "validator_patch",
+      "test_patch",
+      "documentation_patch",
+      "ci_patch",
+      "governance_preflight_patch"
+    ],
+    "collection_id": "planned-file-change-collection-foundation",
+    "collection_kind": "planned_file_change_collection",
+    "collection_mode": "PREFLIGHT_ONLY",
+    "diff_receipt_required_after_collection": true,
+    "file_change_summary_required_after_collection": true,
+    "forbidden_action_classes": [
+      "create_branch",
+      "write_files",
+      "collect_actual_diff",
+      "execute_commands",
+      "run_tests",
+      "open_pr",
+      "append_receipt_store",
+      "call_connector",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "planned_collection_only": true,
+    "required_before_collection_refs": [
+      "examples/agentic_service_harness_workspace_sandbox_preflight.foundation.json",
+      "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+      "receipt://sandbox-cleanup-branchwrite",
+      "evidence://operator-approval-for-branch-write",
+      "evidence://workspace-write-authority",
+      "evidence://redaction-policy-for-file-change-collection"
+    ],
+    "required_validation_refs": [
+      "scripts/validate_agentic_service_harness_planned_file_change_collection_preflight.py",
+      "scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py",
+      "scripts/validate_agentic_service_harness_github_pr_branch_write_authority_binding.py"
+    ]
+  },
+  "collection_status": "AwaitingEvidence",
+  "effect_denials": {
+    "actual_diff_collected": false,
+    "branch_created": false,
+    "cleanup_executed": false,
+    "commands_executed": false,
+    "connector_calls_observed": false,
+    "external_effects_observed": false,
+    "file_change_summary_emitted": false,
+    "files_written": false,
+    "pull_request_opened": false,
+    "receipt_store_appended": false,
+    "runtime_state_written": false,
+    "secret_values_serialized": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false,
+    "tests_executed": false
+  },
+  "generated_at": "2026-06-20T00:00:00Z",
+  "next_action": "Collect actual file-change summaries only after branch-write authority, workspace write authority, cleanup receipt emission, redaction policy evidence, and UAO admission are explicit.",
+  "path_policy": {
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "path_allowlist": [
+      "."
+    ],
+    "path_allowlist_bound_to_workspace_sandbox": true,
+    "production_paths_allowed": false,
+    "secret_paths_allowed": false
+  },
+  "receipt_refs": {
+    "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "github_pr_branch_write_authority_binding_example": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
+    "planned_file_change_collection_preflight_schema": "schemas/agentic_service_harness_planned_file_change_collection_preflight.schema.json",
+    "workspace_sandbox_preflight_example": "examples/agentic_service_harness_workspace_sandbox_preflight.foundation.json",
+    "workspace_sandbox_preflight_schema": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json"
+  },
+  "redaction_policy": {
+    "credential_value_serialization_allowed": false,
+    "diff_redaction_required": true,
+    "raw_secret_path_serialization_allowed": false,
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "secret_redaction_required": true
+  },
+  "report_id": "agentic_service_harness_planned_file_change_collection_preflight",
+  "report_is_not_terminal_closure": true,
+  "schema_version": 1,
+  "scope": {
+    "actual_file_change_collection_started": false,
+    "branch_write_authority_collected": false,
+    "cleanup_receipt_emitted": false,
+    "foundation_phase": "foundation_contract_only",
+    "mode": "branch_write",
+    "planned_file_change_collection_admitted": false,
+    "preflight_only": true,
+    "project_id": "project.foundation",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "task_id": "task.branchwrite",
+    "workspace_write_authority_granted": false,
+    "workspace_write_authority_required": true
+  },
+  "solver_outcome": "SolvedVerified",
+  "source_branch_write_authority_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+  "source_workspace_sandbox_preflight_ref": "examples/agentic_service_harness_workspace_sandbox_preflight.foundation.json",
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_agentic_service_harness_planned_file_change_collection_preflight.py --strict",
+      "required_for_closure": true,
+      "validator_id": "validator.agentic-service-harness-planned-file-change-collection-preflight"
+    }
+  ]
+}

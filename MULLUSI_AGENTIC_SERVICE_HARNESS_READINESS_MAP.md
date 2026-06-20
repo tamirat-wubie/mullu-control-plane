@@ -97,7 +97,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | Codex-style coding adapter | PARTIAL | Adapter concepts exist; no live coding adapter is integrated. | Add a contract-only adapter registry entry with no subprocess, connector, or external model execution. |
 | Temporary branch workspace | PARTIAL | Sandbox and code-change loop primitives exist; harness branch workspace is not bound. | Add temp branch workspace preflight with path allowlist, cleanup receipt, and timeout budget. |
 | Test runner | PARTIAL | Repository validators and test-run receipts exist; harness-selected test execution is not bound. | Add dry-run test runner plan receipt that records selected commands without execution authority. |
-| Diff collection | PARTIAL | Diff and file-change receipts exist in lower-level surfaces; harness diff collection is not durable. | Add diff collection receipt schema with path allowlist and redaction guard. |
+| Diff collection | PARTIAL | Diff and file-change receipts exist in lower-level surfaces; planned file-change collection preflight now binds workspace sandbox, branch-write authority, cleanup, path, redaction, and effect-denial gates. Actual diff collection remains unadmitted. | Add actual diff collection receipt schema after branch-write authority, cleanup receipt, and UAO admission are explicit. |
 | PR creation after approval only | PARTIAL | Open-PR awaiting approval examples exist; no approved PR creation path is live. | Add a PR creation admission preflight that always blocks until ApprovalRequest and policy refs pass. |
 
 ## 5. Permission And Authority Model - READY
@@ -132,7 +132,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | task request | READY | AgentTask contract covers request refs and task scope. | None. |
 | selected agent | READY | Harness examples identify selected adapter/agent. | None. |
 | mode | READY | Read-only, dry-run, branch-write-awaiting-approval, open-PR-awaiting-approval, and blocked high-risk modes exist. | None. |
-| files changed | PARTIAL | AgentRunReceipt dry-run coverage keeps runtime state writes disabled and binds source read-model evidence; no durable run emission exists yet. | Bind planned file-change collection after workspace preflight. |
+| files changed | PARTIAL | AgentRunReceipt dry-run coverage keeps runtime state writes disabled and binds source read-model evidence; planned file-change collection is now preflight-bound to sandbox, authority, cleanup, path, and redaction gates. No durable actual file-change collection exists yet. | Add actual file-change summary receipt after workspace write authority and cleanup receipt emission are admitted. |
 | commands run | PARTIAL | Command receipt concepts exist; harness emission not durable. | Add commands-run field validator with redacted output refs. |
 | tests run | PARTIAL | Test evidence exists in CI and validators; harness test-run receipt not durable. | Add tests-run receipt section with command, exit code, duration, and evidence refs. |
 | policy result | READY | Policy result and approval gate fields exist in harness contracts. | None. |
