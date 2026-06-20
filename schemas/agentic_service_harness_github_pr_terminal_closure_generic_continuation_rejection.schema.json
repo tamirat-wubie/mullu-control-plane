@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-generic-continuation-rejection:1",
+  "title": "Agentic Service Harness GitHub PR Terminal Closure Generic Continuation Rejection",
+  "description": "Foundation Mode witness that generic continuation text is not an explicit operator decision value for GitHub PR terminal closure certificate minting. This witness rejects continuation-as-approval and grants no authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_decision_contract_ref",
+    "witness_kind",
+    "rejected_input_ref",
+    "rejection_status",
+    "generic_continuation_rejected",
+    "operator_decision_value_present",
+    "accepted_as_operator_approval",
+    "terminal_closure_certificate_minted",
+    "terminal_closure_authorized",
+    "authority_granted",
+    "read_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "continuation_rejection",
+    "remaining_witnesses",
+    "authority_denials",
+    "effect_boundary",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_decision_contract_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json"
+    },
+    "witness_kind": { "type": "string", "const": "terminal_closure_generic_continuation_rejection" },
+    "rejected_input_ref": { "type": "string", "const": "operator-input://generic-continuation" },
+    "rejection_status": { "type": "string", "const": "rejected_not_explicit_operator_decision_value" },
+    "generic_continuation_rejected": { "type": "boolean", "const": true },
+    "operator_decision_value_present": { "type": "boolean", "const": false },
+    "accepted_as_operator_approval": { "type": "boolean", "const": false },
+    "terminal_closure_certificate_minted": { "type": "boolean", "const": false },
+    "terminal_closure_authorized": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "read_only": { "type": "boolean", "const": true },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "continuation_rejection": { "$ref": "#/$defs/continuation_rejection" },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/remaining_witness" }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "read_only"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "task_service_id": { "type": "string", "const": "github-repo-task-service-read-only-foundation" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "continuation_rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rejection_id",
+        "source_decision_contract_binding_id",
+        "source_decision_contract_ref",
+        "observed_input_class",
+        "required_decision_values",
+        "generic_continuation_rejected",
+        "operator_decision_value_present",
+        "accepted_as_operator_approval",
+        "terminal_closure_certificate_minted",
+        "terminal_closure_authorized",
+        "required_rejection_result"
+      ],
+      "properties": {
+        "rejection_id": { "type": "string", "const": "terminal-closure-generic-continuation-rejection.github-pr-chain" },
+        "source_decision_contract_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract"
+        },
+        "source_decision_contract_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json"
+        },
+        "observed_input_class": { "type": "string", "const": "generic_continuation" },
+        "required_decision_values": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "string", "const": "approve_terminal_certificate" },
+            { "type": "string", "const": "deny_terminal_certificate" }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "generic_continuation_rejected": { "type": "boolean", "const": true },
+        "operator_decision_value_present": { "type": "boolean", "const": false },
+        "accepted_as_operator_approval": { "type": "boolean", "const": false },
+        "terminal_closure_certificate_minted": { "type": "boolean", "const": false },
+        "terminal_closure_authorized": { "type": "boolean", "const": false },
+        "required_rejection_result": { "type": "string", "const": "rejected_not_explicit_operator_decision_value" }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["witness_kind", "status", "evidence_ref", "authority_granted"],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": ["operator_terminal_closure_decision_value", "terminal_closure_certificate"]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "evidence_ref": {
+          "type": "string",
+          "enum": [
+            "approval://github-pr-terminal-closure-certificate/operator-decision",
+            "evidence://github-pr-terminal-closure-certificate"
+          ]
+        },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_granted",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "ready_for_review_enabled",
+        "pull_request_merge_enabled",
+        "repository_write_enabled",
+        "connector_calls_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "authority_granted": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "ready_for_review_enabled": { "type": "boolean", "const": false },
+        "pull_request_merge_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_written_by_rejection",
+        "connector_called_by_rejection",
+        "mutation_route_admitted_by_rejection",
+        "receipt_store_appended_by_rejection",
+        "secret_values_serialized_by_rejection",
+        "network_policy"
+      ],
+      "properties": {
+        "repository_written_by_rejection": { "type": "boolean", "const": false },
+        "connector_called_by_rejection": { "type": "boolean", "const": false },
+        "mutation_route_admitted_by_rejection": { "type": "boolean", "const": false },
+        "receipt_store_appended_by_rejection": { "type": "boolean", "const": false },
+        "secret_values_serialized_by_rejection": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_terminal_closure_generic_continuation_rejection_schema",
+        "github_pr_terminal_closure_operator_decision_contract_schema",
+        "github_pr_terminal_closure_operator_approval_gate_schema"
+      ],
+      "properties": {
+        "github_pr_terminal_closure_generic_continuation_rejection_schema": { "type": "string", "minLength": 1 },
+        "github_pr_terminal_closure_operator_decision_contract_schema": { "type": "string", "minLength": 1 },
+        "github_pr_terminal_closure_operator_approval_gate_schema": { "type": "string", "minLength": 1 }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

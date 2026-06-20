@@ -49,6 +49,10 @@ def _node(target: str, role: WHRole = WHRole.WHAT) -> WHQRNode:
     return WHQRNode(role=role, target=target)
 
 
+def _canonical_test_json(payload: object) -> str:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
 def _forged_logical_expr(op: LogicalOp, args: tuple[WHQRNode, ...]) -> LogicalExpr:
     expr = object.__new__(LogicalExpr)
     object.__setattr__(expr, "op", op)
@@ -934,6 +938,89 @@ def test_connector_assertions_have_stable_canonical_replay_identity() -> None:
     assert assertion_payload["target_hash"] == WHQRDocument(root=expr.left).canonical_hash()
     assert compilation_payload["logical_hash"] == WHQRDocument(root=first.logical).canonical_hash()
     assert compilation_payload["assertions"][0]["relation"] == "cause"
+
+
+def test_connector_assertion_import_verifies_canonical_payload_and_hashes() -> None:
+    expr = ConnectorExpr(
+        connector=Connector.BECAUSE,
+        left=_node("payment_request"),
+        right=_node("invoice_due", WHRole.WHY),
+    )
+    compiled = compile_connector(expr)
+    imported_assertion = SemanticAssertion.from_canonical_json(
+        compiled.assertion.canonical_json(),
+        expected_canonical_hash=compiled.assertion.canonical_hash(),
+    )
+    imported_compilation = ConnectorCompilation.from_canonical_json(
+        compiled.canonical_json(),
+        expected_canonical_hash=compiled.canonical_hash(),
+    )
+
+    assert imported_assertion == compiled.assertion
+    assert imported_assertion.verify_replay() == compiled.assertion.canonical_hash()
+    assert imported_compilation == compiled
+    assert imported_compilation.verify_replay() == compiled.canonical_hash()
+    assert imported_compilation.assertion.source == expr.right
+    assert imported_compilation.logical.args == (expr.left, expr.right)
+
+
+def test_connector_assertion_import_rejects_tampering_and_noncanonical_payloads() -> None:
+    compiled = compile_connector(
+        ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=_node("payment_request"),
+            right=_node("invoice_due", WHRole.WHY),
+        )
+    )
+    assertion_payload = json.loads(compiled.assertion.canonical_json())
+    source_hash_tampered = dict(assertion_payload)
+    source_hash_tampered["source_hash"] = WHQRDocument(root=compiled.assertion.target).canonical_hash()
+    unknown_field_payload = dict(assertion_payload)
+    unknown_field_payload["extra"] = "not_allowed"
+
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        SemanticAssertion.from_canonical_json(
+            compiled.assertion.canonical_json(),
+            expected_canonical_hash=WHQRDocument(root=compiled.assertion.source).canonical_hash(),
+        )
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        SemanticAssertion.from_canonical_json(_canonical_test_json(source_hash_tampered))
+    with pytest.raises(ValueError, match="deterministic canonical JSON"):
+        SemanticAssertion.from_canonical_json(json.dumps(assertion_payload))
+    with pytest.raises(ValueError, match="unknown fields"):
+        SemanticAssertion.from_canonical_json(_canonical_test_json(unknown_field_payload))
+    with pytest.raises(ValueError, match="valid JSON"):
+        SemanticAssertion.from_canonical_json("{")
+
+
+def test_connector_compilation_import_rejects_invalid_assertion_and_logical_payloads() -> None:
+    compiled = compile_connector(
+        ConnectorExpr(
+            connector=Connector.UNLESS,
+            left=_node("pay"),
+            right=_node("approval_missing"),
+        )
+    )
+    compilation_payload = json.loads(compiled.canonical_json())
+    empty_assertions = dict(compilation_payload)
+    empty_assertions["assertions"] = []
+    logical_hash_tampered = dict(compilation_payload)
+    logical_hash_tampered["logical_hash"] = WHQRDocument(root=compiled.assertion.source).canonical_hash()
+    logical_node_payload = dict(compilation_payload)
+    logical_node_payload["logical"] = json.loads(WHQRDocument(root=compiled.assertion.source).canonical_json())["root"]
+    logical_node_payload["logical_hash"] = WHQRDocument(root=compiled.assertion.source).canonical_hash()
+
+    with pytest.raises(ValueError, match="at least one"):
+        ConnectorCompilation.from_canonical_json(_canonical_test_json(empty_assertions))
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        ConnectorCompilation.from_canonical_json(_canonical_test_json(logical_hash_tampered))
+    with pytest.raises(ValueError, match="LogicalExpr"):
+        ConnectorCompilation.from_canonical_json(_canonical_test_json(logical_node_payload))
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        ConnectorCompilation.from_canonical_json(
+            compiled.canonical_json(),
+            expected_canonical_hash=compiled.assertion.canonical_hash(),
+        )
 
 
 def test_connector_compilation_rejects_mutable_or_empty_assertion_sequences() -> None:
