@@ -309,6 +309,6 @@ python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp
 
 STATUS:
   Completeness: 100%
-  Invariants verified: observation is not execution, evidence packet is not truth commit, evidence packet is not terminal closure, hard-constraint planning blocks on Unknown evidence, local repository observation has a digest-only read witness path, live provider observation remains AwaitingEvidence without witness, raw secret promotion denied, Mfidel atomicity preserved
+  Invariants verified: observation is not execution, evidence packet is not truth commit, evidence packet is not terminal closure, hard-constraint planning blocks on Unknown evidence, local repository observation has a digest-only read witness path, admitted repository world-state claims bind to ProblemStar evidence input, live provider observation remains AwaitingEvidence without witness, raw secret promotion denied, Mfidel atomicity preserved
   Open issues: live provider read witnesses, provider-specific evidence schemas, runtime evidence ledger append, and observation benchmarks remain future proof threads
-  Next action: bind admitted repository world-state projections into ProblemStar evidence input
+  Next action: add provider-specific observation projections after live witnesses exist

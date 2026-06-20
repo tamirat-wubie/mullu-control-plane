@@ -64,7 +64,7 @@ __all__ = [
     # Phi2-GPS v3 platform data model
     "PHI_GPS_V3_SCHEMA_VERSION", "PHI_GPS_KERNEL_SCHEMA_VERSION",
     "PROBLEM_STAR_FIELD_NAMES", "ProblemFieldStatus", "ProblemDomainClass",
-    "RequiredCertainty", "PolicyHint", "RawProblemEnvelope",
+    "RequiredCertainty", "PolicyHint", "ProblemEvidenceInput", "RawProblemEnvelope",
     "CompilerAssumption", "CompilerUnknown", "CompilerContradiction",
     "CompilerRisk", "CompilerProofRequirement", "CompiledProblem",
     "ProblemCompiler", "ProblemStarField", "ProblemStar",
@@ -1533,6 +1533,36 @@ class PolicyHint(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class ProblemEvidenceInput:
+    """Supplementary evidence admitted before ProblemStar compilation."""
+
+    evidence_id: str
+    source_ref: str
+    statement: str
+    confidence: float
+    field_refs: tuple[str, ...] = ("W",)
+
+    def __post_init__(self) -> None:
+        if not self.evidence_id or not self.source_ref or not self.statement:
+            raise ValueError("problem evidence id, source, and statement must be non-empty")
+        _validate_unit_interval(self.confidence, "problem_evidence.confidence")
+        field_refs = _normalize_text_tuple(self.field_refs, "problem_evidence.field_refs")
+        invalid_fields = tuple(field for field in field_refs if field not in PROBLEM_STAR_FIELD_NAMES)
+        if invalid_fields:
+            raise ValueError(f"problem evidence field refs are not canonical: {invalid_fields}")
+        object.__setattr__(self, "field_refs", field_refs)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "evidence_id": self.evidence_id,
+            "source_ref": self.source_ref,
+            "statement": self.statement,
+            "confidence": round(self.confidence, 6),
+            "field_refs": list(self.field_refs),
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class RawProblemEnvelope:
     """Intake-layer envelope for raw v3 problem content."""
 
@@ -1546,6 +1576,7 @@ class RawProblemEnvelope:
     urgency: str = "normal"
     declared_goal: str = ""
     declared_constraints: tuple[str, ...] = ()
+    evidence_inputs: tuple[ProblemEvidenceInput, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.id:
@@ -1555,6 +1586,7 @@ class RawProblemEnvelope:
         if not self.source:
             raise ValueError("RawProblemEnvelope.source must be non-empty")
         object.__setattr__(self, "declared_constraints", _normalize_text_tuple(self.declared_constraints, "declared_constraints"))
+        object.__setattr__(self, "evidence_inputs", _coerce_problem_evidence_inputs(self.evidence_inputs))
 
     @property
     def input_hash(self) -> str:
@@ -1575,6 +1607,7 @@ class RawProblemEnvelope:
             "urgency": self.urgency,
             "declared_goal": self.declared_goal,
             "declared_constraints": list(self.declared_constraints),
+            "evidence_inputs": [evidence.to_dict() for evidence in self.evidence_inputs],
         }
         if include_hash:
             payload["input_hash"] = self.input_hash
@@ -1770,13 +1803,15 @@ class ProblemCompiler:
         text = envelope.content_text()
         distinguish_result = distinguish(text)
         symbols = distinguish_result.symbols
+        evidence_inputs = envelope.evidence_inputs
         assumptions = _extract_compiler_assumptions(text)
         contradictions = _detect_compiler_contradictions(text, envelope.declared_constraints)
         risks = _detect_compiler_risks(text, envelope)
-        unknowns = _infer_compiler_unknowns(envelope, text, contradictions)
+        unknowns = _infer_compiler_unknowns(envelope, text, contradictions, evidence_inputs)
         proof_requirements = _infer_compiler_proof_requirements(envelope, risks, contradictions)
         confidence_map = _compiler_confidence_map(
             symbols=symbols,
+            evidence_inputs=evidence_inputs,
             assumptions=assumptions,
             unknowns=unknowns,
             contradictions=contradictions,
@@ -1791,6 +1826,7 @@ class ProblemCompiler:
             contradictions=contradictions,
             risks=risks,
             proof_requirements=proof_requirements,
+            evidence_inputs=evidence_inputs,
         )
         kernel_draft = build_problem_star(
             problem_id=envelope.id,
@@ -1815,6 +1851,7 @@ class ProblemCompiler:
                 cause="compiler separated evidence, assumptions, unknowns, contradictions, risks, and proof obligations",
                 payload={
                     "symbol_count": len(symbols),
+                    "evidence_input_count": len(evidence_inputs),
                     "assumption_count": len(assumptions),
                     "unknown_count": len(unknowns),
                     "contradiction_count": len(contradictions),
@@ -3886,6 +3923,7 @@ def _infer_compiler_unknowns(
     envelope: RawProblemEnvelope,
     text: str,
     contradictions: tuple[CompilerContradiction, ...],
+    evidence_inputs: tuple[ProblemEvidenceInput, ...] = (),
 ) -> tuple[CompilerUnknown, ...]:
     lowered_text = text.lower()
     unknowns: list[CompilerUnknown] = []
@@ -3899,7 +3937,8 @@ def _infer_compiler_unknowns(
                 resolution="query",
             )
         )
-    if not _contains_any(lowered_text, ("observed", "evidence:", "state:", "current state", "system state")):
+    has_world_evidence = _contains_any(lowered_text, ("observed", "evidence:", "state:", "current state", "system state")) or bool(_evidence_inputs_for_field(evidence_inputs, "W"))
+    if not has_world_evidence:
         unknowns.append(
             CompilerUnknown(
                 unknown_id=f"unknown-{len(unknowns) + 1}",
@@ -3990,6 +4029,7 @@ def _infer_compiler_proof_requirements(
 def _compiler_confidence_map(
     *,
     symbols: tuple[Symbol, ...],
+    evidence_inputs: tuple[ProblemEvidenceInput, ...] = (),
     assumptions: tuple[CompilerAssumption, ...],
     unknowns: tuple[CompilerUnknown, ...],
     contradictions: tuple[CompilerContradiction, ...],
@@ -3997,14 +4037,15 @@ def _compiler_confidence_map(
     proof_requirements: tuple[CompilerProofRequirement, ...],
 ) -> dict[str, float]:
     symbol_confidence = _average(symbol.confidence for symbol in symbols)
+    evidence_confidence = _average(evidence.confidence for evidence in evidence_inputs) if evidence_inputs else 0.0
     assumption_confidence = _average(assumption.confidence for assumption in assumptions) if assumptions else 1.0
     unknown_penalty = min(len(unknowns) / 10.0, 0.6)
     contradiction_penalty = min(len(contradictions) / 5.0, 0.8)
     risk_penalty = min(len(risks) / 10.0, 0.4)
-    base_confidence = max(0.0, min(1.0, (symbol_confidence + assumption_confidence) / 2.0 - unknown_penalty - contradiction_penalty))
+    base_confidence = max(0.0, min(1.0, (symbol_confidence + assumption_confidence + evidence_confidence) / (3.0 if evidence_inputs else 2.0) - unknown_penalty - contradiction_penalty))
     proof_confidence = 0.5 if proof_requirements else 0.0
     return {
-        "W": max(0.0, base_confidence - 0.2),
+        "W": max(0.0, min(1.0, base_confidence - 0.2 + evidence_confidence * 0.3)),
         "B": base_confidence,
         "O": 0.9 if symbols else 0.5,
         "I": 0.8,
@@ -4030,6 +4071,7 @@ def _compile_problem_star_inputs(
     contradictions: tuple[CompilerContradiction, ...],
     risks: tuple[CompilerRisk, ...],
     proof_requirements: tuple[CompilerProofRequirement, ...],
+    evidence_inputs: tuple[ProblemEvidenceInput, ...] = (),
 ) -> tuple[dict[str, Any], dict[str, ProblemFieldStatus], dict[str, tuple[str, ...]]]:
     action_symbols = tuple(dict.fromkeys(
         tuple(symbol.name for symbol in symbols if symbol.kind == "action") + _extract_action_keywords(text)
@@ -4043,8 +4085,14 @@ def _compile_problem_star_inputs(
         "A_e": tuple(unknown.resolution for unknown in unknowns),
         "Pi": tuple(requirement.description for requirement in proof_requirements),
     }
+    world_evidence_inputs = _evidence_inputs_for_field(evidence_inputs, "W")
     if _contains_any(lowered_text, ("observed", "evidence:", "state:", "current state", "system state")):
         values["W"] = {"evidence_ref": "raw_content"}
+    if world_evidence_inputs:
+        values["W"] = {
+            "evidence_refs": [evidence.source_ref for evidence in world_evidence_inputs],
+            "statements": [evidence.statement for evidence in world_evidence_inputs],
+        }
     if symbols:
         values["B"] = {"hypotheses": [symbol.name for symbol in symbols]}
     if envelope.declared_goal:
@@ -4060,7 +4108,7 @@ def _compile_problem_star_inputs(
         values["T"] = {"transition_markers": True}
 
     statuses: dict[str, ProblemFieldStatus] = {
-        "W": ProblemFieldStatus.PARTIAL if "W" in values else ProblemFieldStatus.UNKNOWN,
+        "W": _status_from_evidence_inputs(world_evidence_inputs, default=ProblemFieldStatus.PARTIAL if "W" in values else ProblemFieldStatus.UNKNOWN),
         "B": ProblemFieldStatus.PARTIAL if "B" in values else ProblemFieldStatus.UNKNOWN,
         "O": ProblemFieldStatus.KNOWN,
         "I": ProblemFieldStatus.KNOWN if envelope.authority_context else ProblemFieldStatus.PARTIAL,
@@ -4090,6 +4138,12 @@ def _compile_problem_star_inputs(
     }
     if "W" in values:
         evidences["W"] = ("raw_content_state_marker",)
+    for field_name in PROBLEM_STAR_FIELD_NAMES:
+        field_evidence_inputs = _evidence_inputs_for_field(evidence_inputs, field_name)
+        if not field_evidence_inputs:
+            continue
+        existing_refs = evidences.get(field_name, ())
+        evidences[field_name] = tuple(dict.fromkeys(existing_refs + tuple(evidence.evidence_id for evidence in field_evidence_inputs)))
     if "G" in values:
         evidences["G"] = ("declared_goal",)
     if "Lambda" in values:
@@ -4208,6 +4262,45 @@ def _goal_sharpness(status: ProblemFieldStatus) -> float:
 def _validate_unit_interval(value: float, name: str) -> None:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not 0.0 <= float(value) <= 1.0:
         raise ValueError(f"{name} must be within [0, 1]")
+
+
+def _coerce_problem_evidence_inputs(value: Any) -> tuple[ProblemEvidenceInput, ...]:
+    if value in (None, ""):
+        return ()
+    if isinstance(value, ProblemEvidenceInput):
+        return (value,)
+    if isinstance(value, dict):
+        return (ProblemEvidenceInput(**value),)
+    if isinstance(value, (list, tuple)):
+        coerced: list[ProblemEvidenceInput] = []
+        for item in value:
+            if isinstance(item, ProblemEvidenceInput):
+                coerced.append(item)
+            elif isinstance(item, dict):
+                coerced.append(ProblemEvidenceInput(**item))
+            else:
+                raise ValueError("problem evidence inputs must be typed evidence objects")
+        return tuple(coerced)
+    raise ValueError("problem evidence inputs must be a sequence")
+
+
+def _evidence_inputs_for_field(
+    evidence_inputs: tuple[ProblemEvidenceInput, ...],
+    field_name: str,
+) -> tuple[ProblemEvidenceInput, ...]:
+    return tuple(evidence for evidence in evidence_inputs if field_name in evidence.field_refs)
+
+
+def _status_from_evidence_inputs(
+    evidence_inputs: tuple[ProblemEvidenceInput, ...],
+    *,
+    default: ProblemFieldStatus,
+) -> ProblemFieldStatus:
+    if not evidence_inputs:
+        return default
+    if any(evidence.confidence >= 0.85 for evidence in evidence_inputs):
+        return ProblemFieldStatus.KNOWN
+    return ProblemFieldStatus.PARTIAL
 
 
 def _normalize_text_tuple(value: tuple[str, ...] | list[str] | str, name: str) -> tuple[str, ...]:

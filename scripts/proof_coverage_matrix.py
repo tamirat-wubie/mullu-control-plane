@@ -8632,6 +8632,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "WorldStateStore.add_entity",
                 "project_repository_observation_packet_to_world_state",
+                "bind_repository_world_state_projection_to_problem_star_evidence",
                 "GoalCompiler.compile",
                 "CausalSimulator.simulate",
                 "/api/v1/knowledge/entities",
@@ -8666,10 +8667,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_goal_compiler.py",
                 "tests/test_gateway/test_causal_simulator.py",
             ],
-            "Governed operational intelligence binds sourced world-state admission, repository observation packet projection, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+            "Governed operational intelligence binds sourced world-state admission, repository observation packet projection, planning-only ProblemStar evidence binding, knowledge graph entity/link/contradiction routes, policy simulation dry-run APIs, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
             [
                 "world_assertions_require_source_evidence",
                 "repository_observation_packets_project_to_world_state",
+                "repository_world_state_projection_binds_problem_star_evidence",
+                "repository_world_state_projection_blocks_problem_star_evidence",
                 "repository_observation_failures_block_world_state_planning",
                 "foundation_repository_observation_blocks_without_contradiction",
                 "knowledge_entity_routes_governed",
@@ -8690,6 +8693,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "repository_observation_packets_project_to_world_state": [
                     "repository_observation_packet_projects_to_world_state_planning_claims",
+                ],
+                "repository_world_state_projection_binds_problem_star_evidence": [
+                    "repository_world_state_projection_binds_problem_star_evidence",
+                ],
+                "repository_world_state_projection_blocks_problem_star_evidence": [
+                    "repository_world_state_projection_blocks_problem_star_evidence_on_contradiction",
+                    "foundation_repository_world_state_projection_blocks_problem_star_evidence",
                 ],
                 "repository_observation_failures_block_world_state_planning": [
                     "repository_observation_command_failure_projects_open_contradiction",

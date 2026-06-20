@@ -56,6 +56,20 @@ The receipt must explicitly keep these guards false:
 | `deployment_claimed` | `false` |
 | `terminal_closure` | `false` |
 
+## Repository World-State Evidence
+
+Repository observation may enter `separated_surfaces.evidence` only through the
+World State Plane binding:
+
+```text
+bind_repository_world_state_projection_to_problem_star_evidence(projection, planning_claims)
+```
+
+The binding admits only same-tenant, same-packet, planning-only claims returned
+by `WorldStateStore.planning_claims`. Foundation packets, `ProofState Unknown`
+packets, failed command observations, and projections with open contradictions
+produce no evidence items and emit proof obligations before solver routing.
+
 ## Validation
 
 ```powershell
@@ -65,6 +79,6 @@ python -m pytest tests/test_validate_problem_star_compilation_receipt.py -q
 
 STATUS:
   Completeness: 100%
-  Invariants verified: ProblemStar field order, separation before solver routing, authority denial, Mfidel atomicity preservation
+  Invariants verified: ProblemStar field order, separation before solver routing, authority denial, repository world-state evidence binding, Mfidel atomicity preservation
   Open issues: external adapter evidence remains AwaitingEvidence
   Next action: keep the receipt as governed-loop evidence without runtime authority

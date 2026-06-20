@@ -27,8 +27,10 @@ from gateway.world_state import (
     WorldEntity,
     WorldEvent,
     WorldRelation,
+    bind_repository_world_state_projection_to_problem_star_evidence,
     project_repository_observation_packet_to_world_state,
 )
+from scripts import validate_problem_star_compilation_receipt as problem_star_validator
 from scripts.produce_repository_observation_evidence_packet import (
     READ_ONLY_GIT_COMMANDS,
     RepositoryCommandObservation,
@@ -198,6 +200,27 @@ def test_repository_observation_packet_projects_to_world_state_planning_claims()
     assert any(claim.predicate == "repository_proof_state" and claim.object_value == "Pass" for claim in planning_claims)
 
 
+def test_repository_world_state_projection_binds_problem_star_evidence() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = _repository_observation_packet()
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    planning_claims = store.planning_claims(tenant_id="foundation-local-only")
+    binding = bind_repository_world_state_projection_to_problem_star_evidence(projection, planning_claims)
+    receipt = problem_star_validator.build_mutated_receipt()
+    receipt["separated_surfaces"]["evidence"] = list(binding.as_problem_star_evidence())
+
+    assert binding.admitted is True
+    assert len(binding.evidence_items) == 8
+    assert binding.blocked_reasons == ()
+    assert binding.proof_obligations[0]["proof_state"] == "Pass"
+    assert binding.proof_obligations[0]["required_before"] == "solver_routing"
+    assert all(item.source_ref.startswith(f"world-state://{projection.state.state_id}/claims/") for item in binding.evidence_items)
+    assert all(item.confidence == 1.0 for item in binding.evidence_items)
+    assert any("repository_proof_state = Pass" in item.statement for item in binding.evidence_items)
+    assert problem_star_validator.validate_receipt_record(receipt) == []
+
+
 def test_repository_observation_command_failure_projects_open_contradiction() -> None:
     store = InMemoryWorldStateStore(clock=lambda: NOW)
     packet = _repository_observation_packet(failing_command="git_status")
@@ -218,6 +241,27 @@ def test_repository_observation_command_failure_projects_open_contradiction() ->
     assert any(item.object_type == "contradiction" and item.admission.accepted for item in projection.admissions)
 
 
+def test_repository_world_state_projection_blocks_problem_star_evidence_on_contradiction() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = _repository_observation_packet(failing_command="git_status")
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    admitted_store = InMemoryWorldStateStore(clock=lambda: NOW)
+    project_repository_observation_packet_to_world_state(_repository_observation_packet(), admitted_store)
+    binding = bind_repository_world_state_projection_to_problem_star_evidence(
+        projection,
+        admitted_store.planning_claims(tenant_id="foundation-local-only"),
+    )
+
+    assert binding.admitted is False
+    assert binding.evidence_items == ()
+    assert binding.as_problem_star_evidence() == ()
+    assert binding.proof_obligations[0]["proof_state"] == "Fail"
+    assert binding.proof_obligations[0]["required_before"] == "solver_routing"
+    assert "repository observation command contradiction blocks planning admission" in binding.blocked_reasons
+    assert "repository world-state projection has open contradictions" in binding.blocked_reasons
+
+
 def test_foundation_repository_observation_projection_blocks_without_contradiction() -> None:
     store = InMemoryWorldStateStore(clock=lambda: NOW)
     packet = json.loads((ROOT / "examples" / "repository_observation_evidence_packet.foundation.json").read_text())
@@ -234,6 +278,26 @@ def test_foundation_repository_observation_projection_blocks_without_contradicti
         "repository observation proof state Unknown blocks hard planning",
     )
     assert len(projection.admissions) == 12
+
+
+def test_foundation_repository_world_state_projection_blocks_problem_star_evidence() -> None:
+    store = InMemoryWorldStateStore(clock=lambda: NOW)
+    packet = json.loads((ROOT / "examples" / "repository_observation_evidence_packet.foundation.json").read_text())
+
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    binding = bind_repository_world_state_projection_to_problem_star_evidence(
+        projection,
+        store.planning_claims(tenant_id="foundation-local-only"),
+    )
+
+    assert binding.admitted is False
+    assert binding.evidence_items == ()
+    assert binding.as_problem_star_evidence() == ()
+    assert binding.proof_obligations[0]["proof_state"] == "Unknown"
+    assert binding.proof_obligations[0]["required_before"] == "solver_routing"
+    assert binding.blocked_reasons == (
+        "repository observation proof state Unknown blocks hard planning",
+    )
 
 
 def _evidence() -> EvidenceRef:

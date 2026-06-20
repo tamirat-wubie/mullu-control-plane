@@ -237,6 +237,45 @@ class RepositoryObservationWorldStateProjection:
         return all(item.admission.accepted for item in self.admissions)
 
 
+@dataclass(frozen=True, slots=True)
+class ProblemStarEvidenceItem:
+    """Schema-compatible ProblemStar evidence input item."""
+
+    evidence_id: str
+    source_ref: str
+    statement: str
+    confidence: float
+
+    def as_receipt_evidence(self) -> dict[str, Any]:
+        """Return the JSON object shape accepted by the ProblemStar receipt."""
+
+        return {
+            "evidence_id": self.evidence_id,
+            "source_ref": self.source_ref,
+            "statement": self.statement,
+            "confidence": self.confidence,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class ProblemStarEvidenceBinding:
+    """Repository world-state to ProblemStar evidence binding result."""
+
+    packet_id: str
+    tenant_id: str
+    state_id: str
+    state_hash: str
+    admitted: bool
+    evidence_items: tuple[ProblemStarEvidenceItem, ...]
+    proof_obligations: tuple[dict[str, str], ...]
+    blocked_reasons: tuple[str, ...] = ()
+
+    def as_problem_star_evidence(self) -> tuple[dict[str, Any], ...]:
+        """Return separated ProblemStar evidence surface objects."""
+
+        return tuple(item.as_receipt_evidence() for item in self.evidence_items)
+
+
 class WorldStateStore:
     """Persistence contract for world-state graph assertions."""
 
@@ -701,6 +740,92 @@ def project_repository_observation_packet_to_world_state(
     )
 
 
+def bind_repository_world_state_projection_to_problem_star_evidence(
+    projection: RepositoryObservationWorldStateProjection,
+    planning_claims: Iterable[WorldClaim],
+) -> ProblemStarEvidenceBinding:
+    """Bind admitted repository world-state claims into ProblemStar evidence.
+
+    Input contract: projection comes from a repository observation packet and
+    planning_claims are already filtered by the World State Store.
+    Output contract: returns schema-compatible evidence items only for
+    same-tenant, same-packet, planning-eligible claims.
+    Error contract: blocked or contradicted projections return no evidence
+    items and expose proof obligations; no exception is raised for denial.
+    """
+
+    blocked_reasons = list(projection.blocked_reasons)
+    if not projection.admitted:
+        blocked_reasons.extend(
+            f"{item.object_type}:{item.admission.reason}"
+            for item in projection.admissions
+            if not item.admission.accepted
+        )
+    if projection.state.open_contradiction_count:
+        blocked_reasons.append("repository world-state projection has open contradictions")
+
+    eligible_claims = tuple(
+        sorted(
+            (
+                claim
+                for claim in planning_claims
+                if _claim_belongs_to_repository_projection(projection, claim)
+            ),
+            key=lambda claim: claim.claim_id,
+        )
+    )
+    if blocked_reasons or not eligible_claims:
+        if not blocked_reasons:
+            blocked_reasons.append("repository world-state projection has no admitted planning claims")
+        return ProblemStarEvidenceBinding(
+            packet_id=projection.packet_id,
+            tenant_id=projection.tenant_id,
+            state_id=projection.state.state_id,
+            state_hash=projection.state.state_hash,
+            admitted=False,
+            evidence_items=(),
+            proof_obligations=(
+                {
+                    "obligation_id": f"{projection.packet_id}:proof:repository-world-state-evidence-blocked",
+                    "description": "Repository world-state evidence cannot enter ProblemStar until planning claims are admitted.",
+                    "proof_state": _blocked_problem_star_proof_state(tuple(blocked_reasons)),
+                    "required_before": "solver_routing",
+                },
+            ),
+            blocked_reasons=tuple(_ordered_unique(blocked_reasons)),
+        )
+
+    evidence_items = tuple(
+        ProblemStarEvidenceItem(
+            evidence_id=f"{claim.claim_id}:problem-star-evidence",
+            source_ref=f"world-state://{projection.state.state_id}/claims/{claim.claim_id}",
+            statement=(
+                f"{claim.subject_ref} asserts {claim.predicate} = {claim.object_value} "
+                f"under state {projection.state.state_hash}"
+            ),
+            confidence=claim.confidence,
+        )
+        for claim in eligible_claims
+    )
+    return ProblemStarEvidenceBinding(
+        packet_id=projection.packet_id,
+        tenant_id=projection.tenant_id,
+        state_id=projection.state.state_id,
+        state_hash=projection.state.state_hash,
+        admitted=True,
+        evidence_items=evidence_items,
+        proof_obligations=(
+            {
+                "obligation_id": f"{projection.packet_id}:proof:repository-world-state-evidence-bound",
+                "description": "Admitted repository world-state planning claims were converted into separated ProblemStar evidence items.",
+                "proof_state": "Pass",
+                "required_before": "solver_routing",
+            },
+        ),
+        blocked_reasons=(),
+    )
+
+
 def _repository_observation_block_reason(
     proof_state: str,
     contradiction_refs: tuple[str, ...],
@@ -775,6 +900,35 @@ def _require_text(payload: dict[str, Any], field_name: str) -> str:
 
 def _hash_payload_ref(payload: dict[str, Any]) -> str:
     return f"hash://sha256/{_canonical_hash(payload)}"
+
+
+def _claim_belongs_to_repository_projection(
+    projection: RepositoryObservationWorldStateProjection,
+    claim: WorldClaim,
+) -> bool:
+    return (
+        claim.tenant_id == projection.tenant_id
+        and claim.claim_id.startswith(f"{projection.packet_id}:claim:")
+        and claim.allowed_for_planning
+        and not claim.allowed_for_execution
+    )
+
+
+def _blocked_problem_star_proof_state(blocked_reasons: tuple[str, ...]) -> str:
+    if any("contradiction" in reason or "Fail" in reason for reason in blocked_reasons):
+        return "Fail"
+    return "Unknown"
+
+
+def _ordered_unique(values: Iterable[str]) -> tuple[str, ...]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        unique.append(value)
+    return tuple(unique)
 
 
 def _missing_refs(

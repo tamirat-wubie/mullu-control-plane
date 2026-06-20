@@ -119,6 +119,6 @@ python -m pytest tests/test_validate_observation_evidence_acquisition_architectu
 
 STATUS:
   Completeness: 100%
-  Invariants verified: digest-only repository observation, Foundation fixture blocks live-read claims, live producer uses allowlisted read-only git commands, no raw output serialization, no source filesystem mutation, no file-content payload serialization, no secret read, no connector call, no runtime dispatch, no deployment mutation, no terminal closure, hard-constraint planning blocked unless live proof state is Pass
+  Invariants verified: digest-only repository observation, Foundation fixture blocks live-read claims, live producer uses allowlisted read-only git commands, no raw output serialization, no source filesystem mutation, no file-content payload serialization, no secret read, no connector call, no runtime dispatch, no deployment mutation, no terminal closure, hard-constraint planning blocked unless live proof state is Pass, admitted world-state claims bind to ProblemStar evidence
   Open issues: provider and connector observation packets remain future proof threads
-  Next action: bind admitted repository world-state projections into ProblemStar evidence input
+  Next action: add provider and connector observation packets after live witnesses exist

@@ -122,8 +122,35 @@ The focused verification lane is:
 python -m pytest tests/test_gateway/test_world_state.py::test_repository_observation_packet_projects_to_world_state_planning_claims tests/test_gateway/test_world_state.py::test_repository_observation_command_failure_projects_open_contradiction tests/test_gateway/test_world_state.py::test_foundation_repository_observation_projection_blocks_without_contradiction -q
 ```
 
+## ProblemStar Evidence Binding
+
+Admitted repository world-state projections enter the pre-solver evidence
+surface through:
+
+```text
+bind_repository_world_state_projection_to_problem_star_evidence(projection, planning_claims)
+```
+
+Binding rules:
+
+1. Only claims returned by `WorldStateStore.planning_claims` are eligible.
+2. Claims must belong to the same tenant and packet as the projection.
+3. Claims must remain planning-only; execution-eligible claims are denied.
+4. Open contradictions produce no ProblemStar evidence items.
+5. Foundation or `ProofState Unknown` repository projections produce no
+   ProblemStar evidence items.
+6. Blocked bindings emit explicit proof obligations before solver routing.
+7. Admitted bindings produce schema-compatible `separated_surfaces.evidence`
+   items for the ProblemStar compilation receipt.
+
+The focused verification lane is:
+
+```powershell
+python -m pytest tests/test_gateway/test_world_state.py::test_repository_world_state_projection_binds_problem_star_evidence tests/test_gateway/test_world_state.py::test_repository_world_state_projection_blocks_problem_star_evidence_on_contradiction tests/test_gateway/test_world_state.py::test_foundation_repository_world_state_projection_blocks_problem_star_evidence -q
+```
+
 STATUS:
   Completeness: 100%
-  Invariants verified: repository observation packet projection, expiry binding, contradiction visibility, planning-only admission, execution denial
+  Invariants verified: repository observation packet projection, expiry binding, contradiction visibility, planning-only admission, execution denial, ProblemStar evidence binding
   Open issues: provider and connector observation projections remain future proof threads
-  Next action: bind admitted repository world-state projections into ProblemStar evidence input
+  Next action: add provider and connector observation projections after live witnesses exist

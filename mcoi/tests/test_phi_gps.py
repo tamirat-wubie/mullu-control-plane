@@ -37,6 +37,7 @@ from mcoi_runtime.core.phi_gps import (
     PolicyClass,
     ProblemCompiler,
     ProblemDomainClass,
+    ProblemEvidenceInput,
     ProblemFieldStatus,
     ProblemShapeMetrics,
     ProblemStar,
@@ -482,6 +483,44 @@ class TestPhiGpsV3ProblemCompiler:
         assert first.input_hash == second.input_hash
         assert first.to_dict()["input_hash"] == first.input_hash
         assert first.declared_constraints == ("must verify",)
+
+    def test_compiler_binds_repository_world_state_projection_evidence(self):
+        binding = _repository_world_state_binding()
+        evidence_inputs = _problem_evidence_inputs_from_binding(binding)
+        envelope = RawProblemEnvelope(
+            id="compile-repository-world-state",
+            input_type="natural_language",
+            raw_content="Route repository observation into planning input.",
+            source="unit-test",
+            requester="operator",
+            authority_context="local-proof",
+            declared_goal="verify repository planning input",
+            evidence_inputs=evidence_inputs,
+        )
+
+        compiled = ProblemCompiler.compile(envelope)
+        world_field = compiled.kernel_draft.field("W")
+        evidence_field = compiled.kernel_draft.field("O")
+        knowledge_field = compiled.kernel_draft.field("K")
+        proof_field = compiled.kernel_draft.field("Pi")
+
+        assert isinstance(evidence_inputs[0], ProblemEvidenceInput)
+        assert world_field.status == ProblemFieldStatus.KNOWN
+        assert evidence_field.status == ProblemFieldStatus.KNOWN
+        assert evidence_inputs[0].evidence_id in world_field.evidence_refs
+        assert evidence_inputs[0].evidence_id in evidence_field.evidence_refs
+        assert evidence_inputs[0].evidence_id in knowledge_field.evidence_refs
+        assert evidence_inputs[0].evidence_id in proof_field.evidence_refs
+        assert not any(unknown.dimension == "world_state" for unknown in compiled.unknowns)
+        assert compiled.trace.events[-1].payload["evidence_input_count"] == len(evidence_inputs) == 8
+
+    def test_repository_world_state_projection_with_contradiction_fails_closed(self):
+        binding = _repository_world_state_binding(failing_command="git_status")
+
+        assert binding.admitted is False
+        assert binding.evidence_items == ()
+        assert binding.proof_obligations[0]["proof_state"] == "Fail"
+        assert _problem_evidence_inputs_from_binding(binding) == ()
 
 
 # ── Phase 1: DISTINGUISH ──────────────────────────────────────
@@ -1675,3 +1714,57 @@ class TestExports:
         from mcoi_runtime.core import phi_gps
         for name in phi_gps.__all__:
             assert hasattr(phi_gps, name), f"__all__ lists '{name}' but it doesn't exist"
+
+
+def _repository_world_state_binding(failing_command: str = ""):
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from gateway.world_state import (
+        InMemoryWorldStateStore,
+        bind_repository_world_state_projection_to_problem_star_evidence,
+        project_repository_observation_packet_to_world_state,
+    )
+    from scripts.produce_repository_observation_evidence_packet import (
+        READ_ONLY_GIT_COMMANDS,
+        RepositoryCommandObservation,
+        build_repository_observation_evidence_packet,
+    )
+
+    observations = []
+    for command_name, argv in READ_ONLY_GIT_COMMANDS.items():
+        observations.append(
+            RepositoryCommandObservation(
+                command_name=command_name,
+                argv=argv,
+                returncode=1 if command_name == failing_command else 0,
+                stdout_digest_ref=f"hash://sha256/{command_name}-stdout",
+                stderr_digest_ref=f"hash://sha256/{command_name}-stderr",
+            )
+        )
+    packet = build_repository_observation_evidence_packet(
+        workspace_root=Path(__file__).resolve().parents[2],
+        observed_at=datetime(2026, 6, 20, 12, 0, 0, tzinfo=UTC),
+        command_observations=tuple(observations),
+    )
+    store = InMemoryWorldStateStore(clock=lambda: "2026-06-20T12:00:00Z")
+    projection = project_repository_observation_packet_to_world_state(packet, store)
+    return bind_repository_world_state_projection_to_problem_star_evidence(
+        projection,
+        store.planning_claims(tenant_id="foundation-local-only"),
+    )
+
+
+def _problem_evidence_inputs_from_binding(binding):
+    if not binding.admitted:
+        return ()
+    return tuple(
+        ProblemEvidenceInput(
+            evidence_id=item["evidence_id"],
+            source_ref=item["source_ref"],
+            statement=item["statement"],
+            confidence=item["confidence"],
+            field_refs=("W", "O", "K", "Pi"),
+        )
+        for item in binding.as_problem_star_evidence()
+    )
