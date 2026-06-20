@@ -31,6 +31,16 @@ def _validate_node_result_key(key: object) -> str:
     return key
 
 
+def _snapshot_gate_result(value: GateResult) -> GateResult:
+    return GateResult(
+        truth=value.truth,
+        norm=value.norm,
+        evidence=value.evidence,
+        reason=value.reason,
+        metadata=value.metadata,
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class WHQREvaluationContext:
     node_results: Mapping[str, GateResult] = field(default_factory=dict)
@@ -46,7 +56,7 @@ class WHQREvaluationContext:
                 validated_key = _validate_node_result_key(key)
                 if not isinstance(value, GateResult):
                     raise ValueError("WHQR evaluation context node result value must be GateResult")
-                validated_pairs.append((validated_key, value))
+                validated_pairs.append((validated_key, _snapshot_gate_result(value)))
             for validated_key, value in sorted(validated_pairs):
                 frozen_node_results[validated_key] = value
         object.__setattr__(self, "node_results", MappingProxyType(frozen_node_results))

@@ -595,6 +595,55 @@ def test_evaluation_context_freezes_node_results_snapshot() -> None:
     assert budget_result.reason == "unresolved_whqr_node"
 
 
+def test_evaluation_context_snapshots_gate_result_metadata() -> None:
+    source_result = GateResult(
+        truth=TruthGate.TRUE,
+        norm=NormGate.PERMITTED,
+        evidence=EvidenceGate.PROVEN,
+        reason="initial_gate",
+        metadata={
+            "details": {
+                "evidence_refs": ["evidence:gate-1"],
+                "checks": [{"passed": True}],
+            }
+        },
+    )
+    ctx = WHQREvaluationContext(node_results={"gate": source_result})
+    object.__setattr__(
+        source_result,
+        "metadata",
+        MappingProxyType(
+            {
+                "details": MappingProxyType(
+                    {
+                        "evidence_refs": ("evidence:tampered",),
+                        "checks": (MappingProxyType({"passed": False}),),
+                    }
+                )
+            }
+        ),
+    )
+    result = evaluate(_node("gate"), ctx)
+
+    assert result.truth is TruthGate.TRUE
+    assert result.reason == "initial_gate"
+    assert result.metadata["details"]["evidence_refs"] == ("evidence:gate-1",)
+    assert result.metadata["details"]["checks"][0]["passed"] is True
+    assert source_result.metadata["details"]["evidence_refs"] == ("evidence:tampered",)
+
+
+def test_evaluation_context_rejects_invalid_tampered_gate_metadata() -> None:
+    invalid_result = GateResult(truth=TruthGate.TRUE, evidence=EvidenceGate.PROVEN)
+    object.__setattr__(
+        invalid_result,
+        "metadata",
+        MappingProxyType({"witness": object()}),
+    )
+
+    with pytest.raises(ValueError, match="metadata value"):
+        WHQREvaluationContext(node_results={"gate": invalid_result})
+
+
 def test_evaluation_context_preserves_bindings_alias_without_mutable_exposure() -> None:
     ctx = WHQREvaluationContext(
         bindings={
