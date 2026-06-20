@@ -17,6 +17,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -146,7 +147,7 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Current `origin/main`: `cc0fe646b3630f29a33c7a8f775057a14ae0b784`",
+            "Current `origin/main`: `18884dd838c62370b0d829b408b0ffc290492a2a`",
             "Current `origin/main`: `short-ref`",
         ),
         encoding="utf-8",
@@ -164,11 +165,15 @@ def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) ->
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
+    mutated_map_text = re.sub(
+        r"^Open PRs after readiness-map refresh: .+ outside this map-only closure\.$",
+        "Open PRs after readiness-map refresh: none.",
+        map_text,
+        flags=re.MULTILINE,
+    )
+    assert mutated_map_text != map_text
     map_path.write_text(
-        map_text.replace(
-            "Open PRs after readiness-map refresh: the live open PR queue is empty after PR #2035 merged; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.",
-            "Open PRs after readiness-map refresh: none.",
-        ),
+        mutated_map_text,
         encoding="utf-8",
     )
 

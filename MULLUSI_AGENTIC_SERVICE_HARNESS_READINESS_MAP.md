@@ -13,9 +13,9 @@ Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `cc0fe646b3630f29a33c7a8f775057a14ae0b784`
+Current `origin/main`: `18884dd838c62370b0d829b408b0ffc290492a2a`
 
-Open PRs after readiness-map refresh: the live open PR queue is empty after PR #2035 merged; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
+Open PRs after readiness-map refresh: the live open PR queue includes PR #2059, draft PR #2060, draft PR #2061, and draft PR #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -30,7 +30,7 @@ Open PRs after readiness-map refresh: the live open PR queue is empty after PR #
 | GitHub repo task intake PR | READY | This proof thread adds the GitHub repo task intake schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It validates repository connection and read-only task scope while denying adapter execution, branch writes, PR creation, receipt append, mutation routes, secret serialization, and terminal closure. |
 | Remote CI | READY | Build Verification, SDLC Governance Gate, Schema Validation, Gateway Closure and Witness Tests, Rust, TypeScript, Python compatibility, Python soak, MCOI shards, and GitHub App token boundary checks were green before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | READY | `gh pr list --state open --limit 30` returned no open PRs after fetching `origin/main` at `cc0fe646b3630f29a33c7a8f775057a14ae0b784`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
+| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned PR #2059, draft PR #2060, draft PR #2061, and draft PR #2058 after fetching `origin/main` at `18884dd838c62370b0d829b408b0ffc290492a2a`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
