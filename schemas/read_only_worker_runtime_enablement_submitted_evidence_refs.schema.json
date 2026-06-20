@@ -105,8 +105,8 @@
     },
     "submitted_evidence_refs": {
       "type": "array",
-      "minItems": 9,
-      "maxItems": 9,
+      "minItems": 11,
+      "maxItems": 11,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/repo_ref" }
     },
@@ -227,9 +227,9 @@
       "properties": {
         "source_required_input_count": { "const": 12 },
         "submitted_record_count": { "const": 12 },
-        "records_with_repo_ref_count": { "const": 9 },
-        "records_awaiting_operator_evidence_count": { "const": 3 },
-        "submitted_evidence_ref_count": { "const": 9 },
+        "records_with_repo_ref_count": { "const": 11 },
+        "records_awaiting_operator_evidence_count": { "const": 1 },
+        "submitted_evidence_ref_count": { "const": 11 },
         "accepted_evidence_count": { "const": 0 },
         "rejected_evidence_count": { "const": 0 },
         "authority_grant_count": { "const": 0 },

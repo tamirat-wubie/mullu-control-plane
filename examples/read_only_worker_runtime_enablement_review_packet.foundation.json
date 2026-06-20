@@ -17,11 +17,9 @@
   "external_network_allowed": false,
   "filesystem_write_allowed": false,
   "missing_evidence_names": [
-    "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF",
-    "read_only_worker_runtime_disablement_rollback_plan",
-    "read_only_worker_trusted_runtime_clock_receipt"
+    "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF"
   ],
-  "next_action": "Bind operator approval, runtime disablement rollback plan, and trusted runtime clock evidence before any evidence acceptance or runtime enablement decision.",
+  "next_action": "Bind operator approval before any evidence acceptance or runtime enablement decision.",
   "proof_state": "Unknown",
   "receipt_append_performed": false,
   "rejected_evidence_refs": [],
@@ -427,9 +425,7 @@
       "authority_granted": false,
       "candidate_ref_satisfies_required_name": false,
       "input_kind": "runtime_disablement_rollback_plan",
-      "missing_evidence_names": [
-        "read_only_worker_runtime_disablement_rollback_plan"
-      ],
+      "missing_evidence_names": [],
       "next_action": "bind runtime disablement and rollback plan evidence",
       "proof_state": "Unknown",
       "receipt_append_allowed": false,
@@ -445,11 +441,13 @@
       "required_names": [
         "read_only_worker_runtime_disablement_rollback_plan"
       ],
-      "review_note": "Required operator/runtime evidence remains missing and blocks acceptance.",
+      "review_note": "Repo-local witness ref reviewed but not accepted; it does not satisfy the required runtime input.",
       "review_record_id": "read-only-worker-runtime-enablement-review-d133469a5015",
-      "review_state": "blocked_missing_external_evidence",
-      "reviewed": false,
-      "reviewed_evidence_refs": [],
+      "review_state": "reviewed_not_accepted",
+      "reviewed": true,
+      "reviewed_evidence_refs": [
+        "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json"
+      ],
       "runtime_dispatch_allowed": false,
       "runtime_enablement_allowed": false,
       "runtime_receipt_emission_allowed": false,
@@ -464,9 +462,7 @@
       "authority_granted": false,
       "candidate_ref_satisfies_required_name": false,
       "input_kind": "trusted_runtime_clock",
-      "missing_evidence_names": [
-        "read_only_worker_trusted_runtime_clock_receipt"
-      ],
+      "missing_evidence_names": [],
       "next_action": "bind trusted runtime clock evidence",
       "proof_state": "Unknown",
       "receipt_append_allowed": false,
@@ -482,11 +478,13 @@
       "required_names": [
         "read_only_worker_trusted_runtime_clock_receipt"
       ],
-      "review_note": "Required operator/runtime evidence remains missing and blocks acceptance.",
+      "review_note": "Repo-local witness ref reviewed but not accepted; it does not satisfy the required runtime input.",
       "review_record_id": "read-only-worker-runtime-enablement-review-f11651dfb70a",
-      "review_state": "blocked_missing_external_evidence",
-      "reviewed": false,
-      "reviewed_evidence_refs": [],
+      "review_state": "reviewed_not_accepted",
+      "reviewed": true,
+      "reviewed_evidence_refs": [
+        "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json"
+      ],
       "runtime_dispatch_allowed": false,
       "runtime_enablement_allowed": false,
       "runtime_receipt_emission_allowed": false,
@@ -507,7 +505,9 @@
     "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
     "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
     "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
-    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json"
+    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json"
   ],
   "runtime_dispatch_admitted": false,
   "runtime_dispatch_performed": false,
@@ -526,12 +526,12 @@
     "authority_grant_count": 0,
     "blocked_action_count": 7,
     "dispatch_count": 0,
-    "missing_input_count": 3,
+    "missing_input_count": 1,
     "receipt_append_count": 0,
     "receipt_emission_count": 0,
     "rejected_evidence_count": 0,
     "review_record_count": 12,
-    "reviewed_repo_ref_count": 9,
+    "reviewed_repo_ref_count": 11,
     "runtime_enablement_count": 0,
     "source_submitted_record_count": 12,
     "terminal_closure_count": 0,

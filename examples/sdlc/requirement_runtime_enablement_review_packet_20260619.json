@@ -19,7 +19,7 @@
     "Review packet must not accept submitted evidence.",
     "Review packet must not grant runtime enablement authority.",
     "Repo-local witness refs must not satisfy requested runtime enablement input names by themselves.",
-    "Missing operator approval, runtime disablement rollback plan, and trusted runtime clock evidence must remain explicit.",
+    "Missing operator approval must remain explicit after runtime disablement rollback plan and trusted runtime clock evidence are submitted for review.",
     "Mfidel atomicity must be preserved."
   ],
   "evidence_required": [
@@ -42,7 +42,7 @@
   "risk_class": "high",
   "success_criteria": [
     "The review packet derives from submitted evidence refs.",
-    "The packet contains twelve review records, nine reviewed repo-local refs, and three missing input blockers.",
+    "The packet contains twelve review records, eleven reviewed repo-local refs, and one missing input blocker.",
     "Accepted evidence, rejected evidence, authority grants, runtime enablement, dispatch, worker invocation, receipt emission, receipt append, and terminal closure counts remain zero.",
     "Focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
   ],

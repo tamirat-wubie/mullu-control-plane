@@ -1,0 +1,124 @@
+{
+  "blocked_actions": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_dispatch_admission",
+    "read_only_worker_runtime_dispatch",
+    "read_only_worker_invocation",
+    "read_only_worker_runtime_receipt_emission",
+    "read_only_worker_receipt_append",
+    "read_only_worker_terminal_closure_claim"
+  ],
+  "connector_authority_allowed": false,
+  "disablement_triggers": [
+    "runtime_dispatch_safety_violation",
+    "receipt_emission_integrity_failure",
+    "active_lease_boundary_violation",
+    "operator_revocation_request"
+  ],
+  "external_network_allowed": false,
+  "filesystem_write_allowed": false,
+  "next_action": "Bind operator runtime enablement approval before any runtime enablement acceptance or rollback execution decision.",
+  "plan_is_not_disablement_execution": true,
+  "plan_is_not_receipt_append": true,
+  "plan_is_not_receipt_emission": true,
+  "plan_is_not_runtime_dispatch": true,
+  "plan_is_not_runtime_enablement": true,
+  "plan_is_not_terminal_closure": true,
+  "plan_is_not_worker_invocation": true,
+  "plan_state": "plan_bound_execution_blocked",
+  "proof_state": "Unknown",
+  "receipt_append_performed": false,
+  "recovery_state": {
+    "operator_reapproval_required": true,
+    "rollback_execution_allowed": false,
+    "rollback_plan_bound": true,
+    "terminal_closure_required": true,
+    "trusted_runtime_clock_required": true,
+    "worker_failure_receipt_required": true
+  },
+  "required_evidence_refs": [
+    "examples/read_only_worker_runtime_enablement_review_packet.foundation.json",
+    "examples/read_only_worker_runtime_enablement_witness.foundation.json",
+    "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
+    "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "schemas/worker_failure_receipt.schema.json",
+    "schemas/temporal_lease_window_receipt.schema.json"
+  ],
+  "rollback_plan_id": "read-only-worker-runtime-disablement-rollback-plan-foundation-repo-inspection-20260620",
+  "rollback_plan_version": "read_only_worker_runtime_disablement_rollback_plan.v1",
+  "rollback_steps": [
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "read_only_worker_runtime_state_snapshot",
+      "execution_allowed_now": false,
+      "purpose": "Capture runtime enablement state and active lease identifiers before any disablement attempt.",
+      "required_before_execution": true,
+      "sequence": 1,
+      "step_id": "capture-current-runtime-state"
+    },
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "read_only_worker_runtime_dispatch_admission_block_receipt",
+      "execution_allowed_now": false,
+      "purpose": "Prevent new runtime dispatch admission while preserving existing receipt evidence.",
+      "required_before_execution": true,
+      "sequence": 2,
+      "step_id": "block-new-dispatch-admission"
+    },
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "read_only_worker_active_runtime_lease_revocation_receipt",
+      "execution_allowed_now": false,
+      "purpose": "Revoke or let expire the active runtime lease through a governed lease boundary.",
+      "required_before_execution": true,
+      "sequence": 3,
+      "step_id": "revoke-active-runtime-lease"
+    },
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "read_only_worker_runtime_receipt_emission_disablement_receipt",
+      "execution_allowed_now": false,
+      "purpose": "Disable runtime receipt emission only after dispatch admission is blocked.",
+      "required_before_execution": true,
+      "sequence": 4,
+      "step_id": "disable-receipt-emission"
+    },
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "worker_failure_receipt",
+      "execution_allowed_now": false,
+      "purpose": "Record WorkerFailureReceipt evidence when rollback is caused by failed or partial execution.",
+      "required_before_execution": true,
+      "sequence": 5,
+      "step_id": "record-worker-failure-receipt"
+    },
+    {
+      "blocks_runtime_enablement": true,
+      "evidence_ref_required": "read_only_worker_runtime_rollback_verification_receipt",
+      "execution_allowed_now": false,
+      "purpose": "Verify no dispatch, invocation, receipt emission, or append continues after rollback.",
+      "required_before_execution": true,
+      "sequence": 6,
+      "step_id": "verify-terminal-safe-state"
+    }
+  ],
+  "runtime_disablement_executed": false,
+  "runtime_dispatch_admitted": false,
+  "runtime_dispatch_performed": false,
+  "runtime_enablement_allowed": false,
+  "runtime_enablement_executed": false,
+  "runtime_receipt_emitted": false,
+  "secret_values_serialized": false,
+  "selected_worker_path": "read_only_repo_inspection",
+  "solver_outcome": "AwaitingEvidence",
+  "success_claim_allowed": false,
+  "terminal_closure_performed": false,
+  "validators": [
+    "scripts/validate_read_only_worker_runtime_disablement_rollback_plan.py",
+    "tests/test_validate_read_only_worker_runtime_disablement_rollback_plan.py"
+  ],
+  "worker_invocation_performed": false
+}

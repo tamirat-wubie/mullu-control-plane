@@ -1,0 +1,61 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_disablement_rollback_plan.py --json",
+    "python scripts/validate_read_only_worker_trusted_runtime_clock_receipt.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_review_packet.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_disablement_rollback_plan.py tests/test_validate_read_only_worker_trusted_runtime_clock_receipt.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py tests/test_validate_read_only_worker_runtime_enablement_review_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_disablement_rollback_plan",
+    "read_only_worker_trusted_runtime_clock_receipt",
+    "read_only_worker_runtime_enablement_submitted_evidence_refs",
+    "read_only_worker_runtime_enablement_review_packet",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-disablement-rollback-clock-evidence/20260620",
+  "constraints": [
+    "Rollback plan and trusted clock receipt must be review-only evidence.",
+    "Neither artifact may grant runtime enablement authority.",
+    "Runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector authority, filesystem writes, network access, secret serialization, and success claims remain denied.",
+    "Submitted evidence refs and review packet must count eleven repo-local refs and preserve operator approval as the single missing input.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_runtime_disablement_rollback_plan.schema.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "scripts/validate_read_only_worker_runtime_disablement_rollback_plan.py",
+    "tests/test_validate_read_only_worker_runtime_disablement_rollback_plan.py",
+    "schemas/read_only_worker_trusted_runtime_clock_receipt.schema.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "scripts/validate_read_only_worker_trusted_runtime_clock_receipt.py",
+    "tests/test_validate_read_only_worker_trusted_runtime_clock_receipt.py"
+  ],
+  "non_goals": [
+    "Do not accept submitted evidence.",
+    "Do not grant runtime enablement authority.",
+    "Do not execute rollback or disablement.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not claim terminal closure."
+  ],
+  "problem_statement": "Runtime enablement review still required rollback and trusted clock evidence before operator approval could be the only remaining input.",
+  "receipt_ref": "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+  "request_id": "runtime_disablement_rollback_clock_evidence_20260620",
+  "requirement_id": "sdlc_req_runtime_disablement_rollback_clock_evidence_20260620",
+  "risk_class": "high",
+  "success_criteria": [
+    "Rollback plan and trusted clock receipt validate as review-only evidence.",
+    "Submitted evidence refs and review packet include eleven repo-local evidence refs.",
+    "Operator runtime enablement approval remains the only missing input.",
+    "Focused validators, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-disablement-rollback-clock-evidence/20260620"
+}
