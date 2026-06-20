@@ -201,6 +201,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_agentic_service_harness_temporary_branch_workspace_preflight.py"
+      ],
+      "name": "agentic_service_harness_temporary_branch_workspace_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"
       ],
       "name": "agentic_service_harness_github_pr_admission_preflight",

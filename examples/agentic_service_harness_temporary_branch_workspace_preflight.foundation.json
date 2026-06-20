@@ -1,0 +1,101 @@
+{
+  "report_id": "agentic_service_harness_temporary_branch_workspace_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_contract_ref": "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+  "scope": {
+    "tenant_id": "tenant.foundation",
+    "organization_id": "org.foundation",
+    "project_id": "project.foundation",
+    "repository_connection_id": "repo.mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "approval_gate_id": "gate.branchwrite",
+    "requested_action_class": "write_to_branch",
+    "foundation_phase": "foundation_preflight_only",
+    "preflight_only": true,
+    "branch_created": false,
+    "filesystem_write_enabled": false,
+    "external_adapter_integrated": false,
+    "secret_values_serialized": false
+  },
+  "workspace_preflight": {
+    "preflight_state": "BRANCH_WORKSPACE_CREATE_BLOCKED_AWAITING_APPROVAL",
+    "source_sandbox_id": "sandbox.branchwrite",
+    "branch_workspace_mode": "temporary_branch_preflight_only",
+    "branch_name_template": "codex/harness-branch-workspace-{run_id}",
+    "command_allowlist": [
+      "git.status",
+      "git.diff",
+      "python.pytest",
+      "python.validator"
+    ],
+    "path_allowlist": [
+      ".",
+      "schemas/",
+      "examples/",
+      "scripts/",
+      "tests/",
+      "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+    ],
+    "timeout_seconds": 300,
+    "network_policy": "none",
+    "secret_redaction_required": true,
+    "production_mutation_allowed": false,
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "required_before_create_refs": [
+      "approval-request://harness/gate.branchwrite",
+      "gateway-approval://operator/branch-write",
+      "receipt://sandbox-cleanup-branchwrite",
+      "policy://approval-required",
+      "gate://harness/no-secret-serialization"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/not-present",
+      "blocked://branch-workspace/create-not-admitted",
+      "blocked://filesystem-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ]
+  },
+  "authority_denials": {
+    "branch_workspace_create_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "live_adapter_execution_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "cleanup_plan": {
+    "cleanup_required": true,
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "cleanup_verified": false,
+    "rollback_ref": "rollback://branch-workspace/remove-temporary-state",
+    "residual_state_allowed": false
+  },
+  "receipt_refs": {
+    "temporary_branch_workspace_preflight_schema": "schemas/agentic_service_harness_temporary_branch_workspace_preflight.schema.json",
+    "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
+    "branch_write_contract": "examples/agentic_service_harness.branch_write_awaiting_approval.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-temporary-branch-workspace-preflight",
+      "command": "python scripts/validate_agentic_service_harness_temporary_branch_workspace_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add read-only GitHub repository task intake; keep branch workspace creation blocked until approval and cleanup evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

@@ -11,7 +11,7 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - The first next PR remains the temporary branch workspace preflight.
+  - The first next PR remains the read-only repository task intake.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -232,17 +232,16 @@ def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
 
 def _validate_receipt_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(sandbox\): bind temporary branch workspace preflight`$",
+        r"^1\.\s+`harness\(github\): add read-only repo task intake`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: temporary branch workspace preflight")
+        errors.append("missing first next PR: read-only repo task intake")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(sandbox): bind temporary branch workspace preflight",
         "harness(github): add read-only repo task intake",
         "harness(ui-contract): add dashboard data contract",
     )
