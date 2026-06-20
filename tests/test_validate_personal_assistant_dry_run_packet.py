@@ -93,6 +93,37 @@ def test_validate_dry_run_packet_rejects_source_ref_escape(tmp_path: Path) -> No
     assert validation.packet_id == packet["packet_id"]
 
 
+def test_validate_dry_run_packet_rejects_schema_ref_shape_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    skill_registry_record = next(
+        record
+        for record in packet["source_artifacts"]  # type: ignore[index]
+        if record["source_kind"] == "skill_registry"
+    )
+    skill_registry_record["schema_ref"] = "schemas/personal_assistant_skill.schema.json"
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_dry_run_packet(packet_path=packet_path, require_closed=True)
+
+    assert validation.valid is False
+    assert validation.dry_run_packet_closed is True
+    assert any(step.name == "source artifact schemas" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_dry_run_packet_rejects_schema_ref_escape(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    packet["source_artifacts"][0]["schema_ref"] = "../outside.schema.json"  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_dry_run_packet(packet_path=packet_path)
+
+    assert validation.valid is False
+    assert any(step.name == "source artifact schemas" and not step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+    assert validation.packet_id == packet["packet_id"]
+
+
 def test_dry_run_source_digest_is_line_ending_stable(tmp_path: Path) -> None:
     lf_source = tmp_path / "source-lf.json"
     crlf_source = tmp_path / "source-crlf.json"

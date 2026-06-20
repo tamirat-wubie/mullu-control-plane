@@ -32,7 +32,7 @@ DEFAULT_OUTPUT = REPO_ROOT / "examples" / "personal_assistant_dry_run_packet.jso
 
 SOURCE_ARTIFACTS: tuple[tuple[str, Path, str], ...] = (
     ("request", REPO_ROOT / "examples" / "personal_assistant_request_inbox_summary.json", "schemas/personal_assistant_request.schema.json"),
-    ("skill_registry", REPO_ROOT / "examples" / "personal_assistant_skill_registry.json", "schemas/personal_assistant_skill.schema.json"),
+    ("skill_registry", REPO_ROOT / "examples" / "personal_assistant_skill_registry.json", "schemas/personal_assistant_skill_registry.schema.json"),
     ("read_only_projection", REPO_ROOT / "examples" / "personal_assistant_read_only_projection.json", "schemas/personal_assistant_read_only_projection.schema.json"),
     ("draft_projection", REPO_ROOT / "examples" / "personal_assistant_draft_projection.json", "schemas/personal_assistant_draft_projection.schema.json"),
     ("approval_packet", REPO_ROOT / "examples" / "personal_assistant_approval_packet.json", "schemas/personal_assistant_approval.schema.json"),
