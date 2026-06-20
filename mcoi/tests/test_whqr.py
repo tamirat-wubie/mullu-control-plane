@@ -38,7 +38,7 @@ from mcoi_runtime.whqr.clarification import (
     build_binding_map_from_clarification_responses,
     build_binding_clarification_requests,
 )
-from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
+from mcoi_runtime.whqr.connectors import AssertionKind, ConnectorCompilation, SemanticAssertion, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
 from mcoi_runtime.whqr.governance import build_guard_verdict, build_policy_decision
@@ -909,6 +909,62 @@ def test_temporal_and_conditional_connectors_compile_to_explicit_assertions() ->
     assert unless.assertions[0].kind == AssertionKind.CONDITIONAL
     assert unless.logical.op == LogicalOp.IMPLIES
     assert isinstance(unless.logical.args[0], LogicalExpr)
+
+
+def test_connector_assertions_have_stable_canonical_replay_identity() -> None:
+    expr = ConnectorExpr(
+        connector=Connector.BECAUSE,
+        left=_node("payment_request"),
+        right=_node("invoice_due", WHRole.WHY),
+    )
+    first = compile_connector(expr)
+    second = compile_connector(
+        ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=_node("payment_request"),
+            right=_node("invoice_due", WHRole.WHY),
+        )
+    )
+    assertion_payload = json.loads(first.assertion.canonical_json())
+    compilation_payload = json.loads(first.canonical_json())
+
+    assert first.assertion.canonical_json() == second.assertion.canonical_json()
+    assert first.assertion.canonical_hash() == second.assertion.canonical_hash()
+    assert assertion_payload["source_hash"] == WHQRDocument(root=expr.right).canonical_hash()
+    assert assertion_payload["target_hash"] == WHQRDocument(root=expr.left).canonical_hash()
+    assert compilation_payload["logical_hash"] == WHQRDocument(root=first.logical).canonical_hash()
+    assert compilation_payload["assertions"][0]["relation"] == "cause"
+
+
+def test_connector_compilation_rejects_mutable_or_empty_assertion_sequences() -> None:
+    expr = ConnectorExpr(
+        connector=Connector.BECAUSE,
+        left=_node("payment_request"),
+        right=_node("invoice_due", WHRole.WHY),
+    )
+    compiled = compile_connector(expr)
+
+    with pytest.raises(ValueError, match="immutable tuple"):
+        ConnectorCompilation(logical=compiled.logical, assertions=[compiled.assertion])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="at least one"):
+        ConnectorCompilation(logical=compiled.logical, assertions=())
+    with pytest.raises(ValueError, match="semantic assertions"):
+        ConnectorCompilation(logical=compiled.logical, assertions=("not_assertion",))  # type: ignore[arg-type]
+
+
+def test_semantic_assertion_rejects_invalid_relation_kind_and_exprs() -> None:
+    source = _node("invoice_due", WHRole.WHY)
+    target = _node("payment_request")
+    forged = _forged_logical_expr(LogicalOp.AND, (source,))
+
+    with pytest.raises(ValueError, match="must not be blank"):
+        SemanticAssertion(AssertionKind.CAUSAL, " ", source, target)
+    with pytest.raises(ValueError, match="AssertionKind"):
+        SemanticAssertion("causal", "cause", source, target)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="WHQR expression"):
+        SemanticAssertion(AssertionKind.CAUSAL, "cause", object(), target)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="replay semantics"):
+        SemanticAssertion(AssertionKind.CAUSAL, "cause", forged, target)
 
 
 def test_static_checks_pass_for_complete_acyclic_tree() -> None:
