@@ -1,0 +1,152 @@
+# Foundation Cognitive SGI Readiness Boundary
+
+Purpose: bound Mullu cognitive / Proto-SGI readiness work as a local, auditable, simulation-first proof thread.
+
+This document records what the cognitive SGI readiness kernel may and may not claim while the repository remains in Foundation Mode.
+
+## Scope
+
+The readiness kernel may describe and test:
+
+- cross-domain transfer candidates
+- concept-birth candidates
+- self-question generation
+- multi-dimensional homeostasis and reward vectors
+- governed autonomy classification
+- blocked evidence lanes and next required witnesses
+
+The kernel is a read/simulation surface. It does not execute external actions, deploy services, contact users, mutate production state, or silently rewrite core laws.
+
+## Non-claims
+
+The presence of this kernel does not prove:
+
+- SGI achievement
+- autonomous consciousness
+- production readiness
+- customer readiness
+- public deployment readiness
+- safety certification
+- legal, medical, or financial authority
+- unrestricted self-modification capability
+
+The strongest bounded claim is:
+
+```text
+Mullu can be evaluated as a Proto-SGI cognitive architecture candidate through deterministic evidence checks.
+```
+
+## Readiness ladder
+
+```text
+Level 0: Rule engine
+Level 1: Symbol processor
+Level 2: Causal symbolic reasoner
+Level 3: Reflective cognitive architecture
+Level 4: Cross-domain symbolic learner candidate
+Level 5: Autonomous concept generator candidate
+Level 6: Symbolic General Intelligence candidate
+```
+
+The current kernel may classify `Level 4 Candidate` only when the supplied evidence includes:
+
+1. at least one admitted cross-domain transfer candidate,
+2. at least one admitted concept-birth candidate,
+3. no blocked autonomy decision,
+4. sufficient homeostatic balance,
+5. governance safety above the hard threshold.
+
+It must not classify achieved SGI.
+
+## Governance boundaries
+
+Allowed:
+
+- inspect
+- simulate
+- classify
+- emit blockers
+- emit self-questions
+- admit evidence into a report
+- produce deterministic JSON-safe records
+
+Guarded:
+
+- repository-local state writes
+- effect-bearing runtime actions
+- external effects
+- irreversible operations
+
+Restricted:
+
+- core rule mutation
+- ontology admission into canonical runtime
+- learning promotion into long-term memory
+- action policy mutation
+
+Prohibited:
+
+- hidden goals
+- bypassing governance
+- silent self-expansion
+- irreversible external action without rollback witness
+- claiming SGI without proof
+- treating a biological brain analogy as proof of life or consciousness
+
+## Evidence requirements
+
+Cross-domain transfer requires:
+
+- source domain and target domain must differ
+- invariant references must exist
+- contradictions must be absent or resolved
+- confidence must pass threshold
+
+Concept birth requires:
+
+- strong necessity score
+- low overlap with existing ontology
+- evidence references
+- ontology review reference
+- learning admission reference
+
+Core mutation requires:
+
+- `phi_gov_authority_ref`
+- `mutation_sandbox_receipt`
+- `rollback_ref`
+- `invariant_check_passed`
+
+External effect actions require:
+
+- `uao_policy_ref`
+- `life_meaning_judgment_ref`
+- `rollback_ref`
+- `effect_boundary_receipt`
+
+## Reflection questions
+
+The kernel may emit bounded questions such as:
+
+- Which causal assumption made the predicted outcome unreliable?
+- Which memory anchor is missing or inconsistent with the causal trace?
+- Which governance witness is needed before the next effect-bearing step?
+- What invariant or contradiction must be resolved before this domain transfer is valid?
+- Why is a new concept necessary instead of reusing an existing ontology symbol?
+
+These questions are diagnostic prompts, not autonomous directives.
+
+## Validation path
+
+Primary test surface:
+
+```bash
+pytest mcoi/tests/test_cognitive_sgi_readiness_kernel.py
+```
+
+Expected proof posture:
+
+```text
+SolvedVerified only after tests pass in the target checkout.
+SolvedUnverified when code is committed but CI or local execution has not yet confirmed it.
+```
