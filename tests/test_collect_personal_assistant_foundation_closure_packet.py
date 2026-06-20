@@ -53,8 +53,9 @@ def test_foundation_closure_packet_closes_from_checked_in_receipts() -> None:
     assert packet["proof_state"] == "Pass"
     assert packet["solver_outcome"] == "SolvedVerified"
     assert summary["foundation_closure_packet_closed"] is True
-    assert summary["source_receipt_count"] == 7
+    assert summary["source_receipt_count"] == 9
     assert all(record["closed"] is True for record in source_receipts)
+    assert {record["source_kind"] for record in source_receipts} >= {"skill_readiness_catalog", "dry_run_packet"}
 
 
 def test_foundation_closure_packet_opens_when_source_receipt_is_open(tmp_path: Path) -> None:
