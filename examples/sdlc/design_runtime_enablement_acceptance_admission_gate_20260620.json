@@ -1,0 +1,55 @@
+{
+  "affected_modules": [
+    "read_only_worker_runtime_enablement_evidence_acceptance_gate",
+    "read_only_worker_runtime_enablement_admission_gate",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add separate runtime enablement evidence acceptance and runtime admission gate contracts so accepted evidence remains distinct from runtime execution authority.",
+  "data_model_changes": [
+    "Introduce an evidence acceptance gate derived from the runtime enablement review packet with twelve accepted evidence refs and zero authority grants.",
+    "Introduce a runtime admission gate derived from the acceptance gate with evidence accepted, runtime admission denied, and Foundation Mode blockers retained.",
+    "Register both schemas in the protocol manifest, schema index, CI worker lane, docs, and SDLC artifacts."
+  ],
+  "design_id": "sdlc_design_runtime_enablement_acceptance_admission_gate_20260620",
+  "implementation_plan": [
+    "Add evidence acceptance gate schema, fixture, validator, and focused tests.",
+    "Add runtime admission gate schema, fixture, validator, and focused tests.",
+    "Register both schemas in the protocol manifest and CI worker runtime enablement lane.",
+    "Update worker docs, schema README, gap register, and SDLC artifacts.",
+    "Run focused validators, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "Accepted evidence is not authority.",
+    "Runtime admission remains denied.",
+    "Runtime enablement remains denied.",
+    "Dispatch, worker invocation, receipt emission, receipt append, and terminal closure remain denied.",
+    "Foundation Mode runtime blockers remain explicit."
+  ],
+  "requirement_id": "sdlc_req_runtime_enablement_acceptance_admission_gate_20260620",
+  "rollback_plan": [
+    "Remove acceptance gate and admission gate schemas, fixtures, validators, tests, manifest entries, CI inclusion, docs updates, and SDLC artifacts.",
+    "Restore gap register next action to evidence acceptance and runtime admission gate creation."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_runtime_enablement_evidence_acceptance_gate.schema.json",
+    "schemas/read_only_worker_runtime_enablement_admission_gate.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_enablement_evidence_acceptance_gate.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_admission_gate.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_evidence_acceptance_gate.py tests/test_validate_read_only_worker_runtime_enablement_admission_gate.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k \"runtime_enablement_evidence_acceptance_gate or runtime_enablement_admission_gate\" -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The slice advances evidence acceptance without enabling runtime.",
+    "Runtime promotion remains deliberately unresolved and must be handled as a separate governed decision."
+  ]
+}

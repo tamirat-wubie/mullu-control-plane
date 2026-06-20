@@ -1793,6 +1793,18 @@
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-review-packet:1"
     },
     {
+      "path": "schemas/read_only_worker_runtime_enablement_evidence_acceptance_gate.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-evidence-acceptance-gate",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-acceptance-gate:1"
+    },
+    {
+      "path": "schemas/read_only_worker_runtime_enablement_admission_gate.schema.json",
+      "schema_id": "read-only-worker-runtime-enablement-admission-gate",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1"
+    },
+    {
       "path": "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
       "schema_id": "read-only-worker-operator-runtime-enablement-approval-ref",
       "surface": "worker",
