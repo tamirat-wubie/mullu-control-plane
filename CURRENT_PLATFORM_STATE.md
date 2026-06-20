@@ -8,9 +8,13 @@ Mullu Control Plane is in late Foundation Mode and strong Internal Alpha. Govern
 
 Governed Team Assistant Demo v0.
 
+## Applied audit action
+
+PR #2058 passed both GitHub Actions workflows and was promoted from draft to ready for review. It remains non-authorizing and does not grant runtime activation.
+
 ## Ordered next steps
 
-1. Complete approval-safety review.
+1. Complete review and merge-or-close decision for PR #2058.
 2. Build one read-only operator dashboard projection.
 3. Demonstrate readiness, skill selection, draft preview, approval preview, dry-run receipt, and closure evidence as one replayable flow.
 4. Add signed approval identity, expiry, revocation, and replay protection.
