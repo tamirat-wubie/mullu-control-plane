@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-disablement-rollback-plan:1",
+  "title": "Mullu Read-Only Worker Runtime Disablement Rollback Plan",
+  "description": "Foundation Mode rollback plan for disabling read-only worker runtime enablement. The plan is not runtime enablement, dispatch, disablement execution, worker invocation, receipt emission, receipt append, terminal closure, or success claim.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rollback_plan_id",
+    "rollback_plan_version",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "plan_state",
+    "plan_is_not_runtime_enablement",
+    "plan_is_not_runtime_dispatch",
+    "plan_is_not_worker_invocation",
+    "plan_is_not_disablement_execution",
+    "plan_is_not_receipt_emission",
+    "plan_is_not_receipt_append",
+    "plan_is_not_terminal_closure",
+    "runtime_enablement_allowed",
+    "runtime_enablement_executed",
+    "runtime_dispatch_admitted",
+    "runtime_dispatch_performed",
+    "worker_invocation_performed",
+    "runtime_disablement_executed",
+    "runtime_receipt_emitted",
+    "receipt_append_performed",
+    "terminal_closure_performed",
+    "success_claim_allowed",
+    "secret_values_serialized",
+    "connector_authority_allowed",
+    "filesystem_write_allowed",
+    "external_network_allowed",
+    "disablement_triggers",
+    "rollback_steps",
+    "required_evidence_refs",
+    "blocked_actions",
+    "recovery_state",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "rollback_plan_id": { "$ref": "#/$defs/identifier" },
+    "rollback_plan_version": { "const": "read_only_worker_runtime_disablement_rollback_plan.v1" },
+    "selected_worker_path": { "const": "read_only_repo_inspection" },
+    "solver_outcome": { "const": "AwaitingEvidence" },
+    "proof_state": { "const": "Unknown" },
+    "plan_state": { "const": "plan_bound_execution_blocked" },
+    "plan_is_not_runtime_enablement": { "const": true },
+    "plan_is_not_runtime_dispatch": { "const": true },
+    "plan_is_not_worker_invocation": { "const": true },
+    "plan_is_not_disablement_execution": { "const": true },
+    "plan_is_not_receipt_emission": { "const": true },
+    "plan_is_not_receipt_append": { "const": true },
+    "plan_is_not_terminal_closure": { "const": true },
+    "runtime_enablement_allowed": { "const": false },
+    "runtime_enablement_executed": { "const": false },
+    "runtime_dispatch_admitted": { "const": false },
+    "runtime_dispatch_performed": { "const": false },
+    "worker_invocation_performed": { "const": false },
+    "runtime_disablement_executed": { "const": false },
+    "runtime_receipt_emitted": { "const": false },
+    "receipt_append_performed": { "const": false },
+    "terminal_closure_performed": { "const": false },
+    "success_claim_allowed": { "const": false },
+    "secret_values_serialized": { "const": false },
+    "connector_authority_allowed": { "const": false },
+    "filesystem_write_allowed": { "const": false },
+    "external_network_allowed": { "const": false },
+    "disablement_triggers": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "rollback_steps": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/rollback_step" }
+    },
+    "required_evidence_refs": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "recovery_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_plan_bound",
+        "rollback_execution_allowed",
+        "operator_reapproval_required",
+        "worker_failure_receipt_required",
+        "trusted_runtime_clock_required",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "rollback_plan_bound": { "const": true },
+        "rollback_execution_allowed": { "const": false },
+        "operator_reapproval_required": { "const": true },
+        "worker_failure_receipt_required": { "const": true },
+        "trusted_runtime_clock_required": { "const": true },
+        "terminal_closure_required": { "const": true }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repo_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/@+ -]+$"
+    },
+    "rollback_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "sequence",
+        "purpose",
+        "required_before_execution",
+        "execution_allowed_now",
+        "evidence_ref_required",
+        "blocks_runtime_enablement"
+      ],
+      "properties": {
+        "step_id": { "$ref": "#/$defs/identifier" },
+        "sequence": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "required_before_execution": { "const": true },
+        "execution_allowed_now": { "const": false },
+        "evidence_ref_required": { "$ref": "#/$defs/identifier" },
+        "blocks_runtime_enablement": { "const": true }
+      }
+    }
+  }
+}

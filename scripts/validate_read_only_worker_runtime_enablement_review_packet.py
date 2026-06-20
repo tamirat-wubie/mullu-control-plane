@@ -163,8 +163,7 @@ def build_runtime_enablement_review_packet() -> dict[str, Any]:
             "tests/test_validate_read_only_worker_runtime_enablement_review_packet.py",
         ],
         "next_action": (
-            "Bind operator approval, runtime disablement rollback plan, and trusted runtime clock evidence "
-            "before any evidence acceptance or runtime enablement decision."
+            "Bind operator approval before any evidence acceptance or runtime enablement decision."
         ),
     }
 

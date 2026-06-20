@@ -106,11 +106,11 @@ FOUNDATION_REPO_REFS = {
     "uao_dispatch_authorization": "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
     "phi_gov_dispatch_authorization": "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
     "runtime_dispatch_admission": "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "runtime_disablement_rollback_plan": "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "trusted_runtime_clock": "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
 }
 MISSING_INPUT_NOTES = {
     "operator_runtime_enablement_approval": "operator runtime enablement approval ref is not present in repository-local evidence",
-    "runtime_disablement_rollback_plan": "runtime disablement rollback plan evidence is not present as a dedicated artifact",
-    "trusted_runtime_clock": "trusted runtime clock receipt is not present in repository-local evidence",
 }
 
 
@@ -195,9 +195,8 @@ def build_runtime_enablement_submitted_evidence_refs() -> dict[str, Any]:
             "tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
         ],
         "next_action": (
-            "Review submitted repo-local evidence refs, then separately add missing operator approval, "
-            "runtime disablement rollback plan, and trusted runtime clock evidence before any acceptance "
-            "or runtime enablement decision."
+            "Review submitted repo-local evidence refs, then separately bind missing operator approval "
+            "before any acceptance or runtime enablement decision."
         ),
     }
 
@@ -242,6 +241,17 @@ def write_runtime_enablement_submitted_evidence_refs_validation(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(validation.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return output_path
+
+
+def write_runtime_enablement_submitted_evidence_refs_fixture(output_path: Path) -> Path:
+    """Write the generated submitted evidence refs fixture."""
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(build_runtime_enablement_submitted_evidence_refs(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return output_path
 
 
@@ -429,6 +439,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--write", action="store_true")
+    parser.add_argument("--write-fixture", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -437,6 +448,8 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entry point for submitted evidence refs validation."""
 
     args = parse_args(argv)
+    if args.write_fixture:
+        write_runtime_enablement_submitted_evidence_refs_fixture(Path(args.evidence_refs))
     validation = validate_runtime_enablement_submitted_evidence_refs(
         evidence_refs_path=Path(args.evidence_refs),
         schema_path=Path(args.schema),

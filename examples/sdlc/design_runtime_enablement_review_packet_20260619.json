@@ -10,7 +10,7 @@
   "data_model_changes": [
     "Introduce review records linked to submitted evidence ref records, status records, and source input ids.",
     "Track reviewed repo-local refs separately from accepted evidence refs.",
-    "Preserve missing evidence names for operator approval, runtime disablement rollback plan, and trusted runtime clock."
+    "Preserve the missing evidence name for operator approval after runtime disablement rollback plan and trusted runtime clock evidence are submitted for review."
   ],
   "design_id": "sdlc_design_runtime_enablement_review_packet_20260619",
   "implementation_plan": [

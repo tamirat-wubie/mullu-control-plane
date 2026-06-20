@@ -35,8 +35,8 @@ def test_runtime_enablement_submitted_evidence_refs_fixture_matches_generated_pr
     assert fixture["runtime_dispatch_performed"] is False
     assert fixture["worker_invocation_performed"] is False
     assert len(fixture["submitted_records"]) == 12
-    assert fixture["summary"]["records_with_repo_ref_count"] == 9
-    assert fixture["summary"]["records_awaiting_operator_evidence_count"] == 3
+    assert fixture["summary"]["records_with_repo_ref_count"] == 11
+    assert fixture["summary"]["records_awaiting_operator_evidence_count"] == 1
     assert fixture["summary"]["accepted_evidence_count"] == 0
 
 
@@ -49,9 +49,9 @@ def test_runtime_enablement_submitted_evidence_refs_validator_writes_receipt(tmp
 
     assert validation.valid is True
     assert validation.submitted_record_count == 12
-    assert validation.records_with_repo_ref_count == 9
-    assert validation.awaiting_operator_evidence_count == 3
-    assert validation.submitted_evidence_ref_count == 9
+    assert validation.records_with_repo_ref_count == 11
+    assert validation.awaiting_operator_evidence_count == 1
+    assert validation.submitted_evidence_ref_count == 11
     assert validation.accepted_evidence_count == 0
     assert validation.runtime_enablement_allowed is False
     assert payload["errors"] == []
@@ -145,7 +145,7 @@ def test_runtime_enablement_submitted_evidence_refs_cli_json(tmp_path: Path, cap
     assert stdout_payload["valid"] is True
     assert written_payload["valid"] is True
     assert stdout_payload["submitted_record_count"] == 12
-    assert stdout_payload["records_with_repo_ref_count"] == 9
+    assert stdout_payload["records_with_repo_ref_count"] == 11
     assert captured.err == ""
 
 
