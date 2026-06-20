@@ -1,0 +1,80 @@
+{
+  "accepted_evidence_refs": [
+    "examples/read_only_worker_terminal_closure_witness.foundation.json",
+    "examples/read_only_worker_runtime_runner_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_dispatch_endpoint_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_receipt_emitter_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
+    "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json"
+  ],
+  "blocked_actions": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_dispatch_admission",
+    "read_only_worker_runtime_dispatch",
+    "read_only_worker_invocation",
+    "read_only_worker_runtime_receipt_emission",
+    "read_only_worker_receipt_append",
+    "read_only_worker_terminal_closure_claim"
+  ],
+  "chain_refs": [
+    "examples/read_only_worker_runtime_enablement_witness.foundation.json",
+    "examples/read_only_worker_runtime_enablement_evidence_request_status_ledger.foundation.json",
+    "examples/read_only_worker_runtime_enablement_submitted_evidence_refs.foundation.json",
+    "examples/read_only_worker_runtime_enablement_review_packet.foundation.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "examples/read_only_worker_runtime_enablement_evidence_acceptance_gate.foundation.json",
+    "examples/read_only_worker_runtime_enablement_admission_gate.foundation.json",
+    "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json",
+    "docs/80_read_only_worker_binding_contract.md"
+  ],
+  "closure_id": "read-only-worker-runtime-foundation-closure-summary-repo-inspection-20260620",
+  "closure_state": "foundation_closed_live_runtime_blocked",
+  "closure_version": "read_only_worker_runtime_foundation_closure_summary.v1",
+  "connector_authority_allowed": false,
+  "external_network_allowed": false,
+  "filesystem_write_allowed": false,
+  "foundation_closure_complete": true,
+  "live_runtime_blocked": true,
+  "live_runtime_blockers": [
+    "blocked://foundation-mode/runtime-execution-not-authorized",
+    "blocked://runtime-promotion/promotion-denied",
+    "blocked://operator/no-non-foundation-authority-thread"
+  ],
+  "next_action": "Stop the worker-runtime line in Foundation Mode; open a separate non-Foundation authority thread only if live runtime is explicitly requested.",
+  "proof_state": "Pass",
+  "receipt_append_allowed": false,
+  "runtime_admission_allowed": false,
+  "runtime_dispatch_allowed": false,
+  "runtime_enablement_allowed": false,
+  "runtime_enablement_executed": false,
+  "runtime_promotion_allowed": false,
+  "runtime_receipt_emission_allowed": false,
+  "secret_values_serialized": false,
+  "selected_worker_path": "read_only_repo_inspection",
+  "solver_outcome": "SolvedVerified",
+  "source_promotion_decision_ref": "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json",
+  "success_claim_allowed": false,
+  "summary": {
+    "accepted_evidence_ref_count": 12,
+    "blocked_action_count": 7,
+    "chain_ref_count": 11,
+    "live_runtime_blocker_count": 3,
+    "runtime_enablement_count": 0,
+    "runtime_promotion_allowed_count": 0
+  },
+  "terminal_closure_claimed": false,
+  "validators": [
+    "scripts/validate_read_only_worker_runtime_foundation_closure_summary.py",
+    "scripts/validate_read_only_worker_runtime_enablement_promotion_decision.py",
+    "tests/test_validate_read_only_worker_runtime_foundation_closure_summary.py"
+  ],
+  "worker_invocation_allowed": false
+}
