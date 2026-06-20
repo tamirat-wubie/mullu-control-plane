@@ -345,8 +345,10 @@
     "docs/92_universal_symbol_kernel_audit.md",
     "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
     "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+    "scripts/verify_universal_symbol_lane_runtime_authority_evidence_value_refs.py",
     "scripts/proof_coverage_matrix.py",
     "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+    "tests/test_verify_universal_symbol_lane_runtime_authority_evidence_value_refs.py",
     "tests/test_validate_universal_symbol_kernel.py",
     "tests/test_proof_coverage_matrix.py"
   ],
@@ -358,6 +360,6 @@
     "authority_denial_count": 13,
     "rejection_check_count": 7,
     "blocked_reason_count": 10,
-    "evidence_ref_count": 18
+    "evidence_ref_count": 20
   }
 }

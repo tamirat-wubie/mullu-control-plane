@@ -140,11 +140,21 @@ from scripts.validate_universal_symbol_receipt_store_durability_replay_witness i
     UniversalSymbolReceiptStoreDurabilityReplayWitnessError,
     validate_universal_symbol_receipt_store_durability_replay_witness,
 )
+from scripts.validate_universal_symbol_receipt_store_durability_replay_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_DURABILITY_REPLAY_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_DURABILITY_REPLAY_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_durability_replay_read_model,
+)
 from scripts.validate_universal_symbol_receipt_store_recovery_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_RECOVERY_SCHEMA_PATH,
     DEFAULT_WITNESS_PATH as DEFAULT_RECOVERY_WITNESS_PATH,
     UniversalSymbolReceiptStoreRecoveryWitnessError,
     validate_universal_symbol_receipt_store_recovery_witness,
+)
+from scripts.validate_universal_symbol_receipt_store_recovery_read_model import (
+    DEFAULT_READ_MODEL_PATH as DEFAULT_RECOVERY_READ_MODEL_PATH,
+    DEFAULT_SCHEMA_PATH as DEFAULT_RECOVERY_READ_MODEL_SCHEMA_PATH,
+    validate_universal_symbol_receipt_store_recovery_read_model,
 )
 from scripts.validate_universal_symbol_receipt_store_write_path_witness import (
     DEFAULT_SCHEMA_PATH as DEFAULT_WRITE_PATH_SCHEMA_PATH,
@@ -251,7 +261,7 @@ def test_foundation_universal_symbol_kernel_validates() -> None:
     assert report["valid"] is True
     assert report["symbol_version"] == "universal_symbol.v1"
     assert report["authority_denial_count"] == 9
-    assert report["evidence_ref_count"] == 155
+    assert report["evidence_ref_count"] == 170
 
 
 def test_lifecycle_evidence_bundle_read_model_validates_from_kernel_evidence() -> None:
@@ -374,6 +384,36 @@ def test_write_path_idempotency_read_model_validates_from_kernel_evidence() -> N
     assert report["evidence_ref_count"] == 10
 
 
+def test_durability_replay_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_durability_replay_read_model(
+        DEFAULT_DURABILITY_REPLAY_READ_MODEL_PATH,
+        DEFAULT_DURABILITY_REPLAY_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Durability replay blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 11
+    assert report["read_model_constraint_count"] == 8
+    assert report["evidence_ref_count"] == 10
+
+
+def test_recovery_read_model_validates_from_kernel_evidence() -> None:
+    report = validate_universal_symbol_receipt_store_recovery_read_model(
+        DEFAULT_RECOVERY_READ_MODEL_PATH,
+        DEFAULT_RECOVERY_READ_MODEL_SCHEMA_PATH,
+    )
+
+    assert report["valid"] is True
+    assert report["solver_outcome"] == "AwaitingEvidence"
+    assert report["primary_status"] == "Recovery blocked"
+    assert report["requirement_row_count"] == 8
+    assert report["effective_denial_count"] == 13
+    assert report["read_model_constraint_count"] == 11
+    assert report["evidence_ref_count"] == 10
+
+
 def test_foundation_universal_symbol_runtime_admission_policy_validates() -> None:
     report = validate_universal_symbol_runtime_admission_policy()
     assert report["valid"] is True
@@ -438,7 +478,7 @@ def test_foundation_universal_symbol_lane_runtime_authority_evidence_value_recei
     assert report["evidence_value_kind_count"] == 6
     assert report["evidence_value_item_count"] == 24
     assert report["authority_denial_count"] == 13
-    assert report["evidence_ref_count"] == 18
+    assert report["evidence_ref_count"] == 20
 
 
 def test_foundation_universal_symbol_runtime_authority_witness_validates() -> None:

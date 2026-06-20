@@ -1,5 +1,5 @@
 {
-  "check_count": 256,
+  "check_count": 259,
   "checks": [
     {
       "args": [
@@ -2125,6 +2125,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_repository_observation_evidence_packet.py"
+      ],
+      "name": "repository_observation_evidence_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] repository_observation_evidence_packet\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_universal_symbol_runtime_admission_policy.py"
       ],
       "name": "universal_symbol_runtime_admission_policy",
@@ -2567,6 +2580,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_universal_symbol_receipt_store_durability_replay_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_durability_replay_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_durability_replay_read_model\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
       ],
       "name": "universal_symbol_receipt_store_recovery_witness",
@@ -2574,6 +2600,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_recovery_witness\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_universal_symbol_receipt_store_recovery_read_model.py"
+      ],
+      "name": "universal_symbol_receipt_store_recovery_read_model",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] universal_symbol_receipt_store_recovery_read_model\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

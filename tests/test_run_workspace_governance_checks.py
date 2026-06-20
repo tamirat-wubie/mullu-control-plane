@@ -15,6 +15,7 @@ import io
 import json
 import re
 import sys
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TextIO
@@ -131,6 +132,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     repository_governance_phase = [
         "protocol_manifest",
         "simple_assistant_ui_boundary",
+        "repository_observation_evidence_packet",
         "universal_symbol_runtime_admission_policy",
         "universal_symbol_runtime_admission_evidence_receipt",
         "universal_symbol_runtime_live_witness_input_receipt",
@@ -165,7 +167,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_write_path_idempotency_witness",
         "universal_symbol_receipt_store_write_path_idempotency_read_model",
         "universal_symbol_receipt_store_durability_replay_witness",
+        "universal_symbol_receipt_store_durability_replay_read_model",
         "universal_symbol_receipt_store_recovery_witness",
+        "universal_symbol_receipt_store_recovery_read_model",
         "universal_symbol_receipt_store_writer_identity_witness",
         "universal_symbol_receipt_store_writer_registration_witness",
         "universal_symbol_receipt_store_path_custody_witness",
@@ -570,7 +574,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
     assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
-    assert_ordered("simple_assistant_ui_boundary", "universal_symbol_runtime_admission_policy")
+    assert_ordered("simple_assistant_ui_boundary", "repository_observation_evidence_packet")
+    assert_ordered("repository_observation_evidence_packet", "universal_symbol_runtime_admission_policy")
     assert_ordered(
         "universal_symbol_runtime_admission_policy",
         "universal_symbol_runtime_admission_evidence_receipt",
@@ -711,10 +716,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "universal_symbol_receipt_store_durability_replay_witness",
+        "universal_symbol_receipt_store_durability_replay_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_durability_replay_read_model",
         "universal_symbol_receipt_store_recovery_witness",
     )
     assert_ordered(
         "universal_symbol_receipt_store_recovery_witness",
+        "universal_symbol_receipt_store_recovery_read_model",
+    )
+    assert_ordered(
+        "universal_symbol_receipt_store_recovery_read_model",
         "universal_symbol_receipt_store_writer_identity_witness",
     )
     assert_ordered(
@@ -1124,11 +1137,19 @@ def test_run_check_preserves_failure_evidence() -> None:
     assert result.termination_signal is None
 
 
-def test_run_check_records_timeout_diagnosis() -> None:
+def test_run_check_records_timeout_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:
     command = runner.CheckCommand(
         "intentional_timeout",
         (sys.executable, "-c", "import time; time.sleep(5)"),
     )
+    terminated_process_ids: list[int] = []
+    original_terminate_process_tree = runner._terminate_process_tree
+
+    def record_terminated_process_tree(process: runner.subprocess.Popen[str]) -> None:
+        terminated_process_ids.append(process.pid)
+        original_terminate_process_tree(process)
+
+    monkeypatch.setattr(runner, "_terminate_process_tree", record_terminated_process_tree)
 
     result = runner.run_check(command, runner.WORKSPACE_ROOT, timeout_seconds=0.01)
 
@@ -1137,6 +1158,39 @@ def test_run_check_records_timeout_diagnosis() -> None:
     assert result.termination_reason == "timeout"
     assert result.termination_signal is None
     assert "[TIMEOUT] intentional_timeout exceeded" in result.stderr
+    assert len(terminated_process_ids) == 1
+
+
+def test_run_check_timeout_terminates_child_process_tree(tmp_path: Path) -> None:
+    child_pid_path = tmp_path / "child.pid"
+    command = runner.CheckCommand(
+        "intentional_child_timeout",
+        (
+            sys.executable,
+            "-c",
+            (
+                "from pathlib import Path\n"
+                "import subprocess, sys, time\n"
+                "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])\n"
+                "Path(sys.argv[1]).write_text(str(child.pid), encoding='utf-8')\n"
+                "time.sleep(30)\n"
+            ),
+            str(child_pid_path),
+        ),
+    )
+
+    result = runner.run_check(command, runner.WORKSPACE_ROOT, timeout_seconds=2.0)
+    assert result.return_code == runner.TIMEOUT_RETURN_CODE
+    assert child_pid_path.exists()
+    child_pid = int(child_pid_path.read_text(encoding="utf-8"))
+
+    deadline = time.time() + 5
+    while time.time() < deadline and runner._process_is_active(child_pid):
+        time.sleep(0.1)
+
+    assert result.termination_reason == "timeout"
+    assert "[TIMEOUT] intentional_child_timeout exceeded" in result.stderr
+    assert runner._process_is_active(child_pid) is False
 
 
 def test_run_check_records_signal_termination_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:

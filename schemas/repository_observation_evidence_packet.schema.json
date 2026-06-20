@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:repository-observation-evidence-packet:1",
+  "title": "Repository Observation Evidence Packet",
+  "description": "Foundation Mode digest-only repository observation evidence packet for read-only local repository state before planning input admission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "packet_version",
+    "generated_at",
+    "observation_scope",
+    "observed_state",
+    "evidence_admission",
+    "authority_boundary",
+    "privacy_guard",
+    "receipt_refs",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "minLength": 1},
+    "packet_version": {"const": "repository_observation_evidence_packet.v1"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "observation_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_ref",
+        "worktree_ref",
+        "observation_mode",
+        "source_kind",
+        "tenant_scope",
+        "collector_ref",
+        "uao_ref",
+        "life_meaning_judgment_ref"
+      ],
+      "properties": {
+        "repository_ref": {"type": "string", "minLength": 1},
+        "worktree_ref": {"type": "string", "minLength": 1},
+        "observation_mode": {
+          "type": "string",
+          "enum": [
+            "foundation_digest_example",
+            "local_read_only_git_status",
+            "local_read_only_digest_replay"
+          ]
+        },
+        "source_kind": {"const": "repository"},
+        "tenant_scope": {"type": "string", "minLength": 1},
+        "collector_ref": {"type": "string", "minLength": 1},
+        "uao_ref": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "observed_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_at",
+        "fresh_until",
+        "freshness_state",
+        "branch_digest_ref",
+        "git_status_digest_ref",
+        "diff_digest_ref",
+        "file_inventory_digest_ref",
+        "command_set_ref",
+        "contradiction_refs",
+        "recovery_actions"
+      ],
+      "properties": {
+        "observed_at": {"type": "string", "format": "date-time"},
+        "fresh_until": {"type": "string", "format": "date-time"},
+        "freshness_state": {
+          "type": "string",
+          "enum": ["fresh", "stale", "awaiting_live_observation"]
+        },
+        "branch_digest_ref": {"type": "string", "minLength": 1},
+        "git_status_digest_ref": {"type": "string", "minLength": 1},
+        "diff_digest_ref": {"type": "string", "minLength": 1},
+        "file_inventory_digest_ref": {"type": "string", "minLength": 1},
+        "command_set_ref": {"type": "string", "minLength": 1},
+        "contradiction_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "recovery_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planning_admission",
+        "proof_state",
+        "solver_outcome",
+        "hard_constraint_planning_allowed",
+        "soft_utility_planning_allowed",
+        "live_evidence_required",
+        "live_evidence_state",
+        "admission_reason_refs"
+      ],
+      "properties": {
+        "planning_admission": {
+          "type": "string",
+          "enum": ["admit", "defer", "reject", "escalate"]
+        },
+        "proof_state": {
+          "type": "string",
+          "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"]
+        },
+        "solver_outcome": {
+          "type": "string",
+          "enum": ["SolvedVerified", "SolvedUnverified", "AwaitingEvidence", "GovernanceBlocked"]
+        },
+        "hard_constraint_planning_allowed": {"type": "boolean"},
+        "soft_utility_planning_allowed": {"type": "boolean"},
+        "live_evidence_required": {"type": "boolean"},
+        "live_evidence_state": {"type": "string", "enum": ["AwaitingEvidence", "SolvedVerified"]},
+        "admission_reason_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_repository_read_performed",
+        "filesystem_write_performed",
+        "file_content_read_performed",
+        "secret_read_performed",
+        "connector_call_performed",
+        "external_write_performed",
+        "runtime_dispatch_performed",
+        "deployment_mutation_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "live_repository_read_performed": {"type": "boolean"},
+        "filesystem_write_performed": {"type": "boolean"},
+        "file_content_read_performed": {"type": "boolean"},
+        "secret_read_performed": {"type": "boolean"},
+        "connector_call_performed": {"type": "boolean"},
+        "external_write_performed": {"type": "boolean"},
+        "runtime_dispatch_performed": {"type": "boolean"},
+        "deployment_mutation_allowed": {"type": "boolean"},
+        "terminal_closure_allowed": {"type": "boolean"},
+        "success_claim_allowed": {"type": "boolean"}
+      }
+    },
+    "privacy_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_git_status_stored",
+        "raw_diff_stored",
+        "raw_file_inventory_stored",
+        "raw_file_contents_stored",
+        "raw_secret_value_stored",
+        "private_payload_redacted",
+        "operator_review_required",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "raw_git_status_stored": {"type": "boolean"},
+        "raw_diff_stored": {"type": "boolean"},
+        "raw_file_inventory_stored": {"type": "boolean"},
+        "raw_file_contents_stored": {"type": "boolean"},
+        "raw_secret_value_stored": {"type": "boolean"},
+        "private_payload_redacted": {"type": "boolean"},
+        "operator_review_required": {"type": "boolean"},
+        "retention_policy_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_observation_evidence_packet_schema",
+        "observation_evidence_acquisition_architecture_doc",
+        "universal_action_orchestration_schema",
+        "life_meaning_judgment_schema"
+      ],
+      "properties": {
+        "repository_observation_evidence_packet_schema": {"type": "string", "minLength": 1},
+        "observation_evidence_acquisition_architecture_doc": {"type": "string", "minLength": 1},
+        "universal_action_orchestration_schema": {"type": "string", "minLength": 1},
+        "life_meaning_judgment_schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest_only",
+        "authority_denied",
+        "hard_constraint_blocked",
+        "authority_denial_count",
+        "privacy_guard_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "digest_only": {"type": "boolean"},
+        "authority_denied": {"type": "boolean"},
+        "hard_constraint_blocked": {"type": "boolean"},
+        "authority_denial_count": {"type": "integer", "minimum": 0},
+        "privacy_guard_count": {"type": "integer", "minimum": 0},
+        "receipt_ref_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    }
+  }
+}

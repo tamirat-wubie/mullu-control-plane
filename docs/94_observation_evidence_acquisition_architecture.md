@@ -1,7 +1,7 @@
 <!--
 Purpose: define the platform-wide observation and evidence acquisition architecture that turns world reads into governed planning input.
 Governance scope: OCE field completeness, RAG source-to-evidence relationships, CDCV observation causality, CQTE freshness and trust gates, UWMA receipt anchoring, SRCA bounded sensing, and PRS verification closure.
-Dependencies: docs/00_platform_overview.md, docs/06_capability_planes.md, docs/10_external_integration_plane.md, docs/16_world_state_plane.md, docs/21_workflow_runtime.md, docs/22_goal_reasoning.md, docs/74_truth_kernel_plane.md, docs/75_problem_star_compilation_receipt.md, docs/77_search_decision_contract.md, docs/78_search_receipt_contract.md, docs/79_worker_failure_receipt_contract.md, docs/83_connector_action_promotion_gate_contract.md, docs/87_browser_observation_receipt_contract.md, docs/89_trusted_capture_evidence_packet_contract.md, scripts/validate_observation_evidence_acquisition_architecture.py, tests/test_validate_observation_evidence_acquisition_architecture.py.
+Dependencies: docs/00_platform_overview.md, docs/06_capability_planes.md, docs/10_external_integration_plane.md, docs/16_world_state_plane.md, docs/21_workflow_runtime.md, docs/22_goal_reasoning.md, docs/74_truth_kernel_plane.md, docs/75_problem_star_compilation_receipt.md, docs/77_search_decision_contract.md, docs/78_search_receipt_contract.md, docs/79_worker_failure_receipt_contract.md, docs/83_connector_action_promotion_gate_contract.md, docs/87_browser_observation_receipt_contract.md, docs/89_trusted_capture_evidence_packet_contract.md, docs/95_repository_observation_evidence_packet_contract.md, scripts/validate_observation_evidence_acquisition_architecture.py, tests/test_validate_observation_evidence_acquisition_architecture.py.
 Invariants: observation is not execution; evidence packets are not truth commits; planning cannot consume unobserved or stale evidence for hard constraints; live provider claims remain AwaitingEvidence until a live read witness exists; no raw secret, private payload, or unclassified personal payload is promoted into planning input.
 -->
 
@@ -247,7 +247,7 @@ Observation quality is benchmarked by:
 ## Implementation Sequence
 
 1. Keep this document as the cross-platform architecture contract.
-2. Keep existing narrow receipts as source-specific packets: search, browser
+2. Keep existing narrow receipts as source-specific packets: repository, search, browser
    observation, trusted capture, worker failure, connector promotion, and
    ProblemStar compilation.
 3. Add provider-specific evidence packet schemas only when a concrete read path
@@ -279,6 +279,8 @@ Run:
 ```powershell
 python scripts/validate_observation_evidence_acquisition_architecture.py
 python -m pytest tests/test_validate_observation_evidence_acquisition_architecture.py -q
+python scripts/validate_repository_observation_evidence_packet.py
+python -m pytest tests/test_validate_repository_observation_evidence_packet.py -q
 python scripts/validate_agents_governance.py
 python scripts/validate_workspace_governance_witness.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-observation-evidence-architecture-20260619.json
@@ -294,6 +296,7 @@ python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp
 | Understand the platform boundary | [Platform Overview](00_platform_overview.md) |
 | Understand the capability planes | [Capability Planes](06_capability_planes.md) |
 | Understand current world-state evidence | [World State Plane](16_world_state_plane.md) |
+| Understand repository observation packets | [RepositoryObservationEvidencePacket Contract](95_repository_observation_evidence_packet_contract.md) |
 | Understand pre-solver evidence separation | [ProblemStar Compilation Receipt](75_problem_star_compilation_receipt.md) |
 | Understand browser observation receipts | [BrowserObservationReceipt Contract](87_browser_observation_receipt_contract.md) |
 | Understand trusted capture packets | [TrustedCaptureEvidencePacket Contract](89_trusted_capture_evidence_packet_contract.md) |

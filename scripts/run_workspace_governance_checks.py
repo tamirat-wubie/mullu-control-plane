@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -883,6 +884,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_simple_assistant_ui_boundary.py"),
         ),
         CheckCommand(
+            "repository_observation_evidence_packet",
+            (python_executable, "scripts/validate_repository_observation_evidence_packet.py"),
+        ),
+        CheckCommand(
             "universal_symbol_runtime_admission_policy",
             (python_executable, "scripts/validate_universal_symbol_runtime_admission_policy.py"),
         ),
@@ -1040,8 +1045,16 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"),
         ),
         CheckCommand(
+            "universal_symbol_receipt_store_durability_replay_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_durability_replay_read_model.py"),
+        ),
+        CheckCommand(
             "universal_symbol_receipt_store_recovery_witness",
             (python_executable, "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"),
+        ),
+        CheckCommand(
+            "universal_symbol_receipt_store_recovery_read_model",
+            (python_executable, "scripts/validate_universal_symbol_receipt_store_recovery_read_model.py"),
         ),
         CheckCommand(
             "universal_symbol_receipt_store_writer_identity_witness",
@@ -1361,29 +1374,50 @@ def run_check(
 
     if timeout_seconds is not None and timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive when provided")
-    try:
-        completed = subprocess.run(
+    if timeout_seconds is not None:
+        process = subprocess.Popen(
             command.args,
             cwd=workspace_root,
             text=True,
-            capture_output=True,
-            check=False,
-            timeout=timeout_seconds,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=os.name != "nt",
         )
-    except subprocess.TimeoutExpired as exc:
-        stdout = _normalize_timeout_output(exc.stdout)
-        stderr = _normalize_timeout_output(exc.stderr)
-        if stderr and not stderr.endswith("\n"):
-            stderr += "\n"
-        stderr += f"[TIMEOUT] {command.name} exceeded {timeout_seconds} seconds: {' '.join(command.args)}\n"
+        try:
+            stdout, stderr = process.communicate(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            _terminate_process_tree(process)
+            stdout, stderr = _collect_timeout_process_output(process)
+            stdout = _normalize_timeout_output(stdout)
+            stderr = _normalize_timeout_output(stderr)
+            if stderr and not stderr.endswith("\n"):
+                stderr += "\n"
+            stderr += f"[TIMEOUT] {command.name} exceeded {timeout_seconds} seconds: {' '.join(command.args)}\n"
+            return CheckResult(
+                command.name,
+                command.args,
+                TIMEOUT_RETURN_CODE,
+                stdout,
+                stderr,
+                termination_reason="timeout",
+            )
+        return_code = int(process.returncode or 0)
         return CheckResult(
             command.name,
             command.args,
-            TIMEOUT_RETURN_CODE,
+            return_code,
             stdout,
             stderr,
-            termination_reason="timeout",
+            termination_reason=_termination_reason(return_code),
+            termination_signal=_termination_signal(return_code),
         )
+    completed = subprocess.run(
+        command.args,
+        cwd=workspace_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     return_code = int(completed.returncode)
     return CheckResult(
         command.name,
@@ -1710,6 +1744,36 @@ def _normalize_timeout_output(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return value
+
+
+def _collect_timeout_process_output(process: subprocess.Popen[str]) -> tuple[str, str]:
+    try:
+        stdout, stderr = process.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        stdout, stderr = process.communicate()
+    return _normalize_timeout_output(stdout), _normalize_timeout_output(stderr)
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        completed = subprocess.run(
+            ("taskkill", "/PID", str(process.pid), "/T", "/F"),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode != 0 and process.poll() is None:
+            process.kill()
+        return
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return
+    except PermissionError:
+        process.kill()
 
 
 def _termination_reason(return_code: int) -> str:

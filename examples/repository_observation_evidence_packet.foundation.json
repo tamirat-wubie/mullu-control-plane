@@ -1,0 +1,88 @@
+{
+  "packet_id": "repository-observation-evidence-packet-foundation-20260620",
+  "packet_version": "repository_observation_evidence_packet.v1",
+  "generated_at": "2026-06-20T00:00:00Z",
+  "observation_scope": {
+    "repository_ref": "repo://mullu-control-plane/local-foundation",
+    "worktree_ref": "worktree://foundation-local-digest-example",
+    "observation_mode": "foundation_digest_example",
+    "source_kind": "repository",
+    "tenant_scope": "foundation-local-only",
+    "collector_ref": "collector://repository-observation/foundation-example",
+    "uao_ref": "uao://repository-observation/foundation/read-only",
+    "life_meaning_judgment_ref": "life-meaning://repository-observation/foundation/read-only"
+  },
+  "observed_state": {
+    "observed_at": "2026-06-20T00:00:00Z",
+    "fresh_until": "2026-06-20T00:00:00Z",
+    "freshness_state": "awaiting_live_observation",
+    "branch_digest_ref": "hash://sha256/repository-observation-branch-redacted",
+    "git_status_digest_ref": "hash://sha256/repository-observation-status-redacted",
+    "diff_digest_ref": "hash://sha256/repository-observation-diff-redacted",
+    "file_inventory_digest_ref": "hash://sha256/repository-observation-file-inventory-redacted",
+    "command_set_ref": "command-set://repository-observation/read-only-status-diff-files",
+    "contradiction_refs": [],
+    "recovery_actions": [
+      "produce a live read-only repository observation receipt before hard-constraint planning admission"
+    ]
+  },
+  "evidence_admission": {
+    "planning_admission": "defer",
+    "proof_state": "Unknown",
+    "solver_outcome": "AwaitingEvidence",
+    "hard_constraint_planning_allowed": false,
+    "soft_utility_planning_allowed": true,
+    "live_evidence_required": true,
+    "live_evidence_state": "AwaitingEvidence",
+    "admission_reason_refs": [
+      "observation://repository/foundation-example/non-live",
+      "policy://observation-evidence/hard-constraint-block-on-unknown"
+    ]
+  },
+  "authority_boundary": {
+    "live_repository_read_performed": false,
+    "filesystem_write_performed": false,
+    "file_content_read_performed": false,
+    "secret_read_performed": false,
+    "connector_call_performed": false,
+    "external_write_performed": false,
+    "runtime_dispatch_performed": false,
+    "deployment_mutation_allowed": false,
+    "terminal_closure_allowed": false,
+    "success_claim_allowed": false
+  },
+  "privacy_guard": {
+    "raw_git_status_stored": false,
+    "raw_diff_stored": false,
+    "raw_file_inventory_stored": false,
+    "raw_file_contents_stored": false,
+    "raw_secret_value_stored": false,
+    "private_payload_redacted": true,
+    "operator_review_required": true,
+    "retention_policy_ref": "retention://repository-observation/digest-only"
+  },
+  "receipt_refs": {
+    "repository_observation_evidence_packet_schema": "schemas/repository_observation_evidence_packet.schema.json",
+    "observation_evidence_acquisition_architecture_doc": "docs/94_observation_evidence_acquisition_architecture.md",
+    "universal_action_orchestration_schema": "schemas/universal_action_orchestration.schema.json",
+    "life_meaning_judgment_schema": "schemas/life_meaning_judgment.schema.json"
+  },
+  "contract_summary": {
+    "digest_only": true,
+    "authority_denied": true,
+    "hard_constraint_blocked": true,
+    "authority_denial_count": 10,
+    "privacy_guard_count": 8,
+    "receipt_ref_count": 4,
+    "evidence_ref_count": 7
+  },
+  "evidence_refs": [
+    "schemas/repository_observation_evidence_packet.schema.json",
+    "examples/repository_observation_evidence_packet.foundation.json",
+    "scripts/validate_repository_observation_evidence_packet.py",
+    "tests/test_validate_repository_observation_evidence_packet.py",
+    "docs/95_repository_observation_evidence_packet_contract.md",
+    "docs/94_observation_evidence_acquisition_architecture.md",
+    "schemas/universal_action_orchestration.schema.json"
+  ]
+}

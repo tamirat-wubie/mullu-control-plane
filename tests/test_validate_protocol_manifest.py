@@ -1729,6 +1729,41 @@ def test_protocol_manifest_indexes_universal_symbol_receipt_store_durability_rep
     assert witness_entry["surface"] == "symbol"
 
 
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_durability_replay_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-durability-replay-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json"
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-read-model:1"
+    )
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_universal_symbol_receipt_store_recovery_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["universal-symbol-receipt-store-recovery-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/universal_symbol_receipt_store_recovery_read_model.schema.json"
+    assert read_model_entry["urn"] == "urn:mullusi:schema:universal-symbol-receipt-store-recovery-read-model:1"
+    assert read_model_entry["surface"] == "symbol"
+
+
+def test_protocol_manifest_indexes_repository_observation_evidence_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries["repository-observation-evidence-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == "schemas/repository_observation_evidence_packet.schema.json"
+    assert packet_entry["urn"] == "urn:mullusi:schema:repository-observation-evidence-packet:1"
+    assert packet_entry["surface"] == "evidence"
+
+
 def test_protocol_manifest_indexes_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

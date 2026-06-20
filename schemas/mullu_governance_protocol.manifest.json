@@ -719,6 +719,12 @@
       "urn": "urn:mullusi:schema:trusted-capture-evidence-packet:1"
     },
     {
+      "path": "schemas/repository_observation_evidence_packet.schema.json",
+      "schema_id": "repository-observation-evidence-packet",
+      "surface": "evidence",
+      "urn": "urn:mullusi:schema:repository-observation-evidence-packet:1"
+    },
+    {
       "path": "schemas/sccml_trace_adapter_witness.schema.json",
       "schema_id": "sccml-trace-adapter-witness",
       "surface": "kernel",
@@ -1883,10 +1889,22 @@
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-witness:1"
     },
     {
+      "path": "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-durability-replay-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-read-model:1"
+    },
+    {
       "path": "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
       "schema_id": "universal-symbol-receipt-store-recovery-witness",
       "surface": "symbol",
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-recovery-witness:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_recovery_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-recovery-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-recovery-read-model:1"
     },
     {
       "path": "schemas/universal_symbol_runtime_admission_policy.schema.json",

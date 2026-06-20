@@ -592,6 +592,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "repository_observation_evidence_packet",
+            [
+                "schemas/repository_observation_evidence_packet.schema.json",
+                "examples/repository_observation_evidence_packet.foundation.json",
+                "validate_repository_observation_evidence_packet",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/repository_observation_evidence_packet.schema.json",
+                "examples/repository_observation_evidence_packet.foundation.json",
+                "docs/94_observation_evidence_acquisition_architecture.md",
+                "docs/95_repository_observation_evidence_packet_contract.md",
+                "schemas/universal_action_orchestration.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+                "scripts/validate_repository_observation_evidence_packet.py",
+                "tests/test_validate_repository_observation_evidence_packet.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "RepositoryObservationEvidencePacket records digest-only Foundation Mode repository observation evidence while denying live repository read claims, file-content reads, secret reads, filesystem writes, connector calls, runtime dispatch, terminal closure, success claims, and hard-constraint planning on Unknown proof state.",
+            [
+                "repository_observation_evidence_packet_passes",
+                "repository_observation_rejects_authority_drift",
+                "repository_observation_rejects_privacy_and_digest_drift",
+                "repository_observation_rejects_hard_constraint_promotion",
+                "repository_observation_rejects_receipt_ref_and_count_drift",
+                "repository_observation_cli_json_accepts_relative_paths",
+                "malformed_repository_observation_packet_reports_errors",
+            ],
+            runtime_witness_anchor_aliases={
+                "repository_observation_evidence_packet_passes": [
+                    "repository_observation_evidence_packet_passes"
+                ],
+                "repository_observation_rejects_authority_drift": [
+                    "repository_observation_rejects_authority_drift"
+                ],
+                "repository_observation_rejects_privacy_and_digest_drift": [
+                    "repository_observation_rejects_privacy_and_digest_drift"
+                ],
+                "repository_observation_rejects_hard_constraint_promotion": [
+                    "repository_observation_rejects_hard_constraint_promotion"
+                ],
+                "repository_observation_rejects_receipt_ref_and_count_drift": [
+                    "repository_observation_rejects_receipt_ref_and_count_drift"
+                ],
+                "repository_observation_cli_json_accepts_relative_paths": [
+                    "repository_observation_cli_json_accepts_relative_paths"
+                ],
+                "malformed_repository_observation_packet_reports_errors": [
+                    "malformed_repository_observation_packet_reports_errors"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_lane_runtime_authority_evidence_receipt",
             [
                 "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
@@ -686,12 +743,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/92_universal_symbol_kernel_audit.md",
                 "scripts/produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
                 "scripts/validate_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+                "scripts/verify_universal_symbol_lane_runtime_authority_evidence_value_refs.py",
                 "tests/test_produce_universal_symbol_lane_runtime_authority_evidence_value_receipt.py",
+                "tests/test_verify_universal_symbol_lane_runtime_authority_evidence_value_refs.py",
                 "tests/test_validate_universal_symbol_kernel.py",
                 "scripts/proof_coverage_matrix.py",
                 "tests/test_proof_coverage_matrix.py",
             ],
-            "UniversalSymbol lane runtime authority evidence value receipt records operator-supplied reference values for lane approval, receipt-store authority, recovery, audit, live runtime witness, and blocked actions while denying lane authority, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
+            "UniversalSymbol lane runtime authority evidence value receipt records and structurally verifies operator-supplied reference values for lane approval, receipt-store authority, recovery, audit, live runtime witness, and blocked actions while denying lane authority, runtime admission, dispatch, connector calls, receipt-store append, mutation, and terminal closure.",
             [
                 "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates",
                 "lane_runtime_authority_evidence_value_receipt_rejects_authority_drift",
@@ -704,6 +763,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "lane_value_producer_rejects_unknown_empty_or_secret_refs",
                 "lane_value_cli_stdout_receipt_validates",
                 "lane_value_cli_output_write_reports_summary",
+                "verifier_blocks_template_placeholder_refs",
+                "verifier_accepts_complete_refs_without_authority",
+                "verifier_rejects_wrong_scheme_for_evidence_kind",
+                "verifier_rejects_secret_like_ref",
+                "verifier_accepts_matching_local_json_ref_without_authority",
+                "verifier_rejects_local_json_authority_drift",
             ],
             runtime_witness_anchor_aliases={
                 "foundation_universal_symbol_lane_runtime_authority_evidence_value_receipt_validates": [
@@ -738,6 +803,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "lane_value_cli_output_write_reports_summary": [
                     "lane_value_cli_output_write_reports_summary"
+                ],
+                "verifier_blocks_template_placeholder_refs": [
+                    "verifier_blocks_template_placeholder_refs"
+                ],
+                "verifier_accepts_complete_refs_without_authority": [
+                    "verifier_accepts_complete_refs_without_authority"
+                ],
+                "verifier_rejects_wrong_scheme_for_evidence_kind": [
+                    "verifier_rejects_wrong_scheme_for_evidence_kind"
+                ],
+                "verifier_rejects_secret_like_ref": [
+                    "verifier_rejects_secret_like_ref"
+                ],
+                "verifier_accepts_matching_local_json_ref_without_authority": [
+                    "verifier_accepts_matching_local_json_ref_without_authority"
+                ],
+                "verifier_rejects_local_json_authority_drift": [
+                    "verifier_rejects_local_json_authority_drift"
                 ],
             },
         ),
@@ -2664,6 +2747,71 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "universal_symbol_receipt_store_durability_replay_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_durability_replay_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+                "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_durability_replay_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_durability_replay_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store durability replay read model projects blocked replay status, durability replay requirement rows, Delta_reject logging state, raw-detail visibility denial, replay execution denial, and effective denial fields while denying replay authority, durability replay binding, write-path registration, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_durability_replay_read_model_validates",
+                "durability_replay_read_model_rejects_authority_drift",
+                "durability_replay_read_model_rejects_replay_execution_drift",
+                "durability_replay_read_model_rejects_raw_detail_visibility",
+                "durability_replay_read_model_rejects_missing_requirement",
+                "durability_replay_read_model_rejects_duplicate_requirement_row",
+                "durability_replay_read_model_rejects_missing_delta_reject_log",
+                "durability_replay_read_model_rejects_witness_projection_drift",
+                "durability_replay_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_durability_replay_read_model_validates": [
+                    "foundation_durability_replay_read_model_validates"
+                ],
+                "durability_replay_read_model_rejects_authority_drift": [
+                    "durability_replay_read_model_rejects_authority_drift"
+                ],
+                "durability_replay_read_model_rejects_replay_execution_drift": [
+                    "durability_replay_read_model_rejects_replay_execution_drift"
+                ],
+                "durability_replay_read_model_rejects_raw_detail_visibility": [
+                    "durability_replay_read_model_rejects_raw_detail_visibility"
+                ],
+                "durability_replay_read_model_rejects_missing_requirement": [
+                    "durability_replay_read_model_rejects_missing_requirement"
+                ],
+                "durability_replay_read_model_rejects_duplicate_requirement_row": [
+                    "durability_replay_read_model_rejects_duplicate_requirement_row"
+                ],
+                "durability_replay_read_model_rejects_missing_delta_reject_log": [
+                    "durability_replay_read_model_rejects_missing_delta_reject_log"
+                ],
+                "durability_replay_read_model_rejects_witness_projection_drift": [
+                    "durability_replay_read_model_rejects_witness_projection_drift"
+                ],
+                "durability_replay_read_model_rejects_evidence_ref_count_drift": [
+                    "durability_replay_read_model_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
             "universal_symbol_receipt_store_recovery_witness",
             [
                 "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
@@ -2730,6 +2878,75 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "recovery_witness_rejects_evidence_ref_count_drift": [
                     "recovery_witness_rejects_evidence_ref_count_drift"
+                ],
+            },
+        ),
+        _surface(
+            "universal_symbol_receipt_store_recovery_read_model",
+            [
+                "schemas/universal_symbol_receipt_store_recovery_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_read_model.foundation.json",
+                "validate_universal_symbol_receipt_store_recovery_read_model",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/universal_symbol_receipt_store_recovery_read_model.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_read_model.foundation.json",
+                "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+                "examples/universal_symbol_receipt_store_recovery_witness.foundation.json",
+                "scripts/validate_universal_symbol_receipt_store_recovery_read_model.py",
+                "scripts/validate_universal_symbol_receipt_store_recovery_witness.py",
+                "tests/test_validate_universal_symbol_receipt_store_recovery_read_model.py",
+                "tests/test_validate_universal_symbol_kernel.py",
+                "scripts/proof_coverage_matrix.py",
+                "tests/test_proof_coverage_matrix.py",
+            ],
+            "UniversalSymbol receipt-store recovery read model projects blocked recovery status, recovery requirement rows, Delta_reject logging state, raw-detail visibility denial, recovery execution denial, rollback execution denial, compensation execution denial, replay-state commit denial, and effective denial fields while denying recovery authority, recovery binding, write-path registration, receipt append, raw payload exposure, raw secret exposure, mutation, terminal closure, and success claims.",
+            [
+                "foundation_recovery_read_model_validates",
+                "recovery_read_model_rejects_authority_drift",
+                "recovery_read_model_rejects_recovery_execution_drift",
+                "recovery_read_model_rejects_rollback_compensation_and_replay_commit_drift",
+                "recovery_read_model_rejects_raw_detail_visibility",
+                "recovery_read_model_rejects_missing_requirement",
+                "recovery_read_model_rejects_duplicate_requirement_row",
+                "recovery_read_model_rejects_missing_delta_reject_log",
+                "recovery_read_model_rejects_witness_projection_drift",
+                "recovery_read_model_rejects_evidence_ref_count_drift",
+            ],
+            runtime_witness_anchor_aliases={
+                "foundation_recovery_read_model_validates": [
+                    "foundation_recovery_read_model_validates"
+                ],
+                "recovery_read_model_rejects_authority_drift": [
+                    "recovery_read_model_rejects_authority_drift"
+                ],
+                "recovery_read_model_rejects_recovery_execution_drift": [
+                    "recovery_read_model_rejects_recovery_execution_drift"
+                ],
+                "recovery_read_model_rejects_rollback_compensation_and_replay_commit_drift": [
+                    "recovery_read_model_rejects_rollback_compensation_and_replay_commit_drift"
+                ],
+                "recovery_read_model_rejects_raw_detail_visibility": [
+                    "recovery_read_model_rejects_raw_detail_visibility"
+                ],
+                "recovery_read_model_rejects_missing_requirement": [
+                    "recovery_read_model_rejects_missing_requirement"
+                ],
+                "recovery_read_model_rejects_duplicate_requirement_row": [
+                    "recovery_read_model_rejects_duplicate_requirement_row"
+                ],
+                "recovery_read_model_rejects_missing_delta_reject_log": [
+                    "recovery_read_model_rejects_missing_delta_reject_log"
+                ],
+                "recovery_read_model_rejects_witness_projection_drift": [
+                    "recovery_read_model_rejects_witness_projection_drift"
+                ],
+                "recovery_read_model_rejects_evidence_ref_count_drift": [
+                    "recovery_read_model_rejects_evidence_ref_count_drift"
                 ],
             },
         ),
@@ -13923,6 +14140,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_repository_observation_evidence_packet",
+            "surfaces": ["repository_observation_evidence_packet"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_lane_runtime_authority_evidence_receipt",
             "surfaces": ["universal_symbol_lane_runtime_authority_evidence_receipt"],
             "status": "closed",
@@ -14073,8 +14295,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "publish_universal_symbol_receipt_store_durability_replay_read_model",
+            "surfaces": ["universal_symbol_receipt_store_durability_replay_read_model"],
+            "status": "closed",
+        },
+        {
             "action_id": "publish_universal_symbol_receipt_store_recovery_witness",
             "surfaces": ["universal_symbol_receipt_store_recovery_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_universal_symbol_receipt_store_recovery_read_model",
+            "surfaces": ["universal_symbol_receipt_store_recovery_read_model"],
             "status": "closed",
         },
         {

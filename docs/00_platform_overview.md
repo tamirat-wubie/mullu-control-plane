@@ -39,6 +39,7 @@ and receipt-backed until a later status witness promotes the project.
 - `MAF Core` owns the general substrate, kernel-facing interfaces, and shared runtime primitives.
 - `Mullu Truth Kernel` is an internal MAF Core subsystem for domains, constraints, closure, propagation, kernel checks, projections, forced values, and proof-bound truth-state commits.
 - `Observation Evidence Acquisition Architecture` is the cross-platform intake contract that turns read-only sensing into evidence packets, admission decisions, world-state projections, and ProblemStar planning input while denying execution, truth mutation, terminal closure, and live-provider readiness claims without witnesses.
+- `RepositoryObservationEvidencePacket Contract` is the first source-specific observation packet and records digest-only, non-live Foundation Mode repository-state evidence while hard-constraint planning remains blocked pending a live read-only repository observation.
 - `ProblemStar Compilation Receipt` is a read-only governance receipt proving raw input was separated into canonical Phi-GPS fields and proof surfaces before solver routing.
 - `ClarificationRequest Contract` is a read-only interpretation blocker that asks one focused question and preserves `no_execution` until missing action slots are answered.
 - `SearchDecision Contract` is a read-only pre-retrieval search gate that records search need, freshness, source scope, budget, and retrieval safety before evidence collection.
