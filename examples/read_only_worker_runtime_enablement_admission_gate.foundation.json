@@ -1,0 +1,64 @@
+{
+  "accepted_evidence_refs": [
+    "examples/read_only_worker_terminal_closure_witness.foundation.json",
+    "examples/read_only_worker_runtime_runner_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_dispatch_endpoint_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_receipt_emitter_registration_witness.foundation.json",
+    "examples/read_only_worker_runtime_receipt_store_activation_witness.foundation.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "examples/read_only_worker_active_runtime_lease_admission_witness.foundation.json",
+    "examples/read_only_worker_uao_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_phi_gov_dispatch_authorization_witness.foundation.json",
+    "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json"
+  ],
+  "admission_blockers": [
+    "foundation_mode_runtime_authority_missing",
+    "non_foundation_runtime_promotion_witness_missing",
+    "runtime_admission_phi_gov_decision_missing"
+  ],
+  "admission_state": "blocked_foundation_mode_runtime_authority_missing",
+  "blocked_actions": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_dispatch_admission",
+    "read_only_worker_runtime_dispatch",
+    "read_only_worker_invocation",
+    "read_only_worker_runtime_receipt_emission",
+    "read_only_worker_receipt_append",
+    "read_only_worker_terminal_closure_claim"
+  ],
+  "connector_authority_allowed": false,
+  "evidence_accepted": true,
+  "external_network_allowed": false,
+  "filesystem_write_allowed": false,
+  "gate_id": "read-only-worker-runtime-enablement-admission-gate-foundation-repo-inspection-20260620",
+  "gate_version": "read_only_worker_runtime_enablement_admission_gate.v1",
+  "next_action": "Produce a future non-Foundation runtime authority decision before runtime enablement.",
+  "proof_state": "Unknown",
+  "receipt_append_allowed": false,
+  "runtime_admission_allowed": false,
+  "runtime_dispatch_allowed": false,
+  "runtime_enablement_allowed": false,
+  "runtime_enablement_executed": false,
+  "runtime_receipt_emission_allowed": false,
+  "secret_values_serialized": false,
+  "selected_worker_path": "read_only_repo_inspection",
+  "solver_outcome": "AwaitingEvidence",
+  "source_acceptance_gate_ref": "examples/read_only_worker_runtime_enablement_evidence_acceptance_gate.foundation.json",
+  "success_claim_allowed": false,
+  "summary": {
+    "accepted_evidence_ref_count": 12,
+    "admission_blocker_count": 3,
+    "blocked_action_count": 7,
+    "runtime_admission_count": 0,
+    "runtime_enablement_count": 0
+  },
+  "terminal_closure_allowed": false,
+  "validators": [
+    "scripts/validate_read_only_worker_runtime_enablement_admission_gate.py",
+    "scripts/validate_read_only_worker_runtime_enablement_evidence_acceptance_gate.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_admission_gate.py"
+  ],
+  "worker_invocation_allowed": false
+}

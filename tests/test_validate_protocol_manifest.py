@@ -2158,6 +2158,32 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_review_pa
     assert review_packet_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_evidence_acceptance_gate_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    gate_entry = entries["read-only-worker-runtime-enablement-evidence-acceptance-gate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert gate_entry["path"] == (
+        "schemas/read_only_worker_runtime_enablement_evidence_acceptance_gate.schema.json"
+    )
+    assert gate_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-runtime-enablement-evidence-acceptance-gate:1"
+    )
+    assert gate_entry["surface"] == "worker"
+
+
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_admission_gate_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    gate_entry = entries["read-only-worker-runtime-enablement-admission-gate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert gate_entry["path"] == "schemas/read_only_worker_runtime_enablement_admission_gate.schema.json"
+    assert gate_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-enablement-admission-gate:1"
+    assert gate_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_operator_runtime_enablement_approval_ref_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
