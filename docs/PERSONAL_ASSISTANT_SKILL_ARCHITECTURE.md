@@ -467,10 +467,12 @@ live_nested_mind_activation_allowed = false
 The packet records source artifacts as refs, SHA-256 digests, schema refs, and
 serialized lengths only. It validates acyclic stage topology, no dangling
 predecessors, no dangling source or stage bindings, approval gates before P4/P5
-paths, stage-level `execution_allowed = false`, and absence of secret-shaped
-values. The dry-run packet binds runtime-boundary evidence directly and does
-not bind the aggregate foundation closure packet, so the aggregate closure can
-consume dry-run evidence without forming a causal proof cycle.
+paths, source artifact digests against current checked-in refs using the
+newline-stable text-source digest, stage-level `execution_allowed = false`, and
+absence of secret-shaped values. The dry-run packet binds runtime-boundary
+evidence directly and does not bind the aggregate foundation closure packet, so
+the aggregate closure can consume dry-run evidence without forming a causal
+proof cycle.
 
 The skill registry may declare future approval-gated effect models, but the
 dry-run packet must not execute them or convert them into runtime authority.

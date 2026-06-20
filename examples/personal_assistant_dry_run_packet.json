@@ -21,7 +21,7 @@
     "source_artifact_count": 9,
     "stage_count": 10
   },
-  "generated_at": "2026-06-20T14:13:09.779286Z",
+  "generated_at": "2026-06-20T15:16:53.813288Z",
   "governed": true,
   "lineage": {
     "accepted_deltas": [
@@ -63,7 +63,7 @@
     "production_ready_claim_allowed": false,
     "system_of_record_write_allowed": false
   },
-  "packet_id": "personal-assistant-dry-run-0a39b8cb3e470c7d",
+  "packet_id": "personal-assistant-dry-run-7059acfea79a64ca",
   "packet_is_not_customer_readiness": true,
   "packet_is_not_execution_authority": true,
   "packet_is_not_memory_admission": true,
@@ -83,7 +83,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "request",
       "source_ref": "examples/personal_assistant_request_inbox_summary.json",
-      "source_sha256": "888443d0090c180416f8b49106aea42f1270d4382eeb8e3a998a65c8736df3d0"
+      "source_sha256": "1bbbb2735dfb0ea6d0f1cc0349924973f1164eee59bf189c59337937e457e3e2"
     },
     {
       "bound": true,
@@ -96,7 +96,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "skill_registry",
       "source_ref": "examples/personal_assistant_skill_registry.json",
-      "source_sha256": "672d19fd14bcf37935b47937e79e90668f567fa930de62d5a82e313acc0434f3"
+      "source_sha256": "42da5c73e4eab73a5374884de7077bb11905d99a1e7690f76394cef252de6f01"
     },
     {
       "bound": true,
@@ -109,7 +109,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "read_only_projection",
       "source_ref": "examples/personal_assistant_read_only_projection.json",
-      "source_sha256": "d38305e87b6a9d465dc136cab032f3808251c9e6d1222e374b35e84f3eecfad4"
+      "source_sha256": "2fde7a205707a40d57b938074293fa1c326f1c03418a09dd2669dc53c86c7447"
     },
     {
       "bound": true,
@@ -122,7 +122,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "draft_projection",
       "source_ref": "examples/personal_assistant_draft_projection.json",
-      "source_sha256": "3525a142951a83fdde47d34736d50087612c28f14867b87164d7084b2ba722f0"
+      "source_sha256": "e44426688c84dbbb8c20341425219d20c38574fe212686a3ba827b7faaec091a"
     },
     {
       "bound": true,
@@ -135,7 +135,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "approval_packet",
       "source_ref": "examples/personal_assistant_approval_packet.json",
-      "source_sha256": "7b18ff70cb89ca4e315f44cbf38b50b998f2823521a46595b437bac5371c604d"
+      "source_sha256": "933f80a7ee17688caea7d7b17c7266a8a689722e3174ddd0eff21c1e7b8f8d38"
     },
     {
       "bound": true,
@@ -148,7 +148,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "draft_receipt",
       "source_ref": "examples/personal_assistant_receipt_draft_only.json",
-      "source_sha256": "59fbf2b971734c310948029d09bef6078dcdc969337811cd100436b273629ec9"
+      "source_sha256": "37def2cc87653258ae97afb05285fd1a47fdd61b23619a09260eceda3baa3e1d"
     },
     {
       "bound": true,
@@ -161,7 +161,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "memory_review",
       "source_ref": "examples/personal_assistant_memory_review_evidence.json",
-      "source_sha256": "bd2642f9f4ba71848d6c92be7190f9d2a281d2554de459bed3ff23880e36c2b6"
+      "source_sha256": "8958a05c53a4ebd8bdd681463f22a016e0374d196ba6f6e337a659038f291d63"
     },
     {
       "bound": true,
@@ -174,7 +174,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "skill_readiness_catalog",
       "source_ref": "examples/personal_assistant_skill_readiness_catalog.json",
-      "source_sha256": "d09e142cfdc7bce4a9636e4da7013c5318095a13d40a1fee19924244bb80fc3f"
+      "source_sha256": "d5e60467f1dc8daf146235689cfe99fa49dc777fbcf1c860323705a0cda6e507"
     },
     {
       "bound": true,
@@ -187,7 +187,7 @@
       "solver_outcome": "SolvedVerified",
       "source_kind": "runtime_boundary",
       "source_ref": "examples/personal_assistant_runtime_boundary_receipt.json",
-      "source_sha256": "aea329146c4bd43f383f29674c58054842c0973facfa3d9d56aa5827ecf3d984"
+      "source_sha256": "b87f85f4d4bdc0df0bf727795000593b9a18886be4c601c5fe1334bfda560c7b"
     }
   ],
   "stages": [

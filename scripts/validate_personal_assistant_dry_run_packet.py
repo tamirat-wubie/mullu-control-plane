@@ -31,6 +31,7 @@ from scripts.collect_personal_assistant_dry_run_packet import (  # noqa: E402
     DEFAULT_OUTPUT,
     SOURCE_ARTIFACTS,
 )
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 DRY_RUN_PACKET_SCHEMA_PATH = REPO_ROOT / "schemas" / "personal_assistant_dry_run_packet.schema.json"
@@ -77,6 +78,7 @@ def validate_personal_assistant_dry_run_packet(
         _check_schema_contract(payload, schema_path),
         _check_packet_id(payload),
         _check_source_artifacts(payload),
+        _check_source_artifact_digests(payload),
         _check_topology(payload),
         _check_bindings(payload),
         _check_approval_gate_order(payload),
@@ -161,6 +163,30 @@ def _check_source_artifacts(payload: dict[str, Any]) -> PersonalAssistantDryRunP
         passed,
         f"kinds={len(observed_kinds)}/{len(required_kinds)} valid={len(valid_records)}",
     )
+
+
+def _check_source_artifact_digests(payload: dict[str, Any]) -> PersonalAssistantDryRunPacketValidationStep:
+    records = _list_of_objects(payload.get("source_artifacts"))
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        expected_digest = _bounded_text(record.get("source_sha256"))
+        source_path = (REPO_ROOT / source_ref).resolve()
+        if not source_ref or not _path_within_repo(source_path) or not source_path.exists():
+            missing.append(source_kind)
+            continue
+        observed_digest = canonical_source_sha256(source_path)
+        if observed_digest != expected_digest:
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_ARTIFACTS)
+    detail = (
+        "digests-current"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantDryRunPacketValidationStep("source artifact digests", passed, detail)
 
 
 def _check_topology(payload: dict[str, Any]) -> PersonalAssistantDryRunPacketValidationStep:
@@ -393,6 +419,14 @@ def _bounded_packet_path(packet_path: Path) -> str:
         return packet_path.resolve().relative_to(REPO_ROOT).as_posix()
     except ValueError:
         return packet_path.as_posix()
+
+
+def _path_within_repo(path: Path) -> bool:
+    try:
+        path.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return False
+    return True
 
 
 def main(argv: list[str] | None = None) -> int:

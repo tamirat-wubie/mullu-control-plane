@@ -31,8 +31,8 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     DEFAULT_OUTPUT,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
-    canonical_source_sha256,
 )
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 FOUNDATION_CLOSURE_SCHEMA_PATH = (
