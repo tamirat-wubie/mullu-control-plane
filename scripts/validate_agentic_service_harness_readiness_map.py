@@ -11,7 +11,7 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - The first next PR advances to the read-only dashboard data contract.
+  - The first next PR advances to the contract-only adapter registry.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -43,7 +43,7 @@ REQUIRED_SECTIONS = (
     "## 5. Permission And Authority Model - READY",
     "## 6. Sandbox/Workspace Safety - PARTIAL",
     "## 7. Receipt And Evidence Model - PARTIAL",
-    "## 8. Dashboard/UI Requirements - MISSING",
+    "## 8. Dashboard/UI Requirements - PARTIAL",
     "## 9. Explicit Non-Goals For The First Harness Phase - READY",
     "## Smallest Next PR Sequence",
     "## Governance Decision",
@@ -109,6 +109,14 @@ REQUIRED_GITHUB_TASK_INTAKE_TERMS = (
     "receipt append",
     "terminal closure",
 )
+REQUIRED_DASHBOARD_DATA_CONTRACT_TERMS = (
+    "Dashboard data contract PR",
+    "agentic_service_harness_dashboard_data_contract",
+    "read-only dashboard data contract",
+    "seven display-only widget contracts",
+    "dashboard UI creation remains blocked",
+    "route registration remains blocked",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -171,11 +179,17 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _require_all(map_text, REQUIRED_AGENT_RUN_TERMS, "agent_run_term", errors)
     _require_all(map_text, REQUIRED_APPROVAL_REQUEST_TERMS, "approval_request_term", errors)
     _require_all(map_text, REQUIRED_GITHUB_TASK_INTAKE_TERMS, "github_task_intake_term", errors)
+    _require_all(
+        map_text,
+        REQUIRED_DASHBOARD_DATA_CONTRACT_TERMS,
+        "dashboard_data_contract_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
     _validate_approval_request_ready(map_text, errors)
-    _validate_dashboard_first(map_text, errors)
+    _validate_adapter_registry_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -239,20 +253,20 @@ def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: ApprovalRequest projection binding")
 
 
-def _validate_dashboard_first(map_text: str, errors: list[str]) -> None:
+def _validate_adapter_registry_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(ui-contract\): add dashboard data contract`$",
+        r"^1\.\s+`harness\(adapter-registry\): add contract-only GitHub/Codex adapter registry`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: dashboard data contract")
+        errors.append("missing first next PR: adapter registry")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(ui-contract): add dashboard data contract",
         "harness(adapter-registry): add contract-only GitHub/Codex adapter registry",
+        "harness(evidence): add EvidenceBundle projection by AgentRun id",
     )
     positions: list[int] = []
     for marker in sequence_markers:
