@@ -1,0 +1,590 @@
+{
+  "closure_summary": {
+    "acyclic_topology": true,
+    "all_bindings_resolved": true,
+    "all_source_artifacts_bound": true,
+    "all_source_artifacts_solved_verified": true,
+    "all_stages_verified": true,
+    "approval_gate_before_effect_bearing_actions": true,
+    "approval_gate_count": 1,
+    "bound_source_artifact_count": 9,
+    "customer_ready": false,
+    "deployment_mutation_ready": false,
+    "dry_run_packet_closed": true,
+    "effect_violation_count": 0,
+    "live_connector_execution_ready": false,
+    "memory_write_ready": false,
+    "next_allowed_action": "continue_foundation_hardening_only",
+    "no_effect_boundaries_clear": true,
+    "no_secret_values_serialized": true,
+    "secret_value_marker_count": 0,
+    "source_artifact_count": 9,
+    "stage_count": 10
+  },
+  "generated_at": "2026-06-20T09:38:27.109340Z",
+  "governed": true,
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "dry_run_packet_collected",
+        "logged_in_lineage": true,
+        "reason": "Digest-only workflow evidence can be collected in Foundation Mode."
+      }
+    ],
+    "rejected_deltas": [
+      {
+        "delta_id": "live_connector_execution",
+        "logged_in_lineage": true,
+        "reason": "Dry-run packet does not grant live connector execution authority."
+      },
+      {
+        "delta_id": "memory_admission",
+        "logged_in_lineage": true,
+        "reason": "Memory observations remain review candidates; no live memory write is admitted."
+      },
+      {
+        "delta_id": "external_send",
+        "logged_in_lineage": true,
+        "reason": "External communication remains blocked without explicit approval and live adapter evidence."
+      }
+    ]
+  },
+  "no_effect_boundary": {
+    "connector_mutation_allowed": false,
+    "customer_ready_claim_allowed": false,
+    "deployment_mutation_allowed": false,
+    "execution_authority_granted": false,
+    "external_effect_allowed": false,
+    "live_connector_execution_allowed": false,
+    "live_nested_mind_activation_allowed": false,
+    "memory_admission_allowed": false,
+    "memory_write_allowed": false,
+    "money_legal_public_allowed": false,
+    "production_ready_claim_allowed": false,
+    "system_of_record_write_allowed": false
+  },
+  "packet_id": "personal-assistant-dry-run-1c23b65f0e7222c1",
+  "packet_is_not_customer_readiness": true,
+  "packet_is_not_execution_authority": true,
+  "packet_is_not_memory_admission": true,
+  "proof_state": "Pass",
+  "schema_version": "personal_assistant.dry_run_packet.v1",
+  "secret_value_markers": [],
+  "solver_outcome": "SolvedVerified",
+  "source_artifacts": [
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_request.schema.json",
+      "serialized_length": 1222,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "request",
+      "source_ref": "examples/personal_assistant_request_inbox_summary.json",
+      "source_sha256": "888443d0090c180416f8b49106aea42f1270d4382eeb8e3a998a65c8736df3d0"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_skill.schema.json",
+      "serialized_length": 25579,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "skill_registry",
+      "source_ref": "examples/personal_assistant_skill_registry.json",
+      "source_sha256": "672d19fd14bcf37935b47937e79e90668f567fa930de62d5a82e313acc0434f3"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_read_only_projection.schema.json",
+      "serialized_length": 9132,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "read_only_projection",
+      "source_ref": "examples/personal_assistant_read_only_projection.json",
+      "source_sha256": "d38305e87b6a9d465dc136cab032f3808251c9e6d1222e374b35e84f3eecfad4"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_draft_projection.schema.json",
+      "serialized_length": 11677,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "draft_projection",
+      "source_ref": "examples/personal_assistant_draft_projection.json",
+      "source_sha256": "3525a142951a83fdde47d34736d50087612c28f14867b87164d7084b2ba722f0"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_approval.schema.json",
+      "serialized_length": 1162,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "approval_packet",
+      "source_ref": "examples/personal_assistant_approval_packet.json",
+      "source_sha256": "7b18ff70cb89ca4e315f44cbf38b50b998f2823521a46595b437bac5371c604d"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "serialized_length": 1246,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "draft_receipt",
+      "source_ref": "examples/personal_assistant_receipt_draft_only.json",
+      "source_sha256": "59fbf2b971734c310948029d09bef6078dcdc969337811cd100436b273629ec9"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_memory_review.schema.json",
+      "serialized_length": 39292,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "memory_review",
+      "source_ref": "examples/personal_assistant_memory_review_evidence.json",
+      "source_sha256": "bd2642f9f4ba71848d6c92be7190f9d2a281d2554de459bed3ff23880e36c2b6"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_skill_readiness_catalog.schema.json",
+      "serialized_length": 16237,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "skill_readiness_catalog",
+      "source_ref": "examples/personal_assistant_skill_readiness_catalog.json",
+      "source_sha256": "d09e142cfdc7bce4a9636e4da7013c5318095a13d40a1fee19924244bb80fc3f"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_foundation_closure_packet.schema.json",
+      "serialized_length": 9944,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "foundation_closure_packet",
+      "source_ref": "examples/personal_assistant_foundation_closure_packet.json",
+      "source_sha256": "2748c9c5519df6699b839aeef86ef39d5546e6b3db0d423a95feacfadaf1da1a"
+    }
+  ],
+  "stages": [
+    {
+      "actions_not_taken": [
+        "connector_not_called",
+        "private_payload_not_serialized"
+      ],
+      "actions_taken": [
+        "request_digest_bound"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "personal_assistant.intake.project"
+      ],
+      "effect_boundary": "intake_only_no_execution",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:request"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "governed_intent"
+      ],
+      "predecessor_ids": [],
+      "risk_level": "P1",
+      "skill_id": "",
+      "stage_id": "intake_observation",
+      "stage_type": "observation",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/intake"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "operator_not_contacted",
+        "external_context_not_loaded"
+      ],
+      "actions_taken": [
+        "missing_bindings_checked"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "personal_assistant.whqr.bind"
+      ],
+      "effect_boundary": "clarification_binding_only",
+      "execution_allowed": false,
+      "input_bindings": [
+        "intake_observation.governed_intent"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "whqr_binding"
+      ],
+      "predecessor_ids": [
+        "intake_observation"
+      ],
+      "risk_level": "P1",
+      "skill_id": "",
+      "stage_id": "whqr_binding",
+      "stage_type": "observation",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/whqr"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "gmail_not_called",
+        "connector_state_not_mutated"
+      ],
+      "actions_taken": [
+        "skill_route_selected"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "email.read",
+        "email.search",
+        "personal_assistant.receipt.project"
+      ],
+      "effect_boundary": "skill_route_no_provider_call",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:skill_registry",
+        "whqr_binding.whqr_binding"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "skill_plan_binding"
+      ],
+      "predecessor_ids": [
+        "whqr_binding"
+      ],
+      "risk_level": "P1",
+      "skill_id": "email.inbox.summarize",
+      "stage_id": "skill_route",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/skill-route"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "mailbox_not_mutated",
+        "email_not_sent",
+        "connector_state_not_mutated"
+      ],
+      "actions_taken": [
+        "read_only_projection_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "email.read",
+        "email.search",
+        "personal_assistant.receipt.project"
+      ],
+      "effect_boundary": "read_only_redacted_projection",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:read_only_projection",
+        "skill_route.skill_plan_binding"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "read_only_receipt_ref"
+      ],
+      "predecessor_ids": [
+        "skill_route"
+      ],
+      "risk_level": "P1",
+      "skill_id": "email.inbox.summarize",
+      "stage_id": "read_only_preview",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/read-only-preview"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "email_not_sent",
+        "mailbox_not_modified",
+        "connector_state_not_mutated"
+      ],
+      "actions_taken": [
+        "draft_projection_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "email.reply_suggest",
+        "personal_assistant.receipt.project"
+      ],
+      "effect_boundary": "draft_only_email_not_sent",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:draft_projection",
+        "source:draft_receipt",
+        "read_only_preview.read_only_receipt_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "draft_receipt_ref",
+        "draft_artifact_ref"
+      ],
+      "predecessor_ids": [
+        "read_only_preview"
+      ],
+      "risk_level": "P2",
+      "skill_id": "email.response.draft",
+      "stage_id": "draft_preview",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/draft-preview"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "email_not_sent",
+        "approval_not_auto_granted",
+        "connector_state_not_mutated"
+      ],
+      "actions_taken": [
+        "approval_gate_recorded"
+      ],
+      "approval_level": "P4",
+      "approval_required": true,
+      "capability_refs": [
+        "email.send",
+        "personal_assistant.approval.request"
+      ],
+      "effect_boundary": "external_email_send_requires_explicit_approval",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:approval_packet",
+        "draft_preview.draft_artifact_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "approval_request_ref"
+      ],
+      "predecessor_ids": [
+        "draft_preview"
+      ],
+      "risk_level": "P4",
+      "skill_id": "email.send.with_approval",
+      "stage_id": "approval_gate_external_send",
+      "stage_type": "approval_gate",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/approval-gate"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "email_not_sent",
+        "provider_not_called",
+        "system_of_record_not_mutated"
+      ],
+      "actions_taken": [
+        "approval_wait_state_recorded"
+      ],
+      "approval_level": "P4",
+      "approval_required": true,
+      "capability_refs": [
+        "email.send"
+      ],
+      "effect_boundary": "external_email_send_blocked_without_approval",
+      "execution_allowed": false,
+      "input_bindings": [
+        "approval_gate_external_send.approval_request_ref"
+      ],
+      "outcome": "AwaitingEvidence",
+      "output_keys": [
+        "external_send_blocked"
+      ],
+      "predecessor_ids": [
+        "approval_gate_external_send"
+      ],
+      "risk_level": "P4",
+      "skill_id": "email.send.with_approval",
+      "stage_id": "blocked_external_send",
+      "stage_type": "wait_for_event",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/external-send-blocked"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "live_memory_not_written",
+        "nested_mind_not_activated",
+        "raw_chat_log_not_stored"
+      ],
+      "actions_taken": [
+        "memory_review_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "personal_assistant.memory.review"
+      ],
+      "effect_boundary": "memory_review_candidate_only",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:memory_review",
+        "draft_preview.draft_receipt_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "memory_review_ref"
+      ],
+      "predecessor_ids": [
+        "draft_preview"
+      ],
+      "risk_level": "P2",
+      "skill_id": "memory.observe",
+      "stage_id": "memory_observation_review",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/memory-review"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "raw_private_payload_not_serialized",
+        "secret_values_not_serialized"
+      ],
+      "actions_taken": [
+        "receipt_chain_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "personal_assistant.receipt.replay"
+      ],
+      "effect_boundary": "digest_only_receipt_replay",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:skill_readiness_catalog",
+        "source:foundation_closure_packet",
+        "memory_observation_review.memory_review_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "replay_evidence_ref"
+      ],
+      "predecessor_ids": [
+        "read_only_preview",
+        "draft_preview",
+        "approval_gate_external_send",
+        "memory_observation_review"
+      ],
+      "risk_level": "P2",
+      "skill_id": "",
+      "stage_id": "receipt_replay",
+      "stage_type": "observation",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/receipt-replay"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "terminal_product_readiness_not_claimed",
+        "live_execution_not_enabled"
+      ],
+      "actions_taken": [
+        "dry_run_closure_recorded"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "personal_assistant.foundation.close"
+      ],
+      "effect_boundary": "terminal_foundation_closure_only",
+      "execution_allowed": false,
+      "input_bindings": [
+        "blocked_external_send.external_send_blocked",
+        "receipt_replay.replay_evidence_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "dry_run_packet_closed"
+      ],
+      "predecessor_ids": [
+        "blocked_external_send",
+        "receipt_replay"
+      ],
+      "risk_level": "P2",
+      "skill_id": "",
+      "stage_id": "terminal_no_effect_closure",
+      "stage_type": "observation",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/terminal-closure"
+      ]
+    }
+  ],
+  "topology_summary": {
+    "acyclic": true,
+    "all_stages_verified": true,
+    "approval_gates_before_effects": true,
+    "edge_count": 13,
+    "no_dangling_bindings": true,
+    "no_dangling_predecessors": true,
+    "stage_count": 10,
+    "terminal_stage_id": "terminal_no_effect_closure"
+  },
+  "workflow": {
+    "actor_ref": "operator:tamirat",
+    "expected_effects": [
+      "digest_only_evidence_packet_created"
+    ],
+    "forbidden_effects": [
+      "live_connector_execution",
+      "connector_mutation",
+      "external_send",
+      "calendar_write",
+      "task_write",
+      "memory_write",
+      "deployment_mutation",
+      "money_legal_public_action",
+      "customer_readiness_claim",
+      "live_nested_mind_activation"
+    ],
+    "goal": "Replay a governed inbox-to-draft Personal Assistant request through all foundation gates without live execution.",
+    "tenant_ref": "tenant:foundation-local",
+    "terminal_closure_condition": "All stages are replayable, verified, and no-effect with approval gates before any effect-bearing path.",
+    "workflow_id": "pa_workflow_dry_run_inbox_to_draft_001"
+  }
+}

@@ -1463,6 +1463,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-draft-projection:1"
     },
     {
+      "path": "schemas/personal_assistant_dry_run_packet.schema.json",
+      "schema_id": "personal-assistant-dry-run-packet",
+      "surface": "assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-dry-run-packet:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",

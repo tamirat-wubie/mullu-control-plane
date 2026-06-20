@@ -5992,10 +5992,13 @@
         "tests/test_validate_personal_assistant_planning_projection.py",
         "tests/test_collect_personal_assistant_skill_readiness_catalog.py",
         "tests/test_validate_personal_assistant_skill_readiness_catalog.py",
+        "tests/test_collect_personal_assistant_dry_run_packet.py",
+        "tests/test_validate_personal_assistant_dry_run_packet.py",
         "schemas/personal_assistant_approval_queue.schema.json",
         "schemas/personal_assistant_approval_decision.schema.json",
         "schemas/personal_assistant_approval_review_packet.schema.json",
         "schemas/personal_assistant_skill_readiness_catalog.schema.json",
+        "schemas/personal_assistant_dry_run_packet.schema.json",
         "schemas/personal_assistant_read_only_projection.schema.json",
         "schemas/personal_assistant_draft_projection.schema.json",
         "schemas/personal_assistant_memory_observation.schema.json",
@@ -6019,11 +6022,14 @@
         "examples/personal_assistant_math_projection.json",
         "examples/personal_assistant_planning_projection.json",
         "examples/personal_assistant_skill_readiness_catalog.json",
+        "examples/personal_assistant_dry_run_packet.json",
         "scripts/validate_personal_assistant_approval_queue.py",
         "scripts/validate_personal_assistant_approval_decision.py",
         "scripts/validate_personal_assistant_approval_review_packet.py",
         "scripts/collect_personal_assistant_skill_readiness_catalog.py",
         "scripts/validate_personal_assistant_skill_readiness_catalog.py",
+        "scripts/collect_personal_assistant_dry_run_packet.py",
+        "scripts/validate_personal_assistant_dry_run_packet.py",
         "scripts/validate_personal_assistant_read_only_projection.py",
         "scripts/validate_personal_assistant_draft_projection.py",
         "scripts/validate_personal_assistant_memory_observation.py",
@@ -6127,6 +6133,14 @@
           "draft_projection_validator_rejects_approval_boundary_drift",
           "draft_projection_validator_rejects_receipt_drift",
           "draft_projection_validator_rejects_raw_payload_and_secret"
+        ],
+        "personal_assistant_dry_run_packet_no_effect": [
+          "collect_dry_run_packet_closes_no_effect_workflow",
+          "collect_dry_run_packet_records_approval_before_external_send",
+          "collect_dry_run_packet_no_effect_boundary_denies_live_authority",
+          "validate_dry_run_packet_accepts_checked_in_shape",
+          "validate_dry_run_packet_rejects_ungated_p4_path",
+          "validate_dry_run_packet_rejects_secret_values"
         ],
         "personal_assistant_github_codex_review_no_effect": [
           "personal_assistant_github_codex_projection_fixture_validates",
@@ -6279,7 +6293,8 @@
         "personal_assistant_research_source_compare_no_effect",
         "personal_assistant_math_reasoning_no_effect",
         "personal_assistant_planning_schedule_no_effect",
-        "personal_assistant_skill_readiness_catalog_no_effect"
+        "personal_assistant_skill_readiness_catalog_no_effect",
+        "personal_assistant_dry_run_packet_no_effect"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -15426,8 +15441,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1950,
-    "runtime_witness_count": 1950,
+    "exact_test_anchor_count": 1951,
+    "runtime_witness_count": 1951,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18111,10 +18126,21 @@
               "tests/test_validate_personal_assistant_skill_readiness_catalog.py::test_validation_rejects_secret_shaped_values"
             ],
             "witness": "personal_assistant_skill_readiness_catalog_no_effect"
+          },
+          {
+            "anchors": [
+              "tests/test_collect_personal_assistant_dry_run_packet.py::test_collect_dry_run_packet_closes_no_effect_workflow",
+              "tests/test_collect_personal_assistant_dry_run_packet.py::test_collect_dry_run_packet_records_approval_before_external_send",
+              "tests/test_collect_personal_assistant_dry_run_packet.py::test_collect_dry_run_packet_no_effect_boundary_denies_live_authority",
+              "tests/test_validate_personal_assistant_dry_run_packet.py::test_validate_dry_run_packet_accepts_checked_in_shape",
+              "tests/test_validate_personal_assistant_dry_run_packet.py::test_validate_dry_run_packet_rejects_ungated_p4_path",
+              "tests/test_validate_personal_assistant_dry_run_packet.py::test_validate_dry_run_packet_rejects_secret_values"
+            ],
+            "witness": "personal_assistant_dry_run_packet_no_effect"
           }
         ],
-        "exact_test_anchor_count": 28,
-        "runtime_witness_count": 28,
+        "exact_test_anchor_count": 29,
+        "runtime_witness_count": 29,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
