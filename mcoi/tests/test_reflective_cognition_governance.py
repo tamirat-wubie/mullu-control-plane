@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
+
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.reflective_cognition_governance import (
     EvidenceClaim,
     EvidenceStatus,
@@ -103,3 +106,47 @@ def test_depth_selection_is_adaptive_to_risk_and_metacognitive_language() -> Non
     assert choose_reflection_depth("apply audit and refinement", RiskLevel.LOW) == ReflectionDepth.MEDIUM
     assert choose_reflection_depth("deploy production", RiskLevel.LOW) == ReflectionDepth.HIGH
     assert choose_reflection_depth("summarize docs", RiskLevel.HIGH) == ReflectionDepth.HIGH
+
+
+def test_invalid_created_at_is_rejected_before_receipt_creation() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="created_at must be an ISO-8601 timestamp"):
+        audit_reflective_cognition(
+            request_id="req-reflect-bad-time",
+            user_input="audit this",
+            created_at="not-a-time",
+        )
+
+
+def test_evidence_claim_labels_must_stay_compact_and_redacted() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="claim label must be compact and redacted"):
+        EvidenceClaim(
+            claim_id="claim-too-long",
+            label="x" * 161,
+            status=EvidenceStatus.UNSUPPORTED,
+        )
+
+
+def test_critical_risk_without_specific_conflict_still_stays_advisory() -> None:
+    receipt = audit_reflective_cognition(
+        request_id="req-reflect-critical",
+        user_input="Summarize the approved safety evidence.",
+        risk_level=RiskLevel.CRITICAL,
+        created_at=_CREATED_AT,
+    )
+
+    assert receipt.reflection_depth == ReflectionDepth.HIGH
+    assert receipt.validation_status == ValidationStatus.ADVISORY
+    assert "critical_risk_attention_required" in receipt.bias_flags
+    assert any("critical-risk" in correction for correction in receipt.corrections)
+
+
+def test_evidence_claims_reject_untyped_inputs() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="evidence_claims must contain EvidenceClaim instances"):
+        audit_reflective_cognition(
+            request_id="req-reflect-bad-claim",
+            user_input="Report status.",
+            evidence_claims=(  # type: ignore[arg-type]
+                {"claim_id": "raw-dict", "status": "unsupported"},
+            ),
+            created_at=_CREATED_AT,
+        )
