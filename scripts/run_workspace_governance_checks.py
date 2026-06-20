@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -71,6 +72,16 @@ class CheckResult:
         """Return whether the check completed successfully."""
 
         return self.return_code == 0
+
+
+@dataclass(frozen=True, slots=True)
+class ProcessExecution:
+    """Observed subprocess execution result before governance wrapping."""
+
+    return_code: int
+    stdout: str
+    stderr: str
+    timed_out: bool = False
 
 
 class PreflightLock:
@@ -248,6 +259,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (
                 python_executable,
                 "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.py",
             ),
         ),
         CheckCommand(
@@ -1389,28 +1407,7 @@ def run_check(
     if timeout_seconds is not None and timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive when provided")
     try:
-        completed = subprocess.run(
-            command.args,
-            cwd=workspace_root,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=timeout_seconds,
-        )
-    except subprocess.TimeoutExpired as exc:
-        stdout = _normalize_timeout_output(exc.stdout)
-        stderr = _normalize_timeout_output(exc.stderr)
-        if stderr and not stderr.endswith("\n"):
-            stderr += "\n"
-        stderr += f"[TIMEOUT] {command.name} exceeded {timeout_seconds} seconds: {' '.join(command.args)}\n"
-        return CheckResult(
-            command.name,
-            command.args,
-            TIMEOUT_RETURN_CODE,
-            stdout,
-            stderr,
-            termination_reason="timeout",
-        )
+        completed = run_command_process(command, workspace_root, timeout_seconds)
     except OSError as exc:
         return CheckResult(
             command.name,
@@ -1420,7 +1417,16 @@ def run_check(
             f"[EXCEPTION] {command.name} could not start: {exc}\n",
             termination_reason="exception",
         )
-    return_code = int(completed.returncode)
+    if completed.timed_out:
+        return CheckResult(
+            command.name,
+            command.args,
+            TIMEOUT_RETURN_CODE,
+            completed.stdout,
+            completed.stderr,
+            termination_reason="timeout",
+        )
+    return_code = int(completed.return_code)
     return CheckResult(
         command.name,
         command.args,
@@ -1430,6 +1436,78 @@ def run_check(
         termination_reason=_termination_reason(return_code),
         termination_signal=_termination_signal(return_code),
     )
+
+
+def run_command_process(
+    command: CheckCommand,
+    workspace_root: Path = WORKSPACE_ROOT,
+    timeout_seconds: float | None = None,
+) -> ProcessExecution:
+    """Run one command and terminate its process tree on timeout."""
+
+    process = subprocess.Popen(
+        command.args,
+        cwd=workspace_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=os.name != "nt",
+        creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) if os.name == "nt" else 0,
+    )
+    try:
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as exc:
+        cleanup_stderr = terminate_process_tree(process.pid)
+        stdout = _normalize_timeout_output(exc.stdout)
+        stderr = _normalize_timeout_output(exc.stderr)
+        try:
+            remaining_stdout, remaining_stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            remaining_stdout = ""
+            remaining_stderr = "[TIMEOUT-CLEANUP] process tree did not exit after termination request\n"
+        stdout += _normalize_timeout_output(remaining_stdout)
+        stderr += _normalize_timeout_output(remaining_stderr)
+        if cleanup_stderr:
+            if stderr and not stderr.endswith("\n"):
+                stderr += "\n"
+            stderr += cleanup_stderr
+        if stderr and not stderr.endswith("\n"):
+            stderr += "\n"
+        stderr += f"[TIMEOUT] {command.name} exceeded {timeout_seconds} seconds: {' '.join(command.args)}\n"
+        return ProcessExecution(TIMEOUT_RETURN_CODE, stdout, stderr, timed_out=True)
+    return ProcessExecution(int(process.returncode), stdout, stderr)
+
+
+def terminate_process_tree(pid: int) -> str:
+    """Best-effort termination for a timed-out validator process tree."""
+
+    if pid <= 0:
+        return f"[TIMEOUT-CLEANUP] invalid process id for timeout cleanup: {pid}\n"
+    if os.name == "nt":
+        completed = subprocess.run(
+            ("taskkill", "/PID", str(pid), "/T", "/F"),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode == 0:
+            return ""
+        diagnostic = (completed.stdout or "") + (completed.stderr or "")
+        diagnostic = diagnostic.strip() or f"taskkill exited with {completed.returncode}"
+        return f"[TIMEOUT-CLEANUP] failed to terminate process tree {pid}: {diagnostic}\n"
+    try:
+        os.killpg(pid, signal.SIGTERM)
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline:
+            if not _process_is_active(pid):
+                return ""
+            time.sleep(0.05)
+        os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return ""
+    except OSError as exc:
+        return f"[TIMEOUT-CLEANUP] failed to terminate process tree {pid}: {exc}\n"
+    return ""
 
 
 def run_checks(
