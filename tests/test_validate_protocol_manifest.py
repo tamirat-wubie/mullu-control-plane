@@ -2158,6 +2158,21 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_review_pa
     assert review_packet_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_operator_runtime_enablement_approval_ref_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    approval_ref_entry = entries["read-only-worker-operator-runtime-enablement-approval-ref"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert approval_ref_entry["path"] == (
+        "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json"
+    )
+    assert approval_ref_entry["urn"] == (
+        "urn:mullusi:schema:read-only-worker-operator-runtime-enablement-approval-ref:1"
+    )
+    assert approval_ref_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_runtime_disablement_rollback_plan_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

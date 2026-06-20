@@ -108,10 +108,9 @@ FOUNDATION_REPO_REFS = {
     "runtime_dispatch_admission": "examples/read_only_worker_runtime_dispatch_admission_witness.foundation.json",
     "runtime_disablement_rollback_plan": "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
     "trusted_runtime_clock": "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "operator_runtime_enablement_approval": "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
 }
-MISSING_INPUT_NOTES = {
-    "operator_runtime_enablement_approval": "operator runtime enablement approval ref is not present in repository-local evidence",
-}
+MISSING_INPUT_NOTES: dict[str, str] = {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,7 +159,7 @@ def build_runtime_enablement_submitted_evidence_refs() -> dict[str, Any]:
         "selected_worker_path": "read_only_repo_inspection",
         "solver_outcome": "AwaitingEvidence",
         "proof_state": "Unknown",
-        "submission_state": "partial_repo_refs_submitted_for_review",
+        "submission_state": "repo_refs_submitted_for_review",
         "review_state": "not_evaluated",
         **{field_name: True for field_name in TRUE_TOP_LEVEL_FIELDS},
         **{field_name: False for field_name in FALSE_TOP_LEVEL_FIELDS},
@@ -192,11 +191,11 @@ def build_runtime_enablement_submitted_evidence_refs() -> dict[str, Any]:
         "validators": [
             "scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
             "scripts/validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py",
+            "scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py",
             "tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py",
         ],
         "next_action": (
-            "Review submitted repo-local evidence refs, then separately bind missing operator approval "
-            "before any acceptance or runtime enablement decision."
+            "Review submitted repo-local evidence refs before any evidence acceptance or runtime enablement decision."
         ),
     }
 

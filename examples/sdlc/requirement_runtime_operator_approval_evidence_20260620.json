@@ -1,0 +1,56 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py --json",
+    "python scripts/validate_read_only_worker_runtime_enablement_review_packet.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py tests/test_validate_read_only_worker_runtime_enablement_review_packet.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k operator_runtime_enablement_approval_ref -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_operator_runtime_enablement_approval_ref",
+    "read_only_worker_runtime_enablement_submitted_evidence_refs",
+    "read_only_worker_runtime_enablement_review_packet",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-operator-approval-evidence/20260620",
+  "constraints": [
+    "Operator approval ref must be review-only evidence.",
+    "The approval ref may not accept evidence, grant authority, or enable runtime.",
+    "Runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector authority, filesystem writes, network access, secret serialization, and success claims remain denied.",
+    "Submitted evidence refs and review packet must count twelve repo-local refs and zero missing inputs.",
+    "Evidence acceptance and runtime admission remain separate future gates.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py",
+    "tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py"
+  ],
+  "non_goals": [
+    "Do not accept submitted evidence.",
+    "Do not grant runtime enablement authority.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not claim terminal closure.",
+    "Do not serialize raw operator secret values."
+  ],
+  "problem_statement": "Runtime enablement review needed the operator approval input represented as a repo-local review ref without converting that ref into acceptance or runtime authority.",
+  "receipt_ref": "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+  "request_id": "runtime_operator_approval_evidence_20260620",
+  "requirement_id": "sdlc_req_runtime_operator_approval_evidence_20260620",
+  "risk_class": "high",
+  "success_criteria": [
+    "Operator approval ref validates as review-only evidence.",
+    "Submitted evidence refs and review packet include twelve repo-local evidence refs.",
+    "Missing input count is zero while accepted evidence count remains zero.",
+    "Focused validators, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-operator-approval-evidence/20260620"
+}

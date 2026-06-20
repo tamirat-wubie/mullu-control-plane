@@ -1,0 +1,55 @@
+{
+  "approval_ref_bound": true,
+  "approval_ref_id": "read-only-worker-operator-runtime-enablement-approval-ref-foundation-repo-inspection-20260620",
+  "approval_ref_is_not_acceptance": true,
+  "approval_ref_is_not_authorization": true,
+  "approval_ref_is_not_runtime_enablement": true,
+  "approval_ref_state": "operator_approval_ref_bound_for_review",
+  "approval_ref_value": "operator-approval://local-foundation/read-only-worker-runtime-enablement/20260620",
+  "approval_ref_version": "read_only_worker_operator_runtime_enablement_approval_ref.v1",
+  "approval_scope": {
+    "approval_ref_bound": true,
+    "evidence_acceptance_required": true,
+    "input_kind": "operator_runtime_enablement_approval",
+    "required_name": "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF",
+    "runtime_admission_required": true,
+    "worker_path": "read_only_repo_inspection"
+  },
+  "blocked_actions": [
+    "read_only_worker_runtime_enablement",
+    "read_only_worker_runtime_dispatch_admission",
+    "read_only_worker_runtime_dispatch",
+    "read_only_worker_invocation",
+    "read_only_worker_runtime_receipt_emission",
+    "read_only_worker_receipt_append",
+    "read_only_worker_terminal_closure_claim"
+  ],
+  "connector_authority_allowed": false,
+  "evidence_refs": [
+    "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "scripts/validate_read_only_worker_operator_runtime_enablement_approval_ref.py",
+    "tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py"
+  ],
+  "external_network_allowed": false,
+  "filesystem_write_allowed": false,
+  "governance_refs": [
+    "policy://foundation-mode/no-live-worker-dispatch",
+    "policy://runtime-enablement/review-before-acceptance",
+    "policy://operator-approval-ref/is-not-runtime-authority"
+  ],
+  "next_action": "Review the operator approval ref in the runtime enablement review packet before evidence acceptance or runtime admission.",
+  "operator_identity_ref": "operator://local-foundation-control-studio",
+  "proof_state": "Unknown",
+  "raw_secret_value_present": false,
+  "receipt_append_allowed": false,
+  "runtime_dispatch_allowed": false,
+  "runtime_enablement_allowed": false,
+  "runtime_receipt_emission_allowed": false,
+  "secret_values_serialized": false,
+  "selected_worker_path": "read_only_repo_inspection",
+  "solver_outcome": "AwaitingEvidence",
+  "success_claim_allowed": false,
+  "terminal_closure_allowed": false,
+  "worker_invocation_allowed": false
+}

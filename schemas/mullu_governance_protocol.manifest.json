@@ -1787,6 +1787,12 @@
       "urn": "urn:mullusi:schema:read-only-worker-runtime-enablement-review-packet:1"
     },
     {
+      "path": "schemas/read_only_worker_operator_runtime_enablement_approval_ref.schema.json",
+      "schema_id": "read-only-worker-operator-runtime-enablement-approval-ref",
+      "surface": "worker",
+      "urn": "urn:mullusi:schema:read-only-worker-operator-runtime-enablement-approval-ref:1"
+    },
+    {
       "path": "schemas/read_only_worker_trusted_runtime_clock_receipt.schema.json",
       "schema_id": "read-only-worker-trusted-runtime-clock-receipt",
       "surface": "worker",

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-operator-runtime-enablement-approval-ref:1",
+  "title": "Read-Only Worker Operator Runtime Enablement Approval Ref",
+  "description": "Foundation Mode operator approval reference for read-only worker runtime enablement review. The reference records that operator approval evidence is bound for review only; it does not accept evidence, grant authority, enable runtime dispatch, invoke workers, emit receipts, append receipts, or claim terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approval_ref_id",
+    "approval_ref_version",
+    "selected_worker_path",
+    "solver_outcome",
+    "proof_state",
+    "approval_ref_state",
+    "operator_identity_ref",
+    "approval_ref_value",
+    "approval_ref_bound",
+    "approval_ref_is_not_acceptance",
+    "approval_ref_is_not_authorization",
+    "approval_ref_is_not_runtime_enablement",
+    "raw_secret_value_present",
+    "runtime_enablement_allowed",
+    "runtime_dispatch_allowed",
+    "worker_invocation_allowed",
+    "runtime_receipt_emission_allowed",
+    "receipt_append_allowed",
+    "terminal_closure_allowed",
+    "success_claim_allowed",
+    "secret_values_serialized",
+    "external_network_allowed",
+    "filesystem_write_allowed",
+    "connector_authority_allowed",
+    "approval_scope",
+    "blocked_actions",
+    "governance_refs",
+    "evidence_refs",
+    "next_action"
+  ],
+  "properties": {
+    "approval_ref_id": {
+      "type": "string",
+      "const": "read-only-worker-operator-runtime-enablement-approval-ref-foundation-repo-inspection-20260620"
+    },
+    "approval_ref_version": {
+      "type": "string",
+      "const": "read_only_worker_operator_runtime_enablement_approval_ref.v1"
+    },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "approval_ref_state": {
+      "type": "string",
+      "const": "operator_approval_ref_bound_for_review"
+    },
+    "operator_identity_ref": {
+      "type": "string",
+      "const": "operator://local-foundation-control-studio"
+    },
+    "approval_ref_value": {
+      "type": "string",
+      "const": "operator-approval://local-foundation/read-only-worker-runtime-enablement/20260620"
+    },
+    "approval_ref_bound": { "type": "boolean", "const": true },
+    "approval_ref_is_not_acceptance": { "type": "boolean", "const": true },
+    "approval_ref_is_not_authorization": { "type": "boolean", "const": true },
+    "approval_ref_is_not_runtime_enablement": { "type": "boolean", "const": true },
+    "raw_secret_value_present": { "type": "boolean", "const": false },
+    "runtime_enablement_allowed": { "type": "boolean", "const": false },
+    "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+    "worker_invocation_allowed": { "type": "boolean", "const": false },
+    "runtime_receipt_emission_allowed": { "type": "boolean", "const": false },
+    "receipt_append_allowed": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "success_claim_allowed": { "type": "boolean", "const": false },
+    "secret_values_serialized": { "type": "boolean", "const": false },
+    "external_network_allowed": { "type": "boolean", "const": false },
+    "filesystem_write_allowed": { "type": "boolean", "const": false },
+    "connector_authority_allowed": { "type": "boolean", "const": false },
+    "approval_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_path",
+        "input_kind",
+        "required_name",
+        "approval_ref_bound",
+        "evidence_acceptance_required",
+        "runtime_admission_required"
+      ],
+      "properties": {
+        "worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+        "input_kind": { "type": "string", "const": "operator_runtime_enablement_approval" },
+        "required_name": {
+          "type": "string",
+          "const": "MULLU_READ_ONLY_WORKER_RUNTIME_ENABLEMENT_APPROVAL_REF"
+        },
+        "approval_ref_bound": { "type": "boolean", "const": true },
+        "evidence_acceptance_required": { "type": "boolean", "const": true },
+        "runtime_admission_required": { "type": "boolean", "const": true }
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "governance_refs": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/non_empty_string" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 }
+  }
+}

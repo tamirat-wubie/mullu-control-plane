@@ -27,7 +27,7 @@ def test_runtime_enablement_submitted_evidence_refs_fixture_matches_generated_pr
     assert fixture == generated
     assert fixture["solver_outcome"] == "AwaitingEvidence"
     assert fixture["proof_state"] == "Unknown"
-    assert fixture["submission_state"] == "partial_repo_refs_submitted_for_review"
+    assert fixture["submission_state"] == "repo_refs_submitted_for_review"
     assert fixture["review_state"] == "not_evaluated"
     assert fixture["evidence_submitted"] is True
     assert fixture["evidence_accepted"] is False
@@ -35,8 +35,8 @@ def test_runtime_enablement_submitted_evidence_refs_fixture_matches_generated_pr
     assert fixture["runtime_dispatch_performed"] is False
     assert fixture["worker_invocation_performed"] is False
     assert len(fixture["submitted_records"]) == 12
-    assert fixture["summary"]["records_with_repo_ref_count"] == 11
-    assert fixture["summary"]["records_awaiting_operator_evidence_count"] == 1
+    assert fixture["summary"]["records_with_repo_ref_count"] == 12
+    assert fixture["summary"]["records_awaiting_operator_evidence_count"] == 0
     assert fixture["summary"]["accepted_evidence_count"] == 0
 
 
@@ -49,9 +49,9 @@ def test_runtime_enablement_submitted_evidence_refs_validator_writes_receipt(tmp
 
     assert validation.valid is True
     assert validation.submitted_record_count == 12
-    assert validation.records_with_repo_ref_count == 11
-    assert validation.awaiting_operator_evidence_count == 1
-    assert validation.submitted_evidence_ref_count == 11
+    assert validation.records_with_repo_ref_count == 12
+    assert validation.awaiting_operator_evidence_count == 0
+    assert validation.submitted_evidence_ref_count == 12
     assert validation.accepted_evidence_count == 0
     assert validation.runtime_enablement_allowed is False
     assert payload["errors"] == []
@@ -95,28 +95,26 @@ def test_runtime_enablement_submitted_evidence_refs_rejects_acceptance_drift(tmp
     assert "submitted record candidate_ref_satisfies_required_name must be false" in serialized_errors
 
 
-def test_runtime_enablement_submitted_evidence_refs_rejects_missing_input_overclaim(tmp_path: Path) -> None:
+def test_runtime_enablement_submitted_evidence_refs_rejects_operator_ref_authority_overclaim(tmp_path: Path) -> None:
     evidence_refs_path = _write_mutated_evidence_refs(tmp_path)
     payload = json.loads(evidence_refs_path.read_text(encoding="utf-8"))
-    missing_record = next(
+    approval_record = next(
         record
         for record in payload["submitted_records"]
         if record["input_kind"] == "operator_runtime_enablement_approval"
     )
-    missing_record["submission_state"] = "submitted_for_review"
-    missing_record["submitted_for_review"] = True
-    missing_record["submitted_evidence_refs"] = ["approval://runtime-enable"]
-    missing_record["missing_evidence_names"] = []
+    approval_record["authority_granted"] = True
+    approval_record["runtime_enablement_allowed"] = True
+    approval_record["candidate_ref_satisfies_required_name"] = True
     evidence_refs_path.write_text(json.dumps(payload), encoding="utf-8")
 
     validation = validate_runtime_enablement_submitted_evidence_refs(evidence_refs_path=evidence_refs_path)
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.valid is False
-    assert "missing-input records must be awaiting_operator_evidence" in serialized_errors
-    assert "missing-input records must set submitted_for_review false" in serialized_errors
-    assert "missing-input records must not carry submitted evidence refs" in serialized_errors
-    assert "missing-input records must list required names as missing evidence" in serialized_errors
+    assert "submitted record authority_granted must be false" in serialized_errors
+    assert "submitted record runtime_enablement_allowed must be false" in serialized_errors
+    assert "submitted record candidate_ref_satisfies_required_name must be false" in serialized_errors
 
 
 def test_runtime_enablement_submitted_evidence_refs_rejects_missing_record(tmp_path: Path) -> None:
@@ -145,7 +143,7 @@ def test_runtime_enablement_submitted_evidence_refs_cli_json(tmp_path: Path, cap
     assert stdout_payload["valid"] is True
     assert written_payload["valid"] is True
     assert stdout_payload["submitted_record_count"] == 12
-    assert stdout_payload["records_with_repo_ref_count"] == 11
+    assert stdout_payload["records_with_repo_ref_count"] == 12
     assert captured.err == ""
 
 
