@@ -119,15 +119,15 @@ def test_readiness_map_rejects_missing_approval_ready_row(tmp_path: Path) -> Non
     assert "missing ready row: ApprovalRequest projection binding" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_github_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_dashboard_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(github): add read-only repo task intake`",
             "1. `harness(ui-contract): add dashboard data contract`",
+            "1. `harness(adapter-registry): add contract-only GitHub/Codex adapter registry`",
         ),
         encoding="utf-8",
     )
@@ -136,7 +136,7 @@ def test_readiness_map_rejects_missing_github_first_pr(tmp_path: Path) -> None:
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: read-only repo task intake" in serialized_errors
+    assert "missing first next PR: dashboard data contract" in serialized_errors
 
 
 def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
@@ -146,7 +146,7 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Current `origin/main`: `d17d90d0f0fcb6fe05bae533de7483a43e0efc20`",
+            "Current `origin/main`: `cc0fe646b3630f29a33c7a8f775057a14ae0b784`",
             "Current `origin/main`: `short-ref`",
         ),
         encoding="utf-8",
@@ -166,7 +166,7 @@ def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) ->
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 and draft PR #2032; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.",
+            "Open PRs after readiness-map refresh: the live open PR queue is empty after PR #2035 merged; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.",
             "Open PRs after readiness-map refresh: none.",
         ),
         encoding="utf-8",

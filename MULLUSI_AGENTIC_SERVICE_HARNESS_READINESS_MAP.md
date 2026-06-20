@@ -7,15 +7,15 @@ Invariants: no dashboard creation; no mutation endpoint admission; no Claude Cod
 
 # Mullusi Agentic Service Harness Readiness Map
 
-Date: 2026-06-19
+Date: 2026-06-20
 
 Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `d17d90d0f0fcb6fe05bae533de7483a43e0efc20`
+Current `origin/main`: `cc0fe646b3630f29a33c7a8f775057a14ae0b784`
 
-Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 and draft PR #2032; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
+Open PRs after readiness-map refresh: the live open PR queue is empty after PR #2035 merged; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -27,9 +27,10 @@ Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 a
 | Active lease witness PR | READY | PR #1979 merged at `2026-06-19T16:06:08Z`, merge commit `b849663f9e5e4a2f0d0c6992bedad735e61fb6a8`. |
 | Worker effect reconciliation witness PR | READY | PR #1983 merged at `2026-06-19T16:32:05Z`, merge commit `92c0bf83841253ca395cf3d35259bab82715b79d`. |
 | AgentRun receipt dry-run PR | READY | PR #2025 merged at `5c77e4f7d43e9b7423b20f5f9fb965745b1c7d20` ancestry; it added the AgentRun receipt-emitter dry-run schema, fixture, validator, tests, manifest entry, and CI coverage without runtime receipt emission authority. |
+| GitHub repo task intake PR | READY | This proof thread adds the GitHub repo task intake schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It validates repository connection and read-only task scope while denying adapter execution, branch writes, PR creation, receipt append, mutation routes, secret serialization, and terminal closure. |
 | Remote CI | READY | Build Verification, SDLC Governance Gate, Schema Validation, Gateway Closure and Witness Tests, Rust, TypeScript, Python compatibility, Python soak, MCOI shards, and GitHub App token boundary checks were green before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | PARTIAL | `gh pr list --state open --limit 8` returned PR #2033 and draft PR #2032 after fetching `origin/main` at refresh time; PR #2025, PR #2023, PR #2024, and PR #2018 are merged through `5c77e4f7d43e9b7423b20f5f9fb965745b1c7d20`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
+| Open PR queue | READY | `gh pr list --state open --limit 30` returned no open PRs after fetching `origin/main` at `cc0fe646b3630f29a33c7a8f775057a14ae0b784`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
@@ -93,7 +94,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 a
 
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
-| GitHub repo task service | PARTIAL | GitHub repo task service schemas, examples, and validators exist. | Add a read-only repository task intake PR that validates repo connection and task scope without running code. |
+| GitHub repo task service | PARTIAL | GitHub repo task service and `agentic_service_harness_github_repo_task_intake` read-only task intake schemas, examples, validators, manifest entries, workspace-preflight wiring, and tests exist. The intake validates repository connection and task scope without running code. | Add a contract-only adapter registry entry with no subprocess, connector, external model execution, branch write, pull-request creation, receipt append, or terminal closure. |
 | Codex-style coding adapter | PARTIAL | Adapter concepts exist; no live coding adapter is integrated. | Add a contract-only adapter registry entry with no subprocess, connector, or external model execution. |
 | Temporary branch workspace | READY | Harness branch workspace preflight is bound to path allowlist, command allowlist, timeout, network denial, cleanup receipt, approval blocker, and no filesystem-write or branch-create authority. | None for preflight. Future creation remains blocked until approval and cleanup evidence exist. |
 | Test runner | PARTIAL | Repository validators and test-run receipts exist; harness-selected test execution is not bound. | Add dry-run test runner plan receipt that records selected commands without execution authority. |
@@ -169,8 +170,8 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(github): add read-only repo task intake`
-2. `harness(ui-contract): add dashboard data contract`
+1. `harness(ui-contract): add dashboard data contract`
+2. `harness(adapter-registry): add contract-only GitHub/Codex adapter registry`
 
 ## Governance Decision
 
@@ -184,6 +185,6 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 
 STATUS:
   Completeness: 100%
-  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority
-  Open issues: durable Receipt store append, EvidenceBundle, UI data contracts, branch workspace creation authority, and the current draft PR queue remain partial, missing, externally blocked, or outside this map-only closure
-  Next action: start the smallest next PR sequence with read-only repository task intake
+  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority; read-only GitHub repository task intake bound without execution authority
+  Open issues: durable Receipt store append, EvidenceBundle, UI data contracts, branch workspace creation authority, adapter registry, and live adapter integration remain partial, missing, externally blocked, or outside this closure
+  Next action: start the smallest next PR sequence with read-only dashboard data contract

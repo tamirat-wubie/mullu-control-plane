@@ -1,0 +1,520 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-repo-task-intake:1",
+  "title": "Agentic Service Harness GitHub Repository Task Intake",
+  "description": "Foundation Mode read-only intake preflight for a GitHub repository task. This contract validates repository connection and task scope without running code, executing adapters, creating branches, opening pull requests, appending receipts, serializing secrets, admitting mutation routes, or claiming terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_contract_ref",
+    "scope",
+    "repository_connection_check",
+    "task_scope_intake",
+    "intake_decision",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_repo_task_intake"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "SolvedVerified"
+    },
+    "source_contract_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_repo_task_service.foundation.json"
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "repository_connection_check": {
+      "$ref": "#/$defs/repository_connection_check"
+    },
+    "task_scope_intake": {
+      "$ref": "#/$defs/task_scope_intake"
+    },
+    "intake_decision": {
+      "$ref": "#/$defs/intake_decision"
+    },
+    "authority_denials": {
+      "$ref": "#/$defs/authority_denials"
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/receipt_refs"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "intake_id",
+        "foundation_phase",
+        "read_only",
+        "intake_preflight_only",
+        "live_probe_executed",
+        "adapter_executed",
+        "runtime_state_write_enabled",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_service_id": { "$ref": "#/$defs/identifier" },
+        "intake_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_read_only_intake_preflight"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "intake_preflight_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_probe_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "adapter_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_state_write_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_store_append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "repository_connection_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "provider",
+        "repository_connection_id",
+        "repository_slug",
+        "default_branch",
+        "metadata_fields",
+        "source_refs",
+        "credential_binding_ref",
+        "permission_scope_read_only",
+        "live_probe_executed",
+        "writes_repository",
+        "creates_branch",
+        "opens_pull_request",
+        "secret_values_serialized",
+        "read_only"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "const": "REPOSITORY_CONNECTION_SCOPE_VALIDATED_FROM_CONTRACT"
+        },
+        "provider": {
+          "type": "string",
+          "const": "github"
+        },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata_fields": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "repository_slug",
+              "default_branch",
+              "installation_ref",
+              "permission_scope",
+              "latest_main_ref",
+              "branch_protection_ref",
+              "open_pull_request_refs"
+            ]
+          }
+        },
+        "source_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "credential_binding_ref": { "$ref": "#/$defs/evidence_ref" },
+        "permission_scope_read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_probe_executed": {
+          "type": "boolean",
+          "const": false
+        },
+        "writes_repository": {
+          "type": "boolean",
+          "const": false
+        },
+        "creates_branch": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_pull_request": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "task_scope_intake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intake_id",
+        "task_service_id",
+        "source_task_ref",
+        "requested_action_class",
+        "mode",
+        "risk_level",
+        "objective",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_source_refs",
+        "required_gate_refs",
+        "blocked_reason_refs",
+        "approval_required_for_effects",
+        "read_only",
+        "route_admitted",
+        "executes_adapter",
+        "creates_branch",
+        "opens_pull_request",
+        "writes_repository",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "intake_id": { "$ref": "#/$defs/identifier" },
+        "task_service_id": { "$ref": "#/$defs/identifier" },
+        "source_task_ref": { "$ref": "#/$defs/evidence_ref" },
+        "requested_action_class": {
+          "type": "string",
+          "const": "read_only"
+        },
+        "mode": {
+          "type": "string",
+          "const": "read_only"
+        },
+        "risk_level": {
+          "type": "string",
+          "const": "low"
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["read_only"]
+          }
+        },
+        "forbidden_action_classes": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "execute_adapter",
+              "write_to_branch",
+              "open_pr",
+              "append_receipt_store",
+              "deploy",
+              "dns_mutation",
+              "secret_mutation",
+              "destructive_operation",
+              "terminal_closure"
+            ]
+          }
+        },
+        "required_source_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "approval_required_for_effects": {
+          "type": "boolean",
+          "const": true
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "route_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "executes_adapter": {
+          "type": "boolean",
+          "const": false
+        },
+        "creates_branch": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_pull_request": {
+          "type": "boolean",
+          "const": false
+        },
+        "writes_repository": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_store_append_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_state_write_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "intake_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "task_scope_valid",
+        "repository_connection_valid",
+        "intake_recorded_in_runtime_state",
+        "execution_admitted",
+        "adapter_execution_admitted",
+        "branch_workspace_required",
+        "branch_write_admitted",
+        "pull_request_creation_admitted",
+        "receipt_emission_admitted",
+        "terminal_closure_allowed",
+        "next_required_evidence_refs"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "const": "READ_ONLY_REPO_TASK_INTAKE_ACCEPTED_CONTRACT_ONLY"
+        },
+        "task_scope_valid": {
+          "type": "boolean",
+          "const": true
+        },
+        "repository_connection_valid": {
+          "type": "boolean",
+          "const": true
+        },
+        "intake_recorded_in_runtime_state": {
+          "type": "boolean",
+          "const": false
+        },
+        "execution_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "adapter_execution_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "branch_workspace_required": {
+          "type": "boolean",
+          "const": false
+        },
+        "branch_write_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "pull_request_creation_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_emission_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_adapter_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "mutation_route_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "live_adapter_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_repo_task_intake_schema",
+        "github_repo_task_service_schema",
+        "github_repo_task_service_fixture",
+        "agentic_service_harness_schema",
+        "readiness_map"
+      ],
+      "properties": {
+        "github_repo_task_intake_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_github_repo_task_intake.schema.json"
+        },
+        "github_repo_task_service_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
+        },
+        "github_repo_task_service_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_repo_task_service.foundation.json"
+        },
+        "agentic_service_harness_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness.schema.json"
+        },
+        "readiness_map": {
+          "type": "string",
+          "const": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean" }
+      }
+    }
+  }
+}

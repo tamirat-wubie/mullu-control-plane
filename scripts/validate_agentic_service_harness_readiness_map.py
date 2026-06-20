@@ -11,7 +11,7 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - The first next PR remains the read-only repository task intake.
+  - The first next PR advances to the read-only dashboard data contract.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -101,6 +101,14 @@ REQUIRED_APPROVAL_REQUEST_TERMS = (
     "no collected approval",
     "no granted authority",
 )
+REQUIRED_GITHUB_TASK_INTAKE_TERMS = (
+    "GitHub repo task intake PR",
+    "agentic_service_harness_github_repo_task_intake",
+    "repository connection and read-only task scope",
+    "denying adapter execution",
+    "receipt append",
+    "terminal closure",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -162,11 +170,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(map_text, REQUIRED_AGENT_RUN_TERMS, "agent_run_term", errors)
     _require_all(map_text, REQUIRED_APPROVAL_REQUEST_TERMS, "approval_request_term", errors)
+    _require_all(map_text, REQUIRED_GITHUB_TASK_INTAKE_TERMS, "github_task_intake_term", errors)
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
     _validate_approval_request_ready(map_text, errors)
-    _validate_receipt_first(map_text, errors)
+    _validate_dashboard_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -230,20 +239,20 @@ def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: ApprovalRequest projection binding")
 
 
-def _validate_receipt_first(map_text: str, errors: list[str]) -> None:
+def _validate_dashboard_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(github\): add read-only repo task intake`$",
+        r"^1\.\s+`harness\(ui-contract\): add dashboard data contract`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: read-only repo task intake")
+        errors.append("missing first next PR: dashboard data contract")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(github): add read-only repo task intake",
         "harness(ui-contract): add dashboard data contract",
+        "harness(adapter-registry): add contract-only GitHub/Codex adapter registry",
     )
     positions: list[int] = []
     for marker in sequence_markers:
