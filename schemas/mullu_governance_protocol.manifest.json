@@ -1607,6 +1607,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-skill:1"
     },
     {
+      "path": "schemas/personal_assistant_skill_registry.schema.json",
+      "schema_id": "personal-assistant-skill-registry",
+      "surface": "assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-skill-registry:1"
+    },
+    {
       "path": "schemas/personal_assistant_skill_readiness_catalog.schema.json",
       "schema_id": "personal-assistant-skill-readiness-catalog",
       "surface": "assistant",

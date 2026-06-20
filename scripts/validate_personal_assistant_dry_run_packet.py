@@ -8,6 +8,7 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: dry-run packet schema, collector constants, and schema helpers.
 Invariants:
   - Dry-run closure requires every source artifact to be bound and digest-only.
+  - Source artifact schema refs must resolve and validate their source payloads.
   - P4/P5 or effect-bearing paths must have approval gates before execution.
   - The packet cannot grant execution, connector mutation, memory admission, or readiness authority.
 """
@@ -79,6 +80,7 @@ def validate_personal_assistant_dry_run_packet(
         _check_packet_id(payload),
         _check_source_artifacts(payload),
         _check_source_artifact_digests(payload),
+        _check_source_artifact_schemas(payload),
         _check_topology(payload),
         _check_bindings(payload),
         _check_approval_gate_order(payload),
@@ -187,6 +189,43 @@ def _check_source_artifact_digests(payload: dict[str, Any]) -> PersonalAssistant
         else f"mismatches={len(mismatches)} missing={len(missing)}"
     )
     return PersonalAssistantDryRunPacketValidationStep("source artifact digests", passed, detail)
+
+
+def _check_source_artifact_schemas(payload: dict[str, Any]) -> PersonalAssistantDryRunPacketValidationStep:
+    records = _list_of_objects(payload.get("source_artifacts"))
+    invalid: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        schema_ref = _bounded_text(record.get("schema_ref"))
+        source_path = (REPO_ROOT / source_ref).resolve()
+        schema_path = (REPO_ROOT / schema_ref).resolve()
+        if (
+            not source_ref
+            or not schema_ref
+            or not _path_within_repo(source_path)
+            or not _path_within_repo(schema_path)
+            or not source_path.exists()
+            or not schema_path.exists()
+        ):
+            missing.append(source_kind)
+            continue
+        try:
+            source_payload = _read_json_object(source_path)
+            schema_payload = _load_schema(schema_path)
+        except (OSError, RuntimeError, json.JSONDecodeError):
+            invalid.append(source_kind)
+            continue
+        if _validate_schema_instance(schema_payload, source_payload):
+            invalid.append(source_kind)
+    passed = not invalid and not missing and len(records) == len(SOURCE_ARTIFACTS)
+    detail = (
+        "schemas-current"
+        if passed
+        else f"invalid={len(invalid)} missing={len(missing)}"
+    )
+    return PersonalAssistantDryRunPacketValidationStep("source artifact schemas", passed, detail)
 
 
 def _check_topology(payload: dict[str, Any]) -> PersonalAssistantDryRunPacketValidationStep:
@@ -427,6 +466,16 @@ def _path_within_repo(path: Path) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError("failed to read Personal Assistant dry-run source artifact") from exc
+    if not isinstance(parsed, dict):
+        raise RuntimeError("Personal Assistant dry-run source artifact must be a JSON object")
+    return parsed
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -21,7 +21,7 @@
     "source_artifact_count": 9,
     "stage_count": 10
   },
-  "generated_at": "2026-06-20T15:16:53.813288Z",
+  "generated_at": "2026-06-20T15:33:02.723884Z",
   "governed": true,
   "lineage": {
     "accepted_deltas": [
@@ -63,7 +63,7 @@
     "production_ready_claim_allowed": false,
     "system_of_record_write_allowed": false
   },
-  "packet_id": "personal-assistant-dry-run-7059acfea79a64ca",
+  "packet_id": "personal-assistant-dry-run-a666e3c5231fbc19",
   "packet_is_not_customer_readiness": true,
   "packet_is_not_execution_authority": true,
   "packet_is_not_memory_admission": true,
@@ -91,7 +91,7 @@
       "effect_violations": [],
       "payload_digest_only": true,
       "proof_state": "Pass",
-      "schema_ref": "schemas/personal_assistant_skill.schema.json",
+      "schema_ref": "schemas/personal_assistant_skill_registry.schema.json",
       "serialized_length": 25579,
       "solver_outcome": "SolvedVerified",
       "source_kind": "skill_registry",
