@@ -253,6 +253,51 @@ def test_shadow_routes_respect_disabled_runtime_posture() -> None:
     assert console_payload["execution_authority"] is False
 
 
+def test_shadow_inspect_route_respects_disabled_runtime_posture() -> None:
+    previous_store = dict(deps._store)
+    deps._store.clear()
+    deps.set(
+        "inceptadive_shadow_runtime",
+        build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_ENABLED": "0"}),
+    )
+    try:
+        response = _client().post(
+            "/api/v1/shadow/inspect",
+            json={
+                "request_id": "shadow-route-disabled-001",
+                "stage": "interpretation",
+                "user_input": "deploy it with disabled-secret-token",
+                "risk_level": "high",
+                "external_side_effect": True,
+                "created_at": "2026-06-19T00:00:00+00:00",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    result = payload["result"]
+    receipt = payload["receipt"]
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["registered"] is True
+    assert payload["execution_authority"] is False
+    assert payload["raw_request_text_exposed"] is False
+    assert payload["private_memory_exposed"] is False
+    assert result["mode"] == "off"
+    assert result["verdict"] == "clear"
+    assert result["execution_authority"] is False
+    assert result["finding_count"] == 1
+    assert receipt["mode"] == "off"
+    assert receipt["shadow_verdict"] == "clear"
+    assert receipt["execution_authority"] is False
+    assert payload["recent_activity"]["result_count"] == 1
+    assert payload["recent_activity"]["receipt_count"] == 1
+    assert "deploy it with disabled-secret-token" not in str(payload)
+    assert "disabled-secret-token" not in str(payload)
+
+
 def test_default_routers_include_shadow_inspect_path() -> None:
     app = FastAPI()
     include_default_routers(app)
