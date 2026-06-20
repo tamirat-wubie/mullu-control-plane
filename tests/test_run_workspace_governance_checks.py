@@ -142,6 +142,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     }
     repository_governance_phase = [
         "protocol_manifest",
+        "quantum_boundary_witnesses",
         "simple_assistant_ui_boundary",
         "logic_governance_application",
         "life_meaning_governance",

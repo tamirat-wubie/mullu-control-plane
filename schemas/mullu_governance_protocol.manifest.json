@@ -1331,6 +1331,12 @@
       "urn": "urn:mullusi:schema:non-live-openqasm-export-planning-witness:1"
     },
     {
+      "path": "schemas/non_live_quantum_boundary_review_packet.schema.json",
+      "schema_id": "non-live-quantum-boundary-review-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:non-live-quantum-boundary-review-packet:1"
+    },
+    {
       "path": "schemas/non_live_quantum_fixture_catalog_witness.schema.json",
       "schema_id": "non-live-quantum-fixture-catalog-witness",
       "surface": "governance",

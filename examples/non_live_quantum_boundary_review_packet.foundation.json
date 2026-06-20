@@ -1,0 +1,183 @@
+{
+  "binding_id": "non_live_quantum_boundary_review_packet",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "solver_outcome": "FoundationModeOnly",
+  "parent_boundary_ref": "universal_symbolic_quantum_capability_boundary",
+  "reviewed_witness_refs": [
+    "universal_symbolic_quantum_capability_boundary",
+    "non_live_openqasm_export_planning_witness",
+    "non_live_local_quantum_simulator_boundary_witness",
+    "non_live_quantum_fixture_catalog_witness",
+    "non_live_quantum_fixture_serializer_boundary_witness"
+  ],
+  "architecture_name": "USQCA-PQE",
+  "review_status": "NonLiveQuantumBoundaryStackReviewed",
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "witness_stack_reviewed": true,
+  "non_live_witness_required": true,
+  "implementation_allowed": false,
+  "future_separate_pr_required": true,
+  "review_boundary": {
+    "boundary_family": "quantum boundary witness stack review packet",
+    "descriptor_only": true,
+    "review_only": true,
+    "implementation_authority_allowed": false,
+    "source_emission_allowed": false,
+    "runtime_execution_allowed": false,
+    "output_path": null,
+    "requires_future_implementation_witness": true,
+    "requires_operator_authorization": true
+  },
+  "allowed_review_roles": [
+    "witness_stack_review",
+    "denial_invariant_review",
+    "future_authority_gap_review",
+    "implementation_precondition_review",
+    "operator_handoff_review"
+  ],
+  "required_review_gates": [
+    "ParentQuantumBoundaryGate",
+    "OpenQasmPlanningWitnessGate",
+    "LocalSimulatorBoundaryWitnessGate",
+    "FixtureCatalogWitnessGate",
+    "FixtureSerializerBoundaryWitnessGate",
+    "DenialInvariantRetentionGate",
+    "NoImplementationAuthorityGate",
+    "NoRuntimeExecutionGate",
+    "NoSourceEmissionGate",
+    "NoCredentialAuthorityGate",
+    "FutureSeparatePrGate",
+    "WitnessLedgerGate"
+  ],
+  "denied_authorities": {
+    "openqasm_exporter_implementation_enabled": false,
+    "qir_exporter_implementation_enabled": false,
+    "fixture_catalog_implementation_enabled": false,
+    "fixture_serializer_implementation_enabled": false,
+    "simulator_engine_selection_enabled": false,
+    "simulator_runtime_invocation_enabled": false,
+    "state_vector_materialization_enabled": false,
+    "shot_execution_enabled": false,
+    "measurement_histogram_emission_enabled": false,
+    "backend_execution_enabled": false,
+    "hardware_credentials_access_enabled": false,
+    "quantum_job_submission_enabled": false,
+    "cryptanalysis_execution_enabled": false,
+    "quantum_advantage_claim_enabled": false,
+    "fault_tolerant_readiness_claim_enabled": false,
+    "production_readiness_claim_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "openqasm_source_emitted": false,
+    "qir_source_emitted": false,
+    "executable_fixture_written": false,
+    "fixture_serializer_executed": false,
+    "serialized_artifact_written": false,
+    "canonical_bytes_materialized": false,
+    "simulator_input_generated": false,
+    "simulator_runtime_invoked": false,
+    "state_vector_materialized": false,
+    "measurement_shots_executed": false,
+    "measurement_histogram_emitted": false,
+    "backend_called": false,
+    "hardware_credentials_read": false,
+    "quantum_job_submitted": false,
+    "cryptanalysis_executed": false,
+    "result_distribution_observed": false,
+    "quantum_advantage_claim_made": false,
+    "production_claim_made": false
+  },
+  "review_constraints": {
+    "requires_all_child_witnesses_valid": true,
+    "requires_denial_invariant_retention": true,
+    "requires_no_runtime_payload": true,
+    "requires_no_source_artifact": true,
+    "requires_no_credential_material": true,
+    "requires_no_result_distribution": true,
+    "requires_future_authority_pr": true
+  },
+  "witness_reviews": [
+    {
+      "witness_ref": "universal_symbolic_quantum_capability_boundary",
+      "review_decision": "reviewed_as_planning_only",
+      "implementation_authority_granted": false,
+      "runtime_authority_granted": false,
+      "source_emission_authority_granted": false,
+      "credential_authority_granted": false,
+      "result_claim_authority_granted": false,
+      "required_future_authority": true
+    },
+    {
+      "witness_ref": "non_live_openqasm_export_planning_witness",
+      "review_decision": "reviewed_as_planning_only",
+      "implementation_authority_granted": false,
+      "runtime_authority_granted": false,
+      "source_emission_authority_granted": false,
+      "credential_authority_granted": false,
+      "result_claim_authority_granted": false,
+      "required_future_authority": true
+    },
+    {
+      "witness_ref": "non_live_local_quantum_simulator_boundary_witness",
+      "review_decision": "reviewed_as_planning_only",
+      "implementation_authority_granted": false,
+      "runtime_authority_granted": false,
+      "source_emission_authority_granted": false,
+      "credential_authority_granted": false,
+      "result_claim_authority_granted": false,
+      "required_future_authority": true
+    },
+    {
+      "witness_ref": "non_live_quantum_fixture_catalog_witness",
+      "review_decision": "reviewed_as_planning_only",
+      "implementation_authority_granted": false,
+      "runtime_authority_granted": false,
+      "source_emission_authority_granted": false,
+      "credential_authority_granted": false,
+      "result_claim_authority_granted": false,
+      "required_future_authority": true
+    },
+    {
+      "witness_ref": "non_live_quantum_fixture_serializer_boundary_witness",
+      "review_decision": "reviewed_as_planning_only",
+      "implementation_authority_granted": false,
+      "runtime_authority_granted": false,
+      "source_emission_authority_granted": false,
+      "credential_authority_granted": false,
+      "result_claim_authority_granted": false,
+      "required_future_authority": true
+    }
+  ],
+  "witness_requirements": [
+    "valid_parent_quantum_boundary",
+    "valid_openqasm_planning_witness",
+    "valid_local_simulator_boundary_witness",
+    "valid_fixture_catalog_witness",
+    "valid_fixture_serializer_boundary_witness",
+    "denial_invariants_preserved",
+    "no_implementation_authority_granted",
+    "future_authority_pr_required",
+    "operator_authorization_required"
+  ],
+  "constructive_deltas": [
+    "Records review of the non-live quantum boundary witness stack.",
+    "Binds future implementation paths to separate authority-specific pull requests.",
+    "Preserves planning-only denial invariants across OpenQASM, simulator, fixture catalog, and serializer surfaces."
+  ],
+  "fracture_deltas": [
+    "No OpenQASM exporter implementation is added.",
+    "No QIR exporter implementation is added.",
+    "No executable fixture catalog is added.",
+    "No fixture serializer implementation is added.",
+    "No simulator engine is selected.",
+    "No simulator runtime is invoked.",
+    "No backend credentials are read.",
+    "No quantum result or advantage claim is made.",
+    "No terminal closure is claimed."
+  ],
+  "next_action": "Open a separate authority-specific pull request for any executable fixture catalog, fixture serializer, OpenQASM exporter, QIR exporter, or local simulator implementation; keep all runtime authority denied until that pull request supplies schemas, validators, isolation profile, resource ceiling evidence, result-claim policy, and operator authorization."
+}

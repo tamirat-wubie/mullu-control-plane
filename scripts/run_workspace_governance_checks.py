@@ -986,6 +986,7 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py"),
         ),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
+        CheckCommand("quantum_boundary_witnesses", (python_executable, "scripts/validate_quantum_boundary_witnesses.py")),
         CheckCommand(
             "simple_assistant_ui_boundary",
             (python_executable, "scripts/validate_simple_assistant_ui_boundary.py"),

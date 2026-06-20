@@ -1,5 +1,5 @@
 {
-  "check_count": 259,
+  "check_count": 260,
   "checks": [
     {
       "args": [
@@ -2284,6 +2284,19 @@
         "scripts/validate_protocol_manifest.py"
       ],
       "name": "protocol_manifest",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_quantum_boundary_witnesses.py"
+      ],
+      "name": "quantum_boundary_witnesses",
       "passed": true,
       "return_code": 0,
       "stderr": "",

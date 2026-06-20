@@ -21,6 +21,8 @@ from scripts.validate_quantum_boundary_witnesses import (
     LOCAL_SIMULATOR_EXAMPLE,
     OPENQASM_PLANNING_EXAMPLE,
     OPENQASM_PLANNING_ID,
+    QUANTUM_BOUNDARY_REVIEW_PACKET_EXAMPLE,
+    QUANTUM_BOUNDARY_REVIEW_PACKET_ID,
     UNIVERSAL_BOUNDARY_EXAMPLE,
     UNIVERSAL_BOUNDARY_ID,
     main,
@@ -41,13 +43,14 @@ def test_quantum_boundary_witness_aggregate_passes_all_foundation_examples() -> 
     result = validate_witnesses()
 
     assert result["passed"] is True
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert [witness["binding_id"] for witness in result["witnesses"]] == [
         UNIVERSAL_BOUNDARY_ID,
         OPENQASM_PLANNING_ID,
         LOCAL_SIMULATOR_BOUNDARY_ID,
         FIXTURE_CATALOG_ID,
         FIXTURE_SERIALIZER_BOUNDARY_ID,
+        QUANTUM_BOUNDARY_REVIEW_PACKET_ID,
     ]
     assert result["errors"] == []
 
@@ -60,7 +63,7 @@ def test_cli_json_reports_all_witnesses(capsys) -> None:
     assert exit_code == 0
     assert captured.err == ""
     assert result["passed"] is True
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert len(result["invariants"]) >= 10
 
 
@@ -72,7 +75,7 @@ def test_aggregate_rejects_openqasm_source_emission(tmp_path: pathlib.Path) -> N
     result = validate_witnesses({OPENQASM_PLANNING_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{OPENQASM_PLANNING_ID}: effect_boundary.openqasm_file_written must be false" == error
         for error in result["errors"]
@@ -90,7 +93,7 @@ def test_aggregate_rejects_simulator_runtime_invocation(tmp_path: pathlib.Path) 
     result = validate_witnesses({LOCAL_SIMULATOR_BOUNDARY_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{LOCAL_SIMULATOR_BOUNDARY_ID}: effect_boundary.simulator_runtime_invoked must be false" == error
         for error in result["errors"]
@@ -108,7 +111,7 @@ def test_aggregate_rejects_parent_boundary_live_qpu_authority(tmp_path: pathlib.
     result = validate_witnesses({UNIVERSAL_BOUNDARY_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{UNIVERSAL_BOUNDARY_ID}: denied_authorities.live_qpu_execution_enabled must be false" == error
         for error in result["errors"]
@@ -125,7 +128,7 @@ def test_aggregate_reports_non_object_json_as_validation_error(tmp_path: pathlib
     result = validate_witnesses({OPENQASM_PLANNING_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{OPENQASM_PLANNING_ID}: {altered_path} must contain a JSON object" == error
         for error in result["errors"]
@@ -143,7 +146,7 @@ def test_aggregate_rejects_fixture_executable_generation(tmp_path: pathlib.Path)
     result = validate_witnesses({FIXTURE_CATALOG_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{FIXTURE_CATALOG_ID}: effect_boundary.executable_fixture_written must be false" == error
         for error in result["errors"]
@@ -161,11 +164,29 @@ def test_aggregate_rejects_fixture_serializer_execution(tmp_path: pathlib.Path) 
     result = validate_witnesses({FIXTURE_SERIALIZER_BOUNDARY_ID: altered_path})
 
     assert result["passed"] is False
-    assert result["witness_count"] == 5
+    assert result["witness_count"] == 6
     assert any(
         f"{FIXTURE_SERIALIZER_BOUNDARY_ID}: effect_boundary.serializer_executed must be false" == error
         for error in result["errors"]
     )
     assert next(
         witness for witness in result["witnesses"] if witness["binding_id"] == FIXTURE_SERIALIZER_BOUNDARY_ID
+    )["passed"] is False
+
+
+def test_aggregate_rejects_review_packet_implementation_authority(tmp_path: pathlib.Path) -> None:
+    payload = _payload(QUANTUM_BOUNDARY_REVIEW_PACKET_EXAMPLE)
+    payload["implementation_allowed"] = True
+    altered_path = _write_payload(tmp_path / "review-packet-invalid.json", payload)
+
+    result = validate_witnesses({QUANTUM_BOUNDARY_REVIEW_PACKET_ID: altered_path})
+
+    assert result["passed"] is False
+    assert result["witness_count"] == 6
+    assert any(
+        f"{QUANTUM_BOUNDARY_REVIEW_PACKET_ID}: implementation_allowed must be false" == error
+        for error in result["errors"]
+    )
+    assert next(
+        witness for witness in result["witnesses"] if witness["binding_id"] == QUANTUM_BOUNDARY_REVIEW_PACKET_ID
     )["passed"] is False

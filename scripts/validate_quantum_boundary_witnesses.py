@@ -24,6 +24,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.validate_non_live_quantum_boundary_review_packet import (  # noqa: E402
+    DEFAULT_EXAMPLE as QUANTUM_BOUNDARY_REVIEW_PACKET_EXAMPLE,
+)
+from scripts.validate_non_live_quantum_boundary_review_packet import (  # noqa: E402
+    validate_payload as validate_quantum_boundary_review_packet_payload,
+)
 from scripts.validate_non_live_local_quantum_simulator_boundary_witness import (  # noqa: E402
     DEFAULT_EXAMPLE as LOCAL_SIMULATOR_EXAMPLE,
 )
@@ -60,6 +66,7 @@ OPENQASM_PLANNING_ID = "non_live_openqasm_export_planning_witness"
 LOCAL_SIMULATOR_BOUNDARY_ID = "non_live_local_quantum_simulator_boundary_witness"
 FIXTURE_CATALOG_ID = "non_live_quantum_fixture_catalog_witness"
 FIXTURE_SERIALIZER_BOUNDARY_ID = "non_live_quantum_fixture_serializer_boundary_witness"
+QUANTUM_BOUNDARY_REVIEW_PACKET_ID = "non_live_quantum_boundary_review_packet"
 
 QUANTUM_DENIAL_INVARIANTS = (
     "no live QPU execution",
@@ -83,6 +90,7 @@ QUANTUM_DENIAL_INVARIANTS = (
     "no fault-tolerant readiness claim",
     "no production readiness claim",
     "no terminal closure",
+    "no review packet implementation authority",
 )
 
 
@@ -118,6 +126,11 @@ TARGETS = (
         binding_id=FIXTURE_SERIALIZER_BOUNDARY_ID,
         default_path=FIXTURE_SERIALIZER_BOUNDARY_EXAMPLE,
         validate_payload=validate_fixture_serializer_boundary_payload,
+    ),
+    WitnessValidationTarget(
+        binding_id=QUANTUM_BOUNDARY_REVIEW_PACKET_ID,
+        default_path=QUANTUM_BOUNDARY_REVIEW_PACKET_EXAMPLE,
+        validate_payload=validate_quantum_boundary_review_packet_payload,
     ),
 )
 
@@ -194,6 +207,8 @@ def _build_path_overrides(args: argparse.Namespace) -> dict[str, pathlib.Path]:
         overrides[FIXTURE_CATALOG_ID] = pathlib.Path(args.fixture_catalog)
     if args.fixture_serializer_boundary:
         overrides[FIXTURE_SERIALIZER_BOUNDARY_ID] = pathlib.Path(args.fixture_serializer_boundary)
+    if args.review_packet:
+        overrides[QUANTUM_BOUNDARY_REVIEW_PACKET_ID] = pathlib.Path(args.review_packet)
     return overrides
 
 
@@ -205,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-simulator-boundary", help="override the local simulator boundary witness path")
     parser.add_argument("--fixture-catalog", help="override the fixture catalog witness path")
     parser.add_argument("--fixture-serializer-boundary", help="override the fixture serializer boundary witness path")
+    parser.add_argument("--review-packet", help="override the quantum boundary review packet path")
     args = parser.parse_args(argv)
 
     result = validate_witnesses(_build_path_overrides(args))
