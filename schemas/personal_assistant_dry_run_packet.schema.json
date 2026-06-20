@@ -118,7 +118,7 @@
             "draft_receipt",
             "memory_review",
             "skill_readiness_catalog",
-            "foundation_closure_packet"
+            "runtime_boundary"
           ]
         },
         "source_ref": { "type": "string", "minLength": 1 },
