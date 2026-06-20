@@ -1,0 +1,51 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_enablement_promotion_decision.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_enablement_promotion_decision.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k runtime_enablement_promotion_decision -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_runtime_enablement_promotion_decision",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-enablement-promotion-decision/20260620",
+  "constraints": [
+    "Promotion decision must consume the runtime admission gate.",
+    "Promotion decision must deny runtime promotion under Foundation Mode.",
+    "Runtime admission, runtime enablement, dispatch, worker invocation, receipt emission, receipt append, terminal closure, connector authority, filesystem writes, network access, secret serialization, and success claims remain denied.",
+    "Re-entry evidence for any future non-Foundation runtime authority thread must be explicit.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json",
+    "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json",
+    "scripts/validate_read_only_worker_runtime_enablement_promotion_decision.py",
+    "tests/test_validate_read_only_worker_runtime_enablement_promotion_decision.py"
+  ],
+  "non_goals": [
+    "Do not grant runtime promotion authority.",
+    "Do not admit runtime execution.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not claim terminal closure.",
+    "Do not serialize raw secret values."
+  ],
+  "problem_statement": "The read-only worker runtime evidence and admission gates needed a governed promotion decision that closes the decision boundary without enabling runtime in Foundation Mode.",
+  "receipt_ref": "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json",
+  "request_id": "runtime_enablement_promotion_decision_20260620",
+  "requirement_id": "sdlc_req_runtime_enablement_promotion_decision_20260620",
+  "risk_class": "high",
+  "success_criteria": [
+    "Promotion decision validates as GovernanceBlocked with proof_state Pass.",
+    "Runtime promotion, runtime admission, and runtime enablement remain denied.",
+    "Re-entry evidence requirements are explicit.",
+    "Focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-enablement-promotion-decision/20260620"
+}

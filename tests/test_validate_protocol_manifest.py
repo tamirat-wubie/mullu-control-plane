@@ -2184,6 +2184,17 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_admission
     assert gate_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_enablement_promotion_decision_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    decision_entry = entries["read-only-worker-runtime-enablement-promotion-decision"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert decision_entry["path"] == "schemas/read_only_worker_runtime_enablement_promotion_decision.schema.json"
+    assert decision_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-enablement-promotion-decision:1"
+    assert decision_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_operator_runtime_enablement_approval_ref_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
