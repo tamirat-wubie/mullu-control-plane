@@ -38,6 +38,8 @@ The kernel enforces this language boundary:
 
 If the system only has design or code evidence, it must not say the behavior is live in production.
 
+Evidence labels must stay compact and redacted. Long labels are rejected because they may accidentally copy raw request text, private memory, or unreviewed source material into a public receipt.
+
 ## Core flow
 
 ```text
@@ -61,7 +63,9 @@ The kernel prevents infinite self-reflection with bounded budgets.
 | --- | --- | --- |
 | Low | Simple low-risk request | Minimal assumptions, biases, edge cases, and corrections |
 | Medium | Audit/refinement/metacognitive language | Normal self-audit without over-processing |
-| High | Deployment, deletion, production, secrets, legal, payment, or explicitly high risk | Wider audit with stronger block/repair recommendations |
+| High | Deployment, deletion, production, secrets, legal, payment, critical risk, or explicitly high risk | Wider audit with stronger block/repair recommendations |
+
+Each budget field is capped so reflective recursion cannot silently expand without an explicit code change and review.
 
 ## Receipt invariants
 
@@ -71,6 +75,8 @@ Each receipt must preserve these invariants:
 - `execution_authority = false`
 - `raw_request_text_exposed = false`
 - `private_memory_exposed = false`
+- `created_at` is an ISO-8601 timestamp
+- `request_hash` is a SHA-256 hex digest
 - deterministic `snapshot_hash`
 - deterministic receipt id when finalized with integrity
 
@@ -83,6 +89,7 @@ The first implementation detects advisory markers including:
 - `symbolic_inflation_risk`
 - `scope_creep_risk`
 - `recency_assumption_risk`
+- `critical_risk_attention_required`
 
 These markers are advisory signals, not final verdicts.
 
@@ -91,7 +98,7 @@ These markers are advisory signals, not final verdicts.
 | Status | Meaning |
 | --- | --- |
 | `pass` | No blocking reflective issue detected |
-| `advisory` | Bias or scope marker found; normal governance may continue with warning visible |
+| `advisory` | Bias, scope, critical-risk, or recency marker found; normal governance may continue with warning visible |
 | `needs_evidence` | At least one claim is uncertain or unsupported |
 | `needs_repair` | Contradiction or reasoning conflict needs correction |
 | `block_recommended` | High-impact action should stop until evidence, approval, and rollback are resolved |
@@ -106,6 +113,8 @@ The kernel explicitly handles:
 - design-level work being accidentally described as deployed behavior;
 - destructive action conflicting with preservation or causal continuity;
 - publication intent conflicting with private/secret boundaries;
+- critical-risk requests that are safe in wording but still require explicit governance attention;
+- invalid timestamps, overlong claim labels, and non-`EvidenceClaim` inputs;
 - reflection itself over-triggering and becoming a blocker.
 
 ## Implementation placement
@@ -132,11 +141,12 @@ Constructive deltas:
 - Adds evidence labels and validation statuses.
 - Adds reflection budgets to stop infinite refinement loops.
 - Adds redacted receipts with deterministic integrity hash.
-- Adds focused tests for scope creep, high-risk destructive action, unsupported evidence, budget bounds, and adaptive depth.
+- Adds ISO timestamp validation, request-hash validation, compact evidence-label enforcement, typed evidence-claim validation, and critical-risk advisory handling.
+- Adds focused tests for scope creep, high-risk destructive action, unsupported evidence, budget bounds, adaptive depth, invalid timestamps, label compactness, critical-risk advisory flow, and malformed evidence inputs.
 
 Fracture deltas:
 
 - Not wired into live runtime routes yet.
-- No CI witness is included until GitHub Actions runs on the PR.
+- No CI witness is included until GitHub Actions runs on the latest PR head.
 - No deployment claim is made.
 - Current bias patterns are intentionally simple and should be expanded only after more real traces exist.
