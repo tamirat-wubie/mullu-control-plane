@@ -1,0 +1,80 @@
+{
+  "security_review_id": "SEC-governed-planning-profile-runtime-authorization-approval-witness-template-20260619",
+  "change_id": "governed-planning-profile-runtime-authorization-approval-witness-template-20260619",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "An approval witness template could be mistaken for signed authorization if template flags, required field records, source witness fields, or runtime authority fields permit collection, signed approval, runtime authorization gate satisfaction, or activation. The mitigation is a schema-backed local-only template with AwaitingEvidence, TemplateNoEffect, hard false approval and authority fields, explicit generic continuation rejection binding, and remaining gates for signed approval and separate activation.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "authority boundary check proves the template keeps runtime promotion, execution, dispatch, runtime replanning, success claims, terminal closure, and runtime execution false",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_runtime_authority"
+    },
+    {
+      "category": "policy",
+      "check": "approval-collection drift check proves the template cannot set approval acceptance, approval witness collection, operator approval, signed approval, runtime authorization gate satisfaction, or runtime activation allowance",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_approval_collection_drift"
+    },
+    {
+      "category": "receipts",
+      "check": "template integrity check proves the checked-in fixture matches the deterministic produced template and validates against the schema",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_schema_accepts_fixture_and_produced_template"
+    },
+    {
+      "category": "audit",
+      "check": "source-boundary check proves source request and generic continuation rejection fields cannot drift into approval or gate satisfaction",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_source_boundary_drift"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "planning-profile-approval-template-authorization-collapse",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The schema and validator hard-deny template_accepted_as_approval, approval_witness_collected, operator_response_recorded, operator_approval_collected, signed_approval_present, runtime_authorization_gate_satisfied, runtime_activation_allowed, runtime_promotion_authorized, execution_allowed, dispatch_allowed, runtime_replanning_enabled, success_claim_allowed, terminal_closure, and runtime execution fields.",
+      "evidence_refs": [
+        "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_approval_collection_drift",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_runtime_authority"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "planning-profile-approval-template-source-drift",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "The approval witness template binds the source runtime authorization request id/hash and the generic continuation rejection witness id/hash, then rejects source drift into collected response, signed approval, or satisfied authorization gate state.",
+      "evidence_refs": [
+        "examples/governed_planning_profile_runtime_authorization_approval_witness_template.local.json",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_binds_sources_and_plan_classes",
+        "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py::test_approval_witness_template_rejects_source_boundary_drift"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the approval witness template local, deterministic, and read-only",
+    "hard-deny all runtime promotion, execution, dispatch, runtime replanning, success, terminal closure, activation, and runtime execution fields in the schema",
+    "bind the template to the deterministic runtime authorization request id/hash and generic continuation rejection witness id/hash",
+    "record explicit signed approval and separate runtime activation as remaining gates before activation"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json",
+    "scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py",
+    "receipt://governed-planning-profile/runtime-authorization-approval-witness-template/security/20260619"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-approval-witness-template/security/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-approval-witness-template/security/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-approval-witness-template/security/20260619"
+}

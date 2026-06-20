@@ -291,6 +291,29 @@ replanning, success, runtime activation, and terminal closure authority remain
 hard false. A future explicit signed runtime authorization approval witness
 remains the next required gate before activation.
 
+## Runtime Authorization Approval Witness Template
+
+The local approval-witness-template slice is
+`examples/governed_planning_profile_runtime_authorization_approval_witness_template.local.json`,
+validated by
+`scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py`
+and governed by
+`schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json`.
+
+This template binds the runtime authorization request and the generic
+continuation rejection witness, then defines the required fields for a future
+explicit signed runtime authorization approval witness. It is not itself an
+approval witness. It keeps `template_accepted_as_approval = false`,
+`approval_witness_collected = false`, `operator_response_recorded = false`,
+`operator_approval_collected = false`, `signed_approval_present = false`, and
+`runtime_authorization_gate_satisfied = false`.
+
+The template preserves the remaining gates explicitly: an explicit signed
+runtime authorization approval witness must be collected first, and runtime
+activation still requires a separate governed activation gate. Runtime
+promotion, execution, dispatch, runtime replanning, success claims, runtime
+activation, and terminal closure authority remain hard false.
+
 ## Validation
 
 ```text
@@ -312,6 +335,8 @@ python scripts/validate_governed_planning_profile_runtime_authorization_request.
 python scripts/validate_governed_planning_profile_runtime_authorization_request.py --json
 python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py
 python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py --json
+python scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py
+python scripts/validate_governed_planning_profile_runtime_authorization_approval_witness_template.py --json
 python -m pytest tests/test_validate_governed_planning_profile.py -q
 python -m pytest tests/test_gateway/test_governed_planning_profile_adapter.py -q
 python -m pytest tests/test_report_governed_planning_profile_shadow_dossier.py -q
@@ -322,10 +347,11 @@ python -m pytest tests/test_validate_governed_planning_profile_replay_recovery_w
 python -m pytest tests/test_validate_governed_planning_profile_terminal_closure_certificate.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_request.py -q
 python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py -q
+python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_approval_witness_template.py -q
 ```
 
 STATUS:
-  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, runtime authorization request, and generic continuation rejection witness defined
+  Completeness: static contract, Foundation fixture, first read-only adapter, multi-class shadow dossier, operator evidence intake contract, local operator observation receipt, runtime-promotion approval packet, replay/recovery witness, terminal closure certificate, runtime authorization request, generic continuation rejection witness, and runtime authorization approval witness template defined
   Authority: no execution, dispatch, connector, write, migration, replanning, success, replay, rollback, runtime promotion, or closure authority
-  Open issues: explicit signed runtime authorization approval witness remains absent
+  Open issues: explicit signed runtime authorization approval witness remains absent; separate runtime activation gate remains absent
   Next action: record explicit signed runtime authorization approval witness before activation
