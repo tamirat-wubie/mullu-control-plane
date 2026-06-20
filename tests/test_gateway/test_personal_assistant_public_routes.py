@@ -68,6 +68,7 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     payload = response.json()
     lane_status = payload["lane_status"]
     readiness = payload["assistant_readiness"]
+    pilot = payload["governed_team_assistant_pilot"]
     lane_ids = [lane["lane_id"] for lane in lane_status["lanes"]]
 
     assert response.status_code == 200
@@ -77,6 +78,9 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["governed"] is True
     assert payload["sections"]["assistant_readiness"]["item_count"] == 1
+    assert payload["sections"]["pilot"]["item_count"] == 1
+    assert payload["sections"]["pilot"]["execution_allowed"] is False
+    assert payload["sections"]["pilot"]["customer_readiness_claim_allowed"] is False
     assert readiness["user_prompt"] == "Show my assistant readiness."
     assert readiness["inbox_projection_status"]["skill_id"] == "email.inbox.summarize"
     assert readiness["calendar_projection_status"]["skill_id"] == "calendar.day.brief"
@@ -85,6 +89,17 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert readiness["mailbox_mutation_allowed"] is False
     assert readiness["calendar_write_allowed"] is False
     assert readiness["external_send_allowed"] is False
+    assert pilot["pilot_id"] == "governed_team_assistant_pilot_v0"
+    assert pilot["package_name"] == "Governed Team Assistant Pilot"
+    assert pilot["stage"] == "controlled_demo_productization"
+    assert pilot["included_lane_ids"] == lane_ids
+    assert "/api/v1/personal-assistant/send-write/eligibility/preview" in pilot["demo_surface_refs"]
+    assert pilot["pilot_readiness"]["send_write_preflight_ready"] is True
+    assert pilot["pilot_readiness"]["live_execution_ready"] is False
+    assert pilot["receipt_boundary"]["runtime_dispatch_allowed"] is False
+    assert pilot["execution_allowed"] is False
+    assert pilot["external_send_allowed"] is False
+    assert pilot["customer_readiness_claim_allowed"] is False
     assert lane_status["lane_count"] == 12
     assert lane_ids == [
         "request_intake_whqr",

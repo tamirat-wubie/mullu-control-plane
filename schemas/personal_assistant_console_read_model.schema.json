@@ -21,6 +21,7 @@
     "teamops",
     "lane_status",
     "assistant_readiness",
+    "governed_team_assistant_pilot",
     "assurance",
     "blocked_actions",
     "effect_boundary",
@@ -46,6 +47,7 @@
         "memory",
         "teamops",
         "assistant_readiness",
+        "pilot",
         "lane_status"
       ],
       "properties": {
@@ -57,6 +59,7 @@
         "memory": {"$ref": "#/$defs/memory_section"},
         "teamops": {"$ref": "#/$defs/teamops_section"},
         "assistant_readiness": {"$ref": "#/$defs/assistant_readiness_section"},
+        "pilot": {"$ref": "#/$defs/pilot_section"},
         "lane_status": {"$ref": "#/$defs/lane_status_section"}
       }
     },
@@ -124,6 +127,7 @@
     },
     "lane_status": {"$ref": "#/$defs/lane_status"},
     "assistant_readiness": {"$ref": "#/$defs/assistant_readiness"},
+    "governed_team_assistant_pilot": {"$ref": "#/$defs/governed_team_assistant_pilot"},
     "assurance": {"$ref": "#/$defs/assurance"},
     "blocked_actions": {
       "type": "array",
@@ -206,6 +210,16 @@
       "properties": {
         "item_count": {"const": 1},
         "execution_allowed": {"const": false}
+      }
+    },
+    "pilot_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item_count", "execution_allowed", "customer_readiness_claim_allowed"],
+      "properties": {
+        "item_count": {"const": 1},
+        "execution_allowed": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false}
       }
     },
     "lane_status_section": {
@@ -366,6 +380,115 @@
         "memory_write_allowed": {"const": false},
         "raw_private_payload_serialized": {"const": false},
         "secret_values_serialized": {"const": false},
+        "customer_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "governed_team_assistant_pilot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pilot_id",
+        "package_name",
+        "stage",
+        "foundation_only",
+        "governed",
+        "outcome",
+        "positioning",
+        "operator_prompt",
+        "included_lane_ids",
+        "demo_surface_refs",
+        "operator_promises",
+        "blocked_claims",
+        "required_evidence_refs",
+        "receipt_refs",
+        "pilot_readiness",
+        "approval_boundary",
+        "receipt_boundary",
+        "effect_boundary",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "customer_readiness_claim_allowed"
+      ],
+      "properties": {
+        "pilot_id": {"const": "governed_team_assistant_pilot_v0"},
+        "package_name": {"const": "Governed Team Assistant Pilot"},
+        "stage": {"const": "controlled_demo_productization"},
+        "foundation_only": {"const": true},
+        "governed": {"const": true},
+        "outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+        "positioning": {"const": "Mullu is a governed assistant control plane."},
+        "operator_prompt": {"const": "Show my assistant readiness."},
+        "included_lane_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "demo_surface_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "operator_promises": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "blocked_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "required_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "receipt_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "pilot_readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "read_only_demo_ready",
+            "draft_only_demo_ready",
+            "approval_queue_ready",
+            "teamops_probe_ready",
+            "send_write_preflight_ready",
+            "approval_required_skill_count",
+            "live_execution_ready",
+            "customer_readiness_claim_allowed"
+          ],
+          "properties": {
+            "read_only_demo_ready": {"const": true},
+            "draft_only_demo_ready": {"const": true},
+            "approval_queue_ready": {"const": true},
+            "teamops_probe_ready": {"const": true},
+            "send_write_preflight_ready": {"const": true},
+            "approval_required_skill_count": {"type": "integer", "minimum": 0},
+            "live_execution_ready": {"const": false},
+            "customer_readiness_claim_allowed": {"const": false}
+          }
+        },
+        "approval_boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_required_before_send",
+            "approval_required_before_calendar_write",
+            "approval_required_before_system_write",
+            "approval_is_execution"
+          ],
+          "properties": {
+            "approval_required_before_send": {"const": true},
+            "approval_required_before_calendar_write": {"const": true},
+            "approval_required_before_system_write": {"const": true},
+            "approval_is_execution": {"const": false}
+          }
+        },
+        "receipt_boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "receipt_required_for_actions",
+            "receipt_required_before_claim",
+            "runtime_dispatch_allowed",
+            "success_claim_allowed"
+          ],
+          "properties": {
+            "receipt_required_for_actions": {"const": true},
+            "receipt_required_before_claim": {"const": true},
+            "runtime_dispatch_allowed": {"const": false},
+            "success_claim_allowed": {"const": false}
+          }
+        },
+        "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
         "customer_readiness_claim_allowed": {"const": false}
       }
     },

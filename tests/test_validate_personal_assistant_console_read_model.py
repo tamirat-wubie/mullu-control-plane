@@ -154,6 +154,30 @@ def test_personal_assistant_console_validator_rejects_memory_and_readiness_overc
     assert result.assurance_outcome == "SolvedVerified"
 
 
+def test_personal_assistant_console_validator_rejects_pilot_overclaim(tmp_path: Path) -> None:
+    payload = _load_fixture()
+    pilot = payload["governed_team_assistant_pilot"]
+    pilot["execution_allowed"] = True
+    pilot["pilot_readiness"]["live_execution_ready"] = True
+    pilot["receipt_boundary"]["runtime_dispatch_allowed"] = True
+    pilot["demo_surface_refs"] = []
+    payload["sections"]["pilot"]["customer_readiness_claim_allowed"] = True
+    candidate = tmp_path / "unsafe_pilot_console.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_personal_assistant_console_read_model(read_model_path=candidate, validate_runtime=False)
+
+    assert result.valid is False
+    assert "governed_team_assistant_pilot.execution_allowed must be false" in result.errors
+    assert "governed_team_assistant_pilot.pilot_readiness.live_execution_ready must be false" in result.errors
+    assert "governed_team_assistant_pilot.receipt_boundary.runtime_dispatch_allowed must be false" in result.errors
+    assert "sections.pilot.customer_readiness_claim_allowed must be false" in result.errors
+    assert (
+        "governed_team_assistant_pilot.demo_surface_refs must include "
+        "/api/v1/personal-assistant/send-write/eligibility/preview"
+    ) in result.errors
+
+
 def test_personal_assistant_console_validator_rejects_lane_authority_drift(tmp_path: Path) -> None:
     payload = _load_fixture()
     payload["lane_status"]["execution_allowed"] = True
