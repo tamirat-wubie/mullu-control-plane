@@ -52,3 +52,57 @@ def test_deep_engine_can_be_disabled_without_silent_success() -> None:
     assert result.verdict == ShadowVerdict.DEEP_REQUIRED
     assert result.needs_deep_pass is True
     assert result.to_dict()["execution_authority"] is False
+
+
+def test_external_effect_preflight_gets_bounded_deep_advisory_when_enabled() -> None:
+    runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1"})
+    context = _context(
+        "send approved receipt",
+        request_id="req-deep-runtime-preflight-1",
+        stage=ShadowStage.PREFLIGHT,
+        candidate_action="send approved receipt",
+        explicit_target="operator-review-inbox",
+        scope="support-workflow",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+
+    result, receipt = runtime.preflight_action(context, required_evidence_refs=("approval-receipt-1",))
+    payload = result.to_dict()
+    summaries = tuple(finding.summary for finding in result.findings)
+
+    assert result.mode == ShadowMode.STRICT_PREFLIGHT
+    assert result.needs_deep_pass is False
+    assert result.verdict in {ShadowVerdict.ADVISORY, ShadowVerdict.REPAIR_REQUIRED, ShadowVerdict.BLOCK_RECOMMENDED}
+    assert any(summary == "deep interrogation found possible external side effect" for summary in summaries)
+    assert any(summary == "preflight received explicit evidence references" for summary in summaries)
+    assert payload["execution_authority"] is False
+    assert "send approved receipt" not in str(payload)
+    assert receipt is not None
+    assert receipt.mode == ShadowMode.STRICT_PREFLIGHT
+    assert receipt.to_dict()["execution_authority"] is False
+
+
+def test_external_effect_preflight_keeps_default_disabled_deep_posture() -> None:
+    runtime = build_inceptadive_shadow_runtime({})
+    context = _context(
+        "send approved receipt",
+        request_id="req-deep-runtime-preflight-2",
+        stage=ShadowStage.PREFLIGHT,
+        candidate_action="send approved receipt",
+        explicit_target="operator-review-inbox",
+        scope="support-workflow",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+
+    result, receipt = runtime.preflight_action(context, required_evidence_refs=("approval-receipt-1",))
+    summaries = tuple(finding.summary for finding in result.findings)
+
+    assert result.mode == ShadowMode.STRICT_PREFLIGHT
+    assert result.needs_deep_pass is False
+    assert not any(summary.startswith("deep interrogation found") for summary in summaries)
+    assert any(summary == "preflight received explicit evidence references" for summary in summaries)
+    assert result.to_dict()["execution_authority"] is False
+    assert receipt is not None
+    assert receipt.mode == ShadowMode.STRICT_PREFLIGHT
