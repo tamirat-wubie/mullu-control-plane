@@ -18,11 +18,18 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from gateway.agentic_service_harness_dashboard_projection import (  # noqa: E402
+    DashboardProjectionError,
+    build_agentic_service_harness_dashboard_projection,
+    render_agentic_service_harness_dashboard_html,
+)
 from scripts.validate_agentic_service_harness_dashboard_data_contract import (  # noqa: E402
     DEFAULT_EXAMPLES,
     EXPECTED_SOURCE_COLLECTIONS,
@@ -52,6 +59,44 @@ def test_dashboard_data_contract_accepts_default_example() -> None:
     assert {widget["widget_id"] for widget in payload["widgets"]} == EXPECTED_WIDGET_IDS
     assert payload["scope"]["ui_created"] is False
     assert payload["authority_denials"]["terminal_closure"] is False
+
+
+def test_dashboard_data_contract_projects_static_operator_view() -> None:
+    projection = build_agentic_service_harness_dashboard_projection(_default_payload())
+    html = render_agentic_service_harness_dashboard_html(projection)
+    lowered = html.lower()
+
+    assert projection["read_only"] is True
+    assert projection["no_effect"] is True
+    assert projection["action_controls_present"] is False
+    assert projection["runtime_authority_granted"] is False
+    assert projection["widget_count"] == len(EXPECTED_WIDGET_IDS)
+    assert "<form" not in lowered
+    assert "<button" not in lowered
+    assert "href=" not in lowered
+    assert "write_to_branch" in html
+
+
+def test_dashboard_projection_rejects_contract_authority_drift() -> None:
+    payload = _default_payload()
+    payload["scope"]["route_admitted"] = True
+
+    with pytest.raises(
+        DashboardProjectionError,
+        match="scope.route_admitted must be false",
+    ):
+        build_agentic_service_harness_dashboard_projection(payload)
+
+
+def test_dashboard_projection_escapes_widget_text() -> None:
+    payload = _default_payload()
+    payload["widgets"][0]["title"] = "<script>alert(1)</script>"
+
+    projection = build_agentic_service_harness_dashboard_projection(payload)
+    html = render_agentic_service_harness_dashboard_html(projection)
+
+    assert "<script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
 
 
 def test_dashboard_data_contract_rejects_ui_creation(tmp_path: Path) -> None:
