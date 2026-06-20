@@ -1,0 +1,95 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T09:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_decision_contract_ref": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json",
+  "witness_kind": "terminal_closure_generic_continuation_rejection",
+  "rejected_input_ref": "operator-input://generic-continuation",
+  "rejection_status": "rejected_not_explicit_operator_decision_value",
+  "generic_continuation_rejected": true,
+  "operator_decision_value_present": false,
+  "accepted_as_operator_approval": false,
+  "terminal_closure_certificate_minted": false,
+  "terminal_closure_authorized": false,
+  "authority_granted": false,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "continuation_rejection": {
+    "rejection_id": "terminal-closure-generic-continuation-rejection.github-pr-chain",
+    "source_decision_contract_binding_id": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+    "source_decision_contract_ref": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json",
+    "observed_input_class": "generic_continuation",
+    "required_decision_values": [
+      "approve_terminal_certificate",
+      "deny_terminal_certificate"
+    ],
+    "generic_continuation_rejected": true,
+    "operator_decision_value_present": false,
+    "accepted_as_operator_approval": false,
+    "terminal_closure_certificate_minted": false,
+    "terminal_closure_authorized": false,
+    "required_rejection_result": "rejected_not_explicit_operator_decision_value"
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "operator_terminal_closure_decision_value",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "approval://github-pr-terminal-closure-certificate/operator-decision",
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "terminal_closure_certificate",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://github-pr-terminal-closure-certificate",
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "repository_written_by_rejection": false,
+    "connector_called_by_rejection": false,
+    "mutation_route_admitted_by_rejection": false,
+    "receipt_store_appended_by_rejection": false,
+    "secret_values_serialized_by_rejection": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_terminal_closure_generic_continuation_rejection_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.schema.json",
+    "github_pr_terminal_closure_operator_decision_contract_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.schema.json",
+    "github_pr_terminal_closure_operator_approval_gate_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-terminal-closure-generic-continuation-rejection",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an explicit operator decision value before minting a terminal closure certificate."
+}
