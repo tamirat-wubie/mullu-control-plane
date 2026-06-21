@@ -1,0 +1,238 @@
+{
+  "report_id": "agentic_service_harness_dashboard_data_contract",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "contract_scope": {
+    "tenant_id": "tenant-local-foundation",
+    "project_id": "project-agentic-service-harness",
+    "read_only": true,
+    "ui_created": false,
+    "routes_created": false,
+    "mutation_endpoints_admitted": false,
+    "task_creation_route_admitted": false,
+    "external_adapter_integrated": false,
+    "default_high_risk_authority": false,
+    "secret_values_serialized": false,
+    "terminal_closure_granted": false
+  },
+  "source_contract_refs": [
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md",
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "examples/agentic_service_harness_read_models.foundation.json",
+    "schemas/agentic_service_harness_read_only_repo_task_intake.schema.json",
+    "schemas/agentic_service_harness_actual_file_change_summary_receipt.schema.json",
+    "docs/FOUNDATION_MODE.md"
+  ],
+  "dashboard_sections": [
+    {
+      "section_id": "account_summary",
+      "title": "Account Summary",
+      "source_refs": [
+        "agentic_service_harness_read_models.accounts",
+        "agentic_service_harness_read_models.permission_snapshot"
+      ],
+      "required_fields": [
+        "user_id",
+        "tenant_id",
+        "default_role",
+        "read_only"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": []
+    },
+    {
+      "section_id": "repository_connection",
+      "title": "Repository Connection",
+      "source_refs": [
+        "agentic_service_harness_read_models.repositories",
+        "agentic_service_harness_read_only_repo_task_intake.repository_connection_binding"
+      ],
+      "required_fields": [
+        "connection_id",
+        "repository_slug",
+        "permission_scope",
+        "write_authority_enabled"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": [
+        "approval://provider-connection-mutation/not-admitted"
+      ]
+    },
+    {
+      "section_id": "agent_task_intake",
+      "title": "Agent Task Intake",
+      "source_refs": [
+        "agentic_service_harness_read_only_repo_task_intake.task_intake"
+      ],
+      "required_fields": [
+        "agent_task_id",
+        "requested_mode",
+        "allowed_action_classes",
+        "requested_commands"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": [
+        "approval://task-creation-route/not-admitted"
+      ]
+    },
+    {
+      "section_id": "run_status",
+      "title": "Run Status",
+      "source_refs": [
+        "agentic_service_harness_read_models.runs"
+      ],
+      "required_fields": [
+        "run_id",
+        "mode",
+        "status",
+        "lifecycle_state",
+        "terminal_state"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": []
+    },
+    {
+      "section_id": "approval_gate",
+      "title": "Approval Gate",
+      "source_refs": [
+        "agentic_service_harness_read_models.approvals"
+      ],
+      "required_fields": [
+        "approval_request_id",
+        "status",
+        "approval_required",
+        "authority_granted"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": [
+        "approval://dashboard-approval-screen/not-admitted"
+      ]
+    },
+    {
+      "section_id": "evidence_receipts",
+      "title": "Evidence And Receipts",
+      "source_refs": [
+        "agentic_service_harness_read_models.receipts",
+        "agentic_service_harness_read_models.evidence",
+        "agentic_service_harness_actual_file_change_summary_receipt"
+      ],
+      "required_fields": [
+        "receipt_id",
+        "evidence_refs",
+        "changed_file_count",
+        "terminal_closure"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": [
+        "receipt-store://append-preflight/not-admitted",
+        "evidence-bundle://durable-aggregation/not-admitted"
+      ]
+    },
+    {
+      "section_id": "loop_readiness",
+      "title": "Loop Readiness",
+      "source_refs": [
+        "agentic_service_harness_read_models.projects.loop_status_ref",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+      ],
+      "required_fields": [
+        "loop_status_ref",
+        "readiness_status",
+        "next_action"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": [
+        "loop-status://harness-projection/not-closed"
+      ]
+    },
+    {
+      "section_id": "result_summary",
+      "title": "Result Summary",
+      "source_refs": [
+        "agentic_service_harness_read_models.result_summaries"
+      ],
+      "required_fields": [
+        "summary_id",
+        "outcome",
+        "user_visible_status",
+        "next_action"
+      ],
+      "display_only": true,
+      "read_only": true,
+      "mutation_controls_present": false,
+      "action_buttons_enabled": false,
+      "blocked_until_refs": []
+    }
+  ],
+  "readiness_gates": {
+    "requires_receipt_read_model": true,
+    "requires_evidence_bundle_read_model": true,
+    "requires_approval_read_model": true,
+    "requires_loop_status_read_model": true,
+    "ui_build_admitted": false,
+    "route_build_admitted": false,
+    "task_creation_admitted": false,
+    "missing_evidence_policy": "AwaitingEvidence"
+  },
+  "authority_denials": {
+    "ui_created": false,
+    "route_created": false,
+    "mutation_endpoint_admitted": false,
+    "task_creation_route_admitted": false,
+    "provider_connection_mutation": false,
+    "code_execution": false,
+    "external_adapter_execution": false,
+    "filesystem_write": false,
+    "branch_creation": false,
+    "pull_request_creation": false,
+    "merge": false,
+    "deployment": false,
+    "dns_mutation": false,
+    "secret_serialization": false,
+    "destructive_operation": false,
+    "terminal_closure": false
+  },
+  "non_goals": [
+    "Dashboard UI implementation",
+    "Route implementation",
+    "Mutation endpoint",
+    "Provider connection mutation",
+    "Task creation endpoint",
+    "Live adapter execution",
+    "Branch creation",
+    "Pull request creation",
+    "Secret disclosure",
+    "Terminal closure"
+  ],
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-dashboard-data-contract",
+      "command": "python scripts/validate_agentic_service_harness_dashboard_data_contract.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Close durable Receipt and EvidenceBundle read models before any dashboard UI or task creation route is admitted.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

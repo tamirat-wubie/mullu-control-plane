@@ -11,7 +11,7 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - The first next PR remains the read-only repository task intake.
+  - The first next PR remains the Receipt and EvidenceBundle read-model thread.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -43,7 +43,7 @@ REQUIRED_SECTIONS = (
     "## 5. Permission And Authority Model - READY",
     "## 6. Sandbox/Workspace Safety - PARTIAL",
     "## 7. Receipt And Evidence Model - PARTIAL",
-    "## 8. Dashboard/UI Requirements - MISSING",
+    "## 8. Dashboard/UI Requirements - PARTIAL",
     "## 9. Explicit Non-Goals For The First Harness Phase - READY",
     "## Smallest Next PR Sequence",
     "## Governance Decision",
@@ -232,17 +232,17 @@ def _validate_approval_request_ready(map_text: str, errors: list[str]) -> None:
 
 def _validate_receipt_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(ui-contract\): add dashboard data contract`$",
+        r"^1\.\s+`harness\(evidence\): add Receipt and EvidenceBundle read models`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: dashboard data contract")
+        errors.append("missing first next PR: Receipt and EvidenceBundle read models")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(ui-contract): add dashboard data contract",
+        "harness(evidence): add Receipt and EvidenceBundle read models",
     )
     positions: list[int] = []
     for marker in sequence_markers:

@@ -50,7 +50,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 a
 | 5. Permission and authority model | READY | Roles, action classes, approval gates, and blocked high-risk actions are encoded as contract-only and validated. |
 | 6. Sandbox/workspace safety | PARTIAL | Command/path/network/time/cleanup preflight is now contract-bound for a temporary branch workspace; actual branch workspace creation remains blocked until approval and cleanup evidence exist. |
 | 7. Receipt and evidence model | PARTIAL | Required run receipt fields exist in contracts and examples; durable harness receipt emission and store binding are not complete. |
-| 8. Dashboard/UI requirements | MISSING | The dashboard must not be built yet. Required read models and screens are only readiness inputs. |
+| 8. Dashboard/UI requirements | PARTIAL | Dashboard data contract is now closed as a read-only composition surface. The dashboard itself, UI routes, task creation route, provider mutation, and approval screens remain blocked. |
 | 9. Explicit non-goals | READY | First-phase non-goals are explicit and align with Foundation Mode and high-risk-action blocking. |
 
 ## 1. Public API Foundation - READY
@@ -140,19 +140,19 @@ Open PRs after readiness-map refresh: the live open PR queue includes PR #2033 a
 | evidence refs | PARTIAL | Evidence refs exist; aggregation by AgentRun remains missing. | Add EvidenceBundle projection by AgentRun id. |
 | next action | READY | Harness contracts require next-action fields. | None. |
 
-## 8. Dashboard/UI Requirements - MISSING
+## 8. Dashboard/UI Requirements - PARTIAL
 
-No dashboard should be created in the first readiness PR. The UI depends on durable read models that are not fully closed.
+No dashboard should be created in the first readiness PR. The UI depends on durable read models that are not fully closed. The dashboard data contract is a display-only composition envelope, not a UI implementation or route admission.
 
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | login/account | MISSING | No harness login/account screen or account persistence should be built yet. | Add account/user read model first; UI follows after persistence is validated. |
-| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, and read-only repo task intake preflight are closed for projection; no connect UI or provider mutation route is authorized. | Add UI data contract only after receipt and evidence read models are closed. |
-| create agent task | PARTIAL | AgentTask exists as a contract and read-only repo task intake validates RepositoryConnection and task scope without execution authority; no user-facing task creation route is authorized. | Add task creation admission preflight only after UI data contract and receipt/evidence projections are closed. |
+| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, read-only repo task intake preflight, and dashboard data contract are closed for projection; no connect UI or provider mutation route is authorized. | Add durable Receipt and EvidenceBundle read models before any connect UI. |
+| create agent task | PARTIAL | AgentTask exists as a contract and read-only repo task intake validates RepositoryConnection and task scope without execution authority; dashboard data contract exposes this as display-only; no user-facing task creation route is authorized. | Add task creation admission preflight only after durable Receipt and EvidenceBundle read models are closed. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
-| evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
+| evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; dashboard data contract requires them by reference; harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
 | approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
-| loop/readiness dashboard | PARTIAL | Loop read models and readiness docs exist; no dashboard build is authorized. | Add read-only dashboard data contract after run and receipt read models. |
+| loop/readiness dashboard | PARTIAL | Loop read models, readiness docs, and read-only dashboard data contract exist; no dashboard build is authorized. | Add durable LoopStatus projection after Receipt and EvidenceBundle read models. |
 
 ## 9. Explicit Non-Goals For The First Harness Phase - READY
 
@@ -169,7 +169,7 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(ui-contract): add dashboard data contract`
+1. `harness(evidence): add Receipt and EvidenceBundle read models`
 
 ## Governance Decision
 
@@ -184,5 +184,5 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 STATUS:
   Completeness: 100%
   Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority
-  Open issues: durable Receipt store append, EvidenceBundle, UI data contracts, branch workspace creation authority, and the current draft PR queue remain partial, missing, externally blocked, or outside this map-only closure
-  Next action: continue the smallest next PR sequence with dashboard data contract
+  Open issues: durable Receipt store append, EvidenceBundle, branch workspace creation authority, dashboard UI, and the current draft PR queue remain partial, missing, externally blocked, or outside this map-only closure
+  Next action: continue the smallest next PR sequence with Receipt and EvidenceBundle read models

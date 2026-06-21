@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-dashboard-data-contract:1",
+  "title": "Agentic Service Harness Dashboard Data Contract",
+  "description": "Read-only data composition contract for a future Mullusi Agentic Service Harness dashboard. This contract admits no UI implementation, route creation, mutation endpoint, task creation endpoint, provider mutation, branch write, pull-request creation, adapter execution, secret serialization, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "contract_scope",
+    "source_contract_refs",
+    "dashboard_sections",
+    "readiness_gates",
+    "authority_denials",
+    "non_goals",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_dashboard_data_contract"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contract_scope": {
+      "$ref": "#/$defs/contract_scope"
+    },
+    "source_contract_refs": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "dashboard_sections": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/dashboard_section"
+      }
+    },
+    "readiness_gates": {
+      "$ref": "#/$defs/readiness_gates"
+    },
+    "authority_denials": {
+      "$ref": "#/$defs/authority_denials"
+    },
+    "non_goals": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/non_goal"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "contract_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "project_id",
+        "read_only",
+        "ui_created",
+        "routes_created",
+        "mutation_endpoints_admitted",
+        "task_creation_route_admitted",
+        "external_adapter_integrated",
+        "default_high_risk_authority",
+        "secret_values_serialized",
+        "terminal_closure_granted"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "ui_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "routes_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_endpoints_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "task_creation_route_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_adapter_integrated": {
+          "type": "boolean",
+          "const": false
+        },
+        "default_high_risk_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_granted": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "dashboard_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_id",
+        "title",
+        "source_refs",
+        "required_fields",
+        "display_only",
+        "read_only",
+        "mutation_controls_present",
+        "action_buttons_enabled",
+        "blocked_until_refs"
+      ],
+      "properties": {
+        "section_id": {
+          "type": "string",
+          "enum": [
+            "account_summary",
+            "repository_connection",
+            "agent_task_intake",
+            "run_status",
+            "approval_gate",
+            "evidence_receipts",
+            "loop_readiness",
+            "result_summary"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "required_fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "display_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "mutation_controls_present": {
+          "type": "boolean",
+          "const": false
+        },
+        "action_buttons_enabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "blocked_until_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        }
+      }
+    },
+    "readiness_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requires_receipt_read_model",
+        "requires_evidence_bundle_read_model",
+        "requires_approval_read_model",
+        "requires_loop_status_read_model",
+        "ui_build_admitted",
+        "route_build_admitted",
+        "task_creation_admitted",
+        "missing_evidence_policy"
+      ],
+      "properties": {
+        "requires_receipt_read_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_evidence_bundle_read_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_approval_read_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "requires_loop_status_read_model": {
+          "type": "boolean",
+          "const": true
+        },
+        "ui_build_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "route_build_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "task_creation_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "missing_evidence_policy": {
+          "type": "string",
+          "const": "AwaitingEvidence"
+        }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui_created",
+        "route_created",
+        "mutation_endpoint_admitted",
+        "task_creation_route_admitted",
+        "provider_connection_mutation",
+        "code_execution",
+        "external_adapter_execution",
+        "filesystem_write",
+        "branch_creation",
+        "pull_request_creation",
+        "merge",
+        "deployment",
+        "dns_mutation",
+        "secret_serialization",
+        "destructive_operation",
+        "terminal_closure"
+      ],
+      "properties": {
+        "ui_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "route_created": {
+          "type": "boolean",
+          "const": false
+        },
+        "mutation_endpoint_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "task_creation_route_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "provider_connection_mutation": {
+          "type": "boolean",
+          "const": false
+        },
+        "code_execution": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_adapter_execution": {
+          "type": "boolean",
+          "const": false
+        },
+        "filesystem_write": {
+          "type": "boolean",
+          "const": false
+        },
+        "branch_creation": {
+          "type": "boolean",
+          "const": false
+        },
+        "pull_request_creation": {
+          "type": "boolean",
+          "const": false
+        },
+        "merge": {
+          "type": "boolean",
+          "const": false
+        },
+        "deployment": {
+          "type": "boolean",
+          "const": false
+        },
+        "dns_mutation": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_serialization": {
+          "type": "boolean",
+          "const": false
+        },
+        "destructive_operation": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "non_goal": {
+      "type": "string",
+      "enum": [
+        "Dashboard UI implementation",
+        "Route implementation",
+        "Mutation endpoint",
+        "Provider connection mutation",
+        "Task creation endpoint",
+        "Live adapter execution",
+        "Branch creation",
+        "Pull request creation",
+        "Secret disclosure",
+        "Terminal closure"
+      ]
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
