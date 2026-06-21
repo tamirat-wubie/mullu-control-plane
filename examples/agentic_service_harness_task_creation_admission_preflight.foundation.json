@@ -1,0 +1,129 @@
+{
+  "report_id": "agentic_service_harness_task_creation_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "preflight_id": "task-creation-admission-preflight-foundation",
+    "foundation_phase": "foundation_task_creation_admission_preflight",
+    "read_only": true,
+    "preflight_only": true,
+    "task_creation_route_admitted": false,
+    "task_record_write_enabled": false,
+    "runtime_state_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "branch_creation_enabled": false,
+    "pull_request_creation_enabled": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure_granted": false
+  },
+  "source_contract_refs": [
+    "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+    "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
+    "examples/agentic_service_harness_receipt_projection.foundation.json",
+    "examples/agentic_service_harness_loopstatus_projection.foundation.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "admission_request": {
+    "request_id": "task-creation-request-foundation",
+    "source_task_ref": "task://agentic-service-harness/github-repo-read-only",
+    "requested_action_class": "task_creation",
+    "requested_route_kind": "future_task_creation_route",
+    "risk_level": "medium",
+    "task_creation_requested": true,
+    "requested_runtime_write": true,
+    "requested_adapter_execution": false,
+    "requested_branch_creation": false,
+    "requested_pull_request_creation": false,
+    "requested_receipt_append": false,
+    "required_source_refs": [
+      "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+      "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+      "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
+      "examples/agentic_service_harness_loopstatus_projection.foundation.json",
+      "examples/agentic_service_harness_receipt_projection.foundation.json"
+    ],
+    "required_policy_refs": [
+      "policy://harness/task-creation-read-only-boundary",
+      "policy://harness/no-mutation-route-without-admission",
+      "policy://harness/no-runtime-write-without-approval",
+      "policy://harness/no-adapter-execution",
+      "policy://harness/no-secret-serialization",
+      "policy://harness/terminal-closure-denied"
+    ]
+  },
+  "admission_decision": {
+    "decision": "TASK_CREATION_ADMISSION_BLOCKED_AWAITING_EVIDENCE",
+    "proof_state": "Unknown",
+    "task_creation_admitted": false,
+    "route_creation_admitted": false,
+    "task_record_write_admitted": false,
+    "runtime_state_write_admitted": false,
+    "adapter_execution_admitted": false,
+    "branch_creation_admitted": false,
+    "pull_request_creation_admitted": false,
+    "receipt_store_append_admitted": false,
+    "terminal_closure_allowed": false,
+    "blocked_reason_refs": [
+      "blocked://task-creation-route/not-admitted",
+      "blocked://task-record-write/not-admitted",
+      "blocked://runtime-state-write/not-admitted",
+      "blocked://operator-approval/not-present",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "missing_evidence_refs": [
+      "evidence://task-creation-route-contract",
+      "evidence://operator-approval-for-task-creation",
+      "evidence://task-write-rollback-plan",
+      "evidence://uao-task-creation-admission",
+      "evidence://receipt-store-append-authority"
+    ]
+  },
+  "required_before_task_creation_refs": [
+    "evidence://task-creation-route-contract",
+    "evidence://operator-approval-for-task-creation",
+    "evidence://task-write-rollback-plan",
+    "evidence://uao-task-creation-admission",
+    "evidence://receipt-store-append-authority",
+    "evidence://effect-reconciliation-before-terminal-closure"
+  ],
+  "authority_denials": {
+    "task_creation_route_enabled": false,
+    "task_record_write_enabled": false,
+    "runtime_state_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "branch_creation_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "mutation_endpoint_enabled": false,
+    "external_connector_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false
+  },
+  "receipt_refs": {
+    "task_creation_admission_preflight_schema": "schemas/agentic_service_harness_task_creation_admission_preflight.schema.json",
+    "task_creation_admission_preflight_fixture": "examples/agentic_service_harness_task_creation_admission_preflight.foundation.json",
+    "github_repo_task_intake_fixture": "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+    "dashboard_data_contract_fixture": "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "loopstatus_projection_fixture": "examples/agentic_service_harness_loopstatus_projection.foundation.json",
+    "receipt_projection_fixture": "examples/agentic_service_harness_receipt_projection.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic_service_harness_task_creation_admission_preflight",
+      "command": "python scripts/validate_agentic_service_harness_task_creation_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add approved branch workspace creation preflight only after task creation admission remains blocked from route creation, runtime writes, adapter execution, branch effects, receipt append, and terminal closure.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

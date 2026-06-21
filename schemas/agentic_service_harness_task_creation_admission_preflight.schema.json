@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-task-creation-admission-preflight:1",
+  "title": "Agentic Service Harness Task Creation Admission Preflight",
+  "description": "Foundation Mode task-creation admission preflight for the Agentic Service Harness. This contract records task creation as blocked until approval, policy, projection, rollback, and route authority evidence exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "scope",
+    "source_contract_refs",
+    "admission_request",
+    "admission_decision",
+    "required_before_task_creation_refs",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": { "type": "string", "const": "agentic_service_harness_task_creation_admission_preflight" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "source_contract_refs": { "$ref": "#/$defs/ref_list" },
+    "admission_request": { "$ref": "#/$defs/admission_request" },
+    "admission_decision": { "$ref": "#/$defs/admission_decision" },
+    "required_before_task_creation_refs": { "$ref": "#/$defs/ref_list" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "preflight_id",
+        "foundation_phase",
+        "read_only",
+        "preflight_only",
+        "task_creation_route_admitted",
+        "task_record_write_enabled",
+        "runtime_state_write_enabled",
+        "adapter_execution_enabled",
+        "branch_creation_enabled",
+        "pull_request_creation_enabled",
+        "receipt_store_append_enabled",
+        "secret_values_serialized",
+        "terminal_closure_granted"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "preflight_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": { "type": "string", "const": "foundation_task_creation_admission_preflight" },
+        "read_only": { "type": "boolean", "const": true },
+        "preflight_only": { "type": "boolean", "const": true },
+        "task_creation_route_admitted": { "type": "boolean", "const": false },
+        "task_record_write_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "branch_creation_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "admission_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "source_task_ref",
+        "requested_action_class",
+        "requested_route_kind",
+        "risk_level",
+        "task_creation_requested",
+        "requested_runtime_write",
+        "requested_adapter_execution",
+        "requested_branch_creation",
+        "requested_pull_request_creation",
+        "requested_receipt_append",
+        "required_source_refs",
+        "required_policy_refs"
+      ],
+      "properties": {
+        "request_id": { "$ref": "#/$defs/identifier" },
+        "source_task_ref": { "$ref": "#/$defs/ref" },
+        "requested_action_class": { "type": "string", "const": "task_creation" },
+        "requested_route_kind": { "type": "string", "const": "future_task_creation_route" },
+        "risk_level": { "type": "string", "enum": ["medium", "high"] },
+        "task_creation_requested": { "type": "boolean", "const": true },
+        "requested_runtime_write": { "type": "boolean", "const": true },
+        "requested_adapter_execution": { "type": "boolean", "const": false },
+        "requested_branch_creation": { "type": "boolean", "const": false },
+        "requested_pull_request_creation": { "type": "boolean", "const": false },
+        "requested_receipt_append": { "type": "boolean", "const": false },
+        "required_source_refs": { "$ref": "#/$defs/ref_list" },
+        "required_policy_refs": { "$ref": "#/$defs/ref_list" }
+      }
+    },
+    "admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "proof_state",
+        "task_creation_admitted",
+        "route_creation_admitted",
+        "task_record_write_admitted",
+        "runtime_state_write_admitted",
+        "adapter_execution_admitted",
+        "branch_creation_admitted",
+        "pull_request_creation_admitted",
+        "receipt_store_append_admitted",
+        "terminal_closure_allowed",
+        "blocked_reason_refs",
+        "missing_evidence_refs"
+      ],
+      "properties": {
+        "decision": { "type": "string", "const": "TASK_CREATION_ADMISSION_BLOCKED_AWAITING_EVIDENCE" },
+        "proof_state": { "type": "string", "const": "Unknown" },
+        "task_creation_admitted": { "type": "boolean", "const": false },
+        "route_creation_admitted": { "type": "boolean", "const": false },
+        "task_record_write_admitted": { "type": "boolean", "const": false },
+        "runtime_state_write_admitted": { "type": "boolean", "const": false },
+        "adapter_execution_admitted": { "type": "boolean", "const": false },
+        "branch_creation_admitted": { "type": "boolean", "const": false },
+        "pull_request_creation_admitted": { "type": "boolean", "const": false },
+        "receipt_store_append_admitted": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "blocked_reason_refs": { "$ref": "#/$defs/ref_list" },
+        "missing_evidence_refs": { "$ref": "#/$defs/ref_list" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_creation_route_enabled",
+        "task_record_write_enabled",
+        "runtime_state_write_enabled",
+        "adapter_execution_enabled",
+        "branch_creation_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "receipt_store_append_enabled",
+        "mutation_endpoint_enabled",
+        "external_connector_enabled",
+        "secret_values_serialized",
+        "terminal_closure"
+      ],
+      "properties": {
+        "task_creation_route_enabled": { "type": "boolean", "const": false },
+        "task_record_write_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "branch_creation_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "mutation_endpoint_enabled": { "type": "boolean", "const": false },
+        "external_connector_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_creation_admission_preflight_schema",
+        "task_creation_admission_preflight_fixture",
+        "github_repo_task_intake_fixture",
+        "dashboard_data_contract_fixture",
+        "loopstatus_projection_fixture",
+        "receipt_projection_fixture",
+        "readiness_map"
+      ],
+      "properties": {
+        "task_creation_admission_preflight_schema": { "$ref": "#/$defs/ref" },
+        "task_creation_admission_preflight_fixture": { "$ref": "#/$defs/ref" },
+        "github_repo_task_intake_fixture": { "$ref": "#/$defs/ref" },
+        "dashboard_data_contract_fixture": { "$ref": "#/$defs/ref" },
+        "loopstatus_projection_fixture": { "$ref": "#/$defs/ref" },
+        "receipt_projection_fixture": { "$ref": "#/$defs/ref" },
+        "readiness_map": { "$ref": "#/$defs/ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

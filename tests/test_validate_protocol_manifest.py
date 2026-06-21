@@ -102,6 +102,17 @@ def test_protocol_manifest_indexes_agentic_service_harness_receipt_evidence_read
     assert receipt_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_task_creation_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    task_entry = entries["agentic-service-harness-task-creation-admission-preflight"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert task_entry["path"] == "schemas/agentic_service_harness_task_creation_admission_preflight.schema.json"
+    assert task_entry["urn"] == "urn:mullusi:schema:agentic-service-harness-task-creation-admission-preflight:1"
+    assert task_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
