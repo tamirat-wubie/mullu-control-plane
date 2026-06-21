@@ -51,6 +51,7 @@ _ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "raw_private_payload_serialized",
         "secret_values_serialized",
         "connector_payload_projection",
+        "payload_digest_only",
         "chat_log_projection",
         "body_projection",
         "raw_private_payload_storage_allowed",

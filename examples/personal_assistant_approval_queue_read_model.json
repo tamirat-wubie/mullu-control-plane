@@ -44,6 +44,20 @@
     "items": [
       {
         "approval_id": "pa_approval_email_send_001",
+        "review_packet_ref": {
+          "source_ref": "examples/personal_assistant_approval_review_packet.json",
+          "schema_ref": "schemas/personal_assistant_approval_review_packet.schema.json",
+          "source_sha256": "c2b625853eaebc312612342a4188f33c2fc5e828081ee727918a3a9c88ea4395",
+          "review_packet_id": "pa_approval_review_approval_review_packet_001",
+          "request_id": "pa_request_approval_review_packet_001",
+          "plan_id": "pa_plan_approval_review_packet_001",
+          "review_state": "preview_only",
+          "solver_outcome": "SolvedVerified",
+          "preview_only": true,
+          "payload_digest_only": true,
+          "execution_allowed": false,
+          "approval_enqueued": false
+        },
         "request_id": "pa_request_inbox_summary_001",
         "plan_id": "pa_plan_email_send_001",
         "draft_action_count": 1,
@@ -120,6 +134,20 @@
   "records": [
     {
       "approval_id": "pa_approval_email_send_001",
+      "review_packet_ref": {
+        "source_ref": "examples/personal_assistant_approval_review_packet.json",
+        "schema_ref": "schemas/personal_assistant_approval_review_packet.schema.json",
+        "source_sha256": "c2b625853eaebc312612342a4188f33c2fc5e828081ee727918a3a9c88ea4395",
+        "review_packet_id": "pa_approval_review_approval_review_packet_001",
+        "request_id": "pa_request_approval_review_packet_001",
+        "plan_id": "pa_plan_approval_review_packet_001",
+        "review_state": "preview_only",
+        "solver_outcome": "SolvedVerified",
+        "preview_only": true,
+        "payload_digest_only": true,
+        "execution_allowed": false,
+        "approval_enqueued": false
+      },
       "packet": {
         "approval_id": "pa_approval_email_send_001",
         "request_id": "pa_request_inbox_summary_001",
