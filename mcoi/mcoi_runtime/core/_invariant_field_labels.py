@@ -26,6 +26,7 @@ KNOWN_INVARIANT_FIELD_LABELS = frozenset(
         "connector_id",
         "context",
         "correlation_id",
+        "created_at",
         "decided_by",
         "decided_by_id",
         "decision",
