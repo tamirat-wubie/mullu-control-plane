@@ -1470,6 +1470,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_universal_symbol_receipt_store_authority_witness.py"),
         ),
         CheckCommand("universal_symbol_kernel", (python_executable, "scripts/validate_universal_symbol_kernel.py")),
+        CheckCommand(
+            "inceptadive_external_effect_adapter_readiness",
+            (python_executable, "scripts/validate_inceptadive_external_effect_adapter_readiness.py"),
+        ),
         CheckCommand("sdlc_artifact_validation", (python_executable, "scripts/validate_sdlc_artifact.py")),
         CheckCommand("sdlc_route_validation", (python_executable, "scripts/validate_sdlc_route.py")),
         CheckCommand("sdlc_state_machine_validation", (python_executable, "scripts/validate_sdlc_state_machine.py")),

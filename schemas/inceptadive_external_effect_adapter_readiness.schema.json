@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:inceptadive-external-effect-adapter-readiness:1",
+  "title": "InceptaDive External Effect Adapter Readiness",
+  "description": "Non-authorizing readiness contract for a future InceptaDive external-effect adapter. This schema records evidence obligations and blocks live external effects, connector dispatch, memory writes, credential serialization, provider mutation, and terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "readiness_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "target_adapter_kind",
+    "readiness_decision",
+    "planning_only",
+    "read_only",
+    "adapter_implemented",
+    "dry_run_probe_completed",
+    "live_effect_observed",
+    "effect_receipt_collected",
+    "external_effect_execution_authorized",
+    "connector_dispatch_authority",
+    "memory_write_authority",
+    "governance_verdict_authority",
+    "adapter_credentials_present",
+    "adapter_credentials_serialized",
+    "terminal_closure",
+    "scope",
+    "action_families",
+    "required_evidence",
+    "missing_evidence",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "readiness_id": {
+      "type": "string",
+      "const": "inceptadive-external-effect-adapter-readiness"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "target_adapter_kind": { "type": "string", "const": "external_effect_adapter" },
+    "readiness_decision": {
+      "type": "string",
+      "const": "blocked_until_authority_evidence_and_dry_run_receipts_exist"
+    },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "adapter_implemented": { "type": "boolean", "const": false },
+    "dry_run_probe_completed": { "type": "boolean", "const": false },
+    "live_effect_observed": { "type": "boolean", "const": false },
+    "effect_receipt_collected": { "type": "boolean", "const": false },
+    "external_effect_execution_authorized": { "type": "boolean", "const": false },
+    "connector_dispatch_authority": { "type": "boolean", "const": false },
+    "memory_write_authority": { "type": "boolean", "const": false },
+    "governance_verdict_authority": { "type": "boolean", "const": false },
+    "adapter_credentials_present": { "type": "boolean", "const": false },
+    "adapter_credentials_serialized": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "action_families": {
+      "type": "array",
+      "minItems": 6,
+      "items": { "$ref": "#/$defs/action_family" },
+      "uniqueItems": true
+    },
+    "required_evidence": { "$ref": "#/$defs/required_evidence" },
+    "missing_evidence": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/missing_evidence_item" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "organization_id", "project_id", "repository_id", "read_only"],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_id": { "$ref": "#/$defs/identifier" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "action_family": {
+      "type": "string",
+      "enum": ["connector", "deployment", "document", "finance", "messaging", "repository"]
+    },
+    "required_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_approval_policy_ref",
+        "phi_gov_authority_receipt_ref",
+        "uao_admission_receipt_ref",
+        "dry_run_probe_receipt_ref",
+        "redaction_receipt_ref",
+        "rollback_recovery_receipt_ref",
+        "effect_receipt_schema_ref",
+        "adapter_scope_policy_ref",
+        "status",
+        "blocks_live_execution",
+        "authority_granted"
+      ],
+      "properties": {
+        "operator_approval_policy_ref": { "$ref": "#/$defs/evidence_ref" },
+        "phi_gov_authority_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "uao_admission_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "dry_run_probe_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "redaction_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "rollback_recovery_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "effect_receipt_schema_ref": { "$ref": "#/$defs/evidence_ref" },
+        "adapter_scope_policy_ref": { "$ref": "#/$defs/evidence_ref" },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_execution": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "missing_evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "status", "blocks_live_execution"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "operator_approval_policy_ref",
+            "phi_gov_authority_receipt_ref",
+            "uao_admission_receipt_ref",
+            "dry_run_probe_receipt_ref",
+            "redaction_receipt_ref",
+            "rollback_recovery_receipt_ref",
+            "effect_receipt_schema_ref",
+            "adapter_scope_policy_ref"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_execution": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_effect_execution_authorized",
+        "connector_dispatch_authority",
+        "memory_write_authority",
+        "governance_verdict_authority",
+        "provider_mutation_authority",
+        "credential_read_authority",
+        "credential_serialization_authority",
+        "destructive_operation_authority",
+        "terminal_closure_authority"
+      ],
+      "properties": {
+        "external_effect_execution_authorized": { "type": "boolean", "const": false },
+        "connector_dispatch_authority": { "type": "boolean", "const": false },
+        "memory_write_authority": { "type": "boolean", "const": false },
+        "governance_verdict_authority": { "type": "boolean", "const": false },
+        "provider_mutation_authority": { "type": "boolean", "const": false },
+        "credential_read_authority": { "type": "boolean", "const": false },
+        "credential_serialization_authority": { "type": "boolean", "const": false },
+        "destructive_operation_authority": { "type": "boolean", "const": false },
+        "terminal_closure_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_egress_policy",
+        "mutation_routes_admitted",
+        "provider_calls_allowed",
+        "external_state_writes_allowed",
+        "repository_writes_allowed",
+        "secret_values_allowed",
+        "raw_payload_retention_allowed",
+        "append_only_receipts_required"
+      ],
+      "properties": {
+        "network_egress_policy": { "type": "string", "const": "none" },
+        "mutation_routes_admitted": { "type": "boolean", "const": false },
+        "provider_calls_allowed": { "type": "boolean", "const": false },
+        "external_state_writes_allowed": { "type": "boolean", "const": false },
+        "repository_writes_allowed": { "type": "boolean", "const": false },
+        "secret_values_allowed": { "type": "boolean", "const": false },
+        "raw_payload_retention_allowed": { "type": "boolean", "const": false },
+        "append_only_receipts_required": { "type": "boolean", "const": true }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

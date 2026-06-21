@@ -238,6 +238,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_write_path_witness",
         "universal_symbol_receipt_store_authority_witness",
         "universal_symbol_kernel",
+        "inceptadive_external_effect_adapter_readiness",
         "sdlc_artifact_validation",
         "sdlc_route_validation",
         "sdlc_state_machine_validation",
@@ -812,6 +813,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["terminal_closure_certificate"][1:] == (
         "scripts/validate_terminal_closure_certificate.py",
         "--json",
+    )
+    assert args_by_name["inceptadive_external_effect_adapter_readiness"][1:] == (
+        "scripts/validate_inceptadive_external_effect_adapter_readiness.py",
+    )
+    assert args_by_name["sdlc_artifact_validation"][1:] == (
+        "scripts/validate_sdlc_artifact.py",
     )
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",

@@ -3539,6 +3539,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_inceptadive_external_effect_adapter_readiness.py"
+      ],
+      "name": "inceptadive_external_effect_adapter_readiness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "INCEPTADIVE EXTERNAL EFFECT ADAPTER READINESS VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_sdlc_artifact.py"
       ],
       "name": "sdlc_artifact_validation",
