@@ -10,6 +10,7 @@ Invariants:
   - Source receipt kinds must match canonical source refs, schema refs, and closure fields.
   - Source receipt digests must match current checked-in source refs.
   - Source receipt schema refs must resolve and validate their source payloads.
+  - Source receipt closure fields must be true in the source payloads themselves.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
 """
@@ -98,6 +99,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_source_receipt_bindings(payload),
         _check_source_receipt_digests(payload),
         _check_source_receipt_schemas(payload),
+        _check_source_receipt_source_closure_fields(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
         _check_closure_gate(payload),
@@ -281,6 +283,40 @@ def _check_source_receipt_schemas(payload: dict[str, Any]) -> PersonalAssistantF
     return PersonalAssistantFoundationClosureValidationStep("source receipt schemas", passed, detail)
 
 
+def _check_source_receipt_source_closure_fields(
+    payload: dict[str, Any],
+) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    invalid: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        closure_field = _bounded_text(record.get("closure_field"))
+        if not source_ref or not closure_field:
+            missing.append(source_kind)
+            continue
+        source_path = (REPO_ROOT / source_ref).resolve()
+        if not _path_within_repo(source_path) or not source_path.exists():
+            missing.append(source_kind)
+            continue
+        try:
+            source_payload = _read_json_object(source_path)
+        except (OSError, RuntimeError, json.JSONDecodeError):
+            invalid.append(source_kind)
+            continue
+        source_summary = _source_summary_object(source_payload)
+        if source_summary.get(closure_field) is not True:
+            invalid.append(source_kind)
+    passed = not invalid and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "source-closure-fields-current"
+        if passed
+        else f"invalid={len(invalid)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt source closure fields", passed, detail)
+
+
 def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
     records = _list_of_objects(payload.get("authority_denials"))
     required = set(AUTHORITY_DENIALS)
@@ -413,6 +449,23 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise RuntimeError("Personal Assistant foundation closure source receipt must be a JSON object")
     return parsed
+
+
+def _source_summary_object(payload: dict[str, Any]) -> dict[str, Any]:
+    for key in (
+        "summary",
+        "coherence_summary",
+        "authority_summary",
+        "alignment_summary",
+        "policy_matrix_summary",
+        "runtime_boundary_summary",
+        "catalog_summary",
+        "closure_summary",
+    ):
+        summary = payload.get(key)
+        if isinstance(summary, dict):
+            return summary
+    return {}
 
 
 def _object(value: object) -> dict[str, Any]:
