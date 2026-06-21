@@ -13,9 +13,9 @@ Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `c9274015c7896fa0ad34c14d98ecca765cdcdb10`
+Current `origin/main`: `6f06008421facdedeaf00e6da36ece361cc59966`
 
-Open PRs after readiness-map refresh: the live open PR queue includes non-draft PRs #2088, #2087, #2085, #2084, #2082, #2068, and #2066 plus draft PRs #2086, #2083, #2081, #2077, #2069, and #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
+Open PRs after readiness-map refresh: the live open PR queue includes non-draft PRs #2068 and #2066 plus draft PRs #2089, #2086, #2081, #2077, #2069, and #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -31,9 +31,9 @@ Open PRs after readiness-map refresh: the live open PR queue includes non-draft 
 | Dashboard data contract PR | READY | Commit `1e94f9b786891f992bf195036fd344f0b26868a5` on `origin/main` added `agentic_service_harness_dashboard_data_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds a read-only dashboard data contract with seven display-only widget contracts while dashboard UI creation remains blocked and route registration remains blocked. |
 | Adapter registry contract PR | READY | This proof thread adds `agentic_service_harness_adapter_registry_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds contract-only GitHub/Codex-style adapter entries, modes, authority classes, gate refs, and blocker refs while route registration, mutation endpoints, subprocess execution, connector calls, external model execution, branch writes, PR creation, receipt append, and terminal closure remain blocked. |
 | EvidenceBundle projection PR | READY | This proof thread adds `agentic_service_harness_evidence_bundle_projection` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It groups command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id while log ingestion, receipt-store append, adapter execution, connector calls, branch writes, PR creation, and terminal closure remain blocked. |
-| Remote CI | PARTIAL | PR #2080 pre-merge checks were green, but post-merge main workflow run `27893248939` failed in the SDLC Governance Gate at the workspace governance preflight receipt step after receipt-example count drift. This proof thread updates the receipt example and must wait for current PR CI before merge. |
+| Remote CI | PARTIAL | PR #2090 merged at `ba31636fb8e83929805d29b5e17a5a5b8117a885` and post-merge main Build Verification run `27894325538` passed. Current `origin/main` at `6f06008421facdedeaf00e6da36ece361cc59966` has Build Verification run `27894492528` failing in the SDLC Governance Gate because the workspace preflight receipt example lists 269 checks while `check_count` remained 268; this repair updates the receipt example and must wait for current PR CI before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned non-draft PRs #2088, #2087, #2085, #2084, #2082, #2068, and #2066 plus draft PRs #2086, #2083, #2081, #2077, #2069, and #2058 after fetching `origin/main` at `c9274015c7896fa0ad34c14d98ecca765cdcdb10`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
+| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned non-draft PRs #2068 and #2066 plus draft PRs #2089, #2086, #2081, #2077, #2069, and #2058 after fetching `origin/main` at `6f06008421facdedeaf00e6da36ece361cc59966`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
