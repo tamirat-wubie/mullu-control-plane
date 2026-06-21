@@ -80,6 +80,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_adapter_registry_cont
     assert registry_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_approved_branch_workspace_creation_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    workspace_entry = entries[
+        "agentic-service-harness-approved-branch-workspace-creation-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert workspace_entry["path"] == (
+        "schemas/agentic_service_harness_approved_branch_workspace_creation_preflight.schema.json"
+    )
+    assert workspace_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-preflight:1"
+    )
+    assert workspace_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

@@ -1,0 +1,111 @@
+{
+  "report_id": "agentic_service_harness_approved_branch_workspace_creation_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_task_creation_admission_preflight.foundation.json",
+    "examples/agentic_service_harness_temporary_branch_workspace_preflight.foundation.json",
+    "examples/agentic_service_harness_workspace_sandbox_preflight.foundation.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_creation_preflight_id": "task-creation-admission-foundation",
+    "temporary_workspace_preflight_id": "run.branchwrite",
+    "workspace_sandbox_preflight_id": "workspace-sandbox-preflight-foundation",
+    "approval_gate_id": "gate.branchwrite",
+    "foundation_phase": "foundation_approved_branch_workspace_creation_preflight",
+    "preflight_only": true,
+    "read_only_sources": true,
+    "branch_workspace_creation_admitted": false,
+    "branch_created": false,
+    "filesystem_write_enabled": false,
+    "cleanup_verified": false,
+    "secret_values_serialized": false
+  },
+  "approval_binding": {
+    "requested_action": "create_approved_branch_workspace",
+    "requested_route_ref": "route://harness/branch-workspace/create/not-admitted",
+    "approval_state": "AWAITING_OPERATOR_APPROVAL",
+    "task_creation_admission_valid": true,
+    "temporary_workspace_policy_valid": true,
+    "workspace_sandbox_policy_valid": true,
+    "operator_approval_collected": false,
+    "uao_admission_collected": false,
+    "cleanup_evidence_collected": false,
+    "workspace_create_route_admitted": false,
+    "branch_name_template": "codex/harness-approved-workspace-{run_id}",
+    "workspace_mode": "approved_branch_workspace_preflight_only",
+    "required_before_create_refs": [
+      "approval://operator/branch-workspace-create",
+      "evidence://task-creation-admission-remains-blocked",
+      "evidence://temporary-branch-workspace-preflight-valid",
+      "evidence://workspace-sandbox-preflight-valid",
+      "evidence://cleanup-receipt-plan"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/not-collected",
+      "blocked://uao-admission/not-collected",
+      "blocked://cleanup-evidence/not-collected",
+      "blocked://branch-workspace/create-not-admitted",
+      "blocked://filesystem-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "next_required_evidence_refs": [
+      "evidence://dry-run-test-runner-plan-receipt",
+      "evidence://task-record-write-uao-admission",
+      "approval://adapter-execution/operator-decision"
+    ]
+  },
+  "required_evidence": {
+    "must_have_before_workspace_create": [
+      "approval://operator/branch-workspace-create",
+      "evidence://cleanup-receipt-plan",
+      "evidence://workspace-path-confinement"
+    ],
+    "must_have_before_filesystem_write": [
+      "evidence://branch-workspace-created-with-approval",
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://secret-redaction-policy"
+    ],
+    "must_have_before_adapter_execution": [
+      "approval://adapter-execution/operator-decision",
+      "evidence://worker-lease-sandbox-boundary",
+      "evidence://dry-run-test-runner-plan-receipt"
+    ],
+    "must_have_before_receipt_append": [
+      "evidence://receipt-store-write-path",
+      "evidence://receipt-redaction-policy",
+      "evidence://receipt-append-rollback-plan"
+    ]
+  },
+  "authority_denials": {
+    "branch_workspace_create_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-approved-branch-workspace-creation-preflight",
+      "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add dry-run test runner plan receipt; keep branch workspace creation, filesystem writes, adapter execution, receipt append, connector calls, secrets, and terminal closure blocked until approval, UAO, cleanup, and rollback evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
