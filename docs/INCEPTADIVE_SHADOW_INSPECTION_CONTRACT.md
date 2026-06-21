@@ -1,7 +1,8 @@
 # InceptaDive Shadow Inspection Contract
 
 Purpose: define the request, response, redaction, replay, and authority
-contract for `POST /api/v1/shadow/inspect`.
+contract for `POST /api/v1/shadow/inspect` and the external-effect advisory
+projection route.
 
 Governance scope: advisory-only symbolic intelligence inspection. The route can
 classify request risk, emit redacted findings, and record a redacted receipt; it
@@ -27,6 +28,17 @@ appear in the response envelope.
 | Receipt behavior | redacted receipt metadata is returned when the runtime emits a receipt |
 | Replay fixture | `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json` |
 
+External-effect advisory route:
+
+| Field | Value |
+| --- | --- |
+| Method | `POST` |
+| Path | `/api/v1/shadow/external-effect/advisory` |
+| Authority | advisory-only |
+| Runtime entry point | `InceptaDiveShadowRuntime.external_effect_advisory` |
+| Receipt behavior | no new shadow receipt; response exposes counts and obligations only |
+| Output status | `AwaitingEvidence`, `GovernanceBlocked`, or `SolvedUnverified` |
+
 ## Request Body
 
 | Field | Type | Meaning |
@@ -44,6 +56,7 @@ appear in the response envelope.
 | `memory_contradiction` | boolean | Marks unresolved memory contradiction pressure. |
 | `retrieval_receipt_ids` | array | Retrieval receipt references; response exposes only counts. |
 | `required_evidence_refs` | array | Required evidence references for preflight; response exposes only counts. |
+| `authority_receipt_refs` | array | External-effect advisory route only; response exposes only counts. |
 | `created_at` | string | Optional deterministic timestamp; falls back to registered clock. |
 
 Invalid `stage` or `risk_level` values fail closed with HTTP `400` and a bounded
@@ -73,6 +86,12 @@ The `receipt` object may include receipt id, request id, mode, stage, context
 hash, result id, finding ids, retrieval receipt count, shadow verdict,
 governance verdict placeholder, created timestamp, and snapshot hash. It must
 not include raw request text or raw evidence refs.
+
+The external-effect `advisory` object may include action families, authority
+obligations, evidence obligations, missing-obligation labels, reference counts,
+the recommended outcome, and the recommended next action. It must not include
+raw request text, raw evidence refs, raw authority refs, private memory, live
+adapter handles, connector dispatch handles, or any execution authority flag.
 
 ## Runtime Fallbacks
 
@@ -121,8 +140,12 @@ Any future change that grants one of those powers must be a separate governed
 capability-authority PR with new schemas, approval evidence, rollback evidence,
 and route-family authority witnesses.
 
+`POST /api/v1/shadow/external-effect/advisory` follows the same authority
+boundary. It exposes external-effect obligations for operator visibility only;
+it cannot satisfy those obligations by itself.
+
 STATUS:
-  Completeness: route contract and replay witness defined
-  Invariants verified: advisory-only, redacted response, receipt-count exposure, no execution authority
+  Completeness: route contract, replay witness, and external-effect advisory projection defined
+  Invariants verified: advisory-only, redacted response, receipt-count exposure, no execution authority, no connector dispatch authority
   Open issues: none
   Next action: keep replay fixture aligned with route response shape

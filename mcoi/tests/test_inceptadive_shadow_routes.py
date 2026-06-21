@@ -298,6 +298,109 @@ def test_shadow_inspect_route_respects_disabled_runtime_posture() -> None:
     assert "disabled-secret-token" not in str(payload)
 
 
+def test_external_effect_advisory_route_returns_missing_obligations_redacted() -> None:
+    previous_store = dict(deps._store)
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "request_id": "shadow-route-external-effect-001",
+                "stage": "preflight",
+                "user_input": "deploy it with secret-token",
+                "candidate_action": "deploy it with secret-token",
+                "risk_level": "high",
+                "external_side_effect": True,
+                "created_at": "2026-06-21T00:00:00+00:00",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    advisory = payload["advisory"]
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["registered"] is True
+    assert payload["execution_authority"] is False
+    assert payload["connector_dispatch_authority"] is False
+    assert payload["memory_write_authority"] is False
+    assert payload["governance_verdict_authority"] is False
+    assert advisory["recommended_outcome"] == "AwaitingEvidence"
+    assert advisory["awaiting_evidence"] is True
+    assert "deployment:governance_verdict" in advisory["missing_authority_obligations"]
+    assert "deployment:evidence_ref" in advisory["missing_evidence_obligations"]
+    assert advisory["execution_authority"] is False
+    assert "deploy it with secret-token" not in str(payload)
+    assert "secret-token" not in str(payload)
+
+
+def test_external_effect_advisory_route_closes_refs_without_exposing_refs() -> None:
+    previous_store = dict(deps._store)
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "request_id": "shadow-route-external-effect-002",
+                "stage": "preflight",
+                "user_input": "send approved receipt",
+                "candidate_action": "send approved receipt",
+                "explicit_target": "operator-review-inbox",
+                "scope": "support-workflow",
+                "risk_level": "high",
+                "external_side_effect": True,
+                "required_evidence_refs": ["approval-secret-ref"],
+                "authority_receipt_refs": ["authority-secret-ref"],
+                "created_at": "2026-06-21T00:00:00+00:00",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    advisory = payload["advisory"]
+    assert response.status_code == 200
+    assert advisory["recommended_outcome"] == "SolvedUnverified"
+    assert advisory["missing_authority_obligations"] == []
+    assert advisory["missing_evidence_obligations"] == []
+    assert advisory["required_evidence_ref_count"] == 1
+    assert advisory["authority_receipt_count"] == 1
+    assert advisory["connector_dispatch_authority"] is False
+    assert payload["raw_request_text_exposed"] is False
+    assert "approval-secret-ref" not in str(payload)
+    assert "authority-secret-ref" not in str(payload)
+
+
+def test_external_effect_advisory_route_rejects_invalid_request_bounded() -> None:
+    previous_store = dict(deps._store)
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "stage": "preflight",
+                "user_input": "send notice",
+                "risk_level": "not-a-severity",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    detail = response.json()["detail"]
+    assert response.status_code == 400
+    assert detail["error"] == "invalid external-effect advisory request"
+    assert detail["error_code"] == "invalid_external_effect_advisory_request"
+    assert detail["governed"] is True
+    assert "not-a-severity" not in str(response.json())
+
+
 def test_default_routers_include_shadow_inspect_path() -> None:
     app = FastAPI()
     include_default_routers(app)
@@ -306,3 +409,4 @@ def test_default_routers_include_shadow_inspect_path() -> None:
     assert "/api/v1/health/shadow" in paths
     assert "/api/v1/console/shadow" in paths
     assert "/api/v1/shadow/inspect" in paths
+    assert "/api/v1/shadow/external-effect/advisory" in paths

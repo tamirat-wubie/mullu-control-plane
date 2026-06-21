@@ -54,6 +54,12 @@ class ShadowInspectRequest(BaseModel):
     created_at: str = ""
 
 
+class ExternalEffectAdvisoryRequest(ShadowInspectRequest):
+    """Request body for a redacted external-effect boundary advisory."""
+
+    authority_receipt_refs: list[object] = Field(default_factory=list)
+
+
 @router.get("/api/v1/health/shadow")
 def shadow_health() -> dict[str, object]:
     """Read-only shadow subsystem health posture."""
@@ -80,21 +86,7 @@ def shadow_inspect(req: ShadowInspectRequest) -> dict[str, object]:
     created_at = req.created_at.strip() or _created_at()
     try:
         stage = _shadow_stage(req.stage)
-        context = ShadowContext(
-            request_id=_inspect_request_id(req, created_at=created_at, stage=stage),
-            stage=stage,
-            user_input=req.user_input,
-            normal_intent=req.normal_intent,
-            normal_plan=_tuple_text(req.normal_plan),
-            candidate_action=req.candidate_action,
-            explicit_target=req.explicit_target,
-            scope=req.scope,
-            risk_level=_shadow_severity(req.risk_level),
-            external_side_effect=req.external_side_effect,
-            memory_contradiction=req.memory_contradiction,
-            retrieval_receipt_ids=_tuple_text(req.retrieval_receipt_ids),
-            created_at=created_at,
-        ).with_integrity()
+        context = _shadow_context_from_request(req, created_at=created_at, stage=stage)
         if stage == ShadowStage.PREFLIGHT:
             result, receipt = runtime.preflight_action(
                 context,
@@ -120,6 +112,44 @@ def shadow_inspect(req: ShadowInspectRequest) -> dict[str, object]:
             "receipt_count": len(recent_receipts),
         },
         "execution_authority": False,
+        "raw_request_text_exposed": False,
+        "private_memory_exposed": False,
+    }
+
+
+@router.post("/api/v1/shadow/external-effect/advisory")
+def shadow_external_effect_advisory(req: ExternalEffectAdvisoryRequest) -> dict[str, object]:
+    """Return redacted external-effect authority and evidence obligations."""
+
+    _inc_metric("requests_governed")
+    runtime, registered = _shadow_runtime()
+    created_at = req.created_at.strip() or _created_at()
+    try:
+        stage = _shadow_stage(req.stage)
+        context = _shadow_context_from_request(req, created_at=created_at, stage=stage)
+        advisory = runtime.external_effect_advisory(
+            context,
+            required_evidence_refs=_tuple_text(req.required_evidence_refs),
+            authority_receipt_refs=_tuple_text(req.authority_receipt_refs),
+        )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        _inc_metric("requests_rejected")
+        raise HTTPException(
+            status_code=400,
+            detail=_shadow_error_detail(
+                "invalid external-effect advisory request",
+                "invalid_external_effect_advisory_request",
+            ),
+        ) from exc
+
+    return {
+        "governed": True,
+        "registered": registered,
+        "advisory": advisory.to_dict(),
+        "execution_authority": False,
+        "connector_dispatch_authority": False,
+        "memory_write_authority": False,
+        "governance_verdict_authority": False,
         "raw_request_text_exposed": False,
         "private_memory_exposed": False,
     }
@@ -172,6 +202,24 @@ def _inspect_request_id(req: ShadowInspectRequest, *, created_at: str, stage: Sh
             "created_at": created_at,
         },
     )
+
+
+def _shadow_context_from_request(req: ShadowInspectRequest, *, created_at: str, stage: ShadowStage) -> ShadowContext:
+    return ShadowContext(
+        request_id=_inspect_request_id(req, created_at=created_at, stage=stage),
+        stage=stage,
+        user_input=req.user_input,
+        normal_intent=req.normal_intent,
+        normal_plan=_tuple_text(req.normal_plan),
+        candidate_action=req.candidate_action,
+        explicit_target=req.explicit_target,
+        scope=req.scope,
+        risk_level=_shadow_severity(req.risk_level),
+        external_side_effect=req.external_side_effect,
+        memory_contradiction=req.memory_contradiction,
+        retrieval_receipt_ids=_tuple_text(req.retrieval_receipt_ids),
+        created_at=created_at,
+    ).with_integrity()
 
 
 def _shadow_stage(value: str) -> ShadowStage:

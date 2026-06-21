@@ -73,6 +73,8 @@ Shadow path:
 - Feature-flagged application integration facade.
 - Read-only `POST /api/v1/shadow/inspect` route with a dedicated contract in
   `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
+- Read-only `POST /api/v1/shadow/external-effect/advisory` route exposing
+  redacted authority/evidence obligation status for operator visibility.
 - Replay fixture in
   `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json` proving redacted
   response and receipt-count behavior.
@@ -129,7 +131,7 @@ unavailable, instead of silently pretending that a full live adapter engine has
 run.
 
 STATUS:
-  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, and external-effect boundary advisory added
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, external-effect boundary advisory, and route projection added
   Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority
   Open issues: live external-effect adapter engine remains intentionally deferred
   Next action: keep full effect-bearing integration behind explicit governance and live adapter evidence
