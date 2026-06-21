@@ -54,7 +54,7 @@ The projection is backed by checked-in, no-effect fixtures and contracts:
 
 ## Schema and fixture
 
-- Schema: `schemas/governed_work_assistant_operator_dashboard.schema.json`
+- Local schema contract: `docs/contracts/governed_work_assistant_operator_dashboard.schema.json`
 - Fixture: `examples/governed_work_assistant_operator_dashboard.json`
 - Validator: `scripts/validate_governed_work_assistant_operator_dashboard.py`
 
