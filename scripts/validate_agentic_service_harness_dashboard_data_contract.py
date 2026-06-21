@@ -296,6 +296,7 @@ def _validate_dashboard_semantics(
     _validate_screen_states(example, errors, label)
     _validate_receipt_refs(example, errors, label)
     _validate_validators(example, errors, label)
+    _validate_next_action(example, errors, label)
     _validate_boolean_flags(example, errors, label)
     _validate_secret_surface(example, errors, label)
     _validate_no_mutation_routes(example, errors, label)
@@ -469,6 +470,23 @@ def _validate_no_mutation_routes(
     for path, value in _walk_strings(payload):
         if MUTATION_ROUTE_PATTERN.search(value):
             errors.append(f"{label}: mutation route string at {path}")
+
+
+def _validate_next_action(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str):
+        errors.append(f"{label}: next_action must be a string")
+        return
+    for required_phrase in (
+        "task creation admission",
+        "LoopStatus",
+        "Receipt",
+        "EvidenceBundle",
+        "before any dashboard UI",
+        "append-disabled",
+    ):
+        if required_phrase not in next_action:
+            errors.append(f"{label}: next_action must mention {required_phrase}")
 
 
 def _check_value(

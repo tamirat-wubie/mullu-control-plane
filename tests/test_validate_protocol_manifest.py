@@ -91,6 +91,17 @@ def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_proje
     assert evidence_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_receipt_evidence_read_models() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["agentic-service-harness-receipt-evidence-read-models"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/agentic_service_harness_receipt_evidence_read_models.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:agentic-service-harness-receipt-evidence-read-models:1"
+    assert receipt_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

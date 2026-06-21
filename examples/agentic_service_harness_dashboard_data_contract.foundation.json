@@ -458,7 +458,7 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Add contract-only GitHub/Codex adapter registry; keep dashboard UI creation, route registration, mutation endpoints, adapter execution, receipt append, and terminal closure blocked.",
+  "next_action": "Add task creation admission preflight before any dashboard UI or task creation route is admitted; keep Receipt, EvidenceBundle, and LoopStatus read models append-disabled and mutation-blocked.",
   "report_is_not_terminal_closure": true,
   "terminal_closure_required": true
 }

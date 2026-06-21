@@ -11,8 +11,8 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - Receipt remains closed as a read-only append-disabled projection.
+  - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - LoopStatus remains closed as a read-only projection.
   - The first next PR advances to task creation admission after LoopStatus
     closes.
@@ -57,13 +57,15 @@ REQUIRED_READY_SYMBOLS = (
     "RepositoryConnection",
     "AgentRun",
     "ApprovalRequest",
+    "Receipt",
     "AgentAdapter",
     "EvidenceBundle",
-    "Receipt",
     "LoopStatus",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
     "WorkspaceSandbox",
+    "AgentRunReceipt",
+    "LoopStatus",
     "ResultSummary",
 )
 REQUIRED_DENIALS = (
@@ -247,9 +249,9 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
     _validate_approval_request_ready(map_text, errors)
+    _validate_receipt_ready(map_text, errors)
     _validate_agent_adapter_ready(map_text, errors)
     _validate_evidence_bundle_ready(map_text, errors)
-    _validate_receipt_ready(map_text, errors)
     _validate_loopstatus_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
