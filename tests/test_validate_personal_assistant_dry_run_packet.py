@@ -189,6 +189,19 @@ def test_validate_dry_run_packet_rejects_open_closure_when_required(tmp_path: Pa
     assert any(step.name == "require closed" and not step.passed for step in validation.steps)
 
 
+def test_validate_dry_run_packet_rejects_missing_calendar_conflict_proof(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    packet["closure_summary"]["calendar_conflict_checked"] = False  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_dry_run_packet(packet_path=packet_path, require_closed=True)
+
+    assert validation.valid is False
+    assert validation.dry_run_packet_closed is True
+    assert any(step.name == "schema contract" and not step.passed for step in validation.steps)
+    assert any(step.name == "closure gate" and not step.passed for step in validation.steps)
+
+
 def test_validate_dry_run_packet_cli_writes_report(tmp_path: Path, capsys: object) -> None:
     packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
     packet_path = _write_json(tmp_path, "packet.json", packet)

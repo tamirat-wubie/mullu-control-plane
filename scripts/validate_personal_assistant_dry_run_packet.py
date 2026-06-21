@@ -240,7 +240,7 @@ def _check_topology(payload: dict[str, Any]) -> PersonalAssistantDryRunPacketVal
     acyclic = _acyclic(stages)
     summary = _object(payload.get("topology_summary"))
     passed = (
-        len(stages) == 10
+        len(stages) == 12
         and unique_stage_ids
         and predecessors_valid
         and acyclic
@@ -302,6 +302,12 @@ def _check_closure_gate(payload: dict[str, Any]) -> PersonalAssistantDryRunPacke
         "acyclic_topology",
         "all_bindings_resolved",
         "approval_gate_before_effect_bearing_actions",
+        "calendar_conflict_checked",
+        "task_intake_projected",
+        "draft_response_projected",
+        "approval_request_projected",
+        "no_send_proven",
+        "memory_admission_candidate_reviewed",
         "no_effect_boundaries_clear",
         "no_secret_values_serialized",
     )
@@ -401,7 +407,13 @@ def _approval_gates_before_effects(stages: list[dict[str, Any]]) -> bool:
         effect_boundary = str(stage.get("effect_boundary"))
         requires_gate = risk_level in {"P4", "P5"} or any(
             marker in effect_boundary
-            for marker in ("external_email_send", "system_write", "calendar_write", "task_write", "memory_write")
+            for marker in (
+                "external_email_send",
+                "system_write_allowed",
+                "calendar_write_allowed",
+                "task_write_allowed",
+                "memory_write_allowed",
+            )
         )
         if not requires_gate:
             continue
