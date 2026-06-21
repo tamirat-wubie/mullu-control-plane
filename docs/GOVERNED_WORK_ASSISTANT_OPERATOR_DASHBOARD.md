@@ -51,6 +51,7 @@ The projection is backed by checked-in, no-effect fixtures and local docs contra
 - `examples/personal_assistant_receipt_draft_only.json`
 - `examples/personal_assistant_readiness_index_receipt.json`
 - `docs/GOVERNED_WORK_ASSISTANT_DEMO_NAMING.md`
+- `docs/contracts/governed_work_assistant_operator_dashboard.schema.json`
 
 ## Schema and fixture
 
@@ -60,7 +61,7 @@ The projection is backed by checked-in, no-effect fixtures and local docs contra
 
 ## Protocol-manifest boundary
 
-This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs to become a public protocol schema, move it into `schemas/` and register it in `schemas/mullu_governance_protocol.manifest.json` in the same PR.
+This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs to become a public protocol schema, move it into `schemas/` and register it in the protocol manifest in the same PR.
 
 ## Admission rule
 
