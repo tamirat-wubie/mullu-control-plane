@@ -1,0 +1,93 @@
+{
+  "schema_version": "reasoning.judgment_integrity_gate.v1",
+  "gate_id": "mullu_judgment_integrity_gate.foundation.v1",
+  "purpose": "Fail-close unsupported reasoning judgments before they become completion, implementation, or runtime claims.",
+  "governance_scope": ["OCE", "RAG", "CDCV", "CQTE", "UWMA", "SRCA", "PRS"],
+  "dependencies": [
+    "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+    "governance/reasoning_method_registry.yaml",
+    "governance/weakness_taxonomy.yaml",
+    "governance/reasoning_edge_case_forge.yaml"
+  ],
+  "invariants": [
+    "foundation_mode_required:true",
+    "runtime_behavior_change_allowed:false",
+    "unsupported_completion_claims_rejected_without_evidence",
+    "concept_spec_code_runtime_scope_separation",
+    "high_confidence_requires_evidence_refs",
+    "local_contradiction_cannot_be_global_truth",
+    "recursive_refinement_stops_on_empty_delta",
+    "metaphor_interface_language_cannot_override_mechanism"
+  ],
+  "foundation_mode_required": true,
+  "runtime_behavior_change_allowed": false,
+  "default_outcome": "AwaitingEvidence",
+  "scope_boundaries": ["concept", "spec", "code", "runtime"],
+  "confidence": {
+    "high_confidence_floor": 0.85,
+    "high_confidence_requires_evidence_refs": true,
+    "missing_evidence_outcome": "Fail(high_confidence_without_evidence)"
+  },
+  "completion_claim_policy": {
+    "completion_claims_require_evidence_refs": true,
+    "completion_claims_require_validator_refs": true,
+    "implementation_claims_require_code_refs": true,
+    "runtime_claims_require_runtime_witness_refs": true,
+    "missing_required_ref_outcome": "Fail(unsupported_completion_claim)"
+  },
+  "contradiction_policy": {
+    "local_contradiction_cannot_be_global_truth": true,
+    "global_truth_requires_scope_witness": true,
+    "missing_scope_witness_outcome": "Fail(local_contradiction_globalized)"
+  },
+  "recursive_refinement_policy": {
+    "constructive_delta_field": "constructive_deltas",
+    "fracture_delta_field": "fracture_deltas",
+    "stop_when_both_delta_sets_empty": true,
+    "empty_delta_stop_reason": "no_new_constructive_or_fracture_delta",
+    "unbounded_loop_outcome": "Fail(unbounded_recursive_refinement)"
+  },
+  "metaphor_policy": {
+    "metaphor_interface_language_cannot_override_mechanism": true,
+    "mechanism_refs_required_for_mechanism_claim": true,
+    "missing_mechanism_ref_outcome": "Fail(metaphor_over_mechanism)"
+  },
+  "fail_closed_rules": [
+    {
+      "rule_id": "unsupported_completion_claim",
+      "blocked": true,
+      "requires": ["evidence_refs", "validator_refs"],
+      "reject_reason": "completion claim lacks evidence or validator references"
+    },
+    {
+      "rule_id": "scope_confusion_claim",
+      "blocked": true,
+      "requires": ["declared_scope", "scope_boundary"],
+      "reject_reason": "concept/spec/code/runtime scopes are confused"
+    },
+    {
+      "rule_id": "high_confidence_without_evidence",
+      "blocked": true,
+      "requires": ["evidence_refs"],
+      "reject_reason": "high confidence requires evidence references"
+    },
+    {
+      "rule_id": "local_contradiction_globalized",
+      "blocked": true,
+      "requires": ["scope_witness_ref"],
+      "reject_reason": "local contradiction cannot become global truth"
+    },
+    {
+      "rule_id": "unbounded_recursive_refinement",
+      "blocked": true,
+      "requires": ["constructive_deltas", "fracture_deltas", "stop_condition"],
+      "reject_reason": "recursive refinement lacks empty-delta termination"
+    },
+    {
+      "rule_id": "metaphor_over_mechanism",
+      "blocked": true,
+      "requires": ["mechanism_refs"],
+      "reject_reason": "metaphor or interface language cannot override mechanism"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": "reasoning.method_registry.v1",
+  "registry_id": "mullu_reasoning_method_registry.foundation.v1",
+  "purpose": "Register the bounded reasoning methods admitted by the Reasoning Integrity Mesh.",
+  "governance_scope": ["OCE", "RAG", "CDCV", "CQTE", "UWMA", "SRCA", "PRS"],
+  "dependencies": [
+    "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+    "governance/judgment_integrity_gate.yaml",
+    "governance/weakness_taxonomy.yaml",
+    "governance/reasoning_edge_case_forge.yaml"
+  ],
+  "invariants": [
+    "runtime_behavior_change_allowed:false",
+    "completion_claims_require_evidence_refs",
+    "scope_classification_precedes_judgment",
+    "method_outputs_are_auditable"
+  ],
+  "foundation_mode_required": true,
+  "runtime_behavior_change_allowed": false,
+  "methods": [
+    {
+      "method_id": "scope_classifier",
+      "scope_class": "cross_scope",
+      "purpose": "Classify a claim as concept, spec, code, runtime, or mixed before judgment.",
+      "required_inputs": ["claim_text", "declared_scope", "evidence_refs"],
+      "required_evidence_refs": ["docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md#2-scope-boundary"],
+      "output_contract": ["scope", "scope_conflict", "blocked_claims"],
+      "blocked_claims": ["concept_claims_code", "spec_claims_runtime", "code_claims_live_runtime"],
+      "failure_mode": "Fail(scope_confusion_claim)",
+      "governance_laws": ["OCE", "RAG", "CDCV"]
+    },
+    {
+      "method_id": "evidence_bound_completion_check",
+      "scope_class": "cross_scope",
+      "purpose": "Permit completion claims only when named evidence and validator references exist.",
+      "required_inputs": ["claim_text", "evidence_refs", "validator_refs", "open_issues"],
+      "required_evidence_refs": ["governance/judgment_integrity_gate.yaml"],
+      "output_contract": ["completion_claim_allowed", "missing_evidence", "reject_reason"],
+      "blocked_claims": ["unsupported_completion_claim", "false_implementation_claim"],
+      "failure_mode": "Fail(unsupported_completion_claim)",
+      "governance_laws": ["OCE", "CDCV", "UWMA", "PRS"]
+    },
+    {
+      "method_id": "confidence_evidence_gate",
+      "scope_class": "cross_scope",
+      "purpose": "Require evidence references before a high-confidence judgment can pass.",
+      "required_inputs": ["confidence", "evidence_refs", "judgment"],
+      "required_evidence_refs": ["governance/judgment_integrity_gate.yaml"],
+      "output_contract": ["confidence_band", "evidence_required", "reject_reason"],
+      "blocked_claims": ["high_confidence_without_evidence"],
+      "failure_mode": "Fail(high_confidence_without_evidence)",
+      "governance_laws": ["CQTE", "UWMA", "PRS"]
+    },
+    {
+      "method_id": "contradiction_scope_limiter",
+      "scope_class": "cross_scope",
+      "purpose": "Keep contradictions local until global evidence proves a wider scope.",
+      "required_inputs": ["contradiction_refs", "local_scope", "globalization_evidence_refs"],
+      "required_evidence_refs": ["governance/weakness_taxonomy.yaml"],
+      "output_contract": ["contradiction_scope", "global_truth_allowed", "reject_reason"],
+      "blocked_claims": ["local_contradiction_globalized"],
+      "failure_mode": "Fail(local_contradiction_globalized)",
+      "governance_laws": ["RAG", "CDCV", "CQTE"]
+    },
+    {
+      "method_id": "recursive_delta_settlement",
+      "scope_class": "cross_scope",
+      "purpose": "Stop recursive refinement when no new constructive or fracture delta exists.",
+      "required_inputs": ["iteration_index", "constructive_deltas", "fracture_deltas"],
+      "required_evidence_refs": ["docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md#7-recursive-refinement-termination"],
+      "output_contract": ["continue_refinement", "stop_reason", "delta_counts"],
+      "blocked_claims": ["unbounded_recursive_refinement"],
+      "failure_mode": "Fail(unbounded_recursive_refinement)",
+      "governance_laws": ["SRCA", "CQTE", "PRS"]
+    },
+    {
+      "method_id": "metaphor_mechanism_guard",
+      "scope_class": "cross_scope",
+      "purpose": "Prevent metaphor or interface language from being treated as governance mechanism.",
+      "required_inputs": ["claim_text", "mechanism_refs", "interface_terms"],
+      "required_evidence_refs": ["governance/reasoning_edge_case_forge.yaml"],
+      "output_contract": ["mechanism_bound", "metaphor_detected", "reject_reason"],
+      "blocked_claims": ["metaphor_over_mechanism"],
+      "failure_mode": "Fail(metaphor_over_mechanism)",
+      "governance_laws": ["OCE", "RAG", "CDCV"]
+    }
+  ]
+}
