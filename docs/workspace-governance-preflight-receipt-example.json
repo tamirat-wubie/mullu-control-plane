@@ -1,5 +1,5 @@
 {
-  "check_count": 259,
+  "check_count": 263,
   "checks": [
     {
       "args": [
@@ -312,6 +312,45 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "[PASS] component_authority_envelope_witnesses\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_component_passports.py"
+      ],
+      "name": "component_passports",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] component_passports\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_component_authority_fuse.py"
+      ],
+      "name": "component_authority_fuse",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] component_authority_fuse\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_component_claim_firewall.py"
+      ],
+      "name": "component_claim_firewall",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] component_claim_firewall\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2710,6 +2749,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_reasoning_integrity_mesh.py"
+      ],
+      "name": "reasoning_integrity_mesh",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] reasoning_integrity_mesh\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_life_meaning_governance.py"
       ],
       "name": "life_meaning_governance",
@@ -3422,7 +3474,7 @@
       "termination_signal": null
     }
   ],
-  "generated_at_epoch": 1893456000.0,
+  "generated_at_epoch": 1710000000.0,
   "receipt_id": "workspace_governance_preflight_receipt",
   "receipt_is_not_terminal_closure": true,
   "status": "passed",

@@ -3816,15 +3816,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_gate_satisfaction_evaluator.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_gate_satisfaction_evaluator.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_gate_satisfaction_evaluator.py",
             ],
-            "Component Harness promotion gate-satisfaction evaluator consumes accepted record-only evidence to mark evidence gates satisfied while action gates, promotion approval, route mutation, execution, connector, mutation, and terminal-closure authority remain blocked.",
+            "Component Harness promotion gate-satisfaction evaluator consumes accepted record-only evidence and the target component authority-fuse denial to mark evidence gates satisfied while action gates, promotion approval, route mutation, execution, connector, mutation, and terminal-closure authority remain blocked.",
             [
                 "component_route_family_promotion_gate_satisfaction_evaluator_schema_valid",
                 "component_route_family_promotion_gate_satisfaction_evaluator_match_runtime_projection",
@@ -4735,6 +4739,176 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_authority_envelope_witnesses_reject_missing_evidence": [
                     "component_authority_envelope_witnesses_reject_missing_evidence",
+                ],
+            },
+        ),
+        _surface(
+            "component_passports",
+            ["component_passports"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_passports.py",
+                "schemas/component_passports.schema.json",
+                "examples/component_passports.foundation.json",
+                "scripts/validate_component_passports.py",
+                "tests/test_validate_component_passports.py",
+            ],
+            "Component Harness passports fuse registry identity, lifecycle, authority, proof, receipt, health, dependency, blocked-action, evidence, and validation posture into one read-only trust envelope while denying live execution and terminal closure.",
+            [
+                "component_passports_validate_and_write",
+                "component_passports_reject_missing_component_passport",
+                "component_passports_reject_authority_drift",
+                "component_passports_reject_lifecycle_drift",
+                "component_passports_reject_missing_evidence",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_passports_validate_and_write": [
+                    "component_passports_validate_and_write",
+                ],
+                "component_passports_reject_missing_component_passport": [
+                    "component_passports_reject_missing_component_passport",
+                ],
+                "component_passports_reject_authority_drift": [
+                    "component_passports_reject_authority_drift",
+                ],
+                "component_passports_reject_lifecycle_drift": [
+                    "component_passports_reject_lifecycle_drift",
+                ],
+                "component_passports_reject_missing_evidence": [
+                    "component_passports_reject_missing_evidence",
+                ],
+            },
+        ),
+        _surface(
+            "component_authority_fuse",
+            ["component_authority_fuse"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
+                "schemas/component_authority_fuse.schema.json",
+                "examples/component_authority_fuse.foundation.json",
+                "scripts/validate_component_authority_fuse.py",
+                "tests/test_validate_component_authority_fuse.py",
+            ],
+            "Component Harness authority fuses bind each passport to blocked self-upgrade records and require external evidence before any authority transition can advance.",
+            [
+                "component_authority_fuse_validate_and_write",
+                "component_authority_fuse_reject_missing_component_fuse",
+                "component_authority_fuse_reject_self_upgrade_drift",
+                "component_authority_fuse_reject_authority_level_drift",
+                "component_authority_fuse_reject_missing_fuse_requirement",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_authority_fuse_validate_and_write": [
+                    "component_authority_fuse_validate_and_write",
+                ],
+                "component_authority_fuse_reject_missing_component_fuse": [
+                    "component_authority_fuse_reject_missing_component_fuse",
+                ],
+                "component_authority_fuse_reject_self_upgrade_drift": [
+                    "component_authority_fuse_reject_self_upgrade_drift",
+                ],
+                "component_authority_fuse_reject_authority_level_drift": [
+                    "component_authority_fuse_reject_authority_level_drift",
+                ],
+                "component_authority_fuse_reject_missing_fuse_requirement": [
+                    "component_authority_fuse_reject_missing_fuse_requirement",
+                ],
+            },
+        ),
+        _surface(
+            "component_claim_firewall",
+            ["component_claim_firewall"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_claim_firewall.py",
+                "schemas/component_claim_firewall.schema.json",
+                "examples/component_claim_firewall.foundation.json",
+                "scripts/validate_component_claim_firewall.py",
+                "tests/test_validate_component_claim_firewall.py",
+            ],
+            "Component Harness claim firewall blocks public, product, live, autonomous, compliance, SLA, and terminal-readiness claims that outrun component passports and authority-fuse evidence while allowing only bounded evidence-backed claims.",
+            [
+                "component_claim_firewall_validate_and_write",
+                "component_claim_firewall_reject_blocked_claim_allowed",
+                "component_claim_firewall_reject_missing_blocked_claim",
+                "component_claim_firewall_reject_allowed_claim_without_evidence",
+                "component_claim_firewall_reject_missing_validator_ref",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_claim_firewall_validate_and_write": [
+                    "component_claim_firewall_validate_and_write",
+                ],
+                "component_claim_firewall_reject_blocked_claim_allowed": [
+                    "component_claim_firewall_reject_blocked_claim_allowed",
+                ],
+                "component_claim_firewall_reject_missing_blocked_claim": [
+                    "component_claim_firewall_reject_missing_blocked_claim",
+                ],
+                "component_claim_firewall_reject_allowed_claim_without_evidence": [
+                    "component_claim_firewall_reject_allowed_claim_without_evidence",
+                ],
+                "component_claim_firewall_reject_missing_validator_ref": [
+                    "component_claim_firewall_reject_missing_validator_ref",
+                ],
+            },
+        ),
+        _surface(
+            "reasoning_integrity_mesh",
+            ["reasoning_integrity_mesh"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+                "governance/reasoning_method_registry.yaml",
+                "governance/judgment_integrity_gate.yaml",
+                "governance/weakness_taxonomy.yaml",
+                "governance/reasoning_edge_case_forge.yaml",
+                "scripts/validate_reasoning_integrity_mesh.py",
+                "tests/governance/test_reasoning_integrity_mesh.py",
+            ],
+            "Reasoning integrity mesh binds completion claims, scope separation, high-confidence evidence, local contradiction limits, recursive termination, and mechanism-proof guards to fail-closed governance artifacts without changing runtime behavior.",
+            [
+                "reasoning_integrity_mesh_default_pack_validates",
+                "reasoning_integrity_mesh_rejects_missing_acceptance_anchor",
+                "reasoning_integrity_mesh_rejects_registry_drift",
+                "reasoning_integrity_mesh_rejects_gate_policy_drift",
+                "reasoning_integrity_mesh_rejects_taxonomy_drift",
+                "reasoning_integrity_mesh_rejects_edge_case_forge_drift",
+                "reasoning_integrity_mesh_exposes_required_ids",
+            ],
+            runtime_witness_anchor_aliases={
+                "reasoning_integrity_mesh_default_pack_validates": [
+                    "reasoning_integrity_mesh_default_pack_validates",
+                ],
+                "reasoning_integrity_mesh_rejects_missing_acceptance_anchor": [
+                    "reasoning_integrity_document_reports_missing_acceptance_anchor",
+                ],
+                "reasoning_integrity_mesh_rejects_registry_drift": [
+                    "registry_reports_missing_method_and_incomplete_contract",
+                ],
+                "reasoning_integrity_mesh_rejects_gate_policy_drift": [
+                    "gate_rejects_high_confidence_and_completion_policy_drift",
+                ],
+                "reasoning_integrity_mesh_rejects_taxonomy_drift": [
+                    "taxonomy_requires_hard_weakness_detection_and_repair",
+                ],
+                "reasoning_integrity_mesh_rejects_edge_case_forge_drift": [
+                    "edge_case_forge_requires_gate_rule_alignment_and_positive_case",
+                ],
+                "reasoning_integrity_mesh_exposes_required_ids": [
+                    "default_artifacts_expose_required_ids",
                 ],
             },
         ),
@@ -14549,6 +14723,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_component_authority_envelope_witnesses",
             "surfaces": ["component_authority_envelope_witnesses"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_passports",
+            "surfaces": ["component_passports"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_authority_fuse",
+            "surfaces": ["component_authority_fuse"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_claim_firewall",
+            "surfaces": ["component_claim_firewall"],
             "status": "closed",
         },
         {

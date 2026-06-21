@@ -98,6 +98,7 @@ def validate_component_route_family_promotion_gate_satisfaction_evaluator(
     *,
     schema_path: Path = DEFAULT_SCHEMA,
     example_path: Path = DEFAULT_EXAMPLE,
+    validate_dependencies: bool = False,
 ) -> ComponentRouteFamilyPromotionGateSatisfactionEvaluatorValidation:
     """Validate gate-satisfaction evaluator schema, example, and runtime projection."""
 
@@ -105,12 +106,13 @@ def validate_component_route_family_promotion_gate_satisfaction_evaluator(
     schema = _load_json_object(schema_path, "component route-family promotion gate-satisfaction schema", errors)
     example = _load_json_object(example_path, "component route-family promotion gate-satisfaction example", errors)
 
-    operator_records_validation = validate_component_route_family_promotion_operator_submitted_evidence_records()
-    if not operator_records_validation.ok:
-        errors.extend(
-            f"component route-family promotion operator-submitted evidence records validation failed: {error}"
-            for error in operator_records_validation.errors
-        )
+    if validate_dependencies:
+        operator_records_validation = validate_component_route_family_promotion_operator_submitted_evidence_records()
+        if not operator_records_validation.ok:
+            errors.extend(
+                f"component route-family promotion operator-submitted evidence records validation failed: {error}"
+                for error in operator_records_validation.errors
+            )
 
     runtime_report = build_component_route_family_promotion_gate_satisfaction_evaluator()
     if schema and example:
@@ -173,6 +175,8 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
         errors.append(f"{label}: all_record_evidence_gates_satisfied must be true")
     if report.get("all_action_gates_satisfied") is not False:
         errors.append(f"{label}: all_action_gates_satisfied must be false")
+    if report.get("authority_fuse_enforced") is not True:
+        errors.append(f"{label}: authority_fuse_enforced must be true")
     for field_name in (
         "gate_satisfaction_is_not_execution_authority",
         "gate_satisfaction_is_not_promotion_authority",
@@ -236,6 +240,11 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
         errors.append(f"{label}: satisfied_gate_evaluation_refs must match gate_evaluation_ids")
     if set(_string_list(report.get("accepted_record_refs"))) != set(accepted_record_ids):
         errors.append(f"{label}: accepted_record_refs must match source operator record ids")
+    authority_fuse_refs = _string_list(report.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        errors.append(f"{label}: authority_fuse_refs must contain exactly one target component fuse")
+    if _string_list(report.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: authority_fuse_blocking_refs must match authority_fuse_refs")
 
     observed_gates: set[str] = set()
     evaluated_count = 0
@@ -251,6 +260,7 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
     accepted_evidence_count = 0
     rejected_evidence_count = 0
     authority_grant_count = 0
+    gate_authority_fuse_refs: set[str] = set()
     reported_required = set(_string_list(report.get("approval_evidence_required")))
     submission_channels = set(_string_list(report.get("operator_submission_channels")))
     if not REQUIRED_APPROVAL_EVIDENCE <= reported_required:
@@ -280,6 +290,7 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
         if evaluation.get("satisfies_action_requirement") is True:
             action_requirement_count += 1
         authority_decision_count += len(_string_list(evaluation.get("authority_decision_refs")))
+        gate_authority_fuse_refs.update(_string_list(evaluation.get("authority_fuse_refs")))
         promotion_approval_count += len(_string_list(evaluation.get("promotion_approval_refs")))
         accepted_evidence_count += len(_string_list(evaluation.get("accepted_evidence_refs")))
         rejected_evidence_count += len(_string_list(evaluation.get("rejected_evidence_refs")))
@@ -292,6 +303,8 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
 
     if observed_gates != TARGET_GATES:
         errors.append(f"{label}: gate_evaluations must cover exactly {sorted(TARGET_GATES)}")
+    if gate_authority_fuse_refs != set(authority_fuse_refs):
+        errors.append(f"{label}: every gate evaluation must reference the target authority fuse")
 
     expected_counts = {
         "gate_evaluation_count": len(evaluations),
@@ -309,6 +322,7 @@ def _validate_gate_satisfaction_semantics(report: dict[str, Any], errors: list[s
         "rejected_evidence_count": rejected_evidence_count,
         "approval_artifact_requirement_count": len(reported_required),
         "authority_grant_count": authority_grant_count,
+        "authority_fuse_blocking_count": len(authority_fuse_refs),
     }
     for field_name, expected_count in expected_counts.items():
         if summary.get(field_name) != expected_count:
@@ -351,6 +365,8 @@ def _validate_gate_evaluation(evaluation: dict[str, Any], errors: list[str], lab
         "satisfies_evidence_requirement",
         "blocks_promotion",
         "requires_separate_authority_decision",
+        "requires_external_authority_upgrade_evidence",
+        "authority_fuse_blocks_promotion",
         "requires_route_binding_decision",
         "requires_lifecycle_transition",
         "requires_terminal_closure",
@@ -372,6 +388,8 @@ def _validate_gate_evaluation(evaluation: dict[str, Any], errors: list[str], lab
     accepted_record_refs = _string_list(evaluation.get("accepted_record_refs"))
     if accepted_record_refs != [str(evaluation.get("source_operator_submitted_record_id"))]:
         errors.append(f"{label}: gate {gate_id} accepted_record_refs must contain only the source record id")
+    if len(_string_list(evaluation.get("authority_fuse_refs"))) != 1:
+        errors.append(f"{label}: gate {gate_id} authority_fuse_refs must contain exactly one authority fuse")
     for field_name in (
         "authority_decision_refs",
         "promotion_approval_refs",
@@ -436,6 +454,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     validation = validate_component_route_family_promotion_gate_satisfaction_evaluator(
         schema_path=Path(args.schema),
         example_path=Path(args.example),
+        validate_dependencies=args.strict,
     )
     write_component_route_family_promotion_gate_satisfaction_evaluator_validation(
         validation,

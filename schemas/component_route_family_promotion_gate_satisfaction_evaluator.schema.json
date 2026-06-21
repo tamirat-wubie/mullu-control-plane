@@ -26,6 +26,7 @@
     "separate_route_binding_decision_required",
     "separate_lifecycle_transition_required",
     "terminal_closure_required",
+    "authority_fuse_enforced",
     "live_execution_enabled",
     "live_connector_send_enabled",
     "can_execute",
@@ -41,6 +42,8 @@
     "accepted_record_refs",
     "rejected_record_refs",
     "authority_decision_refs",
+    "authority_fuse_refs",
+    "authority_fuse_blocking_refs",
     "promotion_approval_refs",
     "submitted_evidence_refs",
     "accepted_evidence_refs",
@@ -79,6 +82,7 @@
     "separate_route_binding_decision_required": { "type": "boolean", "const": true },
     "separate_lifecycle_transition_required": { "type": "boolean", "const": true },
     "terminal_closure_required": { "type": "boolean", "const": true },
+    "authority_fuse_enforced": { "type": "boolean", "const": true },
     "live_execution_enabled": { "type": "boolean", "const": false },
     "live_connector_send_enabled": { "type": "boolean", "const": false },
     "can_execute": { "type": "boolean", "const": false },
@@ -91,6 +95,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "component_authority_fuse",
         "operator_submitted_evidence_records",
         "submitted_evidence_payload_examples",
         "promotion_approval_intake",
@@ -98,6 +103,7 @@
         "proof_matrix"
       ],
       "properties": {
+        "component_authority_fuse": { "$ref": "#/$defs/repo_path" },
         "operator_submitted_evidence_records": { "$ref": "#/$defs/repo_path" },
         "submitted_evidence_payload_examples": { "$ref": "#/$defs/repo_path" },
         "promotion_approval_intake": { "$ref": "#/$defs/repo_path" },
@@ -129,6 +135,20 @@
     },
     "rejected_record_refs": { "$ref": "#/$defs/empty_refs" },
     "authority_decision_refs": { "$ref": "#/$defs/empty_refs" },
+    "authority_fuse_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "authority_fuse_blocking_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
     "promotion_approval_refs": { "$ref": "#/$defs/empty_refs" },
     "submitted_evidence_refs": { "$ref": "#/$defs/empty_refs" },
     "accepted_evidence_refs": { "$ref": "#/$defs/empty_refs" },
@@ -207,7 +227,8 @@
         "accepted_evidence_count",
         "rejected_evidence_count",
         "approval_artifact_requirement_count",
-        "authority_grant_count"
+        "authority_grant_count",
+        "authority_fuse_blocking_count"
       ],
       "properties": {
         "gate_evaluation_count": { "type": "integer", "const": 4 },
@@ -224,7 +245,8 @@
         "accepted_evidence_count": { "type": "integer", "const": 0 },
         "rejected_evidence_count": { "type": "integer", "const": 0 },
         "approval_artifact_requirement_count": { "type": "integer", "minimum": 1 },
-        "authority_grant_count": { "type": "integer", "const": 0 }
+        "authority_grant_count": { "type": "integer", "const": 0 },
+        "authority_fuse_blocking_count": { "type": "integer", "const": 1 }
       }
     },
     "gate_evaluation": {
@@ -250,6 +272,8 @@
         "satisfies_action_requirement",
         "blocks_promotion",
         "requires_separate_authority_decision",
+        "requires_external_authority_upgrade_evidence",
+        "authority_fuse_blocks_promotion",
         "requires_route_binding_decision",
         "requires_lifecycle_transition",
         "requires_terminal_closure",
@@ -262,6 +286,7 @@
         "grants_terminal_closure",
         "accepted_record_refs",
         "authority_decision_refs",
+        "authority_fuse_refs",
         "promotion_approval_refs",
         "accepted_evidence_refs",
         "rejected_evidence_refs",
@@ -303,6 +328,8 @@
         "satisfies_action_requirement": { "type": "boolean", "const": false },
         "blocks_promotion": { "type": "boolean", "const": true },
         "requires_separate_authority_decision": { "type": "boolean", "const": true },
+        "requires_external_authority_upgrade_evidence": { "type": "boolean", "const": true },
+        "authority_fuse_blocks_promotion": { "type": "boolean", "const": true },
         "requires_route_binding_decision": { "type": "boolean", "const": true },
         "requires_lifecycle_transition": { "type": "boolean", "const": true },
         "requires_terminal_closure": { "type": "boolean", "const": true },
@@ -321,6 +348,13 @@
           "items": { "$ref": "#/$defs/identifier" }
         },
         "authority_decision_refs": { "$ref": "#/$defs/empty_refs" },
+        "authority_fuse_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
         "promotion_approval_refs": { "$ref": "#/$defs/empty_refs" },
         "accepted_evidence_refs": { "$ref": "#/$defs/empty_refs" },
         "rejected_evidence_refs": { "$ref": "#/$defs/empty_refs" },

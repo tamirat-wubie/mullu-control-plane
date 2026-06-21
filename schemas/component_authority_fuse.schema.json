@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-authority-fuse:1",
+  "title": "Mullu Component Authority Fuse",
+  "description": "Foundation-stage Component Harness authority fuse set. It blocks component self-upgrade and live authority claims until external evidence exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "fuse_set_id",
+    "mode",
+    "source_refs",
+    "fuse_set_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "terminal_closure_required",
+    "authority_transition_ladder",
+    "required_fuse_evidence",
+    "summary",
+    "fuses",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "fuse_set_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_passports"
+      ],
+      "properties": {
+        "component_passports": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "fuse_set_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "authority_transition_ladder": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "required_fuse_evidence": {
+      "$ref": "#/$defs/non_empty_string_list"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "fuses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/fuse"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "non_empty_string_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "fuse_count",
+        "blocked_self_upgrade_count",
+        "approved_live_action_count",
+        "terminal_closure_allowed_count"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fuse_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blocked_self_upgrade_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "approved_live_action_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "terminal_closure_allowed_count": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "fuse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fuse_id",
+        "component_id",
+        "current_authority_level",
+        "requested_authority_level",
+        "fuse_state",
+        "decision",
+        "outcome",
+        "self_upgrade_allowed",
+        "can_upgrade_authority",
+        "can_mutate_authority_envelope",
+        "can_enable_live_action",
+        "terminal_closure_allowed",
+        "required_evidence",
+        "missing_evidence",
+        "present_evidence_refs",
+        "required_validator_refs",
+        "fuse_is_not_execution_authority",
+        "fuse_is_not_terminal_closure"
+      ],
+      "properties": {
+        "fuse_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "component_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "current_authority_level": {
+          "$ref": "#/$defs/identifier"
+        },
+        "requested_authority_level": {
+          "$ref": "#/$defs/identifier"
+        },
+        "fuse_state": {
+          "type": "string",
+          "const": "blocked"
+        },
+        "decision": {
+          "type": "string",
+          "const": "blocked"
+        },
+        "outcome": {
+          "type": "string",
+          "const": "GovernanceBlocked"
+        },
+        "self_upgrade_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_upgrade_authority": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate_authority_envelope": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_enable_live_action": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "required_evidence": {
+          "$ref": "#/$defs/non_empty_string_list"
+        },
+        "missing_evidence": {
+          "$ref": "#/$defs/non_empty_string_list"
+        },
+        "present_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required_validator_refs": {
+          "$ref": "#/$defs/non_empty_string_list"
+        },
+        "fuse_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "fuse_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

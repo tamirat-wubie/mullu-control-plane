@@ -82,16 +82,23 @@ def test_component_route_family_promotion_gate_satisfaction_evaluator_match_runt
     assert example["all_record_evidence_gates_satisfied"] is True
     assert example["all_action_gates_satisfied"] is False
     assert example["gate_satisfaction_is_not_promotion_authority"] is True
+    assert example["authority_fuse_enforced"] is True
+    assert example["authority_fuse_refs"] == example["authority_fuse_blocking_refs"]
+    assert len(example["authority_fuse_refs"]) == 1
     assert example["ready_for_promotion"] is False
     assert example["summary"]["record_evidence_satisfied_gate_count"] == 4
     assert example["summary"]["action_satisfied_gate_count"] == 0
     assert example["summary"]["authority_decision_count"] == 0
     assert example["summary"]["promotion_approval_count"] == 0
+    assert example["summary"]["authority_fuse_blocking_count"] == 1
     assert route_gate["satisfaction_state"] == "satisfied_record_only"
     assert route_gate["satisfies_evidence_requirement"] is True
     assert route_gate["satisfies_action_requirement"] is False
+    assert route_gate["authority_fuse_blocks_promotion"] is True
+    assert route_gate["authority_fuse_refs"] == example["authority_fuse_refs"]
     assert authority_gate["grants_connector_authority"] is False
     assert authority_gate["requires_separate_authority_decision"] is True
+    assert authority_gate["requires_external_authority_upgrade_evidence"] is True
 
 
 def test_component_route_family_promotion_gate_satisfaction_evaluator_reject_authority_overclaim(
@@ -104,8 +111,13 @@ def test_component_route_family_promotion_gate_satisfaction_evaluator_reject_aut
     payload["outcome"] = "SolvedUnverified"
     payload["can_execute"] = True
     payload["ready_for_promotion"] = True
+    payload["authority_fuse_enforced"] = False
+    payload["authority_fuse_refs"] = []
+    payload["authority_fuse_blocking_refs"] = []
     authority_gate["grants_connector_authority"] = True
     authority_gate["requires_separate_authority_decision"] = False
+    authority_gate["authority_fuse_blocks_promotion"] = False
+    authority_gate["authority_fuse_refs"] = []
     payload["blocked_actions"].remove("terminal_closure")
 
     validation = validate_component_route_family_promotion_gate_satisfaction_evaluator(
@@ -117,8 +129,12 @@ def test_component_route_family_promotion_gate_satisfaction_evaluator_reject_aut
     assert "decision must remain blocked" in serialized_errors
     assert "outcome must be AwaitingEvidence" in serialized_errors
     assert "can_execute" in serialized_errors
+    assert "authority_fuse_enforced must be true" in serialized_errors
+    assert "authority_fuse_refs must contain exactly one target component fuse" in serialized_errors
     assert "grants_connector_authority must be false" in serialized_errors
     assert "requires_separate_authority_decision must be true" in serialized_errors
+    assert "authority_fuse_blocks_promotion must be true" in serialized_errors
+    assert "authority_fuse_refs must contain exactly one authority fuse" in serialized_errors
     assert "blocked_actions must include terminal_closure" in serialized_errors
 
 

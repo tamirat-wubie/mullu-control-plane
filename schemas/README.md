@@ -36,6 +36,9 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
 | `claim_verification_report.schema.json` | Canonical claim graph verification report for support, contradiction, freshness, and execution admission |
 | `code_change_physics_packet.schema.json` | Canonical non-executing code-change physics packet for governance, creative path discovery, and repair planning |
+| `component_authority_fuse.schema.json` | Canonical read-only Component Harness authority fuse set blocking component self-upgrade and live authority claims |
+| `component_claim_firewall.schema.json` | Canonical read-only Component Harness claim firewall blocking public and product claims that outrun component authority, proof, and fuse evidence |
+| `component_passports.schema.json` | Canonical read-only Component Harness passport set binding component identity, lifecycle, authority, proof, receipt, health, dependency, blocked-action, and validation posture |
 | `repository_observation_evidence_packet.schema.json` | Canonical digest-only repository observation evidence packet for Foundation examples and live local read-only planning evidence |
 | `commercial_metering_snapshot.schema.json` | Canonical commercial metering snapshot with plans, usage, provider costs, decisions, and tenant billing summaries |
 | `economic_intelligence_snapshot.schema.json` | Canonical governed economic routing snapshot with utility decisions, blocked candidates, and policy override closure |

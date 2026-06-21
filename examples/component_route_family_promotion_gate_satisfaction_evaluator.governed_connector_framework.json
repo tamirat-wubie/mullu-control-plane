@@ -19,6 +19,13 @@
     "selected_component_bound_router_inventory_delta"
   ],
   "authority_decision_refs": [],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_enforced": true,
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "blocked_actions": [
     "autonomous_execution",
     "connector_call",
@@ -60,7 +67,11 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1"
       ],
       "authority_decision_refs": [],
-      "blocking_reason": "route_binding_gate has record-evidence satisfaction but still requires separate authority decision",
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "blocking_reason": "route_binding_gate has record-evidence satisfaction but authority fuse component_authority_fuse.gmail_account_binding_gate.foundation.v1 still blocks promotion",
       "blocks_promotion": true,
       "evaluation_state": "evaluated",
       "evidence_key": "missing_selected_component_route_binding",
@@ -80,6 +91,7 @@
       "record_kind": "route_binding",
       "record_proof_state": "Pass",
       "rejected_evidence_refs": [],
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_route_binding_decision": true,
       "requires_separate_authority_decision": true,
@@ -99,7 +111,11 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.lifecycle_gate.v1"
       ],
       "authority_decision_refs": [],
-      "blocking_reason": "lifecycle_gate has record-evidence satisfaction but still requires separate authority decision",
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "blocking_reason": "lifecycle_gate has record-evidence satisfaction but authority fuse component_authority_fuse.gmail_account_binding_gate.foundation.v1 still blocks promotion",
       "blocks_promotion": true,
       "evaluation_state": "evaluated",
       "evidence_key": "missing_lifecycle_transition_receipt",
@@ -119,6 +135,7 @@
       "record_kind": "lifecycle_transition",
       "record_proof_state": "Pass",
       "rejected_evidence_refs": [],
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_route_binding_decision": true,
       "requires_separate_authority_decision": true,
@@ -138,7 +155,11 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.authority_upgrade_gate.v1"
       ],
       "authority_decision_refs": [],
-      "blocking_reason": "authority_upgrade_gate has record-evidence satisfaction but still requires separate authority decision",
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "blocking_reason": "authority_upgrade_gate has record-evidence satisfaction but authority fuse component_authority_fuse.gmail_account_binding_gate.foundation.v1 still blocks promotion",
       "blocks_promotion": true,
       "evaluation_state": "evaluated",
       "evidence_key": "missing_authority_upgrade_witness",
@@ -158,6 +179,7 @@
       "record_kind": "authority_upgrade",
       "record_proof_state": "Pass",
       "rejected_evidence_refs": [],
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_route_binding_decision": true,
       "requires_separate_authority_decision": true,
@@ -177,7 +199,11 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.product_specific_boundary_gate.v1"
       ],
       "authority_decision_refs": [],
-      "blocking_reason": "product_specific_boundary_gate has record-evidence satisfaction but still requires separate authority decision",
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "blocking_reason": "product_specific_boundary_gate has record-evidence satisfaction but authority fuse component_authority_fuse.gmail_account_binding_gate.foundation.v1 still blocks promotion",
       "blocks_promotion": true,
       "evaluation_state": "evaluated",
       "evidence_key": "generic_connector_surface_not_product_specific_authority",
@@ -197,6 +223,7 @@
       "record_kind": "product_specific_ownership",
       "record_proof_state": "Pass",
       "rejected_evidence_refs": [],
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_route_binding_decision": true,
       "requires_separate_authority_decision": true,
@@ -220,7 +247,7 @@
   "live_execution_enabled": false,
   "mode": "foundation",
   "mutates_router_inventory": false,
-  "next_action": "Create a separate promotion authority decision report that can consume record-evidence gate satisfaction while still requiring route-binding, lifecycle, authority, and terminal-closure witnesses.",
+  "next_action": "Create a separate promotion authority decision report that can consume record-evidence gate satisfaction and authority-fuse denial while still requiring external upgrade evidence.",
   "operator_submission_channels": [
     "authority_upgrade_witness",
     "component_lifecycle_transition_receipt",
@@ -249,6 +276,7 @@
   "separate_lifecycle_transition_required": true,
   "separate_route_binding_decision_required": true,
   "source_refs": {
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "operator_submitted_evidence_records": "examples/component_route_family_promotion_operator_submitted_evidence_records.governed_connector_framework.json",
     "promotion_approval_intake": "examples/component_route_family_promotion_approval_intake.governed_connector_framework.json",
     "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
@@ -262,6 +290,7 @@
     "action_satisfied_gate_count": 0,
     "approval_artifact_requirement_count": 8,
     "authority_decision_count": 0,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "blocking_gate_count": 4,
     "evaluated_gate_count": 4,
@@ -279,6 +308,7 @@
   "validators": [
     "component_route_family_promotion_gate_satisfaction_evaluator_validator",
     "component_route_family_promotion_gate_satisfaction_evaluator_tests",
-    "component_route_family_promotion_operator_submitted_evidence_records_validator"
+    "component_route_family_promotion_operator_submitted_evidence_records_validator",
+    "component_authority_fuse_validator"
   ]
 }

@@ -1,0 +1,107 @@
+{
+  "schema_version": "reasoning.edge_case_forge.v1",
+  "forge_id": "mullu_reasoning_edge_case_forge.foundation.v1",
+  "purpose": "Define deterministic reasoning edge cases for the integrity gate and validator tests.",
+  "governance_scope": ["OCE", "RAG", "CDCV", "CQTE", "UWMA", "SRCA", "PRS"],
+  "dependencies": [
+    "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+    "governance/judgment_integrity_gate.yaml",
+    "governance/weakness_taxonomy.yaml"
+  ],
+  "invariants": [
+    "negative_cases_fail_closed",
+    "positive_case_requires_evidence_refs",
+    "case_expected_rules_match_gate_rules"
+  ],
+  "foundation_mode_required": true,
+  "runtime_behavior_change_allowed": false,
+  "cases": [
+    {
+      "case_id": "concept_claims_runtime_completion",
+      "input_scope": "concept",
+      "claim": "The concept exists, therefore the runtime is complete.",
+      "evidence_refs": [],
+      "validator_refs": [],
+      "expected_outcome": "Fail(scope_confusion_claim)",
+      "expected_rule_id": "scope_confusion_claim"
+    },
+    {
+      "case_id": "spec_claims_code_implementation",
+      "input_scope": "spec",
+      "claim": "The specification exists, therefore the code is implemented.",
+      "evidence_refs": ["docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md"],
+      "validator_refs": [],
+      "expected_outcome": "Fail(scope_confusion_claim)",
+      "expected_rule_id": "scope_confusion_claim"
+    },
+    {
+      "case_id": "code_claims_live_runtime",
+      "input_scope": "code",
+      "claim": "The validator exists, therefore live runtime behavior is proven.",
+      "evidence_refs": ["scripts/validate_reasoning_integrity_mesh.py"],
+      "validator_refs": ["tests/governance/test_reasoning_integrity_mesh.py"],
+      "expected_outcome": "Fail(scope_confusion_claim)",
+      "expected_rule_id": "scope_confusion_claim"
+    },
+    {
+      "case_id": "completion_claim_without_evidence",
+      "input_scope": "code",
+      "claim": "The issue is fully complete.",
+      "evidence_refs": [],
+      "validator_refs": [],
+      "expected_outcome": "Fail(unsupported_completion_claim)",
+      "expected_rule_id": "unsupported_completion_claim"
+    },
+    {
+      "case_id": "high_confidence_without_evidence",
+      "input_scope": "spec",
+      "claim": "Confidence is 0.95 with no evidence references.",
+      "confidence": 0.95,
+      "evidence_refs": [],
+      "validator_refs": [],
+      "expected_outcome": "Fail(high_confidence_without_evidence)",
+      "expected_rule_id": "high_confidence_without_evidence"
+    },
+    {
+      "case_id": "local_contradiction_claims_global_truth",
+      "input_scope": "spec",
+      "claim": "One local contradiction means every related rule is globally false.",
+      "evidence_refs": ["governance/weakness_taxonomy.yaml"],
+      "validator_refs": [],
+      "expected_outcome": "Fail(local_contradiction_globalized)",
+      "expected_rule_id": "local_contradiction_globalized"
+    },
+    {
+      "case_id": "recursive_refinement_empty_delta_loop",
+      "input_scope": "cross_scope",
+      "claim": "Keep refining even though no constructive or fracture delta exists.",
+      "constructive_deltas": [],
+      "fracture_deltas": [],
+      "expected_outcome": "Fail(unbounded_recursive_refinement)",
+      "expected_rule_id": "unbounded_recursive_refinement"
+    },
+    {
+      "case_id": "metaphor_replaces_mechanism",
+      "input_scope": "concept",
+      "claim": "The mesh resonates, therefore the governance mechanism exists.",
+      "mechanism_refs": [],
+      "expected_outcome": "Fail(metaphor_over_mechanism)",
+      "expected_rule_id": "metaphor_over_mechanism"
+    },
+    {
+      "case_id": "evidence_bound_completion_claim",
+      "input_scope": "code",
+      "claim": "The local validator and focused tests passed for this pack.",
+      "evidence_refs": [
+        "scripts/validate_reasoning_integrity_mesh.py",
+        "tests/governance/test_reasoning_integrity_mesh.py"
+      ],
+      "validator_refs": [
+        "python scripts/validate_reasoning_integrity_mesh.py",
+        "python -m pytest tests/governance/test_reasoning_integrity_mesh.py -q"
+      ],
+      "expected_outcome": "Pass",
+      "expected_rule_id": "evidence_bound_completion_check"
+    }
+  ]
+}

@@ -1124,6 +1124,58 @@ def test_component_route_family_promotion_gate_satisfaction_evaluator_surface_is
     )
 
 
+def test_reasoning_integrity_mesh_surface_is_proven() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    reasoning_surface = surfaces["reasoning_integrity_mesh"]
+    witnesses = set(reasoning_surface["runtime_witnesses"])
+
+    assert reasoning_surface["coverage_state"] == "proven"
+    assert reasoning_surface["representative_paths"] == ["reasoning_integrity_mesh"]
+    assert "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md" in reasoning_surface["evidence_files"]
+    assert "governance/reasoning_method_registry.yaml" in reasoning_surface["evidence_files"]
+    assert "governance/judgment_integrity_gate.yaml" in reasoning_surface["evidence_files"]
+    assert "governance/weakness_taxonomy.yaml" in reasoning_surface["evidence_files"]
+    assert "governance/reasoning_edge_case_forge.yaml" in reasoning_surface["evidence_files"]
+    assert "scripts/validate_reasoning_integrity_mesh.py" in reasoning_surface["evidence_files"]
+    assert "tests/governance/test_reasoning_integrity_mesh.py" in reasoning_surface["evidence_files"]
+    assert reasoning_surface["runtime_witnesses"] == [
+        "reasoning_integrity_mesh_default_pack_validates",
+        "reasoning_integrity_mesh_rejects_missing_acceptance_anchor",
+        "reasoning_integrity_mesh_rejects_registry_drift",
+        "reasoning_integrity_mesh_rejects_gate_policy_drift",
+        "reasoning_integrity_mesh_rejects_taxonomy_drift",
+        "reasoning_integrity_mesh_rejects_edge_case_forge_drift",
+        "reasoning_integrity_mesh_exposes_required_ids",
+    ]
+    assert "reasoning_integrity_mesh_default_pack_validates" in witnesses
+    assert "reasoning_integrity_mesh_rejects_edge_case_forge_drift" in witnesses
+
+
+def test_component_claim_firewall_surface_is_proven() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    firewall_surface = surfaces["component_claim_firewall"]
+    witnesses = set(firewall_surface["runtime_witnesses"])
+
+    assert firewall_surface["coverage_state"] == "proven"
+    assert firewall_surface["representative_paths"] == ["component_claim_firewall"]
+    assert "mcoi/mcoi_runtime/app/component_claim_firewall.py" in firewall_surface["evidence_files"]
+    assert "schemas/component_claim_firewall.schema.json" in firewall_surface["evidence_files"]
+    assert "examples/component_claim_firewall.foundation.json" in firewall_surface["evidence_files"]
+    assert "scripts/validate_component_claim_firewall.py" in firewall_surface["evidence_files"]
+    assert "tests/test_validate_component_claim_firewall.py" in firewall_surface["evidence_files"]
+    assert firewall_surface["runtime_witnesses"] == [
+        "component_claim_firewall_validate_and_write",
+        "component_claim_firewall_reject_blocked_claim_allowed",
+        "component_claim_firewall_reject_missing_blocked_claim",
+        "component_claim_firewall_reject_allowed_claim_without_evidence",
+        "component_claim_firewall_reject_missing_validator_ref",
+    ]
+    assert "component_claim_firewall_validate_and_write" in witnesses
+    assert "component_claim_firewall_reject_allowed_claim_without_evidence" in witnesses
+
+
 def test_component_route_family_promotion_authority_decision_report_surface_is_blocked() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

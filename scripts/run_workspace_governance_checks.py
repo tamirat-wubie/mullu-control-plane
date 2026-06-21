@@ -214,6 +214,18 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_component_authority_envelope_witnesses.py"),
         ),
         CheckCommand(
+            "component_passports",
+            (python_executable, "scripts/validate_component_passports.py"),
+        ),
+        CheckCommand(
+            "component_authority_fuse",
+            (python_executable, "scripts/validate_component_authority_fuse.py"),
+        ),
+        CheckCommand(
+            "component_claim_firewall",
+            (python_executable, "scripts/validate_component_claim_firewall.py"),
+        ),
+        CheckCommand(
             "component_router_inventory",
             (python_executable, "scripts/validate_component_router_inventory.py"),
         ),
@@ -1080,6 +1092,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "logic_governance_application",
             (python_executable, "scripts/validate_logic_governance_application.py"),
+        ),
+        CheckCommand(
+            "reasoning_integrity_mesh",
+            (python_executable, "scripts/validate_reasoning_integrity_mesh.py"),
         ),
         CheckCommand(
             "life_meaning_governance",

@@ -18,6 +18,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from mcoi_runtime.app.component_authority_fuse import (
+    ComponentAuthorityFuseError,
+    build_component_authority_fuse,
+)
 from mcoi_runtime.app.component_route_family_promotion_operator_submitted_evidence_records import (
     ComponentRouteFamilyPromotionOperatorSubmittedEvidenceRecordsError,
     build_component_route_family_promotion_operator_submitted_evidence_records,
@@ -58,6 +62,7 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
     surface_id: str = DEFAULT_TARGET_SURFACE_ID,
     component_id: str = DEFAULT_TARGET_COMPONENT_ID,
     operator_submitted_records_report: dict[str, Any] | None = None,
+    authority_fuse_set: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return deterministic record-evidence gate-satisfaction evaluations.
 
@@ -97,12 +102,17 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
             "gate-satisfaction evaluation requires accepted records to remain non-authoritative"
         )
 
+    fuse_set = authority_fuse_set or _build_authority_fuse_set()
+    authority_fuse = _target_authority_fuse(fuse_set, component_id)
+    authority_fuse_id = _required_text(authority_fuse, "fuse_id", f"authority fuse for {component_id}")
+
     records = _operator_submitted_records(records_report)
-    evaluations = [_gate_evaluation(record, surface_id) for record in records]
+    evaluations = [_gate_evaluation(record, surface_id, authority_fuse_id) for record in records]
     approval_evidence_required = list(_string_list(records_report.get("approval_evidence_required")))
     satisfied_gate_refs = [str(evaluation["gate_evaluation_id"]) for evaluation in evaluations]
     accepted_record_refs = [str(evaluation["source_operator_submitted_record_id"]) for evaluation in evaluations]
-    summary = _summary(evaluations, approval_evidence_required)
+    authority_fuse_refs = [authority_fuse_id]
+    summary = _summary(evaluations, approval_evidence_required, authority_fuse_refs)
     return {
         "schema_version": SCHEMA_VERSION,
         "gate_satisfaction_evaluator_id": (
@@ -126,6 +136,7 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
         "separate_route_binding_decision_required": True,
         "separate_lifecycle_transition_required": True,
         "terminal_closure_required": True,
+        "authority_fuse_enforced": True,
         "live_execution_enabled": False,
         "live_connector_send_enabled": False,
         "can_execute": False,
@@ -135,6 +146,7 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
         "mutates_router_inventory": False,
         "ready_for_promotion": False,
         "source_refs": {
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "operator_submitted_evidence_records": (
                 "examples/"
                 "component_route_family_promotion_operator_submitted_evidence_records.governed_connector_framework.json"
@@ -155,6 +167,8 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
         "accepted_record_refs": accepted_record_refs,
         "rejected_record_refs": [],
         "authority_decision_refs": [],
+        "authority_fuse_refs": authority_fuse_refs,
+        "authority_fuse_blocking_refs": authority_fuse_refs,
         "promotion_approval_refs": [],
         "submitted_evidence_refs": [],
         "accepted_evidence_refs": [],
@@ -167,10 +181,11 @@ def build_component_route_family_promotion_gate_satisfaction_evaluator(
             "component_route_family_promotion_gate_satisfaction_evaluator_validator",
             "component_route_family_promotion_gate_satisfaction_evaluator_tests",
             "component_route_family_promotion_operator_submitted_evidence_records_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create a separate promotion authority decision report that can consume record-evidence gate "
-            "satisfaction while still requiring route-binding, lifecycle, authority, and terminal-closure witnesses."
+            "satisfaction and authority-fuse denial while still requiring external upgrade evidence."
         ),
     }
 
@@ -183,6 +198,60 @@ def _build_operator_records(surface_id: str, component_id: str) -> dict[str, Any
         )
     except ComponentRouteFamilyPromotionOperatorSubmittedEvidenceRecordsError as exc:
         raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(str(exc)) from exc
+
+
+def _build_authority_fuse_set() -> dict[str, Any]:
+    try:
+        return build_component_authority_fuse()
+    except ComponentAuthorityFuseError as exc:
+        raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(str(exc)) from exc
+
+
+def _target_authority_fuse(fuse_set: dict[str, Any], component_id: str) -> dict[str, Any]:
+    if fuse_set.get("fuse_set_is_not_execution_authority") is not True:
+        raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+            "authority fuse set must remain non-execution authority"
+        )
+    if fuse_set.get("live_execution_enabled") is not False or fuse_set.get("live_connector_send_enabled") is not False:
+        raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+            "authority fuse set must deny live execution and connector send"
+        )
+    fuses = fuse_set.get("fuses")
+    if not isinstance(fuses, list):
+        raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError("authority fuse set must contain fuses")
+    matching = [fuse for fuse in fuses if isinstance(fuse, dict) and fuse.get("component_id") == component_id]
+    if len(matching) != 1:
+        raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+            f"authority fuse set must contain exactly one fuse for {component_id}"
+        )
+    authority_fuse = matching[0]
+    expected_values = {
+        "fuse_state": "blocked",
+        "decision": "blocked",
+        "outcome": "GovernanceBlocked",
+    }
+    for field_name, expected_value in expected_values.items():
+        if authority_fuse.get(field_name) != expected_value:
+            raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+                f"authority fuse {component_id} {field_name} must be {expected_value}"
+            )
+    for field_name in (
+        "self_upgrade_allowed",
+        "can_upgrade_authority",
+        "can_mutate_authority_envelope",
+        "can_enable_live_action",
+        "terminal_closure_allowed",
+    ):
+        if authority_fuse.get(field_name) is not False:
+            raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+                f"authority fuse {component_id} {field_name} must be false"
+            )
+    for field_name in ("fuse_is_not_execution_authority", "fuse_is_not_terminal_closure"):
+        if authority_fuse.get(field_name) is not True:
+            raise ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError(
+                f"authority fuse {component_id} {field_name} must be true"
+            )
+    return authority_fuse
 
 
 def _operator_submitted_records(report: dict[str, Any]) -> list[dict[str, Any]]:
@@ -219,7 +288,7 @@ def _operator_submitted_records(report: dict[str, Any]) -> list[dict[str, Any]]:
     return output
 
 
-def _gate_evaluation(record: dict[str, Any], surface_id: str) -> dict[str, Any]:
+def _gate_evaluation(record: dict[str, Any], surface_id: str, authority_fuse_id: str) -> dict[str, Any]:
     gate_id = _required_text(record, "gate_id", "operator-submitted evidence record")
     return {
         "gate_evaluation_id": f"promotion_gate_satisfaction_evaluation.{surface_id}.{gate_id}.v1",
@@ -261,6 +330,8 @@ def _gate_evaluation(record: dict[str, Any], surface_id: str) -> dict[str, Any]:
         "satisfies_action_requirement": False,
         "blocks_promotion": True,
         "requires_separate_authority_decision": True,
+        "requires_external_authority_upgrade_evidence": True,
+        "authority_fuse_blocks_promotion": True,
         "requires_route_binding_decision": True,
         "requires_lifecycle_transition": True,
         "requires_terminal_closure": True,
@@ -273,14 +344,22 @@ def _gate_evaluation(record: dict[str, Any], surface_id: str) -> dict[str, Any]:
         "grants_terminal_closure": False,
         "accepted_record_refs": [_required_text(record, "operator_submitted_record_id", f"operator-submitted evidence record {gate_id}")],
         "authority_decision_refs": [],
+        "authority_fuse_refs": [authority_fuse_id],
         "promotion_approval_refs": [],
         "accepted_evidence_refs": [],
         "rejected_evidence_refs": [],
-        "blocking_reason": f"{gate_id} has record-evidence satisfaction but still requires separate authority decision",
+        "blocking_reason": (
+            f"{gate_id} has record-evidence satisfaction but authority fuse {authority_fuse_id} "
+            "still blocks promotion"
+        ),
     }
 
 
-def _summary(evaluations: list[dict[str, Any]], approval_evidence_required: list[str]) -> dict[str, int]:
+def _summary(
+    evaluations: list[dict[str, Any]],
+    approval_evidence_required: list[str],
+    authority_fuse_refs: list[str],
+) -> dict[str, int]:
     return {
         "gate_evaluation_count": len(evaluations),
         "evaluated_gate_count": sum(1 for evaluation in evaluations if evaluation["evaluation_state"] == "evaluated"),
@@ -307,8 +386,9 @@ def _summary(evaluations: list[dict[str, Any]], approval_evidence_required: list
             for evaluation in evaluations
             if evaluation["grants_execution_authority"]
             or evaluation["grants_connector_authority"]
-            or evaluation["grants_terminal_closure"]
+                or evaluation["grants_terminal_closure"]
         ),
+        "authority_fuse_blocking_count": len(authority_fuse_refs),
     }
 
 

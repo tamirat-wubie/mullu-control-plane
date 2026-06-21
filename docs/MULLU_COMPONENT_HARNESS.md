@@ -39,6 +39,9 @@ schemas/component_graph.schema.json,
 schemas/component_dead_component_detection.schema.json,
 schemas/component_lifecycle_transition_receipts.schema.json,
 schemas/component_authority_envelope_witnesses.schema.json,
+schemas/component_passports.schema.json,
+schemas/component_authority_fuse.schema.json,
+schemas/component_claim_firewall.schema.json,
 examples/component_registry.foundation.json, examples/component_router_inventory.foundation.json,
 examples/component_route_family_ownership.foundation.json,
 examples/component_route_family_promotion_preflight.governed_connector_framework.json,
@@ -73,6 +76,9 @@ examples/component_graph.foundation.json,
 examples/component_dead_component_detection.foundation.json,
 examples/component_lifecycle_transition_receipts.foundation.json,
 examples/component_authority_envelope_witnesses.foundation.json,
+examples/component_passports.foundation.json,
+examples/component_authority_fuse.foundation.json,
+examples/component_claim_firewall.foundation.json,
 scripts/validate_component_registry.py,
 scripts/validate_component_router_inventory.py,
 scripts/validate_component_route_family_ownership.py,
@@ -108,6 +114,9 @@ scripts/validate_component_graph.py,
 scripts/validate_component_dead_detector.py,
 scripts/validate_component_lifecycle_transition_receipts.py,
 scripts/validate_component_authority_envelope_witnesses.py,
+scripts/validate_component_passports.py,
+scripts/validate_component_authority_fuse.py,
+scripts/validate_component_claim_firewall.py,
 tests/test_validate_component_registry.py,
 tests/test_validate_component_router_inventory.py,
 tests/test_validate_component_route_family_ownership.py,
@@ -143,6 +152,9 @@ tests/test_validate_component_graph.py,
 tests/test_validate_component_dead_detector.py,
 tests/test_validate_component_lifecycle_transition_receipts.py,
 tests/test_validate_component_authority_envelope_witnesses.py,
+tests/test_validate_component_passports.py,
+tests/test_validate_component_authority_fuse.py,
+tests/test_validate_component_claim_firewall.py,
 mcoi/tests/test_component_read_model_route.py,
 mcoi/tests/test_component_autopsy_route.py,
 mcoi/tests/test_component_request_simulator.py,
@@ -172,6 +184,8 @@ mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_wi
 mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py,
 mcoi/mcoi_runtime/app/component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py,
 mcoi/mcoi_runtime/app/component_authority_envelope_witnesses.py,
+mcoi/mcoi_runtime/app/component_passports.py,
+mcoi/mcoi_runtime/app/component_authority_fuse.py,
 and docs/40_proof_coverage_matrix.md.
 Invariants: mounted does not mean live; bootstrapped does not mean authorized;
 registry presence and proof binding do not grant route binding, connector
@@ -242,6 +256,9 @@ execution.
 | Lifecycle Receipts | Records current-state component lifecycle transitions against an allowed graph, evidence refs, and authority guardrails. | Added as a non-executing schema, example, validator, and tests. No transition engine is added. |
 | Authority Envelope | Records component authority flags so mounted or bootstrapped components cannot imply live execution. | Embedded in registry entries with live authority flags false. |
 | Authority Envelope Witnesses | Records one current authority witness per component and proves that current authority is denial-only unless a separate future upgrade witness exists. | Added as a non-executing schema, example, runtime projection, validator, and tests. |
+| Component Passports | Fuses each component's identity, purpose, lifecycle, authority, proofs, receipts, health, dependencies, blocked actions, evidence refs, and last validation into one dashboard-ready trust envelope. | Added as a non-executing schema, example, runtime projection, validator, and tests. Passports are derived from the registry and authority witnesses and cannot grant live action or terminal closure. |
+| Authority Fuse | Blocks component self-upgrade by requiring external schema, validator, lifecycle receipt, authority-upgrade witness, proof-matrix row, CI gate, and operator approval evidence before any future authority transition can advance. | Added as a non-executing schema, example, runtime projection, validator, and tests. Every current fuse is blocked, denial-only, and cannot mutate authority envelopes. |
+| Claim Firewall | Blocks readiness, live-action, autonomous, compliance, SLA, and Nested Mind claims unless component passports and authority fuses prove bounded authority. | Added as a non-executing schema, example, runtime projection, validator, and tests. Current blocked claims produce `GovernanceBlocked`; bounded evidence claims produce non-terminal `SolvedVerified`. |
 | Component Bundles | Groups components into foundation/demo/read-only product lanes while retaining blocked-action gates. | Added as static bundle inventory consumed by the preview compiler. No live router is added. |
 | Component Router | Routes operator requests only through allowed components. | Not added in PR 1. |
 | Read Model | Exposes component posture through `GET /api/v1/components/read-model`. | Added as a read-only schema, example, route, validator, and tests. |
@@ -268,6 +285,55 @@ Each component declares:
 | `blocked_actions` | Actions denied for the current foundation posture. |
 | `dependencies` | Other registered component IDs this component depends on. |
 | `owner_surface` | Governance, runtime, reasoning, assistant, connector, memory, execution, operations, security, or domain ownership lane. |
+
+## Component Passport Contract
+
+Each component passport is a read-only trust envelope derived from the
+component registry and authority envelope witnesses. It does not dispatch
+requests, mutate router inventory, grant connector access, satisfy promotion
+requirements, or claim terminal closure.
+
+Each passport declares:
+
+| Field | Meaning |
+| --- | --- |
+| `passport_id` | Stable passport identity for one registered component. |
+| `component_id` | Registered component identity the passport summarizes. |
+| `identity` | Component name, type, aliases, and owner surface. |
+| `purpose` | Registry purpose statement for operator review. |
+| `lifecycle` | Mode, lifecycle state, wiring state, and authority level. |
+| `authority` | Registry authority flags with all live-effect flags false. |
+| `proofs` | Proof-surface posture and current authority witness binding. |
+| `receipts` | Receipt requirement, receipt emission posture, and terminal-closure denial. |
+| `health` | Health source and known/unknown posture. |
+| `dependencies` | Registered component dependencies. |
+| `blocked_actions` | Registry-denied actions, including terminal closure. |
+| `evidence_refs` | Registry evidence references that must exist locally. |
+| `last_validation` | Validator refs proving the passport is current. |
+
+## Authority Fuse Contract
+
+The authority fuse is a read-only denial gate that prevents any component from
+upgrading itself. It is derived from component passports and records the
+external evidence required before an authority transition can be reconsidered.
+
+Each fuse declares:
+
+| Field | Meaning |
+| --- | --- |
+| `fuse_id` | Stable fuse identity for one component. |
+| `component_id` | Registered component identity carried by the passport. |
+| `current_authority_level` | Current passport authority level. |
+| `requested_authority_level` | Next possible authority level under the governed ladder. |
+| `fuse_state` | Hard `blocked` in foundation mode. |
+| `self_upgrade_allowed` | Hard false. |
+| `can_upgrade_authority` | Hard false until external evidence exists. |
+| `can_mutate_authority_envelope` | Hard false. |
+| `can_enable_live_action` | Hard false. |
+| `terminal_closure_allowed` | Hard false. |
+| `required_evidence` | Schema, validator, lifecycle receipt, authority-upgrade witness, proof matrix row, CI gate, and operator approval evidence. |
+| `missing_evidence` | Required evidence still absent for the current fuse. |
+| `required_validator_refs` | Validators that must pass before closure. |
 
 ## Bundle Contract
 
@@ -582,7 +648,8 @@ action gates unsatisfied. The report targets `governed_connector_framework` and
 `gmail_account_binding_gate`; it evaluates the same four hard promotion gates
 and records `record_evidence_satisfied_gate_count=4` while preserving
 `action_satisfied_gate_count=0`, `promotion_approval_count=0`, and
-`authority_decision_count=0`.
+`authority_decision_count=0`. It also binds the target component authority
+fuse so record-only gate satisfaction cannot bypass self-upgrade denial.
 
 Each gate-satisfaction evaluator report declares:
 
@@ -592,6 +659,9 @@ Each gate-satisfaction evaluator report declares:
 | `promotion_decision` | Hard `blocked_pending_authority_decision`. |
 | `all_record_evidence_gates_satisfied` | Hard true after four accepted record-only evaluations. |
 | `all_action_gates_satisfied` | Hard false; evidence satisfaction is not action authority. |
+| `authority_fuse_enforced` | Hard true; the target component authority fuse is required for evaluation. |
+| `authority_fuse_refs` | The target component authority fuse denying self-upgrade and live authority. |
+| `authority_fuse_blocking_refs` | The authority fuse refs that keep promotion blocked. |
 | `gate_evaluations` | Exactly four evaluated gate records for route binding, lifecycle transition, authority upgrade, and product-specific boundary. |
 | `satisfied_gate_evaluation_refs` | Four evaluation IDs whose record evidence satisfies the gate. |
 | `accepted_record_refs` | Four source record IDs consumed from operator-submitted evidence records. |
@@ -987,14 +1057,16 @@ Gate-satisfaction evaluator validation follows this deterministic sequence:
 
 1. Load `schemas/component_route_family_promotion_gate_satisfaction_evaluator.schema.json` and `examples/component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json`.
 2. Reuse the operator-submitted evidence records validator before accepting gate-satisfaction evaluation.
-3. Rebuild the gate-satisfaction evaluator report from the runtime projection.
-4. Validate the example against the gate-satisfaction evaluator schema.
-5. Reject example drift from the runtime report.
-6. Require exactly four gate evaluations: route binding, lifecycle, authority upgrade, and product-specific boundary.
-7. Require all evaluations to remain `evaluated`, `satisfied_record_only`, and `Pass`.
-8. Require `record_evidence_satisfied_gate_count=4` and `action_satisfied_gate_count=0`.
-9. Require authority decision refs, promotion approval refs, and accepted evidence refs to remain empty.
-10. Reject action satisfaction, promotion approval, router inventory mutation, execution authority, connector authority, and terminal-closure authority.
+3. Reuse the component authority fuse validator before accepting gate-satisfaction evaluation.
+4. Rebuild the gate-satisfaction evaluator report from the runtime projection.
+5. Validate the example against the gate-satisfaction evaluator schema.
+6. Reject example drift from the runtime report.
+7. Require exactly four gate evaluations: route binding, lifecycle, authority upgrade, and product-specific boundary.
+8. Require all evaluations to remain `evaluated`, `satisfied_record_only`, and `Pass`.
+9. Require `record_evidence_satisfied_gate_count=4`, `action_satisfied_gate_count=0`, and `authority_fuse_blocking_count=1`.
+10. Require every gate evaluation to reference the same target component authority fuse.
+11. Require authority decision refs, promotion approval refs, and accepted evidence refs to remain empty.
+12. Reject action satisfaction, promotion approval, authority-fuse bypass, router inventory mutation, execution authority, connector authority, and terminal-closure authority.
 
 Promotion authority decision report validation follows this deterministic sequence:
 
@@ -1265,6 +1337,36 @@ Authority envelope witness validation follows this deterministic sequence:
 5. Require each witness lifecycle state, wiring state, authority level, blocked actions, and authority flags to match the registry.
 6. Reject proof states other than `Pass`, missing evidence refs, missing validator refs, external effects, terminal-closure claims, authority upgrade claims, and live authority flag drift.
 
+Component passport validation follows this deterministic sequence:
+
+1. Load `schemas/component_passports.schema.json`, `examples/component_passports.foundation.json`, the component registry, and the authority envelope witnesses.
+2. Rebuild the passport set from the registry and authority envelope witnesses.
+3. Validate the example against the component passport schema.
+4. Reject example drift from the runtime passport projection.
+5. Require exactly one passport for every registered component.
+6. Require each passport identity, lifecycle, authority, evidence refs, dependencies, and blocked actions to match the registry.
+7. Reject live authority flags, terminal-closure claims, missing evidence refs, missing validator refs, and passport sets that claim execution authority.
+
+Authority fuse validation follows this deterministic sequence:
+
+1. Load `schemas/component_authority_fuse.schema.json`, `examples/component_authority_fuse.foundation.json`, and component passports.
+2. Rebuild the fuse set from component passports.
+3. Validate the example against the component authority fuse schema.
+4. Reject example drift from the runtime fuse projection.
+5. Require exactly one fuse for every component passport.
+6. Require every fuse to remain blocked, denial-only, and non-terminal.
+7. Reject self-upgrade permission, authority-envelope mutation, live-action enablement, missing fuse evidence drift, and missing validator refs.
+
+Claim firewall validation follows this deterministic sequence:
+
+1. Load `schemas/component_claim_firewall.schema.json`, `examples/component_claim_firewall.foundation.json`, component passports, and component authority fuses.
+2. Rebuild the firewall from passports and authority fuses.
+3. Validate the example against the component claim firewall schema.
+4. Reject example drift from the runtime firewall projection.
+5. Require canonical blocked claims for production readiness, customer readiness, live Gmail, autonomous execution, compliance certification, enterprise SLA, and Nested Mind live activation.
+6. Require canonical evidence-bounded claims for read-only projection, draft-only evidence, approval evidence, terminal evidence bundle, and deployment witness publication.
+7. Reject any blocked claim that becomes allowed, any evidence-bounded claim that names blocking components, and any claim that permits execution authority or terminal closure.
+
 ## Verification
 
 Run:
@@ -1306,6 +1408,8 @@ python scripts/validate_component_graph.py --strict
 python scripts/validate_component_dead_detector.py --strict
 python scripts/validate_component_lifecycle_transition_receipts.py --strict
 python scripts/validate_component_authority_envelope_witnesses.py --strict
+python scripts/validate_component_passports.py --strict
+python scripts/validate_component_authority_fuse.py --strict
 python -m pytest tests/test_validate_component_registry.py -q
 python -m pytest tests/test_validate_component_router_inventory.py -q
 python -m pytest tests/test_validate_component_proof_binding.py -q
@@ -1334,7 +1438,7 @@ python -m pytest tests/test_validate_component_route_family_promotion_router_inv
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py -q
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py -q
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py -q
-python -m pytest tests/test_validate_component_read_model.py tests/test_validate_component_autopsy.py tests/test_validate_component_request_simulation.py tests/test_validate_component_bundle_compiler.py tests/test_validate_component_graph.py tests/test_validate_component_dead_detector.py tests/test_validate_component_lifecycle_transition_receipts.py tests/test_validate_component_authority_envelope_witnesses.py mcoi/tests/test_component_read_model_route.py mcoi/tests/test_component_autopsy_route.py mcoi/tests/test_component_request_simulator.py mcoi/tests/test_component_bundle_compiler.py -q
+python -m pytest tests/test_validate_component_read_model.py tests/test_validate_component_autopsy.py tests/test_validate_component_request_simulation.py tests/test_validate_component_bundle_compiler.py tests/test_validate_component_graph.py tests/test_validate_component_dead_detector.py tests/test_validate_component_lifecycle_transition_receipts.py tests/test_validate_component_authority_envelope_witnesses.py tests/test_validate_component_passports.py tests/test_validate_component_authority_fuse.py mcoi/tests/test_component_read_model_route.py mcoi/tests/test_component_autopsy_route.py mcoi/tests/test_component_request_simulator.py mcoi/tests/test_component_bundle_compiler.py -q
 python scripts/validate_protocol_manifest.py
 ```
 
@@ -1366,7 +1470,8 @@ component proof binding,
 component read-model,
 component autopsy, component request simulation, component bundle
 compiler, component graph, component dead detector, and component lifecycle
-transition receipt and component authority envelope witness validators.
+transition receipt, component authority envelope witness, and component
+passport, component authority fuse, and component claim firewall validators.
 
 ## Non-Goals
 
@@ -1385,7 +1490,7 @@ The current harness boundary does not:
 11. Treat submitted-evidence record envelopes as submitted evidence payloads, accepted evidence, rejected evidence, approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, or terminal closure.
 12. Treat submitted-evidence payload examples or defined acceptance rules as submitted evidence, applied verification, accepted evidence, rejected evidence, approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, or terminal closure.
 13. Treat operator-submitted evidence records or applied record-only acceptance rules as gate satisfaction, promotion approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, live operator evidence, or terminal closure.
-14. Treat gate-satisfaction evaluator output as action-gate satisfaction, promotion approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, live operator evidence, accepted terminal evidence, or terminal closure.
+14. Treat gate-satisfaction evaluator output as action-gate satisfaction, authority-fuse bypass, promotion approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, live operator evidence, accepted terminal evidence, or terminal closure.
 15. Treat promotion authority decision report output as authority grant, promotion approval, route binding, lifecycle transition, authority upgrade, product-specific ownership, live operator evidence, accepted terminal evidence, or terminal closure.
 16. Treat route-binding decision report output as route binding, router inventory mutation, selected-component binding, promotion approval, authority grant, lifecycle transition, authority upgrade, live operator evidence, accepted terminal evidence, or terminal closure.
 17. Treat lifecycle-transition decision report output as lifecycle transition receipt, lifecycle state change, route binding, promotion approval, authority grant, authority upgrade, live operator evidence, accepted terminal evidence, or terminal closure.
@@ -1399,7 +1504,10 @@ The current harness boundary does not:
 25. Treat router-inventory delta witness remediation evidence requests as submitted evidence, accepted evidence, rejected evidence, authorization, requirement satisfaction, witness minting authorization, a minted witness, an applied delta, router inventory mutation, authority grant, promotion approval, or terminal closure.
 26. Treat router-inventory delta witness remediation evidence request status ledgers as submitted evidence, accepted evidence, rejected evidence, authorization, requirement satisfaction, witness minting authorization, a minted witness, an applied delta, router inventory mutation, authority grant, promotion approval, or terminal closure.
 27. Treat a current authority envelope witness as authority-upgrade evidence.
-28. Enable live action, connector calls, filesystem writes, mailbox mutation, external sends, deployment, public readiness, or terminal closure.
+28. Treat a component passport as execution authority, route-binding evidence, product ownership, terminal closure, or authority-upgrade approval.
+29. Treat an authority fuse as approval evidence, authority-upgrade witness, lifecycle transition receipt, route binding, product ownership, or terminal closure.
+30. Treat a claim firewall allowance as execution authority, product readiness, public readiness, compliance certification, SLA evidence, or terminal closure.
+31. Enable live action, connector calls, filesystem writes, mailbox mutation, external sends, deployment, public readiness, or terminal closure.
 
 The router inventory refinement does not:
 

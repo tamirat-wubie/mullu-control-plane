@@ -287,6 +287,24 @@
       "urn": "urn:mullusi:schema:component-authority-envelope-witnesses:1"
     },
     {
+      "path": "schemas/component_passports.schema.json",
+      "schema_id": "component-passports",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-passports:1"
+    },
+    {
+      "path": "schemas/component_authority_fuse.schema.json",
+      "schema_id": "component-authority-fuse",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-authority-fuse:1"
+    },
+    {
+      "path": "schemas/component_claim_firewall.schema.json",
+      "schema_id": "component-claim-firewall",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-claim-firewall:1"
+    },
+    {
       "path": "schemas/component_dead_component_detection.schema.json",
       "schema_id": "component-dead-component-detection",
       "surface": "governance",

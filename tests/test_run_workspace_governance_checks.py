@@ -69,6 +69,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "component_registry",
         "component_lifecycle_transition_receipts",
         "component_authority_envelope_witnesses",
+        "component_passports",
+        "component_authority_fuse",
+        "component_claim_firewall",
         "component_router_inventory",
         "component_proof_binding",
         "component_route_family_ownership",
@@ -177,6 +180,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_authority_witness",
         "universal_symbol_kernel",
         "logic_governance_application",
+        "reasoning_integrity_mesh",
         "life_meaning_governance",
         "phi_gps_v3_platform_spec",
         "public_repository_surface",
@@ -295,6 +299,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_authority_envelope_witnesses",
+        "component_passports",
+    )
+    assert_ordered(
+        "component_passports",
+        "component_authority_fuse",
+    )
+    assert_ordered(
+        "component_authority_fuse",
+        "component_claim_firewall",
+    )
+    assert_ordered(
+        "component_claim_firewall",
         "component_router_inventory",
     )
     assert_ordered(
@@ -748,6 +764,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered("universal_symbol_receipt_store_authority_witness", "universal_symbol_kernel")
     assert_ordered("universal_symbol_kernel", "logic_governance_application")
+    assert_ordered("logic_governance_application", "reasoning_integrity_mesh")
+    assert_ordered("reasoning_integrity_mesh", "life_meaning_governance")
     assert_ordered("code_change_physics_packet", "search_decision_receipt")
     assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 
