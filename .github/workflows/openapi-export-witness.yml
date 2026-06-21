@@ -39,9 +39,49 @@ jobs:
           PYTHONPATH: mcoi
           MULLU_ENV: local_dev
           MULLU_DB_BACKEND: memory
+          MULLU_CERT_ENABLED: "true"
+          MULLU_CERT_INTERVAL: "0"
         run: |
           mkdir -p .change_assurance/openapi-export-witness
-          python scripts/export_openapi.py --output .change_assurance/openapi-export-witness/mullu.openapi.json
+          python - <<'PY'
+          import json
+          import traceback
+          from pathlib import Path
+
+          output = Path('.change_assurance/openapi-export-witness/mullu.openapi.json')
+          diagnostic = Path('.change_assurance/openapi-export-witness/export-diagnostic.json')
+          try:
+              from scripts.export_openapi import export_openapi
+
+              spec = export_openapi(output)
+              diagnostic.write_text(
+                  json.dumps(
+                      {
+                          'governed': True,
+                          'exported': True,
+                          'output': str(output),
+                          'path_count': len(spec.get('paths', {})),
+                      },
+                      sort_keys=True,
+                  ) + '\n',
+                  encoding='utf-8',
+              )
+          except Exception as exc:
+              diagnostic.write_text(
+                  json.dumps(
+                      {
+                          'governed': True,
+                          'exported': False,
+                          'error_type': type(exc).__name__,
+                          'error': str(exc),
+                          'traceback': traceback.format_exc(),
+                      },
+                      sort_keys=True,
+                  ) + '\n',
+                  encoding='utf-8',
+              )
+              raise
+          PY
 
       - name: Verify dashboard route in exported spec
         run: |
@@ -64,8 +104,11 @@ jobs:
           PY
 
       - name: Upload OpenAPI witness artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: openapi-export-witness
-          path: .change_assurance/openapi-export-witness/mullu.openapi.json
-          if-no-files-found: error
+          path: |
+            .change_assurance/openapi-export-witness/mullu.openapi.json
+            .change_assurance/openapi-export-witness/export-diagnostic.json
+          if-no-files-found: warn
