@@ -86,7 +86,7 @@
     {
       "panel_id": "no_effect_boundary",
       "label": "No-effect boundary",
-      "source_ref": "schemas/governed_work_assistant_operator_dashboard.schema.json",
+      "source_ref": "docs/contracts/governed_work_assistant_operator_dashboard.schema.json",
       "visible": true,
       "read_only": true,
       "effect_allowed": false
