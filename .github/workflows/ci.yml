@@ -516,6 +516,9 @@ jobs:
       - name: Test Agentic Service Harness receipt projection
         run: python -m pytest tests/test_validate_agentic_service_harness_receipt_projection.py -q
 
+      - name: Test Agentic Service Harness task creation admission preflight
+        run: python -m pytest tests/test_validate_agentic_service_harness_task_creation_admission_preflight.py -q
+
 
       - name: Test Agentic Service Harness actual diff collection admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_actual_diff_collection_admission_preflight.py -q
