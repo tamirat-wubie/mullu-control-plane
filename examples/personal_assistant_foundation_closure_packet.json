@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-7b38f0fd54af04d7",
+  "packet_id": "personal-assistant-foundation-closure-af5a6eb3c010d411",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-21T03:45:31Z",
+  "generated_at": "2026-06-21T04:21:31Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -173,8 +173,8 @@
       "source_kind": "dry_run_packet",
       "source_ref": "examples/personal_assistant_dry_run_packet.json",
       "schema_ref": "schemas/personal_assistant_dry_run_packet.schema.json",
-      "source_sha256": "8b929a2ae4d3f5002a38778b6d1672c1016acc18a88d96b28f5f5acd5757ef31",
-      "receipt_id": "personal-assistant-dry-run-a666e3c5231fbc19",
+      "source_sha256": "83e57cddb594fec71fa67222793e899e89494855eb7e9701ddd6404abe2d7d49",
+      "receipt_id": "personal-assistant-dry-run-aa82dd48da8a8478",
       "schema_version": "personal_assistant.dry_run_packet.v1",
       "schema_versioned": true,
       "proof_state": "Pass",
@@ -187,7 +187,7 @@
       "effect_violations": [],
       "bound": true,
       "payload_digest_only": true,
-      "serialized_length": 15330
+      "serialized_length": 18600
     }
   ],
   "authority_denials": [

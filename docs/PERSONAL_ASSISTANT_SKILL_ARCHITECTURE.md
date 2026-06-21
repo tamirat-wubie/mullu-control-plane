@@ -444,10 +444,12 @@ claims.
 ## Dry-Run Packet Contract
 
 The dry-run packet is a no-effect replay artifact that binds one representative
-inbox-to-draft request across intake, WHQR binding, skill routing, read-only
-preview, draft preview, explicit P4 approval gating, blocked external-send wait
-state, memory observation review, receipt replay, and terminal foundation
-closure. It is a workflow proof, not an executor.
+inbox, task, calendar-conflict, draft-response, approval, no-send, and memory
+candidate request across intake, WHQR binding, skill routing, read-only preview,
+calendar-conflict reasoning, task-intake projection, draft preview, explicit P4
+approval gating, blocked external-send wait state, memory observation review,
+receipt replay, and terminal foundation closure. It is a workflow proof, not an
+executor.
 
 It must keep:
 
@@ -456,6 +458,10 @@ execution_authority_granted = false
 live_connector_execution_allowed = false
 connector_mutation_allowed = false
 external_effect_allowed = false
+external_send_allowed = false
+mailbox_mutation_allowed = false
+calendar_write_allowed = false
+task_write_allowed = false
 system_of_record_write_allowed = false
 memory_write_allowed = false
 memory_admission_allowed = false

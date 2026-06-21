@@ -1,0 +1,55 @@
+{
+  "affected_modules": [
+    "personal_assistant_dry_run_packet",
+    "personal_assistant_foundation_closure_packet",
+    "personal_assistant_skill_architecture_doc",
+    "personal_assistant_ci_lane"
+  ],
+  "architecture_summary": "Extend the existing Personal Assistant dry-run packet into a no-effect proof packet for inbox, task-intake, calendar-conflict, draft-response, approval-request, no-send, and memory-candidate flow closure.",
+  "data_model_changes": [
+    "Increase dry-run source artifacts from nine to eleven by adding calendar request and planning projection refs.",
+    "Increase dry-run stages from ten to twelve by adding calendar_conflict_reasoning and task_intake_projection.",
+    "Add explicit closure flags for calendar conflict, task intake, draft response, approval request, no-send proof, and memory-admission candidate review.",
+    "Add no-effect boundary fields for external send, mailbox mutation, calendar write, and task write.",
+    "Refresh the dry-run packet fixture and dependent foundation closure packet fixture."
+  ],
+  "design_id": "sdlc_design_personal_assistant_dry_run_proof_packet_20260621",
+  "implementation_plan": [
+    "Patch dry-run collector topology and no-effect boundary.",
+    "Patch dry-run schema constants and closure requirements.",
+    "Patch dry-run validator closure and topology checks.",
+    "Regenerate dry-run and foundation closure fixtures.",
+    "Add focused tests for the expanded calendar/task/memory/no-send proof path.",
+    "Run focused validators, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "The packet is not execution authority.",
+    "The packet is not connector authority.",
+    "The packet is not memory admission.",
+    "No email send, calendar write, task write, mailbox mutation, connector mutation, memory write, or system-of-record write is performed.",
+    "Foundation closure remains digest-bound and no-effect."
+  ],
+  "requirement_id": "sdlc_req_personal_assistant_dry_run_proof_packet_20260621",
+  "rollback_plan": [
+    "Restore dry-run source count to nine and stage count to ten.",
+    "Remove calendar-conflict and task-intake dry-run stages and closure flags.",
+    "Restore the previous dry-run packet and foundation closure packet fixtures.",
+    "Remove the SDLC requirement and design artifacts."
+  ],
+  "schema_changes": [
+    "schemas/personal_assistant_dry_run_packet.schema.json"
+  ],
+  "test_plan": [
+    "python scripts/validate_personal_assistant_dry_run_packet.py --packet examples/personal_assistant_dry_run_packet.json --require-closed --json",
+    "python scripts/validate_personal_assistant_foundation_closure_packet.py --packet examples/personal_assistant_foundation_closure_packet.json --require-closed --json",
+    "python -m pytest tests/test_collect_personal_assistant_dry_run_packet.py tests/test_validate_personal_assistant_dry_run_packet.py tests/test_collect_personal_assistant_foundation_closure_packet.py tests/test_validate_personal_assistant_foundation_closure_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "tradeoffs": [
+    "The packet proves assistant flow composition without exercising live providers.",
+    "Live Gmail, Calendar, task-system, and memory writes remain separate authority threads."
+  ]
+}
