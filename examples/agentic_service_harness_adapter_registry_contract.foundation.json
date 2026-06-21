@@ -1,0 +1,256 @@
+{
+  "report_id": "agentic_service_harness_adapter_registry_contract",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_dashboard_data_contract_ref": "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+  "source_task_intake_ref": "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "registry_id": "adapter-registry-contract-foundation",
+    "foundation_phase": "foundation_contract_only_adapter_registry",
+    "read_only": true,
+    "contract_only": true,
+    "registry_route_admitted": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "subprocess_execution_enabled": false,
+    "connector_call_enabled": false,
+    "external_model_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "registry": {
+    "decision": "CONTRACT_ONLY_ADAPTER_REGISTRY_ACCEPTED",
+    "registry_mode": "read_only_registry_snapshot",
+    "registry_hash_strategy": "stable_descriptor_hash_future",
+    "entry_count": 2,
+    "allowed_action_classes": [
+      "read_only"
+    ],
+    "forbidden_action_classes": [
+      "register_route",
+      "mutation_endpoint",
+      "execute_adapter",
+      "spawn_subprocess",
+      "connector_call",
+      "external_model_execution",
+      "write_to_branch",
+      "open_pr",
+      "append_receipt_store",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "required_gate_refs": [
+      "gate://harness/no-adapter-route-registration",
+      "gate://harness/no-mutation-endpoints",
+      "gate://harness/no-live-adapter-execution",
+      "gate://harness/no-subprocess-execution",
+      "gate://harness/no-connector-call",
+      "gate://harness/no-external-model-execution",
+      "gate://harness/no-branch-write",
+      "gate://harness/no-pr-creation",
+      "gate://harness/no-receipt-store-append",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "blocked_reason_refs": [
+      "blocked://adapter-registry/route-not-admitted",
+      "blocked://adapter-execution/not-admitted",
+      "blocked://subprocess/not-admitted",
+      "blocked://connector-call/not-admitted",
+      "blocked://external-model/not-admitted",
+      "blocked://branch-write/not-authorized",
+      "blocked://pull-request/not-authorized",
+      "blocked://receipt-store/append-not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "read_only": true,
+    "contract_only": true
+  },
+  "adapters": [
+    {
+      "adapter_id": "github_repository_read_adapter",
+      "adapter_kind": "github_repository",
+      "display_name": "GitHub Repository Read Adapter",
+      "authority_class": "contract_only_read_model",
+      "supported_modes": [
+        "read_only",
+        "dry_run"
+      ],
+      "required_input_refs": [
+        "examples/agentic_service_harness_github_repo_task_intake.foundation.json#repository_connection_check"
+      ],
+      "required_evidence_refs": [
+        "examples/agentic_service_harness_read_models.foundation.json#repositories",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md#first-mvp-adapter-path"
+      ],
+      "blocked_reason_refs": [
+        "blocked://connector-call/not-admitted",
+        "blocked://repository-write/not-authorized"
+      ],
+      "read_only": true,
+      "contract_only": true,
+      "live_integration_enabled": false,
+      "subprocess_execution_enabled": false,
+      "connector_call_enabled": false,
+      "external_model_execution_enabled": false,
+      "branch_write_enabled": false,
+      "pull_request_creation_enabled": false,
+      "receipt_store_append_enabled": false,
+      "secret_values_serialized": false
+    },
+    {
+      "adapter_id": "codex_style_planning_adapter",
+      "adapter_kind": "codex_style_planner",
+      "display_name": "Codex-Style Planning Adapter",
+      "authority_class": "contract_only_read_model",
+      "supported_modes": [
+        "read_only",
+        "dry_run",
+        "branch_write_awaiting_approval",
+        "open_pr_awaiting_approval"
+      ],
+      "required_input_refs": [
+        "examples/agentic_service_harness_dashboard_data_contract.foundation.json#widgets"
+      ],
+      "required_evidence_refs": [
+        "examples/agentic_service_harness_github_repo_task_intake.foundation.json#intake_decision",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md#smallest-next-pr-sequence"
+      ],
+      "blocked_reason_refs": [
+        "blocked://subprocess/not-admitted",
+        "blocked://external-model/not-admitted",
+        "blocked://branch-write/not-authorized",
+        "blocked://pull-request/not-authorized"
+      ],
+      "read_only": true,
+      "contract_only": true,
+      "live_integration_enabled": false,
+      "subprocess_execution_enabled": false,
+      "connector_call_enabled": false,
+      "external_model_execution_enabled": false,
+      "branch_write_enabled": false,
+      "pull_request_creation_enabled": false,
+      "receipt_store_append_enabled": false,
+      "secret_values_serialized": false
+    }
+  ],
+  "mode_bindings": [
+    {
+      "mode_id": "read_only",
+      "adapter_ids": [
+        "github_repository_read_adapter",
+        "codex_style_planning_adapter"
+      ],
+      "status": "available_read_only",
+      "authority_result": "read_only_allowed",
+      "required_gate_refs": [
+        "gate://harness/no-live-adapter-execution"
+      ],
+      "blocked_reason_refs": [
+        "blocked://mutation-endpoint/not-admitted"
+      ],
+      "read_only": true,
+      "permits_runtime_effects": false,
+      "requires_operator_approval": false
+    },
+    {
+      "mode_id": "dry_run",
+      "adapter_ids": [
+        "github_repository_read_adapter",
+        "codex_style_planning_adapter"
+      ],
+      "status": "blocked_until_evidence",
+      "authority_result": "effect_blocked",
+      "required_gate_refs": [
+        "gate://harness/no-receipt-store-append"
+      ],
+      "blocked_reason_refs": [
+        "blocked://receipt-store/append-not-admitted"
+      ],
+      "read_only": true,
+      "permits_runtime_effects": false,
+      "requires_operator_approval": true
+    },
+    {
+      "mode_id": "branch_write_awaiting_approval",
+      "adapter_ids": [
+        "codex_style_planning_adapter"
+      ],
+      "status": "blocked_until_evidence",
+      "authority_result": "effect_blocked",
+      "required_gate_refs": [
+        "gate://harness/no-branch-write"
+      ],
+      "blocked_reason_refs": [
+        "blocked://branch-write/not-authorized"
+      ],
+      "read_only": true,
+      "permits_runtime_effects": false,
+      "requires_operator_approval": true
+    },
+    {
+      "mode_id": "open_pr_awaiting_approval",
+      "adapter_ids": [
+        "codex_style_planning_adapter"
+      ],
+      "status": "blocked_until_evidence",
+      "authority_result": "effect_blocked",
+      "required_gate_refs": [
+        "gate://harness/no-pr-creation"
+      ],
+      "blocked_reason_refs": [
+        "blocked://pull-request/not-authorized"
+      ],
+      "read_only": true,
+      "permits_runtime_effects": false,
+      "requires_operator_approval": true
+    }
+  ],
+  "authority_denials": {
+    "registry_route_registration_enabled": false,
+    "mutation_endpoint_enabled": false,
+    "live_adapter_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "connector_call_enabled": false,
+    "external_model_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "adapter_registry_contract_schema": "schemas/agentic_service_harness_adapter_registry_contract.schema.json",
+    "adapter_registry_contract_fixture": "examples/agentic_service_harness_adapter_registry_contract.foundation.json",
+    "dashboard_data_contract_schema": "schemas/agentic_service_harness_dashboard_data_contract.schema.json",
+    "dashboard_data_contract_fixture": "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "github_repo_task_intake_schema": "schemas/agentic_service_harness_github_repo_task_intake.schema.json",
+    "github_repo_task_intake_fixture": "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-adapter-registry-contract",
+      "command": "python scripts/validate_agentic_service_harness_adapter_registry_contract.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add EvidenceBundle projection by AgentRun id; keep adapter execution, subprocess execution, connector calls, branch writes, pull-request creation, receipt append, and terminal closure blocked.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

@@ -29,50 +29,59 @@ from scripts.personal_assistant_source_digest import canonical_source_sha256  # 
 
 DEFAULT_OUTPUT = REPO_ROOT / "examples" / "personal_assistant_foundation_closure_packet.json"
 
-SOURCE_RECEIPTS: tuple[tuple[str, Path, str], ...] = (
+SOURCE_RECEIPTS: tuple[tuple[str, Path, str, str], ...] = (
     (
         "foundation_evidence",
         REPO_ROOT / "examples" / "personal_assistant_foundation_evidence_receipt.json",
+        "schemas/personal_assistant_foundation_evidence_receipt.schema.json",
         "foundation_evidence_closed",
     ),
     (
         "readiness_index",
         REPO_ROOT / "examples" / "personal_assistant_readiness_index_receipt.json",
+        "schemas/personal_assistant_readiness_index_receipt.schema.json",
         "readiness_index_closed",
     ),
     (
         "coherence_ledger",
         REPO_ROOT / "examples" / "personal_assistant_coherence_ledger_receipt.json",
+        "schemas/personal_assistant_coherence_ledger_receipt.schema.json",
         "coherence_ledger_closed",
     ),
     (
         "authority_coverage",
         REPO_ROOT / "examples" / "personal_assistant_authority_coverage_receipt.json",
+        "schemas/personal_assistant_authority_coverage_receipt.schema.json",
         "authority_coverage_closed",
     ),
     (
         "capsule_alignment",
         REPO_ROOT / "examples" / "personal_assistant_capsule_alignment_receipt.json",
+        "schemas/personal_assistant_capsule_alignment_receipt.schema.json",
         "capsule_alignment_closed",
     ),
     (
         "policy_matrix",
         REPO_ROOT / "examples" / "personal_assistant_policy_matrix_receipt.json",
+        "schemas/personal_assistant_policy_matrix_receipt.schema.json",
         "policy_matrix_closed",
     ),
     (
         "runtime_boundary",
         REPO_ROOT / "examples" / "personal_assistant_runtime_boundary_receipt.json",
+        "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
         "runtime_boundary_closed",
     ),
     (
         "skill_readiness_catalog",
         REPO_ROOT / "examples" / "personal_assistant_skill_readiness_catalog.json",
+        "schemas/personal_assistant_skill_readiness_catalog.schema.json",
         "catalog_closed",
     ),
     (
         "dry_run_packet",
         REPO_ROOT / "examples" / "personal_assistant_dry_run_packet.json",
+        "schemas/personal_assistant_dry_run_packet.schema.json",
         "dry_run_packet_closed",
     ),
 )
@@ -127,14 +136,14 @@ BLOCKED_SECRET_VALUE_MARKERS = (
 
 def collect_personal_assistant_foundation_closure_packet(
     *,
-    receipt_sources: tuple[tuple[str, Path, str], ...] = SOURCE_RECEIPTS,
+    receipt_sources: tuple[tuple[str, Path, str, str], ...] = SOURCE_RECEIPTS,
     now_utc: datetime | None = None,
 ) -> dict[str, object]:
     """Collect one no-effect Personal Assistant foundation closure packet."""
     generated_at = _format_utc(now_utc or datetime.now(UTC))
     source_records = [
-        _source_receipt_record(source_kind, source_path, closure_field)
-        for source_kind, source_path, closure_field in receipt_sources
+        _source_receipt_record(source_kind, source_path, schema_ref, closure_field)
+        for source_kind, source_path, schema_ref, closure_field in receipt_sources
     ]
     secret_value_markers = sorted(_secret_markers_for_records(source_records))
     all_sources_bound = all(record["bound"] is True for record in source_records)
@@ -243,7 +252,7 @@ def write_personal_assistant_foundation_closure_packet(
     return output_path
 
 
-def _source_receipt_record(source_kind: str, source_path: Path, closure_field: str) -> dict[str, object]:
+def _source_receipt_record(source_kind: str, source_path: Path, schema_ref: str, closure_field: str) -> dict[str, object]:
     bound = source_path.exists()
     payload = _read_json_object(source_path, source_kind) if bound else {}
     serialized = json.dumps(payload, sort_keys=True, ensure_ascii=True)
@@ -252,6 +261,7 @@ def _source_receipt_record(source_kind: str, source_path: Path, closure_field: s
     return {
         "source_kind": source_kind,
         "source_ref": _path_label(source_path),
+        "schema_ref": schema_ref,
         "source_sha256": _file_sha256(source_path) if bound else "",
         "receipt_id": _bounded_identifier(payload.get("receipt_id") or payload.get("packet_id") or payload.get("catalog_id")),
         "schema_version": _bounded_identifier(payload.get("schema_version")),

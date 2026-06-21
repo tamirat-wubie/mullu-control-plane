@@ -37,11 +37,11 @@ def _write_json(tmp_path: Path, name: str, payload: object) -> Path:
     return path
 
 
-def _copy_source_receipts(tmp_path: Path) -> list[tuple[str, Path, str]]:
-    copied: list[tuple[str, Path, str]] = []
-    for source_kind, source_path, closure_field in SOURCE_RECEIPTS:
+def _copy_source_receipts(tmp_path: Path) -> list[tuple[str, Path, str, str]]:
+    copied: list[tuple[str, Path, str, str]] = []
+    for source_kind, source_path, schema_ref, closure_field in SOURCE_RECEIPTS:
         payload = json.loads(source_path.read_text(encoding="utf-8"))
-        copied.append((source_kind, _write_json(tmp_path, f"{source_kind}.json", payload), closure_field))
+        copied.append((source_kind, _write_json(tmp_path, f"{source_kind}.json", payload), schema_ref, closure_field))
     return copied
 
 
@@ -60,7 +60,7 @@ def test_foundation_closure_packet_closes_from_checked_in_receipts() -> None:
 
 def test_foundation_closure_packet_opens_when_source_receipt_is_open(tmp_path: Path) -> None:
     sources = _copy_source_receipts(tmp_path)
-    readiness_path = next(path for kind, path, _field in sources if kind == "readiness_index")
+    readiness_path = next(path for kind, path, _schema_ref, _field in sources if kind == "readiness_index")
     readiness = json.loads(readiness_path.read_text(encoding="utf-8"))
     readiness["summary"]["readiness_index_closed"] = False
     readiness["proof_state"] = "Fail"
@@ -81,7 +81,7 @@ def test_foundation_closure_packet_opens_when_source_receipt_is_open(tmp_path: P
 
 def test_foundation_closure_packet_blocks_effect_boundary_drift(tmp_path: Path) -> None:
     sources = _copy_source_receipts(tmp_path)
-    runtime_path = next(path for kind, path, _field in sources if kind == "runtime_boundary")
+    runtime_path = next(path for kind, path, _schema_ref, _field in sources if kind == "runtime_boundary")
     runtime = json.loads(runtime_path.read_text(encoding="utf-8"))
     runtime["effect_boundary"]["memory_write_allowed"] = True
     _write_json(tmp_path, "runtime_boundary.json", runtime)

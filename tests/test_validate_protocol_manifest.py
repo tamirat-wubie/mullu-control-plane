@@ -69,6 +69,17 @@ def test_protocol_manifest_indexes_agentic_service_harness_dashboard_data_contra
     assert dashboard_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_adapter_registry_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    registry_entry = entries["agentic-service-harness-adapter-registry-contract"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert registry_entry["path"] == "schemas/agentic_service_harness_adapter_registry_contract.schema.json"
+    assert registry_entry["urn"] == "urn:mullusi:schema:agentic-service-harness-adapter-registry-contract:1"
+    assert registry_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
