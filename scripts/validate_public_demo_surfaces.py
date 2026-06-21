@@ -2,7 +2,8 @@
 """Validate local public demo surfaces before publication.
 
 Purpose: verify that the evaluator-facing sandbox, federation, replay, SDK,
-benchmark, compliance, and proof-coverage witnesses agree.
+benchmark, compliance, Governed Work Assistant dashboard, and proof-coverage
+witnesses agree.
 Governance scope: public demo readiness validation only.
 Dependencies: FastAPI TestClient, OpenAPI SDK source spec, proof matrix,
 benchmark harness, and compliance alignment matrix.
@@ -27,6 +28,20 @@ MCOI_ROOT = REPO_ROOT / "mcoi"
 OPENAPI_SPEC_PATH = REPO_ROOT / "sdk" / "openapi" / "mullu.openapi.json"
 SDK_MANIFEST_PATH = REPO_ROOT / "sdk" / "sdk-generation.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "public_demo_surface_validation.json"
+WORK_ASSISTANT_DASHBOARD_ROUTE = "/api/v1/personal-assistant/work-assistant/dashboard/read-model"
+WORK_ASSISTANT_DASHBOARD_FALSE_FIELDS = (
+    "live_connector_execution_allowed",
+    "mailbox_read_allowed",
+    "mailbox_mutation_allowed",
+    "external_send_allowed",
+    "calendar_write_allowed",
+    "repository_write_allowed",
+    "worker_dispatch_allowed",
+    "live_receipt_append_allowed",
+    "production_readiness_claim_allowed",
+    "customer_readiness_claim_allowed",
+    "autonomous_execution_authority_allowed",
+)
 
 REQUIRED_OPENAPI_PATHS = (
     "/api/v1/sandbox/summary",
@@ -155,7 +170,7 @@ def validate_http_demo_routes() -> DemoSurfaceCheck:
         from mcoi_runtime.app.server import app
     except Exception:
         return DemoSurfaceCheck(
-            "http_demo_routes",
+            "http_import_failed",
             False,
             errors=("http_import_failed",),
         )
@@ -173,6 +188,7 @@ def validate_http_demo_routes() -> DemoSurfaceCheck:
         "sandbox_lineage": client.get("/api/v1/sandbox/lineage/sandbox-trace-budget-cutoff"),
         "sandbox_policy": client.get("/api/v1/sandbox/policy-evaluations"),
         "federation_summary": client.get("/api/v1/federation/summary"),
+        "work_assistant_dashboard": client.get(WORK_ASSISTANT_DASHBOARD_ROUTE),
         "replay_determinism": client.post(
             f"/api/v1/replay/{trace_id}/determinism",
             json={"operations": {"add": {"kind": "add_numbers"}}},
@@ -195,6 +211,33 @@ def validate_http_demo_routes() -> DemoSurfaceCheck:
     federation_payload = responses["federation_summary"].json()
     if federation_payload.get("witness", {}).get("enforcement_receipt", {}).get("central_data_transfer") is not False:
         errors.append("federation_summary:central_transfer_not_false")
+
+    dashboard_payload = responses["work_assistant_dashboard"].json()
+    if dashboard_payload.get("read_only") is not True:
+        errors.append("work_assistant_dashboard:read_only_not_true")
+    if dashboard_payload.get("fixture_backed") is not True:
+        errors.append("work_assistant_dashboard:fixture_backed_not_true")
+    effect_boundary = dashboard_payload.get("effect_boundary", {})
+    if not isinstance(effect_boundary, dict):
+        errors.append("work_assistant_dashboard:effect_boundary_missing")
+    else:
+        for field in WORK_ASSISTANT_DASHBOARD_FALSE_FIELDS:
+            if effect_boundary.get(field) is not False:
+                errors.append(f"work_assistant_dashboard:{field}_not_false")
+    route_boundary = dashboard_payload.get("route_boundary", {})
+    if not isinstance(route_boundary, dict):
+        errors.append("work_assistant_dashboard:route_boundary_missing")
+    else:
+        for field in (
+            "execution_allowed",
+            "live_connector_execution_allowed",
+            "external_send_allowed",
+            "repository_write_allowed",
+            "worker_dispatch_allowed",
+            "live_receipt_append_allowed",
+        ):
+            if route_boundary.get(field) is not False:
+                errors.append(f"work_assistant_dashboard:route_{field}_not_false")
 
     return DemoSurfaceCheck(
         "http_demo_routes",
