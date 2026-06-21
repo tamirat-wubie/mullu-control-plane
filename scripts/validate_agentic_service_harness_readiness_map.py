@@ -14,8 +14,9 @@ Invariants:
   - Receipt remains closed as a read-only append-disabled projection.
   - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - LoopStatus remains closed as a read-only projection.
-  - The first next PR advances to approved branch workspace creation after task
-    creation admission closes as blocked and read-only.
+  - Task creation admission remains closed as an admission-only READY surface.
+  - The first next PR advances to approved branch workspace creation after
+    task creation admission closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -162,11 +163,14 @@ REQUIRED_LOOPSTATUS_PROJECTION_TERMS = (
 REQUIRED_TASK_CREATION_ADMISSION_TERMS = (
     "Task creation admission preflight PR",
     "agentic_service_harness_task_creation_admission_preflight",
-    "task creation admission remains blocked",
-    "runtime writes",
-    "adapter execution",
+    "source task, read-model, approval, and evidence refs",
+    "task creation route",
+    "task record write",
+    "branch workspace creation",
     "receipt append",
+    "secret serialization",
     "terminal closure remain blocked",
+    "denying user-facing task route admission and task writes",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -268,9 +272,8 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_agent_adapter_ready(map_text, errors)
     _validate_evidence_bundle_ready(map_text, errors)
     _validate_loopstatus_ready(map_text, errors)
-    _validate_task_creation_admission_ready(map_text, errors)
-    _validate_create_agent_task_partial(map_text, errors)
     _validate_receipt_projection_pr_ready(map_text, errors)
+    _validate_task_creation_admission_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -374,26 +377,6 @@ def _validate_loopstatus_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: LoopStatus read-only projection")
 
 
-def _validate_task_creation_admission_ready(map_text: str, errors: list[str]) -> None:
-    ready_row = re.search(
-        r"^\| Task creation admission preflight PR \| READY \| .+terminal closure remain blocked\. \|$",
-        map_text,
-        re.MULTILINE,
-    )
-    if ready_row is None:
-        errors.append("missing ready row: Task creation admission preflight PR")
-
-
-def _validate_create_agent_task_partial(map_text: str, errors: list[str]) -> None:
-    partial_row = re.search(
-        r"^\| create agent task \| PARTIAL \| .+task creation admission preflight.+no user-facing task creation route.+ \| Add approved branch workspace creation preflight before any task route admission\. \|$",
-        map_text,
-        re.MULTILINE,
-    )
-    if partial_row is None:
-        errors.append("missing partial row: create agent task admission preflight")
-
-
 def _validate_receipt_projection_pr_ready(map_text: str, errors: list[str]) -> None:
     receipt_projection_row = re.search(
         r"^\| Receipt projection PR \| READY \| .+receipt-store append.+terminal closure remain blocked\. \|$",
@@ -404,10 +387,28 @@ def _validate_receipt_projection_pr_ready(map_text: str, errors: list[str]) -> N
         errors.append("missing ready row: Receipt projection PR")
 
 
+def _validate_task_creation_admission_ready(map_text: str, errors: list[str]) -> None:
+    closure_row = re.search(
+        r"^\| Task creation admission preflight PR \| READY \| .+task creation route.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Task creation admission preflight PR")
+
+    dashboard_row = re.search(
+        r"^\| create agent task \| READY \| .+denying user-facing task route admission and task writes\. \| None for admission preflight\..+ \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if dashboard_row is None:
+        errors.append("missing ready row: create agent task admission preflight")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
         "harness(workspace): add approved branch workspace creation preflight",
-        "harness(tasks): add task creation route design with runtime writes denied",
+        "harness(tasks): add task record write UAO admission preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:

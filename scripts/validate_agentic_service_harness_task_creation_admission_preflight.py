@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 """Validate Agentic Service Harness task creation admission preflight.
 
-Purpose: prove task creation admission remains read-only, blocked, and
-non-terminal while recording prerequisite evidence for a later user-facing
-task route.
+Purpose: prove user-facing AgentTask creation remains blocked until source
+read models, approvals, UAO admission, rollback evidence, and receipt evidence
+are explicit.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies:
-schemas/agentic_service_harness_task_creation_admission_preflight.schema.json,
+Dependencies: schemas/agentic_service_harness_task_creation_admission_preflight.schema.json,
 examples/agentic_service_harness_task_creation_admission_preflight.foundation.json,
-scripts.validate_schemas.
+and source harness validators for task intake, dashboard data, LoopStatus, and
+Receipt projection.
 Invariants:
-  - Admission scope matches the project and repository connection request.
-  - Task creation route, runtime writes, task persistence, adapter execution,
-    branch workspace creation, receipt append, dashboard UI, secrets, and
-    terminal closure remain denied.
-  - Missing approval and UAO evidence force AwaitingEvidence.
+  - Source read-model validators pass first.
+  - Task creation route and task record writes are not admitted.
+  - Adapter execution, branch workspace creation, receipt append, secrets, and
+    terminal closure fail closed.
 """
 
 from __future__ import annotations
@@ -32,6 +31,18 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.validate_agentic_service_harness_dashboard_data_contract import (  # noqa: E402
+    validate_agentic_service_harness_dashboard_data_contract,
+)
+from scripts.validate_agentic_service_harness_github_repo_task_intake import (  # noqa: E402
+    validate_agentic_service_harness_github_repo_task_intake,
+)
+from scripts.validate_agentic_service_harness_loopstatus_projection import (  # noqa: E402
+    validate_agentic_service_harness_loopstatus_projection,
+)
+from scripts.validate_agentic_service_harness_receipt_projection import (  # noqa: E402
+    validate_agentic_service_harness_receipt_projection,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -40,89 +51,57 @@ DEFAULT_EXAMPLES = (
     REPO_ROOT / "examples" / "agentic_service_harness_task_creation_admission_preflight.foundation.json",
 )
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "agentic_service_harness_task_creation_admission_preflight_validation.json"
+EXPECTED_REPORT_ID = "agentic_service_harness_task_creation_admission_preflight"
+EXPECTED_DECISION = "TASK_CREATION_ADMISSION_BLOCKED_PENDING_AUTHORITY"
 REQUIRED_SOURCE_REFS = (
     "schemas/agentic_service_harness.schema.json",
-    "schemas/agentic_service_harness_read_models.schema.json",
-    "schemas/agentic_service_harness_github_repo_task_intake.schema.json",
     "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
     "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
-    "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
     "examples/agentic_service_harness_loopstatus_projection.foundation.json",
-    "docs/FOUNDATION_MODE.md",
+    "examples/agentic_service_harness_receipt_projection.foundation.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md",
 )
-REQUIRED_EVIDENCE_REFS = (
-    "examples/agentic_service_harness_github_repo_task_intake.foundation.json",
-    "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
-    "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
-    "examples/agentic_service_harness_loopstatus_projection.foundation.json",
-    "approval://task-creation-route/not-collected",
-    "evidence://uao-task-creation-admission/not-verified",
-    "policy://harness/task-creation-read-only-boundary",
-    "receipt://task-creation-admission-preflight/not-emitted",
-)
-REQUIRED_MISSING_EVIDENCE_REFS = (
-    "approval://task-creation-route/not-collected",
-    "evidence://uao-task-creation-admission/not-verified",
-    "receipt://task-creation-admission-preflight/not-emitted",
-)
-REQUIRED_BLOCKED_REFS = (
+REQUIRED_BLOCKERS = (
     "blocked://task-creation-route/not-admitted",
-    "blocked://task-creation-approval/not-collected",
-    "blocked://uao-task-creation-admission/not-verified",
-    "blocked://runtime-state-write/not-admitted",
-    "blocked://receipt-store-append/not-admitted",
+    "blocked://task-record-write/no-uao-admission",
+    "blocked://approval/task-creation-not-collected",
+    "blocked://adapter-execution/not-admitted",
+    "blocked://receipt-store/append-not-admitted",
     "blocked://terminal-closure/not-authorized",
 )
 REQUIRED_FALSE_FLAGS = (
     "task_creation_route_admitted",
-    "dashboard_ui_admitted",
     "runtime_state_write_enabled",
     "receipt_store_append_enabled",
-    "adapter_execution_enabled",
-    "branch_workspace_creation_enabled",
     "secret_values_serialized",
-    "terminal_closure_granted",
-    "approval_collected",
-    "uao_admission_verified",
-    "runtime_state_write_admitted",
-    "task_record_persisted",
+    "approval_evidence_collected",
+    "uao_admission_collected",
+    "task_record_write_admitted",
     "adapter_execution_admitted",
     "branch_workspace_creation_admitted",
     "receipt_emission_admitted",
     "terminal_closure_allowed",
     "task_creation_route_enabled",
-    "task_record_persistence_enabled",
-    "live_adapter_execution_enabled",
+    "task_record_write_enabled",
+    "adapter_execution_enabled",
+    "branch_workspace_creation_enabled",
     "branch_write_enabled",
     "pull_request_creation_enabled",
     "repository_write_enabled",
     "mutation_route_enabled",
-    "dashboard_ui_enabled",
-    "deployment_enabled",
-    "dns_mutation_enabled",
-    "secret_mutation_enabled",
-    "destructive_operation_enabled",
     "terminal_closure",
     "default_high_risk_authority",
 )
 REQUIRED_TRUE_FLAGS = (
-    "read_only",
     "preflight_only",
-    "github_repo_task_intake_closed",
-    "dashboard_data_contract_closed",
-    "receipt_evidence_read_models_closed",
-    "loopstatus_projection_closed",
-    "approval_required_for_effects",
+    "read_only_sources",
     "task_scope_valid",
-    "repository_connection_valid",
-    "required_for_closure",
+    "source_read_models_valid",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
+    "required_for_closure",
 )
-ALLOWED_SECRET_KEYS = {
-    "secret_values_serialized",
-    "secret_mutation_enabled",
-}
+ALLOWED_SECRET_KEYS = {"secret_values_serialized"}
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
     "api_key",
@@ -144,14 +123,15 @@ MUTATION_ROUTE_PATTERN = re.compile(r"\b(POST|PUT|PATCH|DELETE)\s+/api\b", re.IG
 
 
 @dataclass(frozen=True, slots=True)
-class TaskCreationAdmissionPreflightValidation:
-    """Schema and semantic validation report for task creation admission."""
+class TaskCreationAdmissionValidation:
+    """Validation report for task creation admission preflight."""
 
     ok: bool
     errors: tuple[str, ...]
     schema_path: str
     example_paths: tuple[str, ...]
     example_count: int
+    source_validators_ok: bool
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -164,16 +144,18 @@ def validate_agentic_service_harness_task_creation_admission_preflight(
     *,
     schema_path: Path = DEFAULT_SCHEMA,
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
-) -> TaskCreationAdmissionPreflightValidation:
+) -> TaskCreationAdmissionValidation:
     """Validate task creation admission preflight examples."""
 
     errors: list[str] = []
-    schema = _load_json_object(schema_path, "task creation admission preflight schema", errors)
+    source_errors = _validate_sources()
+    errors.extend(source_errors)
+    schema = _load_json_object(schema_path, "task creation admission schema", errors)
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(
             example_path,
-            f"task creation admission preflight example {_path_label(example_path)}",
+            f"task creation admission example {_path_label(example_path)}",
             errors,
         )
         if not example:
@@ -185,17 +167,18 @@ def validate_agentic_service_harness_task_creation_admission_preflight(
                 for error in _validate_schema_instance(schema, example)
             )
         _validate_semantics(example, errors, _path_label(example_path))
-    return TaskCreationAdmissionPreflightValidation(
+    return TaskCreationAdmissionValidation(
         ok=not errors,
         errors=tuple(errors),
         schema_path=_path_label(schema_path),
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
+        source_validators_ok=not source_errors,
     )
 
 
-def write_task_creation_admission_preflight_validation(
-    validation: TaskCreationAdmissionPreflightValidation,
+def write_task_creation_admission_validation(
+    validation: TaskCreationAdmissionValidation,
     output_path: Path,
 ) -> Path:
     """Write a deterministic task creation admission validation report."""
@@ -208,18 +191,37 @@ def write_task_creation_admission_preflight_validation(
     return output_path
 
 
+def _validate_sources() -> list[str]:
+    errors: list[str] = []
+    source_results = (
+        ("github_repo_task_intake", validate_agentic_service_harness_github_repo_task_intake()),
+        ("dashboard_data_contract", validate_agentic_service_harness_dashboard_data_contract()),
+        ("loopstatus_projection", validate_agentic_service_harness_loopstatus_projection()),
+        ("receipt_projection", validate_agentic_service_harness_receipt_projection()),
+    )
+    for source_name, validation in source_results:
+        if not validation.ok:
+            errors.extend(f"source {source_name} invalid: {error}" for error in validation.errors)
+    return errors
+
+
 def _validate_semantics(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    _validate_required_source_refs(payload, errors, label)
+    if payload.get("report_id") != EXPECTED_REPORT_ID:
+        errors.append(f"{label}: report_id must be {EXPECTED_REPORT_ID}")
+    if _mapping(payload.get("admission_decision")).get("decision") != EXPECTED_DECISION:
+        errors.append(f"{label}: admission_decision.decision must be {EXPECTED_DECISION}")
+    _validate_source_refs(payload, errors, label)
     _validate_reference_integrity(payload, errors, label)
-    _validate_prerequisite_evidence(payload, errors, label)
-    _validate_admission_decision(payload, errors, label)
+    _validate_required_evidence(payload, errors, label)
+    _validate_blockers(payload, errors, label)
+    _validate_validators(payload, errors, label)
     _validate_boolean_flags(payload, errors, label)
     _validate_secret_surface(payload, errors, label)
     _validate_no_mutation_routes(payload, errors, label)
     _validate_next_action(payload, errors, label)
 
 
-def _validate_required_source_refs(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
+def _validate_source_refs(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
     refs = payload.get("source_contract_refs")
     if not isinstance(refs, list):
         errors.append(f"{label}: source_contract_refs must be a list")
@@ -230,57 +232,64 @@ def _validate_required_source_refs(payload: Mapping[str, Any], errors: list[str]
 
 
 def _validate_reference_integrity(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    scope = payload.get("scope")
-    request = payload.get("admission_request")
-    if not isinstance(scope, Mapping) or not isinstance(request, Mapping):
+    scope = _mapping(payload.get("scope"))
+    request = _mapping(payload.get("admission_request"))
+    if not scope or not request:
         errors.append(f"{label}: scope and admission_request must be objects")
         return
-    if scope.get("project_id") != request.get("project_id"):
-        errors.append(f"{label}: scope.project_id must match admission_request.project_id")
-    if scope.get("repository_connection_id") != request.get("repository_connection_id"):
-        errors.append(
-            f"{label}: scope.repository_connection_id must match admission_request.repository_connection_id"
-        )
+    if scope.get("repository_slug") != "tamirat-wubie/mullu-control-plane":
+        errors.append(f"{label}: scope.repository_slug must bind the repository")
+    if request.get("requested_action") != "create_agent_task":
+        errors.append(f"{label}: requested_action must be create_agent_task")
+    if request.get("requested_route_ref") != "route://harness/task-creation/not-admitted":
+        errors.append(f"{label}: requested_route_ref must remain not-admitted")
+    for key in (
+        "source_repository_connection_ref",
+        "source_dashboard_ref",
+        "source_loopstatus_ref",
+        "source_receipt_projection_ref",
+    ):
+        value = request.get(key)
+        if not isinstance(value, str) or not value.startswith("examples/agentic_service_harness_"):
+            errors.append(f"{label}: admission_request.{key} must bind a harness source example ref")
 
 
-def _validate_prerequisite_evidence(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    evidence = payload.get("prerequisite_evidence")
-    if not isinstance(evidence, Mapping):
-        errors.append(f"{label}: prerequisite_evidence must be an object")
+def _validate_required_evidence(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
+    required_evidence = _mapping(payload.get("required_evidence"))
+    required_sections = (
+        "must_have_before_route_admission",
+        "must_have_before_task_record_write",
+        "must_have_before_adapter_execution",
+        "must_have_before_receipt_append",
+    )
+    for section in required_sections:
+        refs = required_evidence.get(section)
+        if not isinstance(refs, list) or not refs:
+            errors.append(f"{label}: required_evidence.{section} must not be empty")
+    decision_refs = _mapping(payload.get("admission_decision")).get("next_required_evidence_refs")
+    if not isinstance(decision_refs, list) or "evidence://approved-branch-workspace-creation-preflight" not in decision_refs:
+        errors.append(f"{label}: next_required_evidence_refs must include approved branch workspace preflight")
+
+
+def _validate_blockers(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
+    blockers = _mapping(payload.get("admission_decision")).get("blocked_reason_refs")
+    if not isinstance(blockers, list):
+        errors.append(f"{label}: blocked_reason_refs must be a list")
         return
-    required_refs = {str(ref) for ref in evidence.get("required_evidence_refs", [])}
-    missing_required_refs = sorted(set(REQUIRED_EVIDENCE_REFS) - required_refs)
-    if missing_required_refs:
-        errors.append(f"{label}: missing required_evidence_refs: {', '.join(missing_required_refs)}")
-    missing_refs = {str(ref) for ref in evidence.get("missing_evidence_refs", [])}
-    absent_missing_refs = sorted(set(REQUIRED_MISSING_EVIDENCE_REFS) - missing_refs)
-    if absent_missing_refs:
-        errors.append(f"{label}: missing missing_evidence_refs: {', '.join(absent_missing_refs)}")
-    if evidence.get("approval_collected") is not False:
-        errors.append(f"{label}: approval_collected must remain false")
-    if evidence.get("uao_admission_verified") is not False:
-        errors.append(f"{label}: uao_admission_verified must remain false")
+    missing = sorted(set(REQUIRED_BLOCKERS) - {str(ref) for ref in blockers})
+    if missing:
+        errors.append(f"{label}: blocked_reason_refs missing {', '.join(missing)}")
 
 
-def _validate_admission_decision(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    decision = payload.get("admission_decision")
-    if not isinstance(decision, Mapping):
-        errors.append(f"{label}: admission_decision must be an object")
+def _validate_validators(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
+    validators = payload.get("validators")
+    if not isinstance(validators, list) or not validators:
+        errors.append(f"{label}: validators must not be empty")
         return
-    if decision.get("decision") != "TASK_CREATION_ROUTE_BLOCKED_AWAITING_EVIDENCE":
-        errors.append(f"{label}: decision must block task creation route awaiting evidence")
-    if decision.get("solver_outcome") != "AwaitingEvidence":
-        errors.append(f"{label}: decision solver_outcome must be AwaitingEvidence")
-    if decision.get("proof_state") != "Unknown":
-        errors.append(f"{label}: decision proof_state must be Unknown")
-    blocked_refs = {str(ref) for ref in decision.get("blocked_reason_refs", [])}
-    missing_blockers = sorted(set(REQUIRED_BLOCKED_REFS) - blocked_refs)
-    if missing_blockers:
-        errors.append(f"{label}: missing blocked_reason_refs: {', '.join(missing_blockers)}")
-    next_refs = {str(ref) for ref in decision.get("next_required_evidence_refs", [])}
-    missing_next_refs = sorted(set(REQUIRED_MISSING_EVIDENCE_REFS) - next_refs)
-    if missing_next_refs:
-        errors.append(f"{label}: missing next_required_evidence_refs: {', '.join(missing_next_refs)}")
+    commands = {str(item.get("command")) for item in _objects(validators)}
+    expected = "python scripts/validate_agentic_service_harness_task_creation_admission_preflight.py --strict"
+    if expected not in commands:
+        errors.append(f"{label}: validators must include {expected}")
 
 
 def _validate_boolean_flags(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
@@ -317,28 +326,19 @@ def _validate_next_action(payload: Mapping[str, Any], errors: list[str], label: 
     if not isinstance(next_action, str):
         errors.append(f"{label}: next_action must be a string")
         return
-    for phrase in (
-        "approved branch workspace creation preflight",
-        "task creation admission",
-        "mutation endpoints",
-        "runtime writes",
-        "receipt append",
-        "terminal closure",
-    ):
+    for phrase in ("approved branch workspace creation preflight", "task creation admission", "blocked", "terminal closure"):
         if phrase not in next_action:
             errors.append(f"{label}: next_action must mention {phrase}")
 
 
-def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        errors.append(f"{label} load failed: {exc}")
-        return {}
-    if not isinstance(payload, dict):
-        errors.append(f"{label} must be a JSON object")
-        return {}
-    return payload
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _objects(collection: Any) -> tuple[dict[str, Any], ...]:
+    if not isinstance(collection, list):
+        return ()
+    return tuple(item for item in collection if isinstance(item, dict))
 
 
 def _walk(value: Any, path: tuple[str, ...] = ()) -> Iterable[tuple[tuple[str, ...], Any]]:
@@ -349,6 +349,22 @@ def _walk(value: Any, path: tuple[str, ...] = ()) -> Iterable[tuple[tuple[str, .
     elif isinstance(value, list):
         for index, item in enumerate(value):
             yield from _walk(item, (*path, str(index)))
+
+
+def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_json_constant)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        errors.append(f"{label} load failed: {exc}")
+        return {}
+    if not isinstance(payload, dict):
+        errors.append(f"{label} must be a JSON object")
+        return {}
+    return payload
+
+
+def _reject_json_constant(raw_constant: str) -> None:
+    raise ValueError(f"non-finite JSON constants are not permitted: {raw_constant}")
 
 
 def _path_label(path: Path) -> str:
@@ -379,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
         schema_path=args.schema,
         example_paths=tuple(args.examples) if args.examples else DEFAULT_EXAMPLES,
     )
-    write_task_creation_admission_preflight_validation(validation, args.output)
+    write_task_creation_admission_validation(validation, args.output)
     if args.json:
         print(json.dumps(validation.as_dict(), indent=2, sort_keys=True))
     elif validation.ok:

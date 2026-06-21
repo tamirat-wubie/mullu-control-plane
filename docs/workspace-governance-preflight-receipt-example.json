@@ -266,9 +266,9 @@
     {
       "args": [
         "python",
-        "scripts/validate_agentic_service_harness_task_creation_admission_preflight.py"
+        "scripts/validate_agentic_service_harness_receipt_projection.py"
       ],
-      "name": "agentic_service_harness_task_creation_admission_preflight",
+      "name": "agentic_service_harness_receipt_projection",
       "passed": true,
       "return_code": 0,
       "stderr": "",
@@ -279,9 +279,9 @@
     {
       "args": [
         "python",
-        "scripts/validate_agentic_service_harness_receipt_projection.py"
+        "scripts/validate_agentic_service_harness_task_creation_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_receipt_projection",
+      "name": "agentic_service_harness_task_creation_admission_preflight",
       "passed": true,
       "return_code": 0,
       "stderr": "",

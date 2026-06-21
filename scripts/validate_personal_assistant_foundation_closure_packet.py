@@ -13,6 +13,7 @@ Invariants:
   - Source receipt closure fields must be true in the source payloads themselves.
   - Source receipt serialized lengths must match current source payloads.
   - Source receipt records must replay from canonical source payload projection.
+  - Authority denials must replay from canonical denial projection.
   - Closure summaries must match recomputed source receipt aggregates.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
@@ -61,6 +62,7 @@ BLOCKED_SECRET_VALUE_MARKERS = (
     "private_key=",
     "-----begin private key-----",
 )
+AUTHORITY_DENIAL_REASON = "Foundation Mode closure packet grants no live or effect-bearing authority."
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +112,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_source_receipt_source_closure_fields(payload),
         _check_source_receipt_replay_projection(payload),
         _check_authority_denials(payload),
+        _check_authority_denial_replay_projection(payload),
         _check_no_effect_boundary(payload),
         _check_closure_summary_aggregates(payload),
         _check_closure_gate(payload),
@@ -405,6 +408,26 @@ def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFounda
         "authority denials",
         passed,
         f"denied={len(observed)} required={len(required)}",
+    )
+
+
+def _check_authority_denial_replay_projection(
+    payload: dict[str, Any],
+) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("authority_denials"))
+    expected_records = [
+        {
+            "authority": authority,
+            "denied": True,
+            "denial_reason": AUTHORITY_DENIAL_REASON,
+        }
+        for authority in AUTHORITY_DENIALS
+    ]
+    passed = records == expected_records
+    return PersonalAssistantFoundationClosureValidationStep(
+        "authority denial replay projection",
+        passed,
+        "projection-current" if passed else "projection-mismatch",
     )
 
 
