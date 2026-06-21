@@ -13,7 +13,8 @@ Invariants:
   - ApprovalRequest remains closed as a read-only gateway binding surface.
   - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - Receipt remains closed as a read-only append-disabled projection.
-  - The first next PR advances to LoopStatus after the Receipt projection
+  - LoopStatus remains closed as a read-only projection.
+  - The first next PR advances to task creation admission after LoopStatus
     closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
@@ -59,6 +60,7 @@ REQUIRED_READY_SYMBOLS = (
     "AgentAdapter",
     "EvidenceBundle",
     "Receipt",
+    "LoopStatus",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
     "WorkspaceSandbox",
@@ -145,6 +147,16 @@ REQUIRED_EVIDENCE_BUNDLE_PROJECTION_TERMS = (
     "PR creation",
     "terminal closure remain blocked",
 )
+REQUIRED_LOOPSTATUS_PROJECTION_TERMS = (
+    "LoopStatus",
+    "Harness LoopStatus projection",
+    "holistic loop read-model output",
+    "loop registration",
+    "status transition",
+    "task creation routes",
+    "mutation endpoints",
+    "terminal closure remain denied",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -225,6 +237,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "evidence_bundle_projection_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_LOOPSTATUS_PROJECTION_TERMS,
+        "loopstatus_projection_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -232,6 +250,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_agent_adapter_ready(map_text, errors)
     _validate_evidence_bundle_ready(map_text, errors)
     _validate_receipt_ready(map_text, errors)
+    _validate_loopstatus_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -325,10 +344,20 @@ def _validate_receipt_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: Receipt read-only projection")
 
 
+def _validate_loopstatus_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| LoopStatus \| READY \| .+ \| None for read-only projection\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if ready_row is None:
+        errors.append("missing ready row: LoopStatus read-only projection")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(loop): add durable LoopStatus projection",
         "harness(tasks): add task creation admission preflight",
+        "harness(workspace): add approved branch workspace creation preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:
