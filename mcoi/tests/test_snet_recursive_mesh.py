@@ -1480,6 +1480,99 @@ def test_direct_snet_contracts_reject_semantic_whitespace_drift() -> None:
     assert valid_unknown.blocking_reason == "answer missing"
 
 
+def test_direct_snet_contracts_reject_hidden_text_character_drift() -> None:
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetSymbol(symbol_id="symbol:\u200b1", label="Seed")
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed\nLabel")
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetQuestion(
+            question_id="question:1",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="iden\tity",
+        )
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetQuestion(
+            question_id="question:2",
+            target_symbol_id="symbol:1",
+            wh_type=SNetWHType.WHAT,
+            text="What is Seed?",
+            facet="identity",
+            perspective="general\u2028scope",
+        )
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed\u200danswer",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+        )
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetMetadata(
+            metadata_id="metadata:1",
+            parent_symbol_id="symbol:1",
+            question_id="question:1",
+            answer_id="answer:1",
+            facet="identity",
+            value="Seed\u200bvalue",
+            context="general",
+            perspective="general",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetRelation(
+            relation_id="relation:1",
+            source_symbol_id="symbol:1",
+            relation_type="depends\u200bon",
+            target_symbol_id="symbol:2",
+            confidence=0.5,
+            context="general",
+            perspective="general",
+        )
+    with pytest.raises(ValueError, match="forbidden control or invisible character"):
+        SNetUnknown(
+            unknown_id="unknown:1",
+            symbol_id="symbol:1",
+            missing_facet="identity",
+            question_id="question:1",
+            importance_score=0.5,
+            blocking_reason="answer\u2029missing",
+        )
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:2",
+        label="Mfidel \u1200",
+        definition="atomic fidel marker",
+    )
+    valid_metadata = SNetMetadata(
+        metadata_id="metadata:2",
+        parent_symbol_id="symbol:2",
+        question_id="question:2",
+        answer_id="answer:2",
+        facet="identity",
+        value="Seed value \u1200",
+        context="general scope",
+        perspective="operator scope",
+        confidence=0.5,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed answer \u1200",
+        ascii_folded_answer="seed answer",
+        confidence=0.5,
+    )
+
+    assert valid_symbol.label == "Mfidel \u1200"
+    assert valid_metadata.value == "Seed value \u1200"
+    assert valid_answer.raw_answer == "Seed answer \u1200"
+
+
 def test_direct_snet_contracts_reject_identifier_whitespace_drift() -> None:
     with pytest.raises(ValueError, match="symbol_id"):
         SNetSymbol(symbol_id=" symbol:1", label="Seed")
