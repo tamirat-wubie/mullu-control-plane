@@ -97,7 +97,20 @@ def test_gateway_personal_assistant_console_read_model_exposes_lane_status() -> 
     assert pilot["pilot_readiness"]["send_write_preflight_ready"] is True
     assert pilot["pilot_readiness"]["live_execution_ready"] is False
     assert pilot["receipt_boundary"]["runtime_dispatch_allowed"] is False
+    assert pilot["dashboard_projection"]["read_only"] is True
+    assert pilot["dashboard_projection"]["worker_dispatch_allowed"] is False
+    assert pilot["demo_scenario"]["approval_preview"]["approval_is_execution"] is False
+    assert all(phase["effect_allowed"] is False for phase in pilot["workflow_separation"])
+    assert pilot["pr_2058_review_decision"]["decision"] == "hold_open_do_not_merge"
+    assert pilot["pr_2058_review_decision"]["merge_allowed"] is False
+    assert pilot["inceptadive_advisory_panel"]["redacted"] is True
+    assert pilot["deterministic_replay"]["deterministic_replay_from_fixtures"] is True
+    assert pilot["deterministic_replay"]["live_receipt_append_allowed"] is False
+    assert pilot["approval_authority_next_phase"]["status"] == "AwaitingEvidence"
     assert pilot["execution_allowed"] is False
+    assert pilot["repository_write_allowed"] is False
+    assert pilot["worker_dispatch_allowed"] is False
+    assert pilot["live_receipt_append_allowed"] is False
     assert pilot["external_send_allowed"] is False
     assert pilot["customer_readiness_claim_allowed"] is False
     assert lane_status["lane_count"] == 12

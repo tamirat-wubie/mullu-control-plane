@@ -46,6 +46,7 @@ from mcoi_runtime.personal_assistant import (
     PersonalAssistantInvariantError,
     RequestInterface,
     build_clarification_requests,
+    build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
     interpret_user_request,
     load_default_skill_registry,
@@ -139,6 +140,15 @@ def personal_assistant_skill_read_model():
         "live_connector_execution_allowed": False,
         "governed": True,
     }
+
+
+@router.get("/api/v1/personal-assistant/pilot/read-model")
+def personal_assistant_pilot_read_model():
+    """Return the no-effect governed Team Assistant pilot package."""
+    _inc_metric("requests_governed")
+    generated_at = _clock_now()
+    console_model = build_personal_assistant_console_read_model(generated_at=generated_at)
+    return console_model["governed_team_assistant_pilot"]
 
 
 @router.post("/api/v1/personal-assistant/requests/preview")
