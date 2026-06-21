@@ -1,0 +1,55 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_personal_assistant_approval_review_packet.py --json",
+    "python scripts/validate_personal_assistant_approval_queue.py --json",
+    "python -m pytest tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_review_packet.py tests/test_validate_personal_assistant_dry_run_packet.py tests/test_validate_personal_assistant_foundation_closure_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "affected_surfaces": [
+    "personal_assistant_approval_review_packet_schema",
+    "personal_assistant_approval_review_packet_validator",
+    "personal_assistant_approval_runtime_projection",
+    "personal_assistant_approval_review_fixture",
+    "personal_assistant_approval_queue_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-approval-review-source-binding/20260621",
+  "constraints": [
+    "Approval review packets must remain preview-only and no-effect.",
+    "Review packets must bind to the checked-in dry-run packet and foundation closure packet by source path, schema path, packet identity, closure field, and newline-stable SHA-256 digest.",
+    "Review packets must not serialize source packet payloads, raw connector payloads, message bodies, secrets, or credentials.",
+    "Approval enqueue, connector mutation, external send, memory write, calendar write, task write, deployment mutation, and system-of-record writes remain denied.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/personal_assistant_approval_review_packet.schema.json",
+    "examples/personal_assistant_approval_review_packet.json",
+    "scripts/validate_personal_assistant_approval_review_packet.py",
+    "mcoi/mcoi_runtime/personal_assistant/approval.py",
+    "tests/test_validate_personal_assistant_approval_review_packet.py",
+    "tests/test_personal_assistant_approval_queue.py",
+    "examples/personal_assistant_dry_run_packet.json",
+    "examples/personal_assistant_foundation_closure_packet.json"
+  ],
+  "non_goals": [
+    "Do not enqueue an approval from the review packet.",
+    "Do not approve, reject, revise, or execute a live action.",
+    "Do not call Gmail, Calendar, task, messaging, browser, or memory connectors.",
+    "Do not grant live connector, memory, deployment, customer-readiness, or production-readiness authority."
+  ],
+  "problem_statement": "Personal Assistant approval review packets were no-effect previews but only referenced abstract proof URIs, so an operator could not validate that the proposed review was bound to the closed dry-run and foundation closure evidence currently checked into the repository.",
+  "receipt_ref": "examples/personal_assistant_approval_review_packet.json",
+  "request_id": "personal_assistant_approval_review_source_binding_20260621",
+  "requirement_id": "sdlc_req_personal_assistant_approval_review_source_binding_20260621",
+  "risk_class": "medium",
+  "success_criteria": [
+    "Approval review packet schema requires source_closure_refs.",
+    "The checked-in approval review packet validates with digest-only refs to the dry-run and foundation closure packets.",
+    "Runtime-generated approval review packets validate against the updated schema.",
+    "Validator rejects source digest drift, missing required source refs, unclosed source refs, and source payload serialization drift.",
+    "No-effect approval, connector, external send, memory, deployment, and system-of-record boundaries remain false."
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-approval-review-source-binding/20260621"
+}

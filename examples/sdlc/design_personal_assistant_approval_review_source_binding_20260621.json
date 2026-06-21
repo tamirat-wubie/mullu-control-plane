@@ -1,0 +1,49 @@
+{
+  "affected_modules": [
+    "schemas/personal_assistant_approval_review_packet.schema.json",
+    "examples/personal_assistant_approval_review_packet.json",
+    "scripts/validate_personal_assistant_approval_review_packet.py",
+    "mcoi/mcoi_runtime/personal_assistant/approval.py",
+    "tests/test_validate_personal_assistant_approval_review_packet.py",
+    "tests/test_personal_assistant_approval_queue.py"
+  ],
+  "architecture_summary": "Bind Personal Assistant approval review packets to closed dry-run and foundation closure evidence using digest-only source_closure_refs, while keeping the review packet preview-only and non-authoritative.",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-approval-review-source-binding/20260621",
+  "data_model_changes": [
+    "Add source_closure_refs to the approval review packet contract.",
+    "Add metadata flags for digest-verified source closure binding and payload non-serialization.",
+    "Update the approval review fixture with dry-run and foundation closure packet source refs, schema refs, packet IDs, closure fields, and SHA-256 digests.",
+    "Update runtime ApprovalPlanProposal review projection to emit the same digest-only source closure references."
+  ],
+  "design_id": "sdlc_design_personal_assistant_approval_review_source_binding_20260621",
+  "migration_plan": "No persisted migration is required; this changes a checked-in preview schema, fixture, validator, runtime projection, and tests only.",
+  "receipt_ref": "examples/personal_assistant_approval_review_packet.json",
+  "requirement_id": "sdlc_req_personal_assistant_approval_review_source_binding_20260621",
+  "rollback_plan": "Revert the source_closure_refs schema requirement, fixture fields, validator checks, runtime projection additions, and tests; approval review packets return to abstract proof URI binding only.",
+  "schema_changes": [
+    "schemas/personal_assistant_approval_review_packet.schema.json"
+  ],
+  "security_model": {
+    "effect_bearing_requires_receipt": true,
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "tenant_scope_reviewed": true
+  },
+  "test_plan": [
+    "python scripts/validate_personal_assistant_approval_review_packet.py --json",
+    "python scripts/validate_personal_assistant_approval_queue.py --json",
+    "python -m pytest tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_review_packet.py tests/test_validate_personal_assistant_dry_run_packet.py tests/test_validate_personal_assistant_foundation_closure_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-approval-review-source-binding/20260621",
+  "validator_changes": [
+    "Validate required source_closure_refs for dry_run_packet and foundation_closure_packet.",
+    "Validate source refs and schema refs stay under repository root.",
+    "Validate newline-stable SHA-256 digests match checked-in source files.",
+    "Validate source packet IDs, solver outcomes, and closure fields match the referenced packets.",
+    "Reject source payload serialization drift and missing digest-only source binding metadata."
+  ]
+}

@@ -24,7 +24,35 @@
   ],
   "evidence_refs": [
     "proof://personal-assistant/request/approval-review-packet-001",
-    "proof://personal-assistant/plan/approval_review_packet_001"
+    "proof://personal-assistant/plan/approval_review_packet_001",
+    "examples/personal_assistant_dry_run_packet.json",
+    "examples/personal_assistant_foundation_closure_packet.json"
+  ],
+  "source_closure_refs": [
+    {
+      "source_kind": "dry_run_packet",
+      "source_ref": "examples/personal_assistant_dry_run_packet.json",
+      "schema_ref": "schemas/personal_assistant_dry_run_packet.schema.json",
+      "source_sha256": "83e57cddb594fec71fa67222793e899e89494855eb7e9701ddd6404abe2d7d49",
+      "packet_id": "personal-assistant-dry-run-aa82dd48da8a8478",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "dry_run_packet_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "payload_digest_only": true
+    },
+    {
+      "source_kind": "foundation_closure_packet",
+      "source_ref": "examples/personal_assistant_foundation_closure_packet.json",
+      "schema_ref": "schemas/personal_assistant_foundation_closure_packet.schema.json",
+      "source_sha256": "6d19ca506e6b5505c167a3cc9ec860845001c22a5343960b1b0d8b4ec8e97b55",
+      "packet_id": "personal-assistant-foundation-closure-af5a6eb3c010d411",
+      "solver_outcome": "SolvedVerified",
+      "closure_field": "foundation_closure_packet_closed",
+      "closed": true,
+      "no_effect_boundary_verified": true,
+      "payload_digest_only": true
+    }
   ],
   "required_operator_checks": [
     "confirm_request_identity",
@@ -77,6 +105,10 @@
   "metadata": {
     "foundation_only": true,
     "approval_matrix_ref": "personal_assistant_approval_matrix.foundation.v1",
+    "source_closure_binding": "digest_verified_closed_packets",
+    "all_source_closure_refs_bound": true,
+    "all_source_closure_refs_closed": true,
+    "source_payloads_serialized": false,
     "approval_packet_is_execution": false,
     "review_packet_is_execution": false,
     "live_nested_mind_activation_allowed": false,

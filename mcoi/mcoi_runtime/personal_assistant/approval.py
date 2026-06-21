@@ -54,6 +54,32 @@ _APPROVAL_ACTIONS_NOT_TAKEN = (
     "system_of_record_not_written",
     "money_legal_public_action_not_performed",
 )
+_REVIEW_SOURCE_CLOSURE_REFS = (
+    {
+        "source_kind": "dry_run_packet",
+        "source_ref": "examples/personal_assistant_dry_run_packet.json",
+        "schema_ref": "schemas/personal_assistant_dry_run_packet.schema.json",
+        "source_sha256": "83e57cddb594fec71fa67222793e899e89494855eb7e9701ddd6404abe2d7d49",
+        "packet_id": "personal-assistant-dry-run-aa82dd48da8a8478",
+        "solver_outcome": "SolvedVerified",
+        "closure_field": "dry_run_packet_closed",
+        "closed": True,
+        "no_effect_boundary_verified": True,
+        "payload_digest_only": True,
+    },
+    {
+        "source_kind": "foundation_closure_packet",
+        "source_ref": "examples/personal_assistant_foundation_closure_packet.json",
+        "schema_ref": "schemas/personal_assistant_foundation_closure_packet.schema.json",
+        "source_sha256": "6d19ca506e6b5505c167a3cc9ec860845001c22a5343960b1b0d8b4ec8e97b55",
+        "packet_id": "personal-assistant-foundation-closure-af5a6eb3c010d411",
+        "solver_outcome": "SolvedVerified",
+        "closure_field": "foundation_closure_packet_closed",
+        "closed": True,
+        "no_effect_boundary_verified": True,
+        "payload_digest_only": True,
+    },
+)
 
 
 class ApprovalDecision(StrEnum):
@@ -210,7 +236,8 @@ class ApprovalPlanProposal:
             "review_state": "preview_only",
             "proposed_actions": [action.as_dict() for action in self.proposed_actions],
             "forbidden_without_approval": list(self.forbidden_without_approval),
-            "evidence_refs": list(self.evidence_refs),
+            "evidence_refs": list(self.evidence_refs) + _review_source_ref_paths(),
+            "source_closure_refs": _review_source_closure_refs(),
             "required_operator_checks": _review_required_checks(self.risk_level),
             "authority_denials": _review_authority_denials(self.risk_level),
             "effect_boundary": {
@@ -228,6 +255,10 @@ class ApprovalPlanProposal:
             "metadata": {
                 "foundation_only": True,
                 "approval_matrix_ref": self.approval_matrix_ref,
+                "source_closure_binding": "digest_verified_closed_packets",
+                "all_source_closure_refs_bound": True,
+                "all_source_closure_refs_closed": True,
+                "source_payloads_serialized": False,
                 "approval_packet_is_execution": False,
                 "review_packet_is_execution": False,
                 "live_nested_mind_activation_allowed": False,
@@ -875,6 +906,16 @@ def _review_authority_denials(risk_level: SkillRiskLevel) -> list[dict[str, str 
         }
         for authority, reason in denials
     ]
+
+
+def _review_source_ref_paths() -> list[str]:
+    """Return checked-in source paths bound into approval review evidence."""
+    return [str(source_ref["source_ref"]) for source_ref in _REVIEW_SOURCE_CLOSURE_REFS]
+
+
+def _review_source_closure_refs() -> list[dict[str, Any]]:
+    """Return digest-only closed source references for approval review packets."""
+    return [dict(source_ref) for source_ref in _REVIEW_SOURCE_CLOSURE_REFS]
 
 
 def _decision_actions_taken(decision: ApprovalDecision) -> tuple[str, ...]:

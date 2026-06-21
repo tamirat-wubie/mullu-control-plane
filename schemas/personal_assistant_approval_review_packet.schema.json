@@ -18,6 +18,7 @@
     "proposed_actions",
     "forbidden_without_approval",
     "evidence_refs",
+    "source_closure_refs",
     "required_operator_checks",
     "authority_denials",
     "effect_boundary",
@@ -52,6 +53,11 @@
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
+    },
+    "source_closure_refs": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/source_closure_ref" }
     },
     "required_operator_checks": {
       "type": "array",
@@ -107,6 +113,10 @@
       "required": [
         "foundation_only",
         "approval_matrix_ref",
+        "source_closure_binding",
+        "all_source_closure_refs_bound",
+        "all_source_closure_refs_closed",
+        "source_payloads_serialized",
         "approval_packet_is_execution",
         "review_packet_is_execution",
         "live_nested_mind_activation_allowed",
@@ -115,6 +125,10 @@
       "properties": {
         "foundation_only": { "const": true },
         "approval_matrix_ref": { "type": "string", "minLength": 1 },
+        "source_closure_binding": { "type": "string", "minLength": 1 },
+        "all_source_closure_refs_bound": { "const": true },
+        "all_source_closure_refs_closed": { "const": true },
+        "source_payloads_serialized": { "const": false },
         "approval_packet_is_execution": { "const": false },
         "review_packet_is_execution": { "const": false },
         "live_nested_mind_activation_allowed": { "const": false },
@@ -123,6 +137,37 @@
     }
   },
   "$defs": {
+    "source_closure_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_ref",
+        "schema_ref",
+        "source_sha256",
+        "packet_id",
+        "solver_outcome",
+        "closure_field",
+        "closed",
+        "no_effect_boundary_verified",
+        "payload_digest_only"
+      ],
+      "properties": {
+        "source_kind": {
+          "type": "string",
+          "enum": ["dry_run_packet", "foundation_closure_packet"]
+        },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "schema_ref": { "type": "string", "minLength": 1 },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "packet_id": { "type": "string", "minLength": 1 },
+        "solver_outcome": { "const": "SolvedVerified" },
+        "closure_field": { "type": "string", "minLength": 1 },
+        "closed": { "const": true },
+        "no_effect_boundary_verified": { "const": true },
+        "payload_digest_only": { "const": true }
+      }
+    },
     "proposed_action": {
       "type": "object",
       "additionalProperties": false,
