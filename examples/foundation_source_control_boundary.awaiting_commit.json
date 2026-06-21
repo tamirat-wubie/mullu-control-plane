@@ -312,6 +312,17 @@
       "summary": "Capability-roadmap preparation drafts local capability-family, readiness, sequencing, dependency, evidence-gate, user-value, support-load, pricing-exposure, public-claim, and evolution-review questions without capability inventory completeness, availability, roadmap commitment, delivery-date, customer, pilot, support, pricing, money-movement, external publication, or deployment claims."
     },
     {
+      "family_id": "cognitive_sgi_readiness_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_COGNITIVE_SGI_READINESS_BOUNDARY.md",
+        "examples/foundation_cognitive_sgi_readiness_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_cognitive_sgi_readiness_boundary.py",
+        "tests/test_validate_foundation_cognitive_sgi_readiness_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Cognitive SGI readiness preparation drafts local read/simulation surfaces, blocker evidence, ontology-promotion questions, and external-effect boundaries without achieved-SGI, consciousness, production, customer, authority, deployment, or unrestricted self-modification claims."
+    },
+    {
       "family_id": "agentic_management_boundary",
       "required_evidence": [
         "docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md",
@@ -1115,6 +1126,7 @@
     "python scripts/validate_foundation_patent_disclosure_deferral_boundary.py",
     "python scripts/validate_foundation_product_scope_boundary.py",
     "python scripts/validate_foundation_capability_roadmap_boundary.py",
+    "python scripts/validate_foundation_cognitive_sgi_readiness_boundary.py",
     "python scripts/validate_foundation_agentic_management_boundary.py",
     "python scripts/validate_foundation_operations_runbook_boundary.py",
     "python scripts/validate_foundation_market_research_boundary.py",

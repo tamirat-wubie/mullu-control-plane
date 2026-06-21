@@ -1,8 +1,19 @@
+<!--
+Purpose: bound Mullu cognitive SGI readiness work as local read/simulation evidence before any achieved-SGI, consciousness, production, customer, authority, deployment, or unrestricted self-modification claim.
+Governance scope: cross-domain transfer, concept birth, self-question generation, homeostasis, governed autonomy classification, blocked evidence lanes, external-effect blocking, ontology-promotion blocking, and readiness-claim blocking.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, mcoi/mcoi_runtime/core/cognitive_sgi_readiness_kernel.py, examples/foundation_cognitive_sgi_readiness_witness.awaiting_evidence.json, scripts/validate_foundation_cognitive_sgi_readiness_boundary.py.
+Invariants: no achieved-SGI claim, no autonomous consciousness claim, no production readiness claim, no customer readiness claim, no public deployment readiness claim, no safety certification claim, no legal, medical, or financial authority claim, no external effects, no ontology promotion, and no unrestricted self-modification claim.
+-->
+
 # Foundation Cognitive SGI Readiness Boundary
 
 Purpose: bound Mullu cognitive / Proto-SGI readiness work as a local, auditable, simulation-first proof thread.
 
 This document records what the cognitive SGI readiness kernel may and may not claim while the repository remains in Foundation Mode.
+
+Witness packet: [`../examples/foundation_cognitive_sgi_readiness_witness.awaiting_evidence.json`](../examples/foundation_cognitive_sgi_readiness_witness.awaiting_evidence.json)
+
+Rule: Cognitive SGI readiness preparation is a local read/simulation boundary, not an achieved-SGI, consciousness, production, customer, authority, deployment, or unrestricted self-modification certificate.
 
 ## Scope
 
@@ -37,6 +48,23 @@ Mullu can be evaluated as a Proto-SGI cognitive architecture candidate through d
 ```
 
 ## Readiness ladder
+
+```text
+cognitive_sgi_readiness_boundary_state=AwaitingEvidence
+achieved_sgi_claimed=false
+autonomous_consciousness_claimed=false
+production_readiness_claimed=false
+customer_readiness_claimed=false
+public_deployment_readiness_claimed=false
+safety_certification_claimed=false
+legal_authority_claimed=false
+medical_authority_claimed=false
+financial_authority_claimed=false
+external_effects_allowed=false
+ontology_promotion_allowed=false
+unrestricted_self_modification_claimed=false
+max_candidate_level=Level 4 Candidate
+```
 
 ```text
 Level 0: Rule engine
@@ -137,6 +165,12 @@ The kernel may emit bounded questions such as:
 These questions are diagnostic prompts, not autonomous directives.
 
 ## Validation path
+
+Boundary validator:
+
+```powershell
+python scripts/validate_foundation_cognitive_sgi_readiness_boundary.py
+```
 
 Primary test surface:
 

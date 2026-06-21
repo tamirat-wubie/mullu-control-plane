@@ -64,6 +64,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "plain_language_status_boundary",
     "accessibility_language_boundary",
     "capability_roadmap_boundary",
+    "cognitive_sgi_readiness_boundary",
     "agentic_management_boundary",
     "operations_runbook_boundary",
     "claim_boundary",

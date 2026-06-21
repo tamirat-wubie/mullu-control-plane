@@ -1,5 +1,5 @@
 {
-  "artifact_count": 364,
+  "artifact_count": 366,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -997,6 +997,11 @@
       "purpose": "Read-only validator for Foundation Claim Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_cognitive_sgi_readiness_boundary",
+      "path": "scripts/validate_foundation_cognitive_sgi_readiness_boundary.py",
+      "purpose": "Read-only validator for Foundation Cognitive SGI Readiness Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_community_network_boundary",
       "path": "scripts/validate_foundation_community_network_boundary.py",
       "purpose": "Read-only validator for Foundation Community Network Boundary."
@@ -1425,6 +1430,11 @@
       "name": "foundation_boundary_tests_foundation_claim_boundary",
       "path": "tests/test_validate_foundation_claim_boundary.py",
       "purpose": "Regression tests for Foundation Claim Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_cognitive_sgi_readiness_boundary",
+      "path": "tests/test_validate_foundation_cognitive_sgi_readiness_boundary.py",
+      "purpose": "Regression tests for Foundation Cognitive SGI Readiness Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_community_network_boundary",

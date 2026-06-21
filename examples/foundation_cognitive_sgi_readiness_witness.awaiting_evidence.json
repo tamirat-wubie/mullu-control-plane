@@ -1,0 +1,91 @@
+{
+  "achieved_sgi_claimed": false,
+  "autonomous_consciousness_claimed": false,
+  "blocked_claims": [
+    "achieved SGI",
+    "autonomous consciousness",
+    "production readiness",
+    "customer readiness",
+    "public deployment readiness",
+    "safety certification",
+    "legal authority",
+    "medical authority",
+    "financial authority",
+    "unrestricted self-modification"
+  ],
+  "cognitive_sgi_readiness_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Cross-domain transfer can be evaluated locally; no general capability claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "cross_domain_transfer",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Concept-birth candidates can emit blockers; no ontology promotion is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "concept_birth",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Self-questions are diagnostic prompts only; no autonomous directive is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "self_question_generation",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Homeostasis and reward vectors are local classifications; no production control loop is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "homeostasis_reward_vectors",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Autonomy classification remains governed and blocked without required witnesses.",
+      "state": "AwaitingEvidence",
+      "surface_id": "governed_autonomy_classification",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Blocked evidence lanes stay explicit as next evidence, not silent success paths.",
+      "state": "AwaitingEvidence",
+      "surface_id": "blocked_evidence_lanes",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "External effects remain prohibited without UAO, life-meaning, and rollback witnesses.",
+      "state": "AwaitingEvidence",
+      "surface_id": "external_effect_boundary",
+      "surface_type": "local_read_simulation"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Ontology promotion remains blocked without review and learning-admission evidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ontology_promotion_boundary",
+      "surface_type": "local_read_simulation"
+    }
+  ],
+  "customer_readiness_claimed": false,
+  "external_effects_allowed": false,
+  "financial_authority_claimed": false,
+  "legal_authority_claimed": false,
+  "max_candidate_level": "Level 4 Candidate",
+  "medical_authority_claimed": false,
+  "next_action": "keep cognitive SGI readiness local, deterministic, read/simulation-only, and blocked from achieved-SGI, production, customer, authority, deployment, and unrestricted self-modification claims",
+  "ontology_promotion_allowed": false,
+  "production_mutation_allowed": false,
+  "production_readiness_claimed": false,
+  "public_deployment_readiness_claimed": false,
+  "safety_certification_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "unrestricted_self_modification_claimed": false,
+  "witness_id": "foundation_cognitive_sgi_readiness_witness.awaiting_evidence.v1"
+}

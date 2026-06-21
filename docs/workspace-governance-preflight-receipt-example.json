@@ -1,5 +1,5 @@
 {
-  "check_count": 265,
+  "check_count": 266,
   "checks": [
     {
       "args": [
@@ -2102,6 +2102,19 @@
         "scripts/validate_foundation_capability_roadmap_boundary.py"
       ],
       "name": "foundation_capability_roadmap_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_cognitive_sgi_readiness_boundary.py"
+      ],
+      "name": "foundation_cognitive_sgi_readiness_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

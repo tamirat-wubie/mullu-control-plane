@@ -946,6 +946,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_capability_roadmap_boundary.py"),
         ),
         CheckCommand(
+            "foundation_cognitive_sgi_readiness_boundary",
+            (python_executable, "scripts/validate_foundation_cognitive_sgi_readiness_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_agentic_management_boundary",
             (python_executable, "scripts/validate_foundation_agentic_management_boundary.py"),
         ),
