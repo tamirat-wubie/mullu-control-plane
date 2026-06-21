@@ -1,9 +1,10 @@
-"""Purpose: read-only Governed Work Assistant dashboard projection route.
+"""Purpose: read-only Governed Work Assistant dashboard projection route module.
 
 Governance scope: operator dashboard read model projection only.
 Dependencies: FastAPI and the checked-in dashboard fixture.
 Invariants:
-  - The route is read-only and fixture-backed.
+  - The route module is read-only and fixture-backed.
+  - The route is not mounted in the default app in this PR.
   - No connector, mailbox, calendar, repository, worker, or receipt effect is executed.
   - Every effect boundary flag remains false.
 """
@@ -16,6 +17,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+ROUTE_PATH = "/api/v1/personal-assistant/work-assistant/dashboard/read-model"
 router = APIRouter()
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -105,7 +107,6 @@ def _require_no_effect(payload: dict[str, Any]) -> None:
         )
 
 
-@router.get("/api/v1/personal-assistant/work-assistant/dashboard/read-model")
 def governed_work_assistant_operator_dashboard_read_model() -> dict[str, Any]:
     """Return the no-effect Governed Work Assistant operator dashboard projection."""
     dashboard = dict(_load_dashboard_fixture())
@@ -122,3 +123,11 @@ def governed_work_assistant_operator_dashboard_read_model() -> dict[str, Any]:
         "live_receipt_append_allowed": False,
     }
     return dashboard
+
+
+router.add_api_route(
+    ROUTE_PATH,
+    governed_work_assistant_operator_dashboard_read_model,
+    methods=["GET"],
+    name="governed_work_assistant_operator_dashboard_read_model",
+)
