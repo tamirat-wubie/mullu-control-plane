@@ -127,6 +127,15 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
     generic_continuation_rejection_entry = entries[
         "governed-planning-profile-runtime-authorization-generic-continuation-rejection"
     ]
+    approval_witness_template_entry = entries[
+        "governed-planning-profile-runtime-authorization-approval-witness-template"
+    ]
+    signed_approval_intake_entry = entries[
+        "governed-planning-profile-runtime-authorization-signed-approval-intake"
+    ]
+    signed_approval_generic_rejection_entry = entries[
+        "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection"
+    ]
 
     assert validate_protocol_manifest(manifest) == []
     assert profile_entry["path"] == "schemas/governed_planning_profile.schema.json"
@@ -187,6 +196,27 @@ def test_protocol_manifest_indexes_governed_planning_profile() -> None:
         "urn:mullusi:schema:governed-planning-profile-runtime-authorization-generic-continuation-rejection:1"
     )
     assert generic_continuation_rejection_entry["surface"] == "planning"
+    assert approval_witness_template_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json"
+    )
+    assert approval_witness_template_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-approval-witness-template:1"
+    )
+    assert approval_witness_template_entry["surface"] == "planning"
+    assert signed_approval_intake_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_signed_approval_intake.schema.json"
+    )
+    assert signed_approval_intake_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-intake:1"
+    )
+    assert signed_approval_intake_entry["surface"] == "planning"
+    assert signed_approval_generic_rejection_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json"
+    )
+    assert signed_approval_generic_rejection_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1"
+    )
+    assert signed_approval_generic_rejection_entry["surface"] == "planning"
 
 
 def test_protocol_manifest_indexes_search_decision() -> None:

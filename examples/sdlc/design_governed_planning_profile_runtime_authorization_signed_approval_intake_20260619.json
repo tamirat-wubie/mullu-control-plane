@@ -1,0 +1,51 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_runtime_authorization_signed_approval_intake_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_authorization_signed_approval_intake_20260619",
+  "architecture_summary": "Add a local validator/emitter that binds the deterministic GovernedPlanningProfile approval witness template to a no-effect signed approval intake contract. The intake defines the exact signed approval values required for future authorization while preserving missing decision value, missing signature, missing verification, and hard false runtime authority.",
+  "affected_modules": [
+    "governed_planning_profile_lineage",
+    "schema_protocol_manifest",
+    "ci_root_coverage_policy",
+    "sdlc_artifact_lineage",
+    "planning_architecture_documentation"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileRuntimeAuthorizationSignedApprovalIntake fields for source approval template identity, source runtime authorization request identity, source generic continuation rejection identity, intake controls, required witness fields, per-scenario intake requirements, operator signature boundary, promotion gate summary, authority denials, validators, and deterministic intake hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_runtime_authorization_signed_approval_intake.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py, schemas/governed_planning_profile_runtime_authorization_signed_approval_intake.schema.json, the local signed approval intake fixture, focused tests, manifest entries, documentation additions, CI binding, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because no router, worker, dispatch, write, connector, scheduler, signed operator approval, signature verification, promotion activation, or registration surface is added.",
+  "migration_plan": "No runtime migration. Existing profiles, shadow dossiers, evidence requests, observation receipts, approval packets, replay/recovery witnesses, terminal closure certificates, runtime authorization requests, generic continuation rejection witnesses, approval witness templates, admission reports, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The signed approval intake is regenerated from the current deterministic approval witness template.",
+  "test_plan": [
+    "python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py",
+    "python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_intake.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py mcoi/tests/test_protocol_manifest.py tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-signed-approval-intake/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-signed-approval-intake/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-signed-approval-intake/design/20260619"
+}
