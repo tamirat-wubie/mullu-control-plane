@@ -185,13 +185,14 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
-    map_path.write_text(
-        map_text.replace(
-            "Current `origin/main`: `c9274015c7896fa0ad34c14d98ecca765cdcdb10`",
-            "Current `origin/main`: `short-ref`",
-        ),
-        encoding="utf-8",
+    mutated_map_text = re.sub(
+        r"^Current `origin/main`: `[0-9a-f]{40}`$",
+        "Current `origin/main`: `short-ref`",
+        map_text,
+        flags=re.MULTILINE,
     )
+    assert mutated_map_text != map_text
+    map_path.write_text(mutated_map_text, encoding="utf-8")
 
     validation = validate_readiness_map(map_path)
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
