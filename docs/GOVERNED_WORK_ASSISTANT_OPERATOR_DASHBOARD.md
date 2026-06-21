@@ -59,9 +59,9 @@ The projection is backed by checked-in, no-effect fixtures and local docs contra
 - Fixture: `examples/governed_work_assistant_operator_dashboard.json`
 - Validator: `scripts/validate_governed_work_assistant_operator_dashboard.py`
 
-## Protocol-manifest boundary
+## Local contract boundary
 
-This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs to become a public protocol schema, move it into `schemas/` and register it in the protocol manifest in the same PR.
+This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs to become a public protocol schema, promote it through a dedicated compatibility PR.
 
 ## Admission rule
 
