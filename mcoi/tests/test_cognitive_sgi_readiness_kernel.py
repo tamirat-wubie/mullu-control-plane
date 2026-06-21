@@ -121,8 +121,12 @@ def test_blocked_transfer_concept_and_autonomy_emit_questions_and_evidence() -> 
     assert report.readiness_state is ReadinessState.BLOCKED
     assert "transfer:source_and_target_domain_must_differ" in report.blockers
     assert "concept_birth:concept_overlap_above_threshold" in report.blockers
+    assert "concept_birth:missing_governance:learning_admission_ref" in report.blockers
+    assert "concept_birth:missing_governance:ontology_review_ref" in report.blockers
     assert "autonomy:missing_authority:uao_policy_ref" in report.blockers
     assert "contradiction_resolution_receipt" in report.required_next_evidence
+    assert "learning_admission_ref" in report.required_next_evidence
+    assert "ontology_review_ref" in report.required_next_evidence
     assert "prediction_accuracy_below_threshold" in reason_refs
     assert "governance_safety_below_threshold" in reason_refs
 

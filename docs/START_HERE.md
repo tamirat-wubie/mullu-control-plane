@@ -581,15 +581,19 @@ in the wrong room. Use the table above to pick the right room.
    public posts, contact, messages, feedback requests, collaborator or partner
    outreach, mentor requests, events, contact lists, personal data, external
    accounts, customer access, publication, or deployment claims.
-91. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
+91. **[Foundation Cognitive SGI Readiness Boundary](FOUNDATION_COGNITIVE_SGI_READINESS_BOUNDARY.md)** --
+   local cognitive SGI readiness read/simulation work without achieved-SGI,
+   ontology-promotion, production, customer, external-effect, or deployment
+   claims.
+92. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
-92. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
+93. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    -- you install it and run it safely, every command explained, every term
    linked.
-93. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
+94. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
    -- you watch it *refuse* an over-limit payment and *prove* a valid one. This
    is where the safety stops being a claim and becomes something you've seen.
-94. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
+95. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
    scary.Now you can wander into [How-To Guides](how-to/) or the deep
 [Reference](#5-reference--deep-architecture) and it will make sense.
 

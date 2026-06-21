@@ -99,6 +99,11 @@ posts, direct messages, collaborator recruitment, partnership outreach, mentor
 requests, public feedback requests, event participation, contact lists,
 personal-data collection, external account use, customer access, external
 publication, or deployment readiness.
+Cognitive SGI readiness is bounded by
+[`docs/FOUNDATION_COGNITIVE_SGI_READINESS_BOUNDARY.md`](docs/FOUNDATION_COGNITIVE_SGI_READINESS_BOUNDARY.md),
+which keeps Proto-SGI readiness as local read/simulation evidence without
+achieved-SGI, ontology-promotion, production, customer, external-effect, or
+deployment claims.
 Architecture-map preparation is bounded by
 [`docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md`](docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md),
 which maps system boundaries, modules, interfaces, dependencies, invariants,

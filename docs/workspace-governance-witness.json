@@ -1,5 +1,5 @@
 {
-  "artifact_count": 363,
+  "artifact_count": 364,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -560,6 +560,11 @@
       "name": "foundation_boundary_doc_foundation_claim_boundary",
       "path": "docs/FOUNDATION_CLAIM_BOUNDARY.md",
       "purpose": "Foundation Claim Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_cognitive_sgi_readiness_boundary",
+      "path": "docs/FOUNDATION_COGNITIVE_SGI_READINESS_BOUNDARY.md",
+      "purpose": "Foundation Cognitive SGI Readiness Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
       "name": "foundation_boundary_doc_foundation_community_network_boundary",

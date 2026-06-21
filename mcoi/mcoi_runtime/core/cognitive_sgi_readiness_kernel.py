@@ -176,7 +176,7 @@ class ConceptBirthCandidate(ContractRecord):
         object.__setattr__(self, "evidence_refs", _text_tuple(self.evidence_refs, "evidence_refs"))
         object.__setattr__(self, "necessity_score", require_unit_float(self.necessity_score, "necessity_score"))
         object.__setattr__(self, "overlap_score", require_unit_float(self.overlap_score, "overlap_score"))
-        object.__setattr__(self, "governance_refs", _text_tuple(self.governance_refs, "governance_refs"))
+        object.__setattr__(self, "governance_refs", _text_tuple(self.governance_refs, "governance_refs", allow_empty=True))
 
 
 @dataclass(frozen=True, slots=True)

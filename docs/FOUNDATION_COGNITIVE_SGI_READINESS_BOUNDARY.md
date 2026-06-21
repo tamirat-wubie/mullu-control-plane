@@ -150,3 +150,13 @@ Expected proof posture:
 SolvedVerified only after tests pass in the target checkout.
 SolvedUnverified when code is committed but CI or local execution has not yet confirmed it.
 ```
+
+## Status
+
+```text
+STATUS:
+  Completeness: 70%
+  Invariants verified: Foundation Mode claim boundary, read/simulation-only kernel boundary, no achieved SGI claim
+  Open issues: AwaitingEvidence for external runtime proof, ontology promotion, and production readiness
+  Next action: keep the cognitive SGI readiness kernel local, deterministic, and proof-gated
+```
