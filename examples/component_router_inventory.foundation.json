@@ -133,6 +133,7 @@
       "component_id": "inceptadive_shadow",
       "expected_routes": [
         "/api/v1/console/shadow",
+        "/api/v1/shadow/external-effect/advisory",
         "/api/v1/shadow/inspect"
       ],
       "notes": "InceptaDive shadow is bound to its console posture route and bounded advisory inspection route; neither binding grants execution authority.",
@@ -1698,9 +1699,10 @@
         "inceptadive_shadow"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 1,
+      "declared_route_count": 2,
       "notes": "Route family classification records InceptaDive advisory inspection ownership only; it does not grant route execution authority.",
       "sample_routes": [
+        "/api/v1/shadow/external-effect/advisory",
         "/api/v1/shadow/inspect"
       ],
       "surface_id": "inceptadive_shadow_inspection_routes"
