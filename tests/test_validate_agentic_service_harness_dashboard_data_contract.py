@@ -52,6 +52,11 @@ def test_dashboard_data_contract_accepts_default_example() -> None:
     assert {widget["widget_id"] for widget in payload["widgets"]} == EXPECTED_WIDGET_IDS
     assert payload["scope"]["ui_created"] is False
     assert payload["authority_denials"]["terminal_closure"] is False
+    assert "task creation admission" in payload["next_action"]
+    assert "LoopStatus" in payload["next_action"]
+    assert "Receipt" in payload["next_action"]
+    assert "EvidenceBundle" in payload["next_action"]
+    assert "append-disabled" in payload["next_action"]
 
 
 def test_dashboard_data_contract_rejects_ui_creation(tmp_path: Path) -> None:
@@ -139,6 +144,25 @@ def test_dashboard_data_contract_rejects_secret_like_payload(tmp_path: Path) -> 
     assert validation.ok is False
     assert "forbidden secret-bearing key" in serialized_errors
     assert "credential-like value" in serialized_errors
+
+
+def test_dashboard_data_contract_rejects_stale_next_action(tmp_path: Path) -> None:
+    payload = _default_payload()
+    payload["next_action"] = "Add contract-only adapter registry before dashboard work."
+    example_path = _write_example(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_dashboard_data_contract(
+        example_paths=(example_path,)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "next_action must mention task creation admission" in serialized_errors
+    assert "next_action must mention LoopStatus" in serialized_errors
+    assert "next_action must mention Receipt" in serialized_errors
+    assert "next_action must mention EvidenceBundle" in serialized_errors
+    assert "next_action must mention before any dashboard UI" in serialized_errors
+    assert "next_action must mention append-disabled" in serialized_errors
 
 
 def test_dashboard_data_contract_writer_and_cli_honor_strict(

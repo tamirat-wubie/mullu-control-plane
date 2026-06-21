@@ -13,9 +13,9 @@ Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `6f06008421facdedeaf00e6da36ece361cc59966`
+Current `origin/main`: `c899b1793bfec22408d9efd664a65e258097af3f`
 
-Open PRs after readiness-map refresh: the live open PR queue includes non-draft PRs #2068 and #2066 plus draft PRs #2089, #2086, #2081, #2077, #2069, and #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
+Open PRs after readiness-map refresh: `gh pr list --state open --limit 30 --json number,isDraft,headRefName,title` timed out after 60 seconds on 2026-06-21 after verifying `origin/main` at `c899b1793bfec22408d9efd664a65e258097af3f`; the queue remains live, may change after this dashboard next-action guard closure, and remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -31,9 +31,10 @@ Open PRs after readiness-map refresh: the live open PR queue includes non-draft 
 | Dashboard data contract PR | READY | Commit `1e94f9b786891f992bf195036fd344f0b26868a5` on `origin/main` added `agentic_service_harness_dashboard_data_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds a read-only dashboard data contract with seven display-only widget contracts while dashboard UI creation remains blocked and route registration remains blocked. |
 | Adapter registry contract PR | READY | This proof thread adds `agentic_service_harness_adapter_registry_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds contract-only GitHub/Codex-style adapter entries, modes, authority classes, gate refs, and blocker refs while route registration, mutation endpoints, subprocess execution, connector calls, external model execution, branch writes, PR creation, receipt append, and terminal closure remain blocked. |
 | EvidenceBundle projection PR | READY | This proof thread adds `agentic_service_harness_evidence_bundle_projection` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It groups command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id while log ingestion, receipt-store append, adapter execution, connector calls, branch writes, PR creation, and terminal closure remain blocked. |
-| Remote CI | PARTIAL | PR #2090 merged at `ba31636fb8e83929805d29b5e17a5a5b8117a885` and post-merge main Build Verification run `27894325538` passed. Current `origin/main` at `6f06008421facdedeaf00e6da36ece361cc59966` has Build Verification run `27894492528` failing in the SDLC Governance Gate because the workspace preflight receipt example lists 269 checks while `check_count` remained 268; this repair updates the receipt example and must wait for current PR CI before merge. |
+| Receipt/Evidence read models PR | READY | PR #2086 merged at `75af2a2e3`; it added `agentic_service_harness_receipt_evidence_read_models` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds Receipt and EvidenceBundle read models by AgentRun while receipt-store append, runtime writes, command/test execution, filesystem writes, branch creation, PR creation, external adapter execution, secret serialization, and terminal closure remain blocked. |
+| Remote CI | PARTIAL | `origin/main` advanced to `c899b1793bfec22408d9efd664a65e258097af3f` with Receipt/Evidence read models and LoopStatus merged; this dashboard next-action guard branch still requires current PR CI before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned non-draft PRs #2068 and #2066 plus draft PRs #2089, #2086, #2081, #2077, #2069, and #2058 after fetching `origin/main` at `6f06008421facdedeaf00e6da36ece361cc59966`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
+| Open PR queue | PARTIAL | `gh pr list --state open --limit 30 --json number,isDraft,headRefName,title` timed out after 60 seconds after verifying `origin/main` at `c899b1793bfec22408d9efd664a65e258097af3f`; the queue is live, may change after this dashboard next-action guard closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
@@ -151,8 +152,8 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | login/account | MISSING | No harness login/account screen or account persistence should be built yet. | Add account/user read model first; UI follows after persistence is validated. |
-| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, GitHub repo task intake, dashboard data binding, contract-only adapter registry, and EvidenceBundle projection are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight only after receipt and approval evidence remain blocked by default. |
-| create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
+| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, GitHub repo task intake, dashboard data contract, contract-only adapter registry, Receipt/EvidenceBundle projections, and LoopStatus projection are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight before any connect UI or provider mutation route. |
+| create agent task | PARTIAL | AgentTask exists as a contract and read-only repo task intake validates RepositoryConnection and task scope without execution authority; dashboard data contract exposes this as display-only; no user-facing task creation route is authorized. | Add task creation admission preflight before any user-facing task creation route. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
 | evidence/receipt view | READY | Receipt and EvidenceBundle projections are closed for display-only dashboard data, with append, runtime writes, commands, tests, secrets, and terminal closure denied. | None for read-only projection. |
 | approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
