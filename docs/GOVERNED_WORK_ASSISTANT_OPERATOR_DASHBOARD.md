@@ -43,7 +43,7 @@ The projection must keep all effect fields false:
 
 ## Source contracts
 
-The projection is backed by checked-in, no-effect fixtures and contracts:
+The projection is backed by checked-in, no-effect fixtures and local docs contracts:
 
 - `examples/personal_assistant_console_read_model.json`
 - `examples/personal_assistant_draft_projection.json`
