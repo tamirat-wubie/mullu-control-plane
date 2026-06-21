@@ -494,9 +494,10 @@ writes, memory writes, deployment mutation, customer readiness, production
 readiness, live Nested Mind activation, or terminal closure.
 
 The closure validator also compares every recorded source receipt digest to the
-current checked-in source ref using a newline-stable text-source digest.
-Digest mismatch, missing source refs, or source refs that escape the repository
-fail validation even when the packet schema is otherwise well formed.
+current checked-in source ref using a newline-stable text-source digest and
+validates each source receipt against its recorded schema ref. Digest mismatch,
+schema mismatch, missing source or schema refs, or refs that escape the
+repository fail validation even when the packet schema is otherwise well formed.
 
 ## Integration Position
 

@@ -8,6 +8,7 @@ Dependencies: foundation closure packet schema, collector constants, and schema 
 Invariants:
   - Closure requires every source receipt to be bound, SolvedVerified, and closed.
   - Source receipt digests must match current checked-in source refs.
+  - Source receipt schema refs must resolve and validate their source payloads.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
 """
@@ -94,6 +95,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_packet_id(payload),
         _check_source_receipts(payload),
         _check_source_receipt_digests(payload),
+        _check_source_receipt_schemas(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
         _check_closure_gate(payload),
@@ -159,7 +161,7 @@ def _check_packet_id(payload: dict[str, Any]) -> PersonalAssistantFoundationClos
 
 def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
     records = _list_of_objects(payload.get("source_receipts"))
-    required_kinds = {kind for kind, _path, _closure_field in SOURCE_RECEIPTS}
+    required_kinds = {kind for kind, _path, _schema_ref, _closure_field in SOURCE_RECEIPTS}
     observed_kinds = {str(record.get("source_kind")) for record in records}
     closed_records = [
         record
@@ -203,6 +205,44 @@ def _check_source_receipt_digests(payload: dict[str, Any]) -> PersonalAssistantF
         else f"mismatches={len(mismatches)} missing={len(missing)}"
     )
     return PersonalAssistantFoundationClosureValidationStep("source receipt digests", passed, detail)
+
+
+def _check_source_receipt_schemas(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    invalid: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        schema_ref = _bounded_text(record.get("schema_ref"))
+        if not source_ref or not schema_ref:
+            missing.append(source_kind)
+            continue
+        source_path = (REPO_ROOT / source_ref).resolve()
+        schema_path = (REPO_ROOT / schema_ref).resolve()
+        if (
+            not _path_within_repo(source_path)
+            or not _path_within_repo(schema_path)
+            or not source_path.exists()
+            or not schema_path.exists()
+        ):
+            missing.append(source_kind)
+            continue
+        try:
+            source_payload = _read_json_object(source_path)
+            schema_payload = _load_schema(schema_path)
+        except (OSError, RuntimeError, json.JSONDecodeError):
+            invalid.append(source_kind)
+            continue
+        if _validate_schema_instance(schema_payload, source_payload):
+            invalid.append(source_kind)
+    passed = not invalid and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "schemas-current"
+        if passed
+        else f"invalid={len(invalid)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt schemas", passed, detail)
 
 
 def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -323,6 +363,16 @@ def _path_within_repo(path: Path) -> bool:
 
 def _file_sha256(path: Path) -> str:
     return canonical_source_sha256(path)
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError("failed to read Personal Assistant foundation closure source receipt") from exc
+    if not isinstance(parsed, dict):
+        raise RuntimeError("Personal Assistant foundation closure source receipt must be a JSON object")
+    return parsed
 
 
 def _object(value: object) -> dict[str, Any]:
