@@ -7,6 +7,7 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: foundation closure packet schema, collector constants, and schema helpers.
 Invariants:
   - Closure requires every source receipt to be bound, SolvedVerified, and closed.
+  - Source receipt kinds must match canonical source refs, schema refs, and closure fields.
   - Source receipt digests must match current checked-in source refs.
   - Source receipt schema refs must resolve and validate their source payloads.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
@@ -94,6 +95,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_schema_contract(payload, schema_path),
         _check_packet_id(payload),
         _check_source_receipts(payload),
+        _check_source_receipt_bindings(payload),
         _check_source_receipt_digests(payload),
         _check_source_receipt_schemas(payload),
         _check_authority_denials(payload),
@@ -181,6 +183,40 @@ def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundati
         passed,
         f"kinds={len(observed_kinds)}/{len(required_kinds)} closed={len(closed_records)}",
     )
+
+
+def _check_source_receipt_bindings(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    expected_by_kind = {
+        kind: (
+            _repo_relative_ref(source_path),
+            schema_ref,
+            closure_field,
+        )
+        for kind, source_path, schema_ref, closure_field in SOURCE_RECEIPTS
+    }
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        expected = expected_by_kind.get(source_kind)
+        if expected is None:
+            missing.append(source_kind)
+            continue
+        expected_source_ref, expected_schema_ref, expected_closure_field = expected
+        if (
+            record.get("source_ref") != expected_source_ref
+            or record.get("schema_ref") != expected_schema_ref
+            or record.get("closure_field") != expected_closure_field
+        ):
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "bindings-canonical"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt bindings", passed, detail)
 
 
 def _check_source_receipt_digests(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -363,6 +399,10 @@ def _path_within_repo(path: Path) -> bool:
 
 def _file_sha256(path: Path) -> str:
     return canonical_source_sha256(path)
+
+
+def _repo_relative_ref(path: Path) -> str:
+    return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
 
 
 def _read_json_object(path: Path) -> dict[str, Any]:
