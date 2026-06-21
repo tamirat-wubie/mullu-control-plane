@@ -57,9 +57,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["approval_id", "packet", "receipts"],
+        "required": ["approval_id", "review_packet_ref", "packet", "receipts"],
         "properties": {
           "approval_id": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+          "review_packet_ref": { "$ref": "#/$defs/review_packet_ref" },
           "packet": { "type": "object", "additionalProperties": true },
           "receipts": {
             "type": "array",
@@ -154,11 +155,44 @@
         }
       }
     },
+    "review_packet_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ref",
+        "schema_ref",
+        "source_sha256",
+        "review_packet_id",
+        "request_id",
+        "plan_id",
+        "review_state",
+        "solver_outcome",
+        "preview_only",
+        "payload_digest_only",
+        "execution_allowed",
+        "approval_enqueued"
+      ],
+      "properties": {
+        "source_ref": { "const": "examples/personal_assistant_approval_review_packet.json" },
+        "schema_ref": { "const": "schemas/personal_assistant_approval_review_packet.schema.json" },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "review_packet_id": { "type": "string", "pattern": "^pa_approval_review_[a-z0-9][a-z0-9_:-]*$" },
+        "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
+        "plan_id": { "type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$" },
+        "review_state": { "const": "preview_only" },
+        "solver_outcome": { "const": "SolvedVerified" },
+        "preview_only": { "const": true },
+        "payload_digest_only": { "const": true },
+        "execution_allowed": { "const": false },
+        "approval_enqueued": { "const": false }
+      }
+    },
     "workflow_item": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "approval_id",
+        "review_packet_ref",
         "request_id",
         "plan_id",
         "draft_action_count",
@@ -172,6 +206,7 @@
       ],
       "properties": {
         "approval_id": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+        "review_packet_ref": { "$ref": "#/$defs/review_packet_ref" },
         "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
         "plan_id": { "type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$" },
         "draft_action_count": { "type": "integer", "minimum": 1 },

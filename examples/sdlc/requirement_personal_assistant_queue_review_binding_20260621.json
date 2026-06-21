@@ -1,0 +1,53 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_personal_assistant_approval_review_packet.py --json",
+    "python scripts/validate_personal_assistant_approval_queue.py --json",
+    "python -m pytest tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_review_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "affected_surfaces": [
+    "personal_assistant_approval_queue_schema",
+    "personal_assistant_approval_queue_fixture",
+    "personal_assistant_approval_queue_validator",
+    "personal_assistant_approval_runtime_projection",
+    "personal_assistant_approval_queue_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-queue-review-binding/20260621",
+  "constraints": [
+    "Approval queue records must remain no-effect read-model evidence.",
+    "Approval queue records must bind to the checked-in approval review packet by source path, schema path, review identity, review state, and newline-stable SHA-256 digest.",
+    "Approval queue records must not serialize the approval review packet payload, private connector payloads, message bodies, secrets, or credentials.",
+    "Approval enqueue remains a queue projection only; approval decisions do not execute external sends, connector mutation, memory writes, deployment mutation, or system-of-record writes.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/personal_assistant_approval_queue.schema.json",
+    "examples/personal_assistant_approval_queue_read_model.json",
+    "scripts/validate_personal_assistant_approval_queue.py",
+    "mcoi/mcoi_runtime/personal_assistant/approval.py",
+    "tests/test_personal_assistant_approval_queue.py",
+    "examples/personal_assistant_approval_review_packet.json"
+  ],
+  "non_goals": [
+    "Do not enqueue approval records from review packets automatically.",
+    "Do not approve, reject, revise, or execute a live action.",
+    "Do not call Gmail, Calendar, task, messaging, browser, or memory connectors.",
+    "Do not grant live connector, memory, deployment, customer-readiness, or production-readiness authority."
+  ],
+  "problem_statement": "Personal Assistant approval queue records validated embedded approval packets and receipts, but did not prove which no-effect approval review packet preceded the queue projection.",
+  "receipt_ref": "examples/personal_assistant_approval_queue_read_model.json",
+  "request_id": "personal_assistant_queue_review_binding_20260621",
+  "requirement_id": "sdlc_req_personal_assistant_queue_review_binding_20260621",
+  "risk_class": "medium",
+  "success_criteria": [
+    "Approval queue schema requires a review_packet_ref on every record and workflow item.",
+    "The checked-in approval queue fixture validates with digest-only refs to the approval review packet.",
+    "Runtime-generated approval queue read models emit the same digest-only review packet reference.",
+    "Validator rejects review packet digest drift, payload digest flag drift, execution flag drift, and workflow-to-record reference drift.",
+    "No-effect approval, connector, external send, memory, deployment, and system-of-record boundaries remain false."
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-queue-review-binding/20260621"
+}

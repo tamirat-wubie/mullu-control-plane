@@ -80,6 +80,20 @@ _REVIEW_SOURCE_CLOSURE_REFS = (
         "payload_digest_only": True,
     },
 )
+_APPROVAL_REVIEW_PACKET_REF = {
+    "source_ref": "examples/personal_assistant_approval_review_packet.json",
+    "schema_ref": "schemas/personal_assistant_approval_review_packet.schema.json",
+    "source_sha256": "c2b625853eaebc312612342a4188f33c2fc5e828081ee727918a3a9c88ea4395",
+    "review_packet_id": "pa_approval_review_approval_review_packet_001",
+    "request_id": "pa_request_approval_review_packet_001",
+    "plan_id": "pa_plan_approval_review_packet_001",
+    "review_state": "preview_only",
+    "solver_outcome": "SolvedVerified",
+    "preview_only": True,
+    "payload_digest_only": True,
+    "execution_allowed": False,
+    "approval_enqueued": False,
+}
 
 
 class ApprovalDecision(StrEnum):
@@ -274,16 +288,20 @@ class ApprovalQueueRecord:
     approval_id: str
     packet: Mapping[str, Any]
     receipts: tuple[Mapping[str, Any], ...]
+    review_packet_ref: Mapping[str, Any] = field(default_factory=lambda: dict(_APPROVAL_REVIEW_PACKET_REF))
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "approval_id", _require_prefix(self.approval_id, "approval_id", "pa_approval_"))
         if not isinstance(self.packet, Mapping):
             raise PersonalAssistantInvariantError("approval packet must be a mapping")
+        if not isinstance(self.review_packet_ref, Mapping):
+            raise PersonalAssistantInvariantError("review_packet_ref must be a mapping")
         for receipt in self.receipts:
             if not isinstance(receipt, Mapping):
                 raise PersonalAssistantInvariantError("approval receipt must be a mapping")
         object.__setattr__(self, "packet", MappingProxyType(dict(self.packet)))
         object.__setattr__(self, "receipts", tuple(MappingProxyType(dict(receipt)) for receipt in self.receipts))
+        object.__setattr__(self, "review_packet_ref", MappingProxyType(dict(self.review_packet_ref)))
 
     @property
     def latest_receipt(self) -> Mapping[str, Any]:
@@ -294,6 +312,7 @@ class ApprovalQueueRecord:
         """Return a deterministic JSON-ready approval record."""
         return {
             "approval_id": self.approval_id,
+            "review_packet_ref": dict(self.review_packet_ref),
             "packet": dict(self.packet),
             "receipts": [dict(receipt) for receipt in self.receipts],
         }
@@ -519,7 +538,7 @@ class PersonalAssistantApprovalQueue:
                 "revision_request": revision_request,
             },
         )
-        updated = ApprovalQueueRecord(approval_id, packet, (*current.receipts, receipt))
+        updated = ApprovalQueueRecord(approval_id, packet, (*current.receipts, receipt), current.review_packet_ref)
         self._records[approval_id] = updated
         return updated
 
@@ -618,6 +637,7 @@ def _approval_queue_workflow_item(record: ApprovalQueueRecord) -> dict[str, Any]
         decision["revision_request"] = revision_request
     return {
         "approval_id": record.approval_id,
+        "review_packet_ref": dict(record.review_packet_ref),
         "request_id": str(packet.get("request_id", "")),
         "plan_id": str(packet.get("plan_id", "")),
         "draft_action_count": len(proposed_actions),

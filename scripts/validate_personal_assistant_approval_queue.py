@@ -29,6 +29,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -76,6 +77,11 @@ WORKFLOW_FALSE_FIELDS = (
     "connector_mutation_allowed",
     "system_of_record_write_allowed",
 )
+EXPECTED_REVIEW_REF_PATHS = {
+    "source_ref": "examples/personal_assistant_approval_review_packet.json",
+    "schema_ref": "schemas/personal_assistant_approval_review_packet.schema.json",
+}
+REVIEW_REF_FALSE_FIELDS = ("execution_allowed", "approval_enqueued")
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +166,7 @@ def _validate_queue_semantics(
             continue
         packet = record.get("packet")
         receipts = record.get("receipts")
+        _validate_review_packet_ref(record.get("review_packet_ref"), errors, label=f"records[{index}].review_packet_ref")
         if isinstance(packet, dict) and approval_schema:
             errors.extend(f"records[{index}].packet {message}" for message in _validate_schema_instance(approval_schema, packet))
             if packet.get("approval_id") != record.get("approval_id"):
@@ -256,6 +263,8 @@ def _validate_workflow_item(index: int, item: dict[str, Any], record: dict[str, 
     proposed_actions = packet.get("proposed_actions") if isinstance(packet.get("proposed_actions"), list) else []
     if item.get("request_id") != packet.get("request_id"):
         errors.append(f"{label}.request_id must match packet.request_id")
+    if item.get("review_packet_ref") != record.get("review_packet_ref"):
+        errors.append(f"{label}.review_packet_ref must match record review_packet_ref")
     if item.get("plan_id") != packet.get("plan_id"):
         errors.append(f"{label}.plan_id must match packet.plan_id")
     if item.get("draft_action_count") != len(proposed_actions):
@@ -295,6 +304,67 @@ def _validate_workflow_item(index: int, item: dict[str, Any], record: dict[str, 
     for field_name in WORKFLOW_FALSE_FIELDS:
         if effect_boundary.get(field_name) is not False:
             errors.append(f"{label}.effect_boundary.{field_name} must be false")
+
+
+def _validate_review_packet_ref(value: Any, errors: list[str], *, label: str) -> None:
+    if not isinstance(value, dict):
+        errors.append(f"{label} must be an object")
+        return
+    for field_name, expected in EXPECTED_REVIEW_REF_PATHS.items():
+        if value.get(field_name) != expected:
+            errors.append(f"{label}.{field_name} must be {expected}")
+    source_path = _resolve_repo_path(str(value.get("source_ref", "")), errors, f"{label}.source_ref")
+    schema_path = _resolve_repo_path(str(value.get("schema_ref", "")), errors, f"{label}.schema_ref")
+    if schema_path is not None and not schema_path.exists():
+        errors.append(f"{label}.schema_ref does not exist")
+    if source_path is None:
+        return
+    if not source_path.exists():
+        errors.append(f"{label}.source_ref does not exist")
+        return
+    observed_sha256 = canonical_source_sha256(source_path)
+    if value.get("source_sha256") != observed_sha256:
+        errors.append(f"{label}.source_sha256 does not match approval review packet")
+    source_payload = _load_json_object(source_path, f"{label} source approval review packet", errors)
+    if not source_payload:
+        return
+    for field_name in ("review_packet_id", "request_id", "plan_id", "review_state"):
+        if value.get(field_name) != source_payload.get(field_name):
+            errors.append(f"{label}.{field_name} must match approval review packet")
+    if value.get("solver_outcome") != "SolvedVerified":
+        errors.append(f"{label}.solver_outcome must be SolvedVerified")
+    if value.get("preview_only") is not True:
+        errors.append(f"{label}.preview_only must be true")
+    if value.get("payload_digest_only") is not True:
+        errors.append(f"{label}.payload_digest_only must be true")
+    for field_name in REVIEW_REF_FALSE_FIELDS:
+        if value.get(field_name) is not False:
+            errors.append(f"{label}.{field_name} must be false")
+    effect_boundary = source_payload.get("effect_boundary")
+    if not isinstance(effect_boundary, dict):
+        errors.append(f"{label} source effect_boundary must be an object")
+    else:
+        if effect_boundary.get("execution_allowed") is not False:
+            errors.append(f"{label} source effect_boundary.execution_allowed must be false")
+        if effect_boundary.get("approval_enqueued") is not False:
+            errors.append(f"{label} source effect_boundary.approval_enqueued must be false")
+    metadata = source_payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append(f"{label} source metadata must be an object")
+    elif metadata.get("source_payloads_serialized") is not False:
+        errors.append(f"{label} source metadata.source_payloads_serialized must be false")
+
+
+def _resolve_repo_path(path_text: str, errors: list[str], label: str) -> Path | None:
+    if not path_text:
+        errors.append(f"{label} must be present")
+        return None
+    candidate = (REPO_ROOT / path_text).resolve()
+    root = REPO_ROOT.resolve()
+    if candidate != root and root not in candidate.parents:
+        errors.append(f"{label} must stay under repository root")
+        return None
+    return candidate
 
 
 def _workflow_draft_action_count(items: list[Any]) -> int:

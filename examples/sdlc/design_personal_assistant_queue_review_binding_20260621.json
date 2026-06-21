@@ -1,0 +1,48 @@
+{
+  "affected_modules": [
+    "schemas/personal_assistant_approval_queue.schema.json",
+    "examples/personal_assistant_approval_queue_read_model.json",
+    "scripts/validate_personal_assistant_approval_queue.py",
+    "mcoi/mcoi_runtime/personal_assistant/approval.py",
+    "tests/test_personal_assistant_approval_queue.py"
+  ],
+  "architecture_summary": "Bind Personal Assistant approval queue records to the no-effect approval review packet using a digest-only review_packet_ref, while keeping queue projection non-authoritative.",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-queue-review-binding/20260621",
+  "data_model_changes": [
+    "Add review_packet_ref to approval queue records.",
+    "Add review_packet_ref to workflow_v0 items so workflow and record projections bind to the same review evidence.",
+    "Represent review_packet_ref as source path, schema path, review packet identity, request identity, plan identity, review state, solver outcome, newline-stable SHA-256 digest, and no-effect flags.",
+    "Keep payload_digest_only true so the queue never embeds the approval review packet payload."
+  ],
+  "design_id": "sdlc_design_personal_assistant_queue_review_binding_20260621",
+  "migration_plan": "No persisted migration is required; this changes a checked-in preview schema, fixture, validator, runtime projection, and tests only.",
+  "receipt_ref": "examples/personal_assistant_approval_queue_read_model.json",
+  "requirement_id": "sdlc_req_personal_assistant_queue_review_binding_20260621",
+  "rollback_plan": "Revert the review_packet_ref schema requirement, fixture fields, validator checks, runtime projection additions, and tests; approval queue records return to approval-packet and receipt-only provenance.",
+  "schema_changes": [
+    "schemas/personal_assistant_approval_queue.schema.json"
+  ],
+  "security_model": {
+    "effect_bearing_requires_receipt": true,
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "tenant_scope_reviewed": true
+  },
+  "test_plan": [
+    "python scripts/validate_personal_assistant_approval_review_packet.py --json",
+    "python scripts/validate_personal_assistant_approval_queue.py --json",
+    "python -m pytest tests/test_personal_assistant_approval_queue.py tests/test_validate_personal_assistant_approval_review_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-queue-review-binding/20260621",
+  "validator_changes": [
+    "Validate review_packet_ref path and schema path stay under the repository root.",
+    "Validate review_packet_ref source_sha256 matches the checked-in approval review packet.",
+    "Validate review_packet_ref identity and review state match the source packet.",
+    "Reject payload_digest_only drift and execution or approval enqueue drift.",
+    "Reject workflow item review_packet_ref drift from the owning queue record."
+  ]
+}
