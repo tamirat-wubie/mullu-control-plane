@@ -13,6 +13,7 @@ Invariants:
   - Source receipt closure fields must be true in the source payloads themselves.
   - Source receipt serialized lengths must match current source payloads.
   - Source receipt records must replay from canonical source payload projection.
+  - Closure summaries must match recomputed source receipt aggregates.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
@@ -110,6 +111,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_source_receipt_replay_projection(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
+        _check_closure_summary_aggregates(payload),
         _check_closure_gate(payload),
         _check_secret_value_boundary(payload),
         _check_require_closed(payload, require_closed=require_closed),
@@ -424,6 +426,71 @@ def _check_no_effect_boundary(payload: dict[str, Any]) -> PersonalAssistantFound
     )
 
 
+def _check_closure_summary_aggregates(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    summary = _object(payload.get("closure_summary"))
+    records = _list_of_objects(payload.get("source_receipts"))
+    boundary = _object(payload.get("no_effect_boundary"))
+    secret_value_markers = _list(payload.get("secret_value_markers"))
+    expected_summary = _expected_closure_summary(records, boundary, secret_value_markers)
+    mismatches = [
+        key
+        for key, expected_value in expected_summary.items()
+        if summary.get(key) != expected_value
+    ]
+    passed = not mismatches
+    detail = "summary-current" if passed else f"mismatches={len(mismatches)}"
+    return PersonalAssistantFoundationClosureValidationStep("closure summary aggregates", passed, detail)
+
+
+def _expected_closure_summary(
+    records: list[dict[str, Any]],
+    boundary: dict[str, Any],
+    secret_value_markers: list[Any],
+) -> dict[str, object]:
+    all_sources_bound = all(record.get("bound") is True for record in records)
+    all_sources_schema_versioned = all(record.get("schema_versioned") is True for record in records)
+    all_sources_solved_verified = all(record.get("solver_outcome") == "SolvedVerified" for record in records)
+    all_source_closure_flags_pass = all(record.get("closed") is True for record in records)
+    all_no_effect_boundaries_clear = all(_bounded_int(record.get("effect_violation_count")) == 0 for record in records)
+    all_source_receipts_non_authoritative = all(record.get("receipt_non_authoritative") is True for record in records)
+    no_secret_values_serialized = len(secret_value_markers) == 0
+    boundary_flags_clear = bool(boundary) and not any(value is True for value in boundary.values())
+    packet_closed = (
+        all_sources_bound
+        and all_sources_schema_versioned
+        and all_sources_solved_verified
+        and all_source_closure_flags_pass
+        and all_no_effect_boundaries_clear
+        and all_source_receipts_non_authoritative
+        and no_secret_values_serialized
+        and boundary_flags_clear
+    )
+    return {
+        "foundation_closure_packet_closed": packet_closed,
+        "source_receipt_count": len(records),
+        "bound_source_receipt_count": sum(1 for record in records if record.get("bound") is True),
+        "solved_verified_source_receipt_count": sum(
+            1 for record in records if record.get("solver_outcome") == "SolvedVerified"
+        ),
+        "closed_source_receipt_count": sum(1 for record in records if record.get("closed") is True),
+        "effect_violation_count": sum(_bounded_int(record.get("effect_violation_count")) for record in records),
+        "secret_value_marker_count": len(secret_value_markers),
+        "all_sources_bound": all_sources_bound,
+        "all_sources_schema_versioned": all_sources_schema_versioned,
+        "all_sources_solved_verified": all_sources_solved_verified,
+        "all_source_closure_flags_pass": all_source_closure_flags_pass,
+        "all_no_effect_boundaries_clear": all_no_effect_boundaries_clear,
+        "all_source_receipts_non_authoritative": all_source_receipts_non_authoritative,
+        "no_secret_values_serialized": no_secret_values_serialized,
+        "live_connector_execution_ready": False,
+        "memory_write_ready": False,
+        "deployment_mutation_ready": False,
+        "customer_ready": False,
+        "live_nested_mind_ready": False,
+        "next_allowed_action": "continue_foundation_hardening_only",
+    }
+
+
 def _check_closure_gate(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
     summary = _object(payload.get("closure_summary"))
     required_true = (
@@ -571,6 +638,10 @@ def _list(value: object) -> list[Any]:
 
 def _list_of_objects(value: object) -> list[dict[str, Any]]:
     return [item for item in _list(value) if isinstance(item, dict)]
+
+
+def _bounded_int(value: object) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def main(argv: list[str] | None = None) -> int:
