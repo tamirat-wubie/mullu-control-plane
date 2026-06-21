@@ -11,6 +11,7 @@ Invariants:
   - Source receipt digests must match current checked-in source refs.
   - Source receipt schema refs must resolve and validate their source payloads.
   - Source receipt closure fields must be true in the source payloads themselves.
+  - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
 """
@@ -18,6 +19,7 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -95,6 +97,7 @@ def validate_personal_assistant_foundation_closure_packet(
     steps = (
         _check_schema_contract(payload, schema_path),
         _check_packet_id(payload),
+        _check_packet_id_binding(payload),
         _check_source_receipts(payload),
         _check_source_receipt_bindings(payload),
         _check_source_receipt_digests(payload),
@@ -161,6 +164,17 @@ def _check_packet_id(payload: dict[str, Any]) -> PersonalAssistantFoundationClos
     packet_id = payload.get("packet_id")
     passed = PACKET_ID_PATTERN.fullmatch(str(packet_id)) is not None
     return PersonalAssistantFoundationClosureValidationStep("packet id", passed, "valid" if passed else "invalid")
+
+
+def _check_packet_id_binding(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    packet_id = _bounded_text(payload.get("packet_id"))
+    expected_packet_id = _expected_packet_id(payload)
+    passed = bool(packet_id) and packet_id == expected_packet_id
+    return PersonalAssistantFoundationClosureValidationStep(
+        "packet id binding",
+        passed,
+        "body-bound" if passed else "body-mismatch",
+    )
 
 
 def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -412,6 +426,18 @@ def _check_require_closed(
 def _bounded_packet_id(payload: dict[str, Any]) -> str:
     packet_id = payload.get("packet_id")
     return str(packet_id) if isinstance(packet_id, str) else ""
+
+
+def _expected_packet_id(payload: dict[str, Any]) -> str:
+    packet_without_id = dict(payload)
+    packet_without_id.pop("packet_id", None)
+    material = json.dumps(
+        packet_without_id,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return f"personal-assistant-foundation-closure-{hashlib.sha256(material).hexdigest()[:16]}"
 
 
 def _bounded_packet_path(path: Path) -> str:
