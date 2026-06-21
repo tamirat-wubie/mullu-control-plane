@@ -39,7 +39,12 @@ from mcoi_runtime.personal_assistant import (
     PersonalAssistantInvariantError,
     RequestInterface,
     build_clarification_requests,
+    build_draft_assistant_read_model,
+    build_governed_team_assistant_pilot_read_model,
+    build_personal_assistant_console_read_model,
     build_personal_assistant_preview_plan,
+    build_personal_assistant_readiness_demo,
+    build_teamops_gmail_live_probe_readiness,
     interpret_user_request,
     load_default_skill_registry,
 )
@@ -134,6 +139,27 @@ def personal_assistant_skill_read_model():
     }
 
 
+@router.get("/api/v1/personal-assistant/pilot/read-model")
+def personal_assistant_pilot_read_model():
+    """Return the no-effect governed Team Assistant pilot read model."""
+    _inc_metric("requests_governed")
+    generated_at = _clock_now()
+    console_payload = build_personal_assistant_console_read_model(generated_at=generated_at)
+    readiness_payload = build_personal_assistant_readiness_demo(
+        generated_at=generated_at,
+        console_payload=console_payload,
+    )
+    return build_governed_team_assistant_pilot_read_model(
+        generated_at=generated_at,
+        console_payload=console_payload,
+        readiness_payload=readiness_payload,
+        draft_payload=build_draft_assistant_read_model(generated_at=generated_at),
+        teamops_live_probe_payload=build_teamops_gmail_live_probe_readiness(
+            generated_at=generated_at,
+        ),
+    )
+
+
 @router.post("/api/v1/personal-assistant/requests/preview")
 def preview_personal_assistant_request(req: PersonalAssistantPreviewRequest):
     """Interpret a request and emit request, WHQR, plan, and receipt previews."""
@@ -182,8 +208,6 @@ def preview_personal_assistant_request(req: PersonalAssistantPreviewRequest):
         },
     }
     if req.include_console_read_model:
-        from mcoi_runtime.personal_assistant import build_personal_assistant_console_read_model
-
         response["console_read_model"] = build_personal_assistant_console_read_model(
             generated_at=now,
             recent_requests=(

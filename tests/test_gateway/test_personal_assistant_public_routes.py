@@ -177,6 +177,18 @@ def test_gateway_personal_assistant_pilot_read_model_packages_controlled_demo() 
     assert payload["stage_boundaries"]["draft_only_assistant"]["draft_preparation_allowed"] is True
     assert payload["stage_boundaries"]["draft_only_assistant"]["external_send_allowed"] is False
     assert payload["stage_boundaries"]["teamops_gmail_live_probe"]["external_provider_call_performed"] is False
+    assert payload["dashboard_projection"]["read_only"] is True
+    assert payload["dashboard_projection"]["source_contract_ref"] == (
+        "examples/agentic_service_harness_read_models.foundation.json"
+    )
+    assert payload["demo_scenario"]["approval_preview"]["approval_is_execution"] is False
+    assert payload["demo_scenario"]["dry_run_receipt_trail"]["receipt_append_allowed"] is False
+    assert payload["workflow_separation"][2]["phase"] == "approval"
+    assert payload["workflow_separation"][2]["effect_allowed"] is False
+    assert payload["pr_2058_review_decision"]["decision"] == "hold_open_do_not_merge"
+    assert payload["inceptadive_advisory_panel"]["advisory_only"] is True
+    assert payload["deterministic_replay"]["filesystem_writes_allowed"] is False
+    assert payload["approval_authority_next_phase"]["status"] == "AwaitingEvidence"
     assert "live_gmail_send" in payload["blocked_actions"]
     assert "snet_live_execution_authority" in payload["blocked_actions"]
 

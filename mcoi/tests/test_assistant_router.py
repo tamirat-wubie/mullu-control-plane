@@ -114,6 +114,32 @@ def test_personal_assistant_skill_read_model_is_deployed_read_only() -> None:
     assert "personal_assistant.clarification.request" in body["registry"]["skill_ids"]
 
 
+def test_personal_assistant_pilot_read_model_exposes_issue_2067_demo_without_effects() -> None:
+    client = _client()
+
+    response = client.get("/api/v1/personal-assistant/pilot/read-model")
+    post_response = client.post("/api/v1/personal-assistant/pilot/read-model", json={})
+    body = response.json()
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert body["pilot_id"] == "governed_team_assistant_pilot"
+    assert body["status"] == "controlled_demo_productization"
+    assert body["dashboard_projection"]["fixture_backed"] is True
+    assert body["demo_scenario"]["scenario_id"] == "team_assistant_fixture_backed_dry_run_v0"
+    assert body["demo_scenario"]["approval_preview"]["signed_runtime_authority_present"] is False
+    assert body["demo_scenario"]["closure_evidence"]["production_ready_claimed"] is False
+    assert body["effect_boundary"]["execution_allowed"] is False
+    assert body["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert body["effect_boundary"]["repository_write_allowed"] is False
+    assert body["workflow_separation"][3]["phase"] == "execution"
+    assert body["workflow_separation"][3]["effect_allowed"] is False
+    assert body["pr_2058_review_decision"]["issue_2067_decision_satisfied"] is True
+    assert body["inceptadive_advisory_panel"]["redacted"] is True
+    assert body["deterministic_replay"]["live_receipt_append_allowed"] is False
+    assert body["approval_authority_next_phase"]["execution_authority_granted_by_demo"] is False
+
+
 def test_personal_assistant_preview_compiles_inbox_request_without_execution() -> None:
     client = _client()
 
@@ -341,4 +367,5 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     assert "/api/v1/assistant/finance-ops/plans" in paths
     assert "/api/v1/assistant/team-ops/plans" in paths
     assert "/api/v1/personal-assistant/skills" in paths
+    assert "/api/v1/personal-assistant/pilot/read-model" in paths
     assert "/api/v1/personal-assistant/requests/preview" in paths

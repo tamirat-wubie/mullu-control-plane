@@ -15,6 +15,7 @@ from mcoi_runtime.personal_assistant import (
     ApprovalScope,
     PersonalAssistantApprovalQueue,
     PersonalAssistantInvariantError,
+    build_governed_team_assistant_pilot_read_model,
     build_personal_assistant_console_read_model,
     build_personal_assistant_readiness_demo,
     render_personal_assistant_console_html,
@@ -107,6 +108,45 @@ def test_readiness_demo_answers_show_my_assistant_readiness_without_effects() ->
     assert demo["effect_boundary"]["external_send_allowed"] is False
     assert demo["effect_boundary"]["calendar_write_allowed"] is False
     assert demo["private_payload_policy"]["raw_private_payload_serialized"] is False
+
+
+def test_governed_team_assistant_pilot_closes_issue_2067_demo_contract() -> None:
+    console_payload = build_personal_assistant_console_read_model(generated_at=GENERATED_AT)
+    readiness_payload = build_personal_assistant_readiness_demo(
+        generated_at=GENERATED_AT,
+        console_payload=console_payload,
+    )
+    pilot = build_governed_team_assistant_pilot_read_model(
+        generated_at=GENERATED_AT,
+        console_payload=console_payload,
+        readiness_payload=readiness_payload,
+    )
+    separation = {row["phase"]: row for row in pilot["workflow_separation"]}
+
+    assert pilot["pilot_id"] == "governed_team_assistant_pilot"
+    assert pilot["operator_presentation"]["headline"].startswith("Mullu can show")
+    assert "blocked-action reasons" in pilot["operator_presentation"]["can_show"]
+    assert "send external messages" in pilot["operator_presentation"]["cannot_do_in_demo"]
+    assert pilot["dashboard_projection"]["source_contract_ref"] == (
+        "examples/agentic_service_harness_read_models.foundation.json"
+    )
+    assert pilot["dashboard_projection"]["mutation_endpoints_admitted"] is False
+    assert pilot["demo_scenario"]["draft_preview"]["external_send_allowed"] is False
+    assert pilot["demo_scenario"]["approval_preview"]["approval_is_execution"] is False
+    assert pilot["demo_scenario"]["dry_run_receipt_trail"]["live_receipt_append_performed"] is False
+    assert separation["observation"]["effect_allowed"] is False
+    assert separation["approval"]["approval_is_execution"] is False
+    assert separation["execution"]["state"] == "blocked_no_effect"
+    assert pilot["pr_2058_review_decision"]["decision"] == "hold_open_do_not_merge"
+    assert pilot["pr_2058_review_decision"]["merge_allowed"] is False
+    assert pilot["inceptadive_advisory_panel"]["redacted"] is True
+    assert pilot["inceptadive_advisory_panel"]["execution_authority_allowed"] is False
+    assert pilot["deterministic_replay"]["deterministic_replay_from_fixtures"] is True
+    assert pilot["deterministic_replay"]["external_calls_allowed"] is False
+    assert "assert_all_effect_flags_false" in pilot["deterministic_replay"]["replay_steps"]
+    assert pilot["approval_authority_next_phase"]["signed_operator_identity_required"] is True
+    assert pilot["approval_authority_next_phase"]["replay_protection_required"] is True
+    assert pilot["approval_authority_next_phase"]["execution_authority_granted_by_demo"] is False
 
 
 def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
