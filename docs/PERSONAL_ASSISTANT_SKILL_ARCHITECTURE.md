@@ -493,11 +493,13 @@ live connector execution, connector mutation, external effects, system-of-record
 writes, memory writes, deployment mutation, customer readiness, production
 readiness, live Nested Mind activation, or terminal closure.
 
-The closure validator also compares every recorded source receipt digest to the
-current checked-in source ref using a newline-stable text-source digest and
-validates each source receipt against its recorded schema ref. Digest mismatch,
-schema mismatch, missing source or schema refs, or refs that escape the
-repository fail validation even when the packet schema is otherwise well formed.
+The closure validator also locks every source kind to its canonical source ref,
+schema ref, and closure field before comparing every recorded source receipt
+digest to the current checked-in source ref using a newline-stable text-source
+digest and validating each source receipt against its recorded schema ref.
+Digest mismatch, schema mismatch, source-kind binding drift, missing source or
+schema refs, or refs that escape the repository fail validation even when the
+packet schema is otherwise well formed.
 
 ## Integration Position
 
