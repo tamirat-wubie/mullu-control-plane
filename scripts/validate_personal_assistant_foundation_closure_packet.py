@@ -11,6 +11,7 @@ Invariants:
   - Source receipt digests must match current checked-in source refs.
   - Source receipt schema refs must resolve and validate their source payloads.
   - Source receipt closure fields must be true in the source payloads themselves.
+  - Source receipt serialized lengths must match current source payloads.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
@@ -102,6 +103,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_source_receipt_bindings(payload),
         _check_source_receipt_digests(payload),
         _check_source_receipt_schemas(payload),
+        _check_source_receipt_serialized_lengths(payload),
         _check_source_receipt_source_closure_fields(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
@@ -297,6 +299,37 @@ def _check_source_receipt_schemas(payload: dict[str, Any]) -> PersonalAssistantF
     return PersonalAssistantFoundationClosureValidationStep("source receipt schemas", passed, detail)
 
 
+def _check_source_receipt_serialized_lengths(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        recorded_length = record.get("serialized_length")
+        if not source_ref or isinstance(recorded_length, bool) or not isinstance(recorded_length, int):
+            missing.append(source_kind)
+            continue
+        source_path = (REPO_ROOT / source_ref).resolve()
+        if not _path_within_repo(source_path) or not source_path.exists():
+            missing.append(source_kind)
+            continue
+        try:
+            source_payload = _read_json_object(source_path)
+        except (OSError, RuntimeError, json.JSONDecodeError):
+            mismatches.append(source_kind)
+            continue
+        if _source_serialized_length(source_payload) != recorded_length:
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "serialized-lengths-current"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt serialized lengths", passed, detail)
+
+
 def _check_source_receipt_source_closure_fields(
     payload: dict[str, Any],
 ) -> PersonalAssistantFoundationClosureValidationStep:
@@ -475,6 +508,10 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise RuntimeError("Personal Assistant foundation closure source receipt must be a JSON object")
     return parsed
+
+
+def _source_serialized_length(payload: dict[str, Any]) -> int:
+    return len(json.dumps(payload, sort_keys=True, ensure_ascii=True))
 
 
 def _source_summary_object(payload: dict[str, Any]) -> dict[str, Any]:
