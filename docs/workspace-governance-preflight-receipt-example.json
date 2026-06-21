@@ -1,5 +1,5 @@
 {
-  "check_count": 269,
+  "check_count": 270,
   "checks": [
     {
       "args": [
@@ -230,6 +230,19 @@
         "scripts/validate_agentic_service_harness_evidence_bundle_projection.py"
       ],
       "name": "agentic_service_harness_evidence_bundle_projection",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_receipt_evidence_read_models.py"
+      ],
+      "name": "agentic_service_harness_receipt_evidence_read_models",
       "passed": true,
       "return_code": 0,
       "stderr": "",

@@ -1,0 +1,132 @@
+{
+  "report_id": "agentic_service_harness_receipt_evidence_read_models",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T00:00:00Z",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "project_id": "project-agentic-service-harness",
+    "read_only": true,
+    "projection_only": true,
+    "append_enabled": false,
+    "receipt_store_appended": false,
+    "runtime_state_written": false,
+    "secret_values_serialized": false,
+    "terminal_closure_granted": false
+  },
+  "source_contract_refs": [
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "examples/agentic_service_harness_read_models.foundation.json",
+    "schemas/agentic_service_harness_dashboard_data_contract.schema.json",
+    "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "schemas/agentic_service_harness_actual_file_change_summary_receipt.schema.json",
+    "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json",
+    "docs/FOUNDATION_MODE.md"
+  ],
+  "receipt_read_models": [
+    {
+      "receipt_id": "receipt-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "task_request_ref": "task://agentic-service-harness/read-model-foundation",
+      "selected_agent_ref": "agent://contract-only/codex-style",
+      "policy_result": "allowed_read_only",
+      "risk_level": "low",
+      "files_changed": {
+        "changed_file_count": 0,
+        "changed_file_refs": [],
+        "diff_refs": [],
+        "raw_diff_serialized": false
+      },
+      "commands_run_refs": [
+        "command://validator/agentic-service-harness-read-models",
+        "command://validator/agentic-service-harness-dashboard-data-contract"
+      ],
+      "tests_run_refs": [
+        "test://pytest/test-agentic-service-harness-read-models",
+        "test://pytest/test-agentic-service-harness-dashboard-data-contract"
+      ],
+      "evidence_bundle_id": "evidence-read-model-foundation",
+      "evidence_refs": [
+        "evidence://agentic-service-harness/read-model-foundation",
+        "examples/agentic_service_harness_dashboard_data_contract.foundation.json"
+      ],
+      "append_status": "append_blocked_until_approval_and_uao",
+      "read_only": true,
+      "receipt_is_not_terminal_closure": true,
+      "terminal_closure": false
+    }
+  ],
+  "evidence_bundle_read_models": [
+    {
+      "bundle_id": "evidence-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "receipt_ids": [
+        "receipt-read-model-foundation"
+      ],
+      "command_log_refs": [
+        "command://validator/agentic-service-harness-read-models",
+        "command://validator/agentic-service-harness-dashboard-data-contract"
+      ],
+      "test_log_refs": [
+        "test://pytest/test-agentic-service-harness-read-models",
+        "test://pytest/test-agentic-service-harness-dashboard-data-contract"
+      ],
+      "policy_refs": [
+        "docs/FOUNDATION_MODE.md",
+        "policy://harness/read-only-action"
+      ],
+      "diff_refs": [],
+      "blocker_refs": [
+        "blocked://receipt-store-append/not-enabled",
+        "blocked://uao-admission/not-verified",
+        "blocked://cleanup-receipt/not-emitted",
+        "blocked://redaction-evidence/not-collected"
+      ],
+      "redaction_policy": "hash_or_reference_only",
+      "contains_secret_values": false,
+      "inline_diff_allowed": false,
+      "read_only": true
+    }
+  ],
+  "append_preflight": {
+    "append_enabled": false,
+    "approval_collected": false,
+    "uao_admission_verified": false,
+    "cleanup_receipt_emitted": false,
+    "redaction_evidence_collected": false,
+    "required_before_append_refs": [
+      "approval://receipt-store-append/not-collected",
+      "evidence://uao-receipt-append-admission",
+      "receipt://sandbox-cleanup-before-receipt-append",
+      "evidence://redaction-policy-for-receipt-store-append"
+    ],
+    "blocked_reason_refs": [
+      "blocked://receipt-store-append/not-enabled",
+      "blocked://approval/not-collected",
+      "blocked://uao-admission/not-verified",
+      "blocked://cleanup-receipt/not-emitted",
+      "blocked://redaction-evidence/not-collected"
+    ]
+  },
+  "authority_denials": {
+    "receipt_store_append": false,
+    "runtime_state_write": false,
+    "command_execution": false,
+    "test_execution": false,
+    "filesystem_write": false,
+    "branch_creation": false,
+    "pull_request_creation": false,
+    "external_adapter_execution": false,
+    "secret_serialization": false,
+    "terminal_closure": false
+  },
+  "validators": [
+    {
+      "validator_id": "validator.agentic-service-harness-receipt-evidence-read-models",
+      "command": "python scripts/validate_agentic_service_harness_receipt_evidence_read_models.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add LoopStatus projection only after Receipt and EvidenceBundle read models remain read-only and append-disabled.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

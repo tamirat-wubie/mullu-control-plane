@@ -12,8 +12,9 @@ Invariants:
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
   - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
-  - The first next PR advances to the Receipt projection after the
-    EvidenceBundle projection closes.
+  - Receipt remains closed as a read-only append-disabled projection.
+  - The first next PR advances to LoopStatus after the Receipt projection
+    closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -57,9 +58,9 @@ REQUIRED_READY_SYMBOLS = (
     "ApprovalRequest",
     "AgentAdapter",
     "EvidenceBundle",
+    "Receipt",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
-    "Receipt",
     "WorkspaceSandbox",
     "ResultSummary",
 )
@@ -230,7 +231,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_approval_request_ready(map_text, errors)
     _validate_agent_adapter_ready(map_text, errors)
     _validate_evidence_bundle_ready(map_text, errors)
-    _validate_receipt_projection_first(map_text, errors)
+    _validate_receipt_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -314,19 +315,19 @@ def _validate_evidence_bundle_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: EvidenceBundle read-only projection")
 
 
-def _validate_receipt_projection_first(map_text: str, errors: list[str]) -> None:
-    first_sequence_item = re.search(
-        r"^1\.\s+`harness\(receipts\): add harness Receipt projection with append disabled`$",
+def _validate_receipt_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| Receipt \| READY \| .+ \| None for read-only projection\..+ \|$",
         map_text,
         re.MULTILINE,
     )
-    if first_sequence_item is None:
-        errors.append("missing first next PR: Receipt projection")
+    if ready_row is None:
+        errors.append("missing ready row: Receipt read-only projection")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(receipts): add harness Receipt projection with append disabled",
+        "harness(loop): add durable LoopStatus projection",
         "harness(tasks): add task creation admission preflight",
     )
     positions: list[int] = []
