@@ -32,8 +32,10 @@ DEFAULT_OUTPUT = REPO_ROOT / "examples" / "personal_assistant_dry_run_packet.jso
 
 SOURCE_ARTIFACTS: tuple[tuple[str, Path, str], ...] = (
     ("request", REPO_ROOT / "examples" / "personal_assistant_request_inbox_summary.json", "schemas/personal_assistant_request.schema.json"),
+    ("calendar_request", REPO_ROOT / "examples" / "personal_assistant_request_calendar_brief.json", "schemas/personal_assistant_request.schema.json"),
     ("skill_registry", REPO_ROOT / "examples" / "personal_assistant_skill_registry.json", "schemas/personal_assistant_skill_registry.schema.json"),
     ("read_only_projection", REPO_ROOT / "examples" / "personal_assistant_read_only_projection.json", "schemas/personal_assistant_read_only_projection.schema.json"),
+    ("planning_projection", REPO_ROOT / "examples" / "personal_assistant_planning_projection.json", "schemas/personal_assistant_planning_projection.schema.json"),
     ("draft_projection", REPO_ROOT / "examples" / "personal_assistant_draft_projection.json", "schemas/personal_assistant_draft_projection.schema.json"),
     ("approval_packet", REPO_ROOT / "examples" / "personal_assistant_approval_packet.json", "schemas/personal_assistant_approval.schema.json"),
     ("draft_receipt", REPO_ROOT / "examples" / "personal_assistant_receipt_draft_only.json", "schemas/personal_assistant_receipt.schema.json"),
@@ -96,6 +98,10 @@ def collect_personal_assistant_dry_run_packet(*, now_utc: datetime | None = None
         "live_connector_execution_allowed": False,
         "connector_mutation_allowed": False,
         "external_effect_allowed": False,
+        "external_send_allowed": False,
+        "mailbox_mutation_allowed": False,
+        "calendar_write_allowed": False,
+        "task_write_allowed": False,
         "system_of_record_write_allowed": False,
         "memory_write_allowed": False,
         "memory_admission_allowed": False,
@@ -116,7 +122,7 @@ def collect_personal_assistant_dry_run_packet(*, now_utc: datetime | None = None
         "packet_is_not_customer_readiness": True,
         "workflow": {
             "workflow_id": "pa_workflow_dry_run_inbox_to_draft_001",
-            "goal": "Replay a governed inbox-to-draft Personal Assistant request through all foundation gates without live execution.",
+            "goal": "Replay a governed inbox, task, calendar-conflict, draft-response, approval, no-send, and memory-candidate Personal Assistant request through all foundation gates without live execution.",
             "actor_ref": "operator:tamirat",
             "tenant_ref": "tenant:foundation-local",
             "expected_effects": ["digest_only_evidence_packet_created"],
@@ -198,6 +204,12 @@ def collect_personal_assistant_dry_run_packet(*, now_utc: datetime | None = None
         "acyclic_topology": topology_summary["acyclic"] is True,
         "all_bindings_resolved": topology_summary["no_dangling_bindings"] is True,
         "approval_gate_before_effect_bearing_actions": topology_summary["approval_gates_before_effects"] is True,
+        "calendar_conflict_checked": _stage_present(stages, "calendar_conflict_reasoning"),
+        "task_intake_projected": _stage_present(stages, "task_intake_projection"),
+        "draft_response_projected": _stage_present(stages, "draft_preview"),
+        "approval_request_projected": _stage_present(stages, "approval_gate_external_send"),
+        "no_send_proven": _stage_present(stages, "blocked_external_send"),
+        "memory_admission_candidate_reviewed": _stage_present(stages, "memory_observation_review"),
         "no_effect_boundaries_clear": no_effect_boundaries_clear,
         "no_secret_values_serialized": no_secret_values_serialized,
         "live_connector_execution_ready": False,
@@ -320,12 +332,44 @@ def _stage_records() -> list[dict[str, object]]:
             ["mailbox_not_mutated", "email_not_sent", "connector_state_not_mutated"],
         ),
         _stage(
-            "draft_preview",
+            "calendar_conflict_reasoning",
             "skill_execution",
             ["read_only_preview"],
+            "calendar.conflict.detect",
+            ["calendar.read", "calendar.conflict_check", "personal_assistant.receipt.project"],
+            ["source:calendar_request", "source:planning_projection", "read_only_preview.read_only_receipt_ref"],
+            ["calendar_conflict_report"],
+            "P2",
+            False,
+            "none",
+            "calendar_conflict_preview_no_calendar_write",
+            ["proof://personal-assistant/dry-run/calendar-conflict"],
+            ["calendar_conflict_projection_replayed"],
+            ["calendar_not_written", "invite_not_sent", "connector_state_not_mutated"],
+        ),
+        _stage(
+            "task_intake_projection",
+            "skill_execution",
+            ["calendar_conflict_reasoning"],
+            "planning.optimize_schedule",
+            ["task.read", "calendar.read", "planning.preview", "personal_assistant.receipt.project"],
+            ["source:planning_projection", "calendar_conflict_reasoning.calendar_conflict_report"],
+            ["task_intake_summary"],
+            "P2",
+            False,
+            "none",
+            "task_intake_preview_no_task_write",
+            ["proof://personal-assistant/dry-run/task-intake"],
+            ["task_intake_projection_replayed"],
+            ["task_not_written", "task_system_not_mutated", "calendar_not_written"],
+        ),
+        _stage(
+            "draft_preview",
+            "skill_execution",
+            ["read_only_preview", "task_intake_projection"],
             "email.response.draft",
             ["email.reply_suggest", "personal_assistant.receipt.project"],
-            ["source:draft_projection", "source:draft_receipt", "read_only_preview.read_only_receipt_ref"],
+            ["source:draft_projection", "source:draft_receipt", "read_only_preview.read_only_receipt_ref", "task_intake_projection.task_intake_summary"],
             ["draft_receipt_ref", "draft_artifact_ref"],
             "P2",
             False,
@@ -387,7 +431,7 @@ def _stage_records() -> list[dict[str, object]]:
         _stage(
             "receipt_replay",
             "observation",
-            ["read_only_preview", "draft_preview", "approval_gate_external_send", "memory_observation_review"],
+            ["read_only_preview", "calendar_conflict_reasoning", "task_intake_projection", "draft_preview", "approval_gate_external_send", "memory_observation_review"],
             "",
             ["personal_assistant.receipt.replay"],
             ["source:skill_readiness_catalog", "source:runtime_boundary", "memory_observation_review.memory_review_ref"],
@@ -456,6 +500,10 @@ def _stage(
         "actions_not_taken": actions_not_taken,
         "outcome": outcome,
     }
+
+
+def _stage_present(stages: list[dict[str, object]], stage_id: str) -> bool:
+    return any(stage.get("stage_id") == stage_id for stage in stages)
 
 
 def _topology_summary(stages: list[dict[str, object]], source_records: list[dict[str, object]]) -> dict[str, object]:
@@ -534,7 +582,13 @@ def _approval_gates_before_effects(stages: list[dict[str, object]]) -> bool:
         effect_boundary = str(stage["effect_boundary"])
         requires_gate = risk_level in {"P4", "P5"} or any(
             marker in effect_boundary
-            for marker in ("external_email_send", "system_write", "calendar_write", "task_write", "memory_write")
+            for marker in (
+                "external_email_send",
+                "system_write_allowed",
+                "calendar_write_allowed",
+                "task_write_allowed",
+                "memory_write_allowed",
+            )
         )
         if not requires_gate:
             continue

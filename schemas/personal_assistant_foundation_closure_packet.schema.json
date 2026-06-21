@@ -61,6 +61,7 @@
       "required": [
         "source_kind",
         "source_ref",
+        "schema_ref",
         "source_sha256",
         "receipt_id",
         "schema_version",
@@ -93,6 +94,20 @@
           ]
         },
         "source_ref": { "type": "string", "minLength": 1 },
+        "schema_ref": {
+          "type": "string",
+          "enum": [
+            "schemas/personal_assistant_foundation_evidence_receipt.schema.json",
+            "schemas/personal_assistant_readiness_index_receipt.schema.json",
+            "schemas/personal_assistant_coherence_ledger_receipt.schema.json",
+            "schemas/personal_assistant_authority_coverage_receipt.schema.json",
+            "schemas/personal_assistant_capsule_alignment_receipt.schema.json",
+            "schemas/personal_assistant_policy_matrix_receipt.schema.json",
+            "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
+            "schemas/personal_assistant_skill_readiness_catalog.schema.json",
+            "schemas/personal_assistant_dry_run_packet.schema.json"
+          ]
+        },
         "source_sha256": { "type": "string", "pattern": "^$|^[0-9a-f]{64}$" },
         "receipt_id": { "type": "string", "minLength": 1 },
         "schema_version": { "type": "string", "minLength": 1 },

@@ -7,15 +7,15 @@ Invariants: no dashboard creation; no mutation endpoint admission; no Claude Cod
 
 # Mullusi Agentic Service Harness Readiness Map
 
-Date: 2026-06-20
+Date: 2026-06-21
 
 Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `fd792ed292a03f5fc47415daf1cc09ad525e3212`
+Current `origin/main`: `c9274015c7896fa0ad34c14d98ecca765cdcdb10`
 
-Open PRs after readiness-map refresh: the live open PR queue includes draft PR #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
+Open PRs after readiness-map refresh: the live open PR queue includes non-draft PRs #2088, #2087, #2085, #2084, #2082, #2068, and #2066 plus draft PRs #2086, #2083, #2081, #2077, #2069, and #2058; the queue remains live, may change after this map-only closure, and remains outside this map-only closure.
 
 ## Closure Evidence
 
@@ -27,11 +27,13 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | Active lease witness PR | READY | PR #1979 merged at `2026-06-19T16:06:08Z`, merge commit `b849663f9e5e4a2f0d0c6992bedad735e61fb6a8`. |
 | Worker effect reconciliation witness PR | READY | PR #1983 merged at `2026-06-19T16:32:05Z`, merge commit `92c0bf83841253ca395cf3d35259bab82715b79d`. |
 | AgentRun receipt dry-run PR | READY | PR #2025 merged at `5c77e4f7d43e9b7423b20f5f9fb965745b1c7d20` ancestry; it added the AgentRun receipt-emitter dry-run schema, fixture, validator, tests, manifest entry, and CI coverage without runtime receipt emission authority. |
-| GitHub repo task intake PR | READY | PR #2059 merged at `ece356172950e2e3a8cd8ce7aa0c06803b9f0073`; it added the GitHub repo task intake schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It validates repository connection and read-only task scope while denying adapter execution, branch writes, PR creation, receipt append, mutation routes, secret serialization, and terminal closure. |
-| Dashboard data contract PR | READY | This proof thread adds `agentic_service_harness_dashboard_data_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds a read-only dashboard data contract with seven display-only widget contracts while dashboard UI creation remains blocked and route registration remains blocked. |
-| Remote CI | READY | Build Verification, SDLC Governance Gate, Schema Validation, Gateway Closure and Witness Tests, Rust, TypeScript, Python compatibility, Python soak, MCOI shards, and GitHub App token boundary checks were green before merge. |
+| GitHub repo task intake PR | READY | PR #2059 merged at `ece356172950e2e3a8cd8ce7aa0c06803b9f0073`; it added the `agentic_service_harness_github_repo_task_intake` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It validates repository connection and read-only task scope while denying adapter execution, branch writes, PR creation, receipt append, mutation routes, secret serialization, and terminal closure. |
+| Dashboard data contract PR | READY | Commit `1e94f9b786891f992bf195036fd344f0b26868a5` on `origin/main` added `agentic_service_harness_dashboard_data_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds a read-only dashboard data contract with seven display-only widget contracts while dashboard UI creation remains blocked and route registration remains blocked. |
+| Adapter registry contract PR | READY | This proof thread adds `agentic_service_harness_adapter_registry_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It binds contract-only GitHub/Codex-style adapter entries, modes, authority classes, gate refs, and blocker refs while route registration, mutation endpoints, subprocess execution, connector calls, external model execution, branch writes, PR creation, receipt append, and terminal closure remain blocked. |
+| EvidenceBundle projection PR | READY | This proof thread adds `agentic_service_harness_evidence_bundle_projection` schema, fixture, validator, manifest entry, workspace-preflight wiring, and tests. It groups command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id while log ingestion, receipt-store append, adapter execution, connector calls, branch writes, PR creation, and terminal closure remain blocked. |
+| Remote CI | PARTIAL | PR #2080 pre-merge checks were green, but post-merge main workflow run `27893248939` failed in the SDLC Governance Gate at the workspace governance preflight receipt step after receipt-example count drift. This proof thread updates the receipt example and must wait for current PR CI before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
-| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned draft PR #2058 after fetching `origin/main` at `fd792ed292a03f5fc47415daf1cc09ad525e3212`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
+| Open PR queue | PARTIAL | `gh pr list --state open --limit 30` returned non-draft PRs #2088, #2087, #2085, #2084, #2082, #2068, and #2066 plus draft PRs #2086, #2083, #2081, #2077, #2069, and #2058 after fetching `origin/main` at `c9274015c7896fa0ad34c14d98ecca765cdcdb10`; the queue is live, may change after this map-only closure, and does not grant harness execution authority. |
 
 ## Readiness Scale
 
@@ -51,7 +53,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | 4. First MVP adapter path | PARTIAL | GitHub/Codex-style planning receipts and dry-run boundaries exist, but approved branch workspace, diff, test, and PR creation flow are not closed. |
 | 5. Permission and authority model | READY | Roles, action classes, approval gates, and blocked high-risk actions are encoded as contract-only and validated. |
 | 6. Sandbox/workspace safety | PARTIAL | Command/path/network/time/cleanup preflight is now contract-bound for a temporary branch workspace; actual branch workspace creation remains blocked until approval and cleanup evidence exist. |
-| 7. Receipt and evidence model | PARTIAL | Required run receipt fields exist in contracts and examples; durable harness receipt emission and store binding are not complete. |
+| 7. Receipt and evidence model | PARTIAL | Required run receipt fields and AgentRun-indexed EvidenceBundle projection exist; durable harness receipt emission and store binding are not complete. |
 | 8. Dashboard/UI requirements | PARTIAL | The read-only dashboard data contract exists, but the dashboard must not be built yet. Required screens remain readiness inputs only. |
 | 9. Explicit non-goals | READY | First-phase non-goals are explicit and align with Foundation Mode and high-risk-action blocking. |
 
@@ -84,22 +86,22 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | AgentTask | READY | Defined in `schemas/agentic_service_harness.schema.json` and scenario examples. | None. |
-| AgentAdapter | PARTIAL | Contract supports adapter concepts, but external adapter integration is explicitly false. | Add an adapter registry read-model PR with GitHub/Codex-style entries, modes, authority class, and blocker refs only. |
-| WorkspaceSandbox | PARTIAL | Temporary branch workspace preflight schema, fixture, validator, protocol manifest entry, workspace-preflight wiring, and tests bind command allowlist, path allowlist, timeout budget, network denial, cleanup receipt, and branch-create denial. Actual branch workspace creation remains blocked. | Add read-only repository task intake next; keep branch workspace creation blocked until approval and cleanup evidence exist. |
+| AgentAdapter | READY | Contract-only adapter registry exists with GitHub/Codex-style entries, modes, authority class, gate refs, and blocker refs. External adapter integration, subprocess execution, connector calls, external model execution, branch writes, pull-request creation, receipt append, and terminal closure remain explicitly false. | None for contract-only registry. |
+| WorkspaceSandbox | PARTIAL | Temporary branch workspace preflight schema, fixture, validator, protocol manifest entry, workspace-preflight wiring, and tests bind command allowlist, path allowlist, timeout budget, network denial, cleanup receipt, and branch-create denial. Actual branch workspace creation remains blocked. | Add Receipt projection next; keep branch workspace creation blocked until approval and cleanup evidence exist. |
 | AgentRunReceipt | PARTIAL | Dry-run AgentRun receipt-emitter contract, fixture, validator, manifest entry, and CI coverage exist; runtime emission and store binding are not complete. | Add harness receipt-store append preflight after workspace lifecycle is bound. |
 | ApprovalGate | READY | Approval gates and high-risk denials are modeled and validated in harness examples. | None. |
-| EvidenceBundle | PARTIAL | Evidence refs exist across harness and receipt surfaces; no harness evidence bundle aggregation is durable. | Add an EvidenceBundle read model that groups logs, diffs, tests, policies, and receipts by AgentRun. |
+| EvidenceBundle | READY | EvidenceBundle projection schema, fixture, validator, tests, protocol manifest entry, workspace-preflight wiring, receipt schema/example coverage, and CI shard group command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id. It remains read-only, reference-only, redacted, non-appendable, and non-terminal. | None for read-only projection. |
 | ResultSummary | PARTIAL | Result summaries are present in examples; no durable result summary route exists. | Add read-only ResultSummary projection after AgentRunReceipt is durable. |
 
 ## 4. First MVP Adapter Path - PARTIAL
 
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
-| GitHub repo task service | PARTIAL | GitHub repo task service and `agentic_service_harness_github_repo_task_intake` read-only task intake schemas, examples, validators, manifest entries, workspace-preflight wiring, and tests exist. The intake validates repository connection and task scope without running code. | Add a contract-only adapter registry entry with no subprocess, connector, external model execution, branch write, pull-request creation, receipt append, or terminal closure. |
-| Codex-style coding adapter | PARTIAL | Adapter concepts exist; no live coding adapter is integrated. | Add a contract-only adapter registry entry with no subprocess, connector, or external model execution. |
+| GitHub repo task service | READY | GitHub repo task service, read-only task intake, and contract-only GitHub repository adapter registry entry exist. The path validates repository connection and task scope without running code, connector calls, branch writes, pull-request creation, receipt append, or terminal closure. | None for read-only contract path. |
+| Codex-style coding adapter | READY | Contract-only Codex-style planning adapter entry exists with read-only and awaiting-approval modes. No live coding adapter, subprocess, connector, external model execution, branch write, pull-request creation, receipt append, or terminal closure is integrated. | None for contract-only registry. |
 | Temporary branch workspace | READY | Harness branch workspace preflight is bound to path allowlist, command allowlist, timeout, network denial, cleanup receipt, approval blocker, and no filesystem-write or branch-create authority. | None for preflight. Future creation remains blocked until approval and cleanup evidence exist. |
 | Test runner | PARTIAL | Repository validators and test-run receipts exist; harness-selected test execution is not bound. | Add dry-run test runner plan receipt that records selected commands without execution authority. |
-| Diff collection | PARTIAL | Diff and file-change receipts exist in lower-level surfaces; planned file-change collection preflight now binds workspace sandbox, branch-write authority, cleanup, path, redaction, and effect-denial gates. Actual diff collection remains unadmitted. | Add actual diff collection receipt schema after branch-write authority, cleanup receipt, and UAO admission are explicit. |
+| Diff collection | PARTIAL | Diff and file-change receipts exist in lower-level surfaces; planned file-change collection preflight, actual file-change summary receipt, actual diff collection admission preflight, and actual diff collection receipt shape now exist. The receipt remains zero-diff and blocks raw diff content, receipt-store append, branch/workspace mutation, connector calls, and terminal closure until authority, cleanup, redaction, UAO admission, and receipt-store evidence are explicit. Actual non-empty diff collection remains unadmitted. | Add non-empty actual diff receipt only after branch-write authority, cleanup receipt, UAO admission, and receipt-store write path evidence are explicit. |
 | PR creation after approval only | PARTIAL | Open-PR awaiting approval examples exist; no approved PR creation path is live. | Add a PR creation admission preflight that always blocks until ApprovalRequest and policy refs pass. |
 
 ## 5. Permission And Authority Model - READY
@@ -134,12 +136,12 @@ Open PRs after readiness-map refresh: the live open PR queue includes draft PR #
 | task request | READY | AgentTask contract covers request refs and task scope. | None. |
 | selected agent | READY | Harness examples identify selected adapter/agent. | None. |
 | mode | READY | Read-only, dry-run, branch-write-awaiting-approval, open-PR-awaiting-approval, and blocked high-risk modes exist. | None. |
-| files changed | PARTIAL | AgentRunReceipt dry-run coverage keeps runtime state writes disabled and binds source read-model evidence; planned file-change collection is preflight-bound, and actual file-change summary receipt shape is now gated with zero changed files until authority, cleanup, redaction, and UAO evidence are explicit. No non-empty actual file-change collection is admitted yet. | Add non-empty diff/file summary admission only after workspace write authority and cleanup receipt emission are verified. |
+| files changed | PARTIAL | AgentRunReceipt dry-run coverage keeps runtime state writes disabled and binds source read-model evidence; planned file-change collection is preflight-bound, actual file-change summary is zero-file gated, actual diff collection has an admission preflight, and actual diff collection receipt is now modeled as zero-diff. No non-empty actual file-change collection is admitted yet. | Add non-empty diff/file summary receipt only after workspace write authority, cleanup receipt emission, UAO admission, and receipt-store write path evidence are verified. |
 | commands run | PARTIAL | Command receipt concepts exist; harness emission not durable. | Add commands-run field validator with redacted output refs. |
 | tests run | PARTIAL | Test evidence exists in CI and validators; harness test-run receipt not durable. | Add tests-run receipt section with command, exit code, duration, and evidence refs. |
 | policy result | READY | Policy result and approval gate fields exist in harness contracts. | None. |
 | risk level | READY | Harness examples and policy surfaces include risk/high-risk blocking. | None. |
-| evidence refs | PARTIAL | Evidence refs exist; aggregation by AgentRun remains missing. | Add EvidenceBundle projection by AgentRun id. |
+| evidence refs | READY | EvidenceBundle projection by AgentRun id groups command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs without inline logs, inline diffs, secret serialization, log ingestion, receipt append, adapter execution, branch writes, pull-request creation, or terminal closure. | None. |
 | next action | READY | Harness contracts require next-action fields. | None. |
 
 ## 8. Dashboard/UI Requirements - PARTIAL
@@ -149,12 +151,12 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | Item | Status | Evidence | Smallest next PR |
 | --- | --- | --- | --- |
 | login/account | MISSING | No harness login/account screen or account persistence should be built yet. | Add account/user read model first; UI follows after persistence is validated. |
-| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, GitHub repo task intake, and dashboard data binding are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight only after adapter registry and approval evidence remain blocked by default. |
+| connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, GitHub repo task intake, dashboard data binding, contract-only adapter registry, and EvidenceBundle projection are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight only after receipt and approval evidence remain blocked by default. |
 | create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
-| evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; dashboard data contract binds display-only receipt and evidence widgets, but harness aggregation is incomplete. | Add EvidenceBundle and Receipt read models. |
+| evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; dashboard data contract binds display-only receipt and evidence widgets, and EvidenceBundle projection by AgentRun id is closed. Durable Receipt projection remains incomplete. | Add Receipt read model with append disabled. |
 | approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
-| loop/readiness dashboard | PARTIAL | Loop read models, readiness docs, and read-only dashboard data contract exist; no dashboard build, route, or mutation control is authorized. | Add contract-only adapter registry next. |
+| loop/readiness dashboard | PARTIAL | Loop read models, readiness docs, read-only dashboard data contract, contract-only adapter registry, and EvidenceBundle projection exist; no dashboard build, route, mutation control, receipt append, or adapter execution is authorized. | Add Receipt read model with append disabled. |
 
 ## 9. Explicit Non-Goals For The First Harness Phase - READY
 
@@ -171,8 +173,8 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(adapter-registry): add contract-only GitHub/Codex adapter registry`
-2. `harness(evidence): add EvidenceBundle projection by AgentRun id`
+1. `harness(receipts): add harness Receipt projection with append disabled`
+2. `harness(tasks): add task creation admission preflight`
 
 ## Governance Decision
 
@@ -186,6 +188,6 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 
 STATUS:
   Completeness: 100%
-  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority; read-only GitHub repository task intake bound without execution authority; read-only dashboard data contract bound without UI or route authority
-  Open issues: durable Receipt store append, EvidenceBundle, branch workspace creation authority, adapter registry, dashboard UI, and live adapter integration remain partial, missing, externally blocked, or outside this closure
-  Next action: start the smallest next PR sequence with contract-only GitHub/Codex adapter registry
+  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority; read-only GitHub repository task intake bound without execution authority; read-only dashboard data contract bound without UI or route authority; contract-only adapter registry bound without subprocess, connector, external model, branch write, PR creation, receipt append, or terminal closure authority; EvidenceBundle projection by AgentRun id bound without log ingestion, inline logs, inline diffs, receipt append, adapter execution, branch write, PR creation, secret serialization, or terminal closure authority
+  Open issues: durable Receipt store append, branch workspace creation authority, dashboard UI, task creation admission, and live adapter integration remain partial, missing, externally blocked, or outside this closure
+  Next action: start the smallest next PR sequence with harness Receipt projection with append disabled

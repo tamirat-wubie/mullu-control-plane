@@ -40,6 +40,12 @@ from mcoi_runtime.whqr.clarification import (
 )
 from mcoi_runtime.whqr.connectors import AssertionKind, ConnectorCompilation, SemanticAssertion, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
+from mcoi_runtime.whqr.equivalence import (
+    assert_replay_equivalent,
+    normalize_expr,
+    normalize_with_trace,
+    semantic_fingerprint,
+)
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
 from mcoi_runtime.whqr.governance import build_guard_verdict, build_policy_decision
 from mcoi_runtime.whqr.static_checks import validate_static
@@ -1052,6 +1058,66 @@ def test_semantic_assertion_rejects_invalid_relation_kind_and_exprs() -> None:
         SemanticAssertion(AssertionKind.CAUSAL, "cause", object(), target)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="replay semantics"):
         SemanticAssertion(AssertionKind.CAUSAL, "cause", forged, target)
+
+
+def test_semantic_equivalence_normalizes_commutative_logical_order() -> None:
+    first = LogicalExpr(op=LogicalOp.AND, args=(_node("budget_available"), _node("approval_valid")))
+    second = LogicalExpr(op=LogicalOp.AND, args=(_node("approval_valid"), _node("budget_available")))
+    trace = normalize_with_trace(first)
+
+    assert semantic_fingerprint(first) == semantic_fingerprint(second)
+    assert assert_replay_equivalent(first, second) == semantic_fingerprint(first)
+    assert normalize_expr(first) == normalize_expr(second)
+    assert trace.expr == normalize_expr(first)
+    assert {step.rule for step in trace.steps} == {"sort_commutative_logical_args"}
+
+
+def test_semantic_equivalence_flattens_associative_logical_order() -> None:
+    nested = LogicalExpr(
+        op=LogicalOp.OR,
+        args=(
+            _node("invoice_due"),
+            LogicalExpr(op=LogicalOp.OR, args=(_node("approval_valid"), _node("budget_available"))),
+        ),
+    )
+    flat = LogicalExpr(
+        op=LogicalOp.OR,
+        args=(_node("budget_available"), _node("invoice_due"), _node("approval_valid")),
+    )
+    trace = normalize_with_trace(nested)
+
+    assert semantic_fingerprint(nested) == semantic_fingerprint(flat)
+    assert assert_replay_equivalent(nested, flat) == semantic_fingerprint(flat)
+    assert len(normalize_expr(nested).args) == 3  # type: ignore[union-attr]
+    assert {step.rule for step in trace.steps} == {"flatten_associative_logical_args", "sort_commutative_logical_args"}
+
+
+def test_semantic_equivalence_preserves_connector_and_implication_direction() -> None:
+    cause = ConnectorExpr(connector=Connector.BECAUSE, left=_node("pay_vendor"), right=_node("invoice_due", WHRole.WHY))
+    reversed_cause = ConnectorExpr(
+        connector=Connector.BECAUSE,
+        left=_node("invoice_due", WHRole.WHY),
+        right=_node("pay_vendor"),
+    )
+    implication = LogicalExpr(op=LogicalOp.IMPLIES, args=(_node("approval_valid"), _node("pay_vendor")))
+    reversed_implication = LogicalExpr(op=LogicalOp.IMPLIES, args=(_node("pay_vendor"), _node("approval_valid")))
+
+    assert semantic_fingerprint(cause) != semantic_fingerprint(reversed_cause)
+    assert semantic_fingerprint(implication) != semantic_fingerprint(reversed_implication)
+    with pytest.raises(ValueError, match="semantic fingerprint mismatch"):
+        assert_replay_equivalent(cause, reversed_cause)
+    with pytest.raises(ValueError, match="semantic fingerprint mismatch"):
+        assert_replay_equivalent(implication, reversed_implication)
+
+
+def test_semantic_equivalence_rejects_malformed_replay_tree() -> None:
+    original = LogicalExpr(op=LogicalOp.AND, args=(_node("approval_valid"), _node("budget_available")))
+    forged = _forged_logical_expr(LogicalOp.AND, (_node("approval_valid"),))
+
+    with pytest.raises(ValueError, match="WHQR replay"):
+        semantic_fingerprint(forged)
+    with pytest.raises(ValueError, match="WHQR replay"):
+        assert_replay_equivalent(original, forged)
 
 
 def test_static_checks_pass_for_complete_acyclic_tree() -> None:
