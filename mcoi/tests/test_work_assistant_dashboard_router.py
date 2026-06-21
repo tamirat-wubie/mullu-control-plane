@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from mcoi_runtime.app.routers.work_assistant_dashboard import router
+from mcoi_runtime.app.routers.work_assistant_dashboard import ROUTE_PATH, router
 
 
 _EFFECT_FALSE_FIELDS = (
@@ -27,13 +27,13 @@ def _client() -> TestClient:
     return TestClient(app)
 
 
-def test_work_assistant_dashboard_route_returns_no_effect_projection() -> None:
-    client = _client()
+def _default_app_client() -> TestClient:
+    from mcoi_runtime.app.server import app
 
-    response = client.get("/api/v1/personal-assistant/work-assistant/dashboard/read-model")
-    body = response.json()
+    return TestClient(app)
 
-    assert response.status_code == 200
+
+def _assert_no_effect_dashboard_payload(body: dict[str, object]) -> None:
     assert body["dashboard_id"] == "governed_work_assistant_demo_operator_dashboard_v0"
     assert body["product_name"] == "Governed Work Assistant Demo v0"
     assert body["legacy_internal_pilot_id"] == "governed_team_assistant_pilot_v0"
@@ -57,10 +57,20 @@ def test_work_assistant_dashboard_route_returns_no_effect_projection() -> None:
         assert body["effect_boundary"][field] is False
 
 
+def test_work_assistant_dashboard_route_returns_no_effect_projection() -> None:
+    client = _client()
+
+    response = client.get(ROUTE_PATH)
+    body = response.json()
+
+    assert response.status_code == 200
+    _assert_no_effect_dashboard_payload(body)
+
+
 def test_work_assistant_dashboard_route_boundary_is_no_effect() -> None:
     client = _client()
 
-    response = client.get("/api/v1/personal-assistant/work-assistant/dashboard/read-model")
+    response = client.get(ROUTE_PATH)
     route_boundary = response.json()["route_boundary"]
 
     assert route_boundary["method"] == "GET"
@@ -77,6 +87,29 @@ def test_work_assistant_dashboard_route_boundary_is_no_effect() -> None:
 def test_work_assistant_dashboard_route_rejects_post() -> None:
     client = _client()
 
-    response = client.post("/api/v1/personal-assistant/work-assistant/dashboard/read-model", json={})
+    response = client.post(ROUTE_PATH, json={})
+
+    assert response.status_code == 405
+
+
+def test_work_assistant_dashboard_default_app_mount_is_no_effect() -> None:
+    client = _default_app_client()
+
+    response = client.get(ROUTE_PATH)
+    body = response.json()
+
+    assert response.status_code == 200
+    _assert_no_effect_dashboard_payload(body)
+    assert body["route_boundary"]["execution_allowed"] is False
+    assert body["route_boundary"]["live_connector_execution_allowed"] is False
+    assert body["route_boundary"]["repository_write_allowed"] is False
+    assert body["route_boundary"]["worker_dispatch_allowed"] is False
+    assert body["route_boundary"]["live_receipt_append_allowed"] is False
+
+
+def test_work_assistant_dashboard_default_app_rejects_post() -> None:
+    client = _default_app_client()
+
+    response = client.post(ROUTE_PATH, json={})
 
     assert response.status_code == 405
