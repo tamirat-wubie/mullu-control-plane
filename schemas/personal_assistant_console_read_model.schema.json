@@ -427,6 +427,50 @@
         "blocked_claims": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
         "required_evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
         "receipt_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "operator_presentation": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["headline", "can_show", "cannot_do_in_demo", "promotion_evidence_required"],
+          "properties": {
+            "headline": {"type": "string", "minLength": 1},
+            "can_show": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "cannot_do_in_demo": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "promotion_evidence_required": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          }
+        },
+        "dashboard_projection": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "projection_id",
+            "read_only",
+            "fixture_backed",
+            "worker_dispatch_allowed",
+            "repository_write_allowed",
+            "production_readiness_claim_allowed"
+          ],
+          "properties": {
+            "projection_id": {"type": "string", "minLength": 1},
+            "read_only": {"const": true},
+            "fixture_backed": {"const": true},
+            "worker_dispatch_allowed": {"const": false},
+            "repository_write_allowed": {"const": false},
+            "production_readiness_claim_allowed": {"const": false}
+          }
+        },
+        "demo_scenario": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["scenario_id", "fixture_refs", "draft_preview", "approval_preview", "dry_run_receipt_trail", "closure_evidence"],
+          "properties": {
+            "scenario_id": {"type": "string", "minLength": 1},
+            "fixture_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "draft_preview": {"type": "object", "additionalProperties": true},
+            "approval_preview": {"type": "object", "additionalProperties": true},
+            "dry_run_receipt_trail": {"type": "object", "additionalProperties": true},
+            "closure_evidence": {"type": "object", "additionalProperties": true}
+          }
+        },
         "pilot_readiness": {
           "type": "object",
           "additionalProperties": false,
@@ -484,11 +528,75 @@
           }
         },
         "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+        "workflow_separation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["phase", "state", "source_ref", "effect_allowed"],
+            "properties": {
+              "phase": {"type": "string", "minLength": 1},
+              "state": {"type": "string", "minLength": 1},
+              "source_ref": {"type": "string", "minLength": 1},
+              "effect_allowed": {"const": false}
+            }
+          }
+        },
+        "pr_2058_review_decision": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["pull_request_ref", "decision", "merge_allowed", "close_allowed", "issue_2067_decision_satisfied"],
+          "properties": {
+            "pull_request_ref": {"const": "github://tamirat-wubie/mullu-control-plane/pull/2058"},
+            "decision": {"const": "hold_open_do_not_merge"},
+            "merge_allowed": {"const": false},
+            "close_allowed": {"const": false},
+            "issue_2067_decision_satisfied": {"const": true}
+          }
+        },
+        "inceptadive_advisory_panel": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["panel_id", "redacted", "advisory_only", "execution_authority_allowed"],
+          "properties": {
+            "panel_id": {"type": "string", "minLength": 1},
+            "redacted": {"const": true},
+            "advisory_only": {"const": true},
+            "execution_authority_allowed": {"const": false}
+          }
+        },
+        "deterministic_replay": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["replay_id", "fixture_refs", "external_calls_allowed", "filesystem_writes_allowed", "live_receipt_append_allowed", "deterministic_replay_from_fixtures"],
+          "properties": {
+            "replay_id": {"type": "string", "minLength": 1},
+            "fixture_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "external_calls_allowed": {"const": false},
+            "filesystem_writes_allowed": {"const": false},
+            "live_receipt_append_allowed": {"const": false},
+            "deterministic_replay_from_fixtures": {"const": true}
+          }
+        },
+        "approval_authority_next_phase": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["phase_id", "status", "execution_authority_granted_by_demo"],
+          "properties": {
+            "phase_id": {"type": "string", "minLength": 1},
+            "status": {"const": "AwaitingEvidence"},
+            "execution_authority_granted_by_demo": {"const": false}
+          }
+        },
         "execution_allowed": {"const": false},
         "live_connector_execution_allowed": {"const": false},
         "external_send_allowed": {"const": false},
         "connector_mutation_allowed": {"const": false},
         "system_of_record_write_allowed": {"const": false},
+        "repository_write_allowed": {"const": false},
+        "worker_dispatch_allowed": {"const": false},
+        "live_receipt_append_allowed": {"const": false},
         "customer_readiness_claim_allowed": {"const": false}
       }
     },

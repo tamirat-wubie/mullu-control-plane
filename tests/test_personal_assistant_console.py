@@ -102,7 +102,35 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert pilot["receipt_boundary"]["receipt_required_for_actions"] is True
     assert pilot["receipt_boundary"]["runtime_dispatch_allowed"] is False
     assert pilot["effect_boundary"]["external_send_allowed"] is False
+    assert pilot["operator_presentation"]["cannot_do_in_demo"] == [
+        "call_live_connectors",
+        "read_or_mutate_mailbox",
+        "send_external_messages",
+        "write_repositories",
+        "dispatch_workers",
+        "append_live_receipts",
+        "claim_production_readiness",
+    ]
+    assert pilot["dashboard_projection"]["read_only"] is True
+    assert pilot["dashboard_projection"]["fixture_backed"] is True
+    assert pilot["dashboard_projection"]["worker_dispatch_allowed"] is False
+    assert pilot["demo_scenario"]["draft_preview"]["preview_only"] is True
+    assert pilot["demo_scenario"]["approval_preview"]["approval_is_execution"] is False
+    assert pilot["demo_scenario"]["dry_run_receipt_trail"]["actions_not_taken_recorded"] is True
+    assert all(phase["effect_allowed"] is False for phase in pilot["workflow_separation"])
+    assert pilot["pr_2058_review_decision"]["decision"] == "hold_open_do_not_merge"
+    assert pilot["pr_2058_review_decision"]["merge_allowed"] is False
+    assert pilot["pr_2058_review_decision"]["issue_2067_decision_satisfied"] is True
+    assert pilot["inceptadive_advisory_panel"]["redacted"] is True
+    assert pilot["inceptadive_advisory_panel"]["execution_authority_allowed"] is False
+    assert pilot["deterministic_replay"]["deterministic_replay_from_fixtures"] is True
+    assert pilot["deterministic_replay"]["external_calls_allowed"] is False
+    assert pilot["approval_authority_next_phase"]["status"] == "AwaitingEvidence"
+    assert pilot["approval_authority_next_phase"]["execution_authority_granted_by_demo"] is False
     assert pilot["execution_allowed"] is False
+    assert pilot["repository_write_allowed"] is False
+    assert pilot["worker_dispatch_allowed"] is False
+    assert pilot["live_receipt_append_allowed"] is False
     assert pilot["customer_readiness_claim_allowed"] is False
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]

@@ -115,6 +115,31 @@ def test_personal_assistant_skill_read_model_is_deployed_read_only() -> None:
     assert "personal_assistant.clarification.request" in body["registry"]["skill_ids"]
 
 
+def test_personal_assistant_pilot_read_model_is_no_effect_demo() -> None:
+    client = _client()
+
+    response = client.get("/api/v1/personal-assistant/pilot/read-model")
+    post_response = client.post("/api/v1/personal-assistant/pilot/read-model", json={})
+    body = response.json()
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert body["pilot_id"] == "governed_team_assistant_pilot_v0"
+    assert body["stage"] == "controlled_demo_productization"
+    assert body["dashboard_projection"]["read_only"] is True
+    assert body["dashboard_projection"]["repository_write_allowed"] is False
+    assert body["demo_scenario"]["dry_run_receipt_trail"]["actions_not_taken_recorded"] is True
+    assert body["pr_2058_review_decision"]["decision"] == "hold_open_do_not_merge"
+    assert body["pr_2058_review_decision"]["merge_allowed"] is False
+    assert body["inceptadive_advisory_panel"]["advisory_only"] is True
+    assert body["deterministic_replay"]["external_calls_allowed"] is False
+    assert body["approval_authority_next_phase"]["execution_authority_granted_by_demo"] is False
+    assert body["execution_allowed"] is False
+    assert body["repository_write_allowed"] is False
+    assert body["worker_dispatch_allowed"] is False
+    assert body["live_receipt_append_allowed"] is False
+
+
 def test_personal_assistant_preview_compiles_inbox_request_without_execution() -> None:
     client = _client()
 
@@ -378,4 +403,5 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     assert "/api/v1/assistant/finance-ops/plans" in paths
     assert "/api/v1/assistant/team-ops/plans" in paths
     assert "/api/v1/personal-assistant/skills" in paths
+    assert "/api/v1/personal-assistant/pilot/read-model" in paths
     assert "/api/v1/personal-assistant/requests/preview" in paths
