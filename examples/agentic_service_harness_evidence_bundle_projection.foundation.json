@@ -1,0 +1,129 @@
+{
+  "report_id": "agentic_service_harness_evidence_bundle_projection",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T04:20:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_read_models_ref": "examples/agentic_service_harness_read_models.foundation.json",
+  "source_adapter_registry_ref": "examples/agentic_service_harness_adapter_registry_contract.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "projection_id": "evidence-bundle-projection-foundation",
+    "foundation_phase": "foundation_evidence_bundle_projection_by_agent_run",
+    "read_only": true,
+    "contract_only": true,
+    "query_route_admitted": false,
+    "mutation_endpoints_admitted": false,
+    "log_ingestion_enabled": false,
+    "receipt_store_append_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_call_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "secret_values_serialized": false,
+    "inline_diff_allowed": false
+  },
+  "projection_index": {
+    "index_key": "run_id",
+    "lookup_mode": "read_only_reference_projection",
+    "bundle_count": 1,
+    "run_count": 1,
+    "required_category_ids": [
+      "command_logs",
+      "test_logs",
+      "diff_refs",
+      "policy_refs",
+      "receipt_refs",
+      "source_read_models"
+    ],
+    "source_binding_required": true,
+    "redaction_policy_required": true,
+    "read_only": true
+  },
+  "bundles": [
+    {
+      "bundle_id": "bundle-run-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "run_lookup_ref": "agent-run://run-read-model-foundation/evidence-bundle",
+      "source_evidence_bundle_id": "evidence-read-model-foundation",
+      "lookup_result": "found_in_source_read_model",
+      "categories": {
+        "command_logs": [
+          "command://validator/agentic-service-harness-read-models",
+          "command://validator/agentic-service-harness-read-model-persistence",
+          "command://validator/agentic-service-harness-read-only-status-route-design",
+          "command://validator/agentic-service-harness-read-only-status-route"
+        ],
+        "test_logs": [
+          "test://pytest/test-agentic-service-harness-read-models",
+          "test://pytest/test-agentic-service-harness-read-model-persistence",
+          "test://pytest/test-agentic-service-harness-read-only-status-route-design",
+          "test://pytest/test-agentic-service-harness-read-only-status-route"
+        ],
+        "diff_refs": [
+          "diff://none/read-only-projection"
+        ],
+        "policy_refs": [
+          "policy://harness/allowed-read-only",
+          "gate://harness/no-mutation-endpoints",
+          "gate://harness/no-receipt-store-append",
+          "gate://harness/no-adapter-execution",
+          "gate://harness/terminal-closure-denied"
+        ],
+        "receipt_refs": [
+          "receipt://agent-run/run-read-model-foundation/lifecycle/completed",
+          "receipt://harness/receipt-read-model-foundation"
+        ],
+        "source_read_models": [
+          "examples/agentic_service_harness_read_models.foundation.json",
+          "agent-run://run-read-model-foundation/read-only-query",
+          "evidence://agentic-service-harness/read-model-foundation"
+        ]
+      },
+      "redaction_policy": "hash_or_reference_only",
+      "contains_secret_values": false,
+      "inline_log_allowed": false,
+      "inline_diff_allowed": false,
+      "append_enabled": false,
+      "runtime_collection_enabled": false,
+      "terminal_closure": false,
+      "read_only": true
+    }
+  ],
+  "authority_denials": {
+    "query_route_enabled": false,
+    "mutation_endpoint_enabled": false,
+    "log_ingestion_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_call_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "receipt_refs": {
+    "evidence_bundle_projection_schema": "schemas/agentic_service_harness_evidence_bundle_projection.schema.json",
+    "evidence_bundle_projection_fixture": "examples/agentic_service_harness_evidence_bundle_projection.foundation.json",
+    "read_models_schema": "schemas/agentic_service_harness_read_models.schema.json",
+    "read_models_fixture": "examples/agentic_service_harness_read_models.foundation.json",
+    "adapter_registry_contract_schema": "schemas/agentic_service_harness_adapter_registry_contract.schema.json",
+    "adapter_registry_contract_fixture": "examples/agentic_service_harness_adapter_registry_contract.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic_service_harness_evidence_bundle_projection",
+      "command": "python scripts/validate_agentic_service_harness_evidence_bundle_projection.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add a harness Receipt projection with append disabled after EvidenceBundle projection validation is retained.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

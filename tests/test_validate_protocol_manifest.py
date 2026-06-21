@@ -80,6 +80,17 @@ def test_protocol_manifest_indexes_agentic_service_harness_adapter_registry_cont
     assert registry_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    evidence_entry = entries["agentic-service-harness-evidence-bundle-projection"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert evidence_entry["path"] == "schemas/agentic_service_harness_evidence_bundle_projection.schema.json"
+    assert evidence_entry["urn"] == "urn:mullusi:schema:agentic-service-harness-evidence-bundle-projection:1"
+    assert evidence_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_governed_symbolic_loop_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

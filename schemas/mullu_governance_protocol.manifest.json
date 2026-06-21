@@ -185,6 +185,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-adapter-registry-contract:1"
     },
     {
+      "path": "schemas/agentic_service_harness_evidence_bundle_projection.schema.json",
+      "schema_id": "agentic-service-harness-evidence-bundle-projection",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-evidence-bundle-projection:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
       "schema_id": "agentic-service-harness-github-task-receipt-emitter-dry-run",
       "surface": "runtime",
