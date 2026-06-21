@@ -11,8 +11,9 @@ Invariants:
   - RepositoryConnection remains closed as a read-only READY surface.
   - AgentRun remains closed as a read-only lifecycle READY surface.
   - ApprovalRequest remains closed as a read-only gateway binding surface.
-  - The first next PR advances to the EvidenceBundle projection after the
-    contract-only adapter registry closes.
+  - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
+  - The first next PR advances to the Receipt projection after the
+    EvidenceBundle projection closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -55,11 +56,11 @@ REQUIRED_READY_SYMBOLS = (
     "AgentRun",
     "ApprovalRequest",
     "AgentAdapter",
+    "EvidenceBundle",
 )
 REQUIRED_PARTIAL_SYMBOLS = (
     "Receipt",
     "WorkspaceSandbox",
-    "EvidenceBundle",
     "ResultSummary",
 )
 REQUIRED_DENIALS = (
@@ -129,6 +130,18 @@ REQUIRED_ADAPTER_REGISTRY_CONTRACT_TERMS = (
     "branch writes",
     "PR creation",
     "receipt append",
+    "terminal closure remain blocked",
+)
+REQUIRED_EVIDENCE_BUNDLE_PROJECTION_TERMS = (
+    "EvidenceBundle projection PR",
+    "agentic_service_harness_evidence_bundle_projection",
+    "groups command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id",
+    "log ingestion",
+    "receipt-store append",
+    "adapter execution",
+    "connector calls",
+    "branch writes",
+    "PR creation",
     "terminal closure remain blocked",
 )
 FORBIDDEN_PATTERNS = (
@@ -205,12 +218,19 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "adapter_registry_contract_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_EVIDENCE_BUNDLE_PROJECTION_TERMS,
+        "evidence_bundle_projection_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
     _validate_approval_request_ready(map_text, errors)
     _validate_agent_adapter_ready(map_text, errors)
-    _validate_adapter_registry_first(map_text, errors)
+    _validate_evidence_bundle_ready(map_text, errors)
+    _validate_receipt_projection_first(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -284,20 +304,30 @@ def _validate_agent_adapter_ready(map_text: str, errors: list[str]) -> None:
         errors.append("missing ready row: AgentAdapter contract-only registry")
 
 
-def _validate_adapter_registry_first(map_text: str, errors: list[str]) -> None:
+def _validate_evidence_bundle_ready(map_text: str, errors: list[str]) -> None:
+    ready_row = re.search(
+        r"^\| EvidenceBundle \| READY \| .+ \| None for read-only projection\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if ready_row is None:
+        errors.append("missing ready row: EvidenceBundle read-only projection")
+
+
+def _validate_receipt_projection_first(map_text: str, errors: list[str]) -> None:
     first_sequence_item = re.search(
-        r"^1\.\s+`harness\(evidence\): add EvidenceBundle projection by AgentRun id`$",
+        r"^1\.\s+`harness\(receipts\): add harness Receipt projection with append disabled`$",
         map_text,
         re.MULTILINE,
     )
     if first_sequence_item is None:
-        errors.append("missing first next PR: EvidenceBundle projection")
+        errors.append("missing first next PR: Receipt projection")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(evidence): add EvidenceBundle projection by AgentRun id",
         "harness(receipts): add harness Receipt projection with append disabled",
+        "harness(tasks): add task creation admission preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:
