@@ -1,11 +1,13 @@
-"""Pilot provisioning endpoints.
+"""Pilot provisioning and product demo read-only endpoints.
 
 Purpose: expose hosted pilot scaffold generation without live infrastructure
-mutation.
-Governance scope: pilot artifact provisioning surface only.
-Dependencies: FastAPI, pilot scaffold generator, shared dependency registry.
-Invariants: endpoint returns deterministic artifacts, records audit, and never
-writes filesystem state.
+mutation and mount fixture-backed governed product demo read models.
+Governance scope: pilot artifact provisioning and no-effect dashboard surfaces.
+Dependencies: FastAPI, pilot scaffold generator, shared dependency registry, and
+read-only Governed Work Assistant dashboard router.
+Invariants: provisioning endpoint returns deterministic artifacts, records audit,
+and never writes filesystem state; dashboard endpoint is read-only, fixture-backed,
+and grants no connector, mailbox, send, repository, worker, or receipt authority.
 """
 
 from __future__ import annotations
@@ -20,9 +22,11 @@ from mcoi_runtime.app.pilot_init import PilotInitRequest, PilotProvisionRegistry
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.musia_auth import require_admin
+from mcoi_runtime.app.routers.work_assistant_dashboard import router as work_assistant_dashboard_router
 
 
 router = APIRouter()
+router.include_router(work_assistant_dashboard_router)
 _provision_registry = PilotProvisionRegistry()
 
 
