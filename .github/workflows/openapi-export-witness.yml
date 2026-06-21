@@ -1,0 +1,71 @@
+name: OpenAPI Export Witness
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/openapi-export-witness.yml"
+      - "mcoi/**"
+      - "scripts/export_openapi.py"
+      - "tests/test_sdk_generation.py"
+      - "sdk/openapi/mullu.openapi.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-openapi-witness:
+    name: Export OpenAPI witness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+          if [ -f mcoi/requirements.txt ]; then python -m pip install -r mcoi/requirements.txt; fi
+
+      - name: Export runtime OpenAPI spec
+        env:
+          PYTHONPATH: mcoi
+          MULLU_ENV: local_dev
+          MULLU_DB_BACKEND: memory
+        run: |
+          mkdir -p .change_assurance/openapi-export-witness
+          python scripts/export_openapi.py --output .change_assurance/openapi-export-witness/mullu.openapi.json
+
+      - name: Verify dashboard route in exported spec
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('.change_assurance/openapi-export-witness/mullu.openapi.json')
+          spec = json.loads(path.read_text(encoding='utf-8'))
+          route = '/api/v1/personal-assistant/work-assistant/dashboard/read-model'
+          assert route in spec.get('paths', {}), f'missing route: {route}'
+          operation = spec['paths'][route].get('get', {})
+          assert operation, f'missing GET operation for {route}'
+          print(json.dumps({
+              'governed': True,
+              'route': route,
+              'path_count': len(spec.get('paths', {})),
+              'operation_id': operation.get('operationId', ''),
+          }, sort_keys=True))
+          PY
+
+      - name: Upload OpenAPI witness artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-export-witness
+          path: .change_assurance/openapi-export-witness/mullu.openapi.json
+          if-no-files-found: error
