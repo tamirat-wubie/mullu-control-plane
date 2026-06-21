@@ -14,6 +14,7 @@ Invariants:
   - Source receipt serialized lengths must match current source payloads.
   - Source receipt records must replay from canonical source payload projection.
   - Authority denials must replay from canonical denial projection.
+  - No-effect boundaries must replay from canonical no-effect projection.
   - Closure summaries must match recomputed source receipt aggregates.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
@@ -38,6 +39,7 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.collect_personal_assistant_foundation_closure_packet import (  # noqa: E402
     AUTHORITY_DENIALS,
     DEFAULT_OUTPUT,
+    NO_EFFECT_BOUNDARY,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
     _source_receipt_record as _collect_source_receipt_record,
@@ -114,6 +116,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_authority_denials(payload),
         _check_authority_denial_replay_projection(payload),
         _check_no_effect_boundary(payload),
+        _check_no_effect_boundary_replay_projection(payload),
         _check_closure_summary_aggregates(payload),
         _check_closure_gate(payload),
         _check_secret_value_boundary(payload),
@@ -446,6 +449,18 @@ def _check_no_effect_boundary(payload: dict[str, Any]) -> PersonalAssistantFound
         "no-effect boundary",
         passed,
         f"flags_clear={flags_clear} packet_non_authoritative={packet_non_authoritative}",
+    )
+
+
+def _check_no_effect_boundary_replay_projection(
+    payload: dict[str, Any],
+) -> PersonalAssistantFoundationClosureValidationStep:
+    boundary = _object(payload.get("no_effect_boundary"))
+    passed = boundary == NO_EFFECT_BOUNDARY
+    return PersonalAssistantFoundationClosureValidationStep(
+        "no-effect boundary replay projection",
+        passed,
+        "projection-current" if passed else "projection-mismatch",
     )
 
 

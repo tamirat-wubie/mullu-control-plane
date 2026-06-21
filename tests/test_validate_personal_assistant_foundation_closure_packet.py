@@ -14,6 +14,7 @@ Invariants:
   - Source receipt serialized lengths must match current checked-in source payloads.
   - Source receipt records must replay from canonical checked-in source payloads.
   - Authority denials must replay from canonical checked-in denial records.
+  - No-effect boundaries must replay from canonical checked-in boundary records.
   - Closure summaries must match recomputed source receipt aggregates.
   - Authority denials must remain complete.
   - Secret-shaped values cannot be serialized into closure packets.
@@ -381,6 +382,29 @@ def test_validate_foundation_closure_packet_rejects_no_effect_drift(tmp_path: Pa
     assert any(step.name == "schema contract" and not step.passed for step in validation.steps)
     assert any(step.name == "no-effect boundary" and not step.passed for step in validation.steps)
     assert validation.foundation_closure_packet_closed is True
+
+
+def test_validate_foundation_closure_packet_rejects_no_effect_projection_drift(
+    tmp_path: Path,
+) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["no_effect_boundary"]["new_false_flag_allowed"] = False  # type: ignore[index]
+    packet["packet_id"] = closure_validator._expected_packet_id(packet)  # type: ignore[attr-defined]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.foundation_closure_packet_closed is True
+    assert any(
+        step.name == "no-effect boundary replay projection" and not step.passed
+        for step in validation.steps
+    )
+    assert any(step.name == "no-effect boundary" and step.passed for step in validation.steps)
+    assert any(step.name == "packet id binding" and step.passed for step in validation.steps)
 
 
 def test_validate_foundation_closure_packet_rejects_secret_values(tmp_path: Path) -> None:

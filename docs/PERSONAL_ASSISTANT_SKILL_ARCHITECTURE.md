@@ -507,15 +507,16 @@ verifying the recorded closure field is true in the source payload itself. It
 also recomputes each source payload's serialized length from the current source
 payload and replays every recorded source receipt from the canonical checked-in
 source payload projection. It also replays the authority-denial records from
-the canonical no-effect authority set. The packet ID is recomputed from the
+the canonical no-effect authority set and the no-effect boundary from the
+canonical no-effect flag projection. The packet ID is recomputed from the
 current packet body, so a changed packet cannot reuse an old valid-looking
 identity. The closure summary is recomputed from the source receipt records and
 no-effect boundary before the closure gate is accepted. Digest mismatch, schema
 mismatch, source-kind binding drift, source closure field drift, source
 serialized-length drift, source replay-projection drift, authority-denial
-projection drift, closure-summary aggregate drift, packet ID body drift, missing
-source or schema refs, or refs that escape the repository fail validation even
-when the packet schema is otherwise well formed.
+projection drift, no-effect projection drift, closure-summary aggregate drift,
+packet ID body drift, missing source or schema refs, or refs that escape the
+repository fail validation even when the packet schema is otherwise well formed.
 
 ## Integration Position
 
