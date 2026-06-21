@@ -59,12 +59,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_github_repo_task_intake",
         "agentic_service_harness_dashboard_data_contract",
         "agentic_service_harness_adapter_registry_contract",
+        "agentic_service_harness_evidence_bundle_projection",
         "agentic_service_harness_github_task_receipt_emitter_dry_run",
         "agentic_service_harness_temporary_branch_workspace_preflight",
         "agentic_service_harness_workspace_sandbox_preflight",
         "agentic_service_harness_planned_file_change_collection_preflight",
         "agentic_service_harness_actual_file_change_summary_receipt",
         "agentic_service_harness_actual_diff_collection_admission_preflight",
+        "agentic_service_harness_actual_diff_collection_receipt",
         "agentic_service_harness_github_pr_admission_preflight",
         "agentic_service_harness_github_pr_operator_approval_request",
         "agentic_service_harness_github_pr_operator_response_witness",
@@ -284,6 +286,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_adapter_registry_contract",
+        "agentic_service_harness_evidence_bundle_projection",
+    )
+    assert_ordered(
+        "agentic_service_harness_evidence_bundle_projection",
         "agentic_service_harness_github_task_receipt_emitter_dry_run",
     )
     assert_ordered(

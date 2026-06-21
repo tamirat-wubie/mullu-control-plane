@@ -140,15 +140,15 @@ def test_readiness_map_rejects_missing_agent_adapter_ready_row(tmp_path: Path) -
     assert "missing ready row: AgentAdapter contract-only registry" in serialized_errors
 
 
-def test_readiness_map_rejects_missing_evidence_bundle_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_evidence_bundle_ready_row(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(evidence): add EvidenceBundle projection by AgentRun id`",
-            "1. `harness(receipts): add harness Receipt projection with append disabled`",
+            "| EvidenceBundle | READY |",
+            "| EvidenceBundle | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -157,7 +157,27 @@ def test_readiness_map_rejects_missing_evidence_bundle_first_pr(tmp_path: Path) 
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
-    assert "missing first next PR: EvidenceBundle projection" in serialized_errors
+    assert "missing ready row: EvidenceBundle read-only projection" in serialized_errors
+
+
+def test_readiness_map_rejects_missing_receipt_projection_first_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(receipts): add harness Receipt projection with append disabled`",
+            "1. `harness(tasks): add task creation admission preflight`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "missing first next PR: Receipt projection" in serialized_errors
 
 
 def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
@@ -165,13 +185,14 @@ def test_readiness_map_rejects_missing_current_main_ref(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
-    map_path.write_text(
-        map_text.replace(
-            "Current `origin/main`: `1e94f9b786891f992bf195036fd344f0b26868a5`",
-            "Current `origin/main`: `short-ref`",
-        ),
-        encoding="utf-8",
+    mutated_map_text = re.sub(
+        r"^Current `origin/main`: `[0-9a-f]{40}`$",
+        "Current `origin/main`: `short-ref`",
+        map_text,
+        flags=re.MULTILINE,
     )
+    assert mutated_map_text != map_text
+    map_path.write_text(mutated_map_text, encoding="utf-8")
 
     validation = validate_readiness_map(map_path)
     serialized_errors = json.dumps(validation.errors, sort_keys=True)

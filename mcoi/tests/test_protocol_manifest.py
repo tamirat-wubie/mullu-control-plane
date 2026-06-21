@@ -164,6 +164,15 @@ def test_protocol_manifest_is_valid() -> None:
     governed_planning_profile_generic_continuation_rejection_entry = entries[
         "governed-planning-profile-runtime-authorization-generic-continuation-rejection"
     ]
+    governed_planning_profile_approval_witness_template_entry = entries[
+        "governed-planning-profile-runtime-authorization-approval-witness-template"
+    ]
+    governed_planning_profile_signed_approval_intake_entry = entries[
+        "governed-planning-profile-runtime-authorization-signed-approval-intake"
+    ]
+    governed_planning_profile_signed_approval_generic_rejection_entry = entries[
+        "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection"
+    ]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
 
@@ -257,6 +266,27 @@ def test_protocol_manifest_is_valid() -> None:
         "urn:mullusi:schema:governed-planning-profile-runtime-authorization-generic-continuation-rejection:1"
     )
     assert governed_planning_profile_generic_continuation_rejection_entry["surface"] == "planning"
+    assert governed_planning_profile_approval_witness_template_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json"
+    )
+    assert governed_planning_profile_approval_witness_template_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-approval-witness-template:1"
+    )
+    assert governed_planning_profile_approval_witness_template_entry["surface"] == "planning"
+    assert governed_planning_profile_signed_approval_intake_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_signed_approval_intake.schema.json"
+    )
+    assert governed_planning_profile_signed_approval_intake_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-intake:1"
+    )
+    assert governed_planning_profile_signed_approval_intake_entry["surface"] == "planning"
+    assert governed_planning_profile_signed_approval_generic_rejection_entry["path"] == (
+        "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json"
+    )
+    assert governed_planning_profile_signed_approval_generic_rejection_entry["urn"] == (
+        "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1"
+    )
+    assert governed_planning_profile_signed_approval_generic_rejection_entry["surface"] == "planning"
     assert governed_symbolic_loop_entry["path"] == "schemas/governed_symbolic_loop_contract.schema.json"
     assert governed_symbolic_loop_entry["urn"] == "urn:mullusi:schema:governed-symbolic-loop-contract:1"
     assert governed_symbolic_loop_entry["surface"] == "governance"

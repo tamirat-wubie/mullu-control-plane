@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 import math
+import unicodedata
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -28,6 +29,7 @@ from ._base import (
 SNET_VERSION = "0.1.5"
 SNET_SEMANTICS_HASH = "sha256:snet-v0.1.5-answer-and-text-boundary-refined"
 SNET_READ_ONLY_SURFACE = "read_only_snet_recursive_mesh"
+_FORBIDDEN_TEXT_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Zl", "Zp"})
 
 
 class SNetWHType(StrEnum):
@@ -187,12 +189,15 @@ def _require_text_key(key: object, field_name: str) -> str:
 def _require_text(value: object, field_name: str) -> str:
     if type(value) is not str:
         raise ValueError(f"{field_name} must be a non-empty string")
-    return require_non_empty_text(value, field_name)
+    exact_value = require_non_empty_text(value, field_name)
+    _require_visible_text_characters(exact_value, field_name)
+    return exact_value
 
 
 def _require_exact_text(value: object, field_name: str) -> str:
     if type(value) is not str or not value.strip() or value != value.strip():
         raise ValueError(f"{field_name} must be an exact non-empty string")
+    _require_visible_text_characters(value, field_name)
     return value
 
 
@@ -207,13 +212,23 @@ def _require_optional_exact_text(value: object, field_name: str) -> str:
 def _require_scope_text(value: object, field_name: str) -> str:
     if type(value) is not str or not value.strip() or value != value.strip():
         raise ValueError(f"{field_name} must be an exact non-empty scope string")
+    _require_visible_text_characters(value, field_name)
     return value
 
 
 def _require_semantic_text(value: object, field_name: str) -> str:
     if type(value) is not str or not value.strip() or value != value.strip():
         raise ValueError(f"{field_name} must be an exact non-empty semantic string")
+    _require_visible_text_characters(value, field_name)
     return value
+
+
+def _require_visible_text_characters(value: str, field_name: str) -> None:
+    for index, character in enumerate(value):
+        if unicodedata.category(character) in _FORBIDDEN_TEXT_CATEGORIES:
+            raise ValueError(
+                f"{field_name} contains forbidden control or invisible character at index {index}"
+            )
 
 
 def _require_optional_scope_text(value: object, field_name: str) -> str:
@@ -229,7 +244,9 @@ def _require_optional_text(value: object, field_name: str) -> str:
         raise ValueError(f"{field_name} must be a non-empty string")
     if value == "":
         return ""
-    return require_non_empty_text(value, field_name)
+    exact_value = require_non_empty_text(value, field_name)
+    _require_visible_text_characters(exact_value, field_name)
+    return exact_value
 
 
 def _require_literal_bool(value: object, expected: bool, field_name: str) -> bool:

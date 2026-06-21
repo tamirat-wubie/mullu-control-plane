@@ -1,0 +1,57 @@
+{
+  "acceptance_tests": [
+    "python scripts/collect_personal_assistant_dry_run_packet.py --output examples/personal_assistant_dry_run_packet.json",
+    "python scripts/validate_personal_assistant_dry_run_packet.py --packet examples/personal_assistant_dry_run_packet.json --require-closed --json",
+    "python scripts/collect_personal_assistant_foundation_closure_packet.py --output examples/personal_assistant_foundation_closure_packet.json",
+    "python scripts/validate_personal_assistant_foundation_closure_packet.py --packet examples/personal_assistant_foundation_closure_packet.json --require-closed --json",
+    "python -m pytest tests/test_collect_personal_assistant_dry_run_packet.py tests/test_validate_personal_assistant_dry_run_packet.py tests/test_collect_personal_assistant_foundation_closure_packet.py tests/test_validate_personal_assistant_foundation_closure_packet.py -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "affected_surfaces": [
+    "personal_assistant_dry_run_packet",
+    "personal_assistant_foundation_closure_packet",
+    "personal_assistant_skill_architecture_doc",
+    "personal_assistant_ci_lane"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-dry-run-proof-packet/20260621",
+  "constraints": [
+    "The dry-run proof packet must include inbox, task-intake, calendar-conflict, draft-response, approval-request, no-send, memory-candidate, receipt-replay, and closure evidence.",
+    "The packet must remain digest-only and local.",
+    "Email send, calendar write, task write, mailbox mutation, connector mutation, memory write, memory admission, deployment mutation, customer-readiness claim, production-readiness claim, and live Nested Mind activation remain denied.",
+    "Foundation closure packet source digests must be regenerated after the dry-run packet fixture changes.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/personal_assistant_dry_run_packet.schema.json",
+    "examples/personal_assistant_dry_run_packet.json",
+    "scripts/collect_personal_assistant_dry_run_packet.py",
+    "scripts/validate_personal_assistant_dry_run_packet.py",
+    "tests/test_collect_personal_assistant_dry_run_packet.py",
+    "tests/test_validate_personal_assistant_dry_run_packet.py",
+    "examples/personal_assistant_foundation_closure_packet.json"
+  ],
+  "non_goals": [
+    "Do not call Gmail or Calendar.",
+    "Do not send email.",
+    "Do not create, move, cancel, or invite calendar events.",
+    "Do not write tasks.",
+    "Do not admit or write memory.",
+    "Do not claim customer readiness or production readiness."
+  ],
+  "problem_statement": "The existing Personal Assistant dry-run packet closed an inbox-to-draft proof, but the flagship dry-run needed explicit calendar-conflict reasoning, task-intake projection, no-send proof, and memory-admission candidate review without granting live authority.",
+  "receipt_ref": "examples/personal_assistant_dry_run_packet.json",
+  "request_id": "personal_assistant_dry_run_proof_packet_20260621",
+  "requirement_id": "sdlc_req_personal_assistant_dry_run_proof_packet_20260621",
+  "risk_class": "medium",
+  "success_criteria": [
+    "Dry-run packet validates as SolvedVerified and closed.",
+    "Source artifact count is eleven and stage count is twelve.",
+    "Calendar-conflict, task-intake, draft-response, approval-request, no-send, and memory-candidate closure flags are true.",
+    "No-effect boundary explicitly denies send, calendar write, task write, mailbox mutation, connector mutation, memory write, and memory admission.",
+    "Foundation closure packet remains SolvedVerified after digest refresh."
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-dry-run-proof-packet/20260621"
+}

@@ -1,0 +1,115 @@
+{
+  "admission_gates": {
+    "actual_diff_collection_admission_preflight_verified": true,
+    "actual_diff_collection_receipt_emission_allowed": false,
+    "blocked_reason_refs": [
+      "blocked://branch-write-authority/not-collected",
+      "blocked://workspace-write-authority/not-granted",
+      "blocked://operator-approval/not-collected",
+      "blocked://cleanup-receipt/not-emitted",
+      "blocked://redaction-evidence/not-collected",
+      "blocked://uao-diff-collection/not-verified",
+      "blocked://receipt-store-write-path/not-verified"
+    ],
+    "branch_write_authority_collected": false,
+    "cleanup_receipt_emitted": false,
+    "operator_approval_collected": false,
+    "receipt_store_write_path_verified": false,
+    "redaction_evidence_collected": false,
+    "required_before_diff_receipt_refs": [
+      "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json",
+      "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json",
+      "evidence://branch-write-authority-binding",
+      "evidence://operator-approval-for-branch-write",
+      "evidence://workspace-write-authority",
+      "receipt://sandbox-cleanup-branchwrite",
+      "evidence://redaction-policy-for-file-change-collection",
+      "evidence://uao-actual-diff-collection-admission",
+      "evidence://receipt-store-write-path-for-diff-collection"
+    ],
+    "uao_diff_collection_admission_verified": false,
+    "workspace_write_authority_granted": false
+  },
+  "diff_collection_receipt": {
+    "changed_file_count": 0,
+    "changed_file_refs": [],
+    "diff_bundle_hash_ref": "hash://actual-diff-collection-receipt-empty",
+    "diff_refs": [],
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "receipt_append_ref": "blocked://receipt-store-write-path/not-verified",
+    "redacted_diff_bundle_ref": "evidence://actual-diff-collection-receipt/redacted-empty"
+  },
+  "effect_boundary": {
+    "actual_diff_collected": false,
+    "branch_created": false,
+    "commands_executed": false,
+    "connector_calls_observed": false,
+    "diff_receipt_emitted": false,
+    "external_effects_observed": false,
+    "files_written": false,
+    "pull_request_opened": false,
+    "receipt_store_appended": false,
+    "runtime_state_written": false,
+    "secret_values_serialized": false,
+    "success_claim_allowed": false,
+    "terminal_closure": false,
+    "tests_executed": false
+  },
+  "generated_at": "2026-06-21T00:00:00Z",
+  "next_action": "Emit non-empty actual diff receipts only after authority, cleanup, redaction, UAO diff-collection admission, and receipt-store write path evidence are verified.",
+  "path_policy": {
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "path_allowlist": [
+      "."
+    ],
+    "path_allowlist_bound_to_admission_preflight": true,
+    "production_paths_allowed": false,
+    "secret_paths_allowed": false
+  },
+  "receipt_id": "agentic_service_harness_actual_diff_collection_receipt",
+  "receipt_is_not_terminal_closure": true,
+  "receipt_refs": {
+    "actual_diff_collection_admission_preflight_example": "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json",
+    "actual_diff_collection_admission_preflight_schema": "schemas/agentic_service_harness_actual_diff_collection_admission_preflight.schema.json",
+    "actual_diff_collection_receipt_schema": "schemas/agentic_service_harness_actual_diff_collection_receipt.schema.json",
+    "actual_file_change_summary_receipt_example": "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json",
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "receipt_store_write_path_ref": "evidence://receipt-store-write-path-for-diff-collection",
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "uao_diff_collection_admission_ref": "evidence://uao-actual-diff-collection-admission"
+  },
+  "receipt_status": "blocked_until_admission_authority_redaction_uao_and_receipt_store",
+  "redaction_policy": {
+    "credential_value_serialization_allowed": false,
+    "diff_redaction_required": true,
+    "raw_diff_serialization_allowed": false,
+    "raw_secret_path_serialization_allowed": false,
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "secret_redaction_required": true
+  },
+  "schema_version": 1,
+  "scope": {
+    "actual_diff_collection_receipt_allowed": false,
+    "foundation_phase": "foundation_contract_only",
+    "mode": "branch_write",
+    "project_id": "project.foundation",
+    "receipt_only": true,
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "task_id": "task.branchwrite"
+  },
+  "solver_outcome": "AwaitingEvidence",
+  "source_actual_diff_collection_admission_preflight_ref": "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json",
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_agentic_service_harness_actual_diff_collection_receipt.py --strict",
+      "required_for_closure": true,
+      "validator_id": "validator.agentic-service-harness-actual-diff-collection-receipt"
+    }
+  ]
+}

@@ -36,9 +36,11 @@ def test_collect_dry_run_packet_closes_no_effect_workflow() -> None:
 
     assert packet["solver_outcome"] == "SolvedVerified"
     assert summary["dry_run_packet_closed"] is True  # type: ignore[index]
-    assert summary["source_artifact_count"] == 9  # type: ignore[index]
-    assert summary["stage_count"] == 10  # type: ignore[index]
+    assert summary["source_artifact_count"] == 11  # type: ignore[index]
+    assert summary["stage_count"] == 12  # type: ignore[index]
     assert summary["no_effect_boundaries_clear"] is True  # type: ignore[index]
+    assert summary["calendar_conflict_checked"] is True  # type: ignore[index]
+    assert summary["task_intake_projected"] is True  # type: ignore[index]
 
 
 def test_collect_dry_run_packet_records_approval_before_external_send() -> None:
@@ -52,12 +54,30 @@ def test_collect_dry_run_packet_records_approval_before_external_send() -> None:
     assert "email_not_sent" in stages["blocked_external_send"]["actions_not_taken"]
 
 
+def test_collect_dry_run_packet_records_calendar_task_and_memory_proofs() -> None:
+    packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
+    stages = {stage["stage_id"]: stage for stage in packet["stages"]}  # type: ignore[index]
+    summary = packet["closure_summary"]
+
+    assert stages["calendar_conflict_reasoning"]["predecessor_ids"] == ["read_only_preview"]
+    assert stages["calendar_conflict_reasoning"]["execution_allowed"] is False
+    assert "calendar_not_written" in stages["calendar_conflict_reasoning"]["actions_not_taken"]
+    assert stages["task_intake_projection"]["predecessor_ids"] == ["calendar_conflict_reasoning"]
+    assert "task_not_written" in stages["task_intake_projection"]["actions_not_taken"]
+    assert summary["draft_response_projected"] is True  # type: ignore[index]
+    assert summary["approval_request_projected"] is True  # type: ignore[index]
+    assert summary["no_send_proven"] is True  # type: ignore[index]
+    assert summary["memory_admission_candidate_reviewed"] is True  # type: ignore[index]
+
+
 def test_collect_dry_run_packet_uses_digest_only_source_artifacts() -> None:
     packet = collect_personal_assistant_dry_run_packet(now_utc=FIXED_NOW)
     source_artifacts = packet["source_artifacts"]
     source_kinds = {record["source_kind"] for record in source_artifacts}  # type: ignore[index]
 
     assert "skill_registry" in source_kinds
+    assert "calendar_request" in source_kinds
+    assert "planning_projection" in source_kinds
     assert "runtime_boundary" in source_kinds
     assert "foundation_closure_packet" not in source_kinds
     assert all(record["payload_digest_only"] is True for record in source_artifacts)  # type: ignore[index]

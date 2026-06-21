@@ -7,8 +7,11 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: foundation closure packet schema, collector constants, and schema helpers.
 Invariants:
   - Closure requires every source receipt to be bound, SolvedVerified, and closed.
+  - Source receipt kinds must match canonical source refs, schema refs, and closure fields.
   - Source receipt digests must match current checked-in source refs.
   - Source receipt schema refs must resolve and validate their source payloads.
+  - Source receipt closure fields must be true in the source payloads themselves.
+  - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
 """
@@ -16,6 +19,7 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -93,9 +97,12 @@ def validate_personal_assistant_foundation_closure_packet(
     steps = (
         _check_schema_contract(payload, schema_path),
         _check_packet_id(payload),
+        _check_packet_id_binding(payload),
         _check_source_receipts(payload),
+        _check_source_receipt_bindings(payload),
         _check_source_receipt_digests(payload),
         _check_source_receipt_schemas(payload),
+        _check_source_receipt_source_closure_fields(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
         _check_closure_gate(payload),
@@ -159,6 +166,17 @@ def _check_packet_id(payload: dict[str, Any]) -> PersonalAssistantFoundationClos
     return PersonalAssistantFoundationClosureValidationStep("packet id", passed, "valid" if passed else "invalid")
 
 
+def _check_packet_id_binding(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    packet_id = _bounded_text(payload.get("packet_id"))
+    expected_packet_id = _expected_packet_id(payload)
+    passed = bool(packet_id) and packet_id == expected_packet_id
+    return PersonalAssistantFoundationClosureValidationStep(
+        "packet id binding",
+        passed,
+        "body-bound" if passed else "body-mismatch",
+    )
+
+
 def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
     records = _list_of_objects(payload.get("source_receipts"))
     required_kinds = {kind for kind, _path, _schema_ref, _closure_field in SOURCE_RECEIPTS}
@@ -181,6 +199,40 @@ def _check_source_receipts(payload: dict[str, Any]) -> PersonalAssistantFoundati
         passed,
         f"kinds={len(observed_kinds)}/{len(required_kinds)} closed={len(closed_records)}",
     )
+
+
+def _check_source_receipt_bindings(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    expected_by_kind = {
+        kind: (
+            _repo_relative_ref(source_path),
+            schema_ref,
+            closure_field,
+        )
+        for kind, source_path, schema_ref, closure_field in SOURCE_RECEIPTS
+    }
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        expected = expected_by_kind.get(source_kind)
+        if expected is None:
+            missing.append(source_kind)
+            continue
+        expected_source_ref, expected_schema_ref, expected_closure_field = expected
+        if (
+            record.get("source_ref") != expected_source_ref
+            or record.get("schema_ref") != expected_schema_ref
+            or record.get("closure_field") != expected_closure_field
+        ):
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "bindings-canonical"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt bindings", passed, detail)
 
 
 def _check_source_receipt_digests(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -243,6 +295,40 @@ def _check_source_receipt_schemas(payload: dict[str, Any]) -> PersonalAssistantF
         else f"invalid={len(invalid)} missing={len(missing)}"
     )
     return PersonalAssistantFoundationClosureValidationStep("source receipt schemas", passed, detail)
+
+
+def _check_source_receipt_source_closure_fields(
+    payload: dict[str, Any],
+) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    invalid: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        source_ref = _bounded_text(record.get("source_ref"))
+        closure_field = _bounded_text(record.get("closure_field"))
+        if not source_ref or not closure_field:
+            missing.append(source_kind)
+            continue
+        source_path = (REPO_ROOT / source_ref).resolve()
+        if not _path_within_repo(source_path) or not source_path.exists():
+            missing.append(source_kind)
+            continue
+        try:
+            source_payload = _read_json_object(source_path)
+        except (OSError, RuntimeError, json.JSONDecodeError):
+            invalid.append(source_kind)
+            continue
+        source_summary = _source_summary_object(source_payload)
+        if source_summary.get(closure_field) is not True:
+            invalid.append(source_kind)
+    passed = not invalid and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "source-closure-fields-current"
+        if passed
+        else f"invalid={len(invalid)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt source closure fields", passed, detail)
 
 
 def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
@@ -342,6 +428,18 @@ def _bounded_packet_id(payload: dict[str, Any]) -> str:
     return str(packet_id) if isinstance(packet_id, str) else ""
 
 
+def _expected_packet_id(payload: dict[str, Any]) -> str:
+    packet_without_id = dict(payload)
+    packet_without_id.pop("packet_id", None)
+    material = json.dumps(
+        packet_without_id,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return f"personal-assistant-foundation-closure-{hashlib.sha256(material).hexdigest()[:16]}"
+
+
 def _bounded_packet_path(path: Path) -> str:
     try:
         return path.resolve().relative_to(REPO_ROOT).as_posix()
@@ -365,6 +463,10 @@ def _file_sha256(path: Path) -> str:
     return canonical_source_sha256(path)
 
 
+def _repo_relative_ref(path: Path) -> str:
+    return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+
+
 def _read_json_object(path: Path) -> dict[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
@@ -373,6 +475,23 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise RuntimeError("Personal Assistant foundation closure source receipt must be a JSON object")
     return parsed
+
+
+def _source_summary_object(payload: dict[str, Any]) -> dict[str, Any]:
+    for key in (
+        "summary",
+        "coherence_summary",
+        "authority_summary",
+        "alignment_summary",
+        "policy_matrix_summary",
+        "runtime_boundary_summary",
+        "catalog_summary",
+        "closure_summary",
+    ):
+        summary = payload.get(key)
+        if isinstance(summary, dict):
+            return summary
+    return {}
 
 
 def _object(value: object) -> dict[str, Any]:

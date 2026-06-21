@@ -1,5 +1,5 @@
 {
-  "check_count": 267,
+  "check_count": 269,
   "checks": [
     {
       "args": [
@@ -227,6 +227,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_agentic_service_harness_evidence_bundle_projection.py"
+      ],
+      "name": "agentic_service_harness_evidence_bundle_projection",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"
       ],
       "name": "agentic_service_harness_github_task_receipt_emitter_dry_run",
@@ -295,6 +308,19 @@
         "scripts/validate_agentic_service_harness_actual_diff_collection_admission_preflight.py"
       ],
       "name": "agentic_service_harness_actual_diff_collection_admission_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_actual_diff_collection_receipt.py"
+      ],
+      "name": "agentic_service_harness_actual_diff_collection_receipt",
       "passed": true,
       "return_code": 0,
       "stderr": "",

@@ -7,6 +7,9 @@ Dependencies: scripts.validate_personal_assistant_foundation_closure_packet and
 the closure packet collector.
 Invariants:
   - Require-closed validation needs every source receipt closed.
+  - Packet IDs must bind to the packet body.
+  - Source receipt kinds must keep canonical source, schema, and closure bindings.
+  - Source payload closure fields must match the recorded closed source receipts.
   - Source receipt digests must match current checked-in source refs.
   - Authority denials must remain complete.
   - Secret-shaped values cannot be serialized into closure packets.
@@ -23,6 +26,7 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+import scripts.validate_personal_assistant_foundation_closure_packet as closure_validator  # noqa: E402
 from scripts.collect_personal_assistant_foundation_closure_packet import (  # noqa: E402
     collect_personal_assistant_foundation_closure_packet,
 )
@@ -105,6 +109,95 @@ def test_validate_foundation_closure_packet_rejects_source_ref_escape(tmp_path: 
     assert any(step.name == "source receipt digests" and not step.passed for step in validation.steps)
     assert any(step.name == "schema contract" and step.passed for step in validation.steps)
     assert validation.packet_id == packet["packet_id"]
+
+
+def test_validate_foundation_closure_packet_rejects_packet_id_body_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["lineage"]["accepted_deltas"][0]["reason"] = "Bound source receipts with an amended local note."  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.packet_id == packet["packet_id"]
+    assert validation.foundation_closure_packet_closed is True
+    assert any(step.name == "packet id binding" and not step.passed for step in validation.steps)
+    assert any(step.name == "packet id" and step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_foundation_closure_packet_rejects_canonical_source_binding_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    foundation_record = next(
+        record
+        for record in packet["source_receipts"]  # type: ignore[index]
+        if record["source_kind"] == "foundation_evidence"
+    )
+    replacement_ref = "examples/personal_assistant_readiness_index_receipt.json"
+    foundation_record["source_ref"] = replacement_ref
+    foundation_record["schema_ref"] = "schemas/personal_assistant_readiness_index_receipt.schema.json"
+    foundation_record["source_sha256"] = _file_sha256(_ROOT / replacement_ref)
+    foundation_record["closure_field"] = "readiness_index_closed"
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.foundation_closure_packet_closed is True
+    assert any(step.name == "source receipt bindings" and not step.passed for step in validation.steps)
+    assert any(step.name == "source receipt digests" and step.passed for step in validation.steps)
+    assert any(step.name == "source receipt schemas" and step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_foundation_closure_packet_rejects_source_payload_closure_drift(
+    tmp_path: Path,
+    monkeypatch: object,
+) -> None:
+    fixture_root = tmp_path / "repo"
+    source_ref = "examples/personal_assistant_foundation_evidence_receipt.json"
+    patched_sources = []
+    for source_kind, source_path, schema_ref, closure_field in closure_validator.SOURCE_RECEIPTS:
+        source_relative_ref = source_path.relative_to(_ROOT).as_posix()
+        fixture_source_path = fixture_root / source_relative_ref
+        fixture_schema_path = fixture_root / schema_ref
+        fixture_source_path.parent.mkdir(parents=True, exist_ok=True)
+        fixture_schema_path.parent.mkdir(parents=True, exist_ok=True)
+        fixture_source_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+        fixture_schema_path.write_text((_ROOT / schema_ref).read_text(encoding="utf-8"), encoding="utf-8")
+        patched_sources.append((source_kind, fixture_source_path, schema_ref, closure_field))
+    source_payload = json.loads((fixture_root / source_ref).read_text(encoding="utf-8"))
+    source_payload["summary"]["foundation_evidence_closed"] = False
+    (fixture_root / source_ref).write_text(
+        json.dumps(source_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["source_receipts"][0]["source_sha256"] = _file_sha256(fixture_root / source_ref)  # type: ignore[index]
+    monkeypatch.setattr(closure_validator, "REPO_ROOT", fixture_root)  # type: ignore[attr-defined]
+    monkeypatch.setattr(closure_validator, "SOURCE_RECEIPTS", tuple(patched_sources))  # type: ignore[attr-defined]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.foundation_closure_packet_closed is True
+    assert any(
+        step.name == "source receipt source closure fields" and not step.passed
+        for step in validation.steps
+    )
+    assert any(step.name == "source receipt bindings" and step.passed for step in validation.steps)
+    assert any(step.name == "source receipt digests" and step.passed for step in validation.steps)
+    assert any(step.name == "source receipt schemas" and step.passed for step in validation.steps)
 
 
 def test_validate_foundation_closure_packet_rejects_schema_ref_shape_drift(tmp_path: Path) -> None:

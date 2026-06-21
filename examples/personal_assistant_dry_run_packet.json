@@ -7,21 +7,27 @@
     "all_stages_verified": true,
     "approval_gate_before_effect_bearing_actions": true,
     "approval_gate_count": 1,
-    "bound_source_artifact_count": 9,
+    "approval_request_projected": true,
+    "bound_source_artifact_count": 11,
+    "calendar_conflict_checked": true,
     "customer_ready": false,
     "deployment_mutation_ready": false,
+    "draft_response_projected": true,
     "dry_run_packet_closed": true,
     "effect_violation_count": 0,
     "live_connector_execution_ready": false,
+    "memory_admission_candidate_reviewed": true,
     "memory_write_ready": false,
     "next_allowed_action": "continue_foundation_hardening_only",
     "no_effect_boundaries_clear": true,
     "no_secret_values_serialized": true,
+    "no_send_proven": true,
     "secret_value_marker_count": 0,
-    "source_artifact_count": 9,
-    "stage_count": 10
+    "source_artifact_count": 11,
+    "stage_count": 12,
+    "task_intake_projected": true
   },
-  "generated_at": "2026-06-20T15:33:02.723884Z",
+  "generated_at": "2026-06-21T04:21:29.100685Z",
   "governed": true,
   "lineage": {
     "accepted_deltas": [
@@ -50,20 +56,24 @@
     ]
   },
   "no_effect_boundary": {
+    "calendar_write_allowed": false,
     "connector_mutation_allowed": false,
     "customer_ready_claim_allowed": false,
     "deployment_mutation_allowed": false,
     "execution_authority_granted": false,
     "external_effect_allowed": false,
+    "external_send_allowed": false,
     "live_connector_execution_allowed": false,
     "live_nested_mind_activation_allowed": false,
+    "mailbox_mutation_allowed": false,
     "memory_admission_allowed": false,
     "memory_write_allowed": false,
     "money_legal_public_allowed": false,
     "production_ready_claim_allowed": false,
-    "system_of_record_write_allowed": false
+    "system_of_record_write_allowed": false,
+    "task_write_allowed": false
   },
-  "packet_id": "personal-assistant-dry-run-a666e3c5231fbc19",
+  "packet_id": "personal-assistant-dry-run-aa82dd48da8a8478",
   "packet_is_not_customer_readiness": true,
   "packet_is_not_execution_authority": true,
   "packet_is_not_memory_admission": true,
@@ -91,6 +101,19 @@
       "effect_violations": [],
       "payload_digest_only": true,
       "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_request.schema.json",
+      "serialized_length": 1240,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "calendar_request",
+      "source_ref": "examples/personal_assistant_request_calendar_brief.json",
+      "source_sha256": "d70322df1d992eb0fa23554b1b5cb76f0f02ad24374f22b120ab6ad5d3d62c66"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
       "schema_ref": "schemas/personal_assistant_skill_registry.schema.json",
       "serialized_length": 25579,
       "solver_outcome": "SolvedVerified",
@@ -110,6 +133,19 @@
       "source_kind": "read_only_projection",
       "source_ref": "examples/personal_assistant_read_only_projection.json",
       "source_sha256": "2fde7a205707a40d57b938074293fa1c326f1c03418a09dd2669dc53c86c7447"
+    },
+    {
+      "bound": true,
+      "effect_violation_count": 0,
+      "effect_violations": [],
+      "payload_digest_only": true,
+      "proof_state": "Pass",
+      "schema_ref": "schemas/personal_assistant_planning_projection.schema.json",
+      "serialized_length": 19011,
+      "solver_outcome": "SolvedVerified",
+      "source_kind": "planning_projection",
+      "source_ref": "examples/personal_assistant_planning_projection.json",
+      "source_sha256": "704def455a0b49532bc7f02dea7f174b8b2c4fbfecf350dd4550d9d32dd5e946"
     },
     {
       "bound": true,
@@ -334,6 +370,84 @@
     },
     {
       "actions_not_taken": [
+        "calendar_not_written",
+        "invite_not_sent",
+        "connector_state_not_mutated"
+      ],
+      "actions_taken": [
+        "calendar_conflict_projection_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "calendar.read",
+        "calendar.conflict_check",
+        "personal_assistant.receipt.project"
+      ],
+      "effect_boundary": "calendar_conflict_preview_no_calendar_write",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:calendar_request",
+        "source:planning_projection",
+        "read_only_preview.read_only_receipt_ref"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "calendar_conflict_report"
+      ],
+      "predecessor_ids": [
+        "read_only_preview"
+      ],
+      "risk_level": "P2",
+      "skill_id": "calendar.conflict.detect",
+      "stage_id": "calendar_conflict_reasoning",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/calendar-conflict"
+      ]
+    },
+    {
+      "actions_not_taken": [
+        "task_not_written",
+        "task_system_not_mutated",
+        "calendar_not_written"
+      ],
+      "actions_taken": [
+        "task_intake_projection_replayed"
+      ],
+      "approval_level": "none",
+      "approval_required": false,
+      "capability_refs": [
+        "task.read",
+        "calendar.read",
+        "planning.preview",
+        "personal_assistant.receipt.project"
+      ],
+      "effect_boundary": "task_intake_preview_no_task_write",
+      "execution_allowed": false,
+      "input_bindings": [
+        "source:planning_projection",
+        "calendar_conflict_reasoning.calendar_conflict_report"
+      ],
+      "outcome": "SolvedVerified",
+      "output_keys": [
+        "task_intake_summary"
+      ],
+      "predecessor_ids": [
+        "calendar_conflict_reasoning"
+      ],
+      "risk_level": "P2",
+      "skill_id": "planning.optimize_schedule",
+      "stage_id": "task_intake_projection",
+      "stage_type": "skill_execution",
+      "timeout_boundary": "bounded_to_operator_review_no_background_worker",
+      "verification_refs": [
+        "proof://personal-assistant/dry-run/task-intake"
+      ]
+    },
+    {
+      "actions_not_taken": [
         "email_not_sent",
         "mailbox_not_modified",
         "connector_state_not_mutated"
@@ -352,7 +466,8 @@
       "input_bindings": [
         "source:draft_projection",
         "source:draft_receipt",
-        "read_only_preview.read_only_receipt_ref"
+        "read_only_preview.read_only_receipt_ref",
+        "task_intake_projection.task_intake_summary"
       ],
       "outcome": "SolvedVerified",
       "output_keys": [
@@ -360,7 +475,8 @@
         "draft_artifact_ref"
       ],
       "predecessor_ids": [
-        "read_only_preview"
+        "read_only_preview",
+        "task_intake_projection"
       ],
       "risk_level": "P2",
       "skill_id": "email.response.draft",
@@ -505,6 +621,8 @@
       ],
       "predecessor_ids": [
         "read_only_preview",
+        "calendar_conflict_reasoning",
+        "task_intake_projection",
         "draft_preview",
         "approval_gate_external_send",
         "memory_observation_review"
@@ -559,10 +677,10 @@
     "acyclic": true,
     "all_stages_verified": true,
     "approval_gates_before_effects": true,
-    "edge_count": 13,
+    "edge_count": 18,
     "no_dangling_bindings": true,
     "no_dangling_predecessors": true,
-    "stage_count": 10,
+    "stage_count": 12,
     "terminal_stage_id": "terminal_no_effect_closure"
   },
   "workflow": {
@@ -582,7 +700,7 @@
       "customer_readiness_claim",
       "live_nested_mind_activation"
     ],
-    "goal": "Replay a governed inbox-to-draft Personal Assistant request through all foundation gates without live execution.",
+    "goal": "Replay a governed inbox, task, calendar-conflict, draft-response, approval, no-send, and memory-candidate Personal Assistant request through all foundation gates without live execution.",
     "tenant_ref": "tenant:foundation-local",
     "terminal_closure_condition": "All stages are replayable, verified, and no-effect with approval gates before any effect-bearing path.",
     "workflow_id": "pa_workflow_dry_run_inbox_to_draft_001"

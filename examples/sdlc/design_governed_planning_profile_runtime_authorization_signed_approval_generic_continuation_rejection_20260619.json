@@ -1,0 +1,51 @@
+{
+  "design_id": "sdlc_design_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection_20260619",
+  "requirement_id": "sdlc_req_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection_20260619",
+  "architecture_summary": "Add a local validator/emitter that binds the deterministic signed approval intake contract and closed unmerged PR #2047 evidence to a no-effect signed approval generic-continuation rejection witness. The witness records that a later generic continuation input still lacks decision value, operator identity, signature, signature verification, runtime authorization, and activation authority.",
+  "affected_modules": [
+    "governed_planning_profile_lineage",
+    "schema_protocol_manifest",
+    "ci_root_coverage_policy",
+    "sdlc_artifact_lineage",
+    "planning_architecture_documentation"
+  ],
+  "data_model_changes": [
+    "Introduce GovernedPlanningProfileRuntimeAuthorizationSignedApprovalGenericContinuationRejection fields for source signed approval intake identity, source PR #2047 evidence, rejection controls, required witness field rejections, rejected scenario evidence, operator response boundary, promotion gate summary, authority denials, validators, and deterministic witness hash."
+  ],
+  "schema_changes": [
+    "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py",
+    "tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py",
+    "tests/test_validate_protocol_manifest.py",
+    "mcoi/tests/test_protocol_manifest.py",
+    ".github/workflows/ci.yml",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_sdlc_artifact.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py, schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json, the local signed approval generic-continuation rejection fixture, focused tests, manifest entries, documentation additions, CI binding, and SDLC artifacts; then rerun schema, protocol manifest, SDLC, and focused pytest validation. No runtime rollback is required because no router, worker, dispatch, write, connector, scheduler, signed operator approval, signature verification, promotion activation, PR merge, PR reopen, or registration surface is added.",
+  "migration_plan": "No runtime migration. Existing profiles, shadow dossiers, evidence requests, observation receipts, approval packets, replay/recovery witnesses, terminal closure certificates, runtime authorization requests, generic continuation rejection witnesses, approval witness templates, signed approval intake contracts, admission reports, WHQR/MIL, OrgOS, UAO, closure, recovery, and learning records retain their current identities. The signed approval generic-continuation rejection witness is regenerated from the current deterministic signed approval intake contract and fixed PR #2047 evidence.",
+  "test_plan": [
+    "python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py",
+    "python scripts/validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py --json",
+    "python -m pytest tests/test_validate_governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py::test_protocol_manifest_indexes_governed_planning_profile tests/test_root_test_coverage.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "uao_ref": "uao://governed-planning-profile/runtime-authorization-signed-approval-generic-continuation-rejection/design/20260619",
+  "causal_decision_trace_ref": "trace://governed-planning-profile/runtime-authorization-signed-approval-generic-continuation-rejection/design/20260619",
+  "receipt_ref": "receipt://governed-planning-profile/runtime-authorization-signed-approval-generic-continuation-rejection/design/20260619"
+}

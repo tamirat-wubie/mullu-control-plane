@@ -71,6 +71,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-actual-diff-collection-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_actual_diff_collection_receipt.schema.json",
+      "schema_id": "agentic-service-harness-actual-diff-collection-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-actual-diff-collection-receipt:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
@@ -183,6 +189,12 @@
       "schema_id": "agentic-service-harness-adapter-registry-contract",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:agentic-service-harness-adapter-registry-contract:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_evidence_bundle_projection.schema.json",
+      "schema_id": "agentic-service-harness-evidence-bundle-projection",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-evidence-bundle-projection:1"
     },
     {
       "path": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
@@ -1155,6 +1167,24 @@
       "schema_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection",
       "surface": "planning",
       "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-generic-continuation-rejection:1"
+    },
+    {
+      "path": "schemas/governed_planning_profile_runtime_authorization_approval_witness_template.schema.json",
+      "schema_id": "governed-planning-profile-runtime-authorization-approval-witness-template",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-approval-witness-template:1"
+    },
+    {
+      "path": "schemas/governed_planning_profile_runtime_authorization_signed_approval_intake.schema.json",
+      "schema_id": "governed-planning-profile-runtime-authorization-signed-approval-intake",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-intake:1"
+    },
+    {
+      "path": "schemas/governed_planning_profile_runtime_authorization_signed_approval_generic_continuation_rejection.schema.json",
+      "schema_id": "governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection",
+      "surface": "planning",
+      "urn": "urn:mullusi:schema:governed-planning-profile-runtime-authorization-signed-approval-generic-continuation-rejection:1"
     },
     {
       "path": "schemas/governed_planning_profile_shadow_dossier.schema.json",
