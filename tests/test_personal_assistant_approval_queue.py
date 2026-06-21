@@ -321,6 +321,10 @@ def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
     assert review_packet["review_state"] == "preview_only"
     assert review_packet["effect_boundary"]["execution_allowed"] is False
     assert review_packet["effect_boundary"]["approval_enqueued"] is False
+    assert len(review_packet["source_closure_refs"]) == 2
+    assert review_packet["source_closure_refs"][0]["source_kind"] == "dry_run_packet"
+    assert review_packet["metadata"]["source_closure_binding"] == "digest_verified_closed_packets"
+    assert review_packet["metadata"]["source_payloads_serialized"] is False
     assert "confirm_external_recipient_or_target_scope" in review_packet["required_operator_checks"]
     assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
         "execution",
@@ -377,6 +381,9 @@ def test_approval_proposal_from_p5_plan_remains_blocked_and_enqueueable() -> Non
     assert envelope.plan["mode"] == "blocked"
     assert proposal.risk_level is SkillRiskLevel.P5
     assert _validate_schema_instance(_load_schema(APPROVAL_REVIEW_PACKET_SCHEMA_PATH), review_packet) == []
+    assert review_packet["source_closure_refs"][1]["source_kind"] == "foundation_closure_packet"
+    assert review_packet["metadata"]["all_source_closure_refs_closed"] is True
+    assert review_packet["metadata"]["source_payloads_serialized"] is False
     assert "confirm_money_legal_public_deployment_boundary_blocked" in review_packet["required_operator_checks"]
     assert {denial["authority"] for denial in review_packet["authority_denials"]} >= {
         "money_legal_public_action",

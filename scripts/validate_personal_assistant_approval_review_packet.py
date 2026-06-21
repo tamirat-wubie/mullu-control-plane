@@ -28,6 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -88,6 +89,18 @@ ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "customer_readiness_claim_allowed",
     }
 )
+REQUIRED_SOURCE_CLOSURE_REFS = {
+    "dry_run_packet": {
+        "source_ref": "examples/personal_assistant_dry_run_packet.json",
+        "schema_ref": "schemas/personal_assistant_dry_run_packet.schema.json",
+        "closure_field": "dry_run_packet_closed",
+    },
+    "foundation_closure_packet": {
+        "source_ref": "examples/personal_assistant_foundation_closure_packet.json",
+        "schema_ref": "schemas/personal_assistant_foundation_closure_packet.schema.json",
+        "closure_field": "foundation_closure_packet_closed",
+    },
+}
 SECRET_VALUE_PATTERNS = (
     re.compile(r"sk_live_[A-Za-z0-9]+"),
     re.compile(r"ghp_[A-Za-z0-9]+"),
@@ -151,6 +164,7 @@ def _validate_semantics(packet: dict[str, Any]) -> tuple[str, ...]:
         errors.append("evidence_refs must not be empty")
     if not packet.get("forbidden_without_approval"):
         errors.append("forbidden_without_approval must not be empty")
+    errors.extend(_validate_source_closure_refs(packet))
     required_checks = packet.get("required_operator_checks")
     if not isinstance(required_checks, list) or len(required_checks) < 6:
         errors.append("required_operator_checks must contain the base review checks")
@@ -192,10 +206,98 @@ def _validate_semantics(packet: dict[str, Any]) -> tuple[str, ...]:
             errors.append("metadata.foundation_only must be true")
         if not metadata.get("approval_matrix_ref"):
             errors.append("metadata.approval_matrix_ref must be present")
+        if metadata.get("source_closure_binding") != "digest_verified_closed_packets":
+            errors.append("metadata.source_closure_binding must be digest_verified_closed_packets")
+        if metadata.get("all_source_closure_refs_bound") is not True:
+            errors.append("metadata.all_source_closure_refs_bound must be true")
+        if metadata.get("all_source_closure_refs_closed") is not True:
+            errors.append("metadata.all_source_closure_refs_closed must be true")
+        if metadata.get("source_payloads_serialized") is not False:
+            errors.append("metadata.source_payloads_serialized must be false")
         for field_name in sorted(FALSE_METADATA_FIELDS):
             if metadata.get(field_name) is not False:
                 errors.append(f"metadata.{field_name} must be false")
     return tuple(errors)
+
+
+def _validate_source_closure_refs(packet: dict[str, Any]) -> tuple[str, ...]:
+    errors: list[str] = []
+    source_refs = packet.get("source_closure_refs")
+    if not isinstance(source_refs, list):
+        return ("source_closure_refs must be a list",)
+    refs_by_kind: dict[str, dict[str, Any]] = {}
+    for index, source_ref in enumerate(source_refs):
+        if not isinstance(source_ref, dict):
+            errors.append(f"source_closure_refs[{index}] must be an object")
+            continue
+        source_kind = str(source_ref.get("source_kind", ""))
+        if source_kind in refs_by_kind:
+            errors.append(f"source_closure_refs duplicate source_kind {source_kind}")
+        refs_by_kind[source_kind] = source_ref
+        expected = REQUIRED_SOURCE_CLOSURE_REFS.get(source_kind)
+        if expected is None:
+            errors.append(f"source_closure_refs[{index}].source_kind is not supported")
+            continue
+        for field_name in ("source_ref", "schema_ref", "closure_field"):
+            if source_ref.get(field_name) != expected[field_name]:
+                errors.append(
+                    f"source_closure_refs[{index}].{field_name} must be {expected[field_name]}"
+                )
+        source_path = _resolve_repo_path(
+            str(source_ref.get("source_ref", "")),
+            errors,
+            f"source_closure_refs[{index}].source_ref",
+        )
+        schema_path = _resolve_repo_path(
+            str(source_ref.get("schema_ref", "")),
+            errors,
+            f"source_closure_refs[{index}].schema_ref",
+        )
+        if source_path is None or schema_path is None:
+            continue
+        if not schema_path.exists():
+            errors.append(f"source_closure_refs[{index}].schema_ref does not exist")
+        if not source_path.exists():
+            errors.append(f"source_closure_refs[{index}].source_ref does not exist")
+            continue
+        observed_sha256 = canonical_source_sha256(source_path)
+        if source_ref.get("source_sha256") != observed_sha256:
+            errors.append(f"source_closure_refs[{index}].source_sha256 does not match source file")
+        source_payload = _load_json_object(source_path, f"source_closure_refs[{index}] source", errors)
+        if not source_payload:
+            continue
+        if source_ref.get("packet_id") != source_payload.get("packet_id"):
+            errors.append(f"source_closure_refs[{index}].packet_id must match source packet_id")
+        if source_ref.get("solver_outcome") != source_payload.get("solver_outcome"):
+            errors.append(f"source_closure_refs[{index}].solver_outcome must match source solver_outcome")
+        closure_field = str(source_ref.get("closure_field", ""))
+        closure_summary = source_payload.get("closure_summary")
+        if not isinstance(closure_summary, dict):
+            errors.append(f"source_closure_refs[{index}] source closure_summary must be an object")
+        elif closure_summary.get(closure_field) is not True:
+            errors.append(f"source_closure_refs[{index}] source closure field {closure_field} must be true")
+        if source_ref.get("closed") is not True:
+            errors.append(f"source_closure_refs[{index}].closed must be true")
+        if source_ref.get("no_effect_boundary_verified") is not True:
+            errors.append(f"source_closure_refs[{index}].no_effect_boundary_verified must be true")
+        if source_ref.get("payload_digest_only") is not True:
+            errors.append(f"source_closure_refs[{index}].payload_digest_only must be true")
+    for required_kind in REQUIRED_SOURCE_CLOSURE_REFS:
+        if required_kind not in refs_by_kind:
+            errors.append(f"source_closure_refs missing {required_kind}")
+    return tuple(errors)
+
+
+def _resolve_repo_path(path_text: str, errors: list[str], label: str) -> Path | None:
+    if not path_text:
+        errors.append(f"{label} must be present")
+        return None
+    candidate = (REPO_ROOT / path_text).resolve()
+    root = REPO_ROOT.resolve()
+    if candidate != root and root not in candidate.parents:
+        errors.append(f"{label} must stay under repository root")
+        return None
+    return candidate
 
 
 def _scan_private_or_secret_payload(value: Any, errors: list[str], *, path: str) -> None:

@@ -31,6 +31,10 @@ def test_personal_assistant_approval_review_packet_fixture_validates() -> None:
     assert validation.review_packet_id == "pa_approval_review_approval_review_packet_001"
     assert validation.solver_outcome == "SolvedVerified"
     assert validation.errors == ()
+    packet = _load_fixture()
+    assert len(packet["source_closure_refs"]) == 2
+    assert packet["metadata"]["source_closure_binding"] == "digest_verified_closed_packets"
+    assert packet["metadata"]["source_payloads_serialized"] is False
 
 
 def test_personal_assistant_approval_review_packet_rejects_authority_drift(tmp_path: Path) -> None:
@@ -68,6 +72,37 @@ def test_personal_assistant_approval_review_packet_rejects_missing_evidence_and_
     assert any("forbidden_without_approval" in error for error in validation.errors)
     assert "required_operator_checks must contain the base review checks" in validation.errors
     assert validation.solver_outcome == "GovernanceBlocked"
+
+
+def test_personal_assistant_approval_review_packet_rejects_source_digest_drift(tmp_path: Path) -> None:
+    packet = _load_fixture()
+    packet["source_closure_refs"][0]["source_sha256"] = "0" * 64
+    packet["metadata"]["all_source_closure_refs_bound"] = False
+    candidate = tmp_path / "digest_drift_approval_review_packet.json"
+    candidate.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_personal_assistant_approval_review_packet(packet_path=candidate)
+
+    assert validation.valid is False
+    assert "source_closure_refs[0].source_sha256 does not match source file" in validation.errors
+    assert "metadata.all_source_closure_refs_bound must be true" in validation.errors
+    assert validation.solver_outcome == "GovernanceBlocked"
+
+
+def test_personal_assistant_approval_review_packet_rejects_unclosed_source_reference(tmp_path: Path) -> None:
+    packet = _load_fixture()
+    packet["source_closure_refs"][1]["closure_field"] = "missing_foundation_closure"
+    packet["source_closure_refs"][1]["closed"] = False
+    packet["source_closure_refs"][1]["payload_digest_only"] = False
+    candidate = tmp_path / "unclosed_source_approval_review_packet.json"
+    candidate.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_personal_assistant_approval_review_packet(packet_path=candidate)
+
+    assert validation.valid is False
+    assert any("closure_field must be foundation_closure_packet_closed" in error for error in validation.errors)
+    assert "source_closure_refs[1].closed must be true" in validation.errors
+    assert "source_closure_refs[1].payload_digest_only must be true" in validation.errors
 
 
 def test_personal_assistant_approval_review_packet_rejects_raw_payload_and_secret(tmp_path: Path) -> None:
