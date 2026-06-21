@@ -1,0 +1,125 @@
+{
+  "dashboard_id": "governed_work_assistant_demo_operator_dashboard_v0",
+  "product_name": "Governed Work Assistant Demo v0",
+  "legacy_internal_pilot_id": "governed_team_assistant_pilot_v0",
+  "stage": "no_effect_operator_projection",
+  "read_only": true,
+  "fixture_backed": true,
+  "governed": true,
+  "source_refs": [
+    "docs/GOVERNED_WORK_ASSISTANT_DEMO_NAMING.md",
+    "examples/personal_assistant_console_read_model.json",
+    "examples/personal_assistant_draft_projection.json",
+    "examples/personal_assistant_approval_queue_read_model.json",
+    "examples/personal_assistant_receipt_draft_only.json",
+    "examples/personal_assistant_readiness_index_receipt.json"
+  ],
+  "panels": [
+    {
+      "panel_id": "product_identity",
+      "label": "Product identity",
+      "source_ref": "docs/GOVERNED_WORK_ASSISTANT_DEMO_NAMING.md",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "assistant_readiness",
+      "label": "Assistant readiness",
+      "source_ref": "examples/personal_assistant_console_read_model.json",
+      "route_ref": "/api/v1/personal-assistant/pilot/read-model",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "skill_catalog",
+      "label": "Available skills",
+      "source_ref": "examples/personal_assistant_console_read_model.json",
+      "route_ref": "/api/v1/personal-assistant/skills",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "blocked_actions",
+      "label": "Blocked live actions",
+      "source_ref": "examples/personal_assistant_console_read_model.json",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "draft_preview",
+      "label": "Draft preview",
+      "source_ref": "examples/personal_assistant_draft_projection.json",
+      "route_ref": "/api/v1/personal-assistant/drafts/email/preview",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "approval_preview",
+      "label": "Approval preview",
+      "source_ref": "examples/personal_assistant_approval_queue_read_model.json",
+      "route_ref": "/api/v1/personal-assistant/approval-queue/preview",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "receipt_trail",
+      "label": "Dry-run receipt trail",
+      "source_ref": "examples/personal_assistant_receipt_draft_only.json",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "closure_evidence",
+      "label": "Closure evidence",
+      "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    },
+    {
+      "panel_id": "no_effect_boundary",
+      "label": "No-effect boundary",
+      "source_ref": "schemas/governed_work_assistant_operator_dashboard.schema.json",
+      "visible": true,
+      "read_only": true,
+      "effect_allowed": false
+    }
+  ],
+  "effect_boundary": {
+    "live_connector_execution_allowed": false,
+    "mailbox_read_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "external_send_allowed": false,
+    "calendar_write_allowed": false,
+    "repository_write_allowed": false,
+    "worker_dispatch_allowed": false,
+    "live_receipt_append_allowed": false,
+    "production_readiness_claim_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "autonomous_execution_authority_allowed": false
+  },
+  "blocked_claims": [
+    "live_connector_execution",
+    "mailbox_read_or_mutation",
+    "external_send",
+    "repository_write",
+    "worker_dispatch",
+    "live_receipt_append",
+    "production_readiness",
+    "customer_readiness",
+    "autonomous_execution_authority"
+  ],
+  "next_safe_steps": [
+    "wire_this_projection_to_a_read_only_route_in_a_separate_pr",
+    "add_route_tests_that_assert_no_effect_flags_stay_false",
+    "add_signed_approval_identity_scope_expiry_revocation_and_replay_protection",
+    "add_one_read_only_live_observation_before_any_reversible_effect"
+  ]
+}
