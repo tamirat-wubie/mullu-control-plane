@@ -12,6 +12,7 @@ Invariants:
   - Source receipt schema refs must resolve and validate their source payloads.
   - Source receipt closure fields must be true in the source payloads themselves.
   - Source receipt serialized lengths must match current source payloads.
+  - Source receipt records must replay from canonical source payload projection.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
@@ -37,6 +38,7 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     DEFAULT_OUTPUT,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
+    _source_receipt_record as _collect_source_receipt_record,
 )
 from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
@@ -105,6 +107,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_source_receipt_schemas(payload),
         _check_source_receipt_serialized_lengths(payload),
         _check_source_receipt_source_closure_fields(payload),
+        _check_source_receipt_replay_projection(payload),
         _check_authority_denials(payload),
         _check_no_effect_boundary(payload),
         _check_closure_gate(payload),
@@ -362,6 +365,33 @@ def _check_source_receipt_source_closure_fields(
         else f"invalid={len(invalid)} missing={len(missing)}"
     )
     return PersonalAssistantFoundationClosureValidationStep("source receipt source closure fields", passed, detail)
+
+
+def _check_source_receipt_replay_projection(
+    payload: dict[str, Any],
+) -> PersonalAssistantFoundationClosureValidationStep:
+    records = _list_of_objects(payload.get("source_receipts"))
+    expected_by_kind = {
+        source_kind: _collect_source_receipt_record(source_kind, source_path, schema_ref, closure_field)
+        for source_kind, source_path, schema_ref, closure_field in SOURCE_RECEIPTS
+    }
+    mismatches: list[str] = []
+    missing: list[str] = []
+    for record in records:
+        source_kind = _bounded_text(record.get("source_kind")) or "unknown"
+        expected_record = expected_by_kind.get(source_kind)
+        if expected_record is None:
+            missing.append(source_kind)
+            continue
+        if record != expected_record:
+            mismatches.append(source_kind)
+    passed = not mismatches and not missing and len(records) == len(SOURCE_RECEIPTS)
+    detail = (
+        "projection-current"
+        if passed
+        else f"mismatches={len(mismatches)} missing={len(missing)}"
+    )
+    return PersonalAssistantFoundationClosureValidationStep("source receipt replay projection", passed, detail)
 
 
 def _check_authority_denials(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
