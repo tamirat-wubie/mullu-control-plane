@@ -16,6 +16,7 @@ Invariants:
   - Authority denials must replay from canonical denial projection.
   - No-effect boundaries must replay from canonical no-effect projection.
   - Closure summaries must match recomputed source receipt aggregates.
+  - Lineage delta records must replay from recomputed closure state.
   - Packet IDs must bind to the current packet body.
   - The packet grants no live, connector, memory, deployment, customer, or terminal authority.
   - Secret-shaped values are rejected.
@@ -42,6 +43,7 @@ from scripts.collect_personal_assistant_foundation_closure_packet import (  # no
     NO_EFFECT_BOUNDARY,
     NO_EFFECT_FLAGS,
     SOURCE_RECEIPTS,
+    _lineage_reason as _collect_lineage_reason,
     _source_receipt_record as _collect_source_receipt_record,
 )
 from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
@@ -118,6 +120,7 @@ def validate_personal_assistant_foundation_closure_packet(
         _check_no_effect_boundary(payload),
         _check_no_effect_boundary_replay_projection(payload),
         _check_closure_summary_aggregates(payload),
+        _check_lineage_replay_projection(payload),
         _check_closure_gate(payload),
         _check_secret_value_boundary(payload),
         _check_require_closed(payload, require_closed=require_closed),
@@ -478,6 +481,32 @@ def _check_closure_summary_aggregates(payload: dict[str, Any]) -> PersonalAssist
     passed = not mismatches
     detail = "summary-current" if passed else f"mismatches={len(mismatches)}"
     return PersonalAssistantFoundationClosureValidationStep("closure summary aggregates", passed, detail)
+
+
+def _check_lineage_replay_projection(payload: dict[str, Any]) -> PersonalAssistantFoundationClosureValidationStep:
+    lineage = _object(payload.get("lineage"))
+    records = _list_of_objects(payload.get("source_receipts"))
+    boundary = _object(payload.get("no_effect_boundary"))
+    secret_value_markers = _list(payload.get("secret_value_markers"))
+    expected_summary = _expected_closure_summary(records, boundary, secret_value_markers)
+    expected_closed = expected_summary["foundation_closure_packet_closed"] is True
+    generated_date = _bounded_text(payload.get("generated_at"))[:10]
+    expected_lineage = {
+        "accepted_deltas": [
+            {
+                "delta_id": f"delta-personal-assistant-foundation-closure-packet-{generated_date}",
+                "reason": _collect_lineage_reason(expected_closed),
+                "logged_in_lineage": True,
+            }
+        ],
+        "rejected_deltas": [],
+    }
+    passed = lineage == expected_lineage
+    return PersonalAssistantFoundationClosureValidationStep(
+        "lineage replay projection",
+        passed,
+        "projection-current" if passed else "projection-mismatch",
+    )
 
 
 def _expected_closure_summary(
