@@ -21,7 +21,7 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 DEFAULT_DASHBOARD = REPO_ROOT / "examples" / "governed_work_assistant_operator_dashboard.json"
-DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "governed_work_assistant_operator_dashboard.schema.json"
+DEFAULT_SCHEMA = REPO_ROOT / "docs" / "contracts" / "governed_work_assistant_operator_dashboard.schema.json"
 
 FALSE_EFFECT_BOUNDARY_FIELDS = frozenset(
     {
