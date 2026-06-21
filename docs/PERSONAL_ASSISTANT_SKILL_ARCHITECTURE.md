@@ -502,10 +502,11 @@ readiness, live Nested Mind activation, or terminal closure.
 The closure validator also locks every source kind to its canonical source ref,
 schema ref, and closure field before comparing every recorded source receipt
 digest to the current checked-in source ref using a newline-stable text-source
-digest and validating each source receipt against its recorded schema ref.
-Digest mismatch, schema mismatch, source-kind binding drift, missing source or
-schema refs, or refs that escape the repository fail validation even when the
-packet schema is otherwise well formed.
+digest, validating each source receipt against its recorded schema ref, and
+verifying the recorded closure field is true in the source payload itself.
+Digest mismatch, schema mismatch, source-kind binding drift, source closure
+field drift, missing source or schema refs, or refs that escape the repository
+fail validation even when the packet schema is otherwise well formed.
 
 ## Integration Position
 
