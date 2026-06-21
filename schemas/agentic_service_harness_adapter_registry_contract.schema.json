@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-adapter-registry-contract:1",
+  "title": "Agentic Service Harness Adapter Registry Contract",
+  "description": "Foundation Mode contract-only registry for future GitHub/Codex-style harness adapters. This schema records displayable adapter descriptors, authority classes, blocker refs, and denied effects without admitting subprocess execution, connector calls, external model execution, branch writes, pull-request creation, receipt-store append, mutation routes, secrets, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_dashboard_data_contract_ref",
+    "source_task_intake_ref",
+    "scope",
+    "registry",
+    "adapters",
+    "mode_bindings",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": { "type": "string", "const": "agentic_service_harness_adapter_registry_contract" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_dashboard_data_contract_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_dashboard_data_contract.foundation.json"
+    },
+    "source_task_intake_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_repo_task_intake.foundation.json"
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "registry": { "$ref": "#/$defs/registry" },
+    "adapters": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/adapter_descriptor" }
+    },
+    "mode_bindings": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/mode_binding" }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+    },
+    "adapter_id": {
+      "type": "string",
+      "enum": [
+        "github_repository_read_adapter",
+        "codex_style_planning_adapter"
+      ]
+    },
+    "adapter_kind": {
+      "type": "string",
+      "enum": [
+        "github_repository",
+        "codex_style_planner"
+      ]
+    },
+    "mode_id": {
+      "type": "string",
+      "enum": [
+        "read_only",
+        "dry_run",
+        "branch_write_awaiting_approval",
+        "open_pr_awaiting_approval"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "registry_id",
+        "foundation_phase",
+        "read_only",
+        "contract_only",
+        "registry_route_admitted",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "subprocess_execution_enabled",
+        "connector_call_enabled",
+        "external_model_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "registry_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": { "type": "string", "const": "foundation_contract_only_adapter_registry" },
+        "read_only": { "type": "boolean", "const": true },
+        "contract_only": { "type": "boolean", "const": true },
+        "registry_route_admitted": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "subprocess_execution_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "external_model_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "registry_mode",
+        "registry_hash_strategy",
+        "entry_count",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_gate_refs",
+        "blocked_reason_refs",
+        "read_only",
+        "contract_only"
+      ],
+      "properties": {
+        "decision": { "type": "string", "const": "CONTRACT_ONLY_ADAPTER_REGISTRY_ACCEPTED" },
+        "registry_mode": { "type": "string", "const": "read_only_registry_snapshot" },
+        "registry_hash_strategy": { "type": "string", "const": "stable_descriptor_hash_future" },
+        "entry_count": { "type": "integer", "minimum": 2 },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "type": "string", "const": "read_only" }
+        },
+        "forbidden_action_classes": {
+          "type": "array",
+          "minItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "register_route",
+              "mutation_endpoint",
+              "execute_adapter",
+              "spawn_subprocess",
+              "connector_call",
+              "external_model_execution",
+              "write_to_branch",
+              "open_pr",
+              "append_receipt_store",
+              "deploy",
+              "dns_mutation",
+              "secret_mutation",
+              "destructive_operation",
+              "terminal_closure"
+            ]
+          }
+        },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "read_only": { "type": "boolean", "const": true },
+        "contract_only": { "type": "boolean", "const": true }
+      }
+    },
+    "adapter_descriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_id",
+        "adapter_kind",
+        "display_name",
+        "authority_class",
+        "supported_modes",
+        "required_input_refs",
+        "required_evidence_refs",
+        "blocked_reason_refs",
+        "read_only",
+        "contract_only",
+        "live_integration_enabled",
+        "subprocess_execution_enabled",
+        "connector_call_enabled",
+        "external_model_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "adapter_id": { "$ref": "#/$defs/adapter_id" },
+        "adapter_kind": { "$ref": "#/$defs/adapter_kind" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "authority_class": { "type": "string", "const": "contract_only_read_model" },
+        "supported_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/mode_id" }
+        },
+        "required_input_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "read_only": { "type": "boolean", "const": true },
+        "contract_only": { "type": "boolean", "const": true },
+        "live_integration_enabled": { "type": "boolean", "const": false },
+        "subprocess_execution_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "external_model_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "mode_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode_id",
+        "adapter_ids",
+        "status",
+        "authority_result",
+        "required_gate_refs",
+        "blocked_reason_refs",
+        "read_only",
+        "permits_runtime_effects",
+        "requires_operator_approval"
+      ],
+      "properties": {
+        "mode_id": { "$ref": "#/$defs/mode_id" },
+        "adapter_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/adapter_id" }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["available_read_only", "blocked_until_evidence"]
+        },
+        "authority_result": {
+          "type": "string",
+          "enum": ["read_only_allowed", "effect_blocked"]
+        },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "read_only": { "type": "boolean", "const": true },
+        "permits_runtime_effects": { "type": "boolean", "const": false },
+        "requires_operator_approval": { "type": "boolean" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registry_route_registration_enabled",
+        "mutation_endpoint_enabled",
+        "live_adapter_execution_enabled",
+        "subprocess_execution_enabled",
+        "connector_call_enabled",
+        "external_model_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "registry_route_registration_enabled": { "type": "boolean", "const": false },
+        "mutation_endpoint_enabled": { "type": "boolean", "const": false },
+        "live_adapter_execution_enabled": { "type": "boolean", "const": false },
+        "subprocess_execution_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "external_model_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_registry_contract_schema",
+        "adapter_registry_contract_fixture",
+        "dashboard_data_contract_schema",
+        "dashboard_data_contract_fixture",
+        "github_repo_task_intake_schema",
+        "github_repo_task_intake_fixture",
+        "readiness_map"
+      ],
+      "properties": {
+        "adapter_registry_contract_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_adapter_registry_contract.schema.json"
+        },
+        "adapter_registry_contract_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_adapter_registry_contract.foundation.json"
+        },
+        "dashboard_data_contract_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_dashboard_data_contract.schema.json"
+        },
+        "dashboard_data_contract_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_dashboard_data_contract.foundation.json"
+        },
+        "github_repo_task_intake_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_github_repo_task_intake.schema.json"
+        },
+        "github_repo_task_intake_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_repo_task_intake.foundation.json"
+        },
+        "readiness_map": {
+          "type": "string",
+          "const": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

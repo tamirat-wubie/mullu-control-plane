@@ -191,6 +191,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_dashboard_data_contract.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_adapter_registry_contract",
+            (python_executable, "scripts/validate_agentic_service_harness_adapter_registry_contract.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_task_receipt_emitter_dry_run",
             (python_executable, "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"),
         ),
@@ -220,6 +224,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (
                 python_executable,
                 "scripts/validate_agentic_service_harness_actual_file_change_summary_receipt.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_actual_diff_collection_admission_preflight",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_actual_diff_collection_admission_preflight.py",
             ),
         ),
         CheckCommand(
