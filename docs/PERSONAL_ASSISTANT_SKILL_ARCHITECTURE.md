@@ -505,12 +505,13 @@ digest to the current checked-in source ref using a newline-stable text-source
 digest, validating each source receipt against its recorded schema ref, and
 verifying the recorded closure field is true in the source payload itself. It
 also recomputes each source payload's serialized length from the current source
-payload. The packet ID is recomputed from the current packet body, so a changed
-packet cannot reuse an old valid-looking identity. Digest mismatch, schema
-mismatch, source-kind binding drift, source closure field drift, source
-serialized-length drift, packet ID body drift, missing source or schema refs, or
-refs that escape the repository fail validation even when the packet schema is
-otherwise well formed.
+payload and replays every recorded source receipt from the canonical checked-in
+source payload projection. The packet ID is recomputed from the current packet
+body, so a changed packet cannot reuse an old valid-looking identity. Digest
+mismatch, schema mismatch, source-kind binding drift, source closure field
+drift, source serialized-length drift, source replay-projection drift, packet ID
+body drift, missing source or schema refs, or refs that escape the repository
+fail validation even when the packet schema is otherwise well formed.
 
 ## Integration Position
 
