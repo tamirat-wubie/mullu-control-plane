@@ -53,7 +53,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes non-draft 
 | 4. First MVP adapter path | PARTIAL | GitHub/Codex-style planning receipts and dry-run boundaries exist, but approved branch workspace, diff, test, and PR creation flow are not closed. |
 | 5. Permission and authority model | READY | Roles, action classes, approval gates, and blocked high-risk actions are encoded as contract-only and validated. |
 | 6. Sandbox/workspace safety | PARTIAL | Command/path/network/time/cleanup preflight is now contract-bound for a temporary branch workspace; actual branch workspace creation remains blocked until approval and cleanup evidence exist. |
-| 7. Receipt and evidence model | PARTIAL | Required run receipt fields and AgentRun-indexed EvidenceBundle projection exist; durable harness receipt emission and store binding are not complete. |
+| 7. Receipt and evidence model | PARTIAL | Required run receipt fields, read-only Receipt projection, and AgentRun-indexed EvidenceBundle projection exist; durable harness receipt emission and store append remain blocked. |
 | 8. Dashboard/UI requirements | PARTIAL | The read-only dashboard data contract exists, but the dashboard must not be built yet. Required screens remain readiness inputs only. |
 | 9. Explicit non-goals | READY | First-phase non-goals are explicit and align with Foundation Mode and high-risk-action blocking. |
 
@@ -78,7 +78,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes non-draft 
 | RepositoryConnection | READY | Harness contract, read-model schema, fixture projection, durable entity binding, validators, and tests require durable GitHub App installation ref/state, provider repository ref, repository id/name through owner/name and slug, read permission scopes, redacted credential bindings, revocation state/evidence, last verification timestamp, default branch, no secret serialization, false write authority, and read-only projection. | None. |
 | AgentRun | READY | Harness contract, read-model schema, projection, validators, and tests define lifecycle state, created and updated timestamps, transition receipt refs, terminal-state flag, and read-only query ref while preserving no adapter execution, no branch creation, no pull-request creation, and no external-effect authority. | None. |
 | ApprovalRequest | READY | Harness approval gates now bind explicit approval request id/ref, gateway approval ref, requested evidence ref, response-record requirement, no collected approval, and no granted authority. | None. |
-| Receipt | PARTIAL | Many receipt schemas exist and harness receipts are modeled, but durable harness receipt-store append remains witness-bound. | Add a harness Receipt projection and append preflight PR with append disabled until approval. |
+| Receipt | READY | Harness Receipt projection schema, fixture, validator, protocol manifest entry, workspace-preflight wiring, receipt schema/example coverage, and CI coverage bind receipt refs by AgentRun while append, runtime writes, command execution, test execution, secrets, and terminal closure remain disabled. | None for read-only projection. Durable receipt-store append remains blocked until approval, UAO, cleanup, and redaction evidence exist. |
 | LoopStatus | PARTIAL | Loop refs and read models exist; no first-class harness LoopStatus projection is closed. | Add a small LoopStatus projection PR bound to holistic loop read-model output. |
 
 ## 3. Agent Service Harness Contract - PARTIAL
@@ -87,7 +87,7 @@ Open PRs after readiness-map refresh: the live open PR queue includes non-draft 
 | --- | --- | --- | --- |
 | AgentTask | READY | Defined in `schemas/agentic_service_harness.schema.json` and scenario examples. | None. |
 | AgentAdapter | READY | Contract-only adapter registry exists with GitHub/Codex-style entries, modes, authority class, gate refs, and blocker refs. External adapter integration, subprocess execution, connector calls, external model execution, branch writes, pull-request creation, receipt append, and terminal closure remain explicitly false. | None for contract-only registry. |
-| WorkspaceSandbox | PARTIAL | Temporary branch workspace preflight schema, fixture, validator, protocol manifest entry, workspace-preflight wiring, and tests bind command allowlist, path allowlist, timeout budget, network denial, cleanup receipt, and branch-create denial. Actual branch workspace creation remains blocked. | Add Receipt projection next; keep branch workspace creation blocked until approval and cleanup evidence exist. |
+| WorkspaceSandbox | PARTIAL | Temporary branch workspace preflight schema, fixture, validator, protocol manifest entry, workspace-preflight wiring, and tests bind command allowlist, path allowlist, timeout budget, network denial, cleanup receipt, and branch-create denial. Actual branch workspace creation remains blocked. | Keep branch workspace creation blocked until approval and cleanup evidence exist. |
 | AgentRunReceipt | PARTIAL | Dry-run AgentRun receipt-emitter contract, fixture, validator, manifest entry, and CI coverage exist; runtime emission and store binding are not complete. | Add harness receipt-store append preflight after workspace lifecycle is bound. |
 | ApprovalGate | READY | Approval gates and high-risk denials are modeled and validated in harness examples. | None. |
 | EvidenceBundle | READY | EvidenceBundle projection schema, fixture, validator, tests, protocol manifest entry, workspace-preflight wiring, receipt schema/example coverage, and CI shard group command logs, test logs, diff refs, policy refs, receipt refs, and source read-model refs by AgentRun id. It remains read-only, reference-only, redacted, non-appendable, and non-terminal. | None for read-only projection. |
@@ -154,9 +154,9 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 | connect GitHub repo | PARTIAL | RepositoryConnection read model, redacted GitHub installation binding, GitHub repo task intake, dashboard data binding, contract-only adapter registry, and EvidenceBundle projection are closed for read-only projection; no connect UI or provider mutation route is authorized. | Add task creation admission preflight only after receipt and approval evidence remain blocked by default. |
 | create agent task | MISSING | AgentTask exists as a contract; no user-facing task creation route. | Add task creation admission preflight before UI work. |
 | run status | READY | AgentRun lifecycle read model exposes status, lifecycle state, transition receipt refs, terminal flag, and read-only query ref without execution authority. | None. |
-| evidence/receipt view | PARTIAL | Receipt and evidence primitives exist; dashboard data contract binds display-only receipt and evidence widgets, and EvidenceBundle projection by AgentRun id is closed. Durable Receipt projection remains incomplete. | Add Receipt read model with append disabled. |
+| evidence/receipt view | READY | Receipt and EvidenceBundle projections are closed for display-only dashboard data, with append, runtime writes, commands, tests, secrets, and terminal closure denied. | None for read-only projection. |
 | approval screen | MISSING | ApprovalRequest read-model binding exists; no harness approval UI is authorized yet. | Add dashboard approval screen only after receipt/evidence read models and UI data contract are closed. |
-| loop/readiness dashboard | PARTIAL | Loop read models, readiness docs, read-only dashboard data contract, contract-only adapter registry, and EvidenceBundle projection exist; no dashboard build, route, mutation control, receipt append, or adapter execution is authorized. | Add Receipt read model with append disabled. |
+| loop/readiness dashboard | PARTIAL | Loop read models, readiness docs, read-only dashboard data contract, contract-only adapter registry, and Receipt/EvidenceBundle projections exist; no dashboard build, route, mutation control, receipt append, or adapter execution is authorized. | Add durable LoopStatus projection next. |
 
 ## 9. Explicit Non-Goals For The First Harness Phase - READY
 
@@ -173,7 +173,7 @@ No dashboard should be created in the first readiness PR. The UI depends on dura
 
 ## Smallest Next PR Sequence
 
-1. `harness(receipts): add harness Receipt projection with append disabled`
+1. `harness(loop): add durable LoopStatus projection`
 2. `harness(tasks): add task creation admission preflight`
 
 ## Governance Decision
@@ -188,6 +188,6 @@ Do not allow merge, deploy, DNS, secret, destructive operation, unrestricted aut
 
 STATUS:
   Completeness: 100%
-  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority; read-only GitHub repository task intake bound without execution authority; read-only dashboard data contract bound without UI or route authority; contract-only adapter registry bound without subprocess, connector, external model, branch write, PR creation, receipt append, or terminal closure authority; EvidenceBundle projection by AgentRun id bound without log ingestion, inline logs, inline diffs, receipt append, adapter execution, branch write, PR creation, secret serialization, or terminal closure authority
+  Invariants verified: planning-only artifact; no dashboard; no mutation endpoint; no external adapter integration; no high-risk authority; open PR queue recorded without granting execution authority; read-only GitHub repository task intake bound without execution authority; read-only dashboard data contract bound without UI or route authority; contract-only adapter registry bound without subprocess, connector, external model, branch write, PR creation, receipt append, or terminal closure authority; EvidenceBundle projection by AgentRun id bound without log ingestion, inline logs, inline diffs, receipt append, adapter execution, branch write, PR creation, secret serialization, or terminal closure authority; Receipt projection bound without append, runtime writes, command execution, test execution, secret serialization, or terminal closure authority
   Open issues: durable Receipt store append, branch workspace creation authority, dashboard UI, task creation admission, and live adapter integration remain partial, missing, externally blocked, or outside this closure
-  Next action: start the smallest next PR sequence with harness Receipt projection with append disabled
+  Next action: start the smallest next PR sequence with durable LoopStatus projection
