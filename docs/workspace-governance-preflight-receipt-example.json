@@ -214,6 +214,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_agentic_service_harness_adapter_registry_contract.py"
+      ],
+      "name": "agentic_service_harness_adapter_registry_contract",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"
       ],
       "name": "agentic_service_harness_github_task_receipt_emitter_dry_run",
