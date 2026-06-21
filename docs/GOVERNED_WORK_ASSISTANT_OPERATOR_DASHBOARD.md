@@ -61,7 +61,7 @@ The projection is backed by checked-in, no-effect fixtures and local docs contra
 
 ## Local contract boundary
 
-This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs to become a public protocol schema, promote it through a dedicated compatibility PR.
+This dashboard schema is intentionally a local docs contract, not a public governance protocol schema. If it later needs broader publication, promote it through a dedicated compatibility PR.
 
 ## Admission rule
 
