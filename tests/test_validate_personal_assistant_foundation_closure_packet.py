@@ -7,6 +7,7 @@ Dependencies: scripts.validate_personal_assistant_foundation_closure_packet and
 the closure packet collector.
 Invariants:
   - Require-closed validation needs every source receipt closed.
+  - Packet IDs must bind to the packet body.
   - Source receipt kinds must keep canonical source, schema, and closure bindings.
   - Source payload closure fields must match the recorded closed source receipts.
   - Source receipt digests must match current checked-in source refs.
@@ -108,6 +109,24 @@ def test_validate_foundation_closure_packet_rejects_source_ref_escape(tmp_path: 
     assert any(step.name == "source receipt digests" and not step.passed for step in validation.steps)
     assert any(step.name == "schema contract" and step.passed for step in validation.steps)
     assert validation.packet_id == packet["packet_id"]
+
+
+def test_validate_foundation_closure_packet_rejects_packet_id_body_drift(tmp_path: Path) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["lineage"]["accepted_deltas"][0]["reason"] = "Bound source receipts with an amended local note."  # type: ignore[index]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.packet_id == packet["packet_id"]
+    assert validation.foundation_closure_packet_closed is True
+    assert any(step.name == "packet id binding" and not step.passed for step in validation.steps)
+    assert any(step.name == "packet id" and step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
 
 
 def test_validate_foundation_closure_packet_rejects_canonical_source_binding_drift(tmp_path: Path) -> None:
