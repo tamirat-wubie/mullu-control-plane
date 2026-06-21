@@ -336,6 +336,8 @@ def render_normal_user_dashboard_html(view: NormalUserDashboardClientView) -> st
     action_cards = "\n".join(_render_action_card(card) for card in view.action_cards)
     workflow_cards = "\n".join(_render_workflow_card(card) for card in view.workflow_cards)
     command_items = "\n".join(f"<li>{escape(command)}</li>" for command in view.command_guidance)
+    empty_action_cards = '<p class="empty">No actions waiting.</p>'
+    empty_workflow_cards = '<p class="empty">No workflows waiting.</p>'
     return render_normal_user_dashboard_shell(
         document_title=f"Mullu Dashboard - {view.status_label}",
         body_lines=(
@@ -351,11 +353,11 @@ def render_normal_user_dashboard_html(view: NormalUserDashboardClientView) -> st
             '    <section class="grid" aria-label="Dashboard cards">',
             '      <section class="panel" aria-labelledby="actions-title">',
             '        <h2 id="actions-title">Actions</h2>',
-            f"        {action_cards or '<p class=\"empty\">No actions waiting.</p>'}",
+            f"        {action_cards or empty_action_cards}",
             "      </section>",
             '      <section class="panel" aria-labelledby="workflows-title">',
             '        <h2 id="workflows-title">Workflows</h2>',
-            f"        {workflow_cards or '<p class=\"empty\">No workflows waiting.</p>'}",
+            f"        {workflow_cards or empty_workflow_cards}",
             "      </section>",
             '      <section class="panel compact" aria-labelledby="commands-title">',
             '        <h2 id="commands-title">Commands</h2>',
