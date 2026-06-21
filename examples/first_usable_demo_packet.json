@@ -1,0 +1,154 @@
+{
+  "packet_id": "first_usable_demo_packet_v1",
+  "packet_type": "mullu.first_usable_demo_packet",
+  "product_name": "Mullu Govern",
+  "control_surface": "Mullu Control Plane",
+  "demo_name": "Governed Personal Assistant First Usable Demo",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_only": true,
+  "demo_goal": "Compress the governed platform into one reviewable no-effect assistant demo before live connector or customer authority is claimed.",
+  "canonical_user_story": {
+    "actor": "operator",
+    "request": "Review one invoice-related request and prepare a vendor email draft after policy and approval checks.",
+    "observable_result": "The operator sees the interpreted request, policy result, blocked actions, approval requirement, draft/preview status, receipt refs, proof refs, and next safe action.",
+    "explicit_non_goals": [
+      "send_email",
+      "pay_invoice",
+      "mutate_gmail",
+      "mutate_calendar",
+      "mutate_accounting_record",
+      "write_memory",
+      "deploy_service",
+      "claim_customer_readiness"
+    ]
+  },
+  "current_authority": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "external_send_allowed": false,
+    "money_movement_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "public_launch_claim_allowed": false,
+    "approval_is_execution": false
+  },
+  "first_demo_lane": [
+    {
+      "step_id": "01_intake",
+      "surface": "personal_assistant_intake",
+      "expected_output": "structured_request",
+      "authority": "no_effect",
+      "evidence_ref": "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md"
+    },
+    {
+      "step_id": "02_missing_binding_review",
+      "surface": "whqr_clarification",
+      "expected_output": "missing_entity_evidence_action_or_approval_bindings",
+      "authority": "no_effect",
+      "evidence_ref": "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md"
+    },
+    {
+      "step_id": "03_skill_route",
+      "surface": "skill_router",
+      "expected_output": "inbox_finance_document_or_planning_lane",
+      "authority": "no_effect",
+      "evidence_ref": "capabilities/personal_assistant/capability_pack.json"
+    },
+    {
+      "step_id": "04_policy_risk",
+      "surface": "policy_and_risk_classifier",
+      "expected_output": "risk_level_approval_requirement_and_blocked_actions",
+      "authority": "no_effect",
+      "evidence_ref": "governance/personal_assistant_approval_matrix.yaml"
+    },
+    {
+      "step_id": "05_draft_plan",
+      "surface": "draft_plan_builder",
+      "expected_output": "preview_only_action_plan",
+      "authority": "no_effect",
+      "evidence_ref": "examples/personal_assistant_dry_run_packet.json"
+    },
+    {
+      "step_id": "06_approval_review",
+      "surface": "approval_review_packet",
+      "expected_output": "operator_review_packet_with_approval_is_execution_false",
+      "authority": "approval_is_not_execution",
+      "evidence_ref": "examples/personal_assistant_approval_review_packet.json"
+    },
+    {
+      "step_id": "07_receipt_proof",
+      "surface": "receipt_and_proof_export",
+      "expected_output": "redacted_receipt_and_proof_ready_status",
+      "authority": "no_external_effect",
+      "evidence_ref": "examples/personal_assistant_foundation_closure_packet.json"
+    },
+    {
+      "step_id": "08_operator_read_model",
+      "surface": "operator_read_model",
+      "expected_output": "blocked_awaiting_evidence_reviewable_or_proof_ready_status",
+      "authority": "read_only",
+      "evidence_ref": "examples/personal_assistant_readiness_index_receipt.json"
+    }
+  ],
+  "promotion_gates": [
+    {
+      "gate_id": "read_only_demo",
+      "required_before_promotion": "Static packet validates and renders without raw private payloads."
+    },
+    {
+      "gate_id": "draft_only_demo",
+      "required_before_promotion": "Draft projection proves no connector mutation and no external send."
+    },
+    {
+      "gate_id": "approval_review_demo",
+      "required_before_promotion": "Approval packet exists while approval_is_execution remains false."
+    },
+    {
+      "gate_id": "dry_run_adapter_demo",
+      "required_before_promotion": "UAO admission, dry-run adapter evidence, redaction, rollback plan, and effect receipt schema exist."
+    },
+    {
+      "gate_id": "live_connector_demo",
+      "required_before_promotion": "Explicit operator approval, connector authority proof, signed effect receipt, rollback/recovery evidence, and terminal closure certificate exist."
+    },
+    {
+      "gate_id": "customer_pilot",
+      "required_before_promotion": "Separate customer-readiness witness, support boundary, legal/business review, data boundary, and incident/recovery procedure exist."
+    }
+  ],
+  "readiness_index": {
+    "product_compression": "ready_for_review",
+    "read_only_packet": "ready_for_validation",
+    "draft_only_walkthrough": "awaiting_implementation",
+    "approval_review_binding": "awaiting_integration",
+    "dry_run_adapter": "blocked_until_evidence",
+    "live_connector": "blocked_until_operator_approval_and_effect_witness",
+    "customer_readiness": "blocked"
+  },
+  "claim_boundary": {
+    "deployment_health_evidence_is_customer_readiness": false,
+    "public_health_endpoint_is_live_assistant_authority": false,
+    "foundation_demo_is_paid_use_ready": false,
+    "readiness_packet_is_legal_or_business_clearance": false
+  },
+  "constructive_deltas": [
+    "Names one first usable demo instead of scattering product interpretation across many platform surfaces.",
+    "Separates deployment/public-health evidence from live assistant authority and customer readiness.",
+    "Defines a no-effect demo lane with visible operator outputs.",
+    "Adds validator-ready authority fields for future claim synchronization."
+  ],
+  "fracture_deltas": [
+    "No live UI, connector call, Gmail mutation, payment call, memory write, deployment mutation, or customer-facing service is created by this packet.",
+    "README, plain-English overview, STATUS.md, and DEPLOYMENT_STATUS.md still need a later claim-synchronization pass.",
+    "The finance approval pilot and personal-assistant packet still need one shared walkthrough before live use can be considered."
+  ],
+  "next_safe_actions": [
+    "Render this packet into a static operator page.",
+    "Bind this packet to the personal-assistant console read model.",
+    "Add a draft-only invoice/email walkthrough with no external effect.",
+    "Add an approval-review packet that proves approval is not execution.",
+    "Reconcile repository claim language across README, plain-English overview, STATUS.md, and DEPLOYMENT_STATUS.md."
+  ]
+}
