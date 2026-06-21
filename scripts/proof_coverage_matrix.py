@@ -3258,6 +3258,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "inceptadive_shadow_inspection_routes",
             [
                 "/api/v1/shadow/inspect",
+                "/api/v1/shadow/external-effect/advisory",
             ],
             "request_proof",
             "read_model",
@@ -3276,6 +3277,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "shadow_inspect_route_runs_runtime_and_redacts_raw_text",
                 "shadow_inspect_route_rejects_invalid_request_bounded",
+                "external_effect_advisory_route_returns_missing_obligations_redacted",
+                "external_effect_advisory_route_closes_refs_without_exposing_refs",
+                "external_effect_advisory_route_rejects_invalid_request_bounded",
                 "default_routers_include_shadow_inspect_path",
                 "personal_assistant_preview_compiles_inbox_request_without_execution",
                 "finance_ops_plan_records_inceptadive_shadow_advisory_history",
