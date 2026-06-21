@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 288,
+      "proven": 289,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 448,
+    "route_count": 449,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -3171,6 +3171,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/session",
         "surface_id": "workflow_execution_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/shadow/external-effect/advisory",
+        "surface_id": "inceptadive_shadow_inspection_routes"
       },
       {
         "coverage_state": "proven",
@@ -7045,12 +7050,16 @@
       ],
       "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
       "representative_paths": [
-        "/api/v1/shadow/inspect"
+        "/api/v1/shadow/inspect",
+        "/api/v1/shadow/external-effect/advisory"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "shadow_inspect_route_runs_runtime_and_redacts_raw_text",
         "shadow_inspect_route_rejects_invalid_request_bounded",
+        "external_effect_advisory_route_returns_missing_obligations_redacted",
+        "external_effect_advisory_route_closes_refs_without_exposing_refs",
+        "external_effect_advisory_route_rejects_invalid_request_bounded",
         "default_routers_include_shadow_inspect_path",
         "personal_assistant_preview_compiles_inbox_request_without_execution",
         "finance_ops_plan_records_inceptadive_shadow_advisory_history"
@@ -15441,8 +15450,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1951,
-    "runtime_witness_count": 1951,
+    "exact_test_anchor_count": 1954,
+    "runtime_witness_count": 1954,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19157,6 +19166,24 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_external_effect_advisory_route_returns_missing_obligations_redacted"
+            ],
+            "witness": "external_effect_advisory_route_returns_missing_obligations_redacted"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_external_effect_advisory_route_closes_refs_without_exposing_refs"
+            ],
+            "witness": "external_effect_advisory_route_closes_refs_without_exposing_refs"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_external_effect_advisory_route_rejects_invalid_request_bounded"
+            ],
+            "witness": "external_effect_advisory_route_rejects_invalid_request_bounded"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_inceptadive_shadow_routes.py::test_default_routers_include_shadow_inspect_path"
             ],
             "witness": "default_routers_include_shadow_inspect_path"
@@ -19174,8 +19201,8 @@
             "witness": "finance_ops_plan_records_inceptadive_shadow_advisory_history"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
         "surface_id": "inceptadive_shadow_inspection_routes",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

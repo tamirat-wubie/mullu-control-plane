@@ -1,4 +1,258 @@
 {
+  "schema_version": 1,
+  "report_id": "component_dead_component_detection.foundation.v1",
+  "mode": "foundation",
+  "governed": true,
+  "detector_is_not_execution_authority": true,
+  "live_execution_enabled": false,
+  "live_connector_send_enabled": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "terminal_closure_required": true,
+  "source_refs": {
+    "component_graph": "examples/component_graph.foundation.json",
+    "read_model": "examples/component_read_model.foundation.json"
+  },
+  "summary": {
+    "component_count": 10,
+    "active_governed_count": 4,
+    "governed_watch_count": 1,
+    "blocked_governed_count": 5,
+    "dead_candidate_count": 0,
+    "no_route_count": 4,
+    "no_bundle_membership_count": 3,
+    "no_request_path_count": 2,
+    "awaiting_binding_count": 1
+  },
+  "detections": [
+    {
+      "component_id": "agentic_service_harness",
+      "name": "Agentic Service Harness",
+      "classification": "active_governed",
+      "signals": [
+        "no_bundle_membership",
+        "no_request_path_coverage",
+        "no_dependent_components"
+      ],
+      "route_count": 1,
+      "bundle_count": 0,
+      "request_path_count": 0,
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "GovernanceBlocked",
+      "missing_evidence_count": 0,
+      "recommended_decisions": [
+        "no_dead_component_action_required"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "capability_workers",
+      "name": "Capability Workers",
+      "classification": "blocked_governed",
+      "signals": [
+        "no_dependent_components",
+        "missing_evidence"
+      ],
+      "route_count": 1,
+      "bundle_count": 1,
+      "request_path_count": 1,
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "AwaitingEvidence",
+      "missing_evidence_count": 1,
+      "recommended_decisions": [
+        "preserve_blocked_status",
+        "add_missing_evidence_before_lifecycle_transition",
+        "keep_live_authority_false"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "gmail_account_binding_gate",
+      "name": "Gmail Account Binding Gate",
+      "classification": "blocked_governed",
+      "signals": [
+        "no_mounted_route",
+        "missing_evidence"
+      ],
+      "route_count": 0,
+      "bundle_count": 1,
+      "request_path_count": 2,
+      "dependency_count": 1,
+      "dependent_count": 2,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "AwaitingEvidence",
+      "missing_evidence_count": 1,
+      "recommended_decisions": [
+        "preserve_blocked_status",
+        "add_missing_evidence_before_lifecycle_transition",
+        "keep_live_authority_false"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "governance_core",
+      "name": "Governance Core",
+      "classification": "active_governed",
+      "signals": [
+        "no_declared_dependencies"
+      ],
+      "route_count": 23,
+      "bundle_count": 3,
+      "request_path_count": 6,
+      "dependency_count": 0,
+      "dependent_count": 9,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "GovernanceBlocked",
+      "missing_evidence_count": 0,
+      "recommended_decisions": [
+        "no_dead_component_action_required"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "inceptadive_shadow",
+      "name": "InceptaDive Shadow",
+      "classification": "active_governed",
+      "signals": [
+        "no_dependent_components"
+      ],
+      "route_count": 3,
+      "bundle_count": 2,
+      "request_path_count": 1,
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "GovernanceBlocked",
+      "missing_evidence_count": 0,
+      "recommended_decisions": [
+        "no_dead_component_action_required"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "nested_mind_bridge",
+      "name": "Nested Mind Bridge",
+      "classification": "blocked_governed",
+      "signals": [
+        "no_mounted_route",
+        "proof_binding_missing",
+        "no_bundle_membership",
+        "no_dependent_components",
+        "missing_evidence"
+      ],
+      "route_count": 0,
+      "bundle_count": 0,
+      "request_path_count": 1,
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "proof_binding_state": "awaiting_binding",
+      "autopsy_outcome": "AwaitingEvidence",
+      "missing_evidence_count": 2,
+      "recommended_decisions": [
+        "preserve_blocked_status",
+        "add_missing_evidence_before_lifecycle_transition",
+        "keep_live_authority_false"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "personal_assistant",
+      "name": "Personal Assistant",
+      "classification": "active_governed",
+      "signals": [
+        "no_dependent_components"
+      ],
+      "route_count": 4,
+      "bundle_count": 1,
+      "request_path_count": 2,
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "GovernanceBlocked",
+      "missing_evidence_count": 0,
+      "recommended_decisions": [
+        "no_dead_component_action_required"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "snet",
+      "name": "SNet Symbolic Mesh",
+      "classification": "governed_watch",
+      "signals": [
+        "no_mounted_route",
+        "no_dependent_components"
+      ],
+      "route_count": 0,
+      "bundle_count": 2,
+      "request_path_count": 1,
+      "dependency_count": 1,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "GovernanceBlocked",
+      "missing_evidence_count": 0,
+      "recommended_decisions": [
+        "keep_registered_and_monitored",
+        "bind_route_only_if_product_surface_required"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "teamops_shared_inbox",
+      "name": "TeamOps Shared Inbox",
+      "classification": "blocked_governed",
+      "signals": [
+        "no_bundle_membership",
+        "no_request_path_coverage",
+        "no_dependent_components",
+        "missing_evidence"
+      ],
+      "route_count": 1,
+      "bundle_count": 0,
+      "request_path_count": 0,
+      "dependency_count": 2,
+      "dependent_count": 0,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "AwaitingEvidence",
+      "missing_evidence_count": 1,
+      "recommended_decisions": [
+        "preserve_blocked_status",
+        "add_missing_evidence_before_lifecycle_transition",
+        "keep_live_authority_false"
+      ],
+      "detection_is_not_execution_authority": true
+    },
+    {
+      "component_id": "worker_runtime",
+      "name": "Worker Runtime",
+      "classification": "blocked_governed",
+      "signals": [
+        "no_mounted_route",
+        "missing_evidence"
+      ],
+      "route_count": 0,
+      "bundle_count": 1,
+      "request_path_count": 1,
+      "dependency_count": 1,
+      "dependent_count": 1,
+      "proof_binding_state": "proof_bound",
+      "autopsy_outcome": "AwaitingEvidence",
+      "missing_evidence_count": 1,
+      "recommended_decisions": [
+        "preserve_blocked_status",
+        "add_missing_evidence_before_lifecycle_transition",
+        "keep_live_authority_false"
+      ],
+      "detection_is_not_execution_authority": true
+    }
+  ],
+  "dead_component_candidates": [],
   "blocked_governed_components": [
     "capability_workers",
     "gmail_account_binding_gate",
@@ -6,272 +260,18 @@
     "teamops_shared_inbox",
     "worker_runtime"
   ],
-  "can_call_connector": false,
-  "can_claim_terminal_closure": false,
-  "can_execute": false,
-  "can_mutate": false,
-  "dead_component_candidates": [],
-  "detections": [
-    {
-      "autopsy_outcome": "GovernanceBlocked",
-      "bundle_count": 0,
-      "classification": "active_governed",
-      "component_id": "agentic_service_harness",
-      "dependency_count": 1,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 0,
-      "name": "Agentic Service Harness",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "no_dead_component_action_required"
-      ],
-      "request_path_count": 0,
-      "route_count": 1,
-      "signals": [
-        "no_bundle_membership",
-        "no_request_path_coverage",
-        "no_dependent_components"
-      ]
-    },
-    {
-      "autopsy_outcome": "AwaitingEvidence",
-      "bundle_count": 1,
-      "classification": "blocked_governed",
-      "component_id": "capability_workers",
-      "dependency_count": 2,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 1,
-      "name": "Capability Workers",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "preserve_blocked_status",
-        "add_missing_evidence_before_lifecycle_transition",
-        "keep_live_authority_false"
-      ],
-      "request_path_count": 1,
-      "route_count": 1,
-      "signals": [
-        "no_dependent_components",
-        "missing_evidence"
-      ]
-    },
-    {
-      "autopsy_outcome": "AwaitingEvidence",
-      "bundle_count": 1,
-      "classification": "blocked_governed",
-      "component_id": "gmail_account_binding_gate",
-      "dependency_count": 1,
-      "dependent_count": 2,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 1,
-      "name": "Gmail Account Binding Gate",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "preserve_blocked_status",
-        "add_missing_evidence_before_lifecycle_transition",
-        "keep_live_authority_false"
-      ],
-      "request_path_count": 2,
-      "route_count": 0,
-      "signals": [
-        "no_mounted_route",
-        "missing_evidence"
-      ]
-    },
-    {
-      "autopsy_outcome": "GovernanceBlocked",
-      "bundle_count": 3,
-      "classification": "active_governed",
-      "component_id": "governance_core",
-      "dependency_count": 0,
-      "dependent_count": 9,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 0,
-      "name": "Governance Core",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "no_dead_component_action_required"
-      ],
-      "request_path_count": 6,
-      "route_count": 23,
-      "signals": [
-        "no_declared_dependencies"
-      ]
-    },
-    {
-      "autopsy_outcome": "GovernanceBlocked",
-      "bundle_count": 2,
-      "classification": "active_governed",
-      "component_id": "inceptadive_shadow",
-      "dependency_count": 1,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 0,
-      "name": "InceptaDive Shadow",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "no_dead_component_action_required"
-      ],
-      "request_path_count": 1,
-      "route_count": 2,
-      "signals": [
-        "no_dependent_components"
-      ]
-    },
-    {
-      "autopsy_outcome": "AwaitingEvidence",
-      "bundle_count": 0,
-      "classification": "blocked_governed",
-      "component_id": "nested_mind_bridge",
-      "dependency_count": 1,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 2,
-      "name": "Nested Mind Bridge",
-      "proof_binding_state": "awaiting_binding",
-      "recommended_decisions": [
-        "preserve_blocked_status",
-        "add_missing_evidence_before_lifecycle_transition",
-        "keep_live_authority_false"
-      ],
-      "request_path_count": 1,
-      "route_count": 0,
-      "signals": [
-        "no_mounted_route",
-        "proof_binding_missing",
-        "no_bundle_membership",
-        "no_dependent_components",
-        "missing_evidence"
-      ]
-    },
-    {
-      "autopsy_outcome": "GovernanceBlocked",
-      "bundle_count": 1,
-      "classification": "active_governed",
-      "component_id": "personal_assistant",
-      "dependency_count": 2,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 0,
-      "name": "Personal Assistant",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "no_dead_component_action_required"
-      ],
-      "request_path_count": 2,
-      "route_count": 4,
-      "signals": [
-        "no_dependent_components"
-      ]
-    },
-    {
-      "autopsy_outcome": "GovernanceBlocked",
-      "bundle_count": 2,
-      "classification": "governed_watch",
-      "component_id": "snet",
-      "dependency_count": 1,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 0,
-      "name": "SNet Symbolic Mesh",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "keep_registered_and_monitored",
-        "bind_route_only_if_product_surface_required"
-      ],
-      "request_path_count": 1,
-      "route_count": 0,
-      "signals": [
-        "no_mounted_route",
-        "no_dependent_components"
-      ]
-    },
-    {
-      "autopsy_outcome": "AwaitingEvidence",
-      "bundle_count": 0,
-      "classification": "blocked_governed",
-      "component_id": "teamops_shared_inbox",
-      "dependency_count": 2,
-      "dependent_count": 0,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 1,
-      "name": "TeamOps Shared Inbox",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "preserve_blocked_status",
-        "add_missing_evidence_before_lifecycle_transition",
-        "keep_live_authority_false"
-      ],
-      "request_path_count": 0,
-      "route_count": 1,
-      "signals": [
-        "no_bundle_membership",
-        "no_request_path_coverage",
-        "no_dependent_components",
-        "missing_evidence"
-      ]
-    },
-    {
-      "autopsy_outcome": "AwaitingEvidence",
-      "bundle_count": 1,
-      "classification": "blocked_governed",
-      "component_id": "worker_runtime",
-      "dependency_count": 1,
-      "dependent_count": 1,
-      "detection_is_not_execution_authority": true,
-      "missing_evidence_count": 1,
-      "name": "Worker Runtime",
-      "proof_binding_state": "proof_bound",
-      "recommended_decisions": [
-        "preserve_blocked_status",
-        "add_missing_evidence_before_lifecycle_transition",
-        "keep_live_authority_false"
-      ],
-      "request_path_count": 1,
-      "route_count": 0,
-      "signals": [
-        "no_mounted_route",
-        "missing_evidence"
-      ]
-    }
-  ],
-  "detector_is_not_execution_authority": true,
   "expected_receipts": [
     "component_dead_component_detection_receipt",
     "component_graph_projection_receipt",
     "component_read_model_validation_receipt",
     "authority_denial_receipt"
   ],
-  "governed": true,
-  "live_connector_send_enabled": false,
-  "live_execution_enabled": false,
-  "mode": "foundation",
-  "next_action": "Convert dead candidates into explicit archive, bundle, proof, or deprecation decisions without enabling live execution.",
   "outcome": "AwaitingEvidence",
-  "report_id": "component_dead_component_detection.foundation.v1",
-  "schema_version": 1,
-  "source_refs": {
-    "component_graph": "examples/component_graph.foundation.json",
-    "read_model": "examples/component_read_model.foundation.json"
-  },
-  "summary": {
-    "active_governed_count": 4,
-    "awaiting_binding_count": 1,
-    "blocked_governed_count": 5,
-    "component_count": 10,
-    "dead_candidate_count": 0,
-    "governed_watch_count": 1,
-    "no_bundle_membership_count": 3,
-    "no_request_path_count": 2,
-    "no_route_count": 4
-  },
-  "terminal_closure_required": true,
   "validators": [
     "component_dead_detector_validator",
     "component_dead_detector_tests",
     "component_graph_validator",
     "component_read_model_validator"
-  ]
+  ],
+  "next_action": "Convert dead candidates into explicit archive, bundle, proof, or deprecation decisions without enabling live execution."
 }

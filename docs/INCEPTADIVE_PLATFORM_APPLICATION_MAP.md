@@ -41,6 +41,7 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
 
 8. `mcoi_runtime.app.routers.shadow`
    - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
+   - Exposes `POST /api/v1/shadow/external-effect/advisory` for read-only external-effect obligation projection.
    - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
    - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
    - Replay fixture: `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json`.
@@ -79,6 +80,7 @@ request or candidate action
   conversation state, workflow status, streaming token events, cost accounting,
   connector dispatch, or governance verdicts.
 - `POST /api/v1/shadow/inspect` is advisory-only and cannot execute candidate actions.
+- `POST /api/v1/shadow/external-effect/advisory` is advisory-only and cannot execute candidate actions.
 - External-effect preflight deep advisories supplement strict preflight findings
   only; they do not grant execution, connector dispatch, memory write, approval,
   or governance verdict authority.
@@ -112,11 +114,13 @@ Focused tests cover:
   when the deep engine is explicitly enabled.
 - external-effect boundary advisory exposing missing and satisfied
   authority/evidence obligations without raw receipt refs or authority flags.
+- external-effect advisory route exposing the same obligation surface without
+  connector dispatch, memory write, approval, or raw reference exposure.
 
 ## Status
 
 Completeness: core runtime activation and route-level embedding applied.
 
-Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, external-effect boundary advisory, and focused tests.
+Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, external-effect boundary advisory, external-effect advisory route projection, and focused tests.
 
 Fracture delta: live execution authority, memory write authority, connector dispatch authority, and governance verdict replacement remain intentionally absent.
