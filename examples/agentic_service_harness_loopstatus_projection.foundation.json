@@ -1,0 +1,102 @@
+{
+  "report_id": "agentic_service_harness_loopstatus_projection",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T00:00:00Z",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "project_id": "project-agentic-service-harness",
+    "loop_status_ref": "loopstatus://project-agentic-service-harness/holistic-loop-read-model",
+    "read_only": true,
+    "projection_only": true,
+    "loop_registration_admitted": false,
+    "status_transition_admitted": false,
+    "runtime_execution_admitted": false,
+    "secret_values_serialized": false,
+    "terminal_closure_granted": false
+  },
+  "source_contract_refs": [
+    "schemas/holistic_loop_read_model.schema.json",
+    "scripts/report_holistic_loop_read_model.py",
+    "scripts/validate_holistic_loop_read_model.py",
+    "schemas/agentic_service_harness_read_models.schema.json",
+    "examples/agentic_service_harness_dashboard_data_contract.foundation.json",
+    "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
+    "docs/FOUNDATION_MODE.md"
+  ],
+  "loop_status_projection": {
+    "project_id": "project-agentic-service-harness",
+    "loop_status_ref": "loopstatus://project-agentic-service-harness/holistic-loop-read-model",
+    "source_report_id": "holistic_loop_read_model",
+    "source_report_status": "blocked",
+    "source_report_ref": "report://holistic_loop_read_model",
+    "source_loop_count": 9,
+    "source_returned_count": 1,
+    "projected_outcome": "AwaitingEvidence",
+    "projected_status": "blocked",
+    "proof_state": "Unknown",
+    "blocker_refs": [
+      "blocked://holistic-loop-read-model/status-blocked",
+      "blocked://loopstatus/source-loop-evidence-missing",
+      "blocked://loopstatus/source-loop-authority-missing"
+    ],
+    "evidence_refs": [
+      "schemas/holistic_loop_read_model.schema.json",
+      "scripts/report_holistic_loop_read_model.py",
+      "scripts/validate_holistic_loop_read_model.py",
+      "report://holistic_loop_read_model"
+    ],
+    "authority_gap_refs": [
+      "authority://loop-registration/not-granted",
+      "authority://status-transition/not-granted",
+      "authority://terminal-closure/not-granted"
+    ],
+    "read_only": true,
+    "projection_only": true,
+    "status_transition": false,
+    "loop_registration": false,
+    "runtime_execution": false,
+    "terminal_closure": false
+  },
+  "readiness_gates": {
+    "dashboard_data_contract_closed": true,
+    "receipt_evidence_read_models_closed": true,
+    "dashboard_ui_admitted": false,
+    "task_creation_route_admitted": false,
+    "loop_registration_admitted": false,
+    "terminal_closure_granted": false,
+    "missing_evidence_policy": "AwaitingEvidence",
+    "required_before_task_creation_refs": [
+      "evidence://task-creation-admission-preflight",
+      "approval://task-creation-route/not-collected",
+      "policy://harness/task-creation-read-only-boundary"
+    ],
+    "blocked_reason_refs": [
+      "blocked://task-creation-route/not-admitted",
+      "blocked://dashboard-ui/not-admitted",
+      "blocked://loop-registration/not-admitted",
+      "blocked://terminal-closure/not-granted"
+    ]
+  },
+  "authority_denials": {
+    "loop_registration": false,
+    "status_transition": false,
+    "runtime_execution": false,
+    "dashboard_ui": false,
+    "task_creation_route": false,
+    "mutation_endpoint": false,
+    "receipt_store_append": false,
+    "external_adapter_execution": false,
+    "secret_serialization": false,
+    "terminal_closure": false
+  },
+  "validators": [
+    {
+      "validator_id": "validator.agentic-service-harness-loopstatus-projection",
+      "command": "python scripts/validate_agentic_service_harness_loopstatus_projection.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add task creation admission preflight only after LoopStatus, Receipt, and EvidenceBundle projections remain read-only, blocked from mutation endpoints, and non-terminal.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
