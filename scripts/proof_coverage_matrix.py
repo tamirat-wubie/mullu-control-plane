@@ -2280,6 +2280,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/assistant/finance-ops/plans",
                 "/api/v1/assistant/team-ops/plans",
                 "/api/v1/personal-assistant/skills",
+                "/api/v1/personal-assistant/pilot/read-model",
                 "/api/v1/personal-assistant/requests/preview",
                 "/api/v1/personal-assistant/approval-queue",
                 "/api/v1/personal-assistant/approval-queue/preview",
@@ -2392,6 +2393,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
                 "personal_assistant_skill_read_model_deployed_read_only",
+                "personal_assistant_pilot_read_model_no_effect",
                 "personal_assistant_preview_compiles_without_execution",
                 "personal_assistant_preview_blocks_with_whqr_step",
                 "personal_assistant_preview_errors_sanitized",
@@ -2435,6 +2437,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "personal_assistant_skill_read_model_deployed_read_only": [
                     "personal_assistant_skill_read_model_is_deployed_read_only",
+                ],
+                "personal_assistant_pilot_read_model_no_effect": [
+                    "personal_assistant_pilot_read_model_is_no_effect_demo",
+                    "console_read_model_exposes_read_only_foundation_sections",
+                    "gateway_personal_assistant_console_read_model_exposes_lane_status",
                 ],
                 "personal_assistant_preview_compiles_without_execution": [
                     "personal_assistant_preview_compiles_inbox_request_without_execution",

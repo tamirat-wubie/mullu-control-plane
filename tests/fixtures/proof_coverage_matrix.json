@@ -1501,11 +1501,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 289,
+      "proven": 290,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 449,
+    "route_count": 450,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2825,6 +2825,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/memory-observations/review/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/pilot/read-model",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -6051,6 +6056,7 @@
         "/api/v1/assistant/finance-ops/plans",
         "/api/v1/assistant/team-ops/plans",
         "/api/v1/personal-assistant/skills",
+        "/api/v1/personal-assistant/pilot/read-model",
         "/api/v1/personal-assistant/requests/preview",
         "/api/v1/personal-assistant/approval-queue",
         "/api/v1/personal-assistant/approval-queue/preview",
@@ -6193,6 +6199,11 @@
           "gateway_personal_assistant_memory_review_preview_rejects_missing_revision_binding",
           "gateway_personal_assistant_memory_review_preview_rejects_raw_payload"
         ],
+        "personal_assistant_pilot_read_model_no_effect": [
+          "personal_assistant_pilot_read_model_is_no_effect_demo",
+          "console_read_model_exposes_read_only_foundation_sections",
+          "gateway_personal_assistant_console_read_model_exposes_lane_status"
+        ],
         "personal_assistant_planning_schedule_no_effect": [
           "personal_assistant_planning_projection_fixture_validates",
           "runtime_planning_projection_blocks_effect_boundaries_and_assigns_capacity",
@@ -6277,6 +6288,7 @@
         "assistant_plan_never_grants_execution_authority",
         "assistant_plan_errors_sanitized",
         "personal_assistant_skill_read_model_deployed_read_only",
+        "personal_assistant_pilot_read_model_no_effect",
         "personal_assistant_preview_compiles_without_execution",
         "personal_assistant_preview_blocks_with_whqr_step",
         "personal_assistant_preview_errors_sanitized",
@@ -15450,8 +15462,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1954,
-    "runtime_witness_count": 1954,
+    "exact_test_anchor_count": 1955,
+    "runtime_witness_count": 1955,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17911,6 +17923,13 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_pilot_read_model_is_no_effect_demo",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_console_read_model_exposes_lane_status"
+            ],
+            "witness": "personal_assistant_pilot_read_model_no_effect"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_compiles_inbox_request_without_execution",
               "tests/test_personal_assistant_planner.py::test_preview_planner_emits_schema_valid_inbox_plan_and_receipt"
             ],
@@ -18148,8 +18167,8 @@
             "witness": "personal_assistant_dry_run_packet_no_effect"
           }
         ],
-        "exact_test_anchor_count": 29,
-        "runtime_witness_count": 29,
+        "exact_test_anchor_count": 30,
+        "runtime_witness_count": 30,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
