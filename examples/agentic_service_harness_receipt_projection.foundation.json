@@ -1,0 +1,88 @@
+{
+  "report_id": "agentic_service_harness_receipt_projection",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T05:20:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_evidence_bundle_projection_ref": "examples/agentic_service_harness_evidence_bundle_projection.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "projection_id": "receipt-projection-foundation",
+    "foundation_phase": "foundation_receipt_projection_by_agent_run",
+    "read_only": true,
+    "contract_only": true,
+    "receipt_query_route_admitted": false,
+    "receipt_store_append_enabled": false,
+    "inline_receipt_body_allowed": false,
+    "mutation_endpoints_admitted": false,
+    "adapter_execution_enabled": false,
+    "connector_call_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "secret_values_serialized": false
+  },
+  "projection_index": {
+    "index_key": "run_id",
+    "lookup_mode": "read_only_receipt_ref_projection",
+    "projection_count": 1,
+    "run_count": 1,
+    "source_binding_required": true,
+    "redaction_policy_required": true,
+    "read_only": true
+  },
+  "receipt_projections": [
+    {
+      "projection_id": "receipt-projection-run-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "source_evidence_bundle_id": "evidence-read-model-foundation",
+      "source_bundle_ref": "agent-run://run-read-model-foundation/evidence-bundle",
+      "receipt_refs": [
+        "receipt://agent-run/run-read-model-foundation/lifecycle/completed",
+        "receipt://harness/receipt-read-model-foundation"
+      ],
+      "policy_refs": [
+        "gate://harness/no-receipt-store-append",
+        "gate://harness/no-mutation-endpoints",
+        "gate://harness/terminal-closure-denied"
+      ],
+      "redaction_policy": "reference_only_no_inline_body",
+      "receipt_count": 2,
+      "read_only": true,
+      "append_enabled": false,
+      "inline_receipt_body_allowed": false,
+      "runtime_collection_enabled": false,
+      "terminal_closure": false
+    }
+  ],
+  "authority_denials": {
+    "receipt_query_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "inline_receipt_body_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_endpoint_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_call_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false
+  },
+  "receipt_refs": {
+    "receipt_projection_schema": "schemas/agentic_service_harness_receipt_projection.schema.json",
+    "receipt_projection_fixture": "examples/agentic_service_harness_receipt_projection.foundation.json",
+    "evidence_bundle_projection_schema": "schemas/agentic_service_harness_evidence_bundle_projection.schema.json",
+    "evidence_bundle_projection_fixture": "examples/agentic_service_harness_evidence_bundle_projection.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic_service_harness_receipt_projection",
+      "command": "python scripts/validate_agentic_service_harness_receipt_projection.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add receipt-store append admission only after append authority, writer identity, tenant scope, path confinement, UAO admission, and rollback evidence are explicit.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

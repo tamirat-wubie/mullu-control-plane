@@ -1,5 +1,5 @@
 {
-  "check_count": 271,
+  "check_count": 272,
   "checks": [
     {
       "args": [
@@ -256,6 +256,19 @@
         "scripts/validate_agentic_service_harness_loopstatus_projection.py"
       ],
       "name": "agentic_service_harness_loopstatus_projection",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_receipt_projection.py"
+      ],
+      "name": "agentic_service_harness_receipt_projection",
       "passed": true,
       "return_code": 0,
       "stderr": "",

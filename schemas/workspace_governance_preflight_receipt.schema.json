@@ -85,6 +85,7 @@
             "agentic_service_harness_evidence_bundle_projection",
             "agentic_service_harness_receipt_evidence_read_models",
             "agentic_service_harness_loopstatus_projection",
+            "agentic_service_harness_receipt_projection",
             "agentic_service_harness_github_task_receipt_emitter_dry_run",
             "agentic_service_harness_temporary_branch_workspace_preflight",
             "agentic_service_harness_workspace_sandbox_preflight",

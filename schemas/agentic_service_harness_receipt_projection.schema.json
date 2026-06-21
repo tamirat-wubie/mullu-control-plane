@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-receipt-projection:1",
+  "title": "Agentic Service Harness Receipt Projection",
+  "description": "Foundation Mode read-only receipt projection contract. The projection groups existing receipt references by AgentRun id without admitting receipt-store append, inline receipt bodies, mutation routes, connector calls, branch writes, pull-request creation, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_evidence_bundle_projection_ref",
+    "scope",
+    "projection_index",
+    "receipt_projections",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": { "type": "string", "const": "agentic_service_harness_receipt_projection" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_evidence_bundle_projection_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_evidence_bundle_projection.foundation.json"
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "projection_index": { "$ref": "#/$defs/projection_index" },
+    "receipt_projections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/receipt_projection" }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "$ref": "#/$defs/non_empty_string" },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "non_empty_string": { "type": "string", "minLength": 1 },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "reference_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/reference" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "projection_id",
+        "foundation_phase",
+        "read_only",
+        "contract_only",
+        "receipt_query_route_admitted",
+        "receipt_store_append_enabled",
+        "inline_receipt_body_allowed",
+        "mutation_endpoints_admitted",
+        "adapter_execution_enabled",
+        "connector_call_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "projection_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": { "type": "string", "const": "foundation_receipt_projection_by_agent_run" },
+        "read_only": { "type": "boolean", "const": true },
+        "contract_only": { "type": "boolean", "const": true },
+        "receipt_query_route_admitted": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "inline_receipt_body_allowed": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "projection_index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index_key",
+        "lookup_mode",
+        "projection_count",
+        "run_count",
+        "source_binding_required",
+        "redaction_policy_required",
+        "read_only"
+      ],
+      "properties": {
+        "index_key": { "type": "string", "const": "run_id" },
+        "lookup_mode": { "type": "string", "const": "read_only_receipt_ref_projection" },
+        "projection_count": { "type": "integer", "minimum": 1 },
+        "run_count": { "type": "integer", "minimum": 1 },
+        "source_binding_required": { "type": "boolean", "const": true },
+        "redaction_policy_required": { "type": "boolean", "const": true },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "run_id",
+        "source_evidence_bundle_id",
+        "source_bundle_ref",
+        "receipt_refs",
+        "policy_refs",
+        "redaction_policy",
+        "receipt_count",
+        "read_only",
+        "append_enabled",
+        "inline_receipt_body_allowed",
+        "runtime_collection_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "projection_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "source_evidence_bundle_id": { "$ref": "#/$defs/identifier" },
+        "source_bundle_ref": { "$ref": "#/$defs/reference" },
+        "receipt_refs": { "$ref": "#/$defs/reference_list" },
+        "policy_refs": { "$ref": "#/$defs/reference_list" },
+        "redaction_policy": { "type": "string", "const": "reference_only_no_inline_body" },
+        "receipt_count": { "type": "integer", "minimum": 1 },
+        "read_only": { "type": "boolean", "const": true },
+        "append_enabled": { "type": "boolean", "const": false },
+        "inline_receipt_body_allowed": { "type": "boolean", "const": false },
+        "runtime_collection_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_query_route_enabled",
+        "receipt_store_append_enabled",
+        "inline_receipt_body_enabled",
+        "runtime_state_write_enabled",
+        "mutation_endpoint_enabled",
+        "adapter_execution_enabled",
+        "connector_call_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "secret_values_serialized",
+        "terminal_closure"
+      ],
+      "properties": {
+        "receipt_query_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "inline_receipt_body_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_endpoint_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_projection_schema",
+        "receipt_projection_fixture",
+        "evidence_bundle_projection_schema",
+        "evidence_bundle_projection_fixture",
+        "readiness_map"
+      ],
+      "properties": {
+        "receipt_projection_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_receipt_projection.schema.json"
+        },
+        "receipt_projection_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_receipt_projection.foundation.json"
+        },
+        "evidence_bundle_projection_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_evidence_bundle_projection.schema.json"
+        },
+        "evidence_bundle_projection_fixture": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_evidence_bundle_projection.foundation.json"
+        },
+        "readiness_map": {
+          "type": "string",
+          "const": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "$ref": "#/$defs/non_empty_string" },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
