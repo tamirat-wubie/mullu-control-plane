@@ -253,6 +253,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_agent_adapter_ready(map_text, errors)
     _validate_evidence_bundle_ready(map_text, errors)
     _validate_loopstatus_ready(map_text, errors)
+    _validate_receipt_projection_pr_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -354,6 +355,16 @@ def _validate_loopstatus_ready(map_text: str, errors: list[str]) -> None:
     )
     if ready_row is None:
         errors.append("missing ready row: LoopStatus read-only projection")
+
+
+def _validate_receipt_projection_pr_ready(map_text: str, errors: list[str]) -> None:
+    receipt_projection_row = re.search(
+        r"^\| Receipt projection PR \| READY \| .+receipt-store append.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if receipt_projection_row is None:
+        errors.append("missing ready row: Receipt projection PR")
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:

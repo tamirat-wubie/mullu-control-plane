@@ -207,6 +207,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_loopstatus_projection.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_receipt_projection",
+            (python_executable, "scripts/validate_agentic_service_harness_receipt_projection.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_task_receipt_emitter_dry_run",
             (python_executable, "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"),
         ),
