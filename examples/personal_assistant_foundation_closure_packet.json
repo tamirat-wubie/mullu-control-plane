@@ -1,7 +1,7 @@
 {
-  "packet_id": "personal-assistant-foundation-closure-a27342d1f8619a35",
+  "packet_id": "personal-assistant-foundation-closure-7b38f0fd54af04d7",
   "schema_version": "personal_assistant.foundation_closure_packet.v1",
-  "generated_at": "2026-06-20T15:33:02Z",
+  "generated_at": "2026-06-21T03:45:31Z",
   "proof_state": "Pass",
   "solver_outcome": "SolvedVerified",
   "governed": true,
@@ -12,6 +12,7 @@
     {
       "source_kind": "foundation_evidence",
       "source_ref": "examples/personal_assistant_foundation_evidence_receipt.json",
+      "schema_ref": "schemas/personal_assistant_foundation_evidence_receipt.schema.json",
       "source_sha256": "a38fc95f9209afc3da99a3f2c83d2c4a4f06408497146ca09fbf8f49ff38e330",
       "receipt_id": "personal-assistant-foundation-evidence-7892c43aefaa8bb4",
       "schema_version": "personal_assistant.foundation_evidence_receipt.v1",
@@ -31,6 +32,7 @@
     {
       "source_kind": "readiness_index",
       "source_ref": "examples/personal_assistant_readiness_index_receipt.json",
+      "schema_ref": "schemas/personal_assistant_readiness_index_receipt.schema.json",
       "source_sha256": "3fbf9b2b99924b8c614b2dca72e2727357fe9d29472e5dd36f29f7b89cbd449a",
       "receipt_id": "personal-assistant-readiness-index-288cbaae88dce421",
       "schema_version": "personal_assistant.readiness_index_receipt.v1",
@@ -50,6 +52,7 @@
     {
       "source_kind": "coherence_ledger",
       "source_ref": "examples/personal_assistant_coherence_ledger_receipt.json",
+      "schema_ref": "schemas/personal_assistant_coherence_ledger_receipt.schema.json",
       "source_sha256": "554e1b678547c5c7d8c99e69aa64af74d7bb51936eaeeac69511add2f1de3765",
       "receipt_id": "personal-assistant-coherence-ledger-8c41be9862803f39",
       "schema_version": "personal_assistant.coherence_ledger_receipt.v1",
@@ -69,6 +72,7 @@
     {
       "source_kind": "authority_coverage",
       "source_ref": "examples/personal_assistant_authority_coverage_receipt.json",
+      "schema_ref": "schemas/personal_assistant_authority_coverage_receipt.schema.json",
       "source_sha256": "a6dc87c5222d8f380c7827dbac7585924bfe8b07f179a255c4d143a0a51e4095",
       "receipt_id": "personal-assistant-authority-coverage-ff6ddef1e2a65362",
       "schema_version": "personal_assistant.authority_coverage_receipt.v1",
@@ -88,6 +92,7 @@
     {
       "source_kind": "capsule_alignment",
       "source_ref": "examples/personal_assistant_capsule_alignment_receipt.json",
+      "schema_ref": "schemas/personal_assistant_capsule_alignment_receipt.schema.json",
       "source_sha256": "433e029dbc1dc18ebcabdbc8cb1a7524ad372160659d2c01f270cfb100cf9817",
       "receipt_id": "personal-assistant-capsule-alignment-4a7a102220b0ce4d",
       "schema_version": "personal_assistant.capsule_alignment_receipt.v1",
@@ -107,6 +112,7 @@
     {
       "source_kind": "policy_matrix",
       "source_ref": "examples/personal_assistant_policy_matrix_receipt.json",
+      "schema_ref": "schemas/personal_assistant_policy_matrix_receipt.schema.json",
       "source_sha256": "6a1c6c202ad353bda2ba98d06e4df94302337ca4c14173c0535d99f0c32ae660",
       "receipt_id": "personal-assistant-policy-matrix-7aecfbe83ddf4338",
       "schema_version": "personal_assistant.policy_matrix_receipt.v1",
@@ -126,6 +132,7 @@
     {
       "source_kind": "runtime_boundary",
       "source_ref": "examples/personal_assistant_runtime_boundary_receipt.json",
+      "schema_ref": "schemas/personal_assistant_runtime_boundary_receipt.schema.json",
       "source_sha256": "b87f85f4d4bdc0df0bf727795000593b9a18886be4c601c5fe1334bfda560c7b",
       "receipt_id": "personal-assistant-runtime-boundary-45d03b76e23dfdd3",
       "schema_version": "personal_assistant.runtime_boundary_receipt.v1",
@@ -145,6 +152,7 @@
     {
       "source_kind": "skill_readiness_catalog",
       "source_ref": "examples/personal_assistant_skill_readiness_catalog.json",
+      "schema_ref": "schemas/personal_assistant_skill_readiness_catalog.schema.json",
       "source_sha256": "d5e60467f1dc8daf146235689cfe99fa49dc777fbcf1c860323705a0cda6e507",
       "receipt_id": "personal-assistant-skill-readiness-catalog-8fd435fce2a6571b",
       "schema_version": "personal_assistant.skill_readiness_catalog.v1",
@@ -164,6 +172,7 @@
     {
       "source_kind": "dry_run_packet",
       "source_ref": "examples/personal_assistant_dry_run_packet.json",
+      "schema_ref": "schemas/personal_assistant_dry_run_packet.schema.json",
       "source_sha256": "8b929a2ae4d3f5002a38778b6d1672c1016acc18a88d96b28f5f5acd5757ef31",
       "receipt_id": "personal-assistant-dry-run-a666e3c5231fbc19",
       "schema_version": "personal_assistant.dry_run_packet.v1",
@@ -278,7 +287,7 @@
   "lineage": {
     "accepted_deltas": [
       {
-        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-20",
+        "delta_id": "delta-personal-assistant-foundation-closure-packet-2026-06-21",
         "reason": "Bound Personal Assistant Foundation Mode receipt chain without granting live authority.",
         "logged_in_lineage": true
       }
