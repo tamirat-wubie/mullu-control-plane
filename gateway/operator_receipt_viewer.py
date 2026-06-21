@@ -2724,18 +2724,39 @@ def _worker_failure_receipt(
     raw_receipt, source_event = _raw_worker_failure_receipt(command, events)
     if not isinstance(raw_receipt, Mapping):
         return None
+    metadata = raw_receipt.get("metadata") if isinstance(raw_receipt.get("metadata"), Mapping) else {}
     details = {
         key: _json_safe_value(raw_receipt[key])
         for key in (
             "schema_ref",
             "receipt_id",
+            "receipt_version",
+            "worker_dispatch_ref",
             "worker_receipt_id",
             "request_id",
+            "actor_id",
+            "worker_id",
             "command_id",
             "capability",
             "operation",
             "tenant_id",
             "lease_id",
+            "created_at",
+            "solver_outcome",
+            "receipt_state",
+            "failure_class",
+            "effect_status",
+            "rollback_required",
+            "recovery_required",
+            "failure_summary",
+            "completed_step_refs",
+            "failed_step_refs",
+            "partial_effect_refs",
+            "rollback_action_refs",
+            "recovery_action_refs",
+            "blocked_reason_refs",
+            "governance_guards",
+            "receipt_envelope",
             "failure_state",
             "reason",
             "partial_completion",
@@ -2750,6 +2771,10 @@ def _worker_failure_receipt(
         )
         if key in raw_receipt
     }
+    details.setdefault("worker_receipt_id", str(metadata.get("worker_receipt_id", "")))
+    details.setdefault("failure_state", _worker_failure_state(raw_receipt))
+    details.setdefault("recovery_action", _worker_failure_recovery_action(raw_receipt))
+    details.setdefault("source_receipt_hash", str(metadata.get("source_receipt_hash", "")))
     receipt_id = str(
         details.get("receipt_id")
         or command.redacted_payload.get("worker_failure_receipt_id")
@@ -2759,8 +2784,12 @@ def _worker_failure_receipt(
         "command_id": command.command_id,
         "worker_failure_receipt_id": receipt_id,
         "worker_receipt_id": str(details.get("worker_receipt_id", "")),
-        "source_receipt_hash": str(raw_receipt.get("source_receipt_hash", "")),
-        "failure_hash": str(raw_receipt.get("failure_hash", "")),
+        "source_receipt_hash": str(
+            raw_receipt.get("source_receipt_hash")
+            or metadata.get("source_receipt_hash")
+            or ""
+        ),
+        "failure_hash": str(raw_receipt.get("failure_hash") or metadata.get("failure_hash") or ""),
         "source_event_hash": source_event.event_hash if source_event is not None else "",
         "payload_hash": command.payload_hash,
         "trace_id": command.trace_id,
@@ -2768,17 +2797,53 @@ def _worker_failure_receipt(
         if isinstance(raw_receipt.get("evidence_refs"), list)
         else [],
     }
-    receipt_hash = str(raw_receipt.get("failure_hash", "")) or _stable_hash(
+    receipt_hash = str(raw_receipt.get("failure_hash") or metadata.get("failure_hash") or "") or _stable_hash(
         {"details": details, "evidence_refs": evidence_refs}
     )
     return {
         "receipt_type": "worker_failure_receipt",
         "receipt_id": receipt_id,
         "receipt_hash": receipt_hash,
-        "status": str(details.get("failure_state") or "recorded"),
+        "status": _worker_failure_state(raw_receipt),
         "details": details,
         "evidence_refs": evidence_refs,
     }
+
+
+def _worker_failure_state(raw_receipt: Mapping[str, Any]) -> str:
+    metadata = raw_receipt.get("metadata") if isinstance(raw_receipt.get("metadata"), Mapping) else {}
+    legacy_state = str(
+        raw_receipt.get("failure_state")
+        or metadata.get("legacy_failure_state")
+        or ""
+    ).strip()
+    if legacy_state:
+        return legacy_state
+    receipt_state = str(raw_receipt.get("receipt_state") or "").strip()
+    if receipt_state == "PARTIAL_EXECUTION_RECORDED":
+        return "partial_completion"
+    if receipt_state == "FAILED_BEFORE_EXECUTION":
+        return "rejected_before_handler"
+    if receipt_state:
+        return receipt_state.lower()
+    return "recorded"
+
+
+def _worker_failure_recovery_action(raw_receipt: Mapping[str, Any]) -> str:
+    metadata = raw_receipt.get("metadata") if isinstance(raw_receipt.get("metadata"), Mapping) else {}
+    legacy_action = str(
+        raw_receipt.get("recovery_action")
+        or metadata.get("legacy_recovery_action")
+        or ""
+    ).strip()
+    if legacy_action:
+        return legacy_action
+    recovery_refs = raw_receipt.get("recovery_action_refs")
+    if isinstance(recovery_refs, list) and recovery_refs:
+        return str(recovery_refs[0]).rsplit("/", 1)[-1].replace("-", "_")
+    if raw_receipt.get("recovery_required") is True:
+        return "operator_review"
+    return ""
 
 
 def _raw_worker_failure_receipt(
@@ -3283,8 +3348,8 @@ def _current_task_row(command_ledger: Any, command: CommandEnvelope) -> dict[str
             task_status == "waiting_for_approval" and bool(approval_request_id)
         ),
         "worker_failure_receipt_id": str(worker_failure.get("receipt_id", "")),
-        "worker_failure_state": str(worker_failure.get("failure_state", "")),
-        "worker_failure_recovery_action": str(worker_failure.get("recovery_action", "")),
+        "worker_failure_state": _worker_failure_state(worker_failure) if worker_failure else "",
+        "worker_failure_recovery_action": _worker_failure_recovery_action(worker_failure) if worker_failure else "",
         "command_state": command.state.value,
         "task_status": task_status,
         "response_state": response_state,

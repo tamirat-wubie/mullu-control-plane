@@ -57,10 +57,16 @@ def test_worker_failure_receipt_validates_partial_completion() -> None:
     errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), failure_receipt.to_dict())
 
     assert errors == []
+    assert failure_receipt.receipt_version == "worker_failure_receipt.v1"
+    assert failure_receipt.receipt_state == "PARTIAL_EXECUTION_RECORDED"
+    assert failure_receipt.effect_status == "partial_effect_recorded"
+    assert failure_receipt.rollback_required is True
+    assert failure_receipt.recovery_required is True
     assert failure_receipt.failure_state == "partial_completion"
     assert failure_receipt.recovery_action == "safe_halt"
     assert failure_receipt.source_receipt_hash == worker_receipt.receipt_hash
     assert failure_receipt.terminal_closure_required is True
+    assert failure_receipt.governance_guards["terminal_closure"] is False
 
 
 def test_worker_failure_receipt_classifies_rejected_before_handler() -> None:
@@ -82,6 +88,10 @@ def test_worker_failure_receipt_classifies_rejected_before_handler() -> None:
 
     assert calls == []
     assert worker_receipt.status == "rejected"
+    assert failure_receipt.receipt_state == "FAILED_BEFORE_EXECUTION"
+    assert failure_receipt.effect_status == "no_effect_confirmed"
+    assert failure_receipt.solver_outcome == "GovernanceBlocked"
+    assert failure_receipt.recovery_required is False
     assert failure_receipt.failure_state == "rejected_before_handler"
     assert failure_receipt.recovery_action == "no_retry"
     assert failure_receipt.receipt_is_not_terminal_closure is True
