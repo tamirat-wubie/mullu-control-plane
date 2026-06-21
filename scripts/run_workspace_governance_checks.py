@@ -233,6 +233,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_approved_branch_workspace_creation_preflight",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_planned_file_change_collection_preflight",
             (
                 python_executable,

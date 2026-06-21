@@ -8,6 +8,7 @@ Dependencies: checked-in Personal Assistant evidence receipts.
 Invariants:
   - Collection reads local JSON evidence only.
   - The packet grants no execution, connector, memory, deployment, or customer authority.
+  - No-effect boundary records are emitted from the canonical no-effect projection.
   - The packet is not live activation, product readiness, or terminal closure.
 """
 
@@ -109,6 +110,21 @@ NO_EFFECT_FLAGS = (
     "raw_connector_payload_serialized",
 )
 
+NO_EFFECT_BOUNDARY = {
+    "execution_authority_granted": False,
+    "live_connector_execution_allowed": False,
+    "connector_mutation_allowed": False,
+    "external_effect_allowed": False,
+    "system_of_record_write_allowed": False,
+    "memory_write_allowed": False,
+    "deployment_mutation_allowed": False,
+    "money_legal_public_allowed": False,
+    "production_ready_claim_allowed": False,
+    "customer_ready_claim_allowed": False,
+    "live_nested_mind_activation_allowed": False,
+    "terminal_closure_claim_allowed": False,
+}
+
 AUTHORITY_DENIALS = (
     "live_connector_execution",
     "connector_mutation",
@@ -161,20 +177,7 @@ def collect_personal_assistant_foundation_closure_packet(
         }
         for authority in AUTHORITY_DENIALS
     ]
-    no_effect_boundary = {
-        "execution_authority_granted": False,
-        "live_connector_execution_allowed": False,
-        "connector_mutation_allowed": False,
-        "external_effect_allowed": False,
-        "system_of_record_write_allowed": False,
-        "memory_write_allowed": False,
-        "deployment_mutation_allowed": False,
-        "money_legal_public_allowed": False,
-        "production_ready_claim_allowed": False,
-        "customer_ready_claim_allowed": False,
-        "live_nested_mind_activation_allowed": False,
-        "terminal_closure_claim_allowed": False,
-    }
+    no_effect_boundary = dict(NO_EFFECT_BOUNDARY)
     packet_closed = (
         all_sources_bound
         and all_sources_schema_versioned

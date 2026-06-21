@@ -63,6 +63,9 @@ def test_approval_queue_enqueues_p4_packet_without_execution() -> None:
     assert validate_personal_assistant_receipt_payload(receipt) == ()
     assert packet["approval_state"] == "requested"
     assert packet["explicit_approval_required"] is True
+    assert record.as_dict()["review_packet_ref"]["source_ref"] == "examples/personal_assistant_approval_review_packet.json"
+    assert record.as_dict()["review_packet_ref"]["payload_digest_only"] is True
+    assert record.as_dict()["review_packet_ref"]["execution_allowed"] is False
     assert receipt["decision"] == "approval_required"
     assert receipt["approval_required"] is True
     assert "proposed_action_not_executed" in receipt["actions_not_taken"]
@@ -104,6 +107,9 @@ def test_approval_queue_read_model_matches_schema_and_denies_execution() -> None
     assert workflow["approval_decision_executes_action"] is False
     assert workflow["execution_allowed"] is False
     assert workflow_item["draft_actions"][0]["action_id"] == "send_prepared_email_draft"
+    assert workflow_item["review_packet_ref"] == read_model["records"][0]["review_packet_ref"]
+    assert workflow_item["review_packet_ref"]["review_packet_id"] == "pa_approval_review_approval_review_packet_001"
+    assert workflow_item["review_packet_ref"]["approval_enqueued"] is False
     assert workflow_item["risk_class"]["risk_level"] == "P4"
     assert workflow_item["requested_approval"]["approval_state"] == "requested"
     assert workflow_item["decision"]["current_decision"] == "pending"
@@ -279,6 +285,24 @@ def test_approval_queue_validator_rejects_workflow_authority_drift(tmp_path: Pat
     assert "workflow_v0.items[0].decision.approval_is_execution must be false" in result.errors
     assert "workflow_v0.items[0].effect_boundary.external_send_allowed must be false" in result.errors
     assert "workflow_v0.items[0].receipt.latest_receipt_id must match latest receipt" in result.errors
+
+
+def test_approval_queue_validator_rejects_review_packet_ref_drift(tmp_path: Path) -> None:
+    payload = json.loads(DEFAULT_QUEUE.read_text(encoding="utf-8"))
+    payload["records"][0]["review_packet_ref"]["source_sha256"] = "0" * 64
+    payload["records"][0]["review_packet_ref"]["payload_digest_only"] = False
+    payload["records"][0]["review_packet_ref"]["execution_allowed"] = True
+    payload["workflow_v0"]["items"][0]["review_packet_ref"]["review_packet_id"] = "pa_approval_review_drifted"
+    candidate = tmp_path / "review_drift_approval_queue.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_personal_assistant_approval_queue(queue_path=candidate)
+
+    assert result.valid is False
+    assert "records[0].review_packet_ref.source_sha256 does not match approval review packet" in result.errors
+    assert "records[0].review_packet_ref.payload_digest_only must be true" in result.errors
+    assert "records[0].review_packet_ref.execution_allowed must be false" in result.errors
+    assert "workflow_v0.items[0].review_packet_ref must match record review_packet_ref" in result.errors
 
 
 def test_approval_proposal_from_p4_plan_can_enqueue_without_execution() -> None:
