@@ -89,6 +89,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-loopstatus-projection:1"
     },
     {
+      "path": "schemas/agentic_service_harness_task_creation_admission_preflight.schema.json",
+      "schema_id": "agentic-service-harness-task-creation-admission-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-task-creation-admission-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
