@@ -1,5 +1,5 @@
 {
-  "check_count": 265,
+  "check_count": 266,
   "checks": [
     {
       "args": [
@@ -204,6 +204,19 @@
         "scripts/validate_agentic_service_harness_dashboard_data_contract.py"
       ],
       "name": "agentic_service_harness_dashboard_data_contract",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_adapter_registry_contract.py"
+      ],
+      "name": "agentic_service_harness_adapter_registry_contract",
       "passed": true,
       "return_code": 0,
       "stderr": "",
