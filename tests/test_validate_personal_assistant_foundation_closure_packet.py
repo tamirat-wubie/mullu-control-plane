@@ -16,6 +16,7 @@ Invariants:
   - Authority denials must replay from canonical checked-in denial records.
   - No-effect boundaries must replay from canonical checked-in boundary records.
   - Closure summaries must match recomputed source receipt aggregates.
+  - Lineage delta records must replay from recomputed closure state.
   - Authority denials must remain complete.
   - Secret-shaped values cannot be serialized into closure packets.
 """
@@ -131,6 +132,29 @@ def test_validate_foundation_closure_packet_rejects_packet_id_body_drift(tmp_pat
     assert validation.foundation_closure_packet_closed is True
     assert any(step.name == "packet id binding" and not step.passed for step in validation.steps)
     assert any(step.name == "packet id" and step.passed for step in validation.steps)
+    assert any(step.name == "schema contract" and step.passed for step in validation.steps)
+
+
+def test_validate_foundation_closure_packet_rejects_lineage_projection_drift(
+    tmp_path: Path,
+) -> None:
+    packet = collect_personal_assistant_foundation_closure_packet(now_utc=FIXED_NOW)
+    packet["lineage"]["accepted_deltas"][0]["reason"] = "Bound source receipts with an amended local note."  # type: ignore[index]
+    packet["packet_id"] = closure_validator._expected_packet_id(packet)  # type: ignore[attr-defined]
+    packet_path = _write_json(tmp_path, "packet.json", packet)
+
+    validation = validate_personal_assistant_foundation_closure_packet(
+        packet_path=packet_path,
+        require_closed=True,
+    )
+
+    assert validation.valid is False
+    assert validation.foundation_closure_packet_closed is True
+    assert any(
+        step.name == "lineage replay projection" and not step.passed
+        for step in validation.steps
+    )
+    assert any(step.name == "packet id binding" and step.passed for step in validation.steps)
     assert any(step.name == "schema contract" and step.passed for step in validation.steps)
 
 
