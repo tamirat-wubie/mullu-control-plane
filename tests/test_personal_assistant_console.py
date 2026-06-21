@@ -181,6 +181,8 @@ def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
 
     assert payload["approval_queue"]["approval_count"] == 1
     assert payload["approval_queue"]["records"][0]["approval_id"] == record.approval_id
+    assert payload["approval_queue"]["records"][0]["review_packet_ref"]["payload_digest_only"] is True
+    assert payload["approval_queue"]["records"][0]["review_packet_ref"]["execution_allowed"] is False
     assert payload["memory"]["raw_private_payload_storage_allowed"] is False
     assert payload["memory"]["secret_value_storage_allowed"] is False
     assert payload["memory"]["metadata"]["raw_private_payload_storage_allowed"] is False
