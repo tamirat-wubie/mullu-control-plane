@@ -31,6 +31,7 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
         return ""
     effect = _mapping(walkthrough.get("effect_summary"))
     claim = _mapping(walkthrough.get("claim_summary"))
+    state = _automation_state_summary(walkthrough=walkthrough, effect=effect, claim=claim)
     rows = (
         ("Walkthrough", walkthrough.get("walkthrough_id", "")),
         ("Draft Status", walkthrough.get("draft_status", "")),
@@ -55,11 +56,46 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
     return f"""
   <section>
     <h2>Invoice Email Draft Walkthrough</h2>
+    <p><strong>User State:</strong> {escape(state["user_state"])}</p>
+    <p><strong>Next Safe Step:</strong> {escape(state["next_safe_step"])}</p>
+    <p><strong>Approval Prompt:</strong> {escape(state["approval_prompt"])}</p>
     <table>
       <thead><tr><th>Signal</th><th>Status</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
   </section>"""
+
+
+def _automation_state_summary(
+    *,
+    walkthrough: Mapping[str, Any],
+    effect: Mapping[str, Any],
+    claim: Mapping[str, Any],
+) -> dict[str, str]:
+    approval_required = walkthrough.get("approval_required_before_send") is True
+    external_effect_blocked = all(
+        boundary is False
+        for boundary in (
+            effect.get("external_send_allowed", False),
+            effect.get("provider_draft_creation_allowed", False),
+            effect.get("invoice_payment_allowed", False),
+            effect.get("memory_write_allowed", False),
+            effect.get("customer_readiness_claim_allowed", False),
+            claim.get("draft_preview_is_send_authority", False),
+            claim.get("approval_review_is_execution", False),
+        )
+    )
+    if approval_required and external_effect_blocked:
+        return {
+            "user_state": "Drafted for review",
+            "next_safe_step": "Approve to send later",
+            "approval_prompt": "No email will be sent, no provider draft will be created, and no invoice will be paid until approval is explicitly granted.",
+        }
+    return {
+        "user_state": "Blocked",
+        "next_safe_step": "Review effect boundary before continuing",
+        "approval_prompt": "The walkthrough could not be compressed into a safe draft-only user state.",
+    }
 
 
 def _mapping(value: object) -> dict[str, Any]:
