@@ -85,5 +85,7 @@ def test_first_usable_demo_console_route_rejects_authority_drift(monkeypatch) ->
     response = _client().get(route_module.ROUTE_PATH)
 
     assert response.status_code == 409
-    assert response.json()["detail"]["error"] == "first_usable_demo_console_authority_drift"
-    assert "effect_boundary.execution_allowed must be false" in response.json()["detail"]["message"]
+    assert response.json()["detail"] == {
+        "error": "first_usable_demo_console_authority_drift",
+        "message": "first usable demo console authority fields must remain false",
+    }
