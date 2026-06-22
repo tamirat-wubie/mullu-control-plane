@@ -1,0 +1,33 @@
+name: Personal Assistant Invoice Email Walkthrough
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "codex/*"]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  validate-walkthrough:
+    name: Validate invoice email walkthrough
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
+
+      - name: Validate walkthrough fixture
+        run: python scripts/validate_personal_assistant_invoice_email_walkthrough.py --json
+
+      - name: Run walkthrough tests
+        run: python -m pytest tests/test_validate_personal_assistant_invoice_email_walkthrough.py -q
