@@ -42,6 +42,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     payload = response.json()
     first_demo = payload["first_usable_demo"]
     walkthrough = first_demo["invoice_email_walkthrough"]
+    approval_packet = walkthrough["approval_review_packet"]
     binding = payload["first_usable_demo_binding"]
     serialized = json.dumps(payload, sort_keys=True)
 
@@ -62,6 +63,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert first_demo["fixture_backed"] is True
     assert first_demo["walkthroughs"]["item_count"] == 1
     assert first_demo["walkthroughs"]["draft_only_walkthrough_bound"] is True
+    assert first_demo["walkthroughs"]["approval_review_packet_bound"] is True
     assert first_demo["walkthroughs"]["external_send_allowed"] is False
     assert first_demo["walkthroughs"]["provider_draft_creation_allowed"] is False
     assert first_demo["walkthroughs"]["invoice_payment_allowed"] is False
@@ -76,6 +78,8 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert first_demo["effect_boundary"]["customer_readiness_claim_allowed"] is False
     assert first_demo["assurance"]["packet_valid"] is True
     assert first_demo["assurance"]["invoice_email_walkthrough_valid"] is True
+    assert first_demo["assurance"]["approval_review_packet_bound"] is True
+    assert first_demo["assurance"]["approval_review_packet_is_execution"] is False
     assert first_demo["assurance"]["authority_drift_detected"] is False
     assert first_demo["assurance"]["live_connector_execution_allowed"] is False
     assert walkthrough["read_model_id"] == "invoice_email_draft_walkthrough_panel_v1"
@@ -85,6 +89,21 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert walkthrough["draft_status"] == "draft_preview_only"
     assert walkthrough["approval_required_before_send"] is True
     assert walkthrough["approval_is_execution"] is False
+    assert walkthrough["approval_packet_ref"] == "examples/personal_assistant_approval_review_packet.json"
+    assert approval_packet["review_packet_id"] == "pa_approval_review_approval_review_packet_001"
+    assert approval_packet["bound"] is True
+    assert approval_packet["preview_only"] is True
+    assert approval_packet["review_state"] == "preview_only"
+    assert approval_packet["risk_level"] == "P4"
+    assert approval_packet["proposed_action_count"] == 1
+    assert approval_packet["effect_summary"]["approval_is_execution"] is False
+    assert approval_packet["effect_summary"]["approval_enqueued"] is False
+    assert approval_packet["effect_summary"]["external_send_allowed"] is False
+    assert approval_packet["effect_summary"]["connector_mutation_allowed"] is False
+    assert approval_packet["effect_summary"]["memory_write_allowed"] is False
+    assert "external_send" in approval_packet["denied_authorities"]
+    assert "approval_enqueue" in approval_packet["denied_authorities"]
+    assert "send" in approval_packet["forbidden_without_approval"]
     assert walkthrough["effect_summary"]["execution_allowed"] is False
     assert walkthrough["effect_summary"]["external_send_allowed"] is False
     assert walkthrough["effect_summary"]["provider_draft_creation_allowed"] is False
@@ -97,6 +116,9 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert walkthrough["claim_summary"]["approval_review_is_execution"] is False
     assert walkthrough["assurance"]["walkthrough_valid"] is True
     assert walkthrough["assurance"]["draft_preview_only"] is True
+    assert walkthrough["assurance"]["approval_review_packet_bound"] is True
+    assert walkthrough["assurance"]["approval_review_packet_is_execution"] is False
+    assert walkthrough["assurance"]["approval_enqueue_allowed"] is False
     assert walkthrough["assurance"]["external_send_allowed"] is False
     assert walkthrough["assurance"]["provider_draft_creation_allowed"] is False
     assert "email_not_sent" in walkthrough["actions_not_taken"]
@@ -112,6 +134,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert binding["customer_readiness_claim_allowed"] is False
     assert "examples/first_usable_demo_packet.json" in payload["evidence_refs"]
     assert "examples/personal_assistant_invoice_email_walkthrough.json" in payload["evidence_refs"]
+    assert "examples/personal_assistant_approval_review_packet.json" in payload["evidence_refs"]
     assert "mcoi/mcoi_runtime/personal_assistant/console_first_demo.py" in payload["evidence_refs"]
     assert "raw_private_connector_payload" not in serialized
     assert "secret-worker-token" not in serialized
@@ -139,6 +162,13 @@ def test_gateway_personal_assistant_console_html_view_renders_invoice_walkthroug
     assert "Draft Status" in body
     assert "draft_preview_only" in body
     assert "Approval Required Before Send" in body
+    assert "Approval Packet" in body
+    assert "pa_approval_review_approval_review_packet_001" in body
+    assert "Approval Review State" in body
+    assert "preview_only" in body
+    assert "Approval Proposed Action Count" in body
+    assert "Approval Enqueued" in body
+    assert "Approval Packet Is Execution" in body
     assert "Provider Draft Creation Allowed" in body
     assert "Invoice Payment Allowed" in body
     assert "Customer Readiness Claim Allowed" in body
