@@ -1,0 +1,37 @@
+name: PR Hygiene Guard
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  pr-hygiene:
+    name: Validate PR hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Build changed-file manifest
+        run: |
+          mkdir -p .change_assurance
+          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
+          git diff --name-status "origin/${GITHUB_BASE_REF:-main}"...HEAD > .change_assurance/pr_changed_files.txt
+          cat .change_assurance/pr_changed_files.txt
+
+      - name: Validate PR hygiene
+        run: python scripts/validate_pr_hygiene.py --changed-files .change_assurance/pr_changed_files.txt --json
+
+      - name: Run PR hygiene tests
+        run: python -m pytest tests/test_validate_pr_hygiene.py -q
