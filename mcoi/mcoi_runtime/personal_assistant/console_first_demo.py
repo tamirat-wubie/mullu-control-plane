@@ -158,12 +158,12 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
             raise PersonalAssistantInvariantError(f"first usable demo claim boundary drift: {field}")
     lane = _sequence_of_mappings(packet.get("first_demo_lane"))
     user_story = _mapping(packet.get("canonical_user_story"))
-    invoice_walkthrough = _build_invoice_email_walkthrough_read_model(generated_at=generated_at)
+    invoice_walkthrough = _build_invoice_email_walkthrough_panel(generated_at=generated_at)
     evidence_refs = list(
         dict.fromkeys(
             (
                 *(str(step.get("evidence_ref", "")) for step in lane if str(step.get("evidence_ref", ""))),
-                "examples/personal_assistant_invoice_email_walkthrough.json",
+                invoice_walkthrough["source_walkthrough_ref"],
                 *invoice_walkthrough["evidence_refs"],
             )
         )
@@ -216,17 +216,20 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
     }
 
 
-def _build_invoice_email_walkthrough_read_model(*, generated_at: str) -> dict[str, Any]:
+def _build_invoice_email_walkthrough_panel(*, generated_at: str) -> dict[str, Any]:
     payload = _load_json(_INVOICE_EMAIL_WALKTHROUGH, label="invoice email walkthrough")
     effect_boundary = _mapping(payload.get("effect_boundary"))
     claim_boundary = _mapping(payload.get("claim_boundary"))
+    draft_projection = _mapping(payload.get("draft_projection"))
+    approval_review = _mapping(payload.get("approval_review"))
+    receipt_projection = _mapping(payload.get("receipt_projection"))
+
     for field in _REQUIRED_FALSE_WALKTHROUGH_EFFECT_FIELDS:
         if effect_boundary.get(field) is not False:
             raise PersonalAssistantInvariantError(f"invoice email walkthrough effect drift: {field}")
     for field in _REQUIRED_FALSE_WALKTHROUGH_CLAIM_FIELDS:
         if claim_boundary.get(field) is not False:
             raise PersonalAssistantInvariantError(f"invoice email walkthrough claim drift: {field}")
-    draft_projection = _mapping(payload.get("draft_projection"))
     for field in (
         "execution_allowed",
         "external_send_allowed",
@@ -238,21 +241,19 @@ def _build_invoice_email_walkthrough_read_model(*, generated_at: str) -> dict[st
             raise PersonalAssistantInvariantError(f"invoice email draft projection drift: {field}")
     if draft_projection.get("approval_required_before_send") is not True:
         raise PersonalAssistantInvariantError("invoice email draft projection must require approval before send")
-    approval_review = _mapping(payload.get("approval_review"))
     if approval_review.get("approval_required") is not True:
         raise PersonalAssistantInvariantError("invoice email walkthrough approval must be required")
     if approval_review.get("approval_is_execution") is not False:
         raise PersonalAssistantInvariantError("invoice email walkthrough approval must not execute")
-    receipt_projection = _mapping(payload.get("receipt_projection"))
     actions_not_taken = set(_sequence_of_text(receipt_projection.get("actions_not_taken")))
     missing_actions_not_taken = sorted(set(_REQUIRED_ACTIONS_NOT_TAKEN) - actions_not_taken)
     if missing_actions_not_taken:
         raise PersonalAssistantInvariantError(
             "invoice email walkthrough missing actions_not_taken: " + ", ".join(missing_actions_not_taken)
         )
-    input_projection = _mapping(payload.get("input_projection"))
+
     return {
-        "read_model_id": "invoice_email_draft_walkthrough_read_model_v1",
+        "read_model_id": "invoice_email_draft_walkthrough_panel_v1",
         "source_walkthrough_ref": "examples/personal_assistant_invoice_email_walkthrough.json",
         "walkthrough_id": str(payload.get("walkthrough_id", "")),
         "source_demo_packet_id": str(payload.get("source_demo_packet_id", "")),
@@ -262,20 +263,34 @@ def _build_invoice_email_walkthrough_read_model(*, generated_at: str) -> dict[st
         "fixture_backed": True,
         "foundation_only": True,
         "operator_request": str(payload.get("operator_request", "")),
-        "input_projection": dict(input_projection),
-        "draft_projection": dict(draft_projection),
-        "approval_review": dict(approval_review),
-        "receipt_projection": dict(receipt_projection),
-        "effect_boundary": dict(effect_boundary),
-        "claim_boundary": dict(claim_boundary),
+        "draft_status": str(draft_projection.get("status", "")),
+        "draft_type": str(draft_projection.get("draft_type", "")),
+        "approval_required_before_send": True,
+        "approval_is_execution": False,
+        "actions_not_taken": sorted(actions_not_taken),
         "evidence_refs": _sequence_of_text(payload.get("evidence_refs")),
         "next_safe_actions": _sequence_of_text(payload.get("next_safe_actions")),
+        "effect_summary": {
+            "execution_allowed": False,
+            "external_send_allowed": False,
+            "provider_draft_creation_allowed": False,
+            "invoice_payment_allowed": False,
+            "money_movement_allowed": False,
+            "memory_write_allowed": False,
+            "deployment_mutation_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+        "claim_summary": {
+            "draft_preview_is_send_authority": False,
+            "approval_review_is_execution": False,
+            "invoice_context_is_payment_authority": False,
+            "console_visibility_is_customer_readiness": False,
+        },
         "assurance": {
             "assurance_id": "invoice_email_draft_walkthrough_console_panel_assurance",
             "walkthrough_valid": True,
             "draft_preview_only": True,
             "approval_required_before_send": True,
-            "raw_private_payload_serialized": False,
             "provider_draft_creation_allowed": False,
             "external_send_allowed": False,
             "invoice_payment_allowed": False,
