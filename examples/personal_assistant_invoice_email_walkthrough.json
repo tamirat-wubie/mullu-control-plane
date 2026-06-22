@@ -1,0 +1,96 @@
+{
+  "schema_version": "personal_assistant.invoice_email_walkthrough.v1",
+  "walkthrough_id": "personal_assistant_invoice_email_draft_walkthrough_v1",
+  "source_demo_packet_ref": "examples/first_usable_demo_packet.json",
+  "source_demo_packet_id": "first_usable_demo_packet_v1",
+  "foundation_only": true,
+  "governed": true,
+  "fixture_backed": true,
+  "read_only": true,
+  "walkthrough_goal": "Show a governed invoice-related email draft preview without external effects.",
+  "operator_request": "Review one invoice-related vendor request and prepare a reply draft for operator review.",
+  "input_projection": {
+    "source": "operator_supplied_redacted_projection",
+    "message_ref": "msg:redacted:invoice-001",
+    "sender_label": "known vendor",
+    "recipient_label": "accounts payable operator",
+    "subject_digest": "invoice timeline follow-up",
+    "thread_summary_digest": "Vendor asked whether the invoice can be reviewed this week.",
+    "private_payload_serialized": false,
+    "raw_private_payload_serialized": false
+  },
+  "draft_projection": {
+    "projection_id": "pa_invoice_email_draft_projection_001",
+    "skill_id": "email.response.draft",
+    "draft_type": "email_response",
+    "status": "draft_preview_only",
+    "body_digest": "Acknowledge receipt, state that the operator will review the invoice, avoid promising payment timing, and request approval before sending.",
+    "approval_required_before_send": true,
+    "external_send_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "connector_mutation_allowed": false,
+    "provider_draft_creation_allowed": false,
+    "execution_allowed": false
+  },
+  "approval_review": {
+    "approval_required": true,
+    "approval_scope": "per_message",
+    "approval_is_execution": false,
+    "risk_level": "P4",
+    "operator_must_review_before_send": true,
+    "approval_packet_ref": "examples/personal_assistant_approval_review_packet.json"
+  },
+  "receipt_projection": {
+    "receipt_id": "pa_invoice_email_draft_walkthrough_receipt_001",
+    "receipt_kind": "personal_assistant_invoice_email_walkthrough",
+    "actions_taken": [
+      "redacted_projection_reviewed",
+      "email_draft_preview_prepared",
+      "approval_requirement_recorded",
+      "no_effect_receipt_recorded"
+    ],
+    "actions_not_taken": [
+      "email_not_sent",
+      "provider_draft_not_created",
+      "connector_state_not_mutated",
+      "invoice_not_paid",
+      "memory_not_written",
+      "deployment_not_mutated",
+      "customer_readiness_not_claimed"
+    ],
+    "success_claim_allowed": false,
+    "terminal_closure_allowed": false
+  },
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "mailbox_read_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "external_send_allowed": false,
+    "provider_draft_creation_allowed": false,
+    "invoice_payment_allowed": false,
+    "money_movement_allowed": false,
+    "connector_mutation_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "public_launch_claim_allowed": false
+  },
+  "claim_boundary": {
+    "draft_preview_is_send_authority": false,
+    "approval_review_is_execution": false,
+    "invoice_context_is_payment_authority": false,
+    "console_visibility_is_customer_readiness": false
+  },
+  "evidence_refs": [
+    "examples/first_usable_demo_packet.json",
+    "examples/personal_assistant_approval_review_packet.json",
+    "examples/personal_assistant_draft_projection.json",
+    "governance/personal_assistant_approval_matrix.yaml"
+  ],
+  "next_safe_actions": [
+    "render walkthrough in console read model",
+    "add approval-review packet linkage",
+    "require explicit operator approval before any external send promotion"
+  ]
+}
