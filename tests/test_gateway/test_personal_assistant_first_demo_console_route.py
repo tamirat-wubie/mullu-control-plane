@@ -78,31 +78,30 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert first_demo["assurance"]["invoice_email_walkthrough_valid"] is True
     assert first_demo["assurance"]["authority_drift_detected"] is False
     assert first_demo["assurance"]["live_connector_execution_allowed"] is False
-    assert walkthrough["read_model_id"] == "invoice_email_draft_walkthrough_read_model_v1"
+    assert walkthrough["read_model_id"] == "invoice_email_draft_walkthrough_panel_v1"
     assert walkthrough["walkthrough_id"] == "personal_assistant_invoice_email_draft_walkthrough_v1"
     assert walkthrough["read_only"] is True
     assert walkthrough["fixture_backed"] is True
-    assert walkthrough["draft_projection"]["status"] == "draft_preview_only"
-    assert walkthrough["draft_projection"]["approval_required_before_send"] is True
-    assert walkthrough["draft_projection"]["execution_allowed"] is False
-    assert walkthrough["draft_projection"]["external_send_allowed"] is False
-    assert walkthrough["draft_projection"]["provider_draft_creation_allowed"] is False
-    assert walkthrough["approval_review"]["approval_required"] is True
-    assert walkthrough["approval_review"]["approval_is_execution"] is False
-    assert walkthrough["effect_boundary"]["mailbox_read_allowed"] is False
-    assert walkthrough["effect_boundary"]["external_send_allowed"] is False
-    assert walkthrough["effect_boundary"]["provider_draft_creation_allowed"] is False
-    assert walkthrough["effect_boundary"]["invoice_payment_allowed"] is False
-    assert walkthrough["effect_boundary"]["money_movement_allowed"] is False
-    assert walkthrough["effect_boundary"]["memory_write_allowed"] is False
-    assert walkthrough["effect_boundary"]["deployment_mutation_allowed"] is False
-    assert walkthrough["effect_boundary"]["customer_readiness_claim_allowed"] is False
-    assert walkthrough["claim_boundary"]["draft_preview_is_send_authority"] is False
-    assert walkthrough["claim_boundary"]["approval_review_is_execution"] is False
+    assert walkthrough["draft_status"] == "draft_preview_only"
+    assert walkthrough["approval_required_before_send"] is True
+    assert walkthrough["approval_is_execution"] is False
+    assert walkthrough["effect_summary"]["execution_allowed"] is False
+    assert walkthrough["effect_summary"]["external_send_allowed"] is False
+    assert walkthrough["effect_summary"]["provider_draft_creation_allowed"] is False
+    assert walkthrough["effect_summary"]["invoice_payment_allowed"] is False
+    assert walkthrough["effect_summary"]["money_movement_allowed"] is False
+    assert walkthrough["effect_summary"]["memory_write_allowed"] is False
+    assert walkthrough["effect_summary"]["deployment_mutation_allowed"] is False
+    assert walkthrough["effect_summary"]["customer_readiness_claim_allowed"] is False
+    assert walkthrough["claim_summary"]["draft_preview_is_send_authority"] is False
+    assert walkthrough["claim_summary"]["approval_review_is_execution"] is False
     assert walkthrough["assurance"]["walkthrough_valid"] is True
     assert walkthrough["assurance"]["draft_preview_only"] is True
     assert walkthrough["assurance"]["external_send_allowed"] is False
     assert walkthrough["assurance"]["provider_draft_creation_allowed"] is False
+    assert "email_not_sent" in walkthrough["actions_not_taken"]
+    assert "provider_draft_not_created" in walkthrough["actions_not_taken"]
+    assert "invoice_not_paid" in walkthrough["actions_not_taken"]
     assert binding["binding_state"] == "bound_to_existing_console_route"
     assert binding["execution_allowed"] is False
     assert binding["live_connector_execution_allowed"] is False
