@@ -41,6 +41,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     post_response = client.post("/api/v1/console/personal-assistant", json={})
     payload = response.json()
     first_demo = payload["first_usable_demo"]
+    walkthrough = first_demo["invoice_email_walkthrough"]
     binding = payload["first_usable_demo_binding"]
     serialized = json.dumps(payload, sort_keys=True)
 
@@ -48,6 +49,8 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert post_response.status_code == 405
     assert payload["governed"] is True
     assert payload["sections"]["first_usable_demo"]["item_count"] == 1
+    assert payload["sections"]["first_usable_demo"]["walkthrough_count"] == 1
+    assert payload["sections"]["first_usable_demo"]["draft_only_walkthrough_bound"] is True
     assert payload["sections"]["first_usable_demo"]["execution_allowed"] is False
     assert payload["sections"]["first_usable_demo"]["live_connector_execution_allowed"] is False
     assert payload["sections"]["first_usable_demo"]["external_send_allowed"] is False
@@ -57,6 +60,12 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert first_demo["demo_name"] == "Governed Personal Assistant First Usable Demo"
     assert first_demo["read_only"] is True
     assert first_demo["fixture_backed"] is True
+    assert first_demo["walkthroughs"]["item_count"] == 1
+    assert first_demo["walkthroughs"]["draft_only_walkthrough_bound"] is True
+    assert first_demo["walkthroughs"]["external_send_allowed"] is False
+    assert first_demo["walkthroughs"]["provider_draft_creation_allowed"] is False
+    assert first_demo["walkthroughs"]["invoice_payment_allowed"] is False
+    assert first_demo["walkthroughs"]["customer_readiness_claim_allowed"] is False
     assert first_demo["effect_boundary"]["execution_allowed"] is False
     assert first_demo["effect_boundary"]["live_connector_execution_allowed"] is False
     assert first_demo["effect_boundary"]["connector_mutation_allowed"] is False
@@ -66,8 +75,33 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert first_demo["effect_boundary"]["deployment_mutation_allowed"] is False
     assert first_demo["effect_boundary"]["customer_readiness_claim_allowed"] is False
     assert first_demo["assurance"]["packet_valid"] is True
+    assert first_demo["assurance"]["invoice_email_walkthrough_valid"] is True
     assert first_demo["assurance"]["authority_drift_detected"] is False
     assert first_demo["assurance"]["live_connector_execution_allowed"] is False
+    assert walkthrough["read_model_id"] == "invoice_email_draft_walkthrough_panel_v1"
+    assert walkthrough["walkthrough_id"] == "personal_assistant_invoice_email_draft_walkthrough_v1"
+    assert walkthrough["read_only"] is True
+    assert walkthrough["fixture_backed"] is True
+    assert walkthrough["draft_status"] == "draft_preview_only"
+    assert walkthrough["approval_required_before_send"] is True
+    assert walkthrough["approval_is_execution"] is False
+    assert walkthrough["effect_summary"]["execution_allowed"] is False
+    assert walkthrough["effect_summary"]["external_send_allowed"] is False
+    assert walkthrough["effect_summary"]["provider_draft_creation_allowed"] is False
+    assert walkthrough["effect_summary"]["invoice_payment_allowed"] is False
+    assert walkthrough["effect_summary"]["money_movement_allowed"] is False
+    assert walkthrough["effect_summary"]["memory_write_allowed"] is False
+    assert walkthrough["effect_summary"]["deployment_mutation_allowed"] is False
+    assert walkthrough["effect_summary"]["customer_readiness_claim_allowed"] is False
+    assert walkthrough["claim_summary"]["draft_preview_is_send_authority"] is False
+    assert walkthrough["claim_summary"]["approval_review_is_execution"] is False
+    assert walkthrough["assurance"]["walkthrough_valid"] is True
+    assert walkthrough["assurance"]["draft_preview_only"] is True
+    assert walkthrough["assurance"]["external_send_allowed"] is False
+    assert walkthrough["assurance"]["provider_draft_creation_allowed"] is False
+    assert "email_not_sent" in walkthrough["actions_not_taken"]
+    assert "provider_draft_not_created" in walkthrough["actions_not_taken"]
+    assert "invoice_not_paid" in walkthrough["actions_not_taken"]
     assert binding["binding_state"] == "bound_to_existing_console_route"
     assert binding["execution_allowed"] is False
     assert binding["live_connector_execution_allowed"] is False
@@ -77,6 +111,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert binding["deployment_mutation_allowed"] is False
     assert binding["customer_readiness_claim_allowed"] is False
     assert "examples/first_usable_demo_packet.json" in payload["evidence_refs"]
+    assert "examples/personal_assistant_invoice_email_walkthrough.json" in payload["evidence_refs"]
     assert "mcoi/mcoi_runtime/personal_assistant/console_first_demo.py" in payload["evidence_refs"]
     assert "raw_private_connector_payload" not in serialized
     assert "secret-worker-token" not in serialized

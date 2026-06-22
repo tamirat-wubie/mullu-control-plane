@@ -2,8 +2,9 @@
 
 Governance scope: read-only console composition, no-effect authority preservation,
 and customer-readiness claim separation.
-Dependencies: personal_assistant.console and examples/first_usable_demo_packet.json.
-Invariants: this module reads a local fixture only; it does not execute skills,
+Dependencies: personal_assistant.console, examples/first_usable_demo_packet.json,
+and examples/personal_assistant_invoice_email_walkthrough.json.
+Invariants: this module reads local fixtures only; it does not execute skills,
 call connectors, dispatch workers, write memory, mutate deployments, send email,
 create provider drafts, move money, or claim customer readiness.
 """
@@ -22,6 +23,7 @@ from .skill_registry import PersonalAssistantSkillRegistry
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _FIRST_USABLE_DEMO_PACKET = _REPO_ROOT / "examples" / "first_usable_demo_packet.json"
+_INVOICE_EMAIL_WALKTHROUGH = _REPO_ROOT / "examples" / "personal_assistant_invoice_email_walkthrough.json"
 _REQUIRED_FALSE_AUTHORITY_FIELDS = (
     "execution_allowed",
     "live_connector_execution_allowed",
@@ -33,6 +35,36 @@ _REQUIRED_FALSE_AUTHORITY_FIELDS = (
     "customer_readiness_claim_allowed",
     "public_launch_claim_allowed",
     "approval_is_execution",
+)
+_REQUIRED_FALSE_WALKTHROUGH_EFFECT_FIELDS = (
+    "execution_allowed",
+    "live_connector_execution_allowed",
+    "mailbox_read_allowed",
+    "mailbox_mutation_allowed",
+    "external_send_allowed",
+    "provider_draft_creation_allowed",
+    "invoice_payment_allowed",
+    "money_movement_allowed",
+    "connector_mutation_allowed",
+    "memory_write_allowed",
+    "deployment_mutation_allowed",
+    "customer_readiness_claim_allowed",
+    "public_launch_claim_allowed",
+)
+_REQUIRED_FALSE_WALKTHROUGH_CLAIM_FIELDS = (
+    "draft_preview_is_send_authority",
+    "approval_review_is_execution",
+    "invoice_context_is_payment_authority",
+    "console_visibility_is_customer_readiness",
+)
+_REQUIRED_ACTIONS_NOT_TAKEN = (
+    "email_not_sent",
+    "provider_draft_not_created",
+    "connector_state_not_mutated",
+    "invoice_not_paid",
+    "memory_not_written",
+    "deployment_not_mutated",
+    "customer_readiness_not_claimed",
 )
 
 
@@ -64,6 +96,8 @@ def build_personal_assistant_console_read_model(
     sections = dict(_mapping(payload.get("sections")))
     sections["first_usable_demo"] = {
         "item_count": 1,
+        "walkthrough_count": first_demo["walkthroughs"]["item_count"],
+        "draft_only_walkthrough_bound": first_demo["walkthroughs"]["draft_only_walkthrough_bound"],
         "execution_allowed": False,
         "live_connector_execution_allowed": False,
         "external_send_allowed": False,
@@ -74,6 +108,7 @@ def build_personal_assistant_console_read_model(
     evidence_refs = list(payload.get("evidence_refs", ())) if isinstance(payload.get("evidence_refs"), list) else []
     for evidence_ref in (
         "examples/first_usable_demo_packet.json",
+        "examples/personal_assistant_invoice_email_walkthrough.json",
         "mcoi/mcoi_runtime/personal_assistant/console_first_demo.py",
     ):
         if evidence_ref not in evidence_refs:
@@ -105,7 +140,7 @@ def build_personal_assistant_console_read_model(
 
 
 def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
-    packet = _load_first_usable_demo_packet()
+    packet = _load_json(_FIRST_USABLE_DEMO_PACKET, label="first usable demo packet")
     authority = _mapping(packet.get("current_authority"))
     missing_false = [field for field in _REQUIRED_FALSE_AUTHORITY_FIELDS if authority.get(field) is not False]
     if missing_false:
@@ -123,8 +158,15 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
             raise PersonalAssistantInvariantError(f"first usable demo claim boundary drift: {field}")
     lane = _sequence_of_mappings(packet.get("first_demo_lane"))
     user_story = _mapping(packet.get("canonical_user_story"))
-    evidence_refs = tuple(
-        dict.fromkeys(str(step.get("evidence_ref", "")) for step in lane if str(step.get("evidence_ref", "")))
+    invoice_walkthrough = _build_invoice_email_walkthrough_panel(generated_at=generated_at)
+    evidence_refs = list(
+        dict.fromkeys(
+            (
+                *(str(step.get("evidence_ref", "")) for step in lane if str(step.get("evidence_ref", ""))),
+                invoice_walkthrough["source_walkthrough_ref"],
+                *invoice_walkthrough["evidence_refs"],
+            )
+        )
     )
     return {
         "read_model_id": "first_usable_demo_operator_read_model_v1",
@@ -143,16 +185,27 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
         "demo_goal": str(packet.get("demo_goal", "")),
         "canonical_user_story": dict(user_story),
         "first_demo_lane": lane,
+        "walkthroughs": {
+            "item_count": 1,
+            "draft_only_walkthrough_bound": True,
+            "invoice_email_walkthrough_id": invoice_walkthrough["walkthrough_id"],
+            "external_send_allowed": False,
+            "provider_draft_creation_allowed": False,
+            "invoice_payment_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+        "invoice_email_walkthrough": invoice_walkthrough,
         "promotion_gates": _sequence_of_mappings(packet.get("promotion_gates")),
         "readiness_index": _mapping(packet.get("readiness_index")),
         "claim_boundary": dict(claim_boundary),
         "effect_boundary": dict(authority),
         "actions_not_taken": [str(item) for item in user_story.get("explicit_non_goals", ())],
-        "evidence_refs": list(evidence_refs),
+        "evidence_refs": evidence_refs,
         "next_safe_actions": [str(item) for item in packet.get("next_safe_actions", ())],
         "assurance": {
             "assurance_id": "first_usable_demo_console_route_no_effect_assurance",
             "packet_valid": True,
+            "invoice_email_walkthrough_valid": True,
             "authority_drift_detected": False,
             "raw_private_payload_serialized": False,
             "secret_values_serialized": False,
@@ -163,15 +216,98 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
     }
 
 
-def _load_first_usable_demo_packet() -> dict[str, Any]:
+def _build_invoice_email_walkthrough_panel(*, generated_at: str) -> dict[str, Any]:
+    payload = _load_json(_INVOICE_EMAIL_WALKTHROUGH, label="invoice email walkthrough")
+    effect_boundary = _mapping(payload.get("effect_boundary"))
+    claim_boundary = _mapping(payload.get("claim_boundary"))
+    draft_projection = _mapping(payload.get("draft_projection"))
+    approval_review = _mapping(payload.get("approval_review"))
+    receipt_projection = _mapping(payload.get("receipt_projection"))
+
+    for field in _REQUIRED_FALSE_WALKTHROUGH_EFFECT_FIELDS:
+        if effect_boundary.get(field) is not False:
+            raise PersonalAssistantInvariantError(f"invoice email walkthrough effect drift: {field}")
+    for field in _REQUIRED_FALSE_WALKTHROUGH_CLAIM_FIELDS:
+        if claim_boundary.get(field) is not False:
+            raise PersonalAssistantInvariantError(f"invoice email walkthrough claim drift: {field}")
+    for field in (
+        "execution_allowed",
+        "external_send_allowed",
+        "mailbox_mutation_allowed",
+        "connector_mutation_allowed",
+        "provider_draft_creation_allowed",
+    ):
+        if draft_projection.get(field) is not False:
+            raise PersonalAssistantInvariantError(f"invoice email draft projection drift: {field}")
+    if draft_projection.get("approval_required_before_send") is not True:
+        raise PersonalAssistantInvariantError("invoice email draft projection must require approval before send")
+    if approval_review.get("approval_required") is not True:
+        raise PersonalAssistantInvariantError("invoice email walkthrough approval must be required")
+    if approval_review.get("approval_is_execution") is not False:
+        raise PersonalAssistantInvariantError("invoice email walkthrough approval must not execute")
+    actions_not_taken = set(_sequence_of_text(receipt_projection.get("actions_not_taken")))
+    missing_actions_not_taken = sorted(set(_REQUIRED_ACTIONS_NOT_TAKEN) - actions_not_taken)
+    if missing_actions_not_taken:
+        raise PersonalAssistantInvariantError(
+            "invoice email walkthrough missing actions_not_taken: " + ", ".join(missing_actions_not_taken)
+        )
+
+    return {
+        "read_model_id": "invoice_email_draft_walkthrough_panel_v1",
+        "source_walkthrough_ref": "examples/personal_assistant_invoice_email_walkthrough.json",
+        "walkthrough_id": str(payload.get("walkthrough_id", "")),
+        "source_demo_packet_id": str(payload.get("source_demo_packet_id", "")),
+        "generated_at": generated_at,
+        "governed": True,
+        "read_only": True,
+        "fixture_backed": True,
+        "foundation_only": True,
+        "operator_request": str(payload.get("operator_request", "")),
+        "draft_status": str(draft_projection.get("status", "")),
+        "draft_type": str(draft_projection.get("draft_type", "")),
+        "approval_required_before_send": True,
+        "approval_is_execution": False,
+        "actions_not_taken": sorted(actions_not_taken),
+        "evidence_refs": _sequence_of_text(payload.get("evidence_refs")),
+        "next_safe_actions": _sequence_of_text(payload.get("next_safe_actions")),
+        "effect_summary": {
+            "execution_allowed": False,
+            "external_send_allowed": False,
+            "provider_draft_creation_allowed": False,
+            "invoice_payment_allowed": False,
+            "money_movement_allowed": False,
+            "memory_write_allowed": False,
+            "deployment_mutation_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+        "claim_summary": {
+            "draft_preview_is_send_authority": False,
+            "approval_review_is_execution": False,
+            "invoice_context_is_payment_authority": False,
+            "console_visibility_is_customer_readiness": False,
+        },
+        "assurance": {
+            "assurance_id": "invoice_email_draft_walkthrough_console_panel_assurance",
+            "walkthrough_valid": True,
+            "draft_preview_only": True,
+            "approval_required_before_send": True,
+            "provider_draft_creation_allowed": False,
+            "external_send_allowed": False,
+            "invoice_payment_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+    }
+
+
+def _load_json(path: Path, *, label: str) -> dict[str, Any]:
     try:
-        payload = json.loads(_FIRST_USABLE_DEMO_PACKET.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
-        raise PersonalAssistantInvariantError("first usable demo packet is missing") from exc
+        raise PersonalAssistantInvariantError(f"{label} is missing") from exc
     except json.JSONDecodeError as exc:
-        raise PersonalAssistantInvariantError("first usable demo packet is invalid JSON") from exc
+        raise PersonalAssistantInvariantError(f"{label} is invalid JSON") from exc
     if not isinstance(payload, dict):
-        raise PersonalAssistantInvariantError("first usable demo packet must be a mapping")
+        raise PersonalAssistantInvariantError(f"{label} must be a mapping")
     return payload
 
 
@@ -183,3 +319,9 @@ def _sequence_of_mappings(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, (list, tuple)):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _sequence_of_text(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str)]
