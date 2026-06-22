@@ -2,11 +2,11 @@
 """Validate local public demo surfaces before publication.
 
 Purpose: verify that the evaluator-facing sandbox, federation, replay, SDK,
-benchmark, compliance, Governed Work Assistant dashboard, and proof-coverage
-witnesses agree.
+benchmark, compliance, Governed Work Assistant dashboard, first usable demo
+operator page, and proof-coverage witnesses agree.
 Governance scope: public demo readiness validation only.
 Dependencies: FastAPI TestClient, OpenAPI SDK source spec, proof matrix,
-benchmark harness, and compliance alignment matrix.
+benchmark harness, first usable demo renderer, and compliance alignment matrix.
 Invariants: validation is local; no live provider calls are performed; failures
 are bounded by check id and reason; the emitted report hash is deterministic.
 """
@@ -41,6 +41,18 @@ WORK_ASSISTANT_DASHBOARD_FALSE_FIELDS = (
     "production_readiness_claim_allowed",
     "customer_readiness_claim_allowed",
     "autonomous_execution_authority_allowed",
+)
+FIRST_USABLE_DEMO_FALSE_FIELDS = (
+    "execution_allowed",
+    "live_connector_execution_allowed",
+    "connector_mutation_allowed",
+    "external_send_allowed",
+    "money_movement_allowed",
+    "memory_write_allowed",
+    "deployment_mutation_allowed",
+    "customer_readiness_claim_allowed",
+    "public_launch_claim_allowed",
+    "approval_is_execution",
 )
 
 REQUIRED_OPENAPI_PATHS = (
@@ -247,6 +259,57 @@ def validate_http_demo_routes() -> DemoSurfaceCheck:
     )
 
 
+def validate_first_usable_demo_operator_page() -> DemoSurfaceCheck:
+    """Validate the static first usable demo operator page/read-model render."""
+    from scripts.render_first_usable_demo_operator_page import render_first_usable_demo_operator_page
+
+    errors: list[str] = []
+    try:
+        rendered = render_first_usable_demo_operator_page(generated_at="2026-06-22T00:00:00Z")
+    except Exception:
+        return DemoSurfaceCheck("first_usable_demo_operator_page", False, errors=("render_failed",))
+    read_model = rendered.read_model
+    if read_model.get("governed") is not True:
+        errors.append("read_model_not_governed")
+    if read_model.get("read_only") is not True:
+        errors.append("read_model_not_read_only")
+    if read_model.get("fixture_backed") is not True:
+        errors.append("read_model_not_fixture_backed")
+    if read_model.get("source_packet_id") != "first_usable_demo_packet_v1":
+        errors.append("source_packet_id_mismatch")
+    if read_model.get("operator_visible_status") != "reviewable_no_effect_demo_packet":
+        errors.append("operator_status_mismatch")
+    effect_boundary = read_model.get("effect_boundary", {})
+    if not isinstance(effect_boundary, dict):
+        errors.append("effect_boundary_missing")
+    else:
+        for field in FIRST_USABLE_DEMO_FALSE_FIELDS:
+            if effect_boundary.get(field) is not False:
+                errors.append(f"effect_boundary:{field}_not_false")
+    assurance = read_model.get("assurance", {})
+    if not isinstance(assurance, dict):
+        errors.append("assurance_missing")
+    else:
+        if assurance.get("packet_valid") is not True:
+            errors.append("assurance_packet_not_valid")
+        if assurance.get("live_connector_execution_allowed") is not False:
+            errors.append("assurance_live_connector_execution_not_false")
+        if assurance.get("customer_readiness_claim_allowed") is not False:
+            errors.append("assurance_customer_readiness_not_false")
+    if "No-effect authority preserved:</strong> true" not in rendered.html:
+        errors.append("html_no_effect_indicator_missing")
+    return DemoSurfaceCheck(
+        "first_usable_demo_operator_page",
+        not errors,
+        details={
+            "source_packet_id": str(read_model.get("source_packet_id", "")),
+            "operator_question_count": len(read_model.get("operator_questions", [])),
+            "html_length": len(rendered.html),
+        },
+        errors=tuple(errors),
+    )
+
+
 def validate_proof_coverage() -> DemoSurfaceCheck:
     """Validate proof matrix contains public demo surfaces and declared routes."""
     from scripts.proof_coverage_matrix import (
@@ -317,6 +380,7 @@ def validate_public_demo_surfaces() -> PublicDemoSurfaceReport:
         validate_openapi_source(),
         validate_sdk_manifest(),
         validate_http_demo_routes(),
+        validate_first_usable_demo_operator_page(),
         validate_proof_coverage(),
         validate_benchmark_witness(),
         validate_compliance_alignment(),
