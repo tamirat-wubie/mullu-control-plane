@@ -3,7 +3,8 @@
 Governance scope: read-only console composition, no-effect authority preservation,
 and customer-readiness claim separation.
 Dependencies: personal_assistant.console, examples/first_usable_demo_packet.json,
-and examples/personal_assistant_invoice_email_walkthrough.json.
+examples/personal_assistant_invoice_email_walkthrough.json, and
+examples/personal_assistant_approval_review_packet.json.
 Invariants: this module reads local fixtures only; it does not execute skills,
 call connectors, dispatch workers, write memory, mutate deployments, send email,
 create provider drafts, move money, or claim customer readiness.
@@ -24,6 +25,7 @@ from .skill_registry import PersonalAssistantSkillRegistry
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _FIRST_USABLE_DEMO_PACKET = _REPO_ROOT / "examples" / "first_usable_demo_packet.json"
 _INVOICE_EMAIL_WALKTHROUGH = _REPO_ROOT / "examples" / "personal_assistant_invoice_email_walkthrough.json"
+_APPROVAL_REVIEW_PACKET = _REPO_ROOT / "examples" / "personal_assistant_approval_review_packet.json"
 _REQUIRED_FALSE_AUTHORITY_FIELDS = (
     "execution_allowed",
     "live_connector_execution_allowed",
@@ -65,6 +67,31 @@ _REQUIRED_ACTIONS_NOT_TAKEN = (
     "memory_not_written",
     "deployment_not_mutated",
     "customer_readiness_not_claimed",
+)
+_REQUIRED_FALSE_APPROVAL_PACKET_EFFECT_FIELDS = (
+    "execution_allowed",
+    "approval_is_execution",
+    "approval_enqueued",
+    "live_connector_execution_allowed",
+    "external_send_allowed",
+    "connector_mutation_allowed",
+    "memory_write_allowed",
+    "deployment_mutation_allowed",
+    "system_of_record_write_allowed",
+    "money_legal_public_action_allowed",
+)
+_REQUIRED_FALSE_APPROVAL_PACKET_METADATA_FIELDS = (
+    "approval_packet_is_execution",
+    "review_packet_is_execution",
+    "live_nested_mind_activation_allowed",
+    "customer_readiness_claim_allowed",
+)
+_REQUIRED_DENIED_AUTHORITIES = (
+    "execution",
+    "approval_enqueue",
+    "connector_mutation",
+    "memory_write",
+    "external_send",
 )
 
 
@@ -109,6 +136,7 @@ def build_personal_assistant_console_read_model(
     for evidence_ref in (
         "examples/first_usable_demo_packet.json",
         "examples/personal_assistant_invoice_email_walkthrough.json",
+        "examples/personal_assistant_approval_review_packet.json",
         "mcoi/mcoi_runtime/personal_assistant/console_first_demo.py",
     ):
         if evidence_ref not in evidence_refs:
@@ -164,6 +192,7 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
             (
                 *(str(step.get("evidence_ref", "")) for step in lane if str(step.get("evidence_ref", ""))),
                 invoice_walkthrough["source_walkthrough_ref"],
+                invoice_walkthrough["approval_packet_ref"],
                 *invoice_walkthrough["evidence_refs"],
             )
         )
@@ -189,6 +218,7 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
             "item_count": 1,
             "draft_only_walkthrough_bound": True,
             "invoice_email_walkthrough_id": invoice_walkthrough["walkthrough_id"],
+            "approval_review_packet_bound": invoice_walkthrough["approval_review_packet"]["bound"],
             "external_send_allowed": False,
             "provider_draft_creation_allowed": False,
             "invoice_payment_allowed": False,
@@ -206,6 +236,8 @@ def _build_first_usable_demo_read_model(*, generated_at: str) -> dict[str, Any]:
             "assurance_id": "first_usable_demo_console_route_no_effect_assurance",
             "packet_valid": True,
             "invoice_email_walkthrough_valid": True,
+            "approval_review_packet_bound": invoice_walkthrough["approval_review_packet"]["bound"],
+            "approval_review_packet_is_execution": False,
             "authority_drift_detected": False,
             "raw_private_payload_serialized": False,
             "secret_values_serialized": False,
@@ -245,6 +277,12 @@ def _build_invoice_email_walkthrough_panel(*, generated_at: str) -> dict[str, An
         raise PersonalAssistantInvariantError("invoice email walkthrough approval must be required")
     if approval_review.get("approval_is_execution") is not False:
         raise PersonalAssistantInvariantError("invoice email walkthrough approval must not execute")
+    approval_packet_ref = str(approval_review.get("approval_packet_ref", ""))
+    if approval_packet_ref != "examples/personal_assistant_approval_review_packet.json":
+        raise PersonalAssistantInvariantError("invoice email walkthrough must bind the approval review packet fixture")
+    approval_packet = _build_approval_review_packet_summary(
+        _load_json(_APPROVAL_REVIEW_PACKET, label="approval review packet")
+    )
     actions_not_taken = set(_sequence_of_text(receipt_projection.get("actions_not_taken")))
     missing_actions_not_taken = sorted(set(_REQUIRED_ACTIONS_NOT_TAKEN) - actions_not_taken)
     if missing_actions_not_taken:
@@ -267,6 +305,8 @@ def _build_invoice_email_walkthrough_panel(*, generated_at: str) -> dict[str, An
         "draft_type": str(draft_projection.get("draft_type", "")),
         "approval_required_before_send": True,
         "approval_is_execution": False,
+        "approval_packet_ref": approval_packet_ref,
+        "approval_review_packet": approval_packet,
         "actions_not_taken": sorted(actions_not_taken),
         "evidence_refs": _sequence_of_text(payload.get("evidence_refs")),
         "next_safe_actions": _sequence_of_text(payload.get("next_safe_actions")),
@@ -291,9 +331,53 @@ def _build_invoice_email_walkthrough_panel(*, generated_at: str) -> dict[str, An
             "walkthrough_valid": True,
             "draft_preview_only": True,
             "approval_required_before_send": True,
+            "approval_review_packet_bound": True,
+            "approval_review_packet_is_execution": False,
+            "approval_enqueue_allowed": False,
             "provider_draft_creation_allowed": False,
             "external_send_allowed": False,
             "invoice_payment_allowed": False,
+            "customer_readiness_claim_allowed": False,
+        },
+    }
+
+
+def _build_approval_review_packet_summary(packet: Mapping[str, Any]) -> dict[str, Any]:
+    effect_boundary = _mapping(packet.get("effect_boundary"))
+    metadata = _mapping(packet.get("metadata"))
+    for field in _REQUIRED_FALSE_APPROVAL_PACKET_EFFECT_FIELDS:
+        if effect_boundary.get(field) is not False:
+            raise PersonalAssistantInvariantError(f"approval review packet effect drift: {field}")
+    for field in _REQUIRED_FALSE_APPROVAL_PACKET_METADATA_FIELDS:
+        if metadata.get(field) is not False:
+            raise PersonalAssistantInvariantError(f"approval review packet metadata drift: {field}")
+    authority_denials = _sequence_of_mappings(packet.get("authority_denials"))
+    denied_authorities = {str(item.get("authority", "")) for item in authority_denials if item.get("denied") is True}
+    missing_denials = sorted(set(_REQUIRED_DENIED_AUTHORITIES) - denied_authorities)
+    if missing_denials:
+        raise PersonalAssistantInvariantError(
+            "approval review packet missing denied authorities: " + ", ".join(missing_denials)
+        )
+    return {
+        "packet_ref": "examples/personal_assistant_approval_review_packet.json",
+        "review_packet_id": str(packet.get("review_packet_id", "")),
+        "review_state": str(packet.get("review_state", "")),
+        "risk_level": str(packet.get("risk_level", "")),
+        "approval_scope": str(packet.get("approval_scope", "")),
+        "bound": True,
+        "preview_only": True,
+        "proposed_action_count": len(_sequence_of_mappings(packet.get("proposed_actions"))),
+        "required_operator_checks": _sequence_of_text(packet.get("required_operator_checks")),
+        "forbidden_without_approval": _sequence_of_text(packet.get("forbidden_without_approval")),
+        "denied_authorities": sorted(denied_authorities),
+        "effect_summary": {
+            "execution_allowed": False,
+            "approval_is_execution": False,
+            "approval_enqueued": False,
+            "external_send_allowed": False,
+            "connector_mutation_allowed": False,
+            "memory_write_allowed": False,
+            "deployment_mutation_allowed": False,
             "customer_readiness_claim_allowed": False,
         },
     }
