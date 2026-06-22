@@ -22,7 +22,7 @@ from .capability_pack import (
     load_default_personal_assistant_capability_pack,
     load_personal_assistant_capability_pack,
 )
-from .console import render_personal_assistant_console_html
+from .console_first_demo_html import render_personal_assistant_console_html
 from .console_first_demo import build_personal_assistant_console_read_model
 from .approval import (
     ApprovalDecision,
