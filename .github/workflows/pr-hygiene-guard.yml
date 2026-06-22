@@ -34,7 +34,20 @@ jobs:
           cat .change_assurance/pr_changed_files.txt
 
       - name: Validate PR hygiene
-        run: python scripts/validate_pr_hygiene.py --changed-files .change_assurance/pr_changed_files.txt --json
+        run: |
+          python scripts/validate_pr_hygiene.py \
+            --changed-files .change_assurance/pr_changed_files.txt \
+            --json | tee .change_assurance/pr_hygiene_receipt.json
+
+      - name: Upload PR hygiene receipt
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-hygiene-receipt
+          path: |
+            .change_assurance/pr_changed_files.txt
+            .change_assurance/pr_hygiene_receipt.json
+          if-no-files-found: error
 
       - name: Run PR hygiene tests
         run: python -m pytest tests/test_validate_pr_hygiene.py -q
