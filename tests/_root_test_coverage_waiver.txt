@@ -239,3 +239,4 @@ tests/test_verify_orgos_event_log.py
 tests/test_worker_dependency_packaging.py
 tests/test_workspace_groups_authority_directory_adapter.py
 tests/test_validate_governed_work_assistant_operator_dashboard.py
+tests/test_validate_first_usable_demo_packet.py
