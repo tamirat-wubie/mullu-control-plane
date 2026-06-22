@@ -129,6 +129,12 @@ def test_gateway_personal_assistant_console_html_view_renders_invoice_walkthroug
     assert "Mullu Personal Assistant Console" in body
     assert "Assistant Readiness" in body
     assert "Invoice Email Draft Walkthrough" in body
+    assert "User State" in body
+    assert "Drafted for review" in body
+    assert "Next Safe Step" in body
+    assert "Approve to send later" in body
+    assert "Approval Prompt" in body
+    assert "No email will be sent" in body
     assert "personal_assistant_invoice_email_draft_walkthrough_v1" in body
     assert "Draft Status" in body
     assert "draft_preview_only" in body
