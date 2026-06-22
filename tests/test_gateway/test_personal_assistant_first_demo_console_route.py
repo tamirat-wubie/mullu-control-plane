@@ -169,6 +169,13 @@ def test_gateway_personal_assistant_console_html_view_renders_invoice_walkthroug
     assert "Approval Proposed Action Count" in body
     assert "Approval Enqueued" in body
     assert "Approval Packet Is Execution" in body
+    assert "Approval Queue" in body
+    assert "Waiting for operator approval" in body
+    assert "Approval Queue Preview" in body
+    assert "requested" in body
+    assert "Approval Queue Decision" in body
+    assert "pending" in body
+    assert "Approval Queue Executes Action" in body
     assert "Provider Draft Creation Allowed" in body
     assert "Invoice Payment Allowed" in body
     assert "Customer Readiness Claim Allowed" in body
