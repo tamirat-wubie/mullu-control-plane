@@ -1,0 +1,73 @@
+{
+  "schema_version": "reasoning.weakness_taxonomy.v1",
+  "taxonomy_id": "mullu_reasoning_weakness_taxonomy.foundation.v1",
+  "purpose": "Name hard reasoning weakness classes and their deterministic repair obligations.",
+  "governance_scope": ["OCE", "RAG", "CDCV", "CQTE", "UWMA", "SRCA", "PRS"],
+  "dependencies": [
+    "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+    "governance/judgment_integrity_gate.yaml"
+  ],
+  "invariants": [
+    "all_hard_weaknesses_have_detection_and_repair",
+    "all_completion_weaknesses_require_evidence_refs",
+    "no_weakness_class_authorizes_runtime_behavior"
+  ],
+  "foundation_mode_required": true,
+  "runtime_behavior_change_allowed": false,
+  "weaknesses": [
+    {
+      "weakness_id": "false_completion_claim",
+      "category": "evidence",
+      "severity": "hard",
+      "detects": ["completion wording", "missing evidence_refs", "missing validator_refs"],
+      "repair": "downgrade to AwaitingEvidence or attach validator and evidence references",
+      "proof_obligation": "completion_claims_require_evidence_refs",
+      "fail_closed_rule": "unsupported_completion_claim"
+    },
+    {
+      "weakness_id": "scope_confusion",
+      "category": "scope",
+      "severity": "hard",
+      "detects": ["concept/spec/code/runtime substitution", "mixed scope without boundary"],
+      "repair": "classify the claim into one scope or split the claim",
+      "proof_obligation": "concept_spec_code_runtime_scope_separation",
+      "fail_closed_rule": "scope_confusion_claim"
+    },
+    {
+      "weakness_id": "confidence_overclaim",
+      "category": "evidence",
+      "severity": "hard",
+      "detects": ["confidence >= 0.85", "empty evidence_refs"],
+      "repair": "lower confidence or attach evidence references",
+      "proof_obligation": "high_confidence_requires_evidence_refs",
+      "fail_closed_rule": "high_confidence_without_evidence"
+    },
+    {
+      "weakness_id": "contradiction_globalization",
+      "category": "contradiction",
+      "severity": "hard",
+      "detects": ["local contradiction", "global truth claim", "missing scope witness"],
+      "repair": "keep contradiction local until scope witness exists",
+      "proof_obligation": "local_contradiction_cannot_be_global_truth",
+      "fail_closed_rule": "local_contradiction_globalized"
+    },
+    {
+      "weakness_id": "recursive_nontermination",
+      "category": "recursion",
+      "severity": "hard",
+      "detects": ["refinement loop", "no new constructive delta", "no new fracture delta"],
+      "repair": "stop at empty-delta fixed point or emit a new auditable delta",
+      "proof_obligation": "recursive_refinement_stops_on_empty_delta",
+      "fail_closed_rule": "unbounded_recursive_refinement"
+    },
+    {
+      "weakness_id": "metaphor_mechanism_override",
+      "category": "mechanism",
+      "severity": "hard",
+      "detects": ["metaphor term", "interface label", "missing mechanism_refs"],
+      "repair": "replace metaphor with mechanism reference or downgrade the claim",
+      "proof_obligation": "metaphor_interface_language_cannot_override_mechanism",
+      "fail_closed_rule": "metaphor_over_mechanism"
+    }
+  ]
+}
