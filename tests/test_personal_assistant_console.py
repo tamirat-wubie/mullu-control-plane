@@ -8,6 +8,8 @@ live memory authority.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mcoi_runtime.personal_assistant import (
@@ -23,6 +25,10 @@ from mcoi_runtime.personal_assistant import (
     build_personal_assistant_console_read_model,
     prepare_approval_proposal_from_plan,
     render_personal_assistant_console_html,
+)
+from scripts.build_first_usable_demo_console_binding import (
+    build_first_usable_demo_console_binding,
+    write_first_usable_demo_console_binding,
 )
 
 
@@ -135,6 +141,47 @@ def test_console_read_model_exposes_read_only_foundation_sections() -> None:
     assert payload["skills"]["skill_count"] >= 13
     assert "send_email" in payload["blocked_actions"]
     assert "examples/personal_assistant_skill_registry.json" in payload["evidence_refs"]
+
+
+def test_first_usable_demo_console_binding_is_read_only() -> None:
+    payload = build_first_usable_demo_console_binding(generated_at=GENERATED_AT)
+    first_demo = payload["first_usable_demo"]
+    binding = payload["first_usable_demo_binding"]
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert payload["console_id"] == "personal_assistant_console_foundation"
+    assert payload["sections"]["first_usable_demo"]["item_count"] == 1
+    assert payload["sections"]["first_usable_demo"]["execution_allowed"] is False
+    assert payload["sections"]["first_usable_demo"]["customer_readiness_claim_allowed"] is False
+    assert first_demo["read_model_id"] == "first_usable_demo_operator_read_model_v1"
+    assert first_demo["source_packet_id"] == "first_usable_demo_packet_v1"
+    assert first_demo["read_only"] is True
+    assert first_demo["effect_boundary"]["execution_allowed"] is False
+    assert first_demo["effect_boundary"]["external_send_allowed"] is False
+    assert first_demo["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert first_demo["effect_boundary"]["customer_readiness_claim_allowed"] is False
+    assert binding["binding_id"] == "personal_assistant_console_first_usable_demo_binding_v1"
+    assert binding["read_only"] is True
+    assert binding["execution_allowed"] is False
+    assert binding["live_connector_execution_allowed"] is False
+    assert binding["external_send_allowed"] is False
+    assert binding["customer_readiness_claim_allowed"] is False
+    assert "examples/first_usable_demo_packet.json" in payload["evidence_refs"]
+    assert "scripts/render_first_usable_demo_operator_page.py" in payload["evidence_refs"]
+    assert "raw_private_connector_payload" not in serialized
+    assert "secret-worker-token" not in serialized
+
+
+def test_first_usable_demo_console_binding_writes_output(tmp_path) -> None:  # noqa: ANN001
+    output = tmp_path / "first_usable_demo_console_binding.json"
+
+    payload = write_first_usable_demo_console_binding(output, generated_at=GENERATED_AT)
+    saved = json.loads(output.read_text(encoding="utf-8"))
+
+    assert output.exists()
+    assert saved == payload
+    assert saved["first_usable_demo_binding"]["binding_state"] == "static_read_model_bound"
+    assert saved["first_usable_demo"]["assurance"]["packet_valid"] is True
 
 
 def test_console_composes_approval_records_receipts_and_escaped_html() -> None:
