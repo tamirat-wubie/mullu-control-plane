@@ -34,6 +34,7 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
     approval = _mapping(walkthrough.get("approval_review_packet"))
     approval_effect = _mapping(approval.get("effect_summary"))
     state = _automation_state_summary(walkthrough=walkthrough, effect=effect, claim=claim)
+    queue = _approval_queue_preview_summary(approval=approval, approval_effect=approval_effect)
     rows = (
         ("Walkthrough", walkthrough.get("walkthrough_id", "")),
         ("Draft Status", walkthrough.get("draft_status", "")),
@@ -47,6 +48,9 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
         ("Approval Proposed Action Count", approval.get("proposed_action_count", 0)),
         ("Approval Enqueued", approval_effect.get("approval_enqueued", False)),
         ("Approval Packet Is Execution", approval_effect.get("approval_is_execution", False)),
+        ("Approval Queue Preview", queue["queue_state"]),
+        ("Approval Queue Decision", queue["decision_state"]),
+        ("Approval Queue Executes Action", queue["executes_action"]),
         ("External Send Allowed", effect.get("external_send_allowed", False)),
         ("Provider Draft Creation Allowed", effect.get("provider_draft_creation_allowed", False)),
         ("Invoice Payment Allowed", effect.get("invoice_payment_allowed", False)),
@@ -68,6 +72,7 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
     <p><strong>User State:</strong> {escape(state["user_state"])}</p>
     <p><strong>Next Safe Step:</strong> {escape(state["next_safe_step"])}</p>
     <p><strong>Approval Prompt:</strong> {escape(state["approval_prompt"])}</p>
+    <p><strong>Approval Queue:</strong> {escape(queue["user_state"])}</p>
     <table>
       <thead><tr><th>Signal</th><th>Status</th></tr></thead>
       <tbody>{body}</tbody>
@@ -104,6 +109,26 @@ def _automation_state_summary(
         "user_state": "Blocked",
         "next_safe_step": "Review effect boundary before continuing",
         "approval_prompt": "The walkthrough could not be compressed into a safe draft-only user state.",
+    }
+
+
+def _approval_queue_preview_summary(
+    *,
+    approval: Mapping[str, Any],
+    approval_effect: Mapping[str, Any],
+) -> dict[str, object]:
+    if approval and approval_effect.get("approval_is_execution") is False:
+        return {
+            "user_state": "Waiting for operator approval",
+            "queue_state": "requested",
+            "decision_state": "pending",
+            "executes_action": False,
+        }
+    return {
+        "user_state": "Approval queue unavailable",
+        "queue_state": "unavailable",
+        "decision_state": "blocked",
+        "executes_action": False,
     }
 
 
