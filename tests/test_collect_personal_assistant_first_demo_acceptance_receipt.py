@@ -58,17 +58,21 @@ def test_collect_first_demo_acceptance_receipt_passes_and_preserves_no_effect_bo
     assert "mcoi/mcoi_runtime/personal_assistant/console_first_demo_html.py" in receipt["source_refs"]
 
 
-def test_collect_first_demo_acceptance_receipt_writes_output(tmp_path) -> None:  # noqa: ANN001
+def test_collect_first_demo_acceptance_receipt_cli_writes_output(tmp_path, monkeypatch) -> None:  # noqa: ANN001
     output = tmp_path / "first_demo_acceptance_receipt.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "collect_personal_assistant_first_demo_acceptance_receipt.py",
+            "--output",
+            str(output),
+        ],
+    )
 
-    exit_code = main.__wrapped__() if hasattr(main, "__wrapped__") else None
-    assert exit_code is None
-
-    receipt = collect_first_demo_acceptance_receipt(generated_at="2026-06-22T00:00:00Z")
-    output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    assert main() == 0
     saved = json.loads(output.read_text(encoding="utf-8"))
 
     assert output.exists()
-    assert saved == receipt
     assert saved["status"] == "passed"
     assert saved["observed"]["html_panel_title"] == "Invoice Email Draft Walkthrough"
+    assert saved["effect_boundary"]["external_send_allowed"] is False
