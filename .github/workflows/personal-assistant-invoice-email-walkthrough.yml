@@ -29,5 +29,10 @@ jobs:
       - name: Validate walkthrough fixture
         run: python scripts/validate_personal_assistant_invoice_email_walkthrough.py --json
 
+      - name: Collect first demo acceptance receipt
+        run: |
+          mkdir -p .change_assurance
+          python scripts/collect_personal_assistant_first_demo_acceptance_receipt.py --output .change_assurance/personal_assistant_first_demo_acceptance_receipt.json --json
+
       - name: Run walkthrough tests
-        run: python -m pytest tests/test_validate_personal_assistant_invoice_email_walkthrough.py -q
+        run: python -m pytest tests/test_validate_personal_assistant_invoice_email_walkthrough.py tests/test_collect_personal_assistant_first_demo_acceptance_receipt.py -q
