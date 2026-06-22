@@ -21,6 +21,7 @@ from fastapi import APIRouter, HTTPException
 from scripts.build_first_usable_demo_console_binding import build_first_usable_demo_console_binding
 
 ROUTE_PATH = "/api/v1/console/personal-assistant/first-usable-demo"
+_AUTHORITY_DRIFT_MESSAGE = "first usable demo console authority fields must remain false"
 _FALSE_EFFECT_FIELDS = (
     "execution_allowed",
     "live_connector_execution_allowed",
@@ -49,7 +50,7 @@ def _with_route_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
     first_demo_effect_boundary = _mapping(first_demo.get("effect_boundary"))
 
     failures: list[str] = []
-    failures.extend(_false_field_failures(binding, _FALSE_EFFECT_FIELDS, "first_usable_demo_binding"))
+    failures.extend(_false_field_failures(binding, _FALSE_EFFECT_FIELDS))
     failures.extend(
         _false_field_failures(
             effect_boundary,
@@ -60,7 +61,6 @@ def _with_route_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "memory_write_allowed",
                 "deployment_mutation_allowed",
             ),
-            "effect_boundary",
         )
     )
     failures.extend(
@@ -78,7 +78,6 @@ def _with_route_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "public_launch_claim_allowed",
                 "approval_is_execution",
             ),
-            "first_usable_demo.effect_boundary",
         )
     )
     if failures:
@@ -86,7 +85,7 @@ def _with_route_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
             status_code=409,
             detail={
                 "error": "first_usable_demo_console_authority_drift",
-                "message": "; ".join(failures),
+                "message": _AUTHORITY_DRIFT_MESSAGE,
             },
         )
 
@@ -112,8 +111,8 @@ def _with_route_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
     return data
 
 
-def _false_field_failures(payload: Mapping[str, Any], fields: tuple[str, ...], label: str) -> list[str]:
-    return [f"{label}.{field} must be false" for field in fields if payload.get(field) is not False]
+def _false_field_failures(payload: Mapping[str, Any], fields: tuple[str, ...]) -> list[str]:
+    return [field for field in fields if payload.get(field) is not False]
 
 
 def _mapping(value: object) -> dict[str, Any]:
