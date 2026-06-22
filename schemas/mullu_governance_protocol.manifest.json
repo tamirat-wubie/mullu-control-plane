@@ -1265,6 +1265,12 @@
       "urn": "urn:mullusi:schema:holistic-loop-read-model:1"
     },
     {
+      "path": "schemas/inceptadive_external_effect_adapter_readiness.schema.json",
+      "schema_id": "inceptadive-external-effect-adapter-readiness",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:inceptadive-external-effect-adapter-readiness:1"
+    },
+    {
       "path": "schemas/intelligence_coordination_episode_receipt.schema.json",
       "schema_id": "intelligence-coordination-episode-receipt",
       "surface": "coordination",

@@ -1,0 +1,120 @@
+{
+  "readiness_id": "inceptadive-external-effect-adapter-readiness",
+  "schema_version": 1,
+  "generated_at": "2026-06-21T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "target_adapter_kind": "external_effect_adapter",
+  "readiness_decision": "blocked_until_authority_evidence_and_dry_run_receipts_exist",
+  "planning_only": true,
+  "read_only": true,
+  "adapter_implemented": false,
+  "dry_run_probe_completed": false,
+  "live_effect_observed": false,
+  "effect_receipt_collected": false,
+  "external_effect_execution_authorized": false,
+  "connector_dispatch_authority": false,
+  "memory_write_authority": false,
+  "governance_verdict_authority": false,
+  "adapter_credentials_present": false,
+  "adapter_credentials_serialized": false,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-inceptadive-shadow",
+    "repository_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "action_families": [
+    "connector",
+    "deployment",
+    "document",
+    "finance",
+    "messaging",
+    "repository"
+  ],
+  "required_evidence": {
+    "operator_approval_policy_ref": "policy://inceptadive/external-effect/operator-approval-required",
+    "phi_gov_authority_receipt_ref": "receipt://inceptadive/external-effect/phi-gov-authority-required",
+    "uao_admission_receipt_ref": "receipt://inceptadive/external-effect/uao-admission-required",
+    "dry_run_probe_receipt_ref": "receipt://inceptadive/external-effect/dry-run-probe-required",
+    "redaction_receipt_ref": "receipt://inceptadive/external-effect/redaction-required",
+    "rollback_recovery_receipt_ref": "receipt://inceptadive/external-effect/rollback-recovery-required",
+    "effect_receipt_schema_ref": "schema://inceptadive/external-effect/effect-receipt-required",
+    "adapter_scope_policy_ref": "policy://inceptadive/external-effect/adapter-scope-required",
+    "status": "AwaitingEvidence",
+    "blocks_live_execution": true,
+    "authority_granted": false
+  },
+  "missing_evidence": [
+    {
+      "evidence_id": "operator_approval_policy_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "phi_gov_authority_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "uao_admission_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "dry_run_probe_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "redaction_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "rollback_recovery_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "effect_receipt_schema_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    },
+    {
+      "evidence_id": "adapter_scope_policy_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_execution": true
+    }
+  ],
+  "authority_denials": {
+    "external_effect_execution_authorized": false,
+    "connector_dispatch_authority": false,
+    "memory_write_authority": false,
+    "governance_verdict_authority": false,
+    "provider_mutation_authority": false,
+    "credential_read_authority": false,
+    "credential_serialization_authority": false,
+    "destructive_operation_authority": false,
+    "terminal_closure_authority": false
+  },
+  "effect_boundary": {
+    "network_egress_policy": "none",
+    "mutation_routes_admitted": false,
+    "provider_calls_allowed": false,
+    "external_state_writes_allowed": false,
+    "repository_writes_allowed": false,
+    "secret_values_allowed": false,
+    "raw_payload_retention_allowed": false,
+    "append_only_receipts_required": true
+  },
+  "validators": [
+    {
+      "validator_id": "inceptadive-external-effect-adapter-readiness",
+      "command": "python scripts/validate_inceptadive_external_effect_adapter_readiness.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Keep live external-effect adapter execution blocked until authority receipts, UAO admission, dry-run probe evidence, redaction proof, rollback recovery evidence, effect receipt schema, and adapter scope policy are all reviewed."
+}

@@ -1,5 +1,5 @@
 {
-  "check_count": 274,
+  "check_count": 275,
   "checks": [
     {
       "args": [
@@ -3533,6 +3533,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_inceptadive_external_effect_adapter_readiness.py"
+      ],
+      "name": "inceptadive_external_effect_adapter_readiness",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "INCEPTADIVE EXTERNAL EFFECT ADAPTER READINESS VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
