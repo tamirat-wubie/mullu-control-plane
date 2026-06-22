@@ -14,6 +14,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+from scripts.render_first_usable_demo_operator_page import (
+    render_first_usable_demo_operator_page,
+    write_operator_outputs,
+)
 from scripts.validate_first_usable_demo_packet import (
     DEFAULT_PACKET as FIRST_USABLE_DEMO_PACKET_PATH,
     validate_first_usable_demo_packet,
@@ -21,6 +25,7 @@ from scripts.validate_first_usable_demo_packet import (
 from scripts.validate_public_demo_surfaces import (
     REPO_ROOT,
     PublicDemoSurfaceReport,
+    validate_first_usable_demo_operator_page,
     validate_openapi_source,
     validate_public_demo_surfaces,
     write_report,
@@ -34,7 +39,7 @@ def test_public_demo_surface_validator_passes_locally() -> None:
     assert report.ready is True
     assert report.report_hash.startswith("sha256:")
     assert report.to_dict()["failed_count"] == 0
-    assert {"http_demo_routes", "openapi_source", "proof_coverage"} <= check_ids
+    assert {"http_demo_routes", "openapi_source", "proof_coverage", "first_usable_demo_operator_page"} <= check_ids
 
 
 def test_public_demo_surface_report_hash_is_deterministic() -> None:
@@ -74,6 +79,48 @@ def test_first_usable_demo_packet_validates_as_public_demo_evidence() -> None:
     assert validation.valid, validation.errors
     assert validation.packet_id == "first_usable_demo_packet_v1"
     assert validation.solver_outcome == "SolvedVerified"
+
+
+def test_first_usable_demo_operator_render_is_read_only() -> None:
+    rendered = render_first_usable_demo_operator_page(generated_at="2026-06-22T00:00:00Z")
+    read_model = rendered.read_model
+
+    assert read_model["governed"] is True
+    assert read_model["read_only"] is True
+    assert read_model["fixture_backed"] is True
+    assert read_model["source_packet_id"] == "first_usable_demo_packet_v1"
+    assert read_model["effect_boundary"]["execution_allowed"] is False
+    assert read_model["effect_boundary"]["live_connector_execution_allowed"] is False
+    assert read_model["effect_boundary"]["external_send_allowed"] is False
+    assert read_model["assurance"]["packet_valid"] is True
+    assert read_model["assurance"]["customer_readiness_claim_allowed"] is False
+    assert "No-effect authority preserved:</strong> true" in rendered.html
+    assert "Governed Personal Assistant First Usable Demo" in rendered.html
+
+
+def test_first_usable_demo_operator_render_writes_outputs(tmp_path: Path) -> None:
+    rendered = render_first_usable_demo_operator_page(generated_at="2026-06-22T00:00:00Z")
+    read_model_output = tmp_path / "first_usable_demo_operator_read_model.json"
+    html_output = tmp_path / "first_usable_demo_operator_page.html"
+
+    write_operator_outputs(rendered, read_model_output=read_model_output, html_output=html_output)
+    payload = json.loads(read_model_output.read_text(encoding="utf-8"))
+    html = html_output.read_text(encoding="utf-8")
+
+    assert payload["read_model_id"] == "first_usable_demo_operator_read_model_v1"
+    assert payload["read_only"] is True
+    assert html.startswith("<!doctype html>")
+    assert "data-governed=\"true\"" in html
+
+
+def test_first_usable_demo_operator_page_public_demo_check_passes() -> None:
+    check = validate_first_usable_demo_operator_page()
+
+    assert check.check_id == "first_usable_demo_operator_page"
+    assert check.passed is True
+    assert check.details["source_packet_id"] == "first_usable_demo_packet_v1"
+    assert check.details["operator_question_count"] == 8
+    assert check.errors == ()
 
 
 def test_first_usable_demo_packet_rejects_execution_authority(tmp_path: Path) -> None:
@@ -135,4 +182,5 @@ def test_public_demo_surface_validator_cli_writes_report(tmp_path: Path) -> None
     assert completed.returncode == 0
     assert output_path.exists()
     assert payload["ready"] is True
+    assert "first_usable_demo_operator_page" in {check["check_id"] for check in payload["checks"]}
     assert "public_demo_surface_validation" in str(output_path)

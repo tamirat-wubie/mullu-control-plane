@@ -4,7 +4,7 @@ Purpose: compress the Mullu Govern / Mullu Control Plane platform into one revie
 
 Governance scope: product compression, personal-assistant demo sequencing, approval boundary, evidence references, no-effect authority, deployment/readiness claim separation, and next implementation gates.
 
-Dependencies: `docs/explain/PLAIN_ENGLISH.md`, `docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md`, `docs/63_finance_approval_packet_pilot.md`, `STATUS.md`, `DEPLOYMENT_STATUS.md`, `examples/first_usable_demo_packet.json`, and `scripts/validate_first_usable_demo_packet.py`.
+Dependencies: `docs/explain/PLAIN_ENGLISH.md`, `docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md`, `docs/63_finance_approval_packet_pilot.md`, `STATUS.md`, `DEPLOYMENT_STATUS.md`, `examples/first_usable_demo_packet.json`, `scripts/validate_first_usable_demo_packet.py`, and `scripts/render_first_usable_demo_operator_page.py`.
 
 Invariants:
 - The first demo is **draft-only / no-effect** until later evidence promotes a narrower action.
@@ -63,6 +63,20 @@ The first usable demo is successful only when an operator can answer these quest
 7. What receipt and proof references were generated?
 8. What is the next safe action?
 
+## Operator render
+
+The packet now has a read-only renderer that emits a deterministic operator read model and static HTML page without opening any live authority:
+
+```bash
+python scripts/render_first_usable_demo_operator_page.py \
+  --generated-at 2026-06-22T00:00:00Z \
+  --read-model-output .change_assurance/first_usable_demo_operator_read_model.json \
+  --html-output .change_assurance/first_usable_demo_operator_page.html \
+  --json
+```
+
+The renderer is intentionally local and no-effect. It does not call connectors, create provider drafts, send email, move money, write memory, mutate deployments, or claim customer readiness.
+
 ## Promotion gates
 
 | Gate | Required before promotion |
@@ -79,23 +93,23 @@ The first usable demo is successful only when an operator can answer these quest
 - Adds a single named product slice so future work does not scatter across unrelated platform surfaces.
 - Separates deployment/public-health evidence from customer readiness and live assistant authority.
 - Converts “first product” into an auditable demo packet with a validator and expected no-effect authority fields.
+- Adds a static read-only operator render that turns the packet into an operator page/read model.
 - Gives the next implementation sequence: read-only → draft-only → approval-review → dry-run adapter → live connector → customer pilot.
 
 ## Fracture deltas still open
 
 - This packet does not create a live UI, connector, Gmail call, payment call, memory write, deployment mutation, or customer-facing service.
 - README, plain-English, status, and deployment surfaces still need a later synchronization pass so public-health evidence and Foundation Mode language do not conflict.
-- The first demo still needs a rendered operator page or API route that consumes this packet directly.
+- The rendered operator page is static/local; a live API route remains a later bounded promotion.
 - The finance approval pilot and personal-assistant packet still need one shared end-to-end walkthrough before live use can be considered.
 
 ## Next implementation order
 
-1. Render `examples/first_usable_demo_packet.json` into a static operator page.
-2. Bind the packet to the existing personal-assistant console read model.
-3. Add a draft-only invoice/email walkthrough that emits no external effect.
-4. Add an approval-review packet that proves approval is not execution.
-5. Add a dry-run adapter witness only after UAO, redaction, rollback, and receipt gates exist.
-6. Reconcile README / plain-English / `STATUS.md` / `DEPLOYMENT_STATUS.md` claim language in one later claim-synchronization PR.
+1. Bind the packet to the existing personal-assistant console read model.
+2. Add a draft-only invoice/email walkthrough that emits no external effect.
+3. Add an approval-review packet that proves approval is not execution.
+4. Add a dry-run adapter witness only after UAO, redaction, rollback, and receipt gates exist.
+5. Reconcile README / plain-English / `STATUS.md` / `DEPLOYMENT_STATUS.md` claim language in one later claim-synchronization PR.
 
 ## Audit and refinement result
 
