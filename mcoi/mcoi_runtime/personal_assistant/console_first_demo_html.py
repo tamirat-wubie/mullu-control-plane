@@ -31,6 +31,8 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
         return ""
     effect = _mapping(walkthrough.get("effect_summary"))
     claim = _mapping(walkthrough.get("claim_summary"))
+    approval = _mapping(walkthrough.get("approval_review_packet"))
+    approval_effect = _mapping(approval.get("effect_summary"))
     state = _automation_state_summary(walkthrough=walkthrough, effect=effect, claim=claim)
     rows = (
         ("Walkthrough", walkthrough.get("walkthrough_id", "")),
@@ -38,6 +40,13 @@ def _invoice_email_walkthrough_panel(first_demo: Mapping[str, Any]) -> str:
         ("Draft Type", walkthrough.get("draft_type", "")),
         ("Approval Required Before Send", walkthrough.get("approval_required_before_send", False)),
         ("Approval Is Execution", walkthrough.get("approval_is_execution", False)),
+        ("Approval Packet", approval.get("review_packet_id", "")),
+        ("Approval Review State", approval.get("review_state", "")),
+        ("Approval Risk Level", approval.get("risk_level", "")),
+        ("Approval Scope", approval.get("approval_scope", "")),
+        ("Approval Proposed Action Count", approval.get("proposed_action_count", 0)),
+        ("Approval Enqueued", approval_effect.get("approval_enqueued", False)),
+        ("Approval Packet Is Execution", approval_effect.get("approval_is_execution", False)),
         ("External Send Allowed", effect.get("external_send_allowed", False)),
         ("Provider Draft Creation Allowed", effect.get("provider_draft_creation_allowed", False)),
         ("Invoice Payment Allowed", effect.get("invoice_payment_allowed", False)),
