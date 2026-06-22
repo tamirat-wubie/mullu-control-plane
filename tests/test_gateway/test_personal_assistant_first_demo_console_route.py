@@ -117,7 +117,7 @@ def test_gateway_personal_assistant_console_route_exposes_first_usable_demo_read
     assert "secret-worker-token" not in serialized
 
 
-def test_gateway_personal_assistant_console_html_view_still_renders_after_first_demo_binding() -> None:
+def test_gateway_personal_assistant_console_html_view_renders_invoice_walkthrough_panel() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 
     response = client.get("/api/v1/console/personal-assistant/view")
@@ -128,6 +128,14 @@ def test_gateway_personal_assistant_console_html_view_still_renders_after_first_
     assert post_response.status_code == 405
     assert "Mullu Personal Assistant Console" in body
     assert "Assistant Readiness" in body
+    assert "Invoice Email Draft Walkthrough" in body
+    assert "personal_assistant_invoice_email_draft_walkthrough_v1" in body
+    assert "Draft Status" in body
+    assert "draft_preview_only" in body
+    assert "Approval Required Before Send" in body
+    assert "Provider Draft Creation Allowed" in body
+    assert "Invoice Payment Allowed" in body
+    assert "Customer Readiness Claim Allowed" in body
     assert "Execution Allowed" in body
     assert "False" in body
     assert "secret-worker-token" not in body
