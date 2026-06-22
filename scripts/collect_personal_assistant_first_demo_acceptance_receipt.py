@@ -81,7 +81,7 @@ class StubSession:
 def collect_first_demo_acceptance_receipt(*, generated_at: str = _GENERATED_AT) -> dict[str, Any]:
     """Return a deterministic acceptance receipt for the first demo console."""
 
-    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    client = TestClient(create_gateway_app(platform=StubPlatform()), raise_server_exceptions=False)
     json_response = client.get("/api/v1/console/personal-assistant")
     html_response = client.get("/api/v1/console/personal-assistant/view")
     json_post_response = client.post("/api/v1/console/personal-assistant", json={})
@@ -163,6 +163,7 @@ def collect_first_demo_acceptance_receipt(*, generated_at: str = _GENERATED_AT) 
             "first_demo_read_model_id": str(first_demo.get("read_model_id", "")),
             "invoice_walkthrough_id": str(walkthrough.get("walkthrough_id", "")),
             "html_panel_title": "Invoice Email Draft Walkthrough" if "Invoice Email Draft Walkthrough" in html else "",
+            "html_error_excerpt": html[:240] if html_status != 200 else "",
             "actions_not_taken": sorted(actions_not_taken),
         },
         "missing": {
