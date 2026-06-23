@@ -945,6 +945,22 @@
         "title": "ComplianceMappingRequest",
         "type": "object"
       },
+      "ComponentSimulationRequest": {
+        "description": "Request envelope for preview-only Component Harness simulation.",
+        "properties": {
+          "request_text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Request Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_text"
+        ],
+        "title": "ComponentSimulationRequest",
+        "type": "object"
+      },
       "ConfigRollbackRequest": {
         "properties": {
           "applied_by": {
@@ -2180,6 +2196,88 @@
         "title": "ExplainActionRequest",
         "type": "object"
       },
+      "ExternalEffectAdvisoryRequest": {
+        "description": "Request body for a redacted external-effect boundary advisory.",
+        "properties": {
+          "authority_receipt_refs": {
+            "items": {},
+            "title": "Authority Receipt Refs",
+            "type": "array"
+          },
+          "candidate_action": {
+            "default": "",
+            "title": "Candidate Action",
+            "type": "string"
+          },
+          "created_at": {
+            "default": "",
+            "title": "Created At",
+            "type": "string"
+          },
+          "explicit_target": {
+            "default": "",
+            "title": "Explicit Target",
+            "type": "string"
+          },
+          "external_side_effect": {
+            "default": false,
+            "title": "External Side Effect",
+            "type": "boolean"
+          },
+          "memory_contradiction": {
+            "default": false,
+            "title": "Memory Contradiction",
+            "type": "boolean"
+          },
+          "normal_intent": {
+            "default": "",
+            "title": "Normal Intent",
+            "type": "string"
+          },
+          "normal_plan": {
+            "items": {},
+            "title": "Normal Plan",
+            "type": "array"
+          },
+          "request_id": {
+            "default": "",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "required_evidence_refs": {
+            "items": {},
+            "title": "Required Evidence Refs",
+            "type": "array"
+          },
+          "retrieval_receipt_ids": {
+            "items": {},
+            "title": "Retrieval Receipt Ids",
+            "type": "array"
+          },
+          "risk_level": {
+            "default": "low",
+            "title": "Risk Level",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "stage": {
+            "default": "interpretation",
+            "title": "Stage",
+            "type": "string"
+          },
+          "user_input": {
+            "default": "",
+            "title": "User Input",
+            "type": "string"
+          }
+        },
+        "title": "ExternalEffectAdvisoryRequest",
+        "type": "object"
+      },
       "FidelResponse": {
         "properties": {
           "col": {
@@ -3061,6 +3159,13 @@
             "title": "Decision Id",
             "type": "string"
           },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
           "metadata": {
             "additionalProperties": true,
             "title": "Metadata",
@@ -3761,6 +3866,58 @@
           "text"
         ],
         "title": "ParseOutputRequest",
+        "type": "object"
+      },
+      "PersonalAssistantPreviewRequest": {
+        "description": "Request to interpret and preview a governed personal-assistant action.",
+        "properties": {
+          "connector_refs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Connector Refs",
+            "type": "array"
+          },
+          "include_console_read_model": {
+            "default": false,
+            "title": "Include Console Read Model",
+            "type": "boolean"
+          },
+          "interface": {
+            "default": "api_route",
+            "title": "Interface",
+            "type": "string"
+          },
+          "request_id": {
+            "default": "",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_from_id": {
+            "default": "operator",
+            "title": "Requested From Id",
+            "type": "string"
+          },
+          "submitted_at": {
+            "default": "",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "thread_id": {
+            "default": "thread-personal-assistant-preview",
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "user_request": {
+            "title": "User Request",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_request"
+        ],
+        "title": "PersonalAssistantPreviewRequest",
         "type": "object"
       },
       "PilotProvisionRequest": {
@@ -5474,6 +5631,83 @@
           "policy_input"
         ],
         "title": "ShadowEvaluationRequest",
+        "type": "object"
+      },
+      "ShadowInspectRequest": {
+        "description": "Request body for a redacted non-executing shadow inspection.",
+        "properties": {
+          "candidate_action": {
+            "default": "",
+            "title": "Candidate Action",
+            "type": "string"
+          },
+          "created_at": {
+            "default": "",
+            "title": "Created At",
+            "type": "string"
+          },
+          "explicit_target": {
+            "default": "",
+            "title": "Explicit Target",
+            "type": "string"
+          },
+          "external_side_effect": {
+            "default": false,
+            "title": "External Side Effect",
+            "type": "boolean"
+          },
+          "memory_contradiction": {
+            "default": false,
+            "title": "Memory Contradiction",
+            "type": "boolean"
+          },
+          "normal_intent": {
+            "default": "",
+            "title": "Normal Intent",
+            "type": "string"
+          },
+          "normal_plan": {
+            "items": {},
+            "title": "Normal Plan",
+            "type": "array"
+          },
+          "request_id": {
+            "default": "",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "required_evidence_refs": {
+            "items": {},
+            "title": "Required Evidence Refs",
+            "type": "array"
+          },
+          "retrieval_receipt_ids": {
+            "items": {},
+            "title": "Retrieval Receipt Ids",
+            "type": "array"
+          },
+          "risk_level": {
+            "default": "low",
+            "title": "Risk Level",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "stage": {
+            "default": "interpretation",
+            "title": "Stage",
+            "type": "string"
+          },
+          "user_input": {
+            "default": "",
+            "title": "User Input",
+            "type": "string"
+          }
+        },
+        "title": "ShadowInspectRequest",
         "type": "object"
       },
       "ShadowPolicyInputRequest": {
@@ -9652,6 +9886,131 @@
         "summary": "Compliance Summary"
       }
     },
+    "/api/v1/components/read-model": {
+      "get": {
+        "description": "Return the foundation Component Harness read model.",
+        "operationId": "components_read_model_api_v1_components_read_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Components Read Model Api V1 Components Read Model Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Components Read Model"
+      }
+    },
+    "/api/v1/components/simulate": {
+      "post": {
+        "description": "Return a non-executing component route preview for an operator request.",
+        "operationId": "components_request_simulation_api_v1_components_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentSimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Components Request Simulation Api V1 Components Simulate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Components Request Simulation"
+      }
+    },
+    "/api/v1/components/symbols": {
+      "get": {
+        "description": "Return read-only UniversalSymbol projections for registered components.",
+        "operationId": "components_symbol_read_model_api_v1_components_symbols_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Components Symbol Read Model Api V1 Components Symbols Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Components Symbol Read Model"
+      }
+    },
+    "/api/v1/components/{component_id}/autopsy": {
+      "get": {
+        "description": "Return a non-executing autopsy for one registered component.",
+        "operationId": "components_autopsy_api_v1_components__component_id__autopsy_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "component_id",
+            "required": true,
+            "schema": {
+              "title": "Component Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Components Autopsy Api V1 Components  Component Id  Autopsy Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Components Autopsy"
+      }
+    },
     "/api/v1/compression/summary": {
       "get": {
         "description": "Return response compression summary.",
@@ -10312,6 +10671,42 @@
           }
         },
         "summary": "Console Note Memory View"
+      }
+    },
+    "/api/v1/console/personal-assistant": {
+      "get": {
+        "description": "Personal-assistant foundation console read model.",
+        "operationId": "console_personal_assistant_api_v1_console_personal_assistant_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Console Personal Assistant"
+      }
+    },
+    "/api/v1/console/personal-assistant/view": {
+      "get": {
+        "description": "Browser-facing read-only personal-assistant console panel.",
+        "operationId": "console_personal_assistant_view_api_v1_console_personal_assistant_view_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Console Personal Assistant View"
       }
     },
     "/api/v1/console/providers": {
@@ -11036,6 +11431,23 @@
           }
         },
         "summary": "Dashboard"
+      }
+    },
+    "/api/v1/dashboard/operational-math": {
+      "get": {
+        "description": "Read the operational mathematics proof posture.",
+        "operationId": "operational_math_dashboard_api_v1_dashboard_operational_math_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Operational Math Dashboard"
       }
     },
     "/api/v1/data-governance/classify": {
@@ -16052,6 +16464,98 @@
         "summary": "Get Partitions"
       }
     },
+    "/api/v1/personal-assistant/pilot/read-model": {
+      "get": {
+        "description": "Return the no-effect governed Team Assistant pilot package.",
+        "operationId": "personal_assistant_pilot_read_model_api_v1_personal_assistant_pilot_read_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Personal Assistant Pilot Read Model"
+      }
+    },
+    "/api/v1/personal-assistant/requests/preview": {
+      "post": {
+        "description": "Interpret a request and emit request, WHQR, plan, and receipt previews.",
+        "operationId": "preview_personal_assistant_request_api_v1_personal_assistant_requests_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalAssistantPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Personal Assistant Request"
+      }
+    },
+    "/api/v1/personal-assistant/skills": {
+      "get": {
+        "description": "Return the governed personal-assistant skill registry read model.",
+        "operationId": "personal_assistant_skill_read_model_api_v1_personal_assistant_skills_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Personal Assistant Skill Read Model"
+      }
+    },
+    "/api/v1/personal-assistant/work-assistant/dashboard/read-model": {
+      "get": {
+        "description": "Return the no-effect Governed Work Assistant operator dashboard projection.",
+        "operationId": "governed_work_assistant_operator_dashboard_read_model_api_v1_personal_assistant_work_assistant_dashboard_read_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Governed Work Assistant Operator Dashboard Read Model Api V1 Personal Assistant Work Assistant Dashboard Read Model Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Governed Work Assistant Operator Dashboard Read Model"
+      }
+    },
     "/api/v1/pilots/provision": {
       "post": {
         "description": "Return a deterministic pilot scaffold bundle for hosted provisioning.",
@@ -18347,6 +18851,88 @@
         "summary": "Create Session"
       }
     },
+    "/api/v1/shadow/external-effect/advisory": {
+      "post": {
+        "description": "Return redacted external-effect authority and evidence obligations.",
+        "operationId": "shadow_external_effect_advisory_api_v1_shadow_external_effect_advisory_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalEffectAdvisoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Shadow External Effect Advisory Api V1 Shadow External Effect Advisory Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Shadow External Effect Advisory"
+      }
+    },
+    "/api/v1/shadow/inspect": {
+      "post": {
+        "description": "Run a bounded shadow inspection and return a redacted advisory envelope.",
+        "operationId": "shadow_inspect_api_v1_shadow_inspect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShadowInspectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Shadow Inspect Api V1 Shadow Inspect Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Shadow Inspect"
+      }
+    },
     "/api/v1/shutdown/info": {
       "get": {
         "description": "Graceful shutdown configuration.",
@@ -18608,6 +19194,54 @@
           }
         },
         "summary": "Create Snapshot"
+      }
+    },
+    "/api/v1/snet/operator/read-model": {
+      "get": {
+        "description": "Return the bounded SNet operator read model without changing state.",
+        "operationId": "snet_operator_read_model_api_v1_snet_operator_read_model_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "max_symbol_count",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 0,
+              "title": "Max Symbol Count",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Snet Operator Read Model Api V1 Snet Operator Read Model Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Snet Operator Read Model",
+        "tags": [
+          "snet"
+        ]
       }
     },
     "/api/v1/spatial-map": {
