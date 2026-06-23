@@ -23,7 +23,6 @@ from scripts.export_openapi import export_openapi
 REPO_ROOT = Path(__file__).resolve().parents[1]
 OPENAPI_SOURCE_SPEC = REPO_ROOT / "sdk" / "openapi" / "mullu.openapi.json"
 WORK_ASSISTANT_DASHBOARD_ROUTE = "/api/v1/personal-assistant/work-assistant/dashboard/read-model"
-PENDING_OPENAPI_SOURCE_PATHS = frozenset({WORK_ASSISTANT_DASHBOARD_ROUTE})
 
 
 def _assert_openapi_section_matches(
@@ -39,21 +38,15 @@ def _assert_openapi_section_matches(
 
     checked_in_keys = set(checked_in_section)
     exported_keys = set(exported_section)
-    allowed_missing = PENDING_OPENAPI_SOURCE_PATHS if section_name == "paths" else frozenset()
-    missing = sorted((exported_keys - checked_in_keys) - allowed_missing)
+    missing = sorted(exported_keys - checked_in_keys)
     extra = sorted(checked_in_keys - exported_keys)
 
     assert missing == [], f"{section_name} missing from checked-in OpenAPI spec: {missing[:10]}"
     assert extra == [], f"{section_name} extra in checked-in OpenAPI spec: {extra[:10]}"
-    exported_section_for_compare = {
-        key: value
-        for key, value in exported_section.items()
-        if key not in allowed_missing
-    }
-    if checked_in_section != exported_section_for_compare:
+    if checked_in_section != exported_section:
         first_changed = next(
             key for key in sorted(checked_in_keys)
-            if checked_in_section[key] != exported_section_for_compare[key]
+            if checked_in_section[key] != exported_section[key]
         )
         raise AssertionError(f"{section_name} entry drifted in checked-in OpenAPI spec: {first_changed}")
 
@@ -96,6 +89,7 @@ def test_openapi_source_spec_is_exported_for_sdk_generation() -> None:
     assert spec["info"]["version"] == "3.13.0"
     assert "/api/v1/replay/{trace_id}/determinism" in spec["paths"]
     assert "/api/v1/cases/{case_id}/step-handoffs/view" in spec["paths"]
+    assert WORK_ASSISTANT_DASHBOARD_ROUTE in spec["paths"]
     assert "/software/receipts/dashboard" in spec["paths"]
     assert "/software/receipts/sdlc/dashboard" in spec["paths"]
     assert len(spec["paths"]) >= 200
