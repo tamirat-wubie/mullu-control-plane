@@ -443,6 +443,12 @@
       "urn": "urn:mullusi:schema:capture-policy-decision-ledger:1"
     },
     {
+      "path": "schemas/cdg_rccm_architecture_contract.schema.json",
+      "schema_id": "cdg-rccm-architecture-contract",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:cdg-rccm-architecture-contract:1"
+    },
+    {
       "path": "schemas/channel_approval_strength_policy.schema.json",
       "schema_id": "channel-approval-strength-policy",
       "surface": "approval",

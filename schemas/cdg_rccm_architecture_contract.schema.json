@@ -1,0 +1,566 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:cdg-rccm-architecture-contract:1",
+  "title": "CDG-RCCM Architecture Contract",
+  "description": "Foundation Mode contract for the Causal Dependency-Gated Recursive Component Convergence Mesh architecture without live runtime authority or universal convergence claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "checked_at",
+    "solver_outcome",
+    "source_spec",
+    "foundation_boundary",
+    "component_model",
+    "mesh_model",
+    "execution_protocol",
+    "dependency_request_contract",
+    "convergence_contracts",
+    "cycle_handling",
+    "closure_certification",
+    "authority_boundary",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "pattern": "^cdg-rccm-architecture-contract-[a-z0-9-]+$"
+    },
+    "contract_version": {
+      "type": "string",
+      "const": "cdg_rccm_architecture_contract.v1"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedUnverified"]
+    },
+    "source_spec": {
+      "$ref": "#/$defs/source_spec"
+    },
+    "foundation_boundary": {
+      "$ref": "#/$defs/foundation_boundary"
+    },
+    "component_model": {
+      "$ref": "#/$defs/component_model"
+    },
+    "mesh_model": {
+      "$ref": "#/$defs/mesh_model"
+    },
+    "execution_protocol": {
+      "$ref": "#/$defs/execution_protocol"
+    },
+    "dependency_request_contract": {
+      "$ref": "#/$defs/dependency_request_contract"
+    },
+    "convergence_contracts": {
+      "$ref": "#/$defs/convergence_contracts"
+    },
+    "cycle_handling": {
+      "$ref": "#/$defs/cycle_handling"
+    },
+    "closure_certification": {
+      "$ref": "#/$defs/closure_certification"
+    },
+    "authority_boundary": {
+      "$ref": "#/$defs/authority_boundary"
+    },
+    "contract_summary": {
+      "$ref": "#/$defs/contract_summary"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ref_text"
+      }
+    }
+  },
+  "$defs": {
+    "ref_text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_./:-]+$"
+    },
+    "source_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name",
+        "specification_version",
+        "reference_runtime",
+        "primary_algorithm",
+        "primary_region_solver",
+        "standard_status",
+        "universal_termination_claimed",
+        "universal_profile_meaning"
+      ],
+      "properties": {
+        "canonical_name": {
+          "type": "string",
+          "const": "CDG-RCCM"
+        },
+        "specification_version": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "reference_runtime": {
+          "type": "string",
+          "const": "RCOK"
+        },
+        "primary_algorithm": {
+          "type": "string",
+          "const": "DGRCA"
+        },
+        "primary_region_solver": {
+          "type": "string",
+          "const": "DPCRS"
+        },
+        "standard_status": {
+          "type": "string",
+          "const": "proposed_canonical_architecture"
+        },
+        "universal_termination_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "universal_profile_meaning": {
+          "type": "string",
+          "const": "shared_interface_protocol_only"
+        }
+      }
+    },
+    "foundation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_mode",
+        "live_runtime_claimed",
+        "external_effects_allowed",
+        "global_convergence_claimed",
+        "world_verification_claimed",
+        "runtime_certificate_issuer_claimed"
+      ],
+      "properties": {
+        "foundation_mode": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_runtime_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_effects_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "global_convergence_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "world_verification_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "runtime_certificate_issuer_claimed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "component_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_symbol_tuple",
+        "operational_tuple",
+        "required_conditions"
+      ],
+      "properties": {
+        "base_symbol_tuple": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "string"
+          }
+        },
+        "operational_tuple": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_conditions": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "sigma_models_lambda_over_identity",
+              "gamma_exposes_authorized_certified_projections",
+              "history_records_every_accepted_state_transition"
+            ]
+          }
+        }
+      }
+    },
+    "mesh_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mesh_tuple",
+        "epoch_frozen",
+        "containment_dependency_separated",
+        "containment_acyclic_required",
+        "dependency_cycles_allowed_when_classified",
+        "dependency_edge_types"
+      ],
+      "properties": {
+        "mesh_tuple": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "items": {
+            "type": "string"
+          }
+        },
+        "epoch_frozen": {
+          "type": "boolean",
+          "const": true
+        },
+        "containment_dependency_separated": {
+          "type": "boolean",
+          "const": true
+        },
+        "containment_acyclic_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "dependency_cycles_allowed_when_classified": {
+          "type": "boolean",
+          "const": true
+        },
+        "dependency_edge_types": {
+          "type": "array",
+          "minItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "execution_protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "governing_sequence",
+        "step_outcomes",
+        "settlement_levels",
+        "frame_lifecycle",
+        "independent_certificate_kernel_required"
+      ],
+      "properties": {
+        "governing_sequence": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": {
+            "type": "string"
+          }
+        },
+        "step_outcomes": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "settlement_levels": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/settlement_level"
+          }
+        },
+        "frame_lifecycle": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "independent_certificate_kernel_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "settlement_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "name"],
+      "properties": {
+        "level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "name": {
+          "type": "string",
+          "enum": [
+            "PROVISIONAL",
+            "LOCALLY_STABLE",
+            "BOUNDARY_RECONCILED",
+            "CLOSURE_CERTIFIED",
+            "WORLD_VERIFIED"
+          ]
+        }
+      }
+    },
+    "dependency_request_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_fields",
+        "gates",
+        "satisfaction_predicates"
+      ],
+      "properties": {
+        "required_fields": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "string"
+          }
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "satisfaction_predicates": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "convergence_contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "declared_methods",
+        "budget_exhaustion_outcome",
+        "cycle_region_requires_declared_policy"
+      ],
+      "properties": {
+        "declared_methods": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "budget_exhaustion_outcome": {
+          "type": "string",
+          "const": "UNKNOWN"
+        },
+        "cycle_region_requires_declared_policy": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "cycle_handling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_classes",
+        "semantic_feedback_requires_declared_convergence",
+        "structural_containment_rejected",
+        "hidden_self_dependency_exposed"
+      ],
+      "properties": {
+        "cycle_classes": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "semantic_feedback_requires_declared_convergence": {
+          "type": "boolean",
+          "const": true
+        },
+        "structural_containment_rejected": {
+          "type": "boolean",
+          "const": true
+        },
+        "hidden_self_dependency_exposed": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "closure_certification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_conditions",
+        "closure_outcomes",
+        "quiescence_is_not_correctness",
+        "world_claim_requires_evidence"
+      ],
+      "properties": {
+        "required_conditions": {
+          "type": "array",
+          "minItems": 12,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "closure_outcomes": {
+          "type": "array",
+          "minItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "quiescence_is_not_correctness": {
+          "type": "boolean",
+          "const": true
+        },
+        "world_claim_requires_evidence": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reasoning_only",
+        "effect_staging_required",
+        "no_component_self_certifies",
+        "live_runtime_dispatch_allowed",
+        "external_write_allowed",
+        "production_certificate_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "reasoning_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "effect_staging_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "no_component_self_certifies": {
+          "type": "boolean",
+          "const": true
+        },
+        "live_runtime_dispatch_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_write_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "production_certificate_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "success_claim_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_tuple_count",
+        "mesh_tuple_count",
+        "dependency_gate_count",
+        "step_outcome_count",
+        "settlement_level_count",
+        "cycle_class_count",
+        "closure_outcome_count",
+        "evidence_ref_count",
+        "authority_denied"
+      ],
+      "properties": {
+        "component_tuple_count": {
+          "type": "integer",
+          "const": 5
+        },
+        "mesh_tuple_count": {
+          "type": "integer",
+          "const": 11
+        },
+        "dependency_gate_count": {
+          "type": "integer",
+          "const": 7
+        },
+        "step_outcome_count": {
+          "type": "integer",
+          "const": 7
+        },
+        "settlement_level_count": {
+          "type": "integer",
+          "const": 5
+        },
+        "cycle_class_count": {
+          "type": "integer",
+          "const": 7
+        },
+        "closure_outcome_count": {
+          "type": "integer",
+          "const": 9
+        },
+        "evidence_ref_count": {
+          "type": "integer",
+          "minimum": 5
+        },
+        "authority_denied": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
