@@ -22,6 +22,7 @@ from mcoi_runtime.core.invariants import (
     ensure_non_empty_text,
     stable_identifier,
 )
+from mcoi_runtime.core.planning_boundary import PlanningKnowledge
 
 from .operator_models import OperatorRequest, OperatorRunReport
 
@@ -91,6 +92,207 @@ class AutonomousRequestPlan:
         """Return planned requests in validated execution order."""
 
         return tuple(step.request for step in self.steps)
+
+
+@dataclass(frozen=True, slots=True)
+class AutonomousRequestCapabilityMetadata:
+    """Capability metadata used to compile request plans deterministically."""
+
+    capability_id: str
+    template: Mapping[str, object]
+    default_bindings: Mapping[str, str] = field(default_factory=dict)
+    predecessor_capability_ids: tuple[str, ...] = ()
+    verification_keys: tuple[str, ...] = ("operator_run_report",)
+    knowledge_entries: tuple[PlanningKnowledge, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "capability_id", ensure_non_empty_text("capability_id", self.capability_id))
+        if not isinstance(self.template, Mapping):
+            raise RuntimeCoreInvariantError("capability template must be a mapping")
+        for field_name in ("template_id", "action_type"):
+            ensure_non_empty_text(field_name, self.template.get(field_name, ""))
+        object.__setattr__(
+            self,
+            "default_bindings",
+            _validated_text_mapping("default_bindings", self.default_bindings),
+        )
+        object.__setattr__(
+            self,
+            "predecessor_capability_ids",
+            tuple(
+                ensure_non_empty_text("predecessor_capability_id", value)
+                for value in self.predecessor_capability_ids
+            ),
+        )
+        if self.capability_id in self.predecessor_capability_ids:
+            raise RuntimeCoreInvariantError("capability cannot depend on itself")
+        object.__setattr__(
+            self,
+            "verification_keys",
+            tuple(ensure_non_empty_text("verification_key", value) for value in self.verification_keys),
+        )
+        if not self.verification_keys:
+            raise RuntimeCoreInvariantError("capability verification_keys must be non-empty")
+        if not isinstance(self.knowledge_entries, tuple):
+            raise RuntimeCoreInvariantError("capability knowledge_entries must be a tuple")
+        for entry in self.knowledge_entries:
+            if not isinstance(entry, PlanningKnowledge):
+                raise RuntimeCoreInvariantError("capability knowledge_entries must contain PlanningKnowledge values")
+
+
+@dataclass(frozen=True, slots=True)
+class AutonomousRequestIntent:
+    """Raw operator intent for deterministic capability-plan compilation."""
+
+    episode_id: str
+    subject_id: str
+    goal_id: str
+    capability_ids: tuple[str, ...]
+    bindings: Mapping[str, str] = field(default_factory=dict)
+    has_approval: bool = False
+    max_local_retries: int = 0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "episode_id", ensure_non_empty_text("episode_id", self.episode_id))
+        object.__setattr__(self, "subject_id", ensure_non_empty_text("subject_id", self.subject_id))
+        object.__setattr__(self, "goal_id", ensure_non_empty_text("goal_id", self.goal_id))
+        if not isinstance(self.capability_ids, tuple) or not self.capability_ids:
+            raise RuntimeCoreInvariantError("intent capability_ids must be a non-empty tuple")
+        normalized_capability_ids = tuple(
+            ensure_non_empty_text("capability_id", capability_id)
+            for capability_id in self.capability_ids
+        )
+        if len(set(normalized_capability_ids)) != len(normalized_capability_ids):
+            raise RuntimeCoreInvariantError("intent capability_ids must be unique")
+        object.__setattr__(self, "capability_ids", normalized_capability_ids)
+        object.__setattr__(self, "bindings", _validated_text_mapping("bindings", self.bindings))
+        if not isinstance(self.has_approval, bool):
+            raise RuntimeCoreInvariantError("has_approval must be a bool")
+        if not isinstance(self.max_local_retries, int) or self.max_local_retries < 0:
+            raise RuntimeCoreInvariantError("max_local_retries must be a non-negative int")
+
+
+class AutonomousRequestPlanCompiler:
+    """Compiles capability metadata and raw intent into an executable episode."""
+
+    def __init__(self, capability_catalog: Mapping[str, AutonomousRequestCapabilityMetadata]) -> None:
+        if not isinstance(capability_catalog, Mapping) or not capability_catalog:
+            raise RuntimeCoreInvariantError("capability_catalog must be a non-empty mapping")
+        normalized_catalog: dict[str, AutonomousRequestCapabilityMetadata] = {}
+        for capability_id, metadata in capability_catalog.items():
+            normalized_capability_id = ensure_non_empty_text("capability_id", capability_id)
+            if not isinstance(metadata, AutonomousRequestCapabilityMetadata):
+                raise RuntimeCoreInvariantError(
+                    "capability_catalog values must be AutonomousRequestCapabilityMetadata"
+                )
+            if metadata.capability_id != normalized_capability_id:
+                raise RuntimeCoreInvariantError("capability_catalog key must match metadata capability_id")
+            normalized_catalog[normalized_capability_id] = metadata
+        self._capability_catalog = normalized_catalog
+
+    def compile_episode(self, intent: AutonomousRequestIntent) -> AutonomousRequestEpisode:
+        """Compile an intent to a validated episode with expanded dependencies."""
+
+        if not isinstance(intent, AutonomousRequestIntent):
+            raise RuntimeCoreInvariantError("intent must be an AutonomousRequestIntent")
+        ordered_capability_ids = self._expanded_capability_ids(intent.capability_ids)
+        plan = AutonomousRequestPlan(
+            plan_id=stable_identifier(
+                "autonomous-request-plan",
+                {
+                    "episode_id": intent.episode_id,
+                    "capability_ids": ordered_capability_ids,
+                },
+            ),
+            steps=tuple(
+                self._plan_step_for_capability(
+                    capability_id=capability_id,
+                    intent=intent,
+                )
+                for capability_id in ordered_capability_ids
+            ),
+        )
+        return AutonomousRequestEpisode.from_plan(
+            episode_id=intent.episode_id,
+            subject_id=intent.subject_id,
+            goal_id=intent.goal_id,
+            plan=plan,
+            has_approval=intent.has_approval,
+            max_local_retries=intent.max_local_retries,
+        )
+
+    def _expanded_capability_ids(
+        self,
+        requested_capability_ids: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        ordered: list[str] = []
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(capability_id: str) -> None:
+            metadata = self._capability_catalog.get(capability_id)
+            if metadata is None:
+                raise RuntimeCoreInvariantError("requested capability is not registered")
+            if capability_id in visited:
+                return
+            if capability_id in visiting:
+                raise RuntimeCoreInvariantError("capability dependency graph must not contain cycles")
+            visiting.add(capability_id)
+            for predecessor_id in metadata.predecessor_capability_ids:
+                if predecessor_id not in self._capability_catalog:
+                    raise RuntimeCoreInvariantError("capability predecessor is not registered")
+                visit(predecessor_id)
+            visiting.remove(capability_id)
+            visited.add(capability_id)
+            ordered.append(capability_id)
+
+        for capability_id in requested_capability_ids:
+            visit(capability_id)
+        return tuple(ordered)
+
+    def _plan_step_for_capability(
+        self,
+        *,
+        capability_id: str,
+        intent: AutonomousRequestIntent,
+    ) -> AutonomousRequestPlanStep:
+        metadata = self._capability_catalog[capability_id]
+        required_parameters = _required_parameter_names(metadata.template)
+        bindings = dict(metadata.default_bindings)
+        for parameter in required_parameters:
+            if parameter in intent.bindings:
+                bindings[parameter] = intent.bindings[parameter]
+        missing_bindings = tuple(
+            parameter
+            for parameter in required_parameters
+            if parameter not in bindings
+        )
+        if missing_bindings:
+            raise RuntimeCoreInvariantError("capability required bindings are missing")
+        request = OperatorRequest(
+            request_id=stable_identifier(
+                "autonomous-request",
+                {
+                    "episode_id": intent.episode_id,
+                    "capability_id": capability_id,
+                },
+            ),
+            subject_id=intent.subject_id,
+            goal_id=intent.goal_id,
+            template=dict(metadata.template),
+            bindings=bindings,
+            knowledge_entries=metadata.knowledge_entries,
+        )
+        _action_class_for_request(request)
+        return AutonomousRequestPlanStep(
+            stage_id=_stage_id_for_capability(capability_id),
+            request=request,
+            predecessors=tuple(
+                _stage_id_for_capability(predecessor_id)
+                for predecessor_id in metadata.predecessor_capability_ids
+            ),
+            verification_keys=metadata.verification_keys,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -538,6 +740,31 @@ def run_autonomous_request_episode(
     """Convenience entry point for request-episode execution."""
 
     return AutonomousRequestExecutor(operator_loop).run_episode(episode)
+
+
+def _validated_text_mapping(field_name: str, values: Mapping[str, str]) -> dict[str, str]:
+    if not isinstance(values, Mapping):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a mapping")
+    return {
+        ensure_non_empty_text("binding_name", key): ensure_non_empty_text("binding_value", value)
+        for key, value in values.items()
+    }
+
+
+def _required_parameter_names(template: Mapping[str, object]) -> tuple[str, ...]:
+    required_parameters = template.get("required_parameters", ())
+    if required_parameters is None:
+        return ()
+    if isinstance(required_parameters, (str, bytes)) or not isinstance(required_parameters, (tuple, list)):
+        raise RuntimeCoreInvariantError("required_parameters must be an array")
+    return tuple(
+        ensure_non_empty_text("required_parameter", parameter)
+        for parameter in required_parameters
+    )
+
+
+def _stage_id_for_capability(capability_id: str) -> str:
+    return f"stage-{ensure_non_empty_text('capability_id', capability_id)}"
 
 
 def _ordered_plan_steps(
@@ -1014,10 +1241,13 @@ def _solver_outcome(
 
 
 __all__ = [
+    "AutonomousRequestCapabilityMetadata",
     "AutonomousRequestEpisode",
     "AutonomousRequestEpisodeReceipt",
     "AutonomousRequestExecutor",
+    "AutonomousRequestIntent",
     "AutonomousRequestPlan",
+    "AutonomousRequestPlanCompiler",
     "AutonomousRequestPlanStep",
     "AutonomousRequestRepairReceipt",
     "AutonomousRequestStepReceipt",

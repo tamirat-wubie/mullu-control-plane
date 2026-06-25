@@ -12,9 +12,12 @@ import pytest
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.autonomous_request import (
+    AutonomousRequestCapabilityMetadata,
     AutonomousRequestEpisode,
     AutonomousRequestExecutor,
+    AutonomousRequestIntent,
     AutonomousRequestPlan,
+    AutonomousRequestPlanCompiler,
     AutonomousRequestPlanStep,
     RequestActionBoundary,
 )
@@ -74,6 +77,30 @@ def _local_request(
         bindings={"message": "ok"} if bindings is None else bindings,
         knowledge_entries=(
             PlanningKnowledge("knowledge-local", "constraint", KnowledgeLifecycle.ADMITTED),
+        ),
+    )
+
+
+def _capability_metadata(
+    capability_id: str,
+    *,
+    message_parameter: str = "message",
+    default_bindings: dict[str, str] | None = None,
+    predecessor_capability_ids: tuple[str, ...] = (),
+) -> AutonomousRequestCapabilityMetadata:
+    return AutonomousRequestCapabilityMetadata(
+        capability_id=capability_id,
+        template={
+            "template_id": f"template-{capability_id}",
+            "action_type": "shell_command",
+            "action_class": "execute_write",
+            "command_argv": ("python", "-c", f"print('{{{message_parameter}}}')"),
+            "required_parameters": (message_parameter,),
+        },
+        default_bindings={} if default_bindings is None else default_bindings,
+        predecessor_capability_ids=predecessor_capability_ids,
+        knowledge_entries=(
+            PlanningKnowledge(f"knowledge-{capability_id}", "constraint", KnowledgeLifecycle.ADMITTED),
         ),
     )
 
@@ -251,6 +278,100 @@ def test_autonomous_request_plan_rejects_cycles_before_execution() -> None:
                     predecessors=("stage-a",),
                 ),
             ),
+        )
+
+
+def test_autonomous_request_plan_compiler_expands_capability_dependencies() -> None:
+    executor = FakeExecutor()
+    loop = _loop(executor)
+    compiler = AutonomousRequestPlanCompiler(
+        {
+            "capability-analyze": _capability_metadata(
+                "capability-analyze",
+                message_parameter="source",
+            ),
+            "capability-apply": _capability_metadata(
+                "capability-apply",
+                message_parameter="target",
+                default_bindings={"target": "apply"},
+                predecessor_capability_ids=("capability-analyze",),
+            ),
+        }
+    )
+
+    episode = compiler.compile_episode(
+        AutonomousRequestIntent(
+            episode_id="episode-compiled-plan",
+            subject_id="operator-1",
+            goal_id="goal-autonomous-request",
+            capability_ids=("capability-apply",),
+            bindings={"source": "inspect"},
+        )
+    )
+    receipt = AutonomousRequestExecutor(loop).run_episode(episode)
+
+    assert tuple(step.stage_id for step in episode.plan.steps) == (
+        "stage-capability-analyze",
+        "stage-capability-apply",
+    )
+    assert tuple(request.bindings for request in episode.requests) == (
+        {"source": "inspect"},
+        {"target": "apply"},
+    )
+    assert executor.calls == 2
+    assert executor.argv_history[0][-1] == "print('inspect')"
+    assert executor.argv_history[1][-1] == "print('apply')"
+    assert receipt.solver_outcome == SolverOutcome.SOLVED_UNVERIFIED.value
+    assert receipt.plan_id == episode.plan.plan_id
+    assert receipt.planned_stage_count == 2
+    assert receipt.blocked_dependency_count == 0
+
+
+def test_autonomous_request_plan_compiler_rejects_missing_required_bindings() -> None:
+    compiler = AutonomousRequestPlanCompiler(
+        {
+            "capability-analyze": _capability_metadata(
+                "capability-analyze",
+                message_parameter="source",
+            ),
+        }
+    )
+
+    with pytest.raises(Exception, match="capability required bindings are missing"):
+        compiler.compile_episode(
+            AutonomousRequestIntent(
+                episode_id="episode-missing-binding",
+                subject_id="operator-1",
+                goal_id="goal-autonomous-request",
+                capability_ids=("capability-analyze",),
+                bindings={},
+            )
+        )
+
+
+def test_autonomous_request_plan_compiler_rejects_dependency_cycles() -> None:
+    compiler = AutonomousRequestPlanCompiler(
+        {
+            "capability-a": _capability_metadata(
+                "capability-a",
+                predecessor_capability_ids=("capability-b",),
+            ),
+            "capability-b": _capability_metadata(
+                "capability-b",
+                predecessor_capability_ids=("capability-a",),
+            ),
+        }
+    )
+
+    with pytest.raises(Exception, match="capability dependency graph must not contain cycles"):
+        compiler.compile_episode(
+            AutonomousRequestIntent(
+                episode_id="episode-cycle",
+                subject_id="operator-1",
+                goal_id="goal-autonomous-request",
+                capability_ids=("capability-a",),
+                bindings={"message": "loop"},
+            )
         )
 
 
