@@ -48,6 +48,36 @@ class TestOpenAPISpec:
         assert "/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal" in paths
         assert paths["/software/receipts/dashboard"]["get"]["tags"] == ["software-receipts"]
 
+    def test_inceptadive_shadow_openapi_witness_fields_documented(self, client):
+        spec = client.get("/openapi.json").json()
+        paths = spec["paths"]
+        schemas = spec["components"]["schemas"]
+
+        assert "/api/v1/shadow/inspect" in paths
+        assert "/api/v1/shadow/external-effect/advisory" in paths
+        assert "/api/v1/health/shadow" in paths
+        assert "/api/v1/console/shadow" in paths
+
+        inspect_operation = paths["/api/v1/shadow/inspect"]["post"]
+        external_operation = paths["/api/v1/shadow/external-effect/advisory"]["post"]
+        assert inspect_operation["summary"] == "Shadow Inspect"
+        assert external_operation["summary"] == "Shadow External Effect Advisory"
+        assert "requestBody" in inspect_operation
+        assert "requestBody" in external_operation
+
+        inspect_props = schemas["ShadowInspectResponse"]["properties"]
+        external_props = schemas["ShadowExternalEffectAdvisoryResponse"]["properties"]
+        health_props = schemas["ShadowHealthResponse"]["properties"]
+        console_props = schemas["ShadowConsoleResponse"]["properties"]
+        assert "execution_authority" in inspect_props
+        assert "raw_request_text_exposed" in inspect_props
+        assert "private_memory_exposed" in inspect_props
+        assert "connector_dispatch_authority" in external_props
+        assert "memory_write_authority" in external_props
+        assert "governance_verdict_authority" in external_props
+        assert "execution_authority" in health_props
+        assert "execution_authority" in console_props
+
     def test_governed_endpoints_documented(self, client):
         spec = client.get("/openapi.json").json()
         governed = [p for p in spec["paths"] if p.startswith("/api/v1/")]

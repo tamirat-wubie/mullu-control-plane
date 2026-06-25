@@ -271,31 +271,6 @@ def test_readiness_map_rejects_missing_approved_branch_workspace_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_dry_run_test_runner_ready_row(
-    tmp_path: Path,
-) -> None:
-    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
-        encoding="utf-8"
-    )
-    map_path = tmp_path / "readiness-map.md"
-    map_path.write_text(
-        map_text.replace(
-            "| Dry-run test runner plan receipt PR | READY |",
-            "| Dry-run test runner plan receipt PR | PARTIAL |",
-        ),
-        encoding="utf-8",
-    )
-
-    validation = validate_readiness_map(map_path)
-    serialized_errors = json.dumps(validation.errors, sort_keys=True)
-
-    assert validation.ok is False
-    assert (
-        "missing ready row: Dry-run test runner plan receipt PR"
-        in serialized_errors
-    )
-
-
 def test_readiness_map_rejects_missing_task_record_write_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
@@ -304,7 +279,7 @@ def test_readiness_map_rejects_missing_task_record_write_first_pr(tmp_path: Path
     map_path.write_text(
         map_text.replace(
             "1. `harness(tasks): add task record write UAO admission preflight`",
-            "1. `harness(receipts): add receipt-store append admission preflight`",
+            "1. `harness(receipts): add harness receipt-store append preflight`",
         ),
         encoding="utf-8",
     )

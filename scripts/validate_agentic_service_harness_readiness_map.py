@@ -15,8 +15,7 @@ Invariants:
   - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - LoopStatus remains closed as a read-only projection.
   - Task creation admission remains closed as an admission-only READY surface.
-  - Dry-run test runner plan remains closed as a non-executing receipt surface.
-  - The first next PR advances to task record write UAO admission after the
+  - The first next PR advances to task record write UAO admission after
     dry-run test runner plan receipt closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
@@ -189,14 +188,18 @@ REQUIRED_APPROVED_BRANCH_WORKSPACE_TERMS = (
 REQUIRED_DRY_RUN_TEST_RUNNER_PLAN_TERMS = (
     "Dry-run test runner plan receipt PR",
     "agentic_service_harness_dry_run_test_runner_plan_receipt",
-    "selected harness test commands",
-    "allowlist refs",
-    "expected evidence refs",
-    "timeout budgets",
-    "redaction policy",
+    "selected validator and pytest commands",
     "command execution",
-    "raw output capture",
+    "subprocess execution",
+    "test result claims",
+    "coverage claims",
+    "filesystem writes",
+    "adapter execution",
+    "connector calls",
+    "receipt append",
+    "secret serialization",
     "terminal closure remain blocked",
+    "task record write UAO admission preflight",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -457,7 +460,7 @@ def _validate_approved_branch_workspace_ready(map_text: str, errors: list[str]) 
 
 def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -> None:
     closure_row = re.search(
-        r"^\| Dry-run test runner plan receipt PR \| READY \| .+command execution.+terminal closure remain blocked\. \|$",
+        r"^\| Dry-run test runner plan receipt PR \| READY \| .+selected validator and pytest commands.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -465,7 +468,7 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
         errors.append("missing ready row: Dry-run test runner plan receipt PR")
 
     test_runner_row = re.search(
-        r"^\| Test runner \| READY \| .+without command execution.+terminal closure authority\. \| None for plan receipt\..+ \|$",
+        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+ \| None for plan-only command selection\..+ \|$",
         map_text,
         re.MULTILINE,
     )
@@ -476,7 +479,7 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
         "harness(tasks): add task record write UAO admission preflight",
-        "harness(receipts): add receipt-store append admission preflight",
+        "harness(receipts): add harness receipt-store append preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:

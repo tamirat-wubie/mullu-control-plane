@@ -57,6 +57,19 @@ def test_runtime_approval_decision_blocks_effect_boundaries() -> None:
     assert decisions["revised"]["receipt"]["decision"] == "deferred"
     assert decisions["rejected"]["receipt"]["decision"] == "blocked"
     assert decisions["expired"]["receipt"]["decision"] == "blocked"
+    for decision in decisions.values():
+        queue_ref = decision["queue_precondition_ref"]
+        assert queue_ref["source_projection"] == "personal_assistant_approval_queue_read_model"
+        assert queue_ref["approval_id"] == decision["approval_id"]
+        assert queue_ref["source_queue_state"] == "requested"
+        assert queue_ref["source_receipt_id"].endswith("_request")
+        assert queue_ref["source_receipt_id"] != decision["receipt"]["receipt_id"]
+        assert queue_ref["payload_digest_only"] is True
+        assert queue_ref["decision_precondition_met"] is True
+        assert queue_ref["execution_allowed"] is False
+        assert queue_ref["approval_is_execution"] is False
+        assert queue_ref["connector_mutation_allowed"] is False
+        assert queue_ref["system_of_record_write_allowed"] is False
 
 
 def test_approval_queue_expired_decision_records_receipt_without_execution() -> None:
@@ -142,6 +155,40 @@ def test_approval_decision_validator_rejects_receipt_drift(tmp_path: Path) -> No
     assert "decisions[0].receipt.metadata.approval_is_execution must be false" in result.errors
     assert "decisions[3].receipt.decision must be blocked for expired" in result.errors
     assert result.receipt_count == 4
+
+
+def test_approval_decision_validator_rejects_queue_precondition_drift(tmp_path: Path) -> None:
+    payload = _load_fixture()
+    queue_ref = payload["decisions"][0]["queue_precondition_ref"]
+    queue_ref["source_queue_state"] = "approved"
+    queue_ref["source_receipt_id"] = payload["decisions"][0]["receipt"]["receipt_id"]
+    queue_ref["source_review_packet_sha256"] = "0" * 64
+    queue_ref["payload_digest_only"] = False
+    queue_ref["execution_allowed"] = True
+    candidate = tmp_path / "queue_precondition_drift_approval_decision.json"
+    candidate.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_personal_assistant_approval_decision(decision_path=candidate, validate_runtime=False)
+
+    assert result.valid is False
+    assert (
+        "decisions[0].queue_precondition_ref.source_queue_state must be requested"
+        in result.errors
+    )
+    assert (
+        "decisions[0].queue_precondition_ref.source_receipt_id must differ from decision receipt"
+        in result.errors
+    )
+    assert (
+        "decisions[0].queue_precondition_ref.source_review_packet_sha256 does not match approval review packet"
+        in result.errors
+    )
+    assert "decisions[0].queue_precondition_ref.payload_digest_only must be true" in result.errors
+    assert "decisions[0].queue_precondition_ref.execution_allowed must be false" in result.errors
+    assert (
+        "decisions[0].queue_precondition_ref.queue_precondition_sha256 does not match queue precondition fields"
+        in result.errors
+    )
 
 
 def test_approval_decision_validator_rejects_missing_decision_state(tmp_path: Path) -> None:

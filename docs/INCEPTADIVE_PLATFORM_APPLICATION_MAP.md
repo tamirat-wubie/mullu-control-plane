@@ -44,6 +44,7 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Exposes `POST /api/v1/shadow/external-effect/advisory` for read-only external-effect obligation projection.
    - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
    - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
+   - OpenAPI witness: `docs/INCEPTADIVE_SHADOW_OPENAPI_WITNESS.md`.
    - Replay fixture: `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json`.
 
 9. `mcoi_runtime.app.routers.assistant`
@@ -116,6 +117,8 @@ Focused tests cover:
   authority/evidence obligations without raw receipt refs or authority flags.
 - external-effect advisory route exposing the same obligation surface without
   connector dispatch, memory write, approval, or raw reference exposure.
+- OpenAPI export retaining explicit shadow route response models and
+  non-authority/redaction fields.
 
 ## Status
 

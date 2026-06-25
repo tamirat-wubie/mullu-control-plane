@@ -3,10 +3,11 @@
   "schema_version": 1,
   "generated_at": "2026-06-25T00:00:00Z",
   "solver_outcome": "SolvedVerified",
+  "plan_status": "AwaitingEvidence",
   "source_contract_refs": [
-    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
     "examples/agentic_service_harness_task_creation_admission_preflight.foundation.json",
-    "schemas/agentic_service_harness.schema.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "scripts/validate_agentic_service_harness_readiness_map.py",
     "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
   ],
   "scope": {
@@ -15,102 +16,105 @@
     "project_id": "project-agentic-service-harness",
     "repository_connection_id": "repo-mullu-control-plane",
     "repository_slug": "tamirat-wubie/mullu-control-plane",
-    "task_creation_preflight_id": "task-creation-admission-foundation",
-    "approved_workspace_preflight_id": "approved-branch-workspace-creation-foundation",
-    "test_runner_plan_id": "dry-run-test-runner-plan-foundation",
+    "approved_branch_workspace_preflight_id": "gate.branchwrite",
     "foundation_phase": "foundation_dry_run_test_runner_plan_receipt",
-    "dry_run_only": true,
+    "plan_only": true,
     "read_only_sources": true,
-    "command_execution_enabled": false,
-    "test_execution_enabled": false,
-    "raw_output_serialized": false,
-    "receipt_store_append_enabled": false,
+    "test_execution_admitted": false,
+    "commands_executed": false,
+    "test_results_claimed": false,
+    "coverage_claimed": false,
     "secret_values_serialized": false
   },
-  "test_runner_plan": {
-    "requested_action": "plan_dry_run_test_runner",
-    "requested_route_ref": "route://harness/test-runner/dry-run/not-admitted",
-    "runner_mode": "dry_run_plan_only",
-    "approved_branch_workspace_preflight_valid": true,
-    "operator_approval_collected": false,
-    "uao_admission_collected": false,
-    "test_execution_admitted": false,
+  "test_plan": {
+    "plan_id": "dry-run-test-runner-plan-foundation",
+    "execution_mode": "PLAN_ONLY",
     "selected_commands": [
       {
-        "command_id": "validate-dry-run-test-runner-plan-receipt",
-        "command": "python scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py --strict",
-        "purpose": "Validate the dry-run test runner plan receipt contract without executing harness-selected tests.",
-        "allowlist_ref": "allowlist://harness/test-runner/validator-only",
-        "expected_evidence_ref": "evidence://dry-run-test-runner-plan-receipt/validator",
-        "timeout_seconds": 120,
-        "execution_admitted": false,
-        "raw_output_capture_allowed": false
+        "command_id": "approved-branch-workspace-preflight-validator",
+        "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Proves the source approved branch workspace preflight remains valid before test-runner planning can reference it.",
+        "expected_result": "planned_only_no_result_claim"
       },
       {
-        "command_id": "test-dry-run-test-runner-plan-receipt",
+        "command_id": "dry-run-test-runner-plan-receipt-validator",
+        "command": "python scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Validates the dry-run test runner plan receipt schema, example, source refs, and authority denials.",
+        "expected_result": "planned_only_no_result_claim"
+      },
+      {
+        "command_id": "readiness-map-validator",
+        "command": "python scripts/validate_agentic_service_harness_readiness_map.py",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Keeps readiness topology aligned after the test runner plan receipt becomes READY.",
+        "expected_result": "planned_only_no_result_claim"
+      },
+      {
+        "command_id": "dry-run-test-runner-plan-unit-tests",
         "command": "python -m pytest tests/test_validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py -q",
-        "purpose": "Prove the validator rejects authority drift, mutation routes, secret surfaces, and raw output capture.",
-        "allowlist_ref": "allowlist://harness/test-runner/pytest-contract-only",
-        "expected_evidence_ref": "evidence://dry-run-test-runner-plan-receipt/pytest",
-        "timeout_seconds": 180,
-        "execution_admitted": false,
-        "raw_output_capture_allowed": false
+        "command_class": "pytest",
+        "path_scope": "tests_only",
+        "reason": "Defines the focused unit test surface that must run only after command execution authority exists.",
+        "expected_result": "planned_only_no_result_claim"
       }
     ],
-    "required_before_execution_refs": [
-      "approval://operator/test-runner-execution",
-      "evidence://approved-branch-workspace-creation-preflight",
-      "evidence://uao-test-runner-admission",
-      "evidence://redaction-policy-for-command-output",
-      "evidence://receipt-store-write-path"
+    "selection_reason_refs": [
+      "evidence://approved-branch-workspace-preflight-valid",
+      "evidence://test-runner-plan-validator-contract",
+      "evidence://readiness-map-topology-boundary",
+      "evidence://focused-unit-test-contract"
     ],
-    "blocked_reason_refs": [
-      "blocked://operator-approval/not-collected",
-      "blocked://uao-admission/not-collected",
-      "blocked://test-execution/not-admitted",
-      "blocked://raw-output-capture/not-admitted",
-      "blocked://receipt-store/append-not-admitted",
-      "blocked://terminal-closure/not-authorized"
-    ],
-    "next_required_evidence_refs": [
-      "evidence://task-record-write-uao-admission",
-      "evidence://receipt-store-append-admission",
-      "approval://test-runner-execution/operator-decision"
-    ]
-  },
-  "redaction_policy": {
-    "raw_stdout_stored": false,
-    "raw_stderr_stored": false,
-    "environment_values_stored": false,
-    "secret_patterns_blocked": [
-      "secret-pattern://access-token",
-      "secret-pattern://api-key",
-      "secret-pattern://private-key",
-      "secret-pattern://password"
-    ],
-    "allowed_receipt_fields": [
-      "command_id",
-      "command",
-      "purpose",
-      "allowlist_ref",
-      "expected_evidence_ref",
-      "timeout_seconds"
-    ]
+    "command_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "test_result_claim_enabled": false,
+    "coverage_claim_enabled": false
   },
   "authority_denials": {
     "test_execution_enabled": false,
     "command_execution_enabled": false,
-    "adapter_execution_enabled": false,
-    "connector_calls_enabled": false,
+    "subprocess_execution_enabled": false,
     "filesystem_write_enabled": false,
     "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
     "receipt_store_append_enabled": false,
     "runtime_state_write_enabled": false,
     "mutation_route_enabled": false,
-    "raw_output_serialized": false,
     "secret_values_serialized": false,
     "terminal_closure": false,
     "default_high_risk_authority": false
+  },
+  "required_evidence": {
+    "must_have_before_command_execution": [
+      "approval://operator/test-command-execution",
+      "evidence://branch-workspace-created-with-approval",
+      "evidence://workspace-path-confinement",
+      "evidence://test-command-timeout-policy",
+      "evidence://subprocess-output-redaction-policy"
+    ],
+    "must_have_before_test_result_claim": [
+      "evidence://commands-executed-in-approved-workspace",
+      "evidence://test-command-exit-codes",
+      "evidence://test-output-captured-with-redaction"
+    ],
+    "must_have_before_receipt_append": [
+      "evidence://receipt-store-write-path",
+      "evidence://receipt-redaction-policy",
+      "evidence://receipt-append-rollback-plan"
+    ]
+  },
+  "receipt_refs": {
+    "dry_run_test_runner_plan_receipt_schema": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json",
+    "dry_run_test_runner_plan_receipt_example": "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "approved_branch_workspace_creation_preflight_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_preflight.schema.json",
+    "approved_branch_workspace_creation_preflight_example": "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
   },
   "validators": [
     {
@@ -119,7 +123,7 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Add task record write UAO admission preflight; keep test execution, command execution, adapter execution, receipt append, raw output capture, secrets, and terminal closure blocked until operator approval, UAO, redaction, and receipt-store evidence exist.",
+  "next_action": "Add task record write UAO admission preflight; keep test command execution, subprocess execution, filesystem writes, adapter execution, receipt append, connector calls, secrets, result claims, and terminal closure blocked until explicit evidence exists.",
   "report_is_not_terminal_closure": true,
   "terminal_closure_required": true
 }
