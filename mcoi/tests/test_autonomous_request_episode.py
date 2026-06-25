@@ -12,6 +12,7 @@ import pytest
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.autonomous_request import (
+    AutonomousRequestAutomationState,
     AutonomousRequestCapabilityMetadata,
     AutonomousRequestEpisode,
     AutonomousRequestExecutor,
@@ -120,6 +121,7 @@ def test_autonomous_request_episode_runs_local_step_without_prompt() -> None:
 
     assert executor.calls == 1
     assert receipt.solver_outcome == SolverOutcome.SOLVED_UNVERIFIED.value
+    assert receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value
     assert receipt.prompt_count == 0
     assert receipt.pending_approval_count == 0
     assert receipt.dispatched_count == 1
@@ -247,6 +249,7 @@ def test_autonomous_request_episode_blocks_plan_dependent_stage_after_failed_pre
 
     assert executor.calls == 0
     assert receipt.solver_outcome == SolverOutcome.GOVERNANCE_BLOCKED.value
+    assert receipt.automation_state == AutonomousRequestAutomationState.GOVERNANCE_BLOCKED.value
     assert receipt.plan_id == "plan-block-dependent"
     assert receipt.planned_stage_count == 2
     assert receipt.blocked_dependency_count == 1
@@ -482,6 +485,7 @@ def test_autonomous_request_episode_blocks_external_communication_without_approv
 
     assert executor.calls == 0
     assert receipt.solver_outcome == SolverOutcome.AWAITING_EVIDENCE.value
+    assert receipt.automation_state == AutonomousRequestAutomationState.AWAITING_APPROVAL.value
     assert receipt.prompt_count == 1
     assert receipt.pending_approval_count == 1
     assert receipt.dispatched_count == 0
