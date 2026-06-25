@@ -271,15 +271,15 @@ def test_readiness_map_rejects_missing_approved_branch_workspace_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_dry_run_test_runner_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_task_record_write_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(tests): add dry-run test runner plan receipt`",
             "1. `harness(tasks): add task record write UAO admission preflight`",
+            "1. `harness(receipts): add harness receipt-store append preflight`",
         ),
         encoding="utf-8",
     )
@@ -289,7 +289,7 @@ def test_readiness_map_rejects_missing_dry_run_test_runner_first_pr(tmp_path: Pa
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(tests): add dry-run test runner plan receipt"
+        "missing next PR marker: harness(tasks): add task record write UAO admission preflight"
         in serialized_errors
     )
 
