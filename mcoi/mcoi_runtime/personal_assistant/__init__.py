@@ -32,6 +32,13 @@ from .approval import (
     PersonalAssistantApprovalQueue,
     prepare_approval_proposal_from_plan,
 )
+from .approval_decision_evidence import (
+    DEFAULT_APPROVAL_DECISION_CREATED_AT,
+    DEFAULT_APPROVAL_DECISION_DECIDED_AT,
+    DEFAULT_APPROVAL_DECISION_SET_ID,
+    build_default_personal_assistant_approval_decision_evidence,
+    build_personal_assistant_approval_decision_evidence_envelope,
+)
 from .approval_matrix import (
     ApprovalRiskPolicy,
     PersonalAssistantApprovalMatrix,
@@ -141,6 +148,9 @@ __all__ = (
     "ApprovalProposedAction",
     "ApprovalQueueRecord",
     "ApprovalRiskPolicy",
+    "DEFAULT_APPROVAL_DECISION_CREATED_AT",
+    "DEFAULT_APPROVAL_DECISION_DECIDED_AT",
+    "DEFAULT_APPROVAL_DECISION_SET_ID",
     "PersonalAssistantApprovalQueue",
     "PersonalAssistantApprovalMatrix",
     "CalendarEventDraftInput",
@@ -183,10 +193,12 @@ __all__ = (
     "build_clarification_requests",
     "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
+    "build_default_personal_assistant_approval_decision_evidence",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
     "build_default_personal_assistant_read_only_projection",
     "build_personal_assistant_draft_projection_envelope",
+    "build_personal_assistant_approval_decision_evidence_envelope",
     "build_personal_assistant_read_only_projection_envelope",
     "draft_calendar_event",
     "draft_email_response",
