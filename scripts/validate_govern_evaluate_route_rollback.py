@@ -54,7 +54,8 @@ def validate_govern_evaluate_route_rollback(
 ) -> dict[str, Any]:
     """Validate that evaluate-route rollback keeps the product write route closed."""
     observed_at = (now_utc or datetime.now(UTC)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    allowlist_set = frozenset(allowlist or _load_public_proxy_paths())
+    allowlist_source = _load_public_proxy_paths() if allowlist is None else allowlist
+    allowlist_set = frozenset(allowlist_source)
     preserved_routes_present = all(route in allowlist_set for route in PRESERVED_ROUTES)
     blocked_route_absent = BLOCKED_ROUTE not in allowlist_set
     probe = (probe_runner or _probe_blocked_evaluate_route)()

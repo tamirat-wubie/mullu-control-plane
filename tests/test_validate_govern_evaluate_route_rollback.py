@@ -48,6 +48,19 @@ def test_rollback_witness_blocks_if_evaluate_route_is_allowlisted() -> None:
     assert "failed:blocked_route_absent_from_allowlist" in witness["findings"]
 
 
+def test_rollback_witness_preserves_explicit_empty_allowlist() -> None:
+    witness = validate_govern_evaluate_route_rollback(
+        allowlist=(),
+        probe_runner=lambda: RouteProbe(status_code=404, outbound_transport_called=False),
+    )
+
+    assert witness["solver_outcome"] == "GovernanceBlocked"
+    assert witness["proof_state"] == "Fail"
+    assert witness["checks"]["preserved_routes_present"] is False
+    assert witness["checks"]["blocked_route_absent_from_allowlist"] is True
+    assert "failed:preserved_routes_present" in witness["findings"]
+
+
 def test_rollback_witness_blocks_if_probe_reaches_transport() -> None:
     witness = validate_govern_evaluate_route_rollback(
         probe_runner=lambda: RouteProbe(status_code=404, outbound_transport_called=True),
