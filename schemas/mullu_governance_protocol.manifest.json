@@ -1607,6 +1607,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-console-read-model:1"
     },
     {
+      "path": "schemas/personal_assistant_intake_chain_read_model.schema.json",
+      "schema_id": "personal-assistant-intake-chain-read-model",
+      "surface": "assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-intake-chain-read-model:1"
+    },
+    {
       "path": "schemas/personal_assistant_draft_projection.schema.json",
       "schema_id": "personal-assistant-draft-projection",
       "surface": "assistant",

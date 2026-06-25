@@ -1,0 +1,262 @@
+{
+  "read_model_id": "pa_intake_chain_inbox_summary_001",
+  "read_model_version": "personal_assistant_intake_chain_read_model.v1",
+  "generated_at": "2026-06-25T00:00:00Z",
+  "foundation_only": true,
+  "solver_outcome": "SolvedVerified",
+  "request": {
+    "request_id": "pa_request_inbox_summary_001",
+    "interface": "operator_console",
+    "risk_level": "P1",
+    "execution_mode": "read_and_draft_only",
+    "requires_approval": false,
+    "requested_skill_ids": [
+      "email.inbox.summarize",
+      "email.response.draft"
+    ],
+    "missing_binding_count": 0,
+    "source_ref": "examples/personal_assistant_request_inbox_summary.json"
+  },
+  "interpretation": {
+    "proposal_id": "symbolic-interpretation-proposal-1111111111111111",
+    "personal_assistant_request_id": "pa_request_inbox_summary_001",
+    "gateway_request_id": "interpreted-request-2222222222222222",
+    "comparison_result": "matches_deterministic",
+    "validation_status": "accepted_as_proposal",
+    "authority_level": "proposal_only",
+    "deterministic_override_allowed": false,
+    "action_authority_granted": false,
+    "execution_allowed": false,
+    "private_payload_included": false,
+    "secret_values_serialized": false,
+    "source_ref": "examples/symbolic_interpretation_proposal.foundation.json"
+  },
+  "clarification": {
+    "required": false,
+    "missing_binding_count": 0,
+    "reason_codes": [],
+    "questions": [],
+    "safe_default": "no_execution",
+    "source_ref": "examples/clarification_request.foundation.json"
+  },
+  "plan_preview": {
+    "plan": {
+      "plan_id": "pa_plan_inbox_summary_chain_001",
+      "request_id": "pa_request_inbox_summary_001",
+      "created_at": "2026-06-25T00:00:00Z",
+      "goal": "Project inbox summary and draft-only response plan without live connector execution.",
+      "risk_level": "P2",
+      "mode": "read_and_draft_only",
+      "requires_approval": false,
+      "dry_run_available": true,
+      "execution_allowed": false,
+      "approval_gate": {
+        "approval_required": true,
+        "approval_level": "P4",
+        "approval_ref": "pa_approval_email_send_001",
+        "reason_codes": [
+          "external_communication_requires_explicit_approval"
+        ]
+      },
+      "steps": [
+        {
+          "step_id": "intake_projection",
+          "skill_id": "email.inbox.summarize",
+          "capability_refs": [
+            "email.read",
+            "email.search"
+          ],
+          "mode": "preview",
+          "risk_level": "P1",
+          "action": "Project inbox summary from governed request evidence only.",
+          "approval_required": false,
+          "produces_receipt": true,
+          "effect_boundary": "digest_only_read_model_no_provider_call"
+        },
+        {
+          "step_id": "draft_projection",
+          "skill_id": "email.response.draft",
+          "capability_refs": [
+            "email.reply_suggest"
+          ],
+          "mode": "draft",
+          "risk_level": "P2",
+          "action": "Prepare draft artifact reference and receipt without sending.",
+          "approval_required": false,
+          "produces_receipt": true,
+          "effect_boundary": "draft_only_email_not_sent"
+        },
+        {
+          "step_id": "approval_gate_external_send",
+          "skill_id": "email.send.with_approval",
+          "capability_refs": [
+            "email.send"
+          ],
+          "mode": "blocked",
+          "risk_level": "P4",
+          "action": "Record approval gate for any future external email send.",
+          "approval_required": true,
+          "produces_receipt": true,
+          "effect_boundary": "external_send_blocked_without_approval"
+        }
+      ],
+      "actions_not_authorized": [
+        "connector_call",
+        "mailbox_read",
+        "mailbox_mutation",
+        "email_send",
+        "calendar_write",
+        "task_write",
+        "memory_write",
+        "deployment_mutation"
+      ],
+      "receipt_refs": [
+        "pa_receipt_email_draft_001"
+      ],
+      "evidence_refs": [
+        "proof://personal-assistant/intake-chain/inbox-summary"
+      ],
+      "metadata": {
+        "fixture": "personal_assistant_intake_chain_read_model",
+        "foundation_only": true,
+        "live_connector_execution_allowed": false
+      }
+    },
+    "step_count": 3,
+    "actions_not_authorized": [
+      "connector_call",
+      "mailbox_read",
+      "mailbox_mutation",
+      "email_send",
+      "calendar_write",
+      "task_write",
+      "memory_write",
+      "deployment_mutation"
+    ],
+    "source_ref": "examples/personal_assistant_dry_run_packet.json"
+  },
+  "approval_boundary": {
+    "approval_required_for_p4_p5": true,
+    "approval_id": "pa_approval_email_send_001",
+    "approval_state": "requested",
+    "approval_is_execution": false,
+    "execution_allowed": false,
+    "external_send_allowed": false,
+    "source_ref": "examples/personal_assistant_approval_packet.json"
+  },
+  "receipt_boundary": {
+    "receipt_required": true,
+    "receipt_count": 1,
+    "actions_taken_recorded": true,
+    "actions_not_taken_recorded": true,
+    "success_claim_allowed": false,
+    "source_ref": "examples/personal_assistant_receipt_draft_only.json"
+  },
+  "memory_boundary": {
+    "memory_observation_allowed": true,
+    "memory_write_allowed": false,
+    "nested_mind_live_activation_allowed": false,
+    "raw_chat_log_storage_allowed": false
+  },
+  "effect_boundary": {
+    "execution_allowed": false,
+    "live_connector_execution_allowed": false,
+    "connector_mutation_allowed": false,
+    "mailbox_read_allowed": false,
+    "mailbox_mutation_allowed": false,
+    "external_send_allowed": false,
+    "calendar_write_allowed": false,
+    "task_write_allowed": false,
+    "memory_write_allowed": false,
+    "deployment_mutation_allowed": false,
+    "customer_readiness_claim_allowed": false,
+    "money_legal_public_action_allowed": false
+  },
+  "private_payload_policy": {
+    "raw_private_payload_serialized": false,
+    "secret_values_serialized": false,
+    "connector_payload_projection": "digest_only",
+    "body_projection": "operator_visible_draft"
+  },
+  "source_artifacts": [
+    {
+      "source_kind": "request",
+      "source_ref": "examples/personal_assistant_request_inbox_summary.json",
+      "schema_ref": "schemas/personal_assistant_request.schema.json",
+      "payload_digest_only": true,
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "source_kind": "symbolic_interpretation_proposal",
+      "source_ref": "examples/symbolic_interpretation_proposal.foundation.json",
+      "schema_ref": "schemas/symbolic_interpretation_proposal.schema.json",
+      "payload_digest_only": true,
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "source_kind": "clarification_request",
+      "source_ref": "examples/clarification_request.foundation.json",
+      "schema_ref": "schemas/clarification_request.schema.json",
+      "payload_digest_only": true,
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "source_kind": "approval_packet",
+      "source_ref": "examples/personal_assistant_approval_packet.json",
+      "schema_ref": "schemas/personal_assistant_approval.schema.json",
+      "payload_digest_only": true,
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "source_kind": "draft_receipt",
+      "source_ref": "examples/personal_assistant_receipt_draft_only.json",
+      "schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "payload_digest_only": true,
+      "solver_outcome": "SolvedVerified"
+    }
+  ],
+  "evidence_refs": [
+    "proof://personal-assistant/intake-chain/inbox-summary",
+    "proof://personal-assistant/approval/email-send-001",
+    "proof://personal-assistant/receipt/email-draft-001"
+  ],
+  "receipt_refs": [
+    "pa_receipt_email_draft_001"
+  ],
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "intake_chain_read_model_projected",
+        "logged_in_lineage": true,
+        "reason": "Schema-backed read model can bind request, interpretation, WHQR, plan, approval, and receipt evidence in Foundation Mode."
+      }
+    ],
+    "rejected_deltas": [
+      {
+        "delta_id": "live_connector_execution",
+        "logged_in_lineage": true,
+        "reason": "Intake-chain read model grants no connector execution authority."
+      },
+      {
+        "delta_id": "external_send",
+        "logged_in_lineage": true,
+        "reason": "External communication remains blocked without explicit approval and live adapter evidence."
+      },
+      {
+        "delta_id": "memory_write",
+        "logged_in_lineage": true,
+        "reason": "Memory observation remains review-only; no live memory write or Nested Mind activation is admitted."
+      }
+    ]
+  },
+  "contract_summary": {
+    "source_artifact_count": 5,
+    "evidence_ref_count": 3,
+    "receipt_ref_count": 1,
+    "missing_binding_count": 0,
+    "plan_step_count": 3,
+    "read_model_projection_closed": true,
+    "customer_readiness_claim_allowed": false,
+    "deployment_mutation_allowed": false
+  }
+}
