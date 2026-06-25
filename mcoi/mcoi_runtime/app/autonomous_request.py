@@ -36,6 +36,15 @@ class RequestActionBoundary(StrEnum):
     REJECTED = "rejected"
 
 
+class AutonomousRequestAutomationState(StrEnum):
+    """Continuation state derived from an autonomous request episode receipt."""
+
+    SETTLED_WITHOUT_PROMPT = "settled_without_prompt"
+    AWAITING_APPROVAL = "awaiting_approval"
+    GOVERNANCE_BLOCKED = "governance_blocked"
+    AWAITING_EVIDENCE = "awaiting_evidence"
+
+
 @dataclass(frozen=True, slots=True)
 class AutonomousRequestPlanStep:
     """One planned request stage inside an autonomous request episode."""
@@ -532,6 +541,7 @@ class AutonomousRequestEpisodeReceipt:
     planned_stage_count: int = 0
     blocked_dependency_count: int = 0
     plan_receipt_ref: str | None = None
+    automation_state: str = AutonomousRequestAutomationState.AWAITING_EVIDENCE.value
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -544,6 +554,7 @@ class AutonomousRequestEpisodeReceipt:
             "finished_at",
             "solver_outcome",
             "rollback_ref",
+            "automation_state",
         ):
             object.__setattr__(
                 self,
@@ -1148,6 +1159,15 @@ def _episode_receipt(
     )
     receipt_refs = tuple(step.receipt_ref for step in step_receipts)
     plan_receipt_ref = _plan_receipt_ref(episode=episode, step_receipts=step_receipts)
+    automation_state = _automation_state(
+        action_count=len(step_receipts),
+        dispatched_count=dispatched_count,
+        completed_count=completed_count,
+        pending_count=pending_count,
+        rejected_count=rejected_count,
+        validation_errors=validation_errors,
+        blocked_dependency_count=blocked_dependency_count,
+    )
     solver_outcome = _solver_outcome(
         action_count=len(step_receipts),
         dispatched_count=dispatched_count,
@@ -1194,6 +1214,7 @@ def _episode_receipt(
         planned_stage_count=0 if episode.plan is None else len(episode.plan.steps),
         blocked_dependency_count=blocked_dependency_count,
         plan_receipt_ref=plan_receipt_ref,
+        automation_state=automation_state.value,
         solver_outcome=solver_outcome.value,
         rollback_ref=rollback_ref,
     )
@@ -1240,7 +1261,27 @@ def _solver_outcome(
     return SolverOutcome.AWAITING_EVIDENCE
 
 
+def _automation_state(
+    *,
+    action_count: int,
+    dispatched_count: int,
+    completed_count: int,
+    pending_count: int,
+    rejected_count: int,
+    validation_errors: tuple[str, ...],
+    blocked_dependency_count: int,
+) -> AutonomousRequestAutomationState:
+    if pending_count > 0:
+        return AutonomousRequestAutomationState.AWAITING_APPROVAL
+    if rejected_count > 0 or validation_errors or blocked_dependency_count > 0:
+        return AutonomousRequestAutomationState.GOVERNANCE_BLOCKED
+    if action_count > 0 and (completed_count == action_count or dispatched_count == action_count):
+        return AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT
+    return AutonomousRequestAutomationState.AWAITING_EVIDENCE
+
+
 __all__ = [
+    "AutonomousRequestAutomationState",
     "AutonomousRequestCapabilityMetadata",
     "AutonomousRequestEpisode",
     "AutonomousRequestEpisodeReceipt",

@@ -16,7 +16,11 @@ from mcoi_runtime.app.autonomous_capabilities import (
     default_autonomous_capability_catalog,
     default_autonomous_request_plan_compiler,
 )
-from mcoi_runtime.app.autonomous_request import AutonomousRequestExecutor, AutonomousRequestIntent
+from mcoi_runtime.app.autonomous_request import (
+    AutonomousRequestAutomationState,
+    AutonomousRequestExecutor,
+    AutonomousRequestIntent,
+)
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.operator_loop import OperatorLoop
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
@@ -94,6 +98,7 @@ def test_default_catalog_compiles_apply_dependency_chain_without_prompt() -> Non
     assert executor.argv_history[1][-2] == "import sys; print('plan:' + sys.argv[1])"
     assert executor.argv_history[2][-2] == "import sys; print('apply:' + sys.argv[1])"
     assert receipt.solver_outcome == SolverOutcome.SOLVED_UNVERIFIED.value
+    assert receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value
     assert receipt.prompt_count == 0
     assert receipt.planned_stage_count == 3
     assert receipt.blocked_dependency_count == 0
