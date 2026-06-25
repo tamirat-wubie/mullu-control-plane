@@ -33,6 +33,7 @@ APPROVAL_HISTORY_SCHEMA_REF = "urn:mullusi:schema:operator-approval-history-read
 PLAN_REVIEW_SCHEMA_REF = "urn:mullusi:schema:operator-plan-review-read-model:1"
 BUDGET_REPORT_SCHEMA_REF = "urn:mullusi:schema:operator-budget-report-read-model:1"
 PLAN_RECEIPT_EXPORT_SCHEMA_REF = "urn:mullusi:schema:operator-plan-receipt-export-read-model:1"
+PLAN_RECEIPT_BUNDLE_SCHEMA_REF = "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
 CURRENT_TASK_SCHEMA_REF = "urn:mullusi:schema:current-task-read-model:1"
 
 _MAX_SCAN_LIMIT = 1000
@@ -235,6 +236,17 @@ _PLAN_RECEIPT_EXPORT_COLUMNS = (
     "receipt_types",
     "latest_event_hash",
     "receipt_href",
+)
+_PLAN_RECEIPT_BUNDLE_COLUMNS = (
+    "plan_id",
+    "status",
+    "evidence_bundle_available",
+    "step_command_count",
+    "receipt_group_count",
+    "receipt_count",
+    "evidence_ref_count",
+    "missing_step_command_count",
+    "receipt_export_href",
 )
 
 
@@ -836,6 +848,138 @@ def build_operator_plan_receipt_export_read_model(
         "write_allowed": False,
         "governed": True,
     }
+
+
+def build_operator_plan_receipt_bundle_read_model(
+    *,
+    plan_ledger: Any,
+    command_ledger: Any,
+    preview_store: Any | None = None,
+    tenant_budget_reporter: Any | None = None,
+    tenant_id: str = "",
+    status: str = "",
+    budget_gate: str = "",
+    search: str = "",
+    limit: int = 100,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Build a read-only receipt bundle across the current Plan Review page."""
+    plan_review = build_operator_plan_review_read_model(
+        plan_ledger,
+        preview_store=preview_store,
+        tenant_budget_reporter=tenant_budget_reporter,
+        tenant_id=tenant_id,
+        status=status,
+        budget_gate=budget_gate,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    plan_exports: list[dict[str, Any]] = []
+    plan_export_summaries: list[dict[str, Any]] = []
+    missing_step_command_ids: list[str] = []
+    receipt_type_counts: dict[str, int] = {}
+    receipt_status_counts: dict[str, int] = {}
+    for plan_record in _mapping_list(plan_review.get("plans")):
+        plan_id = str(plan_record.get("plan_id", "")).strip()
+        if not plan_id:
+            continue
+        export = build_operator_plan_receipt_export_read_model(
+            plan_ledger=plan_ledger,
+            command_ledger=command_ledger,
+            preview_store=preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            plan_id=plan_id,
+        )
+        plan_exports.append(export)
+        missing = [str(command_id) for command_id in _text_tuple(export.get("missing_step_command_ids"))]
+        missing_step_command_ids.extend(missing)
+        for group in _mapping_list(export.get("step_receipt_groups")):
+            for receipt_type in _text_tuple(group.get("receipt_types")):
+                _increment_count(receipt_type_counts, receipt_type)
+            for receipt in _mapping_list(group.get("receipts")):
+                _increment_count(receipt_status_counts, _receipt_status_key(receipt))
+        evidence_bundle = export.get("plan_evidence_bundle")
+        evidence_refs = (
+            _text_tuple(evidence_bundle.get("evidence_refs"))
+            if isinstance(evidence_bundle, Mapping)
+            else ()
+        )
+        plan_export_summaries.append(
+            {
+                "plan_id": plan_id,
+                "status": str(export.get("status", "not_found")),
+                "evidence_bundle_available": export.get("evidence_bundle_available") is True,
+                "step_command_count": _bounded_int(export.get("step_command_count")),
+                "receipt_group_count": _bounded_int(export.get("receipt_group_count")),
+                "receipt_count": _bounded_int(export.get("receipt_count")),
+                "evidence_ref_count": len(evidence_refs),
+                "missing_step_command_count": len(missing),
+                "receipt_export_href": _plan_receipt_export_href(plan_id),
+            }
+        )
+    return {
+        "schema_ref": PLAN_RECEIPT_BUNDLE_SCHEMA_REF,
+        "tenant_id_filter": str(plan_review.get("tenant_id_filter", "")),
+        "status_filter": str(plan_review.get("status_filter", "")),
+        "budget_gate_filter": str(plan_review.get("budget_gate_filter", "")),
+        "search_filter": str(plan_review.get("search_filter", "")),
+        "limit": _bounded_int(plan_review.get("limit")),
+        "offset": _bounded_int(plan_review.get("offset")),
+        "next_offset": plan_review.get("next_offset"),
+        "total": _bounded_int(plan_review.get("total")),
+        "count": len(plan_exports),
+        "plan_review": plan_review,
+        "plan_export_count": len(plan_exports),
+        "certified_export_count": sum(1 for export in plan_exports if export.get("status") == "certified"),
+        "evidence_bundle_count": sum(1 for export in plan_exports if export.get("evidence_bundle_available") is True),
+        "step_command_count": sum(_bounded_int(export.get("step_command_count")) for export in plan_exports),
+        "receipt_group_count": sum(_bounded_int(export.get("receipt_group_count")) for export in plan_exports),
+        "receipt_count": sum(_bounded_int(export.get("receipt_count")) for export in plan_exports),
+        "evidence_ref_count": sum(
+            _bounded_int(summary.get("evidence_ref_count")) for summary in plan_export_summaries
+        ),
+        "missing_step_command_ids": missing_step_command_ids,
+        "receipt_type_counts": receipt_type_counts,
+        "receipt_status_counts": receipt_status_counts,
+        "plan_export_summaries": plan_export_summaries,
+        "plan_exports": plan_exports,
+        "raw_message_exposed": False,
+        "execution_allowed": False,
+        "write_allowed": False,
+        "governed": True,
+    }
+
+
+def render_operator_plan_receipt_bundle_html(read_model: Mapping[str, Any]) -> str:
+    """Render the cross-plan receipt bundle as bounded operator HTML."""
+    summaries = _mapping_list(read_model.get("plan_export_summaries"))
+    rows = _html_rows(
+        summaries,
+        _PLAN_RECEIPT_BUNDLE_COLUMNS,
+        empty_label="No plan receipt exports in the current view",
+    )
+    metrics = (
+        ("Plans", read_model.get("plan_export_count", 0)),
+        ("Certified", read_model.get("certified_export_count", 0)),
+        ("Evidence Bundles", read_model.get("evidence_bundle_count", 0)),
+        ("Receipt Groups", read_model.get("receipt_group_count", 0)),
+        ("Receipts", read_model.get("receipt_count", 0)),
+        ("Raw Exposed", read_model.get("raw_message_exposed", False)),
+    )
+    return _operator_table_html(
+        title="Mullu Plan Receipt Bundle",
+        description="Read-only Plan Review receipt bundle for the current filtered plan page.",
+        json_href="/operator/plan-review/receipts/read-model",
+        columns=_PLAN_RECEIPT_BUNDLE_COLUMNS,
+        rows=rows,
+        metrics=metrics,
+        nav_links=(
+            ("/operator/plan-review", "plan review"),
+            ("/operator/receipts", "receipt viewer"),
+            ("/operator/current-task", "current task"),
+        ),
+    )
 
 
 def render_operator_plan_receipt_export_html(read_model: Mapping[str, Any]) -> str:
@@ -3124,6 +3268,10 @@ def _bounded_limit(limit: int, *, maximum: int = _MAX_PAGE_LIMIT) -> int:
     return max(1, min(int(limit), maximum))
 
 
+def _bounded_int(value: Any) -> int:
+    return max(0, int(value)) if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
 def _bounded_offset(offset: int) -> int:
     return max(0, int(offset))
 
@@ -3249,6 +3397,19 @@ def _budget_report_href(tenant_id: str) -> str:
 
 def _plan_closure_href(plan_id: str) -> str:
     return f"/capability-plans/{quote(plan_id, safe='')}/closure"
+
+
+def _increment_count(counts: dict[str, int], key: str) -> None:
+    normalized_key = key.strip() or "unknown"
+    counts[normalized_key] = counts.get(normalized_key, 0) + 1
+
+
+def _receipt_status_key(receipt: Mapping[str, Any]) -> str:
+    for key in ("receipt_status", "status", "decision"):
+        value = receipt.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return "unknown"
 
 
 def _html_rows(

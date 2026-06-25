@@ -86,6 +86,9 @@ OPERATOR_BUDGET_REPORT_READ_MODEL_SCHEMA = (
 OPERATOR_PLAN_RECEIPT_EXPORT_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "operator_plan_receipt_export_read_model.schema.json"
 )
+OPERATOR_PLAN_RECEIPT_BUNDLE_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "operator_plan_receipt_bundle_read_model.schema.json"
+)
 CURRENT_TASK_READ_MODEL_SCHEMA = (
     _ROOT / "schemas" / "current_task_read_model.schema.json"
 )
@@ -1366,6 +1369,8 @@ class TestWebChatWebhook:
         plan_review_resp = client.get(
             f"/operator/plan-review/read-model?tenant_id=t1&plan_id={plan_id}"
         )
+        receipt_bundle_resp = client.get("/operator/plan-review/receipts/read-model?tenant_id=t1")
+        receipt_bundle_html_resp = client.get("/operator/plan-review/receipts?tenant_id=t1")
         receipt_export_resp = client.get(
             f"/operator/plan-review/{plan_id}/receipts/read-model"
         )
@@ -1421,6 +1426,32 @@ class TestWebChatWebhook:
         assert plan_review_resp.json()["plans"][0]["receipt_export_href"] == (
             f"/operator/plan-review/{plan_id}/receipts"
         )
+        assert receipt_bundle_resp.status_code == 200
+        receipt_bundle = receipt_bundle_resp.json()
+        assert _validate_schema_instance(
+            _load_schema(OPERATOR_PLAN_RECEIPT_BUNDLE_READ_MODEL_SCHEMA),
+            receipt_bundle,
+        ) == []
+        assert receipt_bundle["schema_ref"] == (
+            "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+        )
+        assert receipt_bundle["plan_export_count"] == 1
+        assert receipt_bundle["certified_export_count"] == 1
+        assert receipt_bundle["evidence_bundle_count"] == 1
+        assert receipt_bundle["step_command_count"] == 2
+        assert receipt_bundle["receipt_group_count"] == 2
+        assert receipt_bundle["receipt_count"] >= 2
+        assert receipt_bundle["missing_step_command_ids"] == []
+        assert receipt_bundle["plan_export_summaries"][0]["plan_id"] == plan_id
+        assert receipt_bundle["plan_export_summaries"][0]["receipt_export_href"] == (
+            f"/operator/plan-review/{plan_id}/receipts"
+        )
+        assert receipt_bundle["plan_exports"][0]["plan_id"] == plan_id
+        assert receipt_bundle["raw_message_exposed"] is False
+        assert receipt_bundle["execution_allowed"] is False
+        assert receipt_bundle["write_allowed"] is False
+        assert receipt_bundle_html_resp.status_code == 200
+        assert "Mullu Plan Receipt Bundle" in receipt_bundle_html_resp.text
         assert receipt_export_resp.status_code == 200
         receipt_export = receipt_export_resp.json()
         assert _validate_schema_instance(

@@ -1505,6 +1505,12 @@
       "urn": "urn:mullusi:schema:operator-control-tower-snapshot:1"
     },
     {
+      "path": "schemas/operator_plan_receipt_bundle_read_model.schema.json",
+      "schema_id": "operator-plan-receipt-bundle-read-model",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+    },
+    {
       "path": "schemas/operator_plan_receipt_export_read_model.schema.json",
       "schema_id": "operator-plan-receipt-export-read-model",
       "surface": "operator",
