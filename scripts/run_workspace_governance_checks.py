@@ -240,6 +240,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_dry_run_test_runner_plan_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_planned_file_change_collection_preflight",
             (
                 python_executable,
