@@ -131,7 +131,7 @@
         "reconciliation_required": true
       },
       "evidence_model": {
-        "required_evidence": ["workspace_file_preflight_receipt_id", "risk_level", "decision"],
+        "required_evidence": ["workspace_file_preflight_receipt_id", "risk_level", "decision", "autonomy_mode"],
         "terminal_certificate_required": true
       },
       "authority_policy": {
@@ -183,6 +183,11 @@
             "move_rename",
             "chmod_permission",
             "governance_artifact_mutation"
+          ],
+          "accepted_autonomy_modes": [
+            "autonomous_local",
+            "bounded_autonomous",
+            "approval_required"
           ],
           "verification_required": true,
           "receipt_required": true,

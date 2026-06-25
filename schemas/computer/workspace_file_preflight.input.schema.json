@@ -58,6 +58,10 @@
       "type": "string",
       "default": ""
     },
+    "autonomy_mode": {
+      "enum": ["autonomous_local", "bounded_autonomous", "approval_required"],
+      "default": "autonomous_local"
+    },
     "metadata": {
       "type": "object",
       "additionalProperties": true

@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 
 from mcoi_runtime.contracts.workspace_file_capability import (
+    WorkspaceFileAutonomyMode,
     WorkspaceFileDecision,
     WorkspaceFileOperation,
     WorkspaceFilePreflightRequest,
@@ -76,20 +77,27 @@ def preflight_workspace_file_operation(
     normalized_path = path_verdict.path
     risk_level = _risk_level_with_path_policy(operation, path_verdict.protected)
     world_mutating = operation not in _READ_ONLY_OPERATIONS
-    approval_required = _approval_required(operation, path_verdict.protected)
+    approval_required = _approval_required(
+        operation=operation,
+        protected_path=path_verdict.protected,
+        autonomy_mode=request.autonomy_mode,
+    )
     rollback_required = world_mutating
     sandbox_required = world_mutating
     allowed_capability_ids = _allowed_capability_ids(
         operation=operation,
         protected_path=path_verdict.protected,
+        approval_required=approval_required,
     )
     decision = _decision(
         operation=operation,
         path_unnormalizable=path_verdict.match is ProtectedPathMatch.UNNORMALIZABLE,
         protected_path=path_verdict.protected,
+        approval_required=approval_required,
     )
     reasons = _reasons(
         operation=operation,
+        autonomy_mode=request.autonomy_mode,
         decision=decision,
         path_unnormalizable=path_verdict.match is ProtectedPathMatch.UNNORMALIZABLE,
         protected_path=path_verdict.protected,
@@ -98,6 +106,7 @@ def preflight_workspace_file_operation(
     metadata = {
         "canonical_levels": workspace_file_capability_levels(),
         "operation_level": workspace_file_operation_level(operation).value,
+        "autonomy_mode": request.autonomy_mode.value,
         "protected_path_match": path_verdict.match.value,
         "protected_path_pattern": path_verdict.matched_pattern,
         "preflight_is_not_execution_authority": True,
@@ -113,6 +122,7 @@ def preflight_workspace_file_operation(
         risk_level=risk_level,
         actor_id=request.actor_id,
         purpose=request.purpose,
+        autonomy_mode=request.autonomy_mode,
         world_mutating=world_mutating,
         approval_required=approval_required,
         sandbox_required=sandbox_required,
@@ -138,8 +148,15 @@ def _risk_level_with_path_policy(
     return workspace_file_operation_level(operation)
 
 
-def _approval_required(operation: WorkspaceFileOperation, protected_path: bool) -> bool:
-    return protected_path or operation in _DESTRUCTIVE_OPERATIONS or operation is WorkspaceFileOperation.GOVERNANCE_ARTIFACT_MUTATION
+def _approval_required(
+    *,
+    operation: WorkspaceFileOperation,
+    protected_path: bool,
+    autonomy_mode: WorkspaceFileAutonomyMode,
+) -> bool:
+    if protected_path or operation in _DESTRUCTIVE_OPERATIONS or operation is WorkspaceFileOperation.GOVERNANCE_ARTIFACT_MUTATION:
+        return True
+    return autonomy_mode is WorkspaceFileAutonomyMode.APPROVAL_REQUIRED and operation not in _READ_ONLY_OPERATIONS
 
 
 def _decision(
@@ -147,12 +164,13 @@ def _decision(
     operation: WorkspaceFileOperation,
     path_unnormalizable: bool,
     protected_path: bool,
+    approval_required: bool,
 ) -> WorkspaceFileDecision:
     if path_unnormalizable:
         return WorkspaceFileDecision.BLOCK
     if operation in _DESTRUCTIVE_OPERATIONS or operation is WorkspaceFileOperation.GOVERNANCE_ARTIFACT_MUTATION:
         return WorkspaceFileDecision.PROPOSAL_ONLY
-    if protected_path:
+    if protected_path or approval_required:
         return WorkspaceFileDecision.REQUIRE_APPROVAL
     return WorkspaceFileDecision.ALLOW
 
@@ -161,8 +179,9 @@ def _allowed_capability_ids(
     *,
     operation: WorkspaceFileOperation,
     protected_path: bool,
+    approval_required: bool,
 ) -> tuple[str, ...]:
-    if protected_path:
+    if protected_path or approval_required:
         return ()
     if operation in _READ_ONLY_OPERATIONS:
         return ("computer.filesystem.observe",)
@@ -210,6 +229,7 @@ def _forbidden_effects(operation: WorkspaceFileOperation) -> tuple[str, ...]:
 def _reasons(
     *,
     operation: WorkspaceFileOperation,
+    autonomy_mode: WorkspaceFileAutonomyMode,
     decision: WorkspaceFileDecision,
     path_unnormalizable: bool,
     protected_path: bool,
@@ -226,6 +246,7 @@ def _reasons(
         reasons.append("operation may proceed only through guarded patch or software-change capability")
     else:
         reasons.append("operation is proposal-only until elevated authority and rollback evidence exist")
+    reasons.append(f"autonomy_mode:{autonomy_mode.value}")
     reasons.append(f"decision:{decision.value}")
     return tuple(reasons)
 
