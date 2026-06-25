@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1",
+  "title": "Operator Plan Receipt Bundle Read Model",
+  "description": "Operator-gated, read-only cross-plan receipt export bundle for Plan Review.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "tenant_id_filter",
+    "status_filter",
+    "budget_gate_filter",
+    "search_filter",
+    "limit",
+    "offset",
+    "next_offset",
+    "total",
+    "count",
+    "plan_review",
+    "plan_export_count",
+    "certified_export_count",
+    "evidence_bundle_count",
+    "step_command_count",
+    "receipt_group_count",
+    "receipt_count",
+    "evidence_ref_count",
+    "missing_step_command_ids",
+    "receipt_type_counts",
+    "receipt_status_counts",
+    "plan_export_summaries",
+    "plan_exports",
+    "raw_message_exposed",
+    "execution_allowed",
+    "write_allowed",
+    "governed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+    },
+    "tenant_id_filter": {"type": "string"},
+    "status_filter": {"type": "string"},
+    "budget_gate_filter": {"type": "string"},
+    "search_filter": {"type": "string", "maxLength": 128},
+    "limit": {"type": "integer", "minimum": 1, "maximum": 500},
+    "offset": {"type": "integer", "minimum": 0},
+    "next_offset": {
+      "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "null"}
+      ]
+    },
+    "total": {"type": "integer", "minimum": 0},
+    "count": {"type": "integer", "minimum": 0},
+    "plan_review": {"type": "object", "additionalProperties": true},
+    "plan_export_count": {"type": "integer", "minimum": 0},
+    "certified_export_count": {"type": "integer", "minimum": 0},
+    "evidence_bundle_count": {"type": "integer", "minimum": 0},
+    "step_command_count": {"type": "integer", "minimum": 0},
+    "receipt_group_count": {"type": "integer", "minimum": 0},
+    "receipt_count": {"type": "integer", "minimum": 0},
+    "evidence_ref_count": {"type": "integer", "minimum": 0},
+    "missing_step_command_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_type_counts": {"$ref": "#/$defs/counts_by_key"},
+    "receipt_status_counts": {"$ref": "#/$defs/counts_by_key"},
+    "plan_export_summaries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/plan_export_summary"}
+    },
+    "plan_exports": {
+      "type": "array",
+      "items": {"type": "object", "additionalProperties": true}
+    },
+    "raw_message_exposed": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "write_allowed": {"type": "boolean", "const": false},
+    "governed": {"type": "boolean", "const": true}
+  },
+  "$defs": {
+    "counts_by_key": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "plan_export_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "status",
+        "evidence_bundle_available",
+        "step_command_count",
+        "receipt_group_count",
+        "receipt_count",
+        "evidence_ref_count",
+        "missing_step_command_count",
+        "receipt_export_href"
+      ],
+      "properties": {
+        "plan_id": {"type": "string", "pattern": "^plan-[a-f0-9]{16}$"},
+        "status": {
+          "type": "string",
+          "enum": ["certified", "awaiting_certificate", "not_found"]
+        },
+        "evidence_bundle_available": {"type": "boolean"},
+        "step_command_count": {"type": "integer", "minimum": 0},
+        "receipt_group_count": {"type": "integer", "minimum": 0},
+        "receipt_count": {"type": "integer", "minimum": 0},
+        "evidence_ref_count": {"type": "integer", "minimum": 0},
+        "missing_step_command_count": {"type": "integer", "minimum": 0},
+        "receipt_export_href": {
+          "type": "string",
+          "pattern": "^/operator/plan-review/.*/receipts$"
+        }
+      }
+    }
+  }
+}

@@ -540,6 +540,9 @@ jobs:
       - name: Run receipt-store read-model tests
         run: python -m pytest tests/test_validate_universal_symbol_receipt_store_durability_replay_read_model.py tests/test_validate_universal_symbol_receipt_store_lifecycle_audit_read_model.py tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py tests/test_validate_universal_symbol_receipt_store_path_confinement_read_model.py tests/test_validate_universal_symbol_receipt_store_recovery_read_model.py tests/test_validate_universal_symbol_receipt_store_replacement_decision_read_model.py tests/test_validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.py tests/test_validate_universal_symbol_receipt_store_tenant_scope_read_model.py tests/test_validate_universal_symbol_receipt_store_write_path_idempotency_read_model.py tests/test_validate_universal_symbol_receipt_store_writer_duty_scope_read_model.py -q
 
+      - name: Run operator plan receipt bundle tests
+        run: python -m pytest tests/test_validate_operator_plan_receipt_bundle_read_model.py -q
+
       - name: Run worker receipt emitter registration witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emitter_registration_witness.py -q
 

@@ -1,0 +1,161 @@
+{
+  "schema_ref": "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1",
+  "tenant_id_filter": "tenant-foundation",
+  "status_filter": "",
+  "budget_gate_filter": "",
+  "search_filter": "",
+  "limit": 100,
+  "offset": 0,
+  "next_offset": null,
+  "total": 1,
+  "count": 1,
+  "plan_review": {
+    "schema_ref": "urn:mullusi:schema:operator-plan-review-read-model:1",
+    "tenant_id_filter": "tenant-foundation",
+    "plan_id_filter": "",
+    "status_filter": "",
+    "budget_gate_filter": "",
+    "search_filter": "",
+    "limit": 100,
+    "offset": 0,
+    "next_offset": null,
+    "total": 1,
+    "count": 1,
+    "status_counts": {
+      "preview_ready": 0,
+      "handoff_submitted": 0,
+      "denied": 0,
+      "blocked": 0,
+      "certified": 1,
+      "failed": 0,
+      "recovered": 0,
+      "recovery_rejected": 0,
+      "recovery_pending": 0
+    },
+    "budget_gate_counts": {
+      "budget_reserved": 1,
+      "not_required": 0,
+      "not_recorded": 0
+    },
+    "plans": [
+      {
+        "review_id": "review-plan-aaaaaaaaaaaaaaaa",
+        "review_type": "certificate",
+        "plan_id": "plan-aaaaaaaaaaaaaaaa",
+        "preview_id": "preview-001",
+        "tenant_id": "tenant-foundation",
+        "identity_id": "operator-001",
+        "status": "certified",
+        "risk_tier": "medium",
+        "approval_required": true,
+        "step_count": 2,
+        "goal_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "evidence_required": ["receipt_refs"],
+        "evidence_required_count": 1,
+        "budget_required": true,
+        "budget_gate": "budget_reserved",
+        "estimate_state": "estimated",
+        "estimate_source": "capability_cost_model",
+        "estimated_cost_units": 2,
+        "used_cost_units": 0,
+        "used_cost_source": "preview_execution_not_started",
+        "limit_cost_units": 10,
+        "remaining_cost_units": 10,
+        "budget_report_href": "/operator/plan-review/budget/tenant-foundation",
+        "currency": "cost_units",
+        "required_by_steps": ["step-1"],
+        "not_required_by_steps": ["step-2"],
+        "execution_spend_allowed": false,
+        "budget_evidence_state": "preview_budget",
+        "tools_count": 2,
+        "certificate_id": "plan-cert-aaaaaaaaaaaaaaaa",
+        "witness_id": "plan-witness-aaaaaaaaaaaaaaaa",
+        "attempt_id": "",
+        "recovery_action": "",
+        "recovery_reason": "",
+        "latest_at": "2026-06-25T00:00:00Z",
+        "review_href": "/operator/plan-review/plan-aaaaaaaaaaaaaaaa?tenant_id=tenant-foundation",
+        "receipt_export_href": "/operator/plan-review/plan-aaaaaaaaaaaaaaaa/receipts",
+        "closure_href": "/capability-plans/plan-aaaaaaaaaaaaaaaa/closure"
+      }
+    ],
+    "raw_message_exposed": false,
+    "execution_allowed": false,
+    "write_allowed": false,
+    "governed": true
+  },
+  "plan_export_count": 1,
+  "certified_export_count": 1,
+  "evidence_bundle_count": 1,
+  "step_command_count": 2,
+  "receipt_group_count": 2,
+  "receipt_count": 2,
+  "evidence_ref_count": 2,
+  "missing_step_command_ids": [],
+  "receipt_type_counts": {
+    "plan_step_receipt": 2
+  },
+  "receipt_status_counts": {
+    "closed": 2
+  },
+  "plan_export_summaries": [
+    {
+      "plan_id": "plan-aaaaaaaaaaaaaaaa",
+      "status": "certified",
+      "evidence_bundle_available": true,
+      "step_command_count": 2,
+      "receipt_group_count": 2,
+      "receipt_count": 2,
+      "evidence_ref_count": 2,
+      "missing_step_command_count": 0,
+      "receipt_export_href": "/operator/plan-review/plan-aaaaaaaaaaaaaaaa/receipts"
+    }
+  ],
+  "plan_exports": [
+    {
+      "plan_id": "plan-aaaaaaaaaaaaaaaa",
+      "status": "certified",
+      "evidence_bundle_available": true,
+      "step_command_count": 2,
+      "receipt_group_count": 2,
+      "receipt_count": 2,
+      "missing_step_command_ids": [],
+      "plan_evidence_bundle": {
+        "evidence_refs": [
+          "receipt:plan-step-1",
+          "receipt:plan-step-2"
+        ]
+      },
+      "step_receipt_groups": [
+        {
+          "command_id": "cmd-1",
+          "receipt_types": ["plan_step_receipt"],
+          "receipt_count": 1,
+          "receipts": [
+            {
+              "receipt_status": "closed"
+            }
+          ]
+        },
+        {
+          "command_id": "cmd-2",
+          "receipt_types": ["plan_step_receipt"],
+          "receipt_count": 1,
+          "receipts": [
+            {
+              "receipt_status": "closed"
+            }
+          ]
+        }
+      ],
+      "raw_message_exposed": false,
+      "execution_allowed": false,
+      "write_allowed": false,
+      "governed": true
+    }
+  ],
+  "raw_message_exposed": false,
+  "execution_allowed": false,
+  "write_allowed": false,
+  "governed": true
+}

@@ -600,6 +600,7 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
     approval_history_entry = entries["operator-approval-history-read-model"]
     plan_review_entry = entries["operator-plan-review-read-model"]
     budget_report_entry = entries["operator-budget-report-read-model"]
+    plan_receipt_bundle_entry = entries["operator-plan-receipt-bundle-read-model"]
     plan_receipt_export_entry = entries["operator-plan-receipt-export-read-model"]
     task_entry = entries["current-task-read-model"]
 
@@ -632,6 +633,13 @@ def test_protocol_manifest_indexes_operator_receipt_and_task_read_models() -> No
         "urn:mullusi:schema:operator-budget-report-read-model:1"
     )
     assert budget_report_entry["surface"] == "operator"
+    assert plan_receipt_bundle_entry["path"] == (
+        "schemas/operator_plan_receipt_bundle_read_model.schema.json"
+    )
+    assert plan_receipt_bundle_entry["urn"] == (
+        "urn:mullusi:schema:operator-plan-receipt-bundle-read-model:1"
+    )
+    assert plan_receipt_bundle_entry["surface"] == "operator"
     assert plan_receipt_export_entry["path"] == (
         "schemas/operator_plan_receipt_export_read_model.schema.json"
     )
