@@ -7,7 +7,7 @@ Invariants: request handling is single-step, ordered, deterministic, and never m
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
 
 from mcoi_runtime.adapters.observer_base import ObservationResult, ObservationStatus
 from mcoi_runtime.contracts._base import thaw_value
@@ -85,6 +85,9 @@ from .operator_runners import (
     run_skill,
     run_workflow,
 )
+
+if TYPE_CHECKING:
+    from .autonomous_request import AutonomousRequestEpisode, AutonomousRequestEpisodeReceipt
 
 
 @dataclass(slots=True)
@@ -423,6 +426,15 @@ class OperatorLoop:
         request: SkillPromotionReceiptReadRequest,
     ) -> SkillPromotionReceiptReadReport:
         return read_skill_promotion_receipts(self, request)
+
+    def run_autonomous_request_episode(
+        self,
+        episode: "AutonomousRequestEpisode",
+    ) -> "AutonomousRequestEpisodeReceipt":
+        """Run one governed autonomous request episode and return its receipt."""
+        from .autonomous_request import run_autonomous_request_episode
+
+        return run_autonomous_request_episode(self, episode)
 
     def run_workflow(
         self,
