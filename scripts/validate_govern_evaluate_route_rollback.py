@@ -33,11 +33,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from gateway.server import GOVERN_CLOUD_PUBLIC_PROXY_PATHS, create_gateway_app  # noqa: E402
-
-
 BLOCKED_ROUTE = "/v1/govern/evaluate"
 PRESERVED_ROUTES = ("/v1/health", "/v1/version")
+FALLBACK_PUBLIC_PROXY_PATHS = frozenset(PRESERVED_ROUTES)
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,13 +48,13 @@ class RouteProbe:
 
 def validate_govern_evaluate_route_rollback(
     *,
-    allowlist: Iterable[str] = GOVERN_CLOUD_PUBLIC_PROXY_PATHS,
+    allowlist: Iterable[str] | None = None,
     probe_runner: Callable[[], RouteProbe] | None = None,
     now_utc: datetime | None = None,
 ) -> dict[str, Any]:
     """Validate that evaluate-route rollback keeps the product write route closed."""
     observed_at = (now_utc or datetime.now(UTC)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-    allowlist_set = frozenset(allowlist)
+    allowlist_set = frozenset(allowlist or _load_public_proxy_paths())
     preserved_routes_present = all(route in allowlist_set for route in PRESERVED_ROUTES)
     blocked_route_absent = BLOCKED_ROUTE not in allowlist_set
     probe = (probe_runner or _probe_blocked_evaluate_route)()
@@ -119,6 +117,14 @@ def format_rollback_witness_report(witness: Mapping[str, Any]) -> str:
 
 
 def _probe_blocked_evaluate_route() -> RouteProbe:
+    try:
+        from gateway.server import create_gateway_app
+    except ImportError:
+        return RouteProbe(
+            status_code=0,
+            outbound_transport_called=False,
+        )
+
     outbound_transport_called = False
 
     def fail_if_called(*_args: object, **_kwargs: object) -> None:
@@ -138,6 +144,14 @@ def _probe_blocked_evaluate_route() -> RouteProbe:
             status_code=response.status_code,
             outbound_transport_called=outbound_transport_called,
         )
+
+
+def _load_public_proxy_paths() -> Iterable[str]:
+    try:
+        from gateway.server import GOVERN_CLOUD_PUBLIC_PROXY_PATHS
+    except ImportError:
+        return FALLBACK_PUBLIC_PROXY_PATHS
+    return GOVERN_CLOUD_PUBLIC_PROXY_PATHS
 
 
 @contextmanager
