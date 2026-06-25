@@ -65,8 +65,8 @@ class DeploymentProfile:
 LOCAL_DEV = DeploymentProfile(
     profile_id="local-dev",
     name="Local Development",
-    description="Full capability for local development and testing",
-    autonomy_mode="bounded_autonomous",
+    description="Local workspace capability for development and testing",
+    autonomy_mode="autonomous_local",
     enabled_executor_routes=("shell_command",),
     enabled_observer_routes=("filesystem", "process"),
     max_retention_days=7,

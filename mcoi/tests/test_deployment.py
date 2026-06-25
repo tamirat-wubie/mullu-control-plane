@@ -131,7 +131,7 @@ class TestProfileBinding:
     def test_bind_local_dev(self):
         binding = bind_profile(LOCAL_DEV)
         assert binding.profile_id == "local-dev"
-        assert binding.autonomy_mode == "bounded_autonomous"
+        assert binding.autonomy_mode == "autonomous_local"
         assert binding.import_enabled is True
         assert binding.export_enabled is True
 
@@ -182,7 +182,7 @@ class TestConformanceEvaluation:
     def test_fully_conformant(self):
         enforcer = DeploymentEnforcer(bind_profile(LOCAL_DEV))
         report = enforcer.evaluate_conformance(
-            actual_autonomy_mode="bounded_autonomous",
+            actual_autonomy_mode="autonomous_local",
             routes_used=("shell_command",),
         )
         assert report.is_conformant
@@ -199,7 +199,7 @@ class TestConformanceEvaluation:
     def test_route_violation(self):
         enforcer = DeploymentEnforcer(bind_profile(LOCAL_DEV))
         report = enforcer.evaluate_conformance(
-            actual_autonomy_mode="bounded_autonomous",
+            actual_autonomy_mode="autonomous_local",
             routes_used=("shell_command", "browser_automation"),
         )
         assert not report.is_conformant
@@ -265,20 +265,20 @@ class TestDeploymentGoldenScenarios:
         )
         assert report.is_conformant
 
-    def test_bounded_autonomous_allows_scoped_execution(self):
-        """Bounded-autonomous allows governed execution within profile scope."""
+    def test_autonomous_local_allows_scoped_execution(self):
+        """Autonomous-local allows governed local execution within profile scope."""
         enforcer = DeploymentEnforcer(bind_profile(LOCAL_DEV))
         report = enforcer.evaluate_conformance(
-            actual_autonomy_mode="bounded_autonomous",
+            actual_autonomy_mode="autonomous_local",
             routes_used=("shell_command",),
         )
         assert report.is_conformant
 
-    def test_bounded_autonomous_rejects_out_of_scope(self):
-        """Bounded-autonomous rejects routes outside profile."""
+    def test_autonomous_local_rejects_out_of_scope(self):
+        """Autonomous-local rejects routes outside profile."""
         enforcer = DeploymentEnforcer(bind_profile(LOCAL_DEV))
         report = enforcer.evaluate_conformance(
-            actual_autonomy_mode="bounded_autonomous",
+            actual_autonomy_mode="autonomous_local",
             routes_used=("shell_command", "browser_automation"),
         )
         assert not report.is_conformant

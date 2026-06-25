@@ -370,7 +370,7 @@ class TestImportEngine:
 
 class TestDeploymentProfiles:
     def test_local_dev(self):
-        assert LOCAL_DEV.autonomy_mode == "bounded_autonomous"
+        assert LOCAL_DEV.autonomy_mode == "autonomous_local"
         assert LOCAL_DEV.import_enabled is True
         assert LOCAL_DEV.max_retention_days == 7
 
@@ -409,7 +409,7 @@ class TestDeploymentProfiles:
 
     def test_to_config_dict(self):
         cfg = LOCAL_DEV.to_config_dict()
-        assert cfg["autonomy_mode"] == "bounded_autonomous"
+        assert cfg["autonomy_mode"] == "autonomous_local"
         assert "shell_command" in cfg["enabled_executor_routes"]
 
     def test_empty_profile_id_rejected(self):
@@ -417,8 +417,7 @@ class TestDeploymentProfiles:
             DeploymentProfile(profile_id="", name="x", description="x", autonomy_mode="observe_only")
 
     def test_no_profile_widens_beyond_mode(self):
-        """No built-in profile uses bounded_autonomous except local-dev."""
+        """No built-in profile uses broad bounded_autonomous by default."""
         for pid, profile in BUILTIN_PROFILES.items():
-            if pid != "local-dev":
-                assert profile.autonomy_mode != "bounded_autonomous", \
-                    f"{pid} should not be bounded_autonomous"
+            assert profile.autonomy_mode != "bounded_autonomous", \
+                f"{pid} should not be bounded_autonomous"

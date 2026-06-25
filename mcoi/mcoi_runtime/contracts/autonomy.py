@@ -21,6 +21,7 @@ class AutonomyMode(StrEnum):
     OBSERVE_ONLY = "observe_only"
     SUGGEST_ONLY = "suggest_only"
     APPROVAL_REQUIRED = "approval_required"
+    AUTONOMOUS_LOCAL = "autonomous_local"
     BOUNDED_AUTONOMOUS = "bounded_autonomous"
 
 

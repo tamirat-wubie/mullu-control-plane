@@ -468,7 +468,7 @@ class TestSkillGovernanceChecks:
 
     def test_skill_proceeds_when_autonomy_and_policy_allow(self):
         """Skill execution proceeds when both autonomy and policy permit it."""
-        loop = _make_loop()  # Default is bounded_autonomous — allows execution
+        loop = _make_loop()  # Default autonomous_local allows local execution.
         _register_skill(loop, "sk-gov-allow", name="shell_command")
 
         report = loop.run_skill(SkillRequest(
