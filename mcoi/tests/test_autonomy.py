@@ -1,7 +1,7 @@
 """Golden scenario tests for autonomy mode levels.
 
 Proves that the runtime enforces explicit autonomy boundaries:
-OBSERVE_ONLY, SUGGEST_ONLY, APPROVAL_REQUIRED, BOUNDED_AUTONOMOUS.
+OBSERVE_ONLY, SUGGEST_ONLY, APPROVAL_REQUIRED, AUTONOMOUS_LOCAL, BOUNDED_AUTONOMOUS.
 """
 
 from __future__ import annotations
@@ -150,6 +150,43 @@ class TestApprovalRequired:
 # --- BOUNDED_AUTONOMOUS ---
 
 
+class TestAutonomousLocal:
+    def test_local_execution_actions_allowed_without_approval(self):
+        engine = AutonomyEngine(mode=AutonomyMode.AUTONOMOUS_LOCAL)
+
+        write_decision = engine.evaluate(ActionClass.EXECUTE_WRITE)
+        read_decision = engine.evaluate(ActionClass.EXECUTE_READ)
+        status = engine.get_status()
+
+        assert write_decision.status is AutonomyDecisionStatus.ALLOWED
+        assert read_decision.status is AutonomyDecisionStatus.ALLOWED
+        assert status.allowed_count == 2
+        assert status.pending_approval_count == 0
+
+    def test_external_boundary_actions_require_approval(self):
+        engine = AutonomyEngine(mode=AutonomyMode.AUTONOMOUS_LOCAL)
+
+        communicate_decision = engine.evaluate(ActionClass.COMMUNICATE)
+        approve_decision = engine.evaluate(ActionClass.APPROVE)
+        status = engine.get_status()
+
+        assert communicate_decision.status is AutonomyDecisionStatus.BLOCKED_PENDING_APPROVAL
+        assert approve_decision.status is AutonomyDecisionStatus.BLOCKED_PENDING_APPROVAL
+        assert status.pending_approval_count == 2
+        assert status.blocked_count == 0
+
+    def test_external_boundary_action_allowed_with_approval(self):
+        engine = AutonomyEngine(mode=AutonomyMode.AUTONOMOUS_LOCAL)
+
+        decision = engine.evaluate(ActionClass.COMMUNICATE, has_approval=True)
+        status = engine.get_status()
+
+        assert decision.status is AutonomyDecisionStatus.ALLOWED
+        assert "approved boundary action" in decision.reason
+        assert status.allowed_count == 1
+        assert status.pending_approval_count == 0
+
+
 class TestBoundedAutonomous:
     def test_all_standard_actions_allowed(self):
         engine = AutonomyEngine(mode=AutonomyMode.BOUNDED_AUTONOMOUS)
@@ -170,9 +207,19 @@ class TestBoundedAutonomous:
 
 
 class TestBootstrapIntegration:
-    def test_default_mode_is_bounded_autonomous(self):
+    def test_default_mode_is_autonomous_local(self):
         runtime = bootstrap_runtime(clock=lambda: "2025-01-15T10:00:00+00:00")
+        assert runtime.autonomy.mode is AutonomyMode.AUTONOMOUS_LOCAL
+
+    def test_bounded_autonomous_from_config(self):
+        config = AppConfig(autonomy_mode="bounded_autonomous")
+        runtime = bootstrap_runtime(config=config, clock=lambda: "2025-01-15T10:00:00+00:00")
         assert runtime.autonomy.mode is AutonomyMode.BOUNDED_AUTONOMOUS
+
+    def test_autonomous_local_from_config(self):
+        config = AppConfig(autonomy_mode="autonomous_local")
+        runtime = bootstrap_runtime(config=config, clock=lambda: "2025-01-15T10:00:00+00:00")
+        assert runtime.autonomy.mode is AutonomyMode.AUTONOMOUS_LOCAL
 
     def test_observe_only_from_config(self):
         config = AppConfig(autonomy_mode="observe_only")

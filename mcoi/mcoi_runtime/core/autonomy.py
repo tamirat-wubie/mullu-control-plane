@@ -6,6 +6,7 @@ Invariants:
   - Unknown action classes fail closed (rejected).
   - OBSERVE_ONLY and SUGGEST_ONLY never permit execution.
   - APPROVAL_REQUIRED blocks execution without explicit approval.
+  - AUTONOMOUS_LOCAL permits local read/write execution, not external communication.
   - BOUNDED_AUTONOMOUS permits governed actions within scope.
 """
 
@@ -50,6 +51,21 @@ _APPROVAL_ALLOWED_WITH_APPROVAL: frozenset[ActionClass] = frozenset({
     ActionClass.PLAN,
     ActionClass.EXECUTE_READ,
     ActionClass.EXECUTE_WRITE,
+    ActionClass.COMMUNICATE,
+    ActionClass.APPROVE,
+})
+
+_AUTONOMOUS_LOCAL_ALLOWED_WITHOUT_APPROVAL: frozenset[ActionClass] = frozenset({
+    ActionClass.OBSERVE,
+    ActionClass.ANALYZE,
+    ActionClass.SUGGEST,
+    ActionClass.PLAN,
+    ActionClass.EXECUTE_READ,
+    ActionClass.EXECUTE_WRITE,
+})
+
+_AUTONOMOUS_LOCAL_ALLOWED_WITH_APPROVAL: frozenset[ActionClass] = frozenset({
+    *_AUTONOMOUS_LOCAL_ALLOWED_WITHOUT_APPROVAL,
     ActionClass.COMMUNICATE,
     ActionClass.APPROVE,
 })
@@ -155,6 +171,19 @@ class AutonomyEngine:
                     f"approval mode: {action_class.value} requires approval",
                 )
             return self._make_decision(action_class, AutonomyDecisionStatus.REJECTED, f"approval mode: {action_class.value} not permitted")
+
+        if self._mode is AutonomyMode.AUTONOMOUS_LOCAL:
+            if action_class in _AUTONOMOUS_LOCAL_ALLOWED_WITHOUT_APPROVAL:
+                return self._make_decision(action_class, AutonomyDecisionStatus.ALLOWED, "autonomous local mode: local action allowed within scope")
+            if has_approval and action_class in _AUTONOMOUS_LOCAL_ALLOWED_WITH_APPROVAL:
+                return self._make_decision(action_class, AutonomyDecisionStatus.ALLOWED, "autonomous local mode: approved boundary action allowed")
+            if action_class in (ActionClass.COMMUNICATE, ActionClass.APPROVE):
+                return self._make_decision(
+                    action_class,
+                    AutonomyDecisionStatus.BLOCKED_PENDING_APPROVAL,
+                    f"autonomous local mode: {action_class.value} requires approval",
+                )
+            return self._make_decision(action_class, AutonomyDecisionStatus.REJECTED, f"autonomous local mode: {action_class.value} not permitted")
 
         if self._mode is AutonomyMode.BOUNDED_AUTONOMOUS:
             if action_class in _AUTONOMOUS_ALLOWED:

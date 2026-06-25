@@ -63,7 +63,7 @@ class AppConfig:
     allowed_planning_classes: tuple[str, ...] = ("constraint",)
     enabled_executor_routes: tuple[str, ...] = ("shell_command",)
     enabled_observer_routes: tuple[str, ...] = ("filesystem", "process")
-    autonomy_mode: str = "bounded_autonomous"
+    autonomy_mode: str = "autonomous_local"
     policy_pack_id: str | None = None
     policy_pack_version: str | None = None
     effect_assurance_required: bool = False
@@ -149,7 +149,7 @@ class AppConfig:
             allowed_planning_classes=normalized.get("allowed_planning_classes", ("constraint",)),
             enabled_executor_routes=normalized.get("enabled_executor_routes", ("shell_command",)),
             enabled_observer_routes=normalized.get("enabled_observer_routes", ("filesystem", "process")),
-            autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
+            autonomy_mode=normalized.get("autonomy_mode", "autonomous_local"),
             policy_pack_id=normalized.get("policy_pack_id"),
             policy_pack_version=normalized.get("policy_pack_version"),
             effect_assurance_required=normalized.get("effect_assurance_required", False),

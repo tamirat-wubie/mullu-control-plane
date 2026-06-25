@@ -17,6 +17,7 @@ def test_app_config_uses_explicit_defaults() -> None:
     assert config.allowed_planning_classes == ("constraint",)
     assert config.enabled_executor_routes == ("shell_command",)
     assert config.enabled_observer_routes == ("filesystem", "process")
+    assert config.autonomy_mode == "autonomous_local"
     assert config.policy_pack_id is None
     assert config.policy_pack_version is None
     assert config.effect_assurance_required is False
@@ -34,6 +35,7 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
             "allowed_planning_classes": ("constraint", "reference"),
             "enabled_executor_routes": ("shell_command",),
             "enabled_observer_routes": ("filesystem",),
+            "autonomy_mode": "autonomous_local",
             "policy_pack_id": "strict-approval",
             "policy_pack_version": "v0.1",
             "effect_assurance_required": True,
@@ -49,6 +51,7 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
     assert config.allowed_planning_classes == ("constraint", "reference")
     assert config.enabled_executor_routes == ("shell_command",)
     assert config.enabled_observer_routes == ("filesystem",)
+    assert config.autonomy_mode == "autonomous_local"
     assert config.policy_pack_id == "strict-approval"
     assert config.policy_pack_version == "v0.1"
     assert config.effect_assurance_required is True
